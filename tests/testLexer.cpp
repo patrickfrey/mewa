@@ -17,7 +17,22 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cstdio>
+#include <cstring>
+
 using namespace mewa;
+
+static void writeFile( const std::string& filename, const std::string& content)
+{
+	FILE* ff = std::fopen( filename.c_str(), "w");
+	if (!ff) throw std::runtime_error( std::strerror( errno));
+	if (content.size() != std::fwrite( content.c_str(), 1, content.size(), ff))
+	{
+		std::fclose( ff);
+		throw std::runtime_error( std::strerror( std::ferror( ff)));
+	}
+	std::fclose( ff);
+}
 
 int main( int argc, const char* argv[] )
 {
@@ -25,8 +40,10 @@ int main( int argc, const char* argv[] )
 	{
 		Lexer lexer;
 		lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
-		lexer.defineLexem( "DQSTRING", "[\"](([^\"])|([\\\\][^\"]))[\"]", 1);
-		lexer.defineLexem( "SQSTRING", "[\'](([^\'])|([\\\\][^\']))[\']", 1);
+		lexer.defineLexem( "CARDINAL", "[0-9]*");
+		lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
+		lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n])|([\\\\][^\"\\n]))*)[\"]", 1);
+		lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n])|([\\\\][^\'\\n]))*)[\']", 1);
 		lexer.defineLexem( "::");
 		lexer.defineLexem( "<<");
 		lexer.defineLexem( ">>");
@@ -53,13 +70,17 @@ int main( int argc, const char* argv[] )
 		lexer.defineLexem( "-");
 		lexer.defineLexem( "--");
 		lexer.defineLexem( "-=");
+		lexer.defineLexem( "#include");
 		lexer.defineEolnComment( "//");
 		lexer.defineBracketComment( "/*", "*/");
-	
+
 		std::string source{R"(
 #include <string>
 #include <iostream>
 
+/*
+ *  Main program:
+*/
 int main() {
     std::string s0{'h','e','l','l','o','\n','n','e','w','\n','w','o','r','l','d','\n'};
     std::string s1{"hello\nnew\nworld\n"};
@@ -74,16 +95,154 @@ int main() {
     return 0;
 }
 	)"};
-		std::ostringstream output;
-	
+
+		std::string expected{R"(
+#include [#include]
+< [<]
+IDENT [string]
+> [>]
+#include [#include]
+< [<]
+IDENT [iostream]
+> [>]
+IDENT [int]
+IDENT [main]
+( [(]
+) [)]
+{ [{]
+IDENT [std]
+:: [::]
+IDENT [string]
+IDENT [s0]
+{ [{]
+SQSTRING [h]
+, [,]
+SQSTRING [e]
+, [,]
+SQSTRING [l]
+, [,]
+SQSTRING [l]
+, [,]
+SQSTRING [o]
+, [,]
+SQSTRING [\n]
+, [,]
+SQSTRING [n]
+, [,]
+SQSTRING [e]
+, [,]
+SQSTRING [w]
+, [,]
+SQSTRING [\n]
+, [,]
+SQSTRING [w]
+, [,]
+SQSTRING [o]
+, [,]
+SQSTRING [r]
+, [,]
+SQSTRING [l]
+, [,]
+SQSTRING [d]
+, [,]
+SQSTRING [\n]
+} [}]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [string]
+IDENT [s1]
+{ [{]
+DQSTRING [hello\nnew\nworld\n]
+} [}]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [string]
+IDENT [s2]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+DQSTRING [--------------]
+<< [<<]
+IDENT [std]
+:: [::]
+IDENT [endl]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+IDENT [s0]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+DQSTRING [--------------]
+<< [<<]
+IDENT [std]
+:: [::]
+IDENT [endl]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+IDENT [s1]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+DQSTRING [--------------]
+<< [<<]
+IDENT [std]
+:: [::]
+IDENT [endl]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+IDENT [s2]
+; [;]
+IDENT [std]
+:: [::]
+IDENT [cout]
+<< [<<]
+DQSTRING [--------------]
+<< [<<]
+IDENT [std]
+:: [::]
+IDENT [endl]
+; [;]
+IDENT [return]
+CARDINAL [0]
+; [;]
+} [}]
+	)"};
+		std::ostringstream outputbuf;
+		outputbuf << "\n";
 		Scanner scanner( "testLexer", source);
 		Lexem lexem = lexer.next( scanner);
-		while (!lexem.empty())
+		for (; !lexem.empty(); lexem = lexer.next( scanner))
 		{
-			lexem = lexer.next( scanner);
-			output << lexem.name() << " [" << lexem.value() << "]" << std::endl;
+			outputbuf << lexem.name() << " [" << lexem.value() << "]" << "\n";
 			std::cerr << lexem.name() << " [" << lexem.value() << "]" << std::endl;
-			if (lexem.name() == "?") break;
+			if (lexem.name() == "?")
+			{
+				break;
+			}
+		}
+		std::string output = outputbuf.str();
+		if (output != expected)
+		{
+			writeFile( "build/testLexer.out", output);
+			writeFile( "build/testLexer.exp", expected);
+			std::cerr << "ERR test output (build/testLexer.out) differs expected build/testLexer.exp" << std::endl;
+			return 3;
 		}
 	}
 	catch (const mewa::Error& err)

@@ -14,19 +14,19 @@
 
 using namespace mewa;
 
-#define REGEX_ESCAPE_CHARS "{}[]()*+.-\\"
+#define REGEX_ESCAPE_CHARS "#{}[]()*+?.-\\"
 
-static std::string parseChar( char const*& si)
+static std::string_view parseChar( char const*& si)
 {
 	if ((unsigned char)*si > 128)
 	{
 		char const* start = si;
 		for (++si; *si && utf8mid(*si); ++si){}
-		return std::string( start, si-start);
+		return std::string_view( start, si-start);
 	}
 	else
 	{
-		return std::string( si, 1);
+		return std::string_view( si, 1);
 	}
 }
 
@@ -45,7 +45,7 @@ static char parseFirstChar( char const*& si)
 		}
 		else
 		{
-			throw Error( Error::IllegalFirstCharacterInLexer, std::string( "\\") + parseChar( si));
+			throw Error( Error::IllegalFirstCharacterInLexer, std::string( "\\") + std::string( parseChar( si)));
 		}
 	}
 	else
@@ -164,18 +164,24 @@ DLL_LOCAL std::string LexemDef::activationCharacters( const std::string& source_
 	return rt;
 }
 
-DLL_PUBLIC std::pair<std::string,int> LexemDef::match( const char* srcptr) const
+DLL_PUBLIC std::pair<std::string_view,int> LexemDef::match( const char* srcptr, std::size_t srclen) const
 {
-	std::pair<std::string,int> rt;
-	std::cmatch match;
+	std::match_results<char const*> pieces_match;
 
-	if (std::regex_match( srcptr, match, m_pattern) && match.size() > select())
+	std::regex_constants::match_flag_type match_flags
+		= std::regex_constants::match_continuous
+		| std::regex_constants::match_not_null;
+
+	if (std::regex_search( srcptr, srcptr+srclen, pieces_match, m_pattern, match_flags) && pieces_match.size() > select())
 	{
-		std::csub_match sub_match = match[ select()];
-		rt.first = sub_match.str();
-		rt.second = match.length( 0);
+		return std::pair<std::string_view,int>( 
+				std::string_view( srcptr + pieces_match.position( select()), pieces_match.length( select())),
+				pieces_match.length(0));
 	}
-	return rt;
+	else
+	{
+		return std::pair<std::string_view,int>( std::string_view( "", 0), 0);
+	}
 }
 
 DLL_PUBLIC char const* Scanner::next( int incr)
@@ -184,7 +190,7 @@ DLL_PUBLIC char const* Scanner::next( int incr)
 	if (pos < 0 || pos > (int)m_src.size()) throw Error( Error::ArrayBoundReadInLexer);
 	for (; incr < 0; ++incr) {if (*--m_srcitr == '\n') --m_line;}
 	for (; incr > 0; --incr) {if (*m_srcitr++ == '\n') ++m_line;}
-	for (; *m_srcitr && (unsigned char)*m_srcitr <= 32; ++m_srcitr) {if (*m_srcitr++ == '\n') ++m_line;}
+	for (; *m_srcitr && (unsigned char)*m_srcitr <= 32; ++m_srcitr) {if (*m_srcitr == '\n') ++m_line;}
 	return m_srcitr;
 }
 
@@ -212,11 +218,19 @@ DLL_PUBLIC bool Scanner::match( const char* str)
 	return false;
 }
 
-DLL_PUBLIC void Lexer::defineLexem( const std::string& name, const std::string& pattern, std::size_t select)
+DLL_PUBLIC void Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
 {
 	try
 	{
-		m_defar.push_back( LexemDef( name, pattern, select));
+		if (name.empty())
+		{
+			m_defar.push_back( LexemDef( std::string(), std::string(pattern), 0/*id*/, select));
+		}
+		else
+		{
+			auto ins = m_nameidmap.insert( std::pair<std::string,int>( std::string(name), m_nameidmap.size()+1));
+			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, select));
+		}
 	}
 	catch (const std::regex_error&)
 	{
@@ -234,10 +248,15 @@ DLL_PUBLIC void Lexer::defineLexem( const std::string& name, const std::string& 
 	if (firstChars == 0) throw Error( Error::SyntaxErrorInLexer);
 }
 
-static std::string stringToRegex( const std::string& opr)
+DLL_PUBLIC void Lexer::defineIgnore( const std::string_view& pattern)
+{
+	defineLexem( "", pattern, 0);
+}
+
+static std::string stringToRegex( const std::string_view& opr)
 {
 	std::string rt;
-	char const* si = opr.c_str();
+	char const* si = opr.data();
 	for (; *si; ++si)
 	{
 		if (0!=std::strchr( REGEX_ESCAPE_CHARS, *si))
@@ -249,12 +268,12 @@ static std::string stringToRegex( const std::string& opr)
 	return rt;
 }
 
-DLL_PUBLIC void Lexer::defineLexem( const std::string& opr)
+DLL_PUBLIC void Lexer::defineLexem( const std::string_view& opr)
 {
 	defineLexem( opr, stringToRegex(opr));
 }
 
-DLL_PUBLIC void Lexer::defineBadLexem( const std::string& name_)
+DLL_PUBLIC void Lexer::defineBadLexem( const std::string_view& name_)
 {
 	m_errorLexemName = name_;
 }
@@ -262,16 +281,16 @@ DLL_PUBLIC void Lexer::defineBadLexem( const std::string& name_)
 #define MATCH_EOLN_COMMENT -1
 #define MATCH_BRACKET_COMMENT -2
 
-DLL_PUBLIC void Lexer::defineEolnComment( const std::string& opr)
+DLL_PUBLIC void Lexer::defineEolnComment( const std::string_view& opr)
 {
-	m_eolnComments.push_back( opr);
+	m_eolnComments.push_back( std::string(opr));
 	if (opr.empty()) throw Error( Error::SyntaxErrorInLexer);
 	m_firstmap.insert( std::pair<char,int>( opr[0], MATCH_EOLN_COMMENT));
 }
 
-DLL_PUBLIC void Lexer::defineBracketComment( const std::string& start, const std::string& end)
+DLL_PUBLIC void Lexer::defineBracketComment( const std::string_view& start, const std::string_view& end)
 {
-	m_bracketComments.push_back( BracketCommentDef( start, end));
+	m_bracketComments.push_back( BracketCommentDef( std::string(start), std::string(end)));
 	if (start.empty() || end.empty()) throw Error( Error::SyntaxErrorInLexer);
 	m_firstmap.insert( std::pair<char,int>( start[0], MATCH_BRACKET_COMMENT));
 }
@@ -282,7 +301,6 @@ DLL_LOCAL bool Lexer::matchEolnComment( Scanner& scanner) const
 	{
 		if (scanner.match( eolnComment.c_str()))
 		{
-			scanner.next( eolnComment.size());
 			return true;
 		}
 	}
@@ -297,54 +315,79 @@ DLL_LOCAL int Lexer::matchBracketCommentStart( Scanner& scanner) const
 		++rt;
 		if (scanner.match( bracketComment.first.c_str()))
 		{
-			scanner.next( bracketComment.first.size());
 			return rt;
 		}
 	}
 	return -1;
 }
 
+DLL_PUBLIC int Lexer::lexemId( const std::string_view& name) const
+{
+	auto lx = m_nameidmap.find( name);
+	return (lx == m_nameidmap.end()) ? 0 : lx->second;
+}
+
 DLL_PUBLIC Lexem Lexer::next( Scanner& scanner) const
 {
-	char const* start = scanner.next();
-	if (*start == '\0') return Lexem( scanner.line());
-	auto range = m_firstmap.equal_range( *start);
-	int maxlen = 0;
-	int matchidx = -1;
-	int cidx;
-	for (auto ri = range.first; ri != range.second; ++ri)
+	for (;;)
 	{
-		int idx = ri->second;
-		if (idx == MATCH_EOLN_COMMENT && matchEolnComment( scanner))
+		char const* start = scanner.next();
+		if (*start == '\0') return Lexem( scanner.line());
+		auto range = m_firstmap.equal_range( *start);
+		int maxlen = 0;
+		int matchidx = -1;
+		const char* matchstart = nullptr;
+		std::size_t matchsize = 0;
+		int cidx;
+		auto ri = range.first;
+		for (; ri != range.second; ++ri)
 		{
-			scanner.scan( "\n");
-		}
-		else if (idx == MATCH_BRACKET_COMMENT && 0>(cidx=matchBracketCommentStart( scanner)))
-		{
-			scanner.scan( m_bracketComments[ cidx].second.c_str());
-		}
-		else
-		{
-			if (idx > (int)m_defar.size()) throw Error( Error::ArrayBoundReadInLexer);
-			auto mm = m_defar[ idx].match( start);
-			if (maxlen < mm.second)
+			int idx = ri->second;
+			if (idx == MATCH_EOLN_COMMENT && matchEolnComment( scanner))
 			{
-				maxlen = mm.second;
-				matchidx = idx;
+				if (!scanner.scan( "\n"))
+				{
+					return Lexem( scanner.line()); //... no EOLN then return EOF
+				}
+				break; //... comment skipped, fetch next lexem
+			}
+			else if (idx == MATCH_BRACKET_COMMENT && 0<=(cidx=matchBracketCommentStart( scanner)))
+			{
+				if (!scanner.scan( m_bracketComments[ cidx].second.c_str()))
+				{
+					return Lexem( m_errorLexemName, -1/*id*/, m_bracketComments[ cidx].first, scanner.line());
+					//... no matching end bracket of comment found, then return ERROR
+				}
+				break; //... comment skipped, fetch next lexem
+			}
+			else
+			{
+				if (idx > (int)m_defar.size()) throw Error( Error::ArrayBoundReadInLexer);
+				auto mm = m_defar[ idx].match( start, scanner.restsize());
+				if (maxlen < mm.second)
+				{
+					maxlen = mm.second;
+					matchstart = mm.first.data();
+					matchsize = mm.first.size();
+					matchidx = idx;
+				}
 			}
 		}
-	}
-	int line = scanner.line();
-	if (matchidx < 0)
-	{
-		std::string chrstr = parseChar( start);
-		scanner.next( chrstr.size());
-		return Lexem( m_errorLexemName, chrstr, line);
-	}
-	else
-	{
-		scanner.next( maxlen);
-		return Lexem( m_defar[ matchidx].name(), std::string( start, maxlen), line);
+		if (ri == range.second)
+		{
+			int line = scanner.line();
+			if (matchidx < 0)
+			{
+				std::string_view chr = parseChar( start);
+				scanner.next( chr.size());
+				return Lexem( m_errorLexemName, -1/*id*/, chr, line);
+			}
+			else if (0 != m_defar[ matchidx].id())
+			{
+				scanner.next( maxlen);
+				return Lexem( m_defar[ matchidx].name(), m_defar[ matchidx].id(), std::string_view( matchstart, matchsize), line);
+			}
+		}
 	}
 }
 

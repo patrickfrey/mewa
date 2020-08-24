@@ -30,26 +30,32 @@ public:
 	};
 
 public:
-	Error( Code code_, const std::string& arg_="")
-		:std::runtime_error(map2string(code_,arg_)),m_code(code_),m_arg(arg_){}
+	Error( Code code_ = Ok)
+                :std::runtime_error(map2string(code_,"")),m_code(code_),m_param(){}
+	Error( Code code_, const std::string& param_)
+                :std::runtime_error(map2string(code_,param_)),m_code(code_),m_param(param_){}
+	Error( Code code_, const std::string_view& param_)
+                :std::runtime_error(map2string(code_,param_)),m_code(code_),m_param(std::string(param_)){}
 	Error( const Error& o)
-		:std::runtime_error(o),m_code(o.m_code),m_arg(o.m_arg){}
+                :std::runtime_error(o),m_code(o.m_code),m_param(o.m_param){}
 	Error( Error&& o)
-		:std::runtime_error(o),m_code(o.m_code),m_arg(std::move(o.m_arg)){}
+                :std::runtime_error(o),m_code(o.m_code),m_param(std::move(o.m_param)){}
 
 	Code code() const			{return m_code;}
-	const std::string& arg() const		{return m_arg;}
+        const std::string& arg() const		{return m_param;}
 
 private:
-	static std::string map2string( Code code_, const std::string& arg_)
+        static std::string map2string( Code code_, const std::string_view& param_)
 	{
 		char numbuf[ 64];
-		std::snprintf( numbuf, sizeof(numbuf), arg_.empty()?"%d":"%d ", (int)code_);
-		return std::string(numbuf) + arg_;
+                std::snprintf( numbuf, sizeof(numbuf), param_.empty()?"%d":"%d ", (int)code_);
+                std::string rt(numbuf);
+                rt.append( param_.data(), param_.size());
+                return rt;
 	}
 private:
 	Code m_code;
-	std::string m_arg;
+        std::string m_param;
 };
 
 }//namespace
