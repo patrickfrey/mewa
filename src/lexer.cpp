@@ -212,11 +212,12 @@ DLL_PUBLIC bool Scanner::match( const char* str)
 	return false;
 }
 
-DLL_PUBLIC void Lexer::defineLexem( const std::string& name, const std::string& pattern, std::size_t select)
+DLL_PUBLIC void Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
 {
 	try
 	{
-		m_defar.push_back( LexemDef( name, pattern, select));
+		auto ins = m_nameset.insert( std::string(name));
+		m_defar.push_back( LexemDef( *ins.first, std::string(pattern), select));
 	}
 	catch (const std::regex_error&)
 	{
@@ -234,13 +235,13 @@ DLL_PUBLIC void Lexer::defineLexem( const std::string& name, const std::string& 
 	if (firstChars == 0) throw Error( Error::SyntaxErrorInLexer);
 }
 
-static std::string stringToRegex( const std::string& opr)
+static std::string stringToRegex( const std::string_view& opr)
 {
 	std::string rt;
-	char const* si = opr.c_str();
+	char const* si = opr.data();
 	for (; *si; ++si)
 	{
-		if (0!=std::strchr( REGEX_ESCAPE_CHARS, *si))
+		if (0!=std::memchr( REGEX_ESCAPE_CHARS, *si, opr.size()))
 		{
 			rt.push_back( '\\');
 		}
@@ -249,12 +250,12 @@ static std::string stringToRegex( const std::string& opr)
 	return rt;
 }
 
-DLL_PUBLIC void Lexer::defineLexem( const std::string& opr)
+DLL_PUBLIC void Lexer::defineLexem( const std::string_view& opr)
 {
 	defineLexem( opr, stringToRegex(opr));
 }
 
-DLL_PUBLIC void Lexer::defineBadLexem( const std::string& name_)
+DLL_PUBLIC void Lexer::defineBadLexem( const std::string_view& name_)
 {
 	m_errorLexemName = name_;
 }
@@ -262,16 +263,16 @@ DLL_PUBLIC void Lexer::defineBadLexem( const std::string& name_)
 #define MATCH_EOLN_COMMENT -1
 #define MATCH_BRACKET_COMMENT -2
 
-DLL_PUBLIC void Lexer::defineEolnComment( const std::string& opr)
+DLL_PUBLIC void Lexer::defineEolnComment( const std::string_view& opr)
 {
-	m_eolnComments.push_back( opr);
+	m_eolnComments.push_back( std::string(opr));
 	if (opr.empty()) throw Error( Error::SyntaxErrorInLexer);
 	m_firstmap.insert( std::pair<char,int>( opr[0], MATCH_EOLN_COMMENT));
 }
 
-DLL_PUBLIC void Lexer::defineBracketComment( const std::string& start, const std::string& end)
+DLL_PUBLIC void Lexer::defineBracketComment( const std::string_view& start, const std::string_view& end)
 {
-	m_bracketComments.push_back( BracketCommentDef( start, end));
+	m_bracketComments.push_back( BracketCommentDef( std::string(start), std::string(end)));
 	if (start.empty() || end.empty()) throw Error( Error::SyntaxErrorInLexer);
 	m_firstmap.insert( std::pair<char,int>( start[0], MATCH_BRACKET_COMMENT));
 }
@@ -302,6 +303,11 @@ DLL_LOCAL int Lexer::matchBracketCommentStart( Scanner& scanner) const
 		}
 	}
 	return -1;
+}
+
+DLL_PUBLIC bool Lexer::isLexemName( const std::string_view& name) const
+{
+	return m_nameset.find( name) != m_nameset.end();
 }
 
 DLL_PUBLIC Lexem Lexer::next( Scanner& scanner) const

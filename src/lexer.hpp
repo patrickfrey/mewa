@@ -15,6 +15,7 @@
 #include <string>
 #include <string_view>
 #include <map>
+#include <set>
 #include <vector>
 
 namespace mewa {
@@ -67,7 +68,7 @@ class Lexem
 public:
 	explicit Lexem( int line_) //...empty Lexem ~ EOF
 		:m_name(),m_value(),m_line(line_){}
-	Lexem( const std::string_view& name_, const std::string& value_, int line_)
+	Lexem( const std::string_view& name_, const std::string_view& value_, int line_)
 		:m_name(name_),m_value(value_),m_line(line_){}
 	Lexem( const Lexem& o)
 		:m_name(o.m_name),m_value(o.m_value),m_line(o.m_line){}
@@ -92,7 +93,7 @@ private:
 class Scanner
 {
 public:
-	Scanner( const std::string& filename_, const std::string& src_)
+	Scanner( const std::string_view& filename_, const std::string_view& src_)
 		:m_filename(filename_),m_src(src_),m_line(1){m_srcitr=m_src.c_str();}
 	Scanner( const Scanner& o)
 		:m_filename(o.m_filename),m_src(o.m_src),m_line(o.m_line)
@@ -130,31 +131,33 @@ class Lexer
 {
 public:
 	Lexer()
-		:m_errorLexemName("?"),m_defar(),m_firstmap(),m_bracketComments(),m_eolnComments(){}
+		:m_errorLexemName("?"),m_defar(),m_firstmap(),m_nameset(),m_bracketComments(),m_eolnComments(){}
 	Lexer( const Lexer& o)
-		:m_errorLexemName(o.m_errorLexemName),m_defar(o.m_defar),m_firstmap(o.m_firstmap)
+		:m_errorLexemName(o.m_errorLexemName),m_defar(o.m_defar)
+		,m_firstmap(o.m_firstmap),m_nameset(o.m_nameset)
 		,m_bracketComments(o.m_bracketComments),m_eolnComments(o.m_eolnComments){}
 	Lexer& operator=( const Lexer& o)
 		{m_errorLexemName=o.m_errorLexemName; m_defar=o.m_defar;
-		 m_firstmap=o.m_firstmap;
+		 m_firstmap=o.m_firstmap; m_nameset=o.m_nameset;
 		 m_bracketComments=o.m_bracketComments; m_eolnComments=o.m_eolnComments;
 		 return *this;}
 	Lexer( Lexer&& o)
 		:m_errorLexemName(std::move(o.m_errorLexemName)),m_defar(std::move(o.m_defar))
-		,m_firstmap(std::move(o.m_firstmap))
+		,m_firstmap(std::move(o.m_firstmap)),m_nameset(std::move(o.m_nameset))
 		,m_bracketComments(std::move(o.m_bracketComments)),m_eolnComments(std::move(o.m_eolnComments)){}
 	Lexer& operator=( Lexer&& o)
 		{m_errorLexemName=std::move(o.m_errorLexemName); m_defar=std::move(o.m_defar);
-		 m_firstmap=std::move(o.m_firstmap);
+		 m_firstmap=std::move(o.m_firstmap); m_nameset=std::move(o.m_nameset);
 		 m_bracketComments=std::move(o.m_bracketComments); m_eolnComments=std::move(o.m_eolnComments);
 		 return *this;}
 
-	void defineBadLexem( const std::string& name_);
-	void defineLexem( const std::string& name, const std::string& pattern, std::size_t select=0);
-	void defineLexem( const std::string& opr);
-	void defineEolnComment( const std::string& opr);
-	void defineBracketComment( const std::string& start, const std::string& end);
+	void defineBadLexem( const std::string_view& name_);
+	void defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select=0);
+	void defineLexem( const std::string_view& opr);
+	void defineEolnComment( const std::string_view& opr);
+	void defineBracketComment( const std::string_view& start, const std::string_view& end);
 
+	bool isLexemName( const std::string_view& name) const;
 	Lexem next( Scanner& scanner) const;
 
 private:
@@ -170,6 +173,7 @@ private:
 	std::string m_errorLexemName;
 	std::vector<LexemDef> m_defar;
 	std::multimap<char,int> m_firstmap;
+	std::set<std::string, std::less<> > m_nameset;
 	BracketCommentDefList m_bracketComments;
 	EolnCommentDefList m_eolnComments;
 };

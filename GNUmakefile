@@ -1,9 +1,19 @@
-#CC=/usr/bin/g++-9
+ifeq ($(strip $(COMPILER)),clang)
 CC=/usr/bin/clang++-4.0
+else
+CC=/usr/bin/g++-9
+endif
+
+ifeq ($(strip $(RELEASE)),)
+DEBUGFLAGS=-ggdb -g3 -O0
+else
+DEBUGFLAGS=-O3
+endif
+
 BUILDDIR=build
 SRCDIR=src
 TESTDIR=tests
-CXXFLAGS=-c -O0 -fPIC -std=c++17 -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread -ggdb -g3
+CXXFLAGS=-c -fPIC -std=c++17 -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread $(DEBUGFLAGS)
 INCFLAGS="-I$(SRCDIR)"
 LDFLAGS=-g
 LDLIBS=-lm -lstdc++
@@ -23,10 +33,11 @@ $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp
 $(LIBRARY): $(LIBOBJS)
 	$(CC) -shared $(LDFLAGS) $(LIBOBJS) $(LDLIBS) -o $(LIBRARY)
 
-$(BUILDDIR)/testLexer : $(LIBRARY) $(BUILDDIR)/testLexer.o
-	$(CC) $(LDFLAGS) -o $@ $(LDLIBS) $(BUILDDIR)/testLexer.o $(LIBRARY)
+$(BUILDDIR)/%: $(BUILDDIR)/%.o
+	$(CC) $(LDFLAGS) -o $@ $(LDLIBS) $< $(LIBRARY)
 
-test : $(BUILDDIR)/testLexer
+test : $(BUILDDIR)/testLexer $(BUILDDIR)/testScope
 	$(BUILDDIR)/testLexer
+	$(BUILDDIR)/testScope
 
 

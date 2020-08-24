@@ -30,8 +30,12 @@ public:
 	};
 
 public:
-	Error( Code code_, const std::string& arg_="")
+	Error( Code code_ = Ok)
+		:std::runtime_error(map2string(code_,"")),m_code(code_),m_arg(){}
+	Error( Code code_, const std::string& arg_)
 		:std::runtime_error(map2string(code_,arg_)),m_code(code_),m_arg(arg_){}
+	Error( Code code_, const std::string_view& arg_)
+		:std::runtime_error(map2string(code_,std::string(arg_))),m_code(code_),m_arg(arg_){}
 	Error( const Error& o)
 		:std::runtime_error(o),m_code(o.m_code),m_arg(o.m_arg){}
 	Error( Error&& o)
