@@ -38,6 +38,19 @@ int main( int argc, const char* argv[] )
 {
 	try
 	{
+		bool verbose = false;
+		int argi = 1;
+		for (; argi < argc; ++argi)
+		{
+			if (0==std::strcmp( argv[argi], "-v"))
+			{
+				verbose = true;
+			}
+			if (0==std::strcmp( argv[argi], "-h"))
+			{
+				std::cerr << "Usage: testLexer [-h][-v]" << std::endl;
+			}
+		}
 		Lexer lexer;
 		lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
 		lexer.defineLexem( "CARDINAL", "[0-9]*");
@@ -94,7 +107,7 @@ int main() {
     std::cout << "--------------" << std::endl;
     return 0;
 }
-	)"};
+)"};
 
 		std::string expected{R"(
 #include [#include]
@@ -222,7 +235,7 @@ IDENT [return]
 CARDINAL [0]
 ; [;]
 } [}]
-	)"};
+)"};
 		std::ostringstream outputbuf;
 		outputbuf << "\n";
 		Scanner scanner( "testLexer", source);
@@ -230,7 +243,7 @@ CARDINAL [0]
 		for (; !lexem.empty(); lexem = lexer.next( scanner))
 		{
 			outputbuf << lexem.name() << " [" << lexem.value() << "]" << "\n";
-			std::cerr << lexem.name() << " [" << lexem.value() << "]" << std::endl;
+			if (verbose) std::cerr << lexem.name() << " [" << lexem.value() << "]" << std::endl;
 			if (lexem.name() == "?")
 			{
 				break;
@@ -244,6 +257,7 @@ CARDINAL [0]
 			std::cerr << "ERR test output (build/testLexer.out) differs expected build/testLexer.exp" << std::endl;
 			return 3;
 		}
+		std::cerr << "OK" << std::endl;
 	}
 	catch (const mewa::Error& err)
 	{

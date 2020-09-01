@@ -41,4 +41,7 @@ luac.out
 
 # Build
 build/*
+<<<<<<< HEAD
 .depend
+=======
+>>>>>>> ec76b10de6faaa3f9eac5bac893e27f3cfcecbfb

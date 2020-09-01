@@ -6,7 +6,7 @@ CC=/usr/bin/g++
 endif
 
 ifeq ($(strip $(RELEASE)),)
-DEBUGFLAGS=-ggdb -g -O0
+DEBUGFLAGS=-ggdb -g3 -O0
 else
 DEBUGFLAGS=-O3
 endif
@@ -26,6 +26,7 @@ TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testGrammar
 
 # Build targets:
 all : $(LIBRARY) $(TESTPRG)
+
 clean:
 	rm $(BUILDDIR)/* .depend
 
