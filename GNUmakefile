@@ -20,7 +20,7 @@ CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisib
 INCFLAGS := "-I$(SRCDIR)"
 LDFLAGS := -g -pthread
 LDLIBS := -lm -lstdc++
-LIBOBJS := $(BUILDDIR)/lexer.o
+LIBOBJS := $(BUILDDIR)/lexer.o $(BUILDDIR)/grammar.o
 LIBRARY := $(BUILDDIR)/libmewa.so
 TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testGrammar
 

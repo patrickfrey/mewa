@@ -40,6 +40,9 @@ public:
 		UnexpectedEndOfRuleInGrammarDef=222,
 
 		CommandNumberOfArgumentsInGrammarDef=241,
+
+		DefinedAsTerminalAndNonterminalInGrammarDef=301,
+		UnresolvedIdentifierInGrammarDef=302,
 	};
 
 public:

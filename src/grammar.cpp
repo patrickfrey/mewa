@@ -9,6 +9,7 @@
 /// \file "grammar.cpp"
 #include "grammar.hpp"
 #include "lexer.hpp"
+#include "error.hpp"
 #include <map>
 #include <vector>
 #include <string>
@@ -105,6 +106,7 @@ static int convertStringToInt( const std::string_view& str)
 			throw Error( Error::ExpectedNumberInGrammarDef, str);
 		}
 	}
+	return rt;
 }
 
 static bool caseInsensitiveCompare( const std::string_view& a, const std::string_view& b)
@@ -133,17 +135,19 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 	};
 	State state = Init;
 	GrammarLexer grammarLexer;
-	Scanner scanner( fileName, source);
+	Scanner scanner( source);
 	Lexer lexer;
 	Lexem lexem( 1/*line*/);
 
 	try
 	{
+		// [1] Parse grammar:
 		std::string_view rulename;
 		std::string_view patternstr;
 		std::string_view cmdname;
 		std::vector<std::string_view> cmdargs;
 		std::multimap<std::string_view, ProductionNodeDefList> prodmap;
+		std::map<std::string_view, int> nonTerminalIdMap;
 		ProductionNodeDefList prod;
 		int priority = 0;
 		int selectidx = 0;
@@ -153,16 +157,16 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 		{
 			switch ((GrammarLexer::LexemType)lexem.id())
 			{
-				case ERROR:
+				case GrammarLexer::ERROR:
 					throw Error( Error::BadCharacterInGrammarDef);
-				case NONE:
+				case GrammarLexer::NONE:
 					throw Error( Error::LogicError); //... loop exit condition (lexem.empty()) met
-				case IDENT:
+				case GrammarLexer::IDENT:
 					if (state == Init)
 					{
 						rulename = lexem.value();
 						prod.clear();
-						patternstr.clear();
+						patternstr.remove_suffix( patternstr.size());
 						priority = 0;
 						selectidx = 0;
 						state = ParsePriority;
@@ -185,7 +189,7 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}	
 					break;
-				case NUMBER:
+				case GrammarLexer::NUMBER:
 					if (state == ParsePriorityNumber)
 					{
 						priority = convertStringToInt( lexem.value());
@@ -201,8 +205,8 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}
 					break;
-				case DQSTRING:
-				case SQSTRING:
+				case GrammarLexer::DQSTRING:
+				case GrammarLexer::SQSTRING:
 					if (state == ParsePattern)
 					{
 						patternstr = lexem.value();
@@ -213,10 +217,10 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						cmdargs.push_back( lexem.value());
 					}
 					break;
-				case PERCENT:
+				case GrammarLexer::PERCENT:
 					if (state == Init)
 					{
-						cmdname.clear();
+						cmdname.remove_suffix( cmdname.size());
 						cmdargs.clear();
 						state = ParseLexerCommand;
 					}
@@ -225,7 +229,7 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}
 					break;
-				case SLASH:
+				case GrammarLexer::SLASH:
 					if (state == ParsePriority)
 					{
 						state = ParsePriorityNumber;
@@ -235,7 +239,7 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}
 					break;
-				case EQUAL:
+				case GrammarLexer::EQUAL:
 					if (state == ParsePriority || state == ParseAssign)
 					{
 						state = ParseProductionElement;
@@ -245,14 +249,13 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}
 					break;
-				case DDOT:
+				case GrammarLexer::DDOT:
 					if (state == ParseAssign)
 					{
 						throw Error( Error::PriorityDefNotForLexemsInGrammarDef);
 					}
 					else if (state == ParsePriority)
 					{
-						patternstr.clear();
 						state = ParsePattern;
 					}
 					else
@@ -260,7 +263,7 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}	
 					break;
-				case SEMICOLON:
+				case GrammarLexer::SEMICOLON:
 					if (state == ParseLexerCommandArg)
 					{
 						if (caseInsensitiveCompare( cmdname, "IGNORE"))
@@ -300,6 +303,7 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 					else if (state == ParseProductionElement)
 					{
 						prodmap.insert( std::pair<std::string_view, ProductionNodeDefList>( rulename, prod));
+						nonTerminalIdMap.insert( std::pair<std::string_view, int>( rulename, nonTerminalIdMap.size()+1));
 					}
 					else
 					{
@@ -310,6 +314,31 @@ static Grammar loadGrammar( const std::string& fileName, const std::string& sour
 			}
 		}
 		if (state != Init) throw Error( Error::UnexpectedEofInGrammarDef);
+
+		// [2] Label grammar production elements:
+		for (auto pr : prodmap)
+		{
+			for (auto element : pr.second)
+			{
+				if (element.type() == ProductionNodeDef::Unresolved)
+				{
+					int lxid = lexer.lexemId( element.name());
+					auto nt = nonTerminalIdMap.find( element.name());
+					if (nt == nonTerminalIdMap.end())
+					{
+						if (!lxid) throw Error( Error::UnresolvedIdentifierInGrammarDef, element.name());
+						element.defineAsTerminal( lxid);
+					}
+					else
+					{
+						if (lxid) throw Error( Error::DefinedAsTerminalAndNonterminalInGrammarDef, element.name());
+						element.defineAsNonTerminal( nt->second);
+					}
+				}
+			}
+		}
+
+		return Grammar( lexer);
 	}
 	catch (const Error& err)
 	{
