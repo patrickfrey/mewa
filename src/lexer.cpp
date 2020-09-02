@@ -110,6 +110,25 @@ static bool skipBrackets( char const*& si, char eb)
 	return !empty;
 }
 
+static bool skipMultiplicator( char const*& si)
+{
+	if (*si)
+	{
+		if (*si == '*')
+		{
+			++si;
+			return false;
+		}
+		if (*si == '{')
+		{
+			bool empty = (si[1] == '0' && si[2] == ',');
+			(void)skipBrackets( si, '}');
+			return !empty;
+		}
+	}
+	return true;
+}
+
 static std::string inverseCharset( const std::string& charset)
 {
 	std::string rt;
@@ -141,6 +160,7 @@ DLL_LOCAL std::string LexemDef::activationCharacters( const std::string& source_
 				++si;
 			}
 			empty &= !extractFirstCharacters( rt, si, ']');
+			empty &= !skipMultiplicator( si);
 			if (inverse) rt = inverseCharset( rt);
 			if (empty) rt.append( activationCharacters( std::string( si)));
 		}
@@ -150,6 +170,7 @@ DLL_LOCAL std::string LexemDef::activationCharacters( const std::string& source_
 			{
 				char const* start = si+1;
 				empty &= !skipBrackets( si, ')');
+				empty &= !skipMultiplicator( si);
 				rt.append( activationCharacters( std::string( start, si-start-1)));
 				if (*si != '|') break;
 				++si;

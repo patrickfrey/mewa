@@ -21,26 +21,22 @@ namespace mewa {
 struct Scope
 {
 public:
-	Scope( int first_, int second_=-1)
-		:first(first_ >= 0 ? first_ : 0),second(second_ >= 0 ? second_ : std::numeric_limits<int>::max()){}
+	typedef int Timestmp;
+
+public:
+	Scope( Timestmp first_, Timestmp second_)
+		:first(first_ >= 0 ? first_ : 0),second(second_ >= 0 ? second_ : std::numeric_limits<Timestmp>::max()){}
 	Scope( const Scope& o)
 		:first(o.first),second(o.second){}
 	Scope& operator=( const Scope& o)
 		{first=o.first; second=o.second; return *this;}
-
-	bool operator < (const Scope& o) const
-	{
-		return second == o.second
-			? first < o.first
-			: second < o.second;
-	}
 
 	bool contains( const Scope& o) const
 	{
 		return o.first >= first && o.second <= second;
 	}
 
-	bool contains( int timestmp) const
+	bool contains( Timestmp timestmp) const
 	{
 		return timestmp >= first && timestmp < second;
 	}
@@ -48,7 +44,7 @@ public:
 	std::string tostring() const
 	{
 		char buf[ 128];
-		if (second == std::numeric_limits<int>::max())
+		if (second == std::numeric_limits<Timestmp>::max())
 		{
 			std::snprintf( buf, sizeof(buf), "[%d,INF]", first);
 		}
@@ -60,8 +56,8 @@ public:
 	}
 
 public:
-	int first;
-	int second;
+	Timestmp first;
+	Timestmp second;
 };
 
 template <typename KEYTYPE>
@@ -79,29 +75,35 @@ public:
 	ScopedKey& operator=( ScopedKey&& o)
 		{m_key=std::move(o.m_key); m_scope=o.m_scope; return *this;}
 
-	const KEYTYPE& key() const				{return m_key;}
-	const Scope scope() const				{return m_scope;}
+	const KEYTYPE& key() const						{return m_key;}
+	const Scope scope() const						{return m_scope;}
 
-	bool matches( const ScopedKey<KEYTYPE>& o) const	{return m_key == o.m_key && m_scope.contains(o.m_scope);}
-
-	bool operator < (const ScopedKey& o) const
-	{
-		return m_key == o.m_key
-			? m_scope < o.m_scope
-			: m_key < o.m_key;
-	}
+	bool matches( const KEYTYPE& key_, Scope::Timestmp timestmp) const	{return m_key == key_ && m_scope.contains( timestmp);}
 
 private:
 	KEYTYPE m_key;
 	Scope m_scope;
 };
 
+template <typename KEYTYPE>
+struct ScopedMapOrder
+{
+	bool operator()( const ScopedKey<KEYTYPE>& a, const ScopedKey<KEYTYPE>& b) const
+	{
+		return a.key() == b.key()
+			? a.scope().second == b.scope().second
+				? a.scope().first < b.scope().first
+				: a.scope().second < b.scope().second
+			: a.key() < b.key();
+	}
+};
+
 template <typename KEYTYPE, typename VALTYPE>
 class ScopedMap
-	:public std::map<ScopedKey<KEYTYPE>, VALTYPE>
+	:public std::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> >
 {
 public:
-	typedef std::map<ScopedKey<KEYTYPE>, VALTYPE> ParentClass;
+	typedef std::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> > ParentClass;
 	typedef typename ParentClass::const_iterator const_iterator;
 
 	ScopedMap() = default;
@@ -110,27 +112,15 @@ public:
 	ScopedMap( ScopedMap&& o) = default;
 	ScopedMap& operator=( ScopedMap&& o) = default;
 
-	std::pair<const_iterator,const_iterator>
-		scoped_find_range( const ScopedKey<KEYTYPE>& key) const
-	{
-		std::pair<const_iterator,const_iterator> rt;
-		const_iterator it = ParentClass::lower_bound( key);
-		rt.first = it;
-		for (; it != ParentClass::end() && it->first.matches( key); ++it){}
-		rt.second = it;
-		return rt;
-	}
-
-	const_iterator scoped_find_inner( const ScopedKey<KEYTYPE>& key) const
+	const_iterator scoped_find( const KEYTYPE& key, const Scope::Timestmp timestmp) const
 	{
 		auto rt = ParentClass::end();
-		auto it = ParentClass::lower_bound( key);
-		if (it != this->end() && it->first.matches( key))
+		auto it = ParentClass::lower_bound( ScopedKey<KEYTYPE>( key, Scope( 0, timestmp+1)));
+		for (; it != this->end() && it->first.key() == key && it->first.scope().second > timestmp; ++it)
 		{
-			rt = it++;
-			for (; it != this->end() && it->first.matches( key); ++it)
+			if (it->first.scope().first <= timestmp)
 			{
-				if (it->first.scope().contains( rt->first.scope()))
+				if (rt == ParentClass::end() || rt->first.scope().contains( it->first.scope()))
 				{
 					rt = it;
 				}

@@ -18,8 +18,21 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cstring>
 
 using namespace mewa;
+
+static void writeFile( const std::string& filename, const std::string& content)
+{
+	FILE* ff = std::fopen( filename.c_str(), "w");
+	if (!ff) throw std::runtime_error( std::strerror( errno));
+	if (content.size() != std::fwrite( content.c_str(), 1, content.size(), ff))
+	{
+		std::fclose( ff);
+		throw std::runtime_error( std::strerror( std::ferror( ff)));
+	}
+	std::fclose( ff);
+}
 
 class TestKey
 	:public ScopedKey<std::string>
@@ -42,11 +55,29 @@ private:
 	std::string m_value;
 };
 
+struct TestCase
+{
+	const char* key;
+	Scope::Timestmp timestmp;
+};
+
 int main( int argc, const char* argv[] )
 {
 	try
 	{
-		std::ostringstream output;
+		bool verbose = false;
+		int argi = 1;
+		for (; argi < argc; ++argi)
+		{
+			if (0==std::strcmp( argv[argi], "-v"))
+			{
+				verbose = true;
+			}
+			if (0==std::strcmp( argv[argi], "-h"))
+			{
+				std::cerr << "Usage: testScope [-h][-v]" << std::endl;
+			}
+		}
 
 		static const std::vector<TestKeyValue> tests = {
 			{"Ali", {1,120}, "Ali 1"},
@@ -59,22 +90,50 @@ int main( int argc, const char* argv[] )
 			{"Baba", {3,93}, "Baba 2"},
 			{"Baba", {7,79}, "Baba 3"}
 		};
+		static const TestCase queries[] = {{"Ali",3},{"Ala",2},{"Baba",5},{"Baba",79},{"Baba",78},{0,0}};
+		std::string expected{R"(
+[3,99] Ali -> Ali 2
+[2,121] Ala -> Ala 1
+[3,93] Baba -> Baba 2
+[3,93] Baba -> Baba 2
+[7,79] Baba -> Baba 3
+)"};
+		std::ostringstream outputbuf;
+		outputbuf << "\n";
+
 		ScopedMap<std::string,std::string> smap;
 		for (auto test : tests)
 		{
 			smap.insert( ScopedMap<std::string,std::string>::value_type(
 					ScopedKey<std::string>( test.key(), test.scope()), test.value()));
 		}
-		auto rg = smap.scoped_find_range( ScopedKey<std::string>( "Ali", 3));
-		for (auto ri = rg.first; ri != rg.second; ++ri)
+		int ti = 0;
+		for (; queries[ti].key; ++ti)
 		{
-			std::cerr << ri->first.scope().tostring() << " " << ri->first.key() << " " << ri->second << std::endl;
-			output << ri->first.scope().tostring() << " " << ri->first.key() << " " << ri->second << std::endl;
+			if (verbose) std::cerr << "Find '" << queries[ti].key << "'/" << queries[ti].timestmp << ": " << std::endl;
+			auto ri = smap.scoped_find( queries[ti].key, queries[ti].timestmp);
+			if (ri != smap.end())
+			{
+				if (verbose)
+				{
+					std::cerr
+						<< ri->first.scope().tostring() << " "
+						<< ri->first.key() << " -> " << ri->second << std::endl;
+				}
+				outputbuf 
+					<< ri->first.scope().tostring() << " "
+					<< ri->first.key() << " -> " << ri->second << std::endl;
+			}
 		}
-		auto ri = smap.scoped_find_inner( ScopedKey<std::string>( "Ala", 2));
-		std::cerr << std::endl << ri->first.scope().tostring() << " " << ri->first.key() << " " << ri->second << std::endl;
-		output << std::endl << ri->first.scope().tostring() << " " << ri->first.key() << " " << ri->second << std::endl;
-
+				std::string output = outputbuf.str();
+		if (output != expected)
+		{
+			writeFile( "build/testScope.out", output);
+			writeFile( "build/testScope.exp", expected);
+			std::cerr << "ERR test output (build/testScope.out) differs expected build/testScope.exp" << std::endl;
+			return 3;
+		}
+		std::cerr << "OK" << std::endl;
 		return 0;
 	}
 	catch (const mewa::Error& err)
