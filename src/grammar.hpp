@@ -10,64 +10,21 @@
 #ifndef _MEWA_GRAMMAR_HPP_INCLUDED
 #define _MEWA_GRAMMAR_HPP_INCLUDED
 #if __cplusplus >= 201703L
+#include "scope.hpp"
+#include "lexer.hpp"
 #include <utility>
-#include <initializer_list>
 #include <string>
 #include <string_view>
 #include <map>
 #include <vector>
-#include "scope.hpp"
 
 namespace mewa {
-
-class ProductionNode
-{
-public:
-	enum Type
-	{
-		Unresolved,
-		NonTerminal,
-		Terminal
-	};
-
-public:
-	ProductionNode( const std::string_view& name_)
-		:m_name(std::string(name_)),m_type(Unresolved),m_index(0){}
-	ProductionNode( const ProductionNode& o)
-		:m_name(o.m_name),m_type(o.m_type),m_index(o.m_index){}
-	ProductionNode& operator=( const ProductionNode& o)
-		{m_name=o.m_name; m_type=o.m_type; m_index=o.m_index;
-		 return *this;}
-	ProductionNode( ProductionNode&& o)
-		:m_name(std::move(o.m_name)),m_type(o.m_type),m_index(o.m_index){}
-	ProductionNode& operator=( ProductionNode&& o)
-		{m_name=std::move(o.m_name); m_type=o.m_type; m_index=o.m_index;
-		 return *this;}
-
-	const std::string& name() const			{return m_name;}
-	Type type() const				{return m_type;}
-	int index() const				{return m_index;}
-
-	void defineAsTerminal( int index_)		{m_type = Terminal; m_index = index_;}
-	void defineAsNonTerminal( int index_)		{m_type = NonTerminal; m_index = index_;}
-
-private:
-	std::string m_name;
-	Type m_type;
-	int m_index;
-};
 
 class Production
 {
 public:
-	Production( const std::vector<std::string>& ar)
-	{
-		for (auto ai : ar) m_ar.push_back( ProductionNode( ai));
-	}
-	Production( const std::initializer_list<std::string>& ar)
-	{
-		for (auto ai : ar) m_ar.push_back( ProductionNode( ai));
-	}
+	Production( const std::vector<int>& ar_)
+		:m_ar(ar_){}
 	Production( const Production& o)
 		:m_ar(o.m_ar){}
 	Production& operator=( const Production& o)
@@ -76,13 +33,31 @@ public:
 		:m_ar(std::move(o.m_ar)){}
 	Production& operator=( Production&& o)
 		{m_ar=std::move(o.m_ar); return *this;}
-
 private:
-	std::vector<ProductionNode> m_ar;
+	std::vector<int> m_ar;
 };
 
 class Grammar
 {
+public:
+	Grammar( const Lexer& lexer_)
+		:m_lexer(lexer_),m_productions(){}
+	Grammar( Lexer&& lexer_)
+		:m_lexer(std::move(lexer_)),m_productions(){}
+	Grammar( const Grammar& o)
+		:m_lexer(o.m_lexer),m_productions(o.m_productions){}
+	Grammar& operator=( const Grammar& o)
+		{m_lexer=o.m_lexer; m_productions=o.m_productions; return *this;}
+	Grammar( Grammar&& o)
+		:m_lexer(std::move(o.m_lexer)),m_productions(std::move(o.m_productions)){}
+	Grammar& operator=( Grammar&& o)
+		{m_lexer=std::move(o.m_lexer); m_productions=std::move(o.m_productions); return *this;}
+
+	const Lexer& lexer() const		{return m_lexer;}
+
+private:
+	Lexer m_lexer;
+	std::vector<Production> m_productions;
 };
 
 }//namespace

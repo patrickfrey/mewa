@@ -239,18 +239,18 @@ DLL_PUBLIC bool Scanner::match( const char* str)
 	return false;
 }
 
-DLL_PUBLIC void Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
+void Lexer::defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select)
 {
 	try
 	{
 		if (name.empty())
 		{
-			m_defar.push_back( LexemDef( std::string(), std::string(pattern), 0/*id*/, select));
+			m_defar.push_back( LexemDef( std::string(), std::string(pattern), 0/*id*/, false/*keyword*/, select));
 		}
 		else
 		{
 			auto ins = m_nameidmap.insert( std::pair<std::string,int>( std::string(name), m_nameidmap.size()+1));
-			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, select));
+			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, false/*keyword*/, select));
 		}
 	}
 	catch (const std::regex_error&)
@@ -269,9 +269,14 @@ DLL_PUBLIC void Lexer::defineLexem( const std::string_view& name, const std::str
 	if (firstChars == 0) throw Error( Error::SyntaxErrorInLexer);
 }
 
+DLL_PUBLIC void Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
+{
+	defineLexem_( name, pattern, false/*keyword*/, select);
+}
+
 DLL_PUBLIC void Lexer::defineIgnore( const std::string_view& pattern)
 {
-	defineLexem( "", pattern, 0);
+	defineLexem_( "", pattern, true/*keyword*/, 0);
 }
 
 static std::string stringToRegex( const std::string_view& opr)
@@ -291,7 +296,7 @@ static std::string stringToRegex( const std::string_view& opr)
 
 DLL_PUBLIC void Lexer::defineLexem( const std::string_view& opr)
 {
-	defineLexem( opr, stringToRegex(opr));
+	defineLexem_( opr, stringToRegex(opr), true/*keyword*/, 0);
 }
 
 DLL_PUBLIC void Lexer::defineBadLexem( const std::string_view& name_)

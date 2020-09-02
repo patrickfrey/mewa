@@ -23,8 +23,8 @@ namespace mewa {
 class LexemDef
 {
 public:
-	LexemDef( const std::string& name_, const std::string& source_, int id_, std::size_t select_=0)
-		:m_name(name_),m_source(source_),m_pattern(source_),m_activate(),m_select(select_),m_id(id_)
+	LexemDef( const std::string& name_, const std::string& source_, int id_, bool keyword_, std::size_t select_)
+		:m_name(name_),m_source(source_),m_pattern(source_),m_activate(),m_select(select_),m_id(id_),m_keyword(keyword_)
 	{
 		std::string achrs( activationCharacters( source_));
 		for (char ch : achrs) {m_activate.set( (unsigned char)ch);}
@@ -33,20 +33,20 @@ public:
 	LexemDef( const LexemDef& o)
 		:m_name(o.m_name),m_source(o.m_source)
 		,m_pattern(o.m_pattern),m_activate(o.m_activate)
-		,m_select(o.m_select),m_id(o.m_id){}
+		,m_select(o.m_select),m_id(o.m_id),m_keyword(o.m_keyword){}
 	LexemDef& operator=( const LexemDef& o)
 		{m_name=o.m_name; m_source=o.m_source;
 		 m_pattern=o.m_pattern; m_activate=o.m_activate;
-		 m_select=o.m_select; m_id=o.m_id;
+		 m_select=o.m_select; m_id=o.m_id; m_keyword=o.m_keyword;
 		 return *this;}
 	LexemDef( LexemDef&& o)
 		:m_name(std::move(o.m_name)),m_source(std::move(o.m_source))
 		,m_pattern(std::move(o.m_pattern)),m_activate(std::move(o.m_activate))
-		,m_select(o.m_select),m_id(o.m_id){}
+		,m_select(o.m_select),m_id(o.m_id),m_keyword(o.m_keyword){}
 	LexemDef& operator=( LexemDef&& o)
 		{m_name=std::move(o.m_name); m_source=std::move(o.m_source);
 		 m_pattern=std::move(o.m_pattern); m_activate=std::move(o.m_activate);
-		 m_select=o.m_select; m_id=o.m_id;
+		 m_select=o.m_select; m_id=o.m_id; m_keyword=o.m_keyword;
 		 return *this;}
 
 	const std::string& name() const			{return m_name;}
@@ -54,6 +54,7 @@ public:
 	const std::bitset<128> activate() const		{return m_activate;}
 	std::size_t select() const			{return m_select;}
 	int id() const					{return m_id;}
+	bool keyword() const				{return m_keyword;}
 
 	std::pair<std::string_view,int> match( const char* srcptr, std::size_t srclen) const;
 
@@ -67,6 +68,7 @@ private:
 	std::bitset<128> m_activate;
 	std::size_t m_select;
 	int m_id;
+	bool m_keyword;
 };
 
 class Lexem
@@ -101,26 +103,22 @@ private:
 class Scanner
 {
 public:
-	Scanner( const std::string_view& filename_, const std::string_view& src_)
-		:m_filename(filename_),m_src(src_),m_line(1){m_srcitr=m_src.c_str();}
+	explicit Scanner( const std::string_view& src_)
+		:m_src(src_),m_line(1){m_srcitr=m_src.c_str();}
 	Scanner( const Scanner& o)
-		:m_filename(o.m_filename),m_src(o.m_src),m_line(o.m_line)
+		:m_src(o.m_src),m_line(o.m_line)
 	{
 		m_srcitr = m_src.c_str() + (o.m_srcitr - o.m_src.c_str());
 	}
 	Scanner& operator=( const Scanner& o)
-		{m_filename=o.m_filename; m_src=o.m_src;
-		 m_srcitr=o.m_srcitr; m_line=o.m_line;
+		{m_src=o.m_src; m_srcitr=o.m_srcitr; m_line=o.m_line;
 		 return *this;}
 	Scanner( Scanner&& o)
-		:m_filename(std::move(o.m_filename)),m_src(std::move(o.m_src))
-		,m_srcitr(o.m_srcitr),m_line(o.m_line){}
+		:m_src(std::move(o.m_src)) ,m_srcitr(o.m_srcitr),m_line(o.m_line){}
 	Scanner& operator=( Scanner&& o)
-		{m_filename=std::move(o.m_filename); m_src=std::move(o.m_src);
-		 m_srcitr=o.m_srcitr; m_line=o.m_line;
+		{m_src=std::move(o.m_src); m_srcitr=o.m_srcitr; m_line=o.m_line;
 		 return *this;}
 
-	const std::string& filename() const	{return m_filename;}
 	const std::string& src() const		{return m_src;}
 	int line() const			{return m_line;}
 
@@ -130,7 +128,6 @@ public:
 	std::size_t restsize() const		{return m_src.size() - (m_srcitr - m_src.c_str());}
 
 private:
-	std::string m_filename;
 	std::string m_src;
 	char const* m_srcitr;
 	int m_line;
@@ -161,6 +158,7 @@ public:
 		 return *this;}
 
 	void defineBadLexem( const std::string_view& name_);
+
 	void defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select=0);
 	void defineLexem( const std::string_view& opr);
 	void defineIgnore( const std::string_view& pattern);
@@ -169,6 +167,9 @@ public:
 
 	int lexemId( const std::string_view& name) const;
 	Lexem next( Scanner& scanner) const;
+
+private:
+	void defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select);
 
 private:
 	typedef std::pair<std::string,std::string> BracketCommentDef;

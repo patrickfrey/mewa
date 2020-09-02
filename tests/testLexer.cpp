@@ -55,8 +55,8 @@ int main( int argc, const char* argv[] )
 		lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
 		lexer.defineLexem( "CARDINAL", "[0-9]*");
 		lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
-		lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n])|([\\\\][^\"\\n]))*)[\"]", 1);
-		lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n])|([\\\\][^\'\\n]))*)[\']", 1);
+		lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
+		lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
 		lexer.defineLexem( "::");
 		lexer.defineLexem( "<<");
 		lexer.defineLexem( ">>");
@@ -238,7 +238,7 @@ CARDINAL [0]
 )"};
 		std::ostringstream outputbuf;
 		outputbuf << "\n";
-		Scanner scanner( "testLexer", source);
+		Scanner scanner( source);
 		Lexem lexem = lexer.next( scanner);
 		for (; !lexem.empty(); lexem = lexer.next( scanner))
 		{
