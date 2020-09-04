@@ -5,9 +5,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-/// \brief LALR(1) Parser generator and parser implementation
-/// \file "grammar.cpp"
-#include "grammar.hpp"
+/// \brief LALR(1) Parser generator implementation
+/// \file "automaton.cpp"
+#include "automaton.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
 #include <map>
@@ -296,11 +296,32 @@ static std::set<ProductionNode> getGotoNodes( const TransitionState& state, cons
 }
 
 template <class CalculateClosureFunctor>
-static std::map<TransitionState,int> getAutomatonStates( const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& closure)
+static TransitionState getGotoState(
+				const TransitionState& state, const ProductionNode& gto,
+				const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calcClosure)
+{
+	TransitionState gtoState;
+	for (auto item : state)
+	{
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos < (int)prod.second.size())
+		{
+			const ProductionNodeDef& nd = prod.second[ item.prodpos];
+			if (gto == nd)
+			{
+				gtoState.insert( TransitionItem( item.prodindex, item.prodpos+1, item.follow));
+			}
+		}
+	}
+	return calcClosure( gtoState);
+}
+
+template <class CalculateClosureFunctor>
+static std::map<TransitionState,int> getAutomatonStateAssignments( const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calcClosure)
 {
 	std::map<TransitionState,int> rt;
 
-	rt.insert( {closure( {{0,0,0}}), 1});
+	rt.insert( {calcClosure( {{0,0,0}}), 1});
 	std::vector<TransitionState> statestk( {rt.begin()->first});
 
 	std::size_t stkidx = 0;
@@ -311,20 +332,7 @@ static std::map<TransitionState,int> getAutomatonStates( const std::vector<Produ
 		auto gtos = getGotoNodes( state, prodlist);
 		for (auto gto : gtos)
 		{
-			TransitionState gtoState;
-			for (auto item : state)
-			{
-				const ProductionDef& prod = prodlist[ item.prodindex];
-				if (item.prodpos < (int)prod.second.size())
-				{
-					const ProductionNodeDef& nd = prod.second[ item.prodpos];
-					if (gto == nd)
-					{
-						gtoState.insert( TransitionItem( item.prodindex, item.prodpos+1, item.follow));
-					}
-				}
-			}
-			auto newState = closure( gtoState);
+			auto newState = getGotoState( state, gto, prodlist, calcClosure);
 			if (rt.insert( {newState,rt.size()+1}).second == true/*insert took place*/)
 			{
 				statestk.push_back( newState);
@@ -706,15 +714,30 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 		std::set<int> nullableNonterminalSet = getNullableNonterminalSet( prodlist);
 		std::map<int, std::set<int> > nonTerminalFirstSetMap = getNonTerminalFirstSetMap( prodlist, nullableNonterminalSet);
 
-		CalculateClosureLr0 closureLr0( prodlist);
-		CalculateClosureLr1 closureLr1( prodlist, nonTerminalFirstSetMap, nullableNonterminalSet);
+		CalculateClosureLr0 calcClosureLr0( prodlist);
+		CalculateClosureLr1 calcClosureLr1( prodlist, nonTerminalFirstSetMap, nullableNonterminalSet);
 
-		std::map<TransitionState,int> statesLr0 = getAutomatonStates( prodlist, closureLr0);
-		std::map<TransitionState,int> statesLr1 = getAutomatonStates( prodlist, closureLr1);
+		std::map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( prodlist, calcClosureLr0);
+		std::map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( prodlist, calcClosureLr1);
+		std::map<ActionKey,int> prioritymap;
 
-		for (auto lr1State : statesLr1)
+		for (auto lr1StateAssign : stateAssignmentsLr1)
 		{
-			
+			auto const& lr1State = lr1StateAssign.first;
+			auto gtos = getGotoNodes( lr1State, prodlist);
+			for (auto gto : gtos)
+			{
+				int from_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( lr1State));
+				int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( getGotoState( lr1State, gto, prodlist, calcClosureLr1)));
+				if (gto.type() == ProductionNode::Terminal)
+				{
+					ActionKey key( from_stateidx, gto.index());
+					auto ains = m_actions.insert( {key, Action( Action::Shift, to_stateidx)} );
+					if (ains.second/*is new*/)
+					{
+					}
+				}
+			}
 		}
 	}
 	catch (const Error& err)

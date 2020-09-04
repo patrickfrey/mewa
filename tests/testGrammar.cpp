@@ -12,7 +12,7 @@
 #error Building mewa requires at least C++17
 #endif
 
-#include "grammar.hpp"
+#include "automaton.hpp"
 #include "scope.hpp"
 #include "error.hpp"
 #include <iostream>

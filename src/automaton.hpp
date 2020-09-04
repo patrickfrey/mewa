@@ -5,8 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-/// \brief LALR(1) Parser generator and parser implementation interface
-/// \file "grammar.hpp"
+/// \brief LALR(1) Parser generator interface
+/// \file "automaton.hpp"
 #ifndef _MEWA_AUTOMATON_HPP_INCLUDED
 #define _MEWA_AUTOMATON_HPP_INCLUDED
 #if __cplusplus >= 201703L
