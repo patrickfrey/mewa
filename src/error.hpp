@@ -46,7 +46,8 @@ public:
 		UnreachableNonTerminalInGrammarDef=303,
 		StartSymbolReferencedInGrammarDef=304,
 		StartSymbolDefinedTwiceInGrammarDef=305,
-		EmptyGrammarDef=306
+		EmptyGrammarDef=306,
+		PriorityConflictInGrammarDef=307,
 	};
 
 public:

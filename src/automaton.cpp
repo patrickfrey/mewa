@@ -112,7 +112,24 @@ private:
 
 
 typedef std::vector<ProductionNodeDef> ProductionNodeDefList;
-typedef std::pair<ProductionNodeDef,ProductionNodeDefList> ProductionDef;
+
+struct ProductionDef
+{
+	ProductionNodeDef left;
+	ProductionNodeDefList right;
+	int priority;
+
+	ProductionDef( ProductionNodeDef left_, ProductionNodeDefList right_, int priority_)
+		:left(left_),right(right_),priority(priority_){}
+	ProductionDef( const ProductionDef& o)
+		:left(o.left),right(o.right),priority(o.priority){}
+	ProductionDef& operator=( const ProductionDef& o)
+		{left=o.left; right=o.right; priority=o.priority; return *this;}
+	ProductionDef( ProductionDef&& o)
+		:left(std::move(o.left)),right(std::move(o.right)),priority(o.priority){}
+	ProductionDef& operator=( ProductionDef&& o)
+		{left=std::move(o.left); right=std::move(o.right); priority=o.priority; return *this;}
+};
 
 
 struct TransitionItem
@@ -120,17 +137,20 @@ struct TransitionItem
 	int prodindex;
 	int prodpos;
 	int follow;
+	int priority;
 
-	TransitionItem( int prodindex_, int prodpos_, int follow_)
-		:prodindex(prodindex_),prodpos(prodpos_),follow(follow_){}
+	TransitionItem( int prodindex_, int prodpos_, int follow_, int priority_)
+		:prodindex(prodindex_),prodpos(prodpos_),follow(follow_),priority(priority_){}
 	TransitionItem( const TransitionItem& o)
-		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow){}
+		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow),priority(o.priority){}
 
 	bool operator < (const TransitionItem& o) const
 	{
 		return prodindex == o.prodindex
 			? prodpos == o.prodpos
-				? follow < o.follow
+				? follow == o.follow
+					? priority < o.priority
+					: follow < o.follow
 				: prodpos < o.prodpos
 			: prodindex < o.prodindex;
 	}
@@ -144,9 +164,9 @@ static std::set<int> getLr1FirstSet(
 				const std::set<int>& nullableNonterminalSet)
 {
 	std::set<int> rt;
-	for (; prodpos < (int)prod.second.size(); ++prodpos)
+	for (; prodpos < (int)prod.right.size(); ++prodpos)
 	{
-		const ProductionNodeDef& nd = prod.second[ prodpos];
+		const ProductionNodeDef& nd = prod.right[ prodpos];
 		if (nd.type() == ProductionNodeDef::Terminal)
 		{
 			rt.insert( nd.index());
@@ -166,7 +186,7 @@ static std::set<int> getLr1FirstSet(
 			}
 		}
 	}
-	if (prodpos == (int)prod.second.size())
+	if (prodpos == (int)prod.right.size())
 	{
 		rt.insert( follow);
 	}
@@ -181,16 +201,16 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 		rt.insert( item);
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.second.size())
+		if (item.prodpos < (int)prod.right.size())
 		{
-			const ProductionNodeDef& nd = prod.second[ item.prodpos];
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
 				for (auto prodidx = 0; prodidx != prodlist.size(); ++prodidx)
 				{
-					if (prodlist[ prodidx].first.index() == nd.index())
+					if (prodlist[ prodidx].left.index() == nd.index())
 					{
-						rt.insert( TransitionItem( prodidx, 0, 0));
+						rt.insert( TransitionItem( prodidx, 0, 0/*follow*/, 0/*priority*/));
 					}
 				}
 			}
@@ -211,21 +231,22 @@ static TransitionState getLr1TransitionStateClosure(
 		rt.insert( item);
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.second.size())
+		if (item.prodpos < (int)prod.right.size())
 		{
-			const ProductionNodeDef& nd = prod.second[ item.prodpos];
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
 				for (auto prodidx = 0; prodidx != prodlist.size(); ++prodidx)
 				{
-					if (prodlist[ prodidx].first.index() == nd.index())
+					const ProductionDef& trigger_prod = prodlist[ prodidx];
+					if (trigger_prod.left.index() == nd.index())
 					{
-						std::set<int> firstSet = getLr1FirstSet( 
+						std::set<int> firstOfRest = getLr1FirstSet( 
 										prod, item.prodpos, item.follow,
 										nonTerminalFirstSetMap, nullableNonterminalSet);
-						for (auto follow :firstSet)
+						for (auto follow :firstOfRest)
 						{
-							rt.insert( TransitionItem( prodidx, 0, follow));
+							rt.insert( TransitionItem( prodidx, 0, follow, trigger_prod.priority));
 						}
 					}
 				}
@@ -240,7 +261,7 @@ static TransitionState getLr0TransitionStateFromLr1State( const TransitionState&
 	TransitionState rt;
 	for (auto item : ts)
 	{
-		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0));
+		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, 0/*priority*/));
 	}
 	return rt;
 }
@@ -287,12 +308,36 @@ static std::set<ProductionNode> getGotoNodes( const TransitionState& state, cons
 	for (auto item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.second.size())
+		if (item.prodpos < (int)prod.right.size())
 		{
-			rt.insert( prod.second[ item.prodpos]);
+			rt.insert( prod.right[ item.prodpos]);
 		}
 	}
 	return rt;
+}
+
+static void checkConflictingPrioritiesForShift( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
+{
+	int priority = -1;
+	for (auto item : state)
+	{
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos < (int)prod.right.size())
+		{
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
+			if (nd.type() == ProductionNode::Terminal && nd.index() == terminal)
+			{
+				if (priority == -1)
+				{
+					priority = item.priority;
+				}
+				else if (priority != item.priority)
+				{
+					throw Error( Error::PriorityConflictInGrammarDef, lexer.lexemName( terminal));
+				}
+			}
+		}
+	}
 }
 
 template <class CalculateClosureFunctor>
@@ -304,12 +349,12 @@ static TransitionState getGotoState(
 	for (auto item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.second.size())
+		if (item.prodpos < (int)prod.right.size())
 		{
-			const ProductionNodeDef& nd = prod.second[ item.prodpos];
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (gto == nd)
 			{
-				gtoState.insert( TransitionItem( item.prodindex, item.prodpos+1, item.follow));
+				gtoState.insert( TransitionItem( item.prodindex, item.prodpos+1, item.follow, item.priority));
 			}
 		}
 	}
@@ -321,7 +366,7 @@ static std::map<TransitionState,int> getAutomatonStateAssignments( const std::ve
 {
 	std::map<TransitionState,int> rt;
 
-	rt.insert( {calcClosure( {{0,0,0}}), 1});
+	rt.insert( {calcClosure( {{0,0,0,0}}), 1});
 	std::vector<TransitionState> statestk( {rt.begin()->first});
 
 	std::size_t stkidx = 0;
@@ -351,12 +396,12 @@ static std::set<int> getNullableNonterminalSet( const std::vector<ProductionDef>
 		changed = false;
 		for (auto prod : prodlist)
 		{
-			auto ei = prod.second.begin(), ee = prod.second.end();
+			auto ei = prod.right.begin(), ee = prod.right.end();
 			for (; ei != ee && ei->type() == ProductionNodeDef::NonTerminal
 				&& rt.find(ei->index()) != rt.end(); ++ei){}
 			if (ei == ee)
 			{
-				rt.insert( prod.first.index());
+				rt.insert( prod.left.index());
 				changed = true;
 			}
 		}
@@ -375,12 +420,12 @@ static std::map<int, std::set<int> >
 		changed = false;
 		for (auto prod : prodlist)
 		{
-			auto ei = prod.second.begin(), ee = prod.second.end();
+			auto ei = prod.right.begin(), ee = prod.right.end();
 			for (; ei != ee; ++ei)
 			{
 				if (ei->type() == ProductionNodeDef::Terminal)
 				{
-					changed |= (rt[ prod.first.index()].insert( ei->index()).second == true/*insert took place*/);
+					changed |= (rt[ prod.left.index()].insert( ei->index()).second == true/*insert took place*/);
 				}
 				else if (ei->type() == ProductionNodeDef::NonTerminal)
 				{
@@ -389,9 +434,9 @@ static std::map<int, std::set<int> >
 					{
 						//... found the FIRST set of the right hand non terminal,
 						// so we insert its content into the FIRST set of the left hand nonterminal.
-						std::size_t sz = rt[ prod.first.index()].size();
-						rt[ prod.first.index()].insert( ri->second.begin(), ri->second.end());
-						changed |= sz < rt[ prod.first.index()].size();
+						std::size_t sz = rt[ prod.left.index()].size();
+						rt[ prod.left.index()].insert( ri->second.begin(), ri->second.end());
+						changed |= sz < rt[ prod.left.index()].size();
 					}
 					else
 					{
@@ -404,8 +449,8 @@ static std::map<int, std::set<int> >
 			}
 			if (ei == ee)
 			{
-				changed |= (rt[ prod.first.index()].insert( 0/*'$'*/).second == true/*insert took place*/);
-				nullableNonterminalSetVerify.insert( prod.first.index());
+				changed |= (rt[ prod.left.index()].insert( 0/*'$'*/).second == true/*insert took place*/);
+				nullableNonterminalSetVerify.insert( prod.left.index());
 			}
 		}
 	}
@@ -501,7 +546,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 					}
 					else if (state == ParseProductionElement)
 					{
-						prodlist.back().second.push_back( lexem.value());
+						prodlist.back().right.push_back( lexem.value());
 					}
 					else if (state == ParseLexerCommand)
 					{
@@ -571,7 +616,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 					if (state == ParsePriority || state == ParseAssign)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, prodlist.size()));
-						prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList()));
+						prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
 						nonTerminalIdMap.insert( std::pair<std::string_view, int>( rulename, nonTerminalIdMap.size()+1));
 						state = ParseProductionElement;
 					}
@@ -648,13 +693,13 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 		// [2] Label grammar production elements:
 		for (auto prod : prodlist)
 		{
-			if (lexer.lexemId( prod.first.name()))
+			if (lexer.lexemId( prod.left.name()))
 			{
-				throw Error( Error::DefinedAsTerminalAndNonterminalInGrammarDef, prod.first.name());
+				throw Error( Error::DefinedAsTerminalAndNonterminalInGrammarDef, prod.left.name());
 			}
-			prod.first.defineAsNonTerminal( nonTerminalIdMap.at( prod.first.name()));
+			prod.left.defineAsNonTerminal( nonTerminalIdMap.at( prod.left.name()));
 
-			for (auto element : prod.second)
+			for (auto element : prod.right)
 			{
 				if (element.type() == ProductionNodeDef::Unresolved)
 				{
@@ -699,7 +744,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 		int startSymbolLeftCount = 0;
 		for (auto prod : prodlist)
 		{
-			if (prod.first.index() == 1) ++startSymbolLeftCount;
+			if (prod.left.index() == 1) ++startSymbolLeftCount;
 		}
 		if (startSymbolLeftCount == 0)
 		{
@@ -707,7 +752,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 		}
 		else if (startSymbolLeftCount > 1)
 		{
-			throw Error( Error::StartSymbolDefinedTwiceInGrammarDef, prodlist[0].first.name());
+			throw Error( Error::StartSymbolDefinedTwiceInGrammarDef, prodlist[0].left.name());
 		}
 
 		// [5] Build the LALR(1) automaton:
@@ -731,6 +776,8 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 				int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( getGotoState( lr1State, gto, prodlist, calcClosureLr1)));
 				if (gto.type() == ProductionNode::Terminal)
 				{
+					checkConflictingPrioritiesForShift( lr1State, gto.index(), prodlist, lexer);
+
 					ActionKey key( from_stateidx, gto.index());
 					auto ains = m_actions.insert( {key, Action( Action::Shift, to_stateidx)} );
 					if (ains.second/*is new*/)
