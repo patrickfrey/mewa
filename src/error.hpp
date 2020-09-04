@@ -43,6 +43,10 @@ public:
 
 		DefinedAsTerminalAndNonterminalInGrammarDef=301,
 		UnresolvedIdentifierInGrammarDef=302,
+		UnreachableNonTerminalInGrammarDef=303,
+		StartSymbolReferencedInGrammarDef=304,
+		StartSymbolDefinedTwiceInGrammarDef=305,
+		EmptyGrammarDef=306
 	};
 
 public:

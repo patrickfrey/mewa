@@ -137,23 +137,23 @@ class Lexer
 {
 public:
 	Lexer()
-		:m_errorLexemName("?"),m_defar(),m_firstmap(),m_nameidmap(),m_bracketComments(),m_eolnComments(){}
+		:m_errorLexemName("?"),m_defar(),m_firstmap(),m_nameidmap(),m_namelist(),m_bracketComments(),m_eolnComments(){}
 	Lexer( const Lexer& o)
 		:m_errorLexemName(o.m_errorLexemName),m_defar(o.m_defar)
-		,m_firstmap(o.m_firstmap),m_nameidmap(o.m_nameidmap)
+		,m_firstmap(o.m_firstmap),m_nameidmap(o.m_nameidmap),m_namelist(o.m_namelist)
 		,m_bracketComments(o.m_bracketComments),m_eolnComments(o.m_eolnComments){}
 	Lexer& operator=( const Lexer& o)
 		{m_errorLexemName=o.m_errorLexemName; m_defar=o.m_defar;
-		 m_firstmap=o.m_firstmap; m_nameidmap=o.m_nameidmap;
+		 m_firstmap=o.m_firstmap; m_nameidmap=o.m_nameidmap; m_namelist=o.m_namelist;
 		 m_bracketComments=o.m_bracketComments; m_eolnComments=o.m_eolnComments;
 		 return *this;}
 	Lexer( Lexer&& o)
 		:m_errorLexemName(std::move(o.m_errorLexemName)),m_defar(std::move(o.m_defar))
-		,m_firstmap(std::move(o.m_firstmap)),m_nameidmap(std::move(o.m_nameidmap))
+		,m_firstmap(std::move(o.m_firstmap)),m_nameidmap(std::move(o.m_nameidmap)),m_namelist(std::move(o.m_namelist))
 		,m_bracketComments(std::move(o.m_bracketComments)),m_eolnComments(std::move(o.m_eolnComments)){}
 	Lexer& operator=( Lexer&& o)
 		{m_errorLexemName=std::move(o.m_errorLexemName); m_defar=std::move(o.m_defar);
-		 m_firstmap=std::move(o.m_firstmap); m_nameidmap=std::move(o.m_nameidmap);
+		 m_firstmap=std::move(o.m_firstmap); m_nameidmap=std::move(o.m_nameidmap); m_namelist=std::move(o.m_namelist);
 		 m_bracketComments=std::move(o.m_bracketComments); m_eolnComments=std::move(o.m_eolnComments);
 		 return *this;}
 
@@ -166,6 +166,7 @@ public:
 	void defineBracketComment( const std::string_view& start, const std::string_view& end);
 
 	int lexemId( const std::string_view& name) const;
+	std::string_view lexemName( int id) const;
 	Lexem next( Scanner& scanner) const;
 
 private:
@@ -185,6 +186,7 @@ private:
 	std::vector<LexemDef> m_defar;
 	std::multimap<char,int> m_firstmap;
 	std::map<std::string, int, std::less<> > m_nameidmap;
+	std::vector<std::string> m_namelist;
 	BracketCommentDefList m_bracketComments;
 	EolnCommentDefList m_eolnComments;
 };

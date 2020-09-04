@@ -4,6 +4,7 @@ CC=/usr/bin/clang
 else
 CC=/usr/bin/g++
 endif
+AR=ar rcs
 
 ifeq ($(strip $(RELEASE)),)
 DEBUGFLAGS=-ggdb -g3 -O0
@@ -21,7 +22,7 @@ INCFLAGS := "-I$(SRCDIR)"
 LDFLAGS := -g -pthread
 LDLIBS := -lm -lstdc++
 LIBOBJS := $(BUILDDIR)/lexer.o $(BUILDDIR)/grammar.o
-LIBRARY := $(BUILDDIR)/libmewa.so
+LIBRARY := $(BUILDDIR)/libmewa.a
 TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testGrammar
 
 # Build targets:
@@ -46,7 +47,7 @@ $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp
 	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
-	$(CC) -shared $(LDFLAGS) $(LIBOBJS) $(LDLIBS) -o $(LIBRARY)
+	$(AR) $(LIBRARY) $(LIBOBJS)
 
 $(BUILDDIR)/%: $(BUILDDIR)/%.o
 	$(CC) $(LDFLAGS) -o $@ $(LDLIBS) $< $(LIBRARY)
