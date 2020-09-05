@@ -238,8 +238,9 @@ bool Scanner::match( const char* str)
 	return false;
 }
 
-void Lexer::defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select)
+int Lexer::defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select)
 {
+	int rt = 0;
 	try
 	{
 		if (name.empty())
@@ -254,6 +255,7 @@ void Lexer::defineLexem_( const std::string_view& name, const std::string_view& 
 				m_namelist.push_back( std::string(name));
 			}
 			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, false/*keyword*/, select));
+			rt = ins.first->second;
 		}
 	}
 	catch (const std::regex_error&)
@@ -270,16 +272,17 @@ void Lexer::defineLexem_( const std::string_view& name, const std::string_view& 
 		}
 	}
 	if (firstChars == 0) throw Error( Error::SyntaxErrorInLexer);
+	return rt;
 }
 
-void Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
+int Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
 {
-	defineLexem_( name, pattern, false/*keyword*/, select);
+	return defineLexem_( name, pattern, false/*keyword*/, select);
 }
 
 void Lexer::defineIgnore( const std::string_view& pattern)
 {
-	defineLexem_( "", pattern, true/*keyword*/, 0);
+	(void)defineLexem_( "", pattern, true/*keyword*/, 0);
 }
 
 static std::string stringToRegex( const std::string_view& opr)
@@ -297,9 +300,9 @@ static std::string stringToRegex( const std::string_view& opr)
 	return rt;
 }
 
-void Lexer::defineLexem( const std::string_view& opr)
+int Lexer::defineLexem( const std::string_view& opr)
 {
-	defineLexem_( opr, stringToRegex(opr), true/*keyword*/, 0);
+	return defineLexem_( opr, stringToRegex(opr), true/*keyword*/, 0);
 }
 
 void Lexer::defineBadLexem( const std::string_view& name_)

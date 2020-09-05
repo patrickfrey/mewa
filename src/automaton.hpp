@@ -10,6 +10,7 @@
 #ifndef _MEWA_AUTOMATON_HPP_INCLUDED
 #define _MEWA_AUTOMATON_HPP_INCLUDED
 #if __cplusplus >= 201703L
+#include "error.hpp"
 #include <utility>
 #include <string>
 #include <map>
@@ -19,6 +20,14 @@ namespace mewa {
 
 class Automaton
 {
+public:
+	enum {
+		ShiftState = 15, MaxState = 1<<ShiftState, MaskState = MaxState-1,
+		ShiftProductionLength = 5, MaxProductionLength = 1<<ShiftProductionLength, MaskProductionLength = MaxProductionLength-1,
+		ShiftNonterminal = 10, MaxNonterminal = 1<<ShiftNonterminal, MaskNonterminal = MaxNonterminal-1,
+		ShiftTerminal = 10, MaxTerminal = 1<<ShiftTerminal, MaskTerminal = MaxTerminal-1
+	};
+
 public:
 	class ActionKey
 	{
@@ -36,6 +45,15 @@ public:
 			return m_state == o.m_state ? m_terminal < o.m_terminal : m_state < o.m_state;
 		}
 
+		int packed() const
+		{
+			return (m_state << ShiftTerminal) | m_terminal;
+		}
+		static ActionKey unpack( int pkg)
+		{
+			return ActionKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*terminal*/);
+		}
+
 	private:
 		int m_state;
 		int m_terminal;
@@ -44,30 +62,85 @@ public:
 	class Action
 	{
 	public:
-		enum Type {Shift,Reduce};
+		enum Type {Shift,Reduce,Accept};
 
-		Action( Type type_, int value_)
-			:m_type(type_),m_value(value_){}
+		Action()
+			:m_type(Shift),m_value(0),m_count(0){}
+		Action( Type type_, int value_, int count_=0)
+			:m_type(type_),m_value(value_),m_count(count_){}
 		Action( const Action& o)
-			:m_type(o.m_type),m_value(o.m_value){}
+			:m_type(o.m_type),m_value(o.m_value),m_count(o.m_count){}
 
 		Type type() const		{return m_type;}
 		int value() const		{return m_value;}
+		int count() const		{return m_count;}
+
+		int packed() const
+		{
+			return (m_type << (ShiftState + ShiftProductionLength)) | (m_value << ShiftProductionLength) | m_count;
+		}
+		static Action unpack( int pkg)
+		{
+			return Action( (Type)(pkg >> (ShiftState + ShiftProductionLength))/*type*/,
+					(pkg >> ShiftProductionLength) & MaskState/*value*/,
+					(pkg) & MaskProductionLength/*count*/);
+		}
 
 	private:
 		Type m_type;
 		int m_value;
+		int m_count;
+	};
+
+	class GotoKey
+	{
+	public:
+		GotoKey( int state_, int nonterminal_)
+			:m_state(state_),m_nonterminal(nonterminal_){}
+		GotoKey( const GotoKey& o)
+			:m_state(o.m_state),m_nonterminal(o.m_nonterminal){}
+
+		int state() const		{return m_state;}
+		int nonterminal() const		{return m_nonterminal;}
+
+		bool operator < (const GotoKey& o) const
+		{
+			return m_state == o.m_state ? m_nonterminal < o.m_nonterminal : m_state < o.m_state;
+		}
+		int packed() const
+		{
+			return (m_state << ShiftTerminal) | m_nonterminal;
+		}
+		static GotoKey unpack( int pkg)
+		{
+			return GotoKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*nonterminal*/);
+		}
+
+	private:
+		int m_state;
+		int m_nonterminal;
 	};
 
 	class Goto
 	{
 	public:
-		Goto( int state_)
+		Goto()
+			:m_state(0){}
+		explicit Goto( int state_)
 			:m_state(state_){}
 		Goto( const Goto& o)
 			:m_state(o.m_state){}
 
 		int state() const		{return m_state;}
+
+		int packed() const
+		{
+			return m_state;
+		}
+		static Goto unpack( int pkg)
+		{
+			return Goto( pkg);
+		}
 
 	private:
 		int m_state;
@@ -85,14 +158,14 @@ public:
 	Automaton& operator=( Automaton&& o)
 		{m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos); return *this;}
 
-	void build( const std::string& fileName, const std::string& source);
+	void build( const std::string& fileName, const std::string& source, std::vector<Error>& warnings);
 
 	const std::map<ActionKey,Action>& actions() const		{return m_actions;}
-	const std::map<int,Goto>& gotos() const				{return m_gotos;}
+	const std::map<GotoKey,Goto>& gotos() const				{return m_gotos;}
 
 private:
 	std::map<ActionKey,Action> m_actions;
-	std::map<int,Goto> m_gotos;
+	std::map<GotoKey,Goto> m_gotos;
 };
 
 }//namespace

@@ -12,7 +12,7 @@
 #if __cplusplus >= 201103L
 #include <utility>
 #include <string>
-#include <exception>
+#include <stdexcept>
 #include <cstdio>
 
 namespace mewa {
@@ -35,6 +35,7 @@ public:
 		UnexpectedTokenInGrammarDef=204,
 		ExpectedRuleIdentifierInGrammarDef=205,
 		ExpectedNumberInGrammarDef=206,
+		ExpectedPriorityInGrammarDef=207,
 
 		PriorityDefNotForLexemsInGrammarDef=221,
 		UnexpectedEndOfRuleInGrammarDef=222,
@@ -48,6 +49,16 @@ public:
 		StartSymbolDefinedTwiceInGrammarDef=305,
 		EmptyGrammarDef=306,
 		PriorityConflictInGrammarDef=307,
+		NoAcceptStatesInGrammarDef=308,
+
+		ShiftReduceConflictInGrammarDef=401,
+		ReduceReduceConflictInGrammarDef=402,
+		ShiftShiftConflictInGrammarDef=403,
+		
+		ComplexityMaxStateInGrammarDef=501,
+		ComplexityMaxProductionLengthInGrammarDef=502,
+		ComplexityMaxNonterminalInGrammarDef=503,
+		ComplexityMaxTerminalInGrammarDef=504,
 	};
 
 public:

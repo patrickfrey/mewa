@@ -97,30 +97,50 @@ class ProductionNodeDef
 	:public ProductionNode
 {
 public:
-	ProductionNodeDef( const std::string_view& name_)
-		:ProductionNode(),m_name(name_){}
+	ProductionNodeDef( const std::string_view& name_, bool symbol_)
+		:ProductionNode(),m_name(name_),m_symbol(symbol_){}
 	ProductionNodeDef( const ProductionNodeDef& o)
-		:ProductionNode(o),m_name(o.m_name){}
+		:ProductionNode(o),m_name(o.m_name),m_symbol(o.m_symbol){}
 	ProductionNodeDef& operator=( const ProductionNodeDef& o)
-		{ProductionNode::operator=(o); m_name=o.m_name; return *this;}
+		{ProductionNode::operator=(o); m_name=o.m_name; m_symbol=o.m_symbol; return *this;}
 
-	const std::string_view& name() const		{return m_name;}
+	const std::string_view& name() const			{return m_name;}
+	bool symbol() const					{return m_symbol;}
 
 private:
 	std::string_view m_name;
+	bool m_symbol;
 };
 
 
 typedef std::vector<ProductionNodeDef> ProductionNodeDefList;
 
+
+enum class Assoziativity :short {Undefined, Left, Right};
+struct Priority {
+	short value;
+	Assoziativity assoziativity;
+
+	Priority( short value_=0, Assoziativity assoziativity_ = Assoziativity::Undefined)
+		:value(value_),assoziativity(assoziativity_){}
+	Priority( const Priority& o)
+		:value(o.value),assoziativity(o.assoziativity){}
+
+	bool operator == (const Priority& o) const	{return value == o.value && assoziativity == o.assoziativity;}
+	bool operator != (const Priority& o) const	{return value != o.value || assoziativity != o.assoziativity;}
+	bool operator < (const Priority& o) const 	{return value == o.value ? assoziativity < o.assoziativity : value < o.value;}
+	bool defined() const				{return value != 0 || assoziativity != Assoziativity::Undefined;}
+};
+
+
 struct ProductionDef
 {
 	ProductionNodeDef left;
 	ProductionNodeDefList right;
-	int priority;
+	Priority priority;
 
-	ProductionDef( ProductionNodeDef left_, ProductionNodeDefList right_, int priority_)
-		:left(left_),right(right_),priority(priority_){}
+	ProductionDef( const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_)
+		:left(leftname_,true/*symbol*/),right(right_),priority(priority_){}
 	ProductionDef( const ProductionDef& o)
 		:left(o.left),right(o.right),priority(o.priority){}
 	ProductionDef& operator=( const ProductionDef& o)
@@ -129,6 +149,62 @@ struct ProductionDef
 		:left(std::move(o.left)),right(std::move(o.right)),priority(o.priority){}
 	ProductionDef& operator=( ProductionDef&& o)
 		{left=std::move(o.left); right=std::move(o.right); priority=o.priority; return *this;}
+
+
+	std::string tostring() const
+	{
+		return head_tostring() + " = "
+			+ element_range_tostring( right.begin(), right.end());
+	}
+
+	std::string tostring( int pos) const
+	{
+		return head_tostring() + " = "
+			+ element_range_tostring( right.begin(), right.begin() + pos) + " . "
+			+ element_range_tostring( right.begin() + pos, right.end());
+	}
+
+	std::string prefix_tostring( int pos) const
+	{
+		return head_tostring() + " = "
+			+ element_range_tostring( right.begin(), right.begin() + pos) + " ...";
+	}
+
+private:
+	std::string head_tostring() const
+	{
+		std::string rt( left.name());
+		if (priority.defined())
+		{
+			char buf[ 32];
+			std::snprintf( buf, sizeof(buf), 
+				       priority.assoziativity == Assoziativity::Undefined
+						? "/%d" : (priority.assoziativity == Assoziativity::Left ? "/L%d" : "/R%d"),
+				       (int)priority.value);
+			rt.append( buf);
+		}
+		return rt;
+	}
+
+	static std::string element_range_tostring( ProductionNodeDefList::const_iterator ri, const ProductionNodeDefList::const_iterator& re)
+	{
+		std::string rt;
+		for (int ridx=0; ri != re; ++ri,++ridx)
+		{
+			if (ridx) rt.push_back( ' ');
+			if (ri->symbol())
+			{
+				rt.append( ri->name());
+			}
+			else
+			{
+				rt.push_back( '"');
+				rt.append( ri->name());
+				rt.push_back( '"');
+			}
+		}
+		return rt;
+	}
 };
 
 
@@ -137,9 +213,9 @@ struct TransitionItem
 	int prodindex;
 	int prodpos;
 	int follow;
-	int priority;
+	Priority priority;
 
-	TransitionItem( int prodindex_, int prodpos_, int follow_, int priority_)
+	TransitionItem( int prodindex_, int prodpos_, int follow_, const Priority priority_)
 		:prodindex(prodindex_),prodpos(prodpos_),follow(follow_),priority(priority_){}
 	TransitionItem( const TransitionItem& o)
 		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow),priority(o.priority){}
@@ -206,7 +282,7 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
-				for (auto prodidx = 0; prodidx != prodlist.size(); ++prodidx)
+				for (auto prodidx = 0U; prodidx != prodlist.size(); ++prodidx)
 				{
 					if (prodlist[ prodidx].left.index() == nd.index())
 					{
@@ -236,7 +312,7 @@ static TransitionState getLr1TransitionStateClosure(
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
-				for (auto prodidx = 0; prodidx != prodlist.size(); ++prodidx)
+				for (auto prodidx = 0U; prodidx != prodlist.size(); ++prodidx)
 				{
 					const ProductionDef& trigger_prod = prodlist[ prodidx];
 					if (trigger_prod.left.index() == nd.index())
@@ -316,9 +392,24 @@ static std::set<ProductionNode> getGotoNodes( const TransitionState& state, cons
 	return rt;
 }
 
-static void checkConflictingPrioritiesForShift( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
+static std::set<ProductionNode> getReduceNodes( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
-	int priority = -1;
+	std::set<ProductionNode> rt;
+	for (auto item : state)
+	{
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos == (int)prod.right.size())
+		{
+			rt.insert( ProductionNode( ProductionNode::Terminal, item.follow));
+		}
+	}
+	return rt;
+}
+
+static Priority getShiftPriority( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist)
+{
+	Priority priority;
+	int last_prodidx = -1;
 	for (auto item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
@@ -327,16 +418,96 @@ static void checkConflictingPrioritiesForShift( const TransitionState& state, in
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNode::Terminal && nd.index() == terminal)
 			{
-				if (priority == -1)
+				if (last_prodidx == -1)
 				{
 					priority = item.priority;
+					last_prodidx = item.prodindex;
 				}
 				else if (priority != item.priority)
 				{
-					throw Error( Error::PriorityConflictInGrammarDef, lexer.lexemName( terminal));
+					throw Error( Error::PriorityConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring());
 				}
 			}
 		}
+	}
+	return priority;
+}
+
+struct ReductionDef
+{
+	Priority priority;
+	int head;
+	int count;
+
+	ReductionDef()
+		:priority(),head(-1),count(-1){}
+	ReductionDef( const ReductionDef& o)
+		:priority(o.priority),head(o.head),count(o.count){}
+};
+
+static ReductionDef getReductionDef( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist)
+{
+	ReductionDef rt;
+	int last_prodidx = -1;
+	for (auto item : state)
+	{
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.follow == terminal && item.prodpos == (int)prod.right.size())
+		{
+			if (last_prodidx == -1)
+			{
+				rt.priority = item.priority;
+				rt.head = prod.left.index();
+				rt.count = prod.right.size();
+				last_prodidx = item.prodindex;
+			}
+			else if (rt.priority != item.priority || rt.head != prod.left.index() || rt.count != prod.right.size())
+			{
+				throw Error( Error::PriorityConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring());
+			}
+		}
+	}
+	return rt;
+}
+
+static std::string getStateTransitionString( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist)
+{
+	const char* redustr = nullptr;
+	const char* shiftstr = nullptr;
+	std::string prodstr;
+	for (auto item : state)
+	{
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos < (int)prod.right.size())
+		{
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
+			if (nd.type() == ProductionNode::Terminal && nd.index() == terminal)
+			{
+				shiftstr = "->";
+				prodstr = prod.prefix_tostring( item.prodpos);
+			}
+		}
+		else if (terminal == item.follow)
+		{
+			redustr = "<-";
+			if (prodstr.empty()) prodstr = prod.tostring( item.prodpos);
+		}
+	}
+	if (redustr && shiftstr)
+	{
+		return prodstr + shiftstr + "|" + redustr;
+	}
+	else if (redustr)
+	{
+		return prodstr + redustr;
+	}
+	else if (shiftstr)
+	{
+		return prodstr + shiftstr;
+	}
+	else
+	{
+		return prodstr;
 	}
 }
 
@@ -381,6 +552,22 @@ static std::map<TransitionState,int> getAutomatonStateAssignments( const std::ve
 			if (rt.insert( {newState,rt.size()+1}).second == true/*insert took place*/)
 			{
 				statestk.push_back( newState);
+			}
+		}
+	}
+	return rt;
+}
+
+static std::vector<int> getAcceptStates( const std::map<TransitionState,int>& states, const std::vector<ProductionDef>& prodlist)
+{
+	std::vector<int> rt;
+	for (auto state : states)
+	{
+		for (auto item : state.first)
+		{
+			if (item.prodindex == 0 && item.prodpos == (int)prodlist[ 0].right.size() && item.follow == 0)
+			{
+				rt.push_back( state.second);
 			}
 		}
 	}
@@ -466,6 +653,10 @@ static int convertStringToInt( const std::string_view& str)
 {
 	int si = 0, se = str.size();
 	int rt = 0;
+	if (si == se)
+	{
+		throw Error( Error::ExpectedNumberInGrammarDef, str);
+	}
 	for (; si != se; ++si)
 	{
 		char ch = str[ si];
@@ -482,7 +673,29 @@ static int convertStringToInt( const std::string_view& str)
 	return rt;
 }
 
-static bool caseInsensitiveCompare( const std::string_view& a, const std::string_view& b)
+static Priority convertStringToPriority( const std::string_view& str)
+{
+	if (str.size() == 0)
+	{
+		throw Error( Error::ExpectedPriorityInGrammarDef, str);
+	}
+	if (str[0] == 'L' || str[0] == 'R')
+	{
+		Assoziativity assoz = str[0] == 'L' ? Assoziativity::Left : Assoziativity::Right;
+		return (str.size() == 1) ? Priority( 0, assoz) : Priority( convertStringToInt( str.substr( 1, str.size()-1)), assoz);
+	}
+	else if (str[str.size()-1] == 'L' || str[str.size()-1] == 'R')
+	{
+		Assoziativity assoz = str[str.size()-1] == 'L' ? Assoziativity::Left : Assoziativity::Right;
+		return Priority( convertStringToInt( str.substr( 0, str.size()-1)), assoz);
+	}
+	else
+	{
+		return Priority( convertStringToInt( str));
+	}
+}
+
+static bool caseInsensitiveEqual( const std::string_view& a, const std::string_view& b)
 {
 	auto ai = a.begin(), ae = a.end(), bi = b.begin(), be = b.end();
 	for (; ai != ae && bi != be; ++ai,++bi)
@@ -492,7 +705,67 @@ static bool caseInsensitiveCompare( const std::string_view& a, const std::string
 	return ai == ae && bi == be;
 }
 
-void Automaton::build( const std::string& fileName, const std::string& source)
+static void insertAction( 
+	std::map<Automaton::ActionKey,Priority>& priorityMap,
+	std::map<Automaton::ActionKey,Automaton::Action>& actionMap,
+	const std::vector<ProductionDef>& prodlist,
+	const TransitionState& lr1State,
+	int terminal,
+	const Automaton::ActionKey& key,
+	const Automaton::Action& action,
+	const Priority priority, 
+	std::vector<Error>& warnings)
+{
+	auto ains = actionMap.insert( {key, action} );
+	Priority storedPriority = priorityMap[ key];
+
+	if (ains.second/*is new*/)
+	{
+		priorityMap[ key] = priority;
+	}
+	else if (priority.value > storedPriority.value)
+	{
+		actionMap[ key] = action;
+		priorityMap[ key] = priority;
+	}
+	else if (priority.value == storedPriority.value)
+	{
+		if (priority.assoziativity != storedPriority.assoziativity || priority.assoziativity == Assoziativity::Undefined)
+		{
+			warnings.push_back(
+				Error( Error::ShiftReduceConflictInGrammarDef, 
+				getStateTransitionString( lr1State, terminal, prodlist)));
+		}
+		else
+		{
+			const Automaton::Action& storedAction = ains.first->second;
+			if (action.type() == storedAction.type())
+			{
+				warnings.push_back(
+					Error( action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef,
+						getStateTransitionString( lr1State, terminal, prodlist)));
+			}
+			else if (action.type() == Automaton::Action::Reduce)
+			{
+				if (priority.assoziativity == Assoziativity::Left)
+				{
+					actionMap[ key] = action;
+					priorityMap[ key] = priority;
+				}
+			}
+			else //if (action.type() == Automaton::Action::Shift)
+			{
+				if (priority.assoziativity == Assoziativity::Right)
+				{
+					actionMap[ key] = action;
+					priorityMap[ key] = priority;
+				}
+			}
+		}
+	}
+}
+
+void Automaton::build( const std::string& fileName, const std::string& source, std::vector<Error>& warnings)
 {
 	enum State {
 		Init,
@@ -523,7 +796,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 		std::map<std::string_view, int> nonTerminalIdMap;
 		std::set<std::string_view> usedSet;
 		std::vector<ProductionDef> prodlist;
-		int priority = 0;
+		Priority priority;
 		int selectidx = 0;
 
 		lexem = grammarLexer.next( scanner);
@@ -540,13 +813,13 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 					{
 						rulename = lexem.value();
 						patternstr.remove_suffix( patternstr.size());
-						priority = 0;
+						priority = Priority();
 						selectidx = 0;
 						state = ParsePriority;
 					}
 					else if (state == ParseProductionElement)
 					{
-						prodlist.back().right.push_back( lexem.value());
+						prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), true/*symbol*/));
 					}
 					else if (state == ParseLexerCommand)
 					{
@@ -565,7 +838,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 				case GrammarLexer::NUMBER:
 					if (state == ParsePriorityNumber)
 					{
-						priority = convertStringToInt( lexem.value());
+						priority = convertStringToPriority( lexem.value());
 						state = ParseAssign;
 					}
 					else if (state == ParsePatternSelect)
@@ -588,6 +861,11 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 					else if (state == ParseLexerCommandArg)
 					{
 						cmdargs.push_back( lexem.value());
+					}
+					else if (state == ParseProductionElement)
+					{
+						if (!lexer.lexemId( lexem.value())) lexer.defineLexem( lexem.value());
+						prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), false/*not a symbol, raw string implicitely defined*/));
 					}
 					break;
 				case GrammarLexer::PERCENT:
@@ -642,17 +920,17 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 				case GrammarLexer::SEMICOLON:
 					if (state == ParseLexerCommandArg)
 					{
-						if (caseInsensitiveCompare( cmdname, "IGNORE"))
+						if (caseInsensitiveEqual( cmdname, "IGNORE"))
 						{
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
 							lexer.defineIgnore( cmdargs[ 0]);
 						}
-						else if (caseInsensitiveCompare( cmdname, "BAD"))
+						else if (caseInsensitiveEqual( cmdname, "BAD"))
 						{
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
 							lexer.defineBadLexem( cmdargs[ 0]);
 						}
-						else if (caseInsensitiveCompare( cmdname, "COMMENT"))
+						else if (caseInsensitiveEqual( cmdname, "COMMENT"))
 						{
 							if (cmdargs.size() == 1)
 							{
@@ -755,7 +1033,7 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 			throw Error( Error::StartSymbolDefinedTwiceInGrammarDef, prodlist[0].left.name());
 		}
 
-		// [5] Build the LALR(1) automaton:
+		// [5] Calculate some sets needed for the build:
 		std::set<int> nullableNonterminalSet = getNullableNonterminalSet( prodlist);
 		std::map<int, std::set<int> > nonTerminalFirstSetMap = getNonTerminalFirstSetMap( prodlist, nullableNonterminalSet);
 
@@ -764,27 +1042,72 @@ void Automaton::build( const std::string& fileName, const std::string& source)
 
 		std::map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( prodlist, calcClosureLr0);
 		std::map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( prodlist, calcClosureLr1);
-		std::map<ActionKey,int> prioritymap;
+
+		std::vector<int> acceptStates = getAcceptStates( stateAssignmentsLr1, prodlist);
+		if (acceptStates.empty())
+		{
+			throw Error( Error::NoAcceptStatesInGrammarDef);
+		}
+
+		// [6] Test complexity boundaries:
+		if (stateAssignmentsLr0.size() >= MaxState)
+		{
+			throw Error( Error::ComplexityMaxStateInGrammarDef);
+		}
+		for (auto prod : prodlist) if (prod.right.size() > MaxProductionLength) 
+		{
+			throw Error( Error::ComplexityMaxProductionLengthInGrammarDef);
+		}
+		if (nonTerminalIdMap.size() >= MaxNonterminal)
+		{
+			throw Error( Error::ComplexityMaxNonterminalInGrammarDef);
+		}
+		if (lexer.nofTerminals()+1 >= MaxTerminal)
+		{
+			throw Error( Error::ComplexityMaxTerminalInGrammarDef);
+		}
+
+		// [7] Build the LALR(1) automaton:
+		std::map<ActionKey,Priority> priorityMap;
 
 		for (auto lr1StateAssign : stateAssignmentsLr1)
 		{
 			auto const& lr1State = lr1StateAssign.first;
+			int stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( lr1State));
+
 			auto gtos = getGotoNodes( lr1State, prodlist);
 			for (auto gto : gtos)
 			{
-				int from_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( lr1State));
 				int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( getGotoState( lr1State, gto, prodlist, calcClosureLr1)));
 				if (gto.type() == ProductionNode::Terminal)
 				{
-					checkConflictingPrioritiesForShift( lr1State, gto.index(), prodlist, lexer);
+					int terminal = gto.index();
+					Priority shiftPriority = getShiftPriority( lr1State, terminal, prodlist);
 
-					ActionKey key( from_stateidx, gto.index());
-					auto ains = m_actions.insert( {key, Action( Action::Shift, to_stateidx)} );
-					if (ains.second/*is new*/)
-					{
-					}
+					ActionKey key( stateidx, terminal);
+					Action action( Action::Shift, to_stateidx);
+
+					insertAction( priorityMap, m_actions, prodlist, lr1State, terminal, key, action, shiftPriority, warnings);
 				}
 			}
+			auto redus = getReduceNodes( lr1State, prodlist);
+			for (auto redu : redus)
+			{
+				int terminal = redu.index();
+				ReductionDef rd = getReductionDef( lr1State, terminal, prodlist);
+				ProductionNode gto( ProductionNode::NonTerminal, rd.head);
+				int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( getGotoState( lr1State, gto, prodlist, calcClosureLr1)));
+
+				ActionKey key( stateidx, terminal);
+				Action action( Action::Reduce, rd.head, rd.count);
+
+				insertAction( priorityMap, m_actions, prodlist, lr1State, terminal, key, action, rd.priority, warnings);
+				m_gotos[ GotoKey( stateidx, rd.head)] = Goto( to_stateidx);
+			}
+		}
+		for (auto acceptState : acceptStates)
+		{
+			m_actions[ ActionKey( acceptState, 0/*EOF terminal*/)] = Action( Action::Accept, 0);
 		}
 	}
 	catch (const Error& err)

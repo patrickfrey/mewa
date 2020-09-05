@@ -159,8 +159,9 @@ public:
 
 	void defineBadLexem( const std::string_view& name_);
 
-	void defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select=0);
-	void defineLexem( const std::string_view& opr);
+	int defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select=0);
+	int defineLexem( const std::string_view& opr);
+
 	void defineIgnore( const std::string_view& pattern);
 	void defineEolnComment( const std::string_view& opr);
 	void defineBracketComment( const std::string_view& start, const std::string_view& end);
@@ -169,8 +170,13 @@ public:
 	std::string_view lexemName( int id) const;
 	Lexem next( Scanner& scanner) const;
 
+	int nofTerminals() const
+	{
+		return m_namelist.size();
+	}
+
 private:
-	void defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select);
+	int defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select);
 
 private:
 	typedef std::pair<std::string,std::string> BracketCommentDef;
