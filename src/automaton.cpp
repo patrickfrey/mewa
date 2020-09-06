@@ -36,7 +36,12 @@ public:
 		ARROW,
 		DDOT,
 		SEMICOLON,
-		EPSILON
+		EPSILON,
+		CALL,
+		OPENBRK,
+		CLOSEBRK,
+		COMMA,
+		OR
 	};
 
 	GrammarLexer()
@@ -54,6 +59,11 @@ public:
 		defineLexem( ":");
 		defineLexem( ";");
 		defineLexem( "ε");
+		defineLexem( "CALL", "[a-zA-Z_][:.a-zA-Z_0-9]*");
+		defineLexem( "(");
+		defineLexem( ")");
+		defineLexem( ",");
+		defineLexem( "|");
 	}
 };
 
@@ -165,23 +175,41 @@ struct Priority {
 	}
 };
 
+
+struct TriggerCall
+{
+	enum ArgumentType
+	{
+		NoArg,
+		StringArg,
+		ReferenceArg
+	};
+	std::string_view proc;
+	std::string_view arg;
+	ArgumentType argtype;
+
+	TriggerCall()
+		:proc(),arg(),argtype(NoArg){}
+	TriggerCall( std::string_view proc_, std::string_view arg_, ArgumentType argtype_)
+		:proc(proc_),arg(arg_),argtype(argtype_){}
+	TriggerCall( const TriggerCall& o)
+		:proc(o.proc),arg(o.arg),argtype(o.argtype){}
+};
+
+
 struct ProductionDef
 {
 	ProductionNodeDef left;
 	ProductionNodeDefList right;
 	Priority priority;
+	TriggerCall call;
 
-	ProductionDef( const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_)
+	ProductionDef( const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_, const TriggerCall& call_ = TriggerCall())
 		:left(leftname_,true/*symbol*/),right(right_),priority(priority_){}
 	ProductionDef( const ProductionDef& o)
-		:left(o.left),right(o.right),priority(o.priority){}
+		:left(o.left),right(o.right),priority(o.priority),call(o.call){}
 	ProductionDef& operator=( const ProductionDef& o)
-		{left=o.left; right=o.right; priority=o.priority; return *this;}
-	ProductionDef( ProductionDef&& o)
-		:left(std::move(o.left)),right(std::move(o.right)),priority(o.priority){}
-	ProductionDef& operator=( ProductionDef&& o)
-		{left=std::move(o.left); right=std::move(o.right); priority=o.priority; return *this;}
-
+		{left=o.left; right=o.right; priority=o.priority; call=o.call; return *this;}
 
 	std::string tostring() const
 	{
@@ -203,9 +231,34 @@ struct ProductionDef
 	}
 
 private:
+	std::string call_tostring() const
+	{
+		if (call.proc.empty()) return std::string();
+
+		std::string rt = std::string("(");
+		rt.append( call.proc);
+		switch (call.argtype)
+		{
+			case TriggerCall::NoArg:
+				break;
+			case TriggerCall::StringArg:
+				rt.append( ",");
+				rt.append( "\"");
+				rt.append( call.arg);
+				rt.append( "\"");
+				break;
+			case TriggerCall::ReferenceArg:
+				rt.append( ",");
+				rt.append( call.arg);
+				break;
+		}
+		rt.append( ")");
+		return rt;
+	}
+	
 	std::string head_tostring() const
 	{
-		return priority.defined() ? (std::string( left.name()) + "/" + priority.tostring()) : std::string( left.name());
+		return priority.defined() ? (std::string( left.name()) + call_tostring() + "/" + priority.tostring()) : (std::string( left.name()) + call_tostring());
 	}
 
 	static std::string element_range_tostring( ProductionNodeDefList::const_iterator ri, const ProductionNodeDefList::const_iterator& re)
@@ -804,8 +857,13 @@ static LanguageDef parseLanguageDef( const std::string& source)
 	LanguageDef rt;
 	enum State {
 		Init,
+		ParseProductionAttributes1,
+		ParseProductionAttributes2,
 		ParsePriority,
-		ParsePriorityNumber,
+		ParseCallName,
+		ParseCallSep,
+		ParseCallArg,
+		ParseCallClose,
 		ParseAssign,
 		ParseProductionElement,
 		ParseEndOfProduction,
@@ -820,7 +878,9 @@ static LanguageDef parseLanguageDef( const std::string& source)
 		static const char* stateName( State state)
 		{
 			static const char* ar[] = {
-					"Init","ParsePriority","ParsePriorityNumber","ParseAssign","ParseProductionElement","ParseEndOfProduction",
+					"Init","ParseProductionAttributes1","ParseProductionAttributes2","ParsePriority",
+					"ParseCallName","ParseCallSep","ParseCallArg","ParseCallClose",
+					"ParseAssign","ParseProductionElement","ParseEndOfProduction",
 					"ParsePattern","ParsePatternSelect","ParseEndOfLexemDef","ParseLexerCommand","ParseLexerCommandArg"};
 			return ar[ state];
 		}
@@ -841,6 +901,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 		std::map<std::string_view, int> nonTerminalIdMap;
 		std::set<std::string_view> usedSet;
 		Priority priority;
+		TriggerCall call;
 		int selectidx = 0;
 
 		lexem = grammarLexer.next( scanner);
@@ -857,13 +918,25 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						rulename = lexem.value();
 						patternstr.remove_suffix( patternstr.size());
-						priority = Priority();
 						selectidx = 0;
-						state = ParsePriority;
+						priority = Priority();
+						call = TriggerCall();
+						state = ParseProductionAttributes1;
 					}
 					else if (state == ParseProductionElement)
 					{
 						rt.prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), true/*symbol*/));
+					}
+					else if (state == ParseCallName)
+					{
+						call.proc = lexem.value();
+						state = ParseCallSep;
+					}
+					else if (state == ParseCallArg)
+					{
+						call.arg = lexem.value();
+						call.argtype = TriggerCall::ReferenceArg;
+						state = ParseCallClose;
 					}
 					else if (state == ParseLexerCommand)
 					{
@@ -879,8 +952,55 @@ static LanguageDef parseLanguageDef( const std::string& source)
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}	
 					break;
+				case GrammarLexer::CALL:
+					if (state == ParseCallName)
+					{
+						call.proc = lexem.value();
+						state = ParseCallSep;
+					}
+					else if (state == ParseCallArg)
+					{
+						call.arg = lexem.value();
+						call.argtype = TriggerCall::ReferenceArg;
+						state = ParseCallClose;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::OPENBRK:
+					if (state == ParseProductionAttributes1)
+					{
+						state = ParseCallName;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::COMMA:
+					if (state == ParseCallSep)
+					{
+						state = ParseCallArg;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::CLOSEBRK:
+					if (state == ParseCallSep || state == ParseCallClose)
+					{
+						state = ParseProductionAttributes1;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
 				case GrammarLexer::NUMBER:
-					if (state == ParsePriorityNumber)
+					if (state == ParsePriority)
 					{
 						priority = convertStringToPriority( lexem.value());
 						state = ParseAssign;
@@ -889,6 +1009,12 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						selectidx = convertStringToInt( lexem.value());
 						state = ParseEndOfLexemDef;
+					}
+					else if (state == ParseCallArg)
+					{
+						call.arg = lexem.value();
+						call.argtype = TriggerCall::ReferenceArg;
+						state = ParseCallClose;
 					}
 					else
 					{
@@ -910,6 +1036,12 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						if (!rt.lexer.lexemId( lexem.value())) rt.lexer.defineLexem( lexem.value());
 						rt.prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), false/*not a symbol, raw string implicitely defined*/));
+					}
+					else if (state == ParseCallArg)
+					{
+						call.arg = lexem.value();
+						call.argtype = TriggerCall::StringArg;
+						state = ParseCallClose;
 					}
 					else
 					{
@@ -938,9 +1070,9 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					}
 					break;
 				case GrammarLexer::SLASH:
-					if (state == ParsePriority)
+					if (state == ParseProductionAttributes1 || state == ParseProductionAttributes2)
 					{
-						state = ParsePriorityNumber;
+						state = ParsePriority;
 					}
 					else
 					{
@@ -949,7 +1081,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					break;
 				case GrammarLexer::EQUAL:
 				case GrammarLexer::ARROW:
-					if (state == ParsePriority || state == ParseAssign)
+					if (state == ParseProductionAttributes1 || state == ParseProductionAttributes2 || state == ParseAssign)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
 						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
@@ -966,7 +1098,11 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						throw Error( Error::PriorityDefNotForLexemsInGrammarDef);
 					}
-					else if (state == ParsePriority)
+					else if (state == ParseProductionAttributes2)
+					{
+						throw Error( Error::TriggerCallNotForLexemsInGrammarDef);
+					}
+					else if (state == ParseProductionAttributes1)
 					{
 						state = ParsePattern;
 					}
@@ -1021,6 +1157,14 @@ static LanguageDef parseLanguageDef( const std::string& source)
 						throw Error( Error::UnexpectedEndOfRuleInGrammarDef, StateContext::stateName( state));
 					}
 					state = Init;
+					break;
+				case GrammarLexer::OR:
+					if (state == ParseProductionElement || state == ParseEndOfProduction)
+					{
+						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
+						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
+						state = ParseProductionElement;
+					}
 					break;
 			}
 		}

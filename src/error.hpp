@@ -38,7 +38,8 @@ public:
 		ExpectedPriorityInGrammarDef=207,
 
 		PriorityDefNotForLexemsInGrammarDef=221,
-		UnexpectedEndOfRuleInGrammarDef=222,
+		TriggerCallNotForLexemsInGrammarDef=222,
+		UnexpectedEndOfRuleInGrammarDef=231,
 
 		CommandNumberOfArgumentsInGrammarDef=241,
 
