@@ -54,7 +54,7 @@ public:
 		ShiftReduceConflictInGrammarDef=401,
 		ReduceReduceConflictInGrammarDef=402,
 		ShiftShiftConflictInGrammarDef=403,
-		
+
 		ComplexityMaxStateInGrammarDef=501,
 		ComplexityMaxProductionLengthInGrammarDef=502,
 		ComplexityMaxNonterminalInGrammarDef=503,
@@ -67,6 +67,8 @@ public:
 	Error( Code code_, const std::string& param_, int line_=0)
                 :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_param(param_),m_line(line_){}
 	Error( Code code_, const std::string_view& param_, int line_=0)
+                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_param(std::string(param_)),m_line(line_){}
+	Error( Code code_, const char* param_, int line_=0)
                 :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_param(std::string(param_)),m_line(line_){}
 	Error( const Error& o)
                 :std::runtime_error(o),m_code(o.m_code),m_param(o.m_param),m_line(o.m_line){}

@@ -26,19 +26,23 @@ public:
 	{
 		ERROR=-1,
 		NONE=0,
-		IDENT=1,
+		IDENT,
 		NUMBER,
 		DQSTRING,
 		SQSTRING,
 		PERCENT,
 		SLASH,
 		EQUAL,
+		ARROW,
 		DDOT,
-		SEMICOLON
+		SEMICOLON,
+		EPSILON
 	};
 
 	GrammarLexer()
 	{
+		defineEolnComment( "//");
+		defineBracketComment( "/*", "*/");
 		defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
 		defineLexem( "NUMBER", "[0-9]+");
 		defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n])|([\\\\][^\"\\n]))*)[\"]", 1);
@@ -46,8 +50,10 @@ public:
 		defineLexem( "%");
 		defineLexem( "/");
 		defineLexem( "=");
+		defineLexem( "→");
 		defineLexem( ":");
 		defineLexem( ";");
+		defineLexem( "ε");
 	}
 };
 
@@ -278,10 +284,12 @@ static std::set<int> getLr1FirstSet(
 
 static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const std::vector<ProductionDef>& prodlist)
 {
-	TransitionState rt;
-	for (auto item : ts)
+	TransitionState rt( ts);
+	std::vector<TransitionItem> orig( ts.begin(), ts.end());
+
+	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
 	{
-		rt.insert( item);
+		auto item = orig[ oidx];
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -293,7 +301,11 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 				{
 					if (prodlist[ prodidx].left.index() == nd.index())
 					{
-						rt.insert( TransitionItem( prodidx, 0, 0/*follow*/, 0/*priority*/));
+						TransitionItem insitem( prodidx, 0, 0/*follow*/, 0/*priority*/);
+						if (rt.insert( insitem).second == true/*insert took place*/)
+						{
+							orig.push_back( insitem);
+						}
 					}
 				}
 			}
@@ -308,10 +320,12 @@ static TransitionState getLr1TransitionStateClosure(
 				const std::map<int, std::set<int> >& nonTerminalFirstSetMap,
 				const std::set<int>& nullableNonterminalSet)
 {
-	TransitionState rt;
-	for (auto item : ts)
+	TransitionState rt( ts);
+	std::vector<TransitionItem> orig( ts.begin(), ts.end());
+
+	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
 	{
-		rt.insert( item);
+		auto item = orig[ oidx];
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -329,7 +343,11 @@ static TransitionState getLr1TransitionStateClosure(
 										nonTerminalFirstSetMap, nullableNonterminalSet);
 						for (auto follow :firstOfRest)
 						{
-							rt.insert( TransitionItem( prodidx, 0, follow, trigger_prod.priority));
+							TransitionItem insitem( prodidx, 0, follow, trigger_prod.priority);
+							if (rt.insert( insitem).second == true/*insert took place*/)
+							{
+								orig.push_back( insitem);
+							}
 						}
 					}
 				}
@@ -342,7 +360,7 @@ static TransitionState getLr1TransitionStateClosure(
 static TransitionState getLr0TransitionStateFromLr1State( const TransitionState& ts)
 {
 	TransitionState rt;
-	for (auto item : ts)
+	for (auto const& item : ts)
 	{
 		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, 0/*priority*/));
 	}
@@ -388,7 +406,7 @@ private:
 static std::set<ProductionNode> getGotoNodes( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
 	std::set<ProductionNode> rt;
-	for (auto item : state)
+	for (auto const& item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -402,7 +420,7 @@ static std::set<ProductionNode> getGotoNodes( const TransitionState& state, cons
 static std::set<ProductionNode> getReduceNodes( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
 	std::set<ProductionNode> rt;
-	for (auto item : state)
+	for (auto const& item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos == (int)prod.right.size())
@@ -417,7 +435,7 @@ static Priority getShiftPriority( const TransitionState& state, int terminal, co
 {
 	Priority priority;
 	int last_prodidx = -1;
-	for (auto item : state)
+	for (auto const& item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -457,7 +475,7 @@ static ReductionDef getReductionDef( const TransitionState& state, int terminal,
 {
 	ReductionDef rt;
 	int last_prodidx = -1;
-	for (auto item : state)
+	for (auto const& item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.follow == terminal && item.prodpos == (int)prod.right.size())
@@ -484,7 +502,7 @@ static std::string getStateTransitionString( const TransitionState& state, int t
 	const char* redustr = nullptr;
 	const char* shiftstr = nullptr;
 	std::string prodstr;
-	for (auto item : state)
+	for (auto const& item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -526,7 +544,7 @@ static TransitionState getGotoState(
 				const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calcClosure)
 {
 	TransitionState gtoState;
-	for (auto item : state)
+	for (auto const& item : state)
 	{
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -549,15 +567,15 @@ static std::map<TransitionState,int> getAutomatonStateAssignments( const std::ve
 	rt.insert( {calcClosure( {{0,0,0,0}}), 1});
 	std::vector<TransitionState> statestk( {rt.begin()->first});
 
-	std::size_t stkidx = 0;
-	while (stkidx < statestk.size())
+	for (std::size_t stkidx = 0; stkidx < statestk.size(); ++stkidx)
 	{
-		auto const& state = statestk[ stkidx];
+		auto state = statestk[ stkidx];
 
 		auto gtos = getGotoNodes( state, prodlist);
-		for (auto gto : gtos)
+		for (auto const& gto : gtos)
 		{
 			auto newState = getGotoState( state, gto, prodlist, calcClosure);
+			if (newState.empty()) throw Error( Error::LogicError);
 			if (rt.insert( {newState,rt.size()+1}).second == true/*insert took place*/)
 			{
 				statestk.push_back( newState);
@@ -586,7 +604,7 @@ static std::set<int> getNullableNonterminalSet( const std::vector<ProductionDef>
 	while (changed)
 	{
 		changed = false;
-		for (auto prod : prodlist)
+		for (auto const& prod : prodlist)
 		{
 			auto ei = prod.right.begin(), ee = prod.right.end();
 			for (; ei != ee && ei->type() == ProductionNodeDef::NonTerminal
@@ -610,7 +628,7 @@ static std::map<int, std::set<int> >
 	while (changed)
 	{
 		changed = false;
-		for (auto prod : prodlist)
+		for (auto const& prod : prodlist)
 		{
 			auto ei = prod.right.begin(), ee = prod.right.end();
 			for (; ei != ee; ++ei)
@@ -636,8 +654,9 @@ static std::map<int, std::set<int> >
 						// so we force another iteration.
 						changed = true;
 					}
-					if (nullableNonterminalSet.find( ei->index()) == nullableNonterminalSet.end()) break;
+					if (nullableNonterminalSet.find( ei->index()) != nullableNonterminalSet.end()) continue;
 				}
+				break;
 			}
 			if (ei == ee)
 			{
@@ -789,11 +808,22 @@ static LanguageDef parseLanguageDef( const std::string& source)
 		ParsePriorityNumber,
 		ParseAssign,
 		ParseProductionElement,
+		ParseEndOfProduction,
 		ParsePattern,
 		ParsePatternSelect,
 		ParseEndOfLexemDef,
 		ParseLexerCommand,
 		ParseLexerCommandArg
+	};
+	struct StateContext
+	{
+		static const char* stateName( State state)
+		{
+			static const char* ar[] = {
+					"Init","ParsePriority","ParsePriorityNumber","ParseAssign","ParseProductionElement","ParseEndOfProduction",
+					"ParsePattern","ParsePatternSelect","ParseEndOfLexemDef","ParseLexerCommand","ParseLexerCommandArg"};
+			return ar[ state];
+		}
 	};
 	State state = Init;
 	GrammarLexer grammarLexer;
@@ -819,9 +849,9 @@ static LanguageDef parseLanguageDef( const std::string& source)
 			switch ((GrammarLexer::LexemType)lexem.id())
 			{
 				case GrammarLexer::ERROR:
-					throw Error( Error::BadCharacterInGrammarDef);
+					throw Error( Error::BadCharacterInGrammarDef, lexem.value());
 				case GrammarLexer::NONE:
-					throw Error( Error::LogicError); //... loop exit condition (lexem.empty()) met
+					throw Error( Error::LogicError, StateContext::stateName( state)); //... loop exit condition (lexem.empty()) met
 				case GrammarLexer::IDENT:
 					if (state == Init)
 					{
@@ -870,7 +900,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					if (state == ParsePattern)
 					{
 						patternstr = lexem.value();
-						state = ParsePriority;
+						state = ParsePatternSelect;
 					}
 					else if (state == ParseLexerCommandArg)
 					{
@@ -881,7 +911,20 @@ static LanguageDef parseLanguageDef( const std::string& source)
 						if (!rt.lexer.lexemId( lexem.value())) rt.lexer.defineLexem( lexem.value());
 						rt.prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), false/*not a symbol, raw string implicitely defined*/));
 					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
 					break;
+				case GrammarLexer::EPSILON:
+					if (state == ParseProductionElement && rt.prodlist.back().right.empty())
+					{
+						state = ParseEndOfProduction;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
 				case GrammarLexer::PERCENT:
 					if (state == Init)
 					{
@@ -905,6 +948,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					}
 					break;
 				case GrammarLexer::EQUAL:
+				case GrammarLexer::ARROW:
 					if (state == ParsePriority || state == ParseAssign)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
@@ -968,13 +1012,13 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						rt.lexer.defineLexem( rulename, patternstr, selectidx);
 					}
-					else if (state == ParseProductionElement)
+					else if (state == ParseProductionElement || state == ParseEndOfProduction)
 					{
 						// ... everything already done
 					}
 					else
 					{
-						throw Error( Error::UnexpectedEndOfRuleInGrammarDef, lexem.value());
+						throw Error( Error::UnexpectedEndOfRuleInGrammarDef, StateContext::stateName( state));
 					}
 					state = Init;
 					break;
@@ -983,7 +1027,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 		if (state != Init) throw Error( Error::UnexpectedEofInGrammarDef);
 
 		// [2] Label grammar production elements:
-		for (auto prod : rt.prodlist)
+		for (auto& prod : rt.prodlist)
 		{
 			if (rt.lexer.lexemId( prod.left.name()))
 			{
@@ -991,7 +1035,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 			}
 			prod.left.defineAsNonTerminal( nonTerminalIdMap.at( prod.left.name()));
 
-			for (auto element : prod.right)
+			for (auto& element : prod.right)
 			{
 				if (element.type() == ProductionNodeDef::Unresolved)
 				{
@@ -1013,7 +1057,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 		}
 
 		// [3] Test if all rules are reachable and the first rule defines a valid start symbol:
-		for (auto pr : prodmap)
+		for (auto const& pr : prodmap)
 		{
 			auto nt = nonTerminalIdMap.at( pr.first);
 			if (usedSet.find( pr.first) == usedSet.end())
@@ -1034,7 +1078,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 
 		// [4] Test if start symbol (head of first production) appears only once on the left side and never on the right side:
 		int startSymbolLeftCount = 0;
-		for (auto prod : rt.prodlist)
+		for (auto const& prod: rt.prodlist)
 		{
 			if (prod.left.index() == 1) ++startSymbolLeftCount;
 		}
@@ -1095,27 +1139,47 @@ static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 static void printProductions( const std::vector<ProductionDef>& prodlist, Automaton::DebugOutput dbgout)
 {
 	dbgout.out() << "-- Productions:" << std::endl;
-	for (auto prod : prodlist)
+	for (auto const& prod : prodlist)
 	{
 		dbgout.out() << prod.tostring() << std::endl;
 	}
 	dbgout.out() << std::endl;
 }
 
-static void printStates( const std::map<TransitionState,int>& lr0statemap, const std::map<TransitionState,int>& lr1statemap, const CalculateClosureLr1& calcClosureLr1,
+static void printLr0States( const std::map<TransitionState,int>& lr0statemap, const CalculateClosureLr1& calcClosureLr0,
+			    const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
+{
+	std::map<int,TransitionState> stateinvmap;
+	for (auto const& st : lr0statemap)
+	{
+		stateinvmap[ st.second] = st.first;
+	}
+	dbgout.out() << "-- LR(0) States:" << std::endl;
+	for (auto const& invst : stateinvmap)
+	{
+		dbgout.out() << "[" << invst.first << "]" << std::endl;
+		for (auto const& item : invst.second)
+		{
+			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << std::endl;
+		}
+	}
+	dbgout.out() << std::endl;
+}
+
+static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, const std::map<TransitionState,int>& lr1statemap, const CalculateClosureLr1& calcClosureLr1,
 			 const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
 {
 	std::map<int,TransitionState> stateinvmap;
-	for (auto st : lr1statemap)
+	for (auto const& st : lr1statemap)
 	{
 		int stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( st.first));
 		stateinvmap[ stateidx].insert( st.first.begin(), st.first.end());
 	}
-	dbgout.out() << "-- LALR(1) States (Merged LR(1) elements assigned to LR(1) states):" << std::endl;
-	for (auto invst : stateinvmap)
+	dbgout.out() << "-- LALR(1) States (Merged LR(1) elements assigned to LR(0) states):" << std::endl;
+	for (auto const& invst : stateinvmap)
 	{
 		dbgout.out() << "[" << invst.first << "]" << std::endl;
-		for (auto item : invst.second)
+		for (auto const& item : invst.second)
 		{
 			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos)
 					<< ", " << (item.follow ? lexer.lexemName( item.follow) : std::string_view("$"));
@@ -1123,29 +1187,29 @@ static void printStates( const std::map<TransitionState,int>& lr0statemap, const
 			{
 				if (item.prodindex == 0 && item.follow == 0)
 				{
-					dbgout.out() << "-> ACCEPT";
+					dbgout.out() << " -> ACCEPT";
 				}
 				else
 				{
 					ReductionDef rd = getReductionDef( invst.second, item.follow, prodlist);
-					ProductionNode gto( ProductionNode::NonTerminal, rd.head);
-					int to_stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( getGotoState( invst.second, gto, prodlist, calcClosureLr1)));
-					dbgout.out() << "-> REDUCE " << rd.headname << " #" << rd.count << " GOTO " << to_stateidx;
+					dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
 				}
-			}
-			else if (prodlist[ item.prodindex].right[ item.prodpos].type() == ProductionNodeDef::Terminal)
-			{
-				int terminal = prodlist[ item.prodindex].right[ item.prodpos].index();
-				ProductionNode gto( ProductionNode::Terminal, terminal);
-				int to_stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( getGotoState( invst.second, gto, prodlist, calcClosureLr1)));
-				dbgout.out() << "-> SHIFT " << prodlist[ item.prodindex].right[ item.prodpos].tostring() << " GOTO " << to_stateidx;
 			}
 			else
 			{
-				int nonterminal = prodlist[ item.prodindex].right[ item.prodpos].index();
-				ProductionNode gto( ProductionNode::NonTerminal, nonterminal);
-				int to_stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( getGotoState( invst.second, gto, prodlist, calcClosureLr1)));
-				dbgout.out() << "-> GOTO " << to_stateidx;
+				auto gto = prodlist[ item.prodindex].right[ item.prodpos];
+				auto gtoState = getGotoState( invst.second, gto, prodlist, calcClosureLr1);
+				if (gtoState.empty()) throw Error( Error::LogicError);
+				int to_stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( gtoState));
+
+				if (gto.type() == ProductionNodeDef::Terminal)
+				{
+					dbgout.out() << " -> SHIFT " << gto.tostring() << " GOTO " << to_stateidx;
+				}
+				else
+				{
+					dbgout.out() << " -> GOTO " << to_stateidx;
+				}
 			}
 			dbgout.out() << std::endl;
 		}
@@ -1170,14 +1234,17 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( langdef.prodlist, calcClosureLr0);
 	std::map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( langdef.prodlist, calcClosureLr1);
 
-	if (dbgout.enabled( DebugOutput::States)) printStates( stateAssignmentsLr0, stateAssignmentsLr1, calcClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
-
+	if (dbgout.enabled( DebugOutput::States))
+	{
+		printLr0States( stateAssignmentsLr0, calcClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
+		printLalr1States( stateAssignmentsLr0, stateAssignmentsLr1, calcClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
+	}
 	// [3] Test complexity boundaries:
 	if (stateAssignmentsLr0.size() >= MaxState)
 	{
 		throw Error( Error::ComplexityMaxStateInGrammarDef);
 	}
-	for (auto prod : langdef.prodlist) if (prod.right.size() > MaxProductionLength) 
+	for (auto const& prod : langdef.prodlist) if (prod.right.size() > MaxProductionLength) 
 	{
 		throw Error( Error::ComplexityMaxProductionLengthInGrammarDef);
 	}
@@ -1190,7 +1257,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::map<ActionKey,Priority> priorityMap;
 	int nofAcceptStates = 0;
 
-	for (auto lr1StateAssign : stateAssignmentsLr1)
+	for (auto const& lr1StateAssign : stateAssignmentsLr1)
 	{
 		auto const& lr1State = lr1StateAssign.first;
 		int stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( lr1State));
@@ -1201,9 +1268,11 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 			++nofAcceptStates;
 		}
 		auto gtos = getGotoNodes( lr1State, langdef.prodlist);
-		for (auto gto : gtos)
+		for (auto const& gto : gtos)
 		{
-			int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( getGotoState( lr1State, gto, langdef.prodlist, calcClosureLr1)));
+			auto gtoState = getGotoState( lr1State, gto, langdef.prodlist, calcClosureLr1);
+			if (gtoState.empty()) throw Error( Error::LogicError);
+			int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( gtoState));
 			if (gto.type() == ProductionNode::Terminal)
 			{
 				int terminal = gto.index();
@@ -1214,20 +1283,25 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 
 				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, shiftPriority, warnings);
 			}
+			else
+			{
+				auto gtoins = m_gotos.insert( {GotoKey( stateidx, gto.index()), Goto( to_stateidx)} );
+				if (gtoins.second == false && gtoins.first->second != Goto( to_stateidx))
+				{
+					throw Error( Error::LogicError); //.... should not happen
+				}
+			}
 		}
 		auto redus = getReduceNodes( lr1State, langdef.prodlist);
-		for (auto redu : redus)
+		for (auto const& redu : redus)
 		{
 			int terminal = redu.index();
 			ReductionDef rd = getReductionDef( lr1State, terminal, langdef.prodlist);
-			ProductionNode gto( ProductionNode::NonTerminal, rd.head);
-			int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( getGotoState( lr1State, gto, langdef.prodlist, calcClosureLr1)));
 
 			ActionKey key( stateidx, terminal);
 			Action action( Action::Reduce, rd.head, rd.count);
 
 			insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, rd.priority, warnings);
-			m_gotos[ GotoKey( stateidx, rd.head)] = Goto( to_stateidx);
 		}
 	}
 	if (nofAcceptStates == 0)

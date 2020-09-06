@@ -160,7 +160,7 @@ public:
 		Goto( const Goto& o)
 			:m_state(o.m_state){}
 
-		int state() const		{return m_state;}
+		int state() const				{return m_state;}
 
 		int packed() const
 		{
@@ -170,6 +170,8 @@ public:
 		{
 			return Goto( pkg);
 		}
+		bool operator == (const Goto& o) const 	{return m_state == o.m_state;}
+		bool operator != (const Goto& o) const 	{return m_state != o.m_state;}
 
 	private:
 		int m_state;

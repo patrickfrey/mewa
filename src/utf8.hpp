@@ -43,6 +43,29 @@ static inline bool utf8mid( unsigned char ch)
 	return (ch & B11000000) == B10000000;
 }
 
+static inline int bitScanReverse( const unsigned char& idx)
+{
+	uint32_t xx = idx;
+	if (!xx) return 0;
+#ifdef __x86_64__
+	uint32_t result; 
+	asm(" bsr %1, %0 \n" : "=r"(result) : "r"(xx) ); 
+	return result+1;
+#else
+	int ee = 1;
+	if ((xx & 0xF0))   { ee += 4; xx >>= 4; }
+	if ((xx & 0x0C))   { ee += 2; xx >>= 2; }
+	if ((xx & 0x02))   { ee += 1; }
+	return ee;
+#endif
+}
+
+static inline int utf8charlen( unsigned char ch)
+{
+	unsigned char cl = 9-bitScanReverse( (ch^0xFFU));
+	return cl>2?(cl-1):1;
+}
+
 } //namespace
 #endif
 

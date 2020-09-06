@@ -14,25 +14,12 @@
 
 #include "lexer.hpp"
 #include "error.hpp"
+#include "utilitiesForTests.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <cstdio>
-#include <cstring>
 
 using namespace mewa;
-
-static void writeFile( const std::string& filename, const std::string& content)
-{
-	FILE* ff = std::fopen( filename.c_str(), "w");
-	if (!ff) throw std::runtime_error( std::strerror( errno));
-	if (content.size() != std::fwrite( content.c_str(), 1, content.size(), ff))
-	{
-		std::fclose( ff);
-		throw std::runtime_error( std::strerror( std::ferror( ff)));
-	}
-	std::fclose( ff);
-}
 
 int main( int argc, const char* argv[] )
 {

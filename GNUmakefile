@@ -23,7 +23,7 @@ LDFLAGS := -g -pthread
 LDLIBS := -lm -lstdc++
 LIBOBJS := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o
 LIBRARY := $(BUILDDIR)/libmewa.a
-TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testGrammar
+TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testAutomaton
 
 # Build targets:
 all : $(LIBRARY) $(TESTPRG)
@@ -55,7 +55,7 @@ $(BUILDDIR)/%: $(BUILDDIR)/%.o
 test : all
 	$(BUILDDIR)/testLexer
 	$(BUILDDIR)/testScope
-	$(BUILDDIR)/testGrammar
+	$(BUILDDIR)/testAutomaton
 
 
 

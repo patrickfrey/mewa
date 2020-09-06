@@ -17,7 +17,7 @@ using namespace mewa;
 
 static std::string_view parseChar( char const*& si)
 {
-	if ((unsigned char)*si > 128)
+	if ((unsigned char)*si >= 128)
 	{
 		char const* start = si;
 		for (++si; *si && utf8mid(*si); ++si){}
@@ -29,9 +29,9 @@ static std::string_view parseChar( char const*& si)
 	}
 }
 
-static char parseFirstChar( char const*& si)
+static char parseFirstChar( char const*& si, bool allowNonAscii)
 {
-	if ((unsigned char)*si > 128 || (unsigned char)*si <= 32)
+	if ((unsigned char)*si <= 32U)
 	{
 		throw Error( Error::IllegalFirstCharacterInLexer, parseChar(si));
 	}
@@ -49,7 +49,14 @@ static char parseFirstChar( char const*& si)
 	}
 	else
 	{
-		return *si++;
+		char rt = *si;
+		int len = utf8charlen( *si);
+		if (!allowNonAscii && len > 1)
+		{
+			throw Error( Error::IllegalFirstCharacterInLexer, parseChar(si));
+		}
+		si += len;
+		return rt;
 	}
 }
 
@@ -69,7 +76,7 @@ static bool extractFirstCharacters( std::string& res, char const*& si, char eb)
 			}
 			else
 			{
-				char to = parseFirstChar( si);
+				char to = parseFirstChar( si, false/*!allowNonAscii*/);
 				if (to < from) std::swap( to, from);
 				for (; from <= to; ++from)
 				{
@@ -79,7 +86,7 @@ static bool extractFirstCharacters( std::string& res, char const*& si, char eb)
 		}
 		else
 		{
-			res.push_back( parseFirstChar( si));
+			res.push_back( parseFirstChar( si, false/*!allowNonAscii*/));
 		}
 		empty = false;
 	}
@@ -131,9 +138,9 @@ static bool skipMultiplicator( char const*& si)
 static std::string inverseCharset( const std::string& charset)
 {
 	std::string rt;
-	std::bitset<128> cset;
+	std::bitset<256> cset;
 	for (char ch : charset) cset.set( ch);
-	for (int ii=33; ii<128; ++ii) if (!cset.test(ii)) {rt.push_back(ii);}
+	for (int ii=33; ii<256; ++ii) if (!cset.test(ii)) {rt.push_back(ii);}
 	return rt;
 }
 
@@ -177,7 +184,7 @@ std::string LexemDef::activationCharacters( const std::string& source_)
 		}
 		else
 		{
-			rt.push_back( parseFirstChar( si));
+			rt.push_back( parseFirstChar( si, true/*allowNonAscii*/));
 			empty = false;
 		}
 	}
@@ -263,7 +270,7 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 		throw Error( Error::InvalidRegexInLexer, pattern);
 	}
 	int firstChars = 0;
-	for (int ii=0; ii<128; ++ii)
+	for (int ii=0; ii<256; ++ii)
 	{
 		if (m_defar.back().activate().test(ii))
 		{
@@ -329,7 +336,7 @@ void Lexer::defineBracketComment( const std::string_view& start, const std::stri
 
 bool Lexer::matchEolnComment( Scanner& scanner) const
 {
-	for (auto eolnComment : m_eolnComments)
+	for (auto const& eolnComment : m_eolnComments)
 	{
 		if (scanner.match( eolnComment.c_str()))
 		{
@@ -342,7 +349,7 @@ bool Lexer::matchEolnComment( Scanner& scanner) const
 int Lexer::matchBracketCommentStart( Scanner& scanner) const
 {
 	int rt = -1;
-	for (auto bracketComment : m_bracketComments)
+	for (auto const& bracketComment : m_bracketComments)
 	{
 		++rt;
 		if (scanner.match( bracketComment.first.c_str()))
@@ -436,7 +443,7 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 	{
 		rt.push_back( Definition( Definition::BadLexem, {m_errorLexemName}));
 	}
-	for (auto def : m_defar)
+	for (auto const& def : m_defar)
 	{
 		if (def.name().empty())
 		{
@@ -451,11 +458,11 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select()));
 		}
 	}
-	for (auto bc : m_bracketComments)
+	for (auto const& bc : m_bracketComments)
 	{
 		rt.push_back( Definition( Definition::BacketComment, {bc.first,bc.second}));
 	}
-	for (auto cc : m_eolnComments)
+	for (auto const& cc : m_eolnComments)
 	{
 		rt.push_back( Definition( Definition::EolnComment, {cc}));
 	}

@@ -51,7 +51,7 @@ public:
 
 	const std::string& name() const			{return m_name;}
 	const std::string& source() const		{return m_source;}
-	const std::bitset<128> activate() const		{return m_activate;}
+	const std::bitset<256> activate() const		{return m_activate;}
 	std::size_t select() const			{return m_select;}
 	int id() const					{return m_id;}
 	bool keyword() const				{return m_keyword;}
@@ -65,7 +65,7 @@ private:
 	std::string m_name;
 	std::string m_source;
 	std::regex m_pattern;
-	std::bitset<128> m_activate;
+	std::bitset<256> m_activate;
 	std::size_t m_select;
 	int m_id;
 	bool m_keyword;
