@@ -71,6 +71,7 @@ private:
 	bool m_keyword;
 };
 
+
 class Lexem
 {
 public:
@@ -99,6 +100,7 @@ private:
 	int m_id;
 	int m_line;
 };
+
 
 class Scanner
 {
@@ -132,6 +134,7 @@ private:
 	char const* m_srcitr;
 	int m_line;
 };
+
 
 class Lexer
 {
@@ -170,10 +173,41 @@ public:
 	std::string_view lexemName( int id) const;
 	Lexem next( Scanner& scanner) const;
 
-	int nofTerminals() const
+	int nofTerminals() const			{return m_namelist.size();}
+
+	class Definition
 	{
-		return m_namelist.size();
-	}
+	public:
+		enum Type
+		{
+			BadLexem,
+			NamedPatternLexem,
+			KeywordLexem,
+			IgnoreLexem,
+			EolnComment,
+			BacketComment
+		};
+		Definition( const Definition& o)
+			:m_type(o.m_type),m_arg(o.m_arg),m_select(o.m_select){}
+		Definition( Type type_, const std::vector<std::string>& arg_, int select_=0)
+			:m_type(type_),m_arg(arg_),m_select(select_){}
+
+		Type type() const				{return m_type;}
+		const std::string& name() const			{return m_arg[0];}
+		const std::string bad() const			{return m_arg.empty() ? std::string() : m_arg[0];}
+		const std::string pattern() const		{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
+		int select() const				{return m_select;}
+		const std::string ignore() const		{return m_arg.empty() ? std::string() : m_arg[0];}
+		const std::string start() const			{return m_arg.empty() ? std::string() : m_arg[0];}
+		const std::string end() const			{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
+
+	private:
+		Type m_type;
+		std::vector<std::string> m_arg;
+		int m_select;
+	};
+
+	std::vector<Definition> getDefinitions() const;
 
 private:
 	int defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select);

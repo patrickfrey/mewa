@@ -15,6 +15,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <iostream>
 
 namespace mewa {
 
@@ -37,6 +38,26 @@ public:
 	};
 
 public:
+	class DebugOutput
+	{
+	public:
+		DebugOutput( std::ostream& out_ = std::cerr) 
+			:m_out(out_){}
+		DebugOutput( const DebugOutput& o) 
+			:m_enabledMask(o.m_enabledMask),m_out(o.m_out){}
+
+		enum Type {None=0, Productions=1, Lexems=2, States=4, All=0xFF};
+
+		DebugOutput& enable( Type type_)	{m_enabledMask |= (int)(type_); return *this;}
+		bool enabled( Type type_) const		{return (m_enabledMask & (int)(type_)) == (int)(type_);}
+
+		std::ostream& out() const		{return m_out;}
+
+	private:
+		int m_enabledMask;
+		std::ostream& m_out;
+	};
+
 	class ActionKey
 	{
 	public:
@@ -166,7 +187,7 @@ public:
 	Automaton& operator=( Automaton&& o)
 		{m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos); return *this;}
 
-	void build( const std::string& fileName, const std::string& source, std::vector<Error>& warnings);
+	void build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout = DebugOutput());
 
 	const std::map<ActionKey,Action>& actions() const		{return m_actions;}
 	const std::map<GotoKey,Goto>& gotos() const				{return m_gotos;}

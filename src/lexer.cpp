@@ -254,7 +254,7 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 			{
 				m_namelist.push_back( std::string(name));
 			}
-			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, false/*keyword*/, select));
+			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, keyword_, select));
 			rt = ins.first->second;
 		}
 	}
@@ -429,4 +429,36 @@ Lexem Lexer::next( Scanner& scanner) const
 	}
 }
 
+std::vector<Lexer::Definition> Lexer::getDefinitions() const
+{
+	std::vector<Lexer::Definition> rt;
+	if (m_errorLexemName != "?")
+	{
+		rt.push_back( Definition( Definition::BadLexem, {m_errorLexemName}));
+	}
+	for (auto def : m_defar)
+	{
+		if (def.name().empty())
+		{
+			rt.push_back( Definition( Definition::IgnoreLexem, {def.source()}, 0));
+		}
+		else if (def.keyword())
+		{
+			rt.push_back( Definition( Definition::KeywordLexem, {def.name()}));
+		}
+		else
+		{
+			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select()));
+		}
+	}
+	for (auto bc : m_bracketComments)
+	{
+		rt.push_back( Definition( Definition::BacketComment, {bc.first,bc.second}));
+	}
+	for (auto cc : m_eolnComments)
+	{
+		rt.push_back( Definition( Definition::EolnComment, {cc}));
+	}
+	return rt;
+}
 
