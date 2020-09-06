@@ -461,7 +461,7 @@ static ReductionDef getReductionDef( const TransitionState& state, int terminal,
 				rt.count = prod.right.size();
 				last_prodidx = item.prodindex;
 			}
-			else if (rt.priority != item.priority || rt.head != prod.left.index() || rt.count != prod.right.size())
+			else if (rt.priority != item.priority || rt.head != prod.left.index() || rt.count != (int)prod.right.size())
 			{
 				throw Error( Error::PriorityConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring());
 			}

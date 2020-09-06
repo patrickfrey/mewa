@@ -22,10 +22,18 @@ class Automaton
 {
 public:
 	enum {
-		ShiftState = 15, MaxState = 1<<ShiftState, MaskState = MaxState-1,
-		ShiftProductionLength = 5, MaxProductionLength = 1<<ShiftProductionLength, MaskProductionLength = MaxProductionLength-1,
-		ShiftNonterminal = 10, MaxNonterminal = 1<<ShiftNonterminal, MaskNonterminal = MaxNonterminal-1,
-		ShiftTerminal = 10, MaxTerminal = 1<<ShiftTerminal, MaskTerminal = MaxTerminal-1
+		ShiftState = 15, 
+			MaxState = 1<<ShiftState,
+			MaskState = MaxState-1,
+		ShiftProductionLength = 5,
+			MaxProductionLength = 1<<ShiftProductionLength,
+			MaskProductionLength = MaxProductionLength-1,
+		ShiftNonterminal = 10,
+			MaxNonterminal = 1<<ShiftNonterminal,
+			MaskNonterminal = MaxNonterminal-1,
+		ShiftTerminal = 10,
+			MaxTerminal = 1<<ShiftTerminal,
+			MaskTerminal = MaxTerminal-1
 	};
 
 public:
