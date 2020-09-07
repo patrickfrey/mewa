@@ -21,12 +21,13 @@ CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisib
 INCFLAGS := "-I$(SRCDIR)"
 LDFLAGS := -g -pthread
 LDLIBS := -lm -lstdc++
-LIBOBJS := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o
+LIBOBJS := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o $(BUILDDIR)/fileio.o
 LIBRARY := $(BUILDDIR)/libmewa.a
 TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testAutomaton
+PROGRAM := $(BUILDDIR)/mewa 
 
 # Build targets:
-all : $(LIBRARY) $(TESTPRG)
+all : $(LIBRARY) $(PROGRAM) $(TESTPRG)
 
 clean:
 	rm $(BUILDDIR)/* .depend
@@ -47,6 +48,7 @@ $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp
 	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
+	rm $(LIBRARY)
 	$(AR) $(LIBRARY) $(LIBOBJS)
 
 $(BUILDDIR)/%: $(BUILDDIR)/%.o
@@ -56,6 +58,5 @@ test : all
 	$(BUILDDIR)/testLexer
 	$(BUILDDIR)/testScope
 	$(BUILDDIR)/testAutomaton
-
 
 

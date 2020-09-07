@@ -14,6 +14,7 @@
 
 #include "automaton.hpp"
 #include "error.hpp"
+#include "fileio.hpp"
 #include "utilitiesForTests.hpp"
 #include <iostream>
 #include <sstream>
@@ -39,7 +40,9 @@ int main( int argc, const char* argv[] )
 				std::cerr << "Usage: testAutomaton [-h][-v]" << std::endl;
 			}
 		}
+		PseudoRandom random;
 
+		// [1] Test Automaton building
 		std::ostringstream outputstream;
 		outputstream << std::endl;
 
@@ -162,6 +165,8 @@ V = "*" E
 	N = V "=" E . , IDENT -> REDUCE N #3
 	N = V "=" E . , * -> REDUCE N #3
 
+-- Function calls:
+
 )"};
 		if (verbose)
 		{
@@ -174,20 +179,53 @@ V = "*" E
 			std::cerr << "ERR test output (build/testAutomaton.out) differs expected build/testAutomaton.exp" << std::endl;
 			return 3;
 		}
+
+		// [2] Test packing
+		for (int ii=0; ii<1000; ++ii)
+		{
+			Automaton::ActionKey actionKey( 
+							random.get( 0, Automaton::MaxState)/*state*/,
+							random.get( 0, Automaton::MaxTerminal)/*terminal*/);
+			Automaton::Action::Type atype = (Automaton::Action::Type)random.get( 0, 3);
+			Automaton::Action action( atype,
+							random.get( 0, Automaton::MaxState)/*value*/,
+							random.get( 0, Automaton::MaxCall)/*call*/,
+							random.get( 0, Automaton::MaxProductionLength)/*count*/);
+			Automaton::GotoKey gtoKey( 
+							random.get( 0, Automaton::MaxState)/*state*/,
+							random.get( 0, Automaton::MaxNonterminal)/*nonterminal*/);
+			Automaton::Goto gto( 
+							random.get( 0, Automaton::MaxState)/*state*/);
+
+			Automaton::ActionKey actionKey2 = Automaton::ActionKey::unpack( actionKey.packed());
+			Automaton::Action action2 = Automaton::Action::unpack( action.packed());
+			Automaton::GotoKey gtoKey2 = Automaton::GotoKey::unpack( gtoKey.packed());
+			Automaton::Goto gto2 = Automaton::Goto::unpack( gto.packed());
+
+			if (actionKey2 != actionKey)
+			{
+				throw std::runtime_error( "packing/unpacking of action key failed");
+			}
+			if (action2 != action)
+			{
+				throw std::runtime_error( "packing/unpacking of action structure failed");
+			}
+			if (gtoKey2 != gtoKey)
+			{
+				throw std::runtime_error( "packing/unpacking of goto key failed");
+			}
+			if (gto2 != gto)
+			{
+				throw std::runtime_error( "packing/unpacking of goto structure failed");
+			}
+		}
 		std::cerr << "OK" << std::endl;
 
 		return 0;
 	}
 	catch (const mewa::Error& err)
 	{
-		if (err.line())
-		{
-			std::cerr << "ERR " << (int)err.code() << " " << err.arg() << " AT LINE " << err.line() << std::endl;
-		}
-		else
-		{
-			std::cerr << "ERR " << (int)err.code() << " " << err.arg() << std::endl;
-		}
+		std::cerr << "ERR " << err.what() << std::endl;
 		return (int)err.code();
 	}
 	catch (const std::runtime_error& err)

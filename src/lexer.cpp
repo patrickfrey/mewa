@@ -13,7 +13,7 @@
 
 using namespace mewa;
 
-#define REGEX_ESCAPE_CHARS "#{}[]()*+?.-\\"
+#define REGEX_ESCAPE_CHARS "#{}[]()*+?.-\\|&"
 
 static std::string_view parseChar( char const*& si)
 {
@@ -383,31 +383,37 @@ Lexem Lexer::next( Scanner& scanner) const
 		int matchidx = -1;
 		const char* matchstart = nullptr;
 		std::size_t matchsize = 0;
-		int cidx;
 		auto ri = range.first;
 		for (; ri != range.second; ++ri)
 		{
 			int idx = ri->second;
-			if (idx == MATCH_EOLN_COMMENT && matchEolnComment( scanner))
+			if (idx == MATCH_EOLN_COMMENT)
 			{
-				if (!scanner.scan( "\n"))
+				if (matchEolnComment( scanner))
 				{
-					return Lexem( scanner.line()); //... no EOLN then return EOF
+					if (!scanner.scan( "\n"))
+					{
+						return Lexem( scanner.line()); //... no EOLN then return EOF
+					}
+					break; //... comment skipped, fetch next lexem
 				}
-				break; //... comment skipped, fetch next lexem
 			}
-			else if (idx == MATCH_BRACKET_COMMENT && 0<=(cidx=matchBracketCommentStart( scanner)))
+			else if (idx == MATCH_BRACKET_COMMENT)
 			{
-				if (!scanner.scan( m_bracketComments[ cidx].second.c_str()))
+				int cidx = matchBracketCommentStart( scanner);
+				if (cidx >= 0)
 				{
-					return Lexem( m_errorLexemName, -1/*id*/, m_bracketComments[ cidx].first, scanner.line());
-					//... no matching end bracket of comment found, then return ERROR
+					if (!scanner.scan( m_bracketComments[ cidx].second.c_str()))
+					{
+						return Lexem( m_errorLexemName, -1/*id*/, m_bracketComments[ cidx].first, scanner.line());
+						//... no matching end bracket of comment found, then return ERROR
+					}
+					break; //... comment skipped, fetch next lexem
 				}
-				break; //... comment skipped, fetch next lexem
 			}
 			else
 			{
-				if (idx > (int)m_defar.size()) throw Error( Error::ArrayBoundReadInLexer);
+				if (idx >= (int)m_defar.size()) throw Error( Error::ArrayBoundReadInLexer);
 				auto mm = m_defar[ idx].match( start, scanner.restsize());
 				if (maxlen < mm.second)
 				{

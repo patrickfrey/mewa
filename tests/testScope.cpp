@@ -14,7 +14,7 @@
 
 #include "scope.hpp"
 #include "error.hpp"
-#include "utilitiesForTests.hpp"
+#include "fileio.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -127,7 +127,7 @@ int main( int argc, const char* argv[] )
 	}
 	catch (const mewa::Error& err)
 	{
-		std::cerr << "ERR " << (int)err.code() << " " << err.arg() << std::endl;
+		std::cerr << "ERR " << err.what() << std::endl;
 		return (int)err.code();
 	}
 	catch (const std::runtime_error& err)

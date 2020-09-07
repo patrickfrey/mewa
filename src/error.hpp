@@ -14,6 +14,7 @@
 #include <string>
 #include <stdexcept>
 #include <cstdio>
+#include <cstring>
 
 namespace mewa {
 
@@ -23,43 +24,41 @@ class Error
 public:
 	enum Code {
 		Ok=0,
-		LogicError=11,
-		IllegalFirstCharacterInLexer=101,
-		SyntaxErrorInLexer=102,
-		ArrayBoundReadInLexer=103,
-		InvalidRegexInLexer=104,
+		LogicError=401,
+		FileReadError=402,
+		IllegalFirstCharacterInLexer=501,
+		SyntaxErrorInLexer=502,
+		ArrayBoundReadInLexer=503,
+		InvalidRegexInLexer=504,
 
-		BadCharacterInGrammarDef=201,
-		ValueOutOfRangeInGrammarDef=202,
-		UnexpectedEofInGrammarDef=203,
-		UnexpectedTokenInGrammarDef=204,
-		ExpectedRuleIdentifierInGrammarDef=205,
-		ExpectedNumberInGrammarDef=206,
-		ExpectedPriorityInGrammarDef=207,
+		BadCharacterInGrammarDef=601,
+		ValueOutOfRangeInGrammarDef=602,
+		UnexpectedEofInGrammarDef=603,
+		UnexpectedTokenInGrammarDef=604,
 
-		PriorityDefNotForLexemsInGrammarDef=221,
-		TriggerCallNotForLexemsInGrammarDef=222,
-		UnexpectedEndOfRuleInGrammarDef=231,
+		PriorityDefNotForLexemsInGrammarDef=621,
+		UnexpectedEndOfRuleInGrammarDef=631,
 
-		CommandNumberOfArgumentsInGrammarDef=241,
+		CommandNumberOfArgumentsInGrammarDef=641,
+		CommandNameUnknownInGrammarDef=642,
 
-		DefinedAsTerminalAndNonterminalInGrammarDef=301,
-		UnresolvedIdentifierInGrammarDef=302,
-		UnreachableNonTerminalInGrammarDef=303,
-		StartSymbolReferencedInGrammarDef=304,
-		StartSymbolDefinedTwiceInGrammarDef=305,
-		EmptyGrammarDef=306,
-		PriorityConflictInGrammarDef=307,
-		NoAcceptStatesInGrammarDef=308,
+		DefinedAsTerminalAndNonterminalInGrammarDef=701,
+		UnresolvedIdentifierInGrammarDef=702,
+		UnreachableNonTerminalInGrammarDef=703,
+		StartSymbolReferencedInGrammarDef=704,
+		StartSymbolDefinedTwiceInGrammarDef=705,
+		EmptyGrammarDef=706,
+		PriorityConflictInGrammarDef=707,
+		NoAcceptStatesInGrammarDef=708,
 
-		ShiftReduceConflictInGrammarDef=401,
-		ReduceReduceConflictInGrammarDef=402,
-		ShiftShiftConflictInGrammarDef=403,
+		ShiftReduceConflictInGrammarDef=801,
+		ReduceReduceConflictInGrammarDef=802,
+		ShiftShiftConflictInGrammarDef=803,
 
-		ComplexityMaxStateInGrammarDef=501,
-		ComplexityMaxProductionLengthInGrammarDef=502,
-		ComplexityMaxNonterminalInGrammarDef=503,
-		ComplexityMaxTerminalInGrammarDef=504,
+		ComplexityMaxStateInGrammarDef=901,
+		ComplexityMaxProductionLengthInGrammarDef=902,
+		ComplexityMaxNonterminalInGrammarDef=903,
+		ComplexityMaxTerminalInGrammarDef=904
 	};
 
 public:
@@ -80,20 +79,72 @@ public:
         const std::string& arg() const		{return m_param;}
         int line() const			{return m_line;}
 
+        static const char* code2String( int code_)
+	{
+		if (code_ < 300)
+		{
+			return std::strerror( code_);
+		}
+		else switch ((Code)code_)
+		{
+			case Ok: return "";
+			case FileReadError: return "Unknown error reading file, could not read until end of file";
+			case LogicError: return "Logic error";
+			case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
+			case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
+			case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";
+			case InvalidRegexInLexer: return "Bad regular expression definition for the lexer";
+
+			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
+			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";
+			case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
+			case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
+
+			case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
+			case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";
+
+			case CommandNumberOfArgumentsInGrammarDef: return "Wrong number of arguments for command (followed by '%') in the grammar definition";
+			case CommandNameUnknownInGrammarDef: return "Unknown command (followed by '%') in the grammar definition";
+
+			case DefinedAsTerminalAndNonterminalInGrammarDef: return "Identifier defined as nonterminal and as lexem in the grammar definition not allowed";
+			case UnresolvedIdentifierInGrammarDef: return "Unresolved identifier in the grammar definition";
+			case UnreachableNonTerminalInGrammarDef: return "Unreachable nonteminal in the grammar definition";
+			case StartSymbolReferencedInGrammarDef: return "Start symbol referenced on the right side of a rule in the grammar definition";
+			case StartSymbolDefinedTwiceInGrammarDef: return "Start symbol defined on the left side of more than one rule of the grammar definition";
+			case EmptyGrammarDef: return "The grammar definition is empty";
+			case PriorityConflictInGrammarDef: return "Priority definition conflict in the grammar definition";
+			case NoAcceptStatesInGrammarDef: return "No accept states in the grammar definition";
+
+			case ShiftReduceConflictInGrammarDef: return "SHIFT/REDUCE conflict in the grammar definition";
+			case ReduceReduceConflictInGrammarDef: return "REDUCE/REDUCE conflict in the grammar definition";
+			case ShiftShiftConflictInGrammarDef: return "SHIFT/SHIFT conflict in the grammar definition";
+
+			case ComplexityMaxStateInGrammarDef: return "To many states in the resulting tables of the grammar";
+			case ComplexityMaxProductionLengthInGrammarDef: return "To many productions in the resulting tables of the grammar";
+			case ComplexityMaxNonterminalInGrammarDef: return "To many nonterminals in the resulting tables of the grammar";
+			case ComplexityMaxTerminalInGrammarDef: return "To many terminals (lexems) in the resulting tables of the grammar";
+		}
+		return "Unknown error";
+	}
+
 private:
         static std::string map2string( Code code_, const std::string_view& param_, int line_)
 	{
 		char numbuf[ 128];
 		if (line_ > 0)
 		{
-			std::snprintf( numbuf, sizeof(numbuf), param_.empty()?"%d at line %d":"%d at line %d ", (int)code_, line_);
+			std::snprintf( numbuf, sizeof(numbuf), "error %d (%s) at line %d", (int)code_, code2String((int)code_), line_);
 		}
 		else
 		{
-			std::snprintf( numbuf, sizeof(numbuf), param_.empty()?"%d":"%d ", (int)code_);
+			std::snprintf( numbuf, sizeof(numbuf), "error %d (%s)", (int)code_, code2String((int)code_));
 		}
                 std::string rt(numbuf);
-                rt.append( param_.data(), param_.size());
+		if (!rt.empty())
+		{
+			rt.push_back(' ');
+			rt.append( param_.data(), param_.size());
+		}
                 return rt;
 	}
 private:
