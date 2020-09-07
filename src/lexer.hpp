@@ -185,7 +185,7 @@ public:
 			KeywordLexem,
 			IgnoreLexem,
 			EolnComment,
-			BacketComment
+			BracketComment
 		};
 		Definition( const Definition& o)
 			:m_type(o.m_type),m_arg(o.m_arg),m_select(o.m_select){}

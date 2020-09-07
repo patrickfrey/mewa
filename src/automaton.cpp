@@ -810,9 +810,9 @@ struct LanguageDef
 	std::vector<ProductionDef> prodlist;
 	std::vector<Automaton::Call> calls;
 
-	LanguageDef() = default;
-	LanguageDef( const LanguageDef& o) = default;
-	LanguageDef( LanguageDef&& o) = default;
+	LanguageDef() 				:language(),lexer(),prodlist(),calls(){};
+	LanguageDef( const LanguageDef& o) 	:language(o.language),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls){}
+	LanguageDef( LanguageDef&& o)  		:language(std::move(o.language)),lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)){}
 };
 
 static LanguageDef parseLanguageDef( const std::string& source)
@@ -920,6 +920,9 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						priority = convertStringToPriority( lexem.value());
 						state = ParseAssign;
+					}
+					else if (state == ParsePattern)
+					{
 					}
 					else
 					{
@@ -1038,6 +1041,7 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
 					}
+					break;
 				case GrammarLexer::PERCENT:
 					if (state == Init)
 					{
@@ -1258,7 +1262,7 @@ static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 			case Lexer::Definition::EolnComment:
 				dbgout.out() << "COMMENT " << def.start() << std::endl;
 				break;
-			case Lexer::Definition::BacketComment:
+			case Lexer::Definition::BracketComment:
 				dbgout.out() << "COMMENT " << def.start() << " " << def.end() << std::endl;
 				break;
 		}

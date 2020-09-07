@@ -48,7 +48,7 @@ $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp
 	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
-	rm $(LIBRARY)
+	-rm $(LIBRARY)
 	$(AR) $(LIBRARY) $(LIBOBJS)
 
 $(BUILDDIR)/%: $(BUILDDIR)/%.o

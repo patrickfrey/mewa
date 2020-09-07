@@ -466,7 +466,7 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 	}
 	for (auto const& bc : m_bracketComments)
 	{
-		rt.push_back( Definition( Definition::BacketComment, {bc.first,bc.second}));
+		rt.push_back( Definition( Definition::BracketComment, {bc.first,bc.second}));
 	}
 	for (auto const& cc : m_eolnComments)
 	{

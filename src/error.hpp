@@ -35,6 +35,7 @@ public:
 		ValueOutOfRangeInGrammarDef=602,
 		UnexpectedEofInGrammarDef=603,
 		UnexpectedTokenInGrammarDef=604,
+		ExpectedPatternInGrammarDef=605,
 
 		PriorityDefNotForLexemsInGrammarDef=621,
 		UnexpectedEndOfRuleInGrammarDef=631,
@@ -99,6 +100,7 @@ public:
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";
 			case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
 			case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
+			case ExpectedPatternInGrammarDef: return "Expected regular expression as first element of a lexem definition in the grammar";
 
 			case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 			case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";

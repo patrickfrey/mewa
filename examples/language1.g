@@ -16,7 +16,7 @@ program		   	= definitionlist
 definitionlist/L	= definition definitionlist
 			| ε
 			;
-definition		: functiondefinition
+definition		= functiondefinition
 			| variabledefinition
 			;
 typename		= IDENT
@@ -37,7 +37,7 @@ statementlist/L		= statement statementlist
 			;
 statement		= variabledefinition
 			| assignement
-			| expressionstatement
+			| expression
 			| returnstatement
 			| "{" statementlist "}"
 			;
@@ -48,44 +48,32 @@ variabledefinition	= typename IDENT "=" expression ";"
 			;  
 assignement		= variable "=" expression
 			;
-expressionstatement	= expression
-			;
 returnstatement	   	= "return" expression
 			;
-expression		= IDENT	  
+expression/L1		= variable
 			| CARDINAL
 			| FLOAT
 			| DQSTRING	
 			| SQSTRING	
 			| "(" expression ")"
 			;
-expression/L1		= expression  "+"  expression		(operator add)
+expression/L2		= expression  "+"  expression		(operator add)
 			| expression  "-"  expression		(operator sub) 
 			| "-"  expression			(operator minus)
 			| "+"  expression			(operator plus) 
 			;
-expression/L2		= expression  "*"  expression		(operator mul)	
+expression/L3		= expression  "*"  expression		(operator mul)	
 			| expression  "/"  expression		(operator div)
 			| expression  "%"  expression		(operator mod)
 			;
-expression/L3		= elementaccess
-			| arrayaccess
-			| functioncall
-			;	 
-elementaccess/L		= IDENT "->" IDENT
-			| elementaccess "->" IDENT 
-			| IDENT "." IDENT
-			| elementaccess "." IDENT 
+expression/L4		= expression "->" IDENT
+			| expression "." IDENT
 			;
-arrayaccess/L		= identifier "[" expression "]"
-			| arrayaccess "[" expression "]" 
+expression/L5		= expression  "(" callparamlist ")"
+			| expression  "(" ")"
+			| expression  "[" callparamlist "]"
 			;
 callparamlist		= expression "," callparamlist
-			| expression
+			| ε
 			;
-functioncall/L		= IDENT  "(" callparamlist ")"
-			| IDENT "(" ")" 
-			;
-
-
 

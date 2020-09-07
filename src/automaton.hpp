@@ -45,7 +45,7 @@ public:
 	{
 	public:
 		DebugOutput( std::ostream& out_ = std::cerr) 
-			:m_out(out_){}
+			:m_enabledMask(0),m_out(out_){}
 		DebugOutput( const DebugOutput& o) 
 			:m_enabledMask(o.m_enabledMask),m_out(o.m_out){}
 
