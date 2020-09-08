@@ -163,8 +163,6 @@ V = "*" E
 [10]
 	N = V "=" E . , $ -> REDUCE N #3
 
--- Function calls:
-
 )"};
 		if (verbose)
 		{

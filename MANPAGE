@@ -1,0 +1,32 @@
+.\" Manpage for mewa.
+.\" Contact patrickpfrey@yahoo.com.
+.TH man 1 "09 Sep 2020" "0.1" "mewa man page"
+.SH NAME
+mewa \- compiler compiler
+.SH SYNOPSIS
+mewa [-h][-v][-g][-o OUTF] INPUTFILE
+.SH DESCRIPTION
+.PP
+mewa is a compiler compiler that builds a lua module implementing a compiler described as an EBNF in the file INPUTFILE with some lua hooks implementing the type system and the code generation.
+.TP
+\fB\-h\fR
+Print this usage
+.TP
+\fB\-v\fR
+Verbose output to stderr
+.TP
+\fB\-g\fR
+Do generate parsing tables for import by lua module for 'mewa'
+.TP
+\fB\-o\fR \fIfile\fR
+Write the output (parsing tables) to \fIfile\fR instead of stdout.  
+.SH COPYRIGHT
+Copyright \(co 2020 Patrick Frey.
+License Mozilla Public License Version 2.0
+
+.SH SEE ALSO
+lua(1)
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Patrick Frey (patrickpfrey@yahoo.com)

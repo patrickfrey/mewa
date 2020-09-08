@@ -763,20 +763,23 @@ static void insertAction(
 	const Lexer& lexer)
 {
 	auto ains = actionMap.insert( {key, action} );
-	Priority storedPriority = priorityMap[ key];
+	auto pi =  priorityMap.find( key);
 
-	if (ains.second/*is new*/)
+	if (pi == priorityMap.end() || ains.second/*is new*/)
 	{
 		priorityMap[ key] = priority;
 	}
-	else if (priority.value > storedPriority.value)
+	else if (priority.value > pi->second.value)
 	{
 		actionMap[ key] = action;
 		priorityMap[ key] = priority;
 	}
-	else if (priority.value == storedPriority.value)
+	else if (priority.value == pi->second.value)
 	{
-		if (priority.assoziativity != storedPriority.assoziativity || priority.assoziativity == Assoziativity::Undefined)
+		if (ains.first->second == action)
+		{/*identical value inserted twice*/}
+
+		else if (priority.assoziativity != pi->second.assoziativity || priority.assoziativity == Assoziativity::Undefined)
 		{
 			warnings.push_back(
 				Error( Error::ShiftReduceConflictInGrammarDef, 
@@ -1373,26 +1376,29 @@ static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, 
 
 static void printFunctionCalls( const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
 {
-	dbgout.out() << "-- Function calls:" << std::endl;
-	int callidx = 0;
-	for (auto call : calls)
+	if (!calls.empty())
 	{
-		++callidx;
-		dbgout.out() << "(" << callidx << ") " << call.function();
-		switch (call.argtype())
+		dbgout.out() << "-- Function calls:" << std::endl;
+		int callidx = 0;
+		for (auto call : calls)
 		{
-			case Automaton::Call::NoArg:
-				break;
-			case Automaton::Call::ReferenceArg:
-				dbgout.out() << ", " << call.arg();
-				break;
-			case Automaton::Call::StringArg:
-				dbgout.out() << ", \"" << call.arg() << "\"";
-				break;
+			++callidx;
+			dbgout.out() << "(" << callidx << ") " << call.function();
+			switch (call.argtype())
+			{
+				case Automaton::Call::NoArg:
+					break;
+				case Automaton::Call::ReferenceArg:
+					dbgout.out() << ", " << call.arg();
+					break;
+				case Automaton::Call::StringArg:
+					dbgout.out() << ", \"" << call.arg() << "\"";
+					break;
+			}
+			dbgout.out() << std::endl;
 		}
 		dbgout.out() << std::endl;
 	}
-	dbgout.out() << std::endl;
 }
 
 void Automaton::build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout)
@@ -1463,7 +1469,10 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 
 				ActionKey key( stateidx, terminal);
 				Action action( Action::Shift, to_stateidx);
-
+				/*[-]*/if (terminal == 0)
+				/*[-]*/{
+				/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
+				/*[-]*/}
 				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, shiftPriority, warnings, langdef.lexer);
 			}
 			else

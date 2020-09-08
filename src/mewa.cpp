@@ -32,15 +32,16 @@ static const char* g_typeSystemModulePrefix = "typesystem.";
 static void printUsage()
 {
 	std::cerr << "Usage: mewa [-h][-v][-g][-o <OUTF>] <inputfile>" << std::endl;
-	std::cerr << "Description: Check the grammar passed in <inputfile> and do some actions\n";
-	std::cerr << "             specified as option.\n";
+	std::cerr << "Description: Build a lua module implementing a compiler described as\n";
+	std::cerr << "             an EBNF and some lua hooks implementing the type system\n";
+	std::cerr << "             and the code generation.\n";
 	std::cerr << "Options:\n";
 	std::cerr << " -h         : Print this usage\n";
 	std::cerr << " -v         : Verbose output to stderr\n";
 	std::cerr << " -g         : Action do generate parsing tables for import by lua module for 'mewa'\n";
 	std::cerr << " -o <OUTF>  : Write the output to file with path <OUTF> instead of stdout.\n";
 	std::cerr << "Arguments:\n";
-	std::cerr << "<inputfile> : Contains the description of the grammar to process\n";
+	std::cerr << "<inputfile> : Contains the EBNF of the grammar to process with the Lua hooks embedded.\n";
 }
 
 static void printWarning( const std::string& filename, const Error& error)
