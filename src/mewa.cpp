@@ -65,8 +65,14 @@ static void printTable( std::ostream& outstream, const char* tablename, const TA
 	int tidx = 0;
 	for (auto keyval : table)
 	{
-		outstream << ((tidx++) ? ",\n\t\t" : "\n\t\t");
-		outstream << "[" << keyval.first.packed() << "] = " << keyval.second.packed();
+		const char* sepc = tidx ? ",":"";
+		const char* shft = ((tidx & 3) == 0) ? "\n\t\t" : "\t";
+		++tidx;
+		/*[-]*/if (keyval.second.packed() < 0)
+		/*[-]*/{
+		/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
+		/*[-]*/}
+		outstream << sepc << shft << "[" << keyval.first.packed() << "] = " << keyval.second.packed();
 	}
 	outstream << (sep ? "},\n" : "}\n");
 }
@@ -113,17 +119,30 @@ static void printCallTable( std::ostream& outstream, const char* tablename, cons
 static void printAutomaton( const std::string& filename, const Automaton& automaton)
 {
 	std::ostringstream outstream;
-	outstream << "typesystem = require(\"typesystem\")\n";
+	outstream << "#!/usr/bin/lua\n";
+	if (!automaton.typesystem().empty())
+	{
+		outstream << "typesystem = require(\"" << automaton.typesystem() << "\")\n";
+	}
+	else
+	{
+		outstream << "typesystem = require(\"typesystem\")\n";
+	}
+	outstream << "mewa = require(\"mewa\")\n\n";
+
 	outstream << "compiler = {\n";
 	if (!automaton.language().empty())
 	{
-		outstream << "\tlanguage = \"" << automaton.language() << "\"";
+		outstream << "\tlanguage = \"" << automaton.language() << "\",\n";
 	}
 	printTable( outstream, "action", automaton.actions(), true/*sep*/);
 	printTable( outstream, "gto", automaton.gotos(), true/*sep*/);
 	std::string callprefix = "typesystem.";
 	printCallTable( outstream, "call", automaton.calls(), false/*sep*/);
 	outstream << "}\n\n";
+
+	outstream << "typesystem.options, files = typesystem.parseArguments( arg)\n";
+	outstream << "for fi = 1, #files do\n\tmewa.compile( compiler, files[fi] )\nend\n";
 
 	if (filename.empty())
 	{

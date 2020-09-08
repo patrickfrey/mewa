@@ -1,5 +1,6 @@
 
 % LANGUAGE test ;
+% TYPESYSTEM typesystem1 ;
 % COMMENT "/*" "*/" ;
 % COMMENT "//" ;
 

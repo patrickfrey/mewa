@@ -762,6 +762,10 @@ static void insertAction(
 	std::vector<Error>& warnings,
 	const Lexer& lexer)
 {
+	/*[-]*/if (action.packed() < 0)
+	/*[-]*/{
+	/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
+	/*[-]*/}
 	auto ains = actionMap.insert( {key, action} );
 	auto pi =  priorityMap.find( key);
 
@@ -817,13 +821,18 @@ static void insertAction(
 struct LanguageDef
 {
 	std::string language;
+	std::string typesystem;
 	Lexer lexer;
 	std::vector<ProductionDef> prodlist;
 	std::vector<Automaton::Call> calls;
 
-	LanguageDef() 				:language(),lexer(),prodlist(),calls(){};
-	LanguageDef( const LanguageDef& o) 	:language(o.language),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls){}
-	LanguageDef( LanguageDef&& o)  		:language(std::move(o.language)),lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)){}
+	LanguageDef()
+		:language(),typesystem(),lexer(),prodlist(),calls(){};
+	LanguageDef( const LanguageDef& o)
+		:language(o.language),typesystem(o.typesystem),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls){}
+	LanguageDef( LanguageDef&& o)
+		:language(std::move(o.language)),typesystem(std::move(o.typesystem))
+		,lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)){}
 };
 
 static LanguageDef parseLanguageDef( const std::string& source)
@@ -1110,6 +1119,11 @@ static LanguageDef parseLanguageDef( const std::string& source)
 						{
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
 							rt.language = std::string( cmdargs[ 0]);
+						}
+						else if (caseInsensitiveEqual( cmdname, "TYPESYSTEM"))
+						{
+							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
+							rt.typesystem = std::string( cmdargs[ 0]);
 						}
 						else if (caseInsensitiveEqual( cmdname, "IGNORE"))
 						{
@@ -1501,6 +1515,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 		throw Error( Error::NoAcceptStatesInGrammarDef);
 	}
 	std::swap( m_language, langdef.language);
+	std::swap( m_typesystem, langdef.typesystem);
 	std::swap( m_calls, langdef.calls);
 }
 

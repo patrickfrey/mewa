@@ -23,7 +23,7 @@ class Automaton
 {
 public:
 	enum {
-		ShiftState = 15, 
+		ShiftState = 14, 
 			MaxState = 1<<ShiftState,
 			MaskState = MaxState-1,
 		ShiftProductionLength = 5,
@@ -236,19 +236,20 @@ public:
 
 public:
 	Automaton()
-		:m_language(),m_actions(),m_gotos(),m_calls(){}
+		:m_language(),m_typesystem(),m_actions(),m_gotos(),m_calls(){}
 	Automaton( const Automaton& o)
-		:m_language(o.m_language),m_actions(o.m_actions),m_gotos(o.m_gotos),m_calls(o.m_calls){}
+		:m_language(o.m_language),m_typesystem(o.m_typesystem),m_actions(o.m_actions),m_gotos(o.m_gotos),m_calls(o.m_calls){}
 	Automaton& operator=( const Automaton& o)
-		{m_language=o.m_language; m_actions=o.m_actions; m_gotos=o.m_gotos; m_calls=o.m_calls; return *this;}
+		{m_language=o.m_language; m_typesystem=o.m_typesystem; m_actions=o.m_actions; m_gotos=o.m_gotos; m_calls=o.m_calls; return *this;}
 	Automaton( Automaton&& o)
-		:m_language(std::move(o.m_language)),m_actions(std::move(o.m_actions)),m_gotos(std::move(o.m_gotos)),m_calls(std::move(o.m_calls)){}
+		:m_language(std::move(o.m_language)),m_typesystem(std::move(o.m_typesystem)),m_actions(std::move(o.m_actions)),m_gotos(std::move(o.m_gotos)),m_calls(std::move(o.m_calls)){}
 	Automaton& operator=( Automaton&& o)
-		{m_language=std::move(o.m_language); m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos); m_calls=std::move(o.m_calls); return *this;}
+		{m_language=std::move(o.m_language); m_typesystem=std::move(o.m_typesystem); m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos); m_calls=std::move(o.m_calls); return *this;}
 
 	void build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout = DebugOutput());
 
 	const std::string& language() const				{return m_language;}
+	const std::string& typesystem() const				{return m_typesystem;}
 	const std::map<ActionKey,Action>& actions() const		{return m_actions;}
 	const std::map<GotoKey,Goto>& gotos() const			{return m_gotos;}
 	const Call call( int callidx) const				{return m_calls[ callidx-1];}
@@ -256,6 +257,7 @@ public:
 
 private:
 	std::string m_language;
+	std::string m_typesystem;
 	std::map<ActionKey,Action> m_actions;
 	std::map<GotoKey,Goto> m_gotos;
 	std::vector<Call> m_calls;
