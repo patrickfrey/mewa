@@ -15,6 +15,8 @@ endif
 
 # Project settings:
 BUILDDIR := build
+MANPAGES := /usr/local/man
+DESTINATION := /usr/local/bin
 SRCDIR := src
 TESTDIR := tests
 STDFLAGS := -std=c++17
@@ -60,4 +62,8 @@ test : all
 	$(BUILDDIR)/testScope
 	$(BUILDDIR)/testAutomaton
 
+install:
+	cp $(PROGRAM) $(DESTINATION)
+	cp MANPAGE $(MANPAGES)/man1/mewa.1
+	gzip -f $(MANPAGES)/man1/mewa.1
 

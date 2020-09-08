@@ -31,7 +31,7 @@ static const char* g_typeSystemModulePrefix = "typesystem.";
 
 static void printUsage()
 {
-	std::cerr << "Usage: mewa [-h][-v][-g][-o <OUTF>] <inputfile>" << std::endl;
+	std::cerr << "Usage: mewa [-h][-v][-g][-o OUTF][-d DBGOUTF] INPUTFILE" << std::endl;
 	std::cerr << "Description: Build a lua module implementing a compiler described as\n";
 	std::cerr << "             an EBNF and some lua hooks implementing the type system\n";
 	std::cerr << "             and the code generation.\n";
@@ -39,9 +39,10 @@ static void printUsage()
 	std::cerr << " -h         : Print this usage\n";
 	std::cerr << " -v         : Verbose output to stderr\n";
 	std::cerr << " -g         : Action do generate parsing tables for import by lua module for 'mewa'\n";
-	std::cerr << " -o <OUTF>  : Write the output to file with path <OUTF> instead of stdout.\n";
+	std::cerr << " -o <OUTF>  : Write the output to file with path OUTF instead of stderr.\n";
+	std::cerr << " -d <DBGF>  : Write the debug output to file with path DBGF instead of stdout.\n";
 	std::cerr << "Arguments:\n";
-	std::cerr << "<inputfile> : Contains the EBNF of the grammar to process with the Lua hooks embedded.\n";
+	std::cerr << "INPUTFILE   : Contains the EBNF of the grammar to process with the Lua hooks embedded.\n";
 }
 
 static void printWarning( const std::string& filename, const Error& error)
@@ -146,6 +147,7 @@ int main( int argc, const char* argv[] )
 		Command cmd = NoCommand;
 		std::string inputFilename;
 		std::string outputFilename;
+		std::string debugFilename;
 		int argi = 1;
 		for (; argi < argc; ++argi)
 		{
@@ -162,11 +164,23 @@ int main( int argc, const char* argv[] )
 				++argi;
 				if (argi == argc || argv[argi][0] == '-') 
 				{
-					std::cerr << "Option -o requires an argument" << std::endl << std::endl;
+					std::cerr << "Option -o requires a file path as argument" << std::endl << std::endl;
 					printUsage();
 					return ERRCODE_INVALID_ARGUMENTS;
 				}
 				outputFilename = argv[argi];
+			}
+			else if (0==std::strcmp( argv[argi], "-d"))
+			{
+				++argi;
+				if (argi == argc || argv[argi][0] == '-') 
+				{
+					std::cerr << "Option -d requires a file path as argument" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
+				debugFilename = argv[argi];
+				verbose = true;
 			}
 			else if (0==std::strcmp( argv[argi], "-g"))
 			{
@@ -211,8 +225,17 @@ int main( int argc, const char* argv[] )
 
 		std::vector<Error> warnings;
 		Automaton automaton;
-		automaton.build( source, warnings, Automaton::DebugOutput().enable( verbose ? Automaton::DebugOutput::All : Automaton::DebugOutput::None));
-
+		if (debugFilename.empty())
+		{
+			automaton.build( source, warnings, Automaton::DebugOutput().enable( verbose ? Automaton::DebugOutput::All : Automaton::DebugOutput::None));
+		}
+		else
+		{
+			std::stringstream dbgoutstream;
+			automaton.build( source, warnings, Automaton::DebugOutput( dbgoutstream).enable( Automaton::DebugOutput::All));
+			std::string dbgoutput = dbgoutstream.str();
+			writeFile( debugFilename, dbgoutput);
+		}
 		for (auto warning : warnings) printWarning( inputFilename, warning);
 
 		switch (cmd)
