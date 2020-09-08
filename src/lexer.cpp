@@ -213,7 +213,7 @@ std::pair<std::string_view,int> LexemDef::match( const char* srcptr, std::size_t
 
 char const* Scanner::next( int incr)
 {
-	int pos = m_srcitr - m_src.c_str() + incr;
+	int pos = m_srcitr - m_src.data() + incr;
 	if (pos < 0 || pos > (int)m_src.size()) throw Error( Error::ArrayBoundReadInLexer);
 	for (; incr < 0; ++incr) {if (*--m_srcitr == '\n') --m_line;}
 	for (; incr > 0; --incr) {if (*m_srcitr++ == '\n') ++m_line;}

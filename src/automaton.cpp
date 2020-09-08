@@ -67,6 +67,11 @@ public:
 	}
 };
 
+static std::string getLexemName( const Lexer& lexer, int terminal)
+{
+	return terminal ? std::string( lexer.lexemName( terminal)) : std::string("$");
+}
+
 class ProductionNode
 {
 public:
@@ -353,7 +358,7 @@ static TransitionState getLr1TransitionStateClosure(
 					if (trigger_prod.left.index() == nd.index())
 					{
 						std::set<int> firstOfRest = getLr1FirstSet( 
-										prod, item.prodpos, item.follow,
+										prod, item.prodpos+1, item.follow,
 										nonTerminalFirstSetMap, nullableNonterminalSet);
 						for (auto follow :firstOfRest)
 						{
@@ -445,7 +450,7 @@ static std::set<ProductionNode> getReduceNodes( const TransitionState& state, co
 	return rt;
 }
 
-static Priority getShiftPriority( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist)
+static Priority getShiftPriority( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
 {
 	Priority priority;
 	int last_prodidx = -1;
@@ -464,7 +469,9 @@ static Priority getShiftPriority( const TransitionState& state, int terminal, co
 				}
 				else if (priority != item.priority)
 				{
-					throw Error( Error::PriorityConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring());
+					throw Error( Error::PriorityConflictInGrammarDef, prod.tostring( item.prodpos)
+						+ ", " + prodlist[ last_prodidx].tostring( item.prodpos)
+						+ " -> " + getLexemName(lexer,terminal));
 				}
 			}
 		}
@@ -485,7 +492,7 @@ struct ReductionDef
 		:priority(o.priority),head(o.head),count(o.count),headname(o.headname){}
 };
 
-static ReductionDef getReductionDef( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist)
+static ReductionDef getReductionDef( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
 {
 	ReductionDef rt;
 	int last_prodidx = -1;
@@ -502,16 +509,20 @@ static ReductionDef getReductionDef( const TransitionState& state, int terminal,
 				rt.count = prod.right.size();
 				last_prodidx = item.prodindex;
 			}
-			else if (rt.priority != item.priority || rt.head != prod.left.index() || rt.count != (int)prod.right.size())
+			else if (rt.head != prod.left.index() || rt.count != (int)prod.right.size())
 			{
-				throw Error( Error::PriorityConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring());
+				throw Error( Error::ReduceReduceConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring() + " <- " + getLexemName(lexer,terminal));
+			}
+			else if (rt.priority != item.priority)
+			{
+				throw Error( Error::PriorityConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring() + " <- " + getLexemName(lexer,terminal));
 			}
 		}
 	}
 	return rt;
 }
 
-static std::string getStateTransitionString( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist)
+static std::string getStateTransitionString( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
 {
 	const char* redustr = nullptr;
 	const char* shiftstr = nullptr;
@@ -536,15 +547,15 @@ static std::string getStateTransitionString( const TransitionState& state, int t
 	}
 	if (redustr && shiftstr)
 	{
-		return prodstr + shiftstr + "|" + redustr;
+		return prodstr + " " + shiftstr + "|" + redustr + " " + getLexemName(lexer,terminal);
 	}
 	else if (redustr)
 	{
-		return prodstr + redustr;
+		return prodstr + " " + redustr + " " + getLexemName(lexer,terminal);
 	}
 	else if (shiftstr)
 	{
-		return prodstr + shiftstr;
+		return prodstr + " " + shiftstr + " " + getLexemName(lexer,terminal);
 	}
 	else
 	{
@@ -623,11 +634,7 @@ static std::set<int> getNullableNonterminalSet( const std::vector<ProductionDef>
 			auto ei = prod.right.begin(), ee = prod.right.end();
 			for (; ei != ee && ei->type() == ProductionNodeDef::NonTerminal
 				&& rt.find(ei->index()) != rt.end(); ++ei){}
-			if (ei == ee)
-			{
-				rt.insert( prod.left.index());
-				changed = true;
-			}
+			changed |= (ei == ee && rt.insert( prod.left.index()).second/*insert took place*/);
 		}
 	}
 	return rt;
@@ -752,7 +759,8 @@ static void insertAction(
 	const Automaton::ActionKey& key,
 	const Automaton::Action& action,
 	const Priority priority, 
-	std::vector<Error>& warnings)
+	std::vector<Error>& warnings,
+	const Lexer& lexer)
 {
 	auto ains = actionMap.insert( {key, action} );
 	Priority storedPriority = priorityMap[ key];
@@ -772,7 +780,7 @@ static void insertAction(
 		{
 			warnings.push_back(
 				Error( Error::ShiftReduceConflictInGrammarDef, 
-				getStateTransitionString( lr1State, terminal, prodlist)));
+				getStateTransitionString( lr1State, terminal, prodlist, lexer)));
 		}
 		else
 		{
@@ -781,7 +789,7 @@ static void insertAction(
 			{
 				warnings.push_back(
 					Error( action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef,
-						getStateTransitionString( lr1State, terminal, prodlist)));
+						getStateTransitionString( lr1State, terminal, prodlist, lexer)));
 			}
 			else if (action.type() == Automaton::Action::Reduce)
 			{
@@ -1320,8 +1328,7 @@ static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, 
 		dbgout.out() << "[" << invst.first << "]" << std::endl;
 		for (auto const& item : invst.second)
 		{
-			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos)
-					<< ", " << (item.follow ? lexer.lexemName( item.follow) : std::string_view("$"));
+			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << ", " << getLexemName(lexer,item.follow);
 			if (item.prodpos == (int)prodlist[ item.prodindex].right.size())
 			{
 				if (item.prodindex == 0 && item.follow == 0)
@@ -1330,8 +1337,16 @@ static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, 
 				}
 				else
 				{
-					ReductionDef rd = getReductionDef( invst.second, item.follow, prodlist);
-					dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
+					try
+					{
+						ReductionDef rd = getReductionDef( invst.second, item.follow, prodlist, lexer);
+						dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
+					}
+					catch (const Error& err)
+					{
+						dbgout.out() << std::endl;
+						throw err;
+					}
 				}
 			}
 			else
@@ -1444,12 +1459,12 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 			if (gto.type() == ProductionNode::Terminal)
 			{
 				int terminal = gto.index();
-				Priority shiftPriority = getShiftPriority( lr1State, terminal, langdef.prodlist);
+				Priority shiftPriority = getShiftPriority( lr1State, terminal, langdef.prodlist, langdef.lexer);
 
 				ActionKey key( stateidx, terminal);
 				Action action( Action::Shift, to_stateidx);
 
-				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, shiftPriority, warnings);
+				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, shiftPriority, warnings, langdef.lexer);
 			}
 			else
 			{
@@ -1464,12 +1479,12 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 		for (auto const& redu : redus)
 		{
 			int terminal = redu.index();
-			ReductionDef rd = getReductionDef( lr1State, terminal, langdef.prodlist);
+			ReductionDef rd = getReductionDef( lr1State, terminal, langdef.prodlist, langdef.lexer);
 
 			ActionKey key( stateidx, terminal);
 			Action action( Action::Reduce, rd.head, rd.count);
 
-			insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, rd.priority, warnings);
+			insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, rd.priority, warnings, langdef.lexer);
 		}
 	}
 	if (nofAcceptStates == 0)

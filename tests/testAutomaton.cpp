@@ -61,6 +61,15 @@ int main( int argc, const char* argv[] )
 	V 	→ "*" E ;
 )"};
 		automaton.build( source, warnings, debugout);
+		if (!warnings.empty())
+		{
+			outputstream << "-- Warnings:" << std::endl;
+			for (auto warning : warnings)
+			{
+				outputstream << warning.what() << std::endl;
+			}
+			outputstream << std::endl;
+		}
 		std::string output = outputstream.str();
 
 		std::string expected{R"(
@@ -114,56 +123,45 @@ V = "*" E
 -- LALR(1) States (Merged LR(1) elements assigned to LR(0) states):
 [1]
 	S =  . N, $ -> GOTO 2
-	N =  . V "=" E, IDENT -> GOTO 4
-	N =  . V "=" E, * -> GOTO 4
-	N =  . E, IDENT -> GOTO 3
-	N =  . E, * -> GOTO 3
-	E =  . V, IDENT -> GOTO 4
-	E =  . V, * -> GOTO 4
-	V =  . IDENT, IDENT -> SHIFT IDENT GOTO 5
-	V =  . IDENT, * -> SHIFT IDENT GOTO 5
-	V =  . "*" E, IDENT -> SHIFT "*" GOTO 6
-	V =  . "*" E, * -> SHIFT "*" GOTO 6
+	N =  . V "=" E, $ -> GOTO 4
+	N =  . E, $ -> GOTO 3
+	E =  . V, $ -> GOTO 4
+	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
+	V =  . IDENT, = -> SHIFT IDENT GOTO 5
+	V =  . "*" E, $ -> SHIFT "*" GOTO 6
+	V =  . "*" E, = -> SHIFT "*" GOTO 6
 [2]
 	S = N . , $ -> ACCEPT
 [3]
-	N = E . , IDENT -> REDUCE N #1
-	N = E . , * -> REDUCE N #1
+	N = E . , $ -> REDUCE N #1
 [4]
-	N = V . "=" E, IDENT -> SHIFT "=" GOTO 7
-	N = V . "=" E, * -> SHIFT "=" GOTO 7
-	E = V . , IDENT -> REDUCE E #1
-	E = V . , * -> REDUCE E #1
+	N = V . "=" E, $ -> SHIFT "=" GOTO 7
+	E = V . , $ -> REDUCE E #1
 [5]
-	V = IDENT . , IDENT -> REDUCE V #1
-	V = IDENT . , * -> REDUCE V #1
+	V = IDENT . , $ -> REDUCE V #1
+	V = IDENT . , = -> REDUCE V #1
 [6]
-	E =  . V, IDENT -> GOTO 9
-	E =  . V, * -> GOTO 9
-	V =  . IDENT, IDENT -> SHIFT IDENT GOTO 5
-	V =  . IDENT, * -> SHIFT IDENT GOTO 5
-	V =  . "*" E, IDENT -> SHIFT "*" GOTO 6
-	V =  . "*" E, * -> SHIFT "*" GOTO 6
-	V = "*" . E, IDENT -> GOTO 8
-	V = "*" . E, * -> GOTO 8
+	E =  . V, $ -> GOTO 9
+	E =  . V, = -> GOTO 9
+	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
+	V =  . IDENT, = -> SHIFT IDENT GOTO 5
+	V =  . "*" E, $ -> SHIFT "*" GOTO 6
+	V =  . "*" E, = -> SHIFT "*" GOTO 6
+	V = "*" . E, $ -> GOTO 8
+	V = "*" . E, = -> GOTO 8
 [7]
-	N = V "=" . E, IDENT -> GOTO 10
-	N = V "=" . E, * -> GOTO 10
-	E =  . V, IDENT -> GOTO 9
-	E =  . V, * -> GOTO 9
-	V =  . IDENT, IDENT -> SHIFT IDENT GOTO 5
-	V =  . IDENT, * -> SHIFT IDENT GOTO 5
-	V =  . "*" E, IDENT -> SHIFT "*" GOTO 6
-	V =  . "*" E, * -> SHIFT "*" GOTO 6
+	N = V "=" . E, $ -> GOTO 10
+	E =  . V, $ -> GOTO 9
+	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
+	V =  . "*" E, $ -> SHIFT "*" GOTO 6
 [8]
-	V = "*" E . , IDENT -> REDUCE V #2
-	V = "*" E . , * -> REDUCE V #2
+	V = "*" E . , $ -> REDUCE V #2
+	V = "*" E . , = -> REDUCE V #2
 [9]
-	E = V . , IDENT -> REDUCE E #1
-	E = V . , * -> REDUCE E #1
+	E = V . , $ -> REDUCE E #1
+	E = V . , = -> REDUCE E #1
 [10]
-	N = V "=" E . , IDENT -> REDUCE N #3
-	N = V "=" E . , * -> REDUCE N #3
+	N = V "=" E . , $ -> REDUCE N #3
 
 -- Function calls:
 

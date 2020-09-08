@@ -1,13 +1,14 @@
 # Build flavor parameters:
 ifeq ($(strip $(COMPILER)),clang)
 CC=/usr/bin/clang
+DEBUGFLAGS:=-fstandalone-debug
 else
 CC=/usr/bin/g++
 endif
 AR=ar rcs
 
 ifeq ($(strip $(RELEASE)),)
-DEBUGFLAGS=-ggdb -g3 -O0
+DEBUGFLAGS:=-ggdb -g3 -O0 $(DEBUGFLAGS)
 else
 DEBUGFLAGS=-O3
 endif
@@ -48,9 +49,9 @@ $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp
 	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
-	-rm $(LIBRARY)
 	$(AR) $(LIBRARY) $(LIBOBJS)
 
+$(PROGRAM) $(TESTPRG): $(LIBRARY)
 $(BUILDDIR)/%: $(BUILDDIR)/%.o
 	$(CC) $(LDFLAGS) -o $@ $(LDLIBS) $< $(LIBRARY)
 

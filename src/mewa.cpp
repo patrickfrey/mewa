@@ -23,6 +23,10 @@
 
 using namespace mewa;
 
+#define ERRCODE_MEMORY_ALLOCATION	12 /*ENOMEM*/
+#define ERRCODE_RUNTIME_ERROR 		-2
+#define ERRCODE_INVALID_ARGUMENTS 	-1
+
 static const char* g_typeSystemModulePrefix = "typesystem.";
 
 static void printUsage()
@@ -43,13 +47,13 @@ static void printWarning( const std::string& filename, const Error& error)
 {
 	if (error.line())
 	{
-		std::cerr << "Warning on line " << error.line() << " of " << filename << ":";
+		std::cerr << "Warning on line " << error.line() << " of " << filename << ": ";
 	}
 	else
 	{
-		std::cerr << "Warning in " << filename << ":";
+		std::cerr << "Warning in " << filename << ": ";
 	}
-	std::cerr << " [" << (int)error.code() << "] " << error.code2String( error.code()) << std::endl;
+	std::cerr << error.what() << std::endl;
 }
 
 template <typename TABLETYPE>
@@ -159,7 +163,7 @@ int main( int argc, const char* argv[] )
 				{
 					std::cerr << "Option -o requires an argument" << std::endl << std::endl;
 					printUsage();
-					return 4;
+					return ERRCODE_INVALID_ARGUMENTS;
 				}
 				outputFilename = argv[argi];
 			}
@@ -169,7 +173,7 @@ int main( int argc, const char* argv[] )
 				{
 					std::cerr << "Conflicting options" << std::endl << std::endl;
 					printUsage();
-					return 4;
+					return ERRCODE_INVALID_ARGUMENTS;
 				}
 				cmd = GenerateTables;
 			}
@@ -182,7 +186,7 @@ int main( int argc, const char* argv[] )
 			{
 				std::cerr << "Unknown program option " << argv[argi] << std::endl << std::endl;
 				printUsage();
-				return 4;
+				return ERRCODE_INVALID_ARGUMENTS;
 			}
 			else
 			{
@@ -193,13 +197,13 @@ int main( int argc, const char* argv[] )
 		{
 			std::cerr << "Too few arguments, input file expected" << std::endl << std::endl;
 			printUsage();
-			return 4;
+			return ERRCODE_INVALID_ARGUMENTS;
 		}
 		if (argi + 1 < argc)
 		{
 			std::cerr << "Too many arguments, only input file expected" << std::endl << std::endl;
 			printUsage();
-			return 4;
+			return ERRCODE_INVALID_ARGUMENTS;
 		}
 		inputFilename = argv[ argi];
 		std::string source = readFile( inputFilename);
@@ -223,17 +227,17 @@ int main( int argc, const char* argv[] )
 	catch (const mewa::Error& err)
 	{
 		std::cerr << "ERR " << err.what() << std::endl;
-		return (int)err.code();
+		return (int)err.code() < 128 ? (int)err.code() /*errno*/ : ERRCODE_RUNTIME_ERROR;
 	}
 	catch (const std::runtime_error& err)
 	{
 		std::cerr << "ERR runtime " << err.what() << std::endl;
-		return 1;
+		return ERRCODE_RUNTIME_ERROR;
 	}
 	catch (const std::bad_alloc&)
 	{
 		std::cerr << "ERR out of memory" << std::endl;
-		return 2;
+		return ERRCODE_MEMORY_ALLOCATION;
 	}
 	return 0;
 }

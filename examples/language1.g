@@ -19,9 +19,7 @@ definitionlist/L	= definition definitionlist
 definition		= functiondefinition
 			| variabledefinition
 			;
-typename		= IDENT
-			;
-variable		= IDENT
+typename/L1		= IDENT
 			;
 functiondefinition	= "function" typename IDENT 
 				"(" parameters ")"
@@ -35,10 +33,9 @@ paramdecl		= typename IDENT
 statementlist/L		= statement statementlist
 			| ε
 			;
-statement		= variabledefinition
-			| assignement
-			| expression
-			| returnstatement
+statement		= typename IDENT "=" expression ";"
+			| expression ";" 
+			| returnstatement ";" 
 			| "{" statementlist "}"
 			;
 variabledefinition	= typename IDENT "=" expression ";"
@@ -46,30 +43,30 @@ variabledefinition	= typename IDENT "=" expression ";"
 			| typename IDENT "[" "]" "=" expression ";"
 			| typename IDENT "[" "]" ";"
 			;  
-assignement		= variable "=" expression
-			;
 returnstatement	   	= "return" expression
 			;
-expression/L1		= variable
+expression/L1		= IDENT
 			| CARDINAL
 			| FLOAT
 			| DQSTRING	
-			| SQSTRING	
+			| SQSTRING
 			| "(" expression ")"
 			;
-expression/L2		= expression  "+"  expression		(operator add)
+expression/L2		= expression  "="  expression		(operator assign)
+			;
+expression/L3		= expression  "+"  expression		(operator add)
 			| expression  "-"  expression		(operator sub) 
 			| "-"  expression			(operator minus)
 			| "+"  expression			(operator plus) 
 			;
-expression/L3		= expression  "*"  expression		(operator mul)	
+expression/L4		= expression  "*"  expression		(operator mul)	
 			| expression  "/"  expression		(operator div)
 			| expression  "%"  expression		(operator mod)
 			;
-expression/L4		= expression "->" IDENT
+expression/L5		= expression "->" IDENT
 			| expression "." IDENT
 			;
-expression/L5		= expression  "(" callparamlist ")"
+expression/L6		= expression  "(" callparamlist ")"
 			| expression  "(" ")"
 			| expression  "[" callparamlist "]"
 			;

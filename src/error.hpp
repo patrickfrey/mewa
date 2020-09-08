@@ -13,6 +13,7 @@
 #include <utility>
 #include <string>
 #include <stdexcept>
+#include <exception>
 #include <cstdio>
 #include <cstring>
 
@@ -80,6 +81,12 @@ public:
         const std::string& arg() const		{return m_param;}
         int line() const			{return m_line;}
 
+        const char* what() const noexcept override
+        {
+		return std::runtime_error::what();
+	}
+
+private:
         static const char* code2String( int code_)
 	{
 		if (code_ < 300)
@@ -129,17 +136,16 @@ public:
 		return "Unknown error";
 	}
 
-private:
         static std::string map2string( Code code_, const std::string_view& param_, int line_)
 	{
 		char numbuf[ 128];
 		if (line_ > 0)
 		{
-			std::snprintf( numbuf, sizeof(numbuf), "error %d (%s) at line %d", (int)code_, code2String((int)code_), line_);
+			std::snprintf( numbuf, sizeof(numbuf), "[%d] \"%s\" at line %d", (int)code_, code2String((int)code_), line_);
 		}
 		else
 		{
-			std::snprintf( numbuf, sizeof(numbuf), "error %d (%s)", (int)code_, code2String((int)code_));
+			std::snprintf( numbuf, sizeof(numbuf), "[%d] \"%s\"", (int)code_, code2String((int)code_));
 		}
                 std::string rt(numbuf);
 		if (!rt.empty())

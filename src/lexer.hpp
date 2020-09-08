@@ -105,32 +105,23 @@ private:
 class Scanner
 {
 public:
-	explicit Scanner( const std::string_view& src_)
-		:m_src(src_),m_line(1){m_srcitr=m_src.c_str();}
+	explicit Scanner( const std::string& src_)
+		:m_src(src_),m_srcitr(src_.c_str()),m_line(1){}
 	Scanner( const Scanner& o)
-		:m_src(o.m_src),m_line(o.m_line)
-	{
-		m_srcitr = m_src.c_str() + (o.m_srcitr - o.m_src.c_str());
-	}
+		:m_src(o.m_src),m_srcitr(o.m_srcitr),m_line(o.m_line){}
 	Scanner& operator=( const Scanner& o)
-		{m_src=o.m_src; m_srcitr=o.m_srcitr; m_line=o.m_line;
-		 return *this;}
-	Scanner( Scanner&& o)
-		:m_src(std::move(o.m_src)) ,m_srcitr(o.m_srcitr),m_line(o.m_line){}
-	Scanner& operator=( Scanner&& o)
-		{m_src=std::move(o.m_src); m_srcitr=o.m_srcitr; m_line=o.m_line;
-		 return *this;}
+		{m_src=o.m_src; m_srcitr=o.m_srcitr; m_line=o.m_line; return *this;}
 
-	const std::string& src() const		{return m_src;}
 	int line() const			{return m_line;}
 
 	char const* next( int incr=0);
 	bool scan( const char* end);
 	bool match( const char* str);
-	std::size_t restsize() const		{return m_src.size() - (m_srcitr - m_src.c_str());}
+
+	std::size_t restsize() const		{return m_src.size() - (m_srcitr - m_src.data());}
 
 private:
-	std::string m_src;
+	std::string_view m_src;
 	char const* m_srcitr;
 	int m_line;
 };
