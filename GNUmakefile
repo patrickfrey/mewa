@@ -2,8 +2,11 @@
 ifeq ($(strip $(COMPILER)),clang)
 CC=/usr/bin/clang
 DEBUGFLAGS:=-fstandalone-debug
-else
+else ifeq ($(strip $(COMPILER)),gcc)
 CC=/usr/bin/g++
+else
+CC=/usr/bin/clang
+DEBUGFLAGS:=-fstandalone-debug
 endif
 AR=ar rcs
 

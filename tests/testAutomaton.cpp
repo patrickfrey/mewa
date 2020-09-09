@@ -31,13 +31,13 @@ int main( int argc, const char* argv[] )
 		int argi = 1;
 		for (; argi < argc; ++argi)
 		{
-			if (0==std::strcmp( argv[argi], "-v"))
+			if (0==std::strcmp( argv[argi], "-V"))
 			{
 				verbose = true;
 			}
 			if (0==std::strcmp( argv[argi], "-h"))
 			{
-				std::cerr << "Usage: testAutomaton [-h][-v]" << std::endl;
+				std::cerr << "Usage: testAutomaton [-h][-V]" << std::endl;
 			}
 		}
 		PseudoRandom random;
@@ -74,7 +74,7 @@ int main( int argc, const char* argv[] )
 
 		std::string expected{R"(
 -- Lexems:
-DEF IDENT [a-z] 0
+TOKEN IDENT [a-z] 0
 KEYWORD =
 KEYWORD *
 

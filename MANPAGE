@@ -13,10 +13,13 @@ mewa is a compiler compiler that builds a lua module implementing a compiler des
 Print this usage
 .TP
 \fB\-v\fR
+Print version of mewa
+.TP
+\fB\-V\fR
 Verbose debug output to stderr
 .TP
 \fB\-g\fR
-Do generate parsing tables for import by lua module for 'mewa'
+Do generate parsing tables for import by lua module for \fImewa\fR
 .TP
 \fB\-o\fR \fIfile\fR
 Write the output (parsing tables) to \fIfile\fR instead of stdout.  

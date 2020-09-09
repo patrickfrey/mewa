@@ -453,15 +453,15 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 	{
 		if (def.name().empty())
 		{
-			rt.push_back( Definition( Definition::IgnoreLexem, {def.source()}, 0));
+			rt.push_back( Definition( Definition::IgnoreLexem, {def.source()}, 0/*select*/,def.id()));
 		}
 		else if (def.keyword())
 		{
-			rt.push_back( Definition( Definition::KeywordLexem, {def.name()}));
+			rt.push_back( Definition( Definition::KeywordLexem, {def.name()}, 0/*select*/, def.id()));
 		}
 		else
 		{
-			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select()));
+			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select(), def.id()));
 		}
 	}
 	for (auto const& bc : m_bracketComments)

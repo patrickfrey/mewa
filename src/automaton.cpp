@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <string_view>
+#include <algorithm>
 
 using namespace mewa;
 
@@ -1270,25 +1271,28 @@ static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 
 	for (auto def : definitions)
 	{
+		std::string deftypename = def.typeName();
+		std::transform( deftypename.begin(), deftypename.end(), deftypename.begin(), ::toupper);
+
 		switch (def.type())
 		{
 			case Lexer::Definition::BadLexem:
-				dbgout.out() << "BAD " << def.bad() << std::endl;
+				dbgout.out() << deftypename << " " << def.bad() << std::endl;
 				break;
 			case Lexer::Definition::NamedPatternLexem:
-				dbgout.out() << "DEF " << def.name() << " " << def.pattern() << " " << def.select() << std::endl;
+				dbgout.out() << deftypename << " " << def.name() << " " << def.pattern() << " " << def.select() << std::endl;
 				break;
 			case Lexer::Definition::KeywordLexem:
-				dbgout.out() << "KEYWORD " << def.name() << std::endl;
+				dbgout.out() << deftypename << " " << def.name() << std::endl;
 				break;
 			case Lexer::Definition::IgnoreLexem:
-				dbgout.out() << "IGNORE " << def.ignore() << std::endl;
+				dbgout.out() << deftypename << " " << def.ignore() << std::endl;
 				break;
 			case Lexer::Definition::EolnComment:
-				dbgout.out() << "COMMENT " << def.start() << std::endl;
+				dbgout.out() << deftypename << " " << def.start() << std::endl;
 				break;
 			case Lexer::Definition::BracketComment:
-				dbgout.out() << "COMMENT " << def.start() << " " << def.end() << std::endl;
+				dbgout.out() << deftypename << " " << def.start() << " " << def.end() << std::endl;
 				break;
 		}
 	}
@@ -1516,6 +1520,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	}
 	std::swap( m_language, langdef.language);
 	std::swap( m_typesystem, langdef.typesystem);
+	std::swap( m_lexer, langdef.lexer);
 	std::swap( m_calls, langdef.calls);
 }
 

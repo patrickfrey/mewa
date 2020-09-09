@@ -178,12 +178,22 @@ public:
 			EolnComment,
 			BracketComment
 		};
+		static const char* typeName( Type type_)
+		{
+			static const char* ar[] = {"bad","token","keyword","ignore","comment","comment"};
+			return ar[ type_];
+		}
+		const char* typeName() const
+		{
+			return typeName( m_type);
+		}
 		Definition( const Definition& o)
-			:m_type(o.m_type),m_arg(o.m_arg),m_select(o.m_select){}
-		Definition( Type type_, const std::vector<std::string>& arg_, int select_=0)
-			:m_type(type_),m_arg(arg_),m_select(select_){}
+			:m_type(o.m_type),m_arg(o.m_arg),m_select(o.m_select),m_id(o.m_id){}
+		Definition( Type type_, const std::vector<std::string>& arg_, int select_=0, int id_=-1)
+			:m_type(type_),m_arg(arg_),m_select(select_),m_id(id_){}
 
 		Type type() const				{return m_type;}
+		int id() const					{return m_id;}
 		const std::string& name() const			{return m_arg[0];}
 		const std::string bad() const			{return m_arg.empty() ? std::string() : m_arg[0];}
 		const std::string pattern() const		{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
@@ -196,6 +206,7 @@ public:
 		Type m_type;
 		std::vector<std::string> m_arg;
 		int m_select;
+		int m_id;
 	};
 
 	std::vector<Definition> getDefinitions() const;
