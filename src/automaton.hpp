@@ -252,6 +252,16 @@ public:
 		{m_language=std::move(o.m_language); m_typesystem=std::move(o.m_typesystem);
 		m_lexer=std::move(o.m_lexer); m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos);
 		m_calls=std::move(o.m_calls); return *this;}
+	Automaton( const std::string& language_, const std::string& typesystem_,
+			const Lexer& lexer_, const std::map<ActionKey,Action>& actions_, const std::map<GotoKey,Goto>& gotos_,
+			const std::vector<Call>& calls_)
+		:m_language(language_),m_typesystem(typesystem_),m_lexer(lexer_),m_actions(actions_),m_gotos(gotos_),m_calls(calls_){}
+	Automaton( std::string&& language_, std::string&& typesystem_,
+			Lexer&& lexer_, std::map<ActionKey,Action>&& actions_, std::map<GotoKey,Goto>&& gotos_,
+			std::vector<Call>&& calls_)
+		:m_language(std::move(language_)),m_typesystem(std::move(typesystem_))
+		,m_lexer(std::move(lexer_)),m_actions(std::move(actions_)),m_gotos(std::move(gotos_))
+		,m_calls(std::move(calls_)){}
 
 	void build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout = DebugOutput());
 
@@ -260,7 +270,7 @@ public:
 	const Lexer& lexer() const					{return m_lexer;}
 	const std::map<ActionKey,Action>& actions() const		{return m_actions;}
 	const std::map<GotoKey,Goto>& gotos() const			{return m_gotos;}
-	const Call call( int callidx) const				{return m_calls[ callidx-1];}
+	const Call& call( int callidx) const				{return m_calls[ callidx-1];}
 	const std::vector<Call>& calls() const				{return m_calls;}
 
 private:

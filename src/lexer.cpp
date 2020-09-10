@@ -477,3 +477,19 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 	return rt;
 }
 
+Lexer::Lexer( const std::vector<Definition>& definitions)
+{
+	for (auto const& def : definitions)
+	{
+		switch (def.type())
+		{
+			case Definition::BadLexem:		defineBadLexem( def.name()); break;
+			case Definition::NamedPatternLexem:	defineLexem( def.name(), def.pattern(), def.select()); break;
+			case Definition::KeywordLexem:		defineLexem( def.name()); break;
+			case Definition::IgnoreLexem:		defineIgnore( def.pattern());
+			case Definition::EolnComment:		defineEolnComment( def.start()); break;
+			case Definition::BracketComment:	defineBracketComment( def.start(), def.end()); break;
+		}
+	}
+}
+

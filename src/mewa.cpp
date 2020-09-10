@@ -87,36 +87,6 @@ static bool isConstantArgument( const std::string& val)
 	return false;
 }
 
-static void printCallTable( std::ostream& outstream, const char* tablename, const std::vector<Automaton::Call>& table, bool sep)
-{
-	outstream << "\t" << tablename << " = {";
-	int tidx = 0;
-	for (auto call : table)
-	{
-		outstream << ((tidx++) ? ",\n\t\t" : "\n\t\t");
-		switch (call.argtype())
-		{
-			case Automaton::Call::NoArg:
-				outstream << g_typeSystemModulePrefix << call.function();
-				break;
-			case Automaton::Call::StringArg:
-				outstream << "{" << g_typeSystemModulePrefix << call.function() << ", \"" << call.arg() << "\"}";
-				break;
-			case Automaton::Call::ReferenceArg:
-				if (isConstantArgument( call.arg()))
-				{
-					outstream << "{" << g_typeSystemModulePrefix << call.function() << ", " << call.arg() << "}";
-				}
-				else
-				{
-					outstream << "{" << g_typeSystemModulePrefix << call.function() << ", " << g_typeSystemModulePrefix << call.arg() << "}";
-				}
-				break;
-		}
-	}
-	outstream << (sep ? "},\n" : "}\n");
-}
-
 static void printString( std::ostream& outstream, const std::string& str)
 {
 	char const* sqpos = std::strchr( str.c_str(), '\'');
@@ -151,6 +121,39 @@ static void printString( std::ostream& outstream, const std::string& str)
 	{
 		outstream << "\"" << str << "\"";
 	}
+}
+
+static void printCallTable( std::ostream& outstream, const char* tablename, const std::vector<Automaton::Call>& table, bool sep)
+{
+	outstream << "\t" << tablename << " = {";
+	int tidx = 0;
+	for (auto call : table)
+	{
+		outstream << ((tidx++) ? ",\n\t\t{ " : "\n\t\t{ ");
+		printString( outstream, call.function() + " " + call.arg());
+
+		switch (call.argtype())
+		{
+			case Automaton::Call::NoArg:
+				outstream << ", " << g_typeSystemModulePrefix << call.function();
+				break;
+			case Automaton::Call::StringArg:
+				outstream << ", " << g_typeSystemModulePrefix << call.function() << ", \"" << call.arg() << "\"}";
+				break;
+			case Automaton::Call::ReferenceArg:
+				if (isConstantArgument( call.arg()))
+				{
+					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << call.arg();
+				}
+				else
+				{
+					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << g_typeSystemModulePrefix << call.arg();
+				}
+				break;
+		}
+		outstream << "}";
+	}
+	outstream << (sep ? "},\n" : "}\n");
 }
 
 static void printLexems( std::ostream& outstream, const char* tablename, const Lexer& lexer, bool sep)
