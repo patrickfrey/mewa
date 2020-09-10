@@ -8,7 +8,7 @@ Cmake with gcc or clang with C++17 support.
 Install packages with 'apt-get'/aptitude.
 
 ## Required packages
-        lua >= 5.2
+        lua5.2 liblua5.2-dev
 
 # Fetch sources
         git clone https://github.com/patrickfrey/mewa

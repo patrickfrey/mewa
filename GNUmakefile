@@ -24,7 +24,7 @@ SRCDIR := src
 TESTDIR := tests
 STDFLAGS := -std=c++17
 CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread $(DEBUGFLAGS)
-INCFLAGS := "-I$(SRCDIR)"
+INCFLAGS := -I$(SRCDIR) -I/usr/include/lua5.2
 LDFLAGS := -g -pthread
 LDLIBS := -lm -lstdc++
 LIBOBJS := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o $(BUILDDIR)/fileio.o
