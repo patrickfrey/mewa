@@ -29,13 +29,14 @@
 
 extern "C" int luaopen_mewa( lua_State *ls);
 
-struct mewa_userdata_t
+struct mewa_compiler_userdata_t
 {
 	mewa::Automaton automaton;
 
-	~mewa_userdata_t(){}
+	~mewa_compiler_userdata_t(){}
 };
-#define MEWA_METATABLE_NAME "mewa.cc"
+#define MEWA_COMPILER_METATABLE_NAME 	"mewa.compiler"
+#define MEWA_TYPESYSTEM_METATABLE_NAME 	"mewa.typesystem"
 
 
 #ifdef __GNUC__
@@ -351,10 +352,10 @@ static mewa::Automaton parseAutomaton( lua_State *ls, int li)
 	return mewa::Automaton( language, ""/*typesystem_*/, lexer, actions, gotos, calls);
 }
 
-static int mewa_new( lua_State *ls)
+static int mewa_new_compiler( lua_State *ls)
 {
 	luaL_checktype( ls, 1, LUA_TTABLE);
-	mewa_userdata_t* mw = (mewa_userdata_t *)lua_newuserdata( ls, sizeof(mewa_userdata_t));
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
 	try
 	{
 		new (&mw->automaton) mewa::Automaton( parseAutomaton( ls, 1));
@@ -374,39 +375,38 @@ static int mewa_new( lua_State *ls)
 		lua_pushstring( ls, "unknown error");
 		lua_error( ls); 
 	}
-	luaL_getmetatable( ls, MEWA_METATABLE_NAME);
+	luaL_getmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
 	lua_setmetatable( ls, -2);
 	return 1;
 }
 
-static int mewa_destroy( lua_State *ls)
+static int mewa_destroy_compiler( lua_State *ls)
 {
-    mewa_userdata_t* mw = (mewa_userdata_t *)luaL_checkudata( ls, 1, MEWA_METATABLE_NAME);
+    mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
     mw->automaton.~Automaton();
     return 0;
 }
 
-static const struct luaL_Reg mewa_methods[] = {
-    { "__gc",        mewa_destroy   },
+static const struct luaL_Reg mewa_compiler_methods[] = {
+    { "__gc",        mewa_destroy_compiler   },
     { NULL,          NULL               },
 };
 
 static const struct luaL_Reg mewa_functions[] = {
-    { "new", mewa_new },
+    { "compiler", mewa_new_compiler },
     { NULL,  NULL         }
 };
 
 DLL_PUBLIC int luaopen_mewa( lua_State *ls)
 {
     /* Create the metatable and put it on the stack. */
-    luaL_newmetatable( ls, MEWA_METATABLE_NAME);
+    luaL_newmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
     lua_pushvalue( ls, -1);
 
     lua_setfield( ls, -2, "__index");
-    luaL_setfuncs( ls, mewa_methods, 0);
+    luaL_setfuncs( ls, mewa_compiler_methods, 0);
 
     luaL_newlib( ls, mewa_functions);
-
     return 1;
 }
 
