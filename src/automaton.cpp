@@ -763,16 +763,21 @@ static void insertAction(
 	std::vector<Error>& warnings,
 	const Lexer& lexer)
 {
-	/*[-]*/if (action.packed() < 0)
-	/*[-]*/{
-	/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
-	/*[-]*/}
 	auto ains = actionMap.insert( {key, action} );
 	auto pi =  priorityMap.find( key);
 
 	if (pi == priorityMap.end() || ains.second/*is new*/)
 	{
 		priorityMap[ key] = priority;
+	}
+	else if (action.type() == ains.first->second.type())
+	{
+		if (ains.first->second != action)
+		{
+			warnings.push_back(
+				Error( action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef,
+					getStateTransitionString( lr1State, terminal, prodlist, lexer)));
+		}
 	}
 	else if (priority.value > pi->second.value)
 	{
@@ -781,10 +786,7 @@ static void insertAction(
 	}
 	else if (priority.value == pi->second.value)
 	{
-		if (ains.first->second == action)
-		{/*identical value inserted twice*/}
-
-		else if (priority.assoziativity != pi->second.assoziativity || priority.assoziativity == Assoziativity::Undefined)
+		if (priority.assoziativity != pi->second.assoziativity || priority.assoziativity == Assoziativity::Undefined)
 		{
 			warnings.push_back(
 				Error( Error::ShiftReduceConflictInGrammarDef, 
@@ -792,14 +794,7 @@ static void insertAction(
 		}
 		else
 		{
-			const Automaton::Action& storedAction = ains.first->second;
-			if (action.type() == storedAction.type())
-			{
-				warnings.push_back(
-					Error( action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef,
-						getStateTransitionString( lr1State, terminal, prodlist, lexer)));
-			}
-			else if (action.type() == Automaton::Action::Reduce)
+			if (action.type() == Automaton::Action::Reduce)
 			{
 				if (priority.assoziativity == Assoziativity::Left)
 				{
@@ -1487,10 +1482,6 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 
 				ActionKey key( stateidx, terminal);
 				Action action( Action::Shift, to_stateidx);
-				/*[-]*/if (terminal == 0)
-				/*[-]*/{
-				/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
-				/*[-]*/}
 				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, shiftPriority, warnings, langdef.lexer);
 			}
 			else

@@ -115,6 +115,42 @@ static void printCallTable( std::ostream& outstream, const char* tablename, cons
 	outstream << (sep ? "},\n" : "}\n");
 }
 
+static void printString( std::ostream& outstream, const std::string& str)
+{
+	char const* sqpos = std::strchr( str.c_str(), '\'');
+	char const* dqpos = std::strchr( str.c_str(), '\"');
+	if (sqpos && dqpos)
+	{
+		sqpos = 0;
+		dqpos = 0;
+		char const* si = str.c_str();
+		for (; si; ++si)
+		{
+			if (*si == '\\')
+			{
+				++si;
+			}
+			else if (*si == '\'')
+			{
+				sqpos = si;
+			}
+			else if (*si == '\"')
+			{
+				dqpos = si;
+			}
+		}
+	}
+	if (dqpos)
+	{
+		if (sqpos) throw Error( Error::EscapeQuoteErrorInString, str);
+		outstream << "\'" << str << "\'";
+	}
+	else
+	{
+		outstream << "\"" << str << "\"";
+	}
+}
+
 static void printLexems( std::ostream& outstream, const char* tablename, const Lexer& lexer, bool sep)
 {
 	auto definitions = lexer.getDefinitions();
@@ -144,30 +180,38 @@ static void printLexems( std::ostream& outstream, const char* tablename, const L
 				switch (def.type())
 				{
 					case Lexer::Definition::BadLexem:
-						outstream << sepc << shft << "\"" << def.bad() << "\"";
+						outstream << sepc;
+						printString( outstream, def.bad());
 						break;
 					case Lexer::Definition::NamedPatternLexem:
-						outstream << sepc << shft;
+						outstream << sepc << shft << "{ ";
+						printString( outstream, def.name());
+						outstream << ", ";
+						printString( outstream, def.pattern());
 						if (def.select() != 0)
 						{
-							outstream << "{ \"" << def.name() << "\", \"" << def.pattern() << "\", select=" << def.select() << " }";
+							outstream << ", select=" << def.select();
 						}
-						else
-						{
-							outstream << "{ \"" << def.name() << "\", \"" << def.pattern() << "\" }";
-						}
+						outstream << " }";
 						break;
 					case Lexer::Definition::KeywordLexem:
-						outstream << sepc << ((defcnt & 7) == 0 ? shft : " ") << "\"" << def.name() << "\"";
+						outstream << sepc << ((defcnt & 7) == 0 ? shft : " ");
+						printString( outstream, def.name());
 						break;
 					case Lexer::Definition::IgnoreLexem:
-						outstream << sepc << "\"" << def.ignore() << "\"";
+						outstream << sepc;
+						printString( outstream, def.ignore());
 						break;
 					case Lexer::Definition::EolnComment:
-						outstream << sepc << "\"" << def.start() << "\"";
+						outstream << sepc;
+						printString( outstream, def.start());
 						break;
 					case Lexer::Definition::BracketComment:
-						outstream << sepc << "{\"" << def.start() << "\", \"" << def.end() << "\" }";
+						outstream << sepc << "{ ";
+						printString( outstream, def.start());
+						outstream << ", ";
+						printString( outstream, def.end());
+						outstream << " }";
 						break;
 				}
 				++defcnt;
@@ -304,6 +348,12 @@ int main( int argc, const char* argv[] )
 		if (argi + 1 < argc)
 		{
 			std::cerr << "Too many arguments, only input file expected" << std::endl << std::endl;
+			printUsage();
+			return ERRCODE_INVALID_ARGUMENTS;
+		}
+		if (!outputFilename.empty() && cmd == NoCommand)
+		{
+			std::cerr << "Output file but no action defined, nothing is written to " << outputFilename << std::endl;
 			printUsage();
 			return ERRCODE_INVALID_ARGUMENTS;
 		}

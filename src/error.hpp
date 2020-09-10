@@ -40,6 +40,7 @@ public:
 
 		PriorityDefNotForLexemsInGrammarDef=621,
 		UnexpectedEndOfRuleInGrammarDef=631,
+		EscapeQuoteErrorInString=632,
 
 		CommandNumberOfArgumentsInGrammarDef=641,
 		CommandNameUnknownInGrammarDef=642,
@@ -111,6 +112,7 @@ private:
 
 			case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 			case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";
+			case EscapeQuoteErrorInString: return "Some internal pattern string mapping error in the grammar definition";
 
 			case CommandNumberOfArgumentsInGrammarDef: return "Wrong number of arguments for command (followed by '%') in the grammar definition";
 			case CommandNameUnknownInGrammarDef: return "Unknown command (followed by '%') in the grammar definition";

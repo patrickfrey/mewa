@@ -33,10 +33,12 @@ TESTPRG := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testAutomaton
 PROGRAM := $(BUILDDIR)/mewa 
 
 # Build targets:
-all : $(LIBRARY) $(PROGRAM) $(TESTPRG)
+all : build $(LIBRARY) $(PROGRAM) $(TESTPRG)
 
-clean:
+clean: build
 	rm $(BUILDDIR)/* .depend
+build:
+	mkdir -p $(BUILDDIR)
 
 # Generate include dependencies:
 SOURCES := $(wildcard $(SRCDIR)/*.cpp)
