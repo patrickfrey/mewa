@@ -31,8 +31,6 @@ using namespace mewa;
 #define ERRCODE_RUNTIME_ERROR 		-2
 #define ERRCODE_INVALID_ARGUMENTS 	-1
 
-static const char* g_typeSystemModulePrefix = "typesystem.";
-
 static void printUsage()
 {
 	std::cerr << "Usage: mewa [-h][-v][-V][-g][-o OUTF][-d DBGOUTF] INPUTFILE" << std::endl;
@@ -63,170 +61,6 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-template <typename TABLETYPE>
-static void printTable( std::ostream& outstream, const char* tablename, const TABLETYPE& table, bool sep)
-{
-	outstream << "\t" << tablename << " = {";
-	int tidx = 0;
-	for (auto keyval : table)
-	{
-		const char* sepc = tidx ? ",":"";
-		const char* shft = ((tidx & 3) == 0) ? "\n\t\t" : "\t";
-		++tidx;
-		outstream << sepc << shft << "[" << keyval.first.packed() << "] = " << keyval.second.packed();
-	}
-	outstream << (sep ? "},\n" : "}\n");
-}
-
-static bool isConstantArgument( const std::string& val)
-{
-	if (val.empty()) return false;
-	char ch = val[0];
-	if (ch >= '0' || ch <= '9') return true;
-	if (ch == '-') return true;
-	return false;
-}
-
-static void printString( std::ostream& outstream, const std::string& str)
-{
-	char const* sqpos = std::strchr( str.c_str(), '\'');
-	char const* dqpos = std::strchr( str.c_str(), '\"');
-	if (sqpos && dqpos)
-	{
-		sqpos = 0;
-		dqpos = 0;
-		char const* si = str.c_str();
-		for (; si; ++si)
-		{
-			if (*si == '\\')
-			{
-				++si;
-			}
-			else if (*si == '\'')
-			{
-				sqpos = si;
-			}
-			else if (*si == '\"')
-			{
-				dqpos = si;
-			}
-		}
-	}
-	if (dqpos)
-	{
-		if (sqpos) throw Error( Error::EscapeQuoteErrorInString, str);
-		outstream << "\'" << str << "\'";
-	}
-	else
-	{
-		outstream << "\"" << str << "\"";
-	}
-}
-
-static void printCallTable( std::ostream& outstream, const char* tablename, const std::vector<Automaton::Call>& table, bool sep)
-{
-	outstream << "\t" << tablename << " = {";
-	int tidx = 0;
-	for (auto call : table)
-	{
-		outstream << ((tidx++) ? ",\n\t\t{ " : "\n\t\t{ ");
-		printString( outstream, call.function() + " " + call.arg());
-
-		switch (call.argtype())
-		{
-			case Automaton::Call::NoArg:
-				outstream << ", " << g_typeSystemModulePrefix << call.function();
-				break;
-			case Automaton::Call::StringArg:
-				outstream << ", " << g_typeSystemModulePrefix << call.function() << ", \"" << call.arg() << "\"}";
-				break;
-			case Automaton::Call::ReferenceArg:
-				if (isConstantArgument( call.arg()))
-				{
-					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << call.arg();
-				}
-				else
-				{
-					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << g_typeSystemModulePrefix << call.arg();
-				}
-				break;
-		}
-		outstream << "}";
-	}
-	outstream << (sep ? "},\n" : "}\n");
-}
-
-static void printLexems( std::ostream& outstream, const char* tablename, const Lexer& lexer, bool sep)
-{
-	auto definitions = lexer.getDefinitions();
-	if (!definitions.empty())
-	{
-		std::map<std::string, std::vector<int> > defclassmap;
-		int di = 0;
-		for (auto def : definitions)
-		{
-			defclassmap[ def.typeName()].push_back( di++);
-		}
-		outstream << "\t" << tablename << " = {";
-
-		int defclassidx = 0;
-		for (auto defclass : defclassmap)
-		{
-			outstream << (defclassidx ? ",\n\t\t" : "\n\t\t") << defclass.first << " = {";
-			++defclassidx;
-
-			int defcnt = 0;
-			for (auto defidx : defclass.second)
-			{
-				auto const& def = definitions[ defidx];
-				const char* sepc = defcnt ? ",":"";
-				const char* shft = "\n\t\t\t";
-
-				switch (def.type())
-				{
-					case Lexer::Definition::BadLexem:
-						outstream << sepc;
-						printString( outstream, def.bad());
-						break;
-					case Lexer::Definition::NamedPatternLexem:
-						outstream << sepc << shft << "{ ";
-						printString( outstream, def.name());
-						outstream << ", ";
-						printString( outstream, def.pattern());
-						if (def.select() != 0)
-						{
-							outstream << ", select=" << def.select();
-						}
-						outstream << " }";
-						break;
-					case Lexer::Definition::KeywordLexem:
-						outstream << sepc << ((defcnt & 7) == 0 ? shft : " ");
-						printString( outstream, def.name());
-						break;
-					case Lexer::Definition::IgnoreLexem:
-						outstream << sepc;
-						printString( outstream, def.ignore());
-						break;
-					case Lexer::Definition::EolnComment:
-						outstream << sepc;
-						printString( outstream, def.start());
-						break;
-					case Lexer::Definition::BracketComment:
-						outstream << sepc << "{ ";
-						printString( outstream, def.start());
-						outstream << ", ";
-						printString( outstream, def.end());
-						outstream << " }";
-						break;
-				}
-				++defcnt;
-			}
-			outstream << " }";
-		}
-		outstream << (sep ? "},\n" : "}\n");
-	}
-}
-
 static void printAutomaton( const std::string& filename, const Automaton& automaton)
 {
 	std::ostringstream outstream;
@@ -241,18 +75,9 @@ static void printAutomaton( const std::string& filename, const Automaton& automa
 	}
 	outstream << "mewa = require(\"mewa\")\n\n";
 
-	outstream << "compiler = {\n";
-	if (!automaton.language().empty())
-	{
-		outstream << "\tlanguage = \"" << automaton.language() << "\",\n";
-	}
-	printLexems( outstream, "lexer", automaton.lexer(), true/*sep*/);
-	printTable( outstream, "action", automaton.actions(), true/*sep*/);
-	printTable( outstream, "gto", automaton.gotos(), true/*sep*/);
-	std::string callprefix = "typesystem.";
-	printCallTable( outstream, "call", automaton.calls(), false/*sep*/);
-	outstream << "}\n\n";
-
+	outstream << "compiler = ";
+	outstream << automaton.tostring();
+	outstream << "\n";
 	outstream << "typesystem.options, files = typesystem.parseArguments( arg)\n";
 	outstream << "for fi = 1, #files do\n\tmewa.compile( compiler, files[fi] )\nend\n";
 

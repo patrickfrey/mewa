@@ -12,10 +12,7 @@
 #include "automaton.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
-#include <map>
 #include <set>
-#include <vector>
-#include <string>
 #include <string_view>
 #include <algorithm>
 

@@ -273,6 +273,8 @@ public:
 	const Call& call( int callidx) const				{return m_calls[ callidx-1];}
 	const std::vector<Call>& calls() const				{return m_calls;}
 
+	std::string tostring() const;
+
 private:
 	std::string m_language;
 	std::string m_typesystem;

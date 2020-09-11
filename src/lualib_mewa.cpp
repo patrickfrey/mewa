@@ -286,6 +286,7 @@ static mewa::Automaton parseAutomaton( lua_State *ls, int li)
 	int rowcnt = 0;
 
 	std::string language;
+	std::string typesystem;
 	mewa::Lexer lexer;
 	std::map<mewa::Automaton::ActionKey,mewa::Automaton::Action> actions;
 	std::map<mewa::Automaton::GotoKey,mewa::Automaton::Goto> gotos;
@@ -308,6 +309,14 @@ static mewa::Automaton parseAutomaton( lua_State *ls, int li)
 					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
 				}
 				language = lua_tostring( ls, -1);
+			}
+			else if (0==std::strcmp( keystr, "typesystem"))
+			{
+				if (!lua_isstring( ls, -1))
+				{
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+				}
+				typesystem = lua_tostring( ls, -1);
 			}
 			else if (0==std::strcmp( keystr, "lexer"))
 			{
@@ -349,32 +358,36 @@ static mewa::Automaton parseAutomaton( lua_State *ls, int li)
 		lua_pop( ls, 1);
 	}
 	lua_pop( ls, 1);
-	return mewa::Automaton( language, ""/*typesystem_*/, lexer, actions, gotos, calls);
+	return mewa::Automaton( language, typesystem, lexer, actions, gotos, calls);
 }
+
+#define LUA_MAP_EXCEPTION( CALL) \
+	try\
+	{\
+		CALL;\
+	}\
+	catch (const std::runtime_error& err)\
+	{\
+		lua_pushstring( ls, err.what());\
+		lua_error( ls);\
+	}\
+	catch (const std::bad_alloc& )\
+	{\
+		lua_pushstring( ls, "out of memory");\
+		lua_error( ls);\
+	}\
+	catch ( ... )\
+	{\
+		lua_pushstring( ls, "unknown error");\
+		lua_error( ls);\
+	}
+
 
 static int mewa_new_compiler( lua_State *ls)
 {
 	luaL_checktype( ls, 1, LUA_TTABLE);
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
-	try
-	{
-		new (&mw->automaton) mewa::Automaton( parseAutomaton( ls, 1));
-	}
-	catch (const std::runtime_error& err)
-	{
-		lua_pushstring( ls, err.what());
-		lua_error( ls); 
-	}
-	catch (const std::bad_alloc& )
-	{
-		lua_pushstring( ls, "out of memory");
-		lua_error( ls); 
-	}
-	catch ( ... )
-	{
-		lua_pushstring( ls, "unknown error");
-		lua_error( ls); 
-	}
+	LUA_MAP_EXCEPTION( new (&mw->automaton) mewa::Automaton( parseAutomaton( ls, 1)))
 	luaL_getmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
 	lua_setmetatable( ls, -2);
 	return 1;
@@ -382,32 +395,42 @@ static int mewa_new_compiler( lua_State *ls)
 
 static int mewa_destroy_compiler( lua_State *ls)
 {
-    mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
-    mw->automaton.~Automaton();
-    return 0;
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	mw->automaton.~Automaton();
+	return 0;
+}
+
+static int mewa_compiler_tostring( lua_State *ls)
+{
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	std::string result;
+	LUA_MAP_EXCEPTION( result = mw->automaton.tostring())
+	lua_pushlstring( ls, result.c_str(), result.size());
+	return 1;
 }
 
 static const struct luaL_Reg mewa_compiler_methods[] = {
-    { "__gc",        mewa_destroy_compiler   },
-    { NULL,          NULL               },
+	{ "__gc",	mewa_destroy_compiler },
+	{ "__tostring",	mewa_compiler_tostring },
+	{ NULL,		NULL },
 };
 
 static const struct luaL_Reg mewa_functions[] = {
-    { "compiler", mewa_new_compiler },
-    { NULL,  NULL         }
+	{ "compiler",	mewa_new_compiler },
+	{ NULL,  	NULL }
 };
 
 DLL_PUBLIC int luaopen_mewa( lua_State *ls)
 {
-    /* Create the metatable and put it on the stack. */
-    luaL_newmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
-    lua_pushvalue( ls, -1);
+	/* Create the metatable and put it on the stack. */
+	luaL_newmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
+	lua_pushvalue( ls, -1);
 
-    lua_setfield( ls, -2, "__index");
-    luaL_setfuncs( ls, mewa_compiler_methods, 0);
+	lua_setfield( ls, -2, "__index");
+	luaL_setfuncs( ls, mewa_compiler_methods, 0);
 
-    luaL_newlib( ls, mewa_functions);
-    return 1;
+	luaL_newlib( ls, mewa_functions);
+	return 1;
 }
 
 
