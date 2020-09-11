@@ -21,17 +21,19 @@ endif
 BUILDDIR := build
 MANPAGES := /usr/local/man
 DESTINATION := /usr/local/bin
+LUAVER   := 5.2
 SRCDIR   := src
 TESTDIR  := tests
 STDFLAGS := -std=c++17
 CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread $(DEBUGFLAGS)
-INCFLAGS := -I$(SRCDIR) -I/usr/include/lua5.2
+INCFLAGS := -I$(SRCDIR) -I/usr/include/lua$(LUAVER)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
+LUALIBS  := -llua$(LUAVER)
 LIBOBJS  := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/fileio.o
 MODOBJS  := $(BUILDDIR)/lualib_mewa.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
-MODULE   := $(BUILDDIR)/lualib_mewa.so
+MODULE   := $(BUILDDIR)/mewa.so
 TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testAutomaton
 PROGRAM  := $(BUILDDIR)/mewa 
 
@@ -64,16 +66,18 @@ $(LIBRARY): $(LIBOBJS)
 $(PROGRAM) $(TESTPRG): $(LIBRARY)
 
 $(BUILDDIR)/%: $(BUILDDIR)/%.o
-	$(CC) $(LDFLAGS) -o $@ $(LDLIBS) $< $(LIBRARY)
+	$(CC) $(LDFLAGS) $(LDLIBS) -o $@ $< $(LIBRARY)
 
 $(MODULE): $(LIBRARY) $(MODOBJS)
-	$(LNKSO) -o $@ $(LIBRARY) $(MODOBJS)
+	$(LNKSO) $(LUALIBS) $(LDLIBS) -o $@ $(MODOBJS) $(LIBRARY)
 
 test : all
 	$(BUILDDIR)/testLexer
 	$(BUILDDIR)/testScope
 	$(BUILDDIR)/testAutomaton
-
+check: test
+luatest:
+	tests/luatest.sh
 install:
 	cp $(PROGRAM) $(DESTINATION)
 	cp MANPAGE $(MANPAGES)/man1/mewa.1

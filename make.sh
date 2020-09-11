@@ -4,8 +4,8 @@
 set -x
 
 COMP="/usr/bin/clang -c -std=c++17 -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread -O3"
-LINK="/usr/bin/clang -pthread"
-LINKSO="$LINK -shared"
+LINK="/usr/bin/clang -pthread -lm -lstdc++"
+LINKSO="$LINK -shared -llua5.2"
 
 $COMP -Isrc -c src/lexer.cpp -o build/lexer.o
 $COMP -Isrc -c src/automaton.cpp -o build/automaton.o
@@ -21,11 +21,11 @@ $COMP -Isrc -c tests/testLexer.cpp -o build/testLexer.o
 $COMP -Isrc -c tests/testScope.cpp -o build/testScope.o
 $COMP -Isrc -c tests/testAutomaton.cpp -o build/testAutomaton.o
 
-$LINK -o build/mewa -lm -lstdc++ build/mewa.o build/libmewa.a
-$LINK -o build/testLexer -lm -lstdc++ build/testLexer.o build/libmewa.a
-$LINK -o build/testScope -lm -lstdc++ build/testScope.o build/libmewa.a
-$LINK -o build/testAutomaton -lm -lstdc++ build/testAutomaton.o build/libmewa.a
-$LINKSO -o build/lualib_mewa.so build/libmewa.a build/lualib_mewa.o
+$LINK -o build/mewa build/mewa.o build/libmewa.a
+$LINK -o build/testLexer build/testLexer.o build/libmewa.a
+$LINK -o build/testScope build/testScope.o build/libmewa.a
+$LINK -o build/testAutomaton build/testAutomaton.o build/libmewa.a
+$LINKSO -o build/mewa.so build/lualib_mewa.o build/libmewa.a
 
 build/testLexer
 build/testScope

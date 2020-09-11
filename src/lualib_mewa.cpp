@@ -18,8 +18,9 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-#include <utility>
 #include <map>
+#include <utility>
+#include <typeinfo>
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -99,7 +100,7 @@ static std::vector<std::string> parseStringArray( lua_State *ls, int li, const s
 	while (lua_next( ls, -2))
 	{
 		++rowcnt;
-		if (rowcnt != lua_tointeger( ls, -2))
+		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
@@ -148,45 +149,99 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		{
 			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
 		}
-		auto arg = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
 		if (0==std::strcmp( keystr, "comment"))
 		{
-			if (arg.size() > 2) throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
-			if (arg.size() == 1)
+			lua_pushvalue( ls, -1);
+			lua_pushnil( ls);
+			int colcnt = 0;
+			while (lua_next( ls, -2))
 			{
-				rt.defineEolnComment( arg[ 0]);
+				++colcnt;
+				if (!lua_isnumber( ls, -2) || colcnt != lua_tointeger( ls, -2))
+				{
+					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+				}
+				if (lua_istable( ls, -1))
+				{
+					auto arg = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+					if (arg.size() > 2 || arg.empty())
+					{
+						throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+					}
+					else if (arg.size() == 1)
+					{
+						rt.defineEolnComment( arg[ 0]);
+					}
+					else
+					{
+						rt.defineBracketComment( arg[0], arg[1]);
+					}
+				}
+				else if (lua_isstring( ls, -1))
+				{
+					auto arg = lua_tostring( ls, -1);
+					rt.defineEolnComment( arg);
+				}
+				else
+				{
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+				}
+				lua_pop( ls, 1);
 			}
-			else
-			{
-				rt.defineBracketComment( arg[0], arg[1]);
-			}
+			lua_pop( ls, 1);
 		}
 		else if (0==std::strcmp( keystr, "keyword"))
 		{
-			if (arg.size() > 1) throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
-			rt.defineLexem( arg[0]);
+			auto keywords = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+			for (auto keyword : keywords)
+			{
+				rt.defineLexem( keyword);
+			}
 		}
 		else if (0==std::strcmp( keystr, "token"))
 		{
-			if (arg.size() > 3) throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
-			if (arg.size() > 2)
+			lua_pushvalue( ls, -1);
+			lua_pushnil( ls);
+			int colcnt = 0;
+			while (lua_next( ls, -2))
 			{
-				rt.defineLexem( arg[0], arg[1], string2int( arg[2]));
+				++colcnt;
+				if (!lua_isnumber( ls, -2) || colcnt != lua_tointeger( ls, -2))
+				{
+					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+				}
+				auto arg = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+				if (arg.size() > 3 || arg.empty())
+				{
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
+				}
+				else if (arg.size() > 2)
+				{
+					rt.defineLexem( arg[0], arg[1], string2int( arg[2]));
+				}
+				else
+				{
+					rt.defineLexem( arg[0], arg[1]);
+				}
+				lua_pop( ls, 1);
 			}
-			else
-			{
-				rt.defineLexem( arg[0], arg[1]);
-			}
+			lua_pop( ls, 1);
 		}
 		else if (0==std::strcmp( keystr, "bad"))
 		{
-			if (arg.size() > 1) throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
-			rt.defineBadLexem( arg[0]);
+			auto badlexems = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+			for (auto badlexem : badlexems)
+			{
+				rt.defineBadLexem( badlexem);
+			}
 		}
 		else if (0==std::strcmp( keystr, "ignore"))
 		{
-			if (arg.size() > 1) throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
-			rt.defineIgnore( arg[0]);
+			auto ignores = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+			for (auto ignore : ignores)
+			{
+				rt.defineIgnore( ignore);
+			}
 		}
 		lua_pop( ls, 1);
 	}
@@ -207,7 +262,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 	while (lua_next( ls, -2))
 	{
 		++rowcnt;
-		if (rowcnt != lua_tointeger( ls, -2))
+		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
@@ -222,7 +277,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 				{
 					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
 				}
-				valstr = lua_tolstring( ls, -1, &vallen); function.append( valstr, vallen);
+				valstr = lua_tolstring( ls, -1, &vallen);
 				argstr = std::strchr( valstr, ' ');
 				if (argstr)
 				{
@@ -265,7 +320,7 @@ static std::vector<mewa::Automaton::Call> parseCallList( lua_State *ls, int li, 
 	while (lua_next( ls, -2))
 	{
 		++rowcnt;
-		if (rowcnt != lua_tointeger( ls, -2))
+		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}

@@ -38,9 +38,27 @@ static bool isConstantArgument( const std::string& val)
 {
 	if (val.empty()) return false;
 	char ch = val[0];
-	if (ch >= '0' || ch <= '9') return true;
+	if (ch >= '0' && ch <= '9') return true;
 	if (ch == '-') return true;
 	return false;
+}
+
+static std::string escapeString( const std::string& str)
+{
+	std::string rt;
+	char const* si = str.c_str();
+	for (; *si; ++si)
+	{
+		if (*si == '\\')
+		{
+			rt.append( "\\\\");
+		}
+		else
+		{
+			rt.push_back( *si);
+		}
+	}
+	return rt;
 }
 
 static void printString( std::ostream& outstream, const std::string& str)
@@ -71,11 +89,11 @@ static void printString( std::ostream& outstream, const std::string& str)
 	if (dqpos)
 	{
 		if (sqpos) throw Error( Error::EscapeQuoteErrorInString, str);
-		outstream << "\'" << str << "\'";
+		outstream << "\'" << escapeString( str) << "\'";
 	}
 	else
 	{
-		outstream << "\"" << str << "\"";
+		outstream << "\"" << escapeString( str) << "\"";
 	}
 }
 
@@ -151,7 +169,7 @@ static void printLexems( std::ostream& outstream, const char* tablename, const L
 						printString( outstream, def.pattern());
 						if (def.select() != 0)
 						{
-							outstream << ", select=" << def.select();
+							outstream << ", " << def.select();
 						}
 						outstream << " }";
 						break;

@@ -33,17 +33,18 @@ using namespace mewa;
 
 static void printUsage()
 {
-	std::cerr << "Usage: mewa [-h][-v][-V][-g][-o OUTF][-d DBGOUTF] INPUTFILE" << std::endl;
+	std::cerr << "Usage: mewa [-h][-v][-V][-g][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPUTFILE" << std::endl;
 	std::cerr << "Description: Build a lua module implementing a compiler described as\n";
 	std::cerr << "             an EBNF and some lua hooks implementing the type system\n";
 	std::cerr << "             and the code generation.\n";
 	std::cerr << "Options:\n";
-	std::cerr << " -h         : Print this usage\n";
-	std::cerr << " -v         : Print version of mewa\n";
-	std::cerr << " -V         : Verbose output to stderr\n";
-	std::cerr << " -g         : Action do generate parsing tables for import by lua module for 'mewa'\n";
-	std::cerr << " -o <OUTF>  : Write the output to file with path OUTF instead of stderr.\n";
-	std::cerr << " -d <DBGF>  : Write the debug output to file with path DBGF instead of stdout.\n";
+	std::cerr << " -h           : Print this usage\n";
+	std::cerr << " -v           : Print version of mewa\n";
+	std::cerr << " -V           : Verbose output to stderr\n";
+	std::cerr << " -g           : Action do generate parsing tables for import by lua module for 'mewa'\n";
+	std::cerr << " -o <OUTF>    : Write the output to file with path OUTF instead of stderr.\n";
+	std::cerr << " -d <DBGF>    : Write the debug output to file with path DBGF instead of stdout.\n";
+	std::cerr << " -t <TEMPLAT> : Use content of file TEMPLAT as template for generated lua module (-g).\n";
 	std::cerr << "Arguments:\n";
 	std::cerr << "INPUTFILE   : Contains the EBNF of the grammar to process with the Lua hooks embedded.\n";
 }
@@ -61,33 +62,60 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-static void printAutomaton( const std::string& filename, const Automaton& automaton)
+static const std::string g_defaultTemplate{R"(
+#!/usr/bin/lua
+
+typesystem = require( "%typesystem%")
+mewa = require("mewa")
+
+compilerdef = %automaton%
+
+compiler = mewa.compiler( compilerdef)
+
+files = typesystem.parseArguments( arg)
+for fi = 1, #files do
+	mewa.compile( compiler, files[fi] )
+end
+)"};
+
+
+static std::string mapTemplateKey( const std::string& content, const char* key, const std::string& value)
 {
-	std::ostringstream outstream;
-	outstream << "#!/usr/bin/lua\n";
-	if (!automaton.typesystem().empty())
+	std::string rt;
+	std::string pattern = std::string("%") + key + "%";
+	char const* pp = std::strstr( content.c_str(), pattern.c_str());
+	if (pp)
 	{
-		outstream << "typesystem = require(\"" << automaton.typesystem() << "\")\n";
+		rt.append( content.c_str(), pp-content.c_str());
+		rt.append( value);
+		rt.append( pp + pattern.size());
 	}
 	else
 	{
-		outstream << "typesystem = require(\"typesystem\")\n";
+		rt.append( content);
 	}
-	outstream << "mewa = require(\"mewa\")\n\n";
+	return rt;
+}
 
-	outstream << "compiler = ";
-	outstream << automaton.tostring();
-	outstream << "\n";
-	outstream << "typesystem.options, files = typesystem.parseArguments( arg)\n";
-	outstream << "for fi = 1, #files do\n\tmewa.compile( compiler, files[fi] )\nend\n";
+static std::string mapTemplate( const std::string& templat, const Automaton& automaton)
+{
+	std::string rt = templat;
+	rt = mapTemplateKey( rt, "typesystem", automaton.typesystem());
+	rt = mapTemplateKey( rt, "automaton", automaton.tostring());
+	return rt;
+}
 
+static void printAutomaton( const std::string& filename, const std::string& templat, const Automaton& automaton)
+{
 	if (filename.empty())
 	{
-		std::cout << outstream.str();
+		std::cout << mapTemplate( templat, automaton) << std::endl;
 	}
 	else
 	{
-		writeFile( filename, outstream.str());
+		std::string content = mapTemplate( templat, automaton);
+		content.push_back( '\n');
+		writeFile( filename, content);
 	}
 }
 
@@ -98,12 +126,14 @@ int main( int argc, const char* argv[] )
 		bool verbose = false;
 		enum Command {
 			NoCommand,
-			GenerateTables
+			GenerateCompilerForLua,
 		};
 		Command cmd = NoCommand;
 		std::string inputFilename;
 		std::string outputFilename;
 		std::string debugFilename;
+		std::string templat = g_defaultTemplate;
+
 		int argi = 1;
 		for (; argi < argc; ++argi)
 		{
@@ -143,6 +173,17 @@ int main( int argc, const char* argv[] )
 				debugFilename = argv[argi];
 				verbose = true;
 			}
+			else if (0==std::strcmp( argv[argi], "-t"))
+			{
+				++argi;
+				if (argi == argc || argv[argi][0] == '-') 
+				{
+					std::cerr << "Option -t requires a file path as argument" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
+				templat = readFile( argv[argi]);
+			}
 			else if (0==std::strcmp( argv[argi], "-g"))
 			{
 				if (cmd != NoCommand)
@@ -151,7 +192,7 @@ int main( int argc, const char* argv[] )
 					printUsage();
 					return ERRCODE_INVALID_ARGUMENTS;
 				}
-				cmd = GenerateTables;
+				cmd = GenerateCompilerForLua;
 			}
 			else if (0==std::strcmp( argv[argi], "--"))
 			{
@@ -209,8 +250,8 @@ int main( int argc, const char* argv[] )
 		{
 			case NoCommand:
 				break;
-			case GenerateTables:
-				printAutomaton( outputFilename, automaton);
+			case GenerateCompilerForLua:
+				printAutomaton( outputFilename, templat, automaton);
 				break;
 		}
 		return 0;
