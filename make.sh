@@ -30,3 +30,5 @@ $LINKSO -o build/mewa.so build/lualib_mewa.o build/libmewa.a
 build/testLexer
 build/testScope
 build/testAutomaton
+tests/luatest.sh
+
