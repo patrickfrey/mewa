@@ -72,9 +72,9 @@ compilerdef = %automaton%
 
 compiler = mewa.compiler( compilerdef)
 
-files = typesystem.parseArguments( arg)
+files = typesystem:parseArguments( arg)
 for fi = 1, #files do
-	mewa.compile( compiler, files[fi] )
+	compiler.run( files[fi] )
 end
 )"};
 

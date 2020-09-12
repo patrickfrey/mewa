@@ -15,7 +15,7 @@
 
 using namespace mewa;
 
-#define REGEX_ESCAPE_CHARS "#{}[]()*+?.-\\|&"
+#define REGEX_ESCAPE_CHARS "#{}[]()*+?.-\\|&^"
 
 static std::string_view parseChar( char const*& si)
 {
@@ -247,6 +247,42 @@ bool Scanner::match( const char* str)
 	return false;
 }
 
+static std::string nameString( const std::string_view& name)
+{
+	std::string rt;
+	void const* sqpos = std::memchr( name.data(), name.size(), '\'');
+	void const* dqpos = std::memchr( name.data(), name.size(), '\"');
+	if (sqpos && dqpos)
+	{
+		rt.append( name.data(), name.size());
+	}
+	else if (sqpos)
+	{
+		rt.push_back( '"');
+		rt.append( name.data(), name.size());
+		rt.push_back( '"');
+	}
+	else if (dqpos)
+	{
+		rt.push_back( '\'');
+		rt.append( name.data(), name.size());
+		rt.push_back( '\'');
+	}
+	else if (name.size() == 1)
+	{
+		rt.push_back( '\'');
+		rt.append( name.data(), name.size());
+		rt.push_back( '\'');
+	}
+	else
+	{
+		rt.push_back( '"');
+		rt.append( name.data(), name.size());
+		rt.push_back( '"');
+	}
+	return rt;
+}
+
 int Lexer::defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select)
 {
 	int rt = 0;
@@ -261,7 +297,14 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 			auto ins = m_nameidmap.insert( std::pair<std::string,int>( std::string(name), m_nameidmap.size()+1));
 			if (ins.second/*insert took place*/)
 			{
-				m_namelist.push_back( std::string(name));
+				if (keyword_)
+				{
+					m_namelist.push_back( nameString( name));
+				}
+				else
+				{
+					m_namelist.push_back( std::string(name));
+				}
 			}
 			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, keyword_, select));
 			rt = ins.first->second;

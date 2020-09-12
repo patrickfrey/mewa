@@ -129,9 +129,9 @@ V = "*" E
 	N =  . E, $ -> GOTO 3
 	E =  . V, $ -> GOTO 4
 	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
-	V =  . IDENT, = -> SHIFT IDENT GOTO 5
+	V =  . IDENT, '=' -> SHIFT IDENT GOTO 5
 	V =  . "*" E, $ -> SHIFT "*" GOTO 6
-	V =  . "*" E, = -> SHIFT "*" GOTO 6
+	V =  . "*" E, '=' -> SHIFT "*" GOTO 6
 [2]
 	S = N . , $ -> ACCEPT
 [3]
@@ -141,16 +141,16 @@ V = "*" E
 	E = V . , $ -> REDUCE E #1
 [5]
 	V = IDENT . , $ -> REDUCE V #1
-	V = IDENT . , = -> REDUCE V #1
+	V = IDENT . , '=' -> REDUCE V #1
 [6]
 	E =  . V, $ -> GOTO 9
-	E =  . V, = -> GOTO 9
+	E =  . V, '=' -> GOTO 9
 	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
-	V =  . IDENT, = -> SHIFT IDENT GOTO 5
+	V =  . IDENT, '=' -> SHIFT IDENT GOTO 5
 	V =  . "*" E, $ -> SHIFT "*" GOTO 6
-	V =  . "*" E, = -> SHIFT "*" GOTO 6
+	V =  . "*" E, '=' -> SHIFT "*" GOTO 6
 	V = "*" . E, $ -> GOTO 8
-	V = "*" . E, = -> GOTO 8
+	V = "*" . E, '=' -> GOTO 8
 [7]
 	N = V "=" . E, $ -> GOTO 10
 	E =  . V, $ -> GOTO 9
@@ -158,10 +158,10 @@ V = "*" E
 	V =  . "*" E, $ -> SHIFT "*" GOTO 6
 [8]
 	V = "*" E . , $ -> REDUCE V #2
-	V = "*" E . , = -> REDUCE V #2
+	V = "*" E . , '=' -> REDUCE V #2
 [9]
 	E = V . , $ -> REDUCE E #1
-	E = V . , = -> REDUCE E #1
+	E = V . , '=' -> REDUCE E #1
 [10]
 	N = V "=" E . , $ -> REDUCE N #3
 

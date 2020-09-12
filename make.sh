@@ -15,6 +15,8 @@ $COMP -Isrc -c src/fileio.cpp -o build/fileio.o
 ar rcs build/libmewa.a build/lexer.o build/automaton.o build/automaton_tostring.o build/fileio.o
 
 $COMP -Isrc -I/usr/include/lua5.2 -c src/lualib_mewa.cpp -o build/lualib_mewa.o
+$COMP -Isrc -I/usr/include/lua5.2 -c src/lua_load_automaton.cpp -o build/lua_load_automaton.o
+$COMP -Isrc -I/usr/include/lua5.2 -c src/lua_run_compiler.cpp -o build/lua_run_compiler.o
 $COMP -Isrc -c src/mewa.cpp -o build/mewa.o
 
 $COMP -Isrc -c tests/testLexer.cpp -o build/testLexer.o
@@ -25,7 +27,7 @@ $LINK -o build/mewa build/mewa.o build/libmewa.a
 $LINK -o build/testLexer build/testLexer.o build/libmewa.a
 $LINK -o build/testScope build/testScope.o build/libmewa.a
 $LINK -o build/testAutomaton build/testAutomaton.o build/libmewa.a
-$LINKSO -o build/mewa.so build/lualib_mewa.o build/libmewa.a
+$LINKSO -o build/mewa.so build/lualib_mewa.o build/lua_load_automaton.o build/lua_run_compiler.o build/libmewa.a
 
 build/testLexer
 build/testScope

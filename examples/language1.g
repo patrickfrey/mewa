@@ -18,31 +18,50 @@ definitionlist/L	= definition definitionlist
 			| ε
 			;
 definition		= functiondefinition
-			| variabledefinition
+			| typedefinition ";"
+			| variabledefinition ";"
 			;
 typename/L1		= IDENT
+			| IDENT "::" typename
 			;
-functiondefinition	= "function" typename IDENT 
+typespec/L1		= typename
+			| "const" typename
+			| typename "&"
+			| "const" typename "&"
+			| typename "^"
+			| "const" typename "^"
+			| typename "^" "&"
+			| "const" typename "^" "&"
+			| typename "&&"
+			;
+typedefinition		= "typedef" typename IDENT
+			;
+functiondefinition	= "function" typespec IDENT 
 				"(" parameters ")"
 				"{" statementlist "}"
 			;
 parameters/L		= paramdecl "," parameters
 			| ε
 			;
-paramdecl		= typename IDENT
+paramdecl		= typespec IDENT
 			;
 statementlist/L		= statement statementlist
 			| ε
 			;
-statement		= typename IDENT "=" expression ";"
-			| expression ";" 
-			| returnstatement ";" 
+statement		= functiondefinition
+			| typedefinition ";"
+			| variabledefinition ";"
+			| expression ";"
+			| returnstatement ";"
+			| "if" "(" expression ")" "{" statementlist "}"
+			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"
+			| "while" "(" expression ")" "{" statementlist "}"
 			| "{" statementlist "}"
 			;
-variabledefinition	= typename IDENT "=" expression ";"
-			| typename IDENT ";"
-			| typename IDENT "[" "]" "=" expression ";"
-			| typename IDENT "[" "]" ";"
+variabledefinition	= typespec IDENT "=" expression ";"
+			| typespec IDENT ";"
+			| typespec IDENT "[" "]" "=" expression ";"
+			| typespec IDENT "[" "]" ";"
 			;  
 returnstatement	   	= "return" expression
 			;
@@ -67,11 +86,11 @@ expression/L4		= expression  "*"  expression		(operator mul)
 expression/L5		= expression "->" IDENT
 			| expression "." IDENT
 			;
-expression/L6		= expression  "(" callparamlist ")"
+expression/L6		= expression  "(" expressionlist ")"
 			| expression  "(" ")"
-			| expression  "[" callparamlist "]"
+			| expression  "[" expressionlist "]"
 			;
-callparamlist		= expression "," callparamlist
+expressionlist		= expression "," expressionlist
 			| ε
 			;
 

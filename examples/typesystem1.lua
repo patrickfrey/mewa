@@ -1,6 +1,7 @@
-options = {}
 
 return {
+	options = {},
+
 	parseArguments = function( arg)
 		files = {}
 		for ai = 1, #arg do
