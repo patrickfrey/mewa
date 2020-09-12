@@ -36,7 +36,10 @@ typespec/L1		= typename
 			;
 typedefinition		= "typedef" typename IDENT
 			;
-functiondefinition	= "function" typespec IDENT 
+functiondefinition	= "function" typespec IDENT
+				"(" parameters ")"
+				"{" statementlist "}"
+			| "procedure" IDENT
 				"(" parameters ")"
 				"{" statementlist "}"
 			;
