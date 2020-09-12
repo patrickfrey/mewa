@@ -62,8 +62,7 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-static const std::string g_defaultTemplate{R"(
-#!/usr/bin/lua
+static const std::string g_defaultTemplate{R"(#!/usr/bin/lua
 
 typesystem = require( "%typesystem%")
 mewa = require("mewa")
