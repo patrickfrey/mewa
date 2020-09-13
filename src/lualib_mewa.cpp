@@ -54,16 +54,21 @@ struct mewa_compiler_userdata_t
 	CallTableName callTableName;
 	FILE* outputFileHandle;
 
-	mewa_compiler_userdata_t()
-		 :outputFileHandle(nullptr){}
-	~mewa_compiler_userdata_t()
+	void init()
 	{
-		closeOutput();
+		std::memset( &automaton, 0, sizeof( automaton));
+		outputFileHandle = nullptr;
+		callTableName.init();
 	}
 	void closeOutput()
 	{
 		if (outputFileHandle && outputFileHandle != ::stdout && outputFileHandle != ::stderr) std::fclose(outputFileHandle);
 		outputFileHandle = nullptr;
+	}
+	void destroy()
+	{
+		closeOutput();
+		automaton.~Automaton();
 	}
 };
 
@@ -117,7 +122,7 @@ static int mewa_new_compiler( lua_State* ls)
 
 	luaL_checktype( ls, 1, LUA_TTABLE);
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
-	mw->callTableName.init();
+	mw->init();
 	lua_pushstring( ls, "call");
 	lua_gettable( ls, 1);
 	lua_setglobal( ls, mw->callTableName.buf);
@@ -140,7 +145,7 @@ static int mewa_destroy_compiler( lua_State* ls)
 	if (nn == 0) luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
 
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
-	mw->automaton.~Automaton();
+	mw->destroy();
 	return 0;
 }
 

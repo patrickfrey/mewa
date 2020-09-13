@@ -250,8 +250,8 @@ bool Scanner::match( const char* str)
 static std::string nameString( const std::string_view& name)
 {
 	std::string rt;
-	void const* sqpos = std::memchr( name.data(), name.size(), '\'');
-	void const* dqpos = std::memchr( name.data(), name.size(), '\"');
+	void const* sqpos = std::memchr( name.data(), '\'', name.size());
+	void const* dqpos = std::memchr( name.data(), '\"', name.size());
 	if (sqpos && dqpos)
 	{
 		rt.append( name.data(), name.size());
@@ -303,7 +303,7 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 				}
 				else
 				{
-					m_namelist.push_back( std::string(name));
+					m_namelist.push_back( std::string( name));
 				}
 			}
 			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, keyword_, select));
@@ -354,7 +354,8 @@ static std::string stringToRegex( const std::string_view& opr)
 
 int Lexer::defineLexem( const std::string_view& opr)
 {
-	return defineLexem_( opr, stringToRegex(opr), true/*keyword*/, 0);
+	std::string pattern = stringToRegex(opr);
+	return defineLexem_( opr, pattern, true/*keyword*/, 0);
 }
 
 void Lexer::defineBadLexem( const std::string_view& name_)
