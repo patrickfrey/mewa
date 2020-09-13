@@ -1,17 +1,19 @@
+require( 'pl')
+lapp = require( 'pl.lapp')
+
+function nilIfEmpty( arg)
+	if arg == "" then return nil else return arg end
+end
 
 return {
-	options = {},
-
 	parseArguments = function( arg)
-		files = {}
-		for ai = 1, #arg do
-			if string.sub( arg[ai], 1, 1) == "-" then
-				options[ string.sub( arg[ai], 2, 1)] = string.sub( arg[ai], 3)
-			else
-				table.insert( files, arg[ai])
-			end
-		end
-		return files
+	local args = lapp [[
+		Compiler for language1
+			-d,--debug  (default "") Optional file path (or stderr, resp. stdout) to write the debug output to
+			-o,--output (default "") Optional file path to write the output to (stdout if not specified)
+			<input> (string) File with source to compile
+		]]
+		return args.input,nilIfEmpty( args.output),nilIfEmpty( args.debug)
 	end,
 
 	assign = {},

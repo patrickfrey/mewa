@@ -34,6 +34,21 @@ static void printTable( std::ostream& outstream, const char* tablename, const TA
 	outstream << (sep ? "},\n" : "}\n");
 }
 
+static void printStringArray( std::ostream& outstream, const char* tablename, const std::vector<std::string>& list, bool sep)
+{
+	outstream << "\t" << tablename << " = {";
+	int tidx = 0;
+	for (auto element : list)
+	{
+		const char* sepc = tidx ? ",":"";
+		const char* shft = ((tidx & 3) == 0) ? "\n\t\t" : " ";
+		++tidx;
+
+		outstream << sepc << shft << "\"" << element << "\"";
+	}
+	outstream << (sep ? "},\n" : "}\n");
+}
+
 static bool isConstantArgument( const std::string& val)
 {
 	if (val.empty()) return false;
@@ -214,6 +229,7 @@ std::string Automaton::tostring() const
 		outstream << "\ttypesystem = \"" << typesystem() << "\",\n";
 	}
 	printLexems( outstream, "lexer", lexer(), true/*sep*/);
+	printStringArray( outstream, "nonterminal", m_nonterminals, true/*sep*/);
 	printTable( outstream, "action", actions(), true/*sep*/);
 	printTable( outstream, "gto", gotos(), true/*sep*/);
 	std::string callprefix = "typesystem.";

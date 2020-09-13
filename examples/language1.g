@@ -88,6 +88,7 @@ expression/L4		= expression  "*"  expression		(operator mul)
 			;
 expression/L5		= expression "->" IDENT
 			| expression "." IDENT
+			| "*" expression
 			;
 expression/L6		= expression  "(" expressionlist ")"
 			| expression  "(" ")"

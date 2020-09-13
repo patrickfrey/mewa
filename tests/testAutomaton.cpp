@@ -80,6 +80,12 @@ TOKEN IDENT [a-z] 0
 KEYWORD =
 KEYWORD *
 
+-- Nonterminals:
+(1) S
+(2) N
+(3) E
+(4) V
+
 -- Productions:
 S = N
 N = V "=" E

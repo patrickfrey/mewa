@@ -15,10 +15,11 @@
 #include "automaton.hpp"
 #include <lua.h>
 #include <string>
+#include <iostream>
 
 namespace mewa {
 
-void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string& source);
+void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string& source, std::ostream* dbgout);
 
 } //namespace
 #else

@@ -411,10 +411,16 @@ int Lexer::lexemId( const std::string_view& name) const
 	return (lx == m_nameidmap.end()) ? 0 : lx->second;
 }
 
-std::string_view Lexer::lexemName( int id) const
+const std::string& Lexer::lexemName( int id) const
 {
-	if (id < 1 || id > (int)m_namelist.size()) return std::string_view( "", 0);
+	if (id < 1 || id > (int)m_namelist.size()) throw Error( Error::ArrayBoundReadInLexer);
 	return m_namelist[ id-1];
+}
+
+bool Lexer::isKeyword( int id) const
+{
+	return m_nameidmap.find( lexemName( id)) == m_nameidmap.end();
+	// ... lexemName of keyword has quotes added
 }
 
 Lexem Lexer::next( Scanner& scanner) const

@@ -7,5 +7,3 @@ compilerdef = %automaton%
 
 compiler = mewa.compiler( compilerdef)
 print( compiler)
-
-

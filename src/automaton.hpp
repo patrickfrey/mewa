@@ -52,7 +52,7 @@ public:
 		DebugOutput( const DebugOutput& o) 
 			:m_enabledMask(o.m_enabledMask),m_out(o.m_out){}
 
-		enum Type {None=0, Productions=1, Lexems=2, States=4, FunctionCalls=8, All=0xFF};
+		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, All=0xFF};
 
 		DebugOutput& enable( Type type_)	{m_enabledMask |= (int)(type_); return *this;}
 		bool enabled( Type type_) const		{return (m_enabledMask & (int)(type_)) == (int)(type_);}
@@ -231,6 +231,8 @@ public:
 					: m_function < o.m_function;
 		}
 
+		std::string tostring() const;
+
 	private:
 		std::string m_function;
 		std::string m_arg;
@@ -239,29 +241,32 @@ public:
 
 public:
 	Automaton()
-		:m_language(),m_typesystem(),m_lexer(),m_actions(),m_gotos(),m_calls(){}
+		:m_language(),m_typesystem(),m_lexer(),m_actions(),m_gotos(),m_calls(),m_nonterminals(){}
 	Automaton( const Automaton& o)
-		:m_language(o.m_language),m_typesystem(o.m_typesystem),m_lexer(o.m_lexer),m_actions(o.m_actions),m_gotos(o.m_gotos),m_calls(o.m_calls){}
+		:m_language(o.m_language),m_typesystem(o.m_typesystem),m_lexer(o.m_lexer),m_actions(o.m_actions),m_gotos(o.m_gotos)
+		,m_calls(o.m_calls),m_nonterminals(o.m_nonterminals){}
 	Automaton& operator=( const Automaton& o)
-		{m_language=o.m_language; m_typesystem=o.m_typesystem; m_lexer=o.m_lexer; m_actions=o.m_actions; m_gotos=o.m_gotos; m_calls=o.m_calls; return *this;}
+		{m_language=o.m_language; m_typesystem=o.m_typesystem; m_lexer=o.m_lexer; m_actions=o.m_actions; m_gotos=o.m_gotos;
+		 m_calls=o.m_calls; m_nonterminals=o.m_nonterminals; return *this;}
 	Automaton( Automaton&& o)
 		:m_language(std::move(o.m_language)),m_typesystem(std::move(o.m_typesystem))
 		,m_lexer(std::move(o.m_lexer)),m_actions(std::move(o.m_actions)),m_gotos(std::move(o.m_gotos))
-		,m_calls(std::move(o.m_calls)){}
+		,m_calls(std::move(o.m_calls)),m_nonterminals(std::move(o.m_nonterminals)){}
 	Automaton& operator=( Automaton&& o)
 		{m_language=std::move(o.m_language); m_typesystem=std::move(o.m_typesystem);
 		m_lexer=std::move(o.m_lexer); m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos);
-		m_calls=std::move(o.m_calls); return *this;}
+		m_calls=std::move(o.m_calls); m_nonterminals=std::move(o.m_nonterminals); return *this;}
 	Automaton( const std::string& language_, const std::string& typesystem_,
 			const Lexer& lexer_, const std::map<ActionKey,Action>& actions_, const std::map<GotoKey,Goto>& gotos_,
-			const std::vector<Call>& calls_)
-		:m_language(language_),m_typesystem(typesystem_),m_lexer(lexer_),m_actions(actions_),m_gotos(gotos_),m_calls(calls_){}
+			const std::vector<Call>& calls_, const std::vector<std::string>& nonterminals_)
+		:m_language(language_),m_typesystem(typesystem_),m_lexer(lexer_),m_actions(actions_),m_gotos(gotos_)
+		,m_calls(calls_),m_nonterminals(nonterminals_){}
 	Automaton( std::string&& language_, std::string&& typesystem_,
 			Lexer&& lexer_, std::map<ActionKey,Action>&& actions_, std::map<GotoKey,Goto>&& gotos_,
-			std::vector<Call>&& calls_)
+			std::vector<Call>&& calls_, std::vector<std::string>&& nonterminals_)
 		:m_language(std::move(language_)),m_typesystem(std::move(typesystem_))
 		,m_lexer(std::move(lexer_)),m_actions(std::move(actions_)),m_gotos(std::move(gotos_))
-		,m_calls(std::move(calls_)){}
+		,m_calls(std::move(calls_)),m_nonterminals(std::move(nonterminals_)){}
 
 	void build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout = DebugOutput());
 
@@ -273,6 +278,8 @@ public:
 	const Call& call( int callidx) const				{return m_calls[ callidx-1];}
 	const std::vector<Call>& calls() const				{return m_calls;}
 
+	const std::string& nonterminal( int nonterminalidx) const	{return m_nonterminals[ nonterminalidx-1];}
+	const std::vector<std::string>& nonterminals() const		{return m_nonterminals;}
 	std::string tostring() const;
 
 private:
@@ -282,6 +289,7 @@ private:
 	std::map<ActionKey,Action> m_actions;
 	std::map<GotoKey,Goto> m_gotos;
 	std::vector<Call> m_calls;
+	std::vector<std::string> m_nonterminals;
 };
 
 }//namespace

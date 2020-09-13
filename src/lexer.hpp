@@ -208,7 +208,8 @@ public:
 	void defineBracketComment( const std::string_view& start, const std::string_view& end);
 
 	int lexemId( const std::string_view& name) const;
-	std::string_view lexemName( int id) const;
+	const std::string& lexemName( int id) const;
+	bool isKeyword( int id) const;
 	Lexem next( Scanner& scanner) const;
 
 	int nofTerminals() const			{return m_namelist.size();}

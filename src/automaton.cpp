@@ -69,7 +69,7 @@ public:
 
 static std::string getLexemName( const Lexer& lexer, int terminal)
 {
-	return terminal ? std::string( lexer.lexemName( terminal)) : std::string("$");
+        return terminal ? lexer.lexemName( terminal) : std::string("$");
 }
 
 class ProductionNode
@@ -820,14 +820,15 @@ struct LanguageDef
 	Lexer lexer;
 	std::vector<ProductionDef> prodlist;
 	std::vector<Automaton::Call> calls;
+	std::vector<std::string> nonterminals;
 
 	LanguageDef()
-		:language(),typesystem(),lexer(),prodlist(),calls(){};
+		:language(),typesystem(),lexer(),prodlist(),calls(),nonterminals(){};
 	LanguageDef( const LanguageDef& o)
-		:language(o.language),typesystem(o.typesystem),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls){}
+		:language(o.language),typesystem(o.typesystem),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls),nonterminals(o.nonterminals){}
 	LanguageDef( LanguageDef&& o)
 		:language(std::move(o.language)),typesystem(std::move(o.typesystem))
-		,lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)){}
+		,lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)),nonterminals(std::move(o.nonterminals)){}
 };
 
 static LanguageDef parseLanguageDef( const std::string& source)
@@ -1085,7 +1086,10 @@ static LanguageDef parseLanguageDef( const std::string& source)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
 						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
-						nonTerminalIdMap.insert( std::pair<std::string_view, int>( rulename, nonTerminalIdMap.size()+1));
+						if (nonTerminalIdMap.insert( std::pair<std::string_view, int>( rulename, nonTerminalIdMap.size()+1)).second/*insert took place*/)
+						{
+							rt.nonterminals.push_back( std::string( rulename));
+						}
 						state = ParseProductionElement;
 					}
 					else
@@ -1293,9 +1297,23 @@ static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 	dbgout.out() << std::endl;
 }
 
-static void printLanguageName( const std::string& language, Automaton::DebugOutput dbgout)
+static void printNonterminals( const std::vector<std::string>& nonterminals, Automaton::DebugOutput dbgout)
 {
-	dbgout.out() << "== " << language << " ==" << std::endl;
+	dbgout.out() << "-- Nonterminals:" << std::endl;
+	int ntidx = 0;
+	for (auto ident : nonterminals)
+	{
+		++ntidx;
+		dbgout.out() << "(" << ntidx << ") " << ident << std::endl;
+	}
+	dbgout.out() << std::endl;
+}
+
+static void printLanguageHeader( const std::string& language, const std::string& typesystem, Automaton::DebugOutput dbgout)
+{
+	dbgout.out() << "== " << language;
+	if (!typesystem.empty()) dbgout.out() << " (" << typesystem << ")";
+	dbgout.out() << " ==" << std::endl;
 }
 
 static void printProductions( const std::vector<ProductionDef>& prodlist, Automaton::DebugOutput dbgout)
@@ -1413,12 +1431,34 @@ static void printFunctionCalls( const std::vector<Automaton::Call>& calls, Autom
 	}
 }
 
+std::string Automaton::Call::tostring() const
+{
+	std::string rt( m_function);
+	switch (m_argtype)
+	{
+		case Automaton::Call::NoArg:
+			break;
+		case Automaton::Call::StringArg:
+			rt.push_back( ' ');
+			rt.push_back( '"');
+			rt.append( m_arg);
+			rt.push_back( '"');
+			break;
+		case Automaton::Call::ReferenceArg:
+			rt.push_back( ' ');
+			rt.append( m_arg);
+			break;
+	}
+	return rt;
+}
+
 void Automaton::build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout)
 {
 	// [1] Parse grammar and test completeness:
 	LanguageDef langdef = parseLanguageDef( source);
-	if (dbgout.enabled() && !langdef.language.empty()) printLanguageName( langdef.language, dbgout);
+	if (dbgout.enabled() && !langdef.language.empty()) printLanguageHeader( langdef.language, langdef.typesystem, dbgout);
 	if (dbgout.enabled( DebugOutput::Lexems)) printLexems( langdef.lexer, dbgout);
+	if (dbgout.enabled( DebugOutput::Nonterminals)) printNonterminals( langdef.nonterminals, dbgout);
 	if (dbgout.enabled( DebugOutput::Productions)) printProductions( langdef.prodlist, dbgout);
 
 	// [2] Calculate some sets needed for the build:
@@ -1512,6 +1552,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::swap( m_typesystem, langdef.typesystem);
 	std::swap( m_lexer, langdef.lexer);
 	std::swap( m_calls, langdef.calls);
+	std::swap( m_nonterminals, langdef.nonterminals);
 }
 
 

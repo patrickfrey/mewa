@@ -334,6 +334,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 	std::map<mewa::Automaton::ActionKey,mewa::Automaton::Action> actions;
 	std::map<mewa::Automaton::GotoKey,mewa::Automaton::Goto> gotos;
 	std::vector<mewa::Automaton::Call> calls;
+	std::vector<std::string> nonterminals;
 
 	while (lua_next( ls, -2))
 	{
@@ -349,7 +350,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_isstring( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				language = lua_tostring( ls, -1);
 			}
@@ -357,7 +358,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_isstring( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				typesystem = lua_tostring( ls, -1);
 			}
@@ -365,15 +366,23 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				lexer = parseLexerDefinitions( ls, -1, keystr);
+			}
+			else if (0==std::strcmp( keystr, "nonterminal"))
+			{
+				if (!lua_istable( ls, -1))
+				{
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+				}
+				nonterminals = parseStringArray( ls, -1, keystr);
 			}
 			else if (0==std::strcmp( keystr, "action"))
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				actions = parsePackedTable<mewa::Automaton::ActionKey,mewa::Automaton::Action>( ls, -1, keystr);
 			}
@@ -381,7 +390,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				gotos = parsePackedTable<mewa::Automaton::GotoKey,mewa::Automaton::Goto>( ls, -1, keystr);
 			}
@@ -389,7 +398,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				calls = parseCallList( ls, -1, keystr);
 			}
@@ -401,6 +410,6 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 		lua_pop( ls, 1);
 	}
 	lua_pop( ls, 1);
-	return mewa::Automaton( language, typesystem, lexer, actions, gotos, calls);
+	return mewa::Automaton( language, typesystem, lexer, actions, gotos, calls, nonterminals);
 }
 

@@ -3,8 +3,7 @@
 #
 set -e 
 
-export LUA_CPATH="build/?.so"
-export LUA_PATH="examples/?.lua"
+. tests/luaenv.sh
 
 verify_test_result() {
 	TNAM=$1
@@ -27,6 +26,11 @@ verify_test_result "test dump automaton read by Lua script"  build/test1.out tes
 
 build/mewa -d build/test2.out examples/language1.g
 verify_test_result "test dump states dumped from language1 grammar"  build/test2.out tests/test2.exp
+
+build/mewa -g -o build/language1.lua examples/language1.g
+chmod +x build/language1.lua
+build/language1.lua examples/language1.prg > build/test3.out
+verify_test_result "test debug output compiling example program with language1 compiler"  build/test3.out tests/test3.exp
 
 build/mewa -g -o build/language1.lua examples/language1.g
 chmod +x build/language1.lua

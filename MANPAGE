@@ -26,6 +26,9 @@ Write the output (parsing tables) to \fIfile\fR instead of stdout.
 .TP
 \fB\-d\fR \fIfile\fR
 Write the verbose debug output (productions,states,functions,etc.) to \fIfile\fR instead of stdout.  
+.TP
+\fB\-t\fR \fIfile\fR
+Use \fIfile\fR content as template for generated lua module (option -g). The template contains the substitutes %typesystem% (name of the module implementing the typesystem) and %automaton% (Lua table with the generated automaton of the compiler) to be replaced.
 .SH COPYRIGHT
 Copyright \(co 2020 Patrick P. Frey.
 

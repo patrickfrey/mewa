@@ -23,7 +23,7 @@
 #include <vector>
 #include <map>
 #include <utility>
-#include <typeinfo>
+#include <fstream>
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -52,8 +52,19 @@ struct mewa_compiler_userdata_t
 {
 	mewa::Automaton automaton;
 	CallTableName callTableName;
+	FILE* outputFileHandle;
 
-	~mewa_compiler_userdata_t(){}
+	mewa_compiler_userdata_t()
+		 :outputFileHandle(nullptr){}
+	~mewa_compiler_userdata_t()
+	{
+		closeOutput();
+	}
+	void closeOutput()
+	{
+		if (outputFileHandle && outputFileHandle != ::stdout && outputFileHandle != ::stderr) std::fclose(outputFileHandle);
+		outputFileHandle = nullptr;
+	}
 };
 
 #define CATCH_EXCEPTION \
@@ -73,8 +84,36 @@ struct mewa_compiler_userdata_t
 		lua_error( ls);\
 	}
 
+static int lua_print_redirected( lua_State* ls) {
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
+	if (!mw) luaL_error( ls, "calling print redirected without attached userdata");
+	if (!mw->outputFileHandle) luaL_error( ls, "no valid filehandle in attached userdata of print redirected");
+
+	int nargs = lua_gettop( ls);
+	for (int li=1; li <= nargs; ++li)
+	{
+		std::size_t len;
+		const char* str = lua_tolstring( ls, li, &len);
+		std::fwrite( str, 1, len, mw->outputFileHandle);
+		int ec = std::ferror( mw->outputFileHandle);
+		if (ec) luaL_error( ls, "error in print redirected: %s", std::strerror( ec));
+		std::fflush( mw->outputFileHandle);
+	}
+	return 0;
+}
+
+static const struct luaL_Reg g_printlib [] = {
+	{"print", lua_print_redirected},
+	{nullptr, nullptr} /* end of array */
+};
+
+
 static int mewa_new_compiler( lua_State* ls)
 {
+	static const char* functionName = "mewa.compiler";
+	int nn = lua_gettop(ls);
+	if (nn > 1) return luaL_error( ls, "too many arguments calling '%s'", functionName);
+	if (nn < 1) return luaL_error( ls, "too few arguments calling '%s'", functionName);
 
 	luaL_checktype( ls, 1, LUA_TTABLE);
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
@@ -95,6 +134,11 @@ static int mewa_new_compiler( lua_State* ls)
 
 static int mewa_destroy_compiler( lua_State* ls)
 {
+	static const char* functionName = "compiler:__gc";
+	int nn = lua_gettop(ls);
+	if (nn > 1) luaL_error( ls, "too many arguments calling '%s'", functionName);
+	if (nn == 0) luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
+
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 	mw->automaton.~Automaton();
 	return 0;
@@ -102,6 +146,11 @@ static int mewa_destroy_compiler( lua_State* ls)
 
 static int mewa_compiler_tostring( lua_State* ls)
 {
+	static const char* functionName = "compiler:__tostring";
+	int nn = lua_gettop(ls);
+	if (nn > 1) return luaL_error( ls, "too many arguments calling '%s'", functionName);
+	if (nn == 0) return luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
+
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 	std::string result;
 	try
@@ -117,14 +166,81 @@ static int mewa_compiler_tostring( lua_State* ls)
 
 static int mewa_compiler_run( lua_State* ls)
 {
-	std::string source;
+	static const char* functionName = "compiler:run( inputfile[ , outputfile[ , dbgoutput]])";
 	try
 	{
+		
+		std::string source;
+		int nn = lua_gettop(ls);
+		if (nn > 4) return luaL_error( ls, "too many arguments calling '%s'", functionName);
+		if (nn < 2) return luaL_error( ls, "too few arguments calling '%s'", functionName);
+
 		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
-		if (!lua_isstring( ls, 2)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument);
-		const char* filename = lua_tostring( ls, 1);
+		if (!lua_isstring( ls, 2)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[1] " + lua_typename( ls, lua_type( ls, 2)));
+		const char* filename = lua_tostring( ls, 2);
 		source = mewa::readFile( filename);
-		mewa::luaRunCompiler( ls, mw->automaton, source);
+
+		if (nn >= 3)
+		{
+			bool hasRedirectedOutput = !lua_isnil( ls, 3);
+			if (hasRedirectedOutput)
+			{
+				if (!lua_isstring( ls, 3)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[2] " + lua_typename( ls, lua_type( ls, 3)));
+				const char* outputFileName = lua_tostring( ls, 3);
+				mw->closeOutput();
+				if (0==std::strcmp( outputFileName, "stderr"))
+				{
+					mw->outputFileHandle = ::stderr;
+				}
+				else if (0==std::strcmp( outputFileName, "stdout"))
+				{
+					mw->outputFileHandle = ::stdout;
+				}
+				else
+				{
+					mw->outputFileHandle = std::fopen( outputFileName, "w");
+				}
+				lua_getglobal( ls, "_G");		// STK: table=_G
+				lua_pushliteral( ls, "print");		// STK: table=_G, key=print
+				lua_pushliteral( ls, "print");		// STK: table=_G, key=print, key=print
+				lua_gettable( ls, -3);			// STK: table=_G, key=print, value=function
+
+				lua_getglobal( ls, "_G");
+				lua_pushlightuserdata( ls, mw);
+				luaL_setfuncs( ls, g_printlib, 1/*number of closure elements*/);
+				lua_pop( ls, 1);
+			}
+			if (nn >= 4 && !lua_isnil( ls, 4))
+			{
+				if (!lua_isstring( ls, 4)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[3] " + lua_typename( ls, lua_type( ls, 4)));
+				const char* debugFilename = lua_tostring( ls, 4);
+				if (0==std::strcmp( debugFilename, "stderr"))
+				{
+					mewa::luaRunCompiler( ls, mw->automaton, source, &std::cerr);
+				}
+				else if (0==std::strcmp( debugFilename, "stdout"))
+				{
+					mewa::luaRunCompiler( ls, mw->automaton, source, &std::cout);
+				}
+				else
+				{
+					std::ofstream debugStream( debugFilename, std::ios_base::out | std::ios_base::trunc);
+					mewa::luaRunCompiler( ls, mw->automaton, source, &debugStream);
+				}
+			}
+			else
+			{
+				mewa::luaRunCompiler( ls, mw->automaton, source, nullptr/*no debug output*/);
+			}
+			if (hasRedirectedOutput)
+			{
+				// Restore old print function that has been left on the stack:
+							//STK: table=_G, key=print, value=function
+				lua_settable( ls, -3);	//STK: table=_G
+				lua_pop( ls, 1);	//STK:
+				mw->closeOutput();
+			}
+		}
 	}
 	CATCH_EXCEPTION
 	return 0;
