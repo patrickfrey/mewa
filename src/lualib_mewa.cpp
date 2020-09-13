@@ -72,22 +72,23 @@ struct mewa_compiler_userdata_t
 	}
 };
 
-#define CATCH_EXCEPTION \
+#define CATCH_EXCEPTION( success) \
 	catch (const std::runtime_error& err)\
 	{\
 		lua_pushstring( ls, err.what());\
-		lua_error( ls);\
+		success = false;\
 	}\
 	catch (const std::bad_alloc& )\
 	{\
 		lua_pushstring( ls, "out of memory");\
-		lua_error( ls);\
+		success = false;\
 	}\
 	catch ( ... )\
 	{\
 		lua_pushstring( ls, "unknown error");\
-		lua_error( ls);\
-	}
+		success = false;\
+	}\
+	if (!success) lua_error( ls);
 
 static int lua_print_redirected( lua_State* ls) {
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
@@ -127,11 +128,12 @@ static int mewa_new_compiler( lua_State* ls)
 	lua_gettable( ls, 1);
 	lua_setglobal( ls, mw->callTableName.buf);
 
+	bool success = true;
 	try
 	{
 		new (&mw->automaton) mewa::Automaton( mewa::luaLoadAutomaton( ls, 1));
 	}
-	CATCH_EXCEPTION
+	CATCH_EXCEPTION( success)
 	luaL_getmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
 	lua_setmetatable( ls, -2);
 	return 1;
@@ -158,11 +160,12 @@ static int mewa_compiler_tostring( lua_State* ls)
 
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 	std::string result;
+	bool success = true;
 	try
 	{
 		result = mw->automaton.tostring();
 	}
-	CATCH_EXCEPTION
+	CATCH_EXCEPTION( success)
 
 	lua_pushlstring( ls, result.c_str(), result.size());
 	//... [PF:BUG] This call may fail with ENOMEM and cause an lua_error longjump, leaving a memory leak (result). Could not figure out a way to catch this.
@@ -172,6 +175,7 @@ static int mewa_compiler_tostring( lua_State* ls)
 static int mewa_compiler_run( lua_State* ls)
 {
 	static const char* functionName = "compiler:run( inputfile[ , outputfile[ , dbgoutput]])";
+	bool success = true;
 	try
 	{
 		
@@ -247,7 +251,7 @@ static int mewa_compiler_run( lua_State* ls)
 			}
 		}
 	}
-	CATCH_EXCEPTION
+	CATCH_EXCEPTION( success)
 	return 0;
 }
 

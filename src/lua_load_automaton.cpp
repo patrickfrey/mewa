@@ -405,7 +405,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 		}
 		catch (const mewa::Error& err)
 		{
-			throw mewa::Error( err.code(), stringf( "%s, row %d", err.arg().c_str(), rowcnt));
+			throw mewa::Error( err.code(), stringf( "%s, row %d", err.arg(), rowcnt));
 		}
 		lua_pop( ls, 1);
 	}

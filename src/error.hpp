@@ -77,20 +77,18 @@ public:
 
 public:
 	Error( Code code_ = Ok, int line_=0)
-                :std::runtime_error(map2string(code_,"",line_)),m_code(code_),m_param(),m_line(line_){}
+                :std::runtime_error(map2string(code_,"",line_)),m_code(code_),m_line(line_) 	{m_param[0] = 0;}
 	Error( Code code_, const std::string& param_, int line_=0)
-                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_param(param_),m_line(line_){}
+                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_line(line_)	{initParam(param_);}
 	Error( Code code_, const std::string_view& param_, int line_=0)
-                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_param(std::string(param_)),m_line(line_){}
+                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_line(line_)	{initParam(param_);}
 	Error( Code code_, const char* param_, int line_=0)
-                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_param(std::string(param_)),m_line(line_){}
+                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_line(line_)	{initParam(param_);}
 	Error( const Error& o)
-                :std::runtime_error(o),m_code(o.m_code),m_param(o.m_param),m_line(o.m_line){}
-	Error( Error&& o)
-                :std::runtime_error(o),m_code(o.m_code),m_param(std::move(o.m_param)),m_line(o.m_line){}
+                :std::runtime_error(o),m_code(o.m_code),m_line(o.m_line) 			{initParam(o.m_param);}
 
 	Code code() const			{return m_code;}
-        const std::string& arg() const		{return m_param;}
+        const char* arg() const			{return m_param;}
         int line() const			{return m_line;}
 
         const char* what() const noexcept override
@@ -177,9 +175,25 @@ private:
 		}
                 return rt;
 	}
+
+	void initParam( const std::string_view& param_)
+	{
+		if (param_.size() >= MaxParamLen)
+		{
+			std::memcpy( m_param, param_.data(), MaxParamLen-1);
+			m_param[ MaxParamLen-1] = '\0';
+		}
+		else
+		{
+			std::memcpy( m_param, param_.data(), param_.size());
+			m_param[ param_.size()] = '\0';
+		}
+	}
+
 private:
 	Code m_code;
-        std::string m_param;
+	enum {MaxParamLen=2048};
+        char m_param[ MaxParamLen];
 	int m_line;
 };
 
