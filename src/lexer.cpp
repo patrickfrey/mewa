@@ -213,6 +213,11 @@ std::pair<std::string_view,int> LexemDef::match( const char* srcptr, std::size_t
 	}
 }
 
+void Scanner::checkNullTerminated()
+{
+	if (m_src.data()[ m_src.size()] != 0) throw Error( Error::InternalSourceExpectedNullTerminated);
+}
+
 char const* Scanner::next( int incr)
 {
 	int pos = m_srcitr - m_src.data() + incr;

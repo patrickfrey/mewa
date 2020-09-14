@@ -142,7 +142,7 @@ static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateSta
 	}
 }
 
-void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string& source, std::ostream* dbgout)
+void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, std::ostream* dbgout)
 {
 	mewa::Scanner scanner( source);
 	std::vector<State> stateStack( {{1}} );

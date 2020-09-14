@@ -36,6 +36,7 @@ extern "C" int luaopen_mewa( lua_State* ls);
 #define MEWA_COMPILER_METATABLE_NAME 	"mewa.compiler"
 #define MEWA_TYPESYSTEM_METATABLE_NAME 	"mewa.typesystem"
 #define MEWA_CALLTABLE_FMT	 	"mewa.calls.%d"
+#define MEMBLOCK_METATABLE_NAME 	"mewa.local.memblock"
 
 struct CallTableName
 {
@@ -72,6 +73,35 @@ struct mewa_compiler_userdata_t
 	}
 };
 
+class MemoryBlock
+{
+public:
+	virtual ~MemoryBlock(){}
+};
+
+template <class OBJECT>
+class ObjectReference :public MemoryBlock
+{
+public:
+	ObjectReference( OBJECT&& obj_)
+		:m_obj(std::move(obj_)){}
+	virtual ~ObjectReference(){}
+	const OBJECT& obj() const		{return m_obj;}
+private:
+	OBJECT m_obj;
+};
+
+// \brief Structure to give control of memory to lua to avoid memory leaks in case of Lua exceptions
+struct memblock_userdata_t
+{
+	MemoryBlock* memoryBlock;
+
+	void destroy()
+	{
+		if (memoryBlock) delete memoryBlock;
+	}
+};
+
 #define CATCH_EXCEPTION( success) \
 	catch (const std::runtime_error& err)\
 	{\
@@ -89,6 +119,23 @@ struct mewa_compiler_userdata_t
 		success = false;\
 	}\
 	if (!success) lua_error( ls);
+
+static int destroy_memblock( lua_State* ls)
+{
+	memblock_userdata_t* mb = (memblock_userdata_t*)luaL_checkudata( ls, 1, MEMBLOCK_METATABLE_NAME);
+	mb->destroy();
+	return 0;
+}
+
+static std::string_view move_string_on_lua_stack( lua_State* ls, std::string&& str)
+{
+	memblock_userdata_t* mb = (memblock_userdata_t*)lua_newuserdata( ls, sizeof(memblock_userdata_t));
+	luaL_getmetatable( ls, MEMBLOCK_METATABLE_NAME);
+	lua_setmetatable( ls, -2);
+	ObjectReference<std::string>* obj = new ObjectReference<std::string>( std::move(str));
+	mb->memoryBlock = obj;
+	return obj->obj();
+}
 
 static int lua_print_redirected( lua_State* ls) {
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
@@ -122,7 +169,7 @@ static int mewa_new_compiler( lua_State* ls)
 	if (nn < 1) return luaL_error( ls, "too few arguments calling '%s'", functionName);
 
 	luaL_checktype( ls, 1, LUA_TTABLE);
-	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
 	mw->init();
 	lua_pushstring( ls, "call");
 	lua_gettable( ls, 1);
@@ -146,7 +193,7 @@ static int mewa_destroy_compiler( lua_State* ls)
 	if (nn > 1) luaL_error( ls, "too many arguments calling '%s'", functionName);
 	if (nn == 0) luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
 
-	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 	mw->destroy();
 	return 0;
 }
@@ -157,18 +204,20 @@ static int mewa_compiler_tostring( lua_State* ls)
 	int nn = lua_gettop(ls);
 	if (nn > 1) return luaL_error( ls, "too many arguments calling '%s'", functionName);
 	if (nn == 0) return luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
+	if (!lua_checkstack( ls, 4)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
 
-	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
-	std::string result;
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	std::string_view resultptr;
 	bool success = true;
 	try
 	{
-		result = mw->automaton.tostring();
+		std::string result = mw->automaton.tostring();
+		resultptr = move_string_on_lua_stack( ls, std::move( result));
 	}
 	CATCH_EXCEPTION( success)
 
-	lua_pushlstring( ls, result.c_str(), result.size());
-	//... [PF:BUG] This call may fail with ENOMEM and cause an lua_error longjump, leaving a memory leak (result). Could not figure out a way to catch this.
+	lua_pushlstring( ls, resultptr.data(), resultptr.size());
+	lua_replace( ls, -2); // ... dispose the element created with move_string_on_lua_stack
 	return 1;
 }
 
@@ -178,16 +227,16 @@ static int mewa_compiler_run( lua_State* ls)
 	bool success = true;
 	try
 	{
-		
-		std::string source;
 		int nn = lua_gettop(ls);
 		if (nn > 4) return luaL_error( ls, "too many arguments calling '%s'", functionName);
 		if (nn < 2) return luaL_error( ls, "too few arguments calling '%s'", functionName);
+		if (!lua_checkstack( ls, 10)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
 
-		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t *)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 		if (!lua_isstring( ls, 2)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[1] " + lua_typename( ls, lua_type( ls, 2)));
 		const char* filename = lua_tostring( ls, 2);
-		source = mewa::readFile( filename);
+		std::string source = mewa::readFile( filename);
+		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));
 
 		if (nn >= 3)
 		{
@@ -225,21 +274,21 @@ static int mewa_compiler_run( lua_State* ls)
 				const char* debugFilename = lua_tostring( ls, 4);
 				if (0==std::strcmp( debugFilename, "stderr"))
 				{
-					mewa::luaRunCompiler( ls, mw->automaton, source, &std::cerr);
+					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, &std::cerr);
 				}
 				else if (0==std::strcmp( debugFilename, "stdout"))
 				{
-					mewa::luaRunCompiler( ls, mw->automaton, source, &std::cout);
+					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, &std::cout);
 				}
 				else
 				{
 					std::ofstream debugStream( debugFilename, std::ios_base::out | std::ios_base::trunc);
-					mewa::luaRunCompiler( ls, mw->automaton, source, &debugStream);
+					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, &debugStream);
 				}
 			}
 			else
 			{
-				mewa::luaRunCompiler( ls, mw->automaton, source, nullptr/*no debug output*/);
+				mewa::luaRunCompiler( ls, mw->automaton, sourceptr, nullptr/*no debug output*/);
 			}
 			if (hasRedirectedOutput)
 			{
@@ -250,26 +299,43 @@ static int mewa_compiler_run( lua_State* ls)
 				mw->closeOutput();
 			}
 		}
+		lua_pop( ls, 1); // ... destroy string on lua stack created with move_string_on_lua_stack
 	}
 	CATCH_EXCEPTION( success)
 	return 0;
+}
+
+static const struct luaL_Reg memblock_control_methods[] = {
+	{ "__gc",	destroy_memblock },
+	{ nullptr,	nullptr }
+};
+
+static void create_memblock_control_class( lua_State* ls)
+{
+	luaL_newmetatable( ls, MEMBLOCK_METATABLE_NAME);
+	lua_pushvalue( ls, -1);
+
+	lua_setfield( ls, -2, "__index");
+	luaL_setfuncs( ls, memblock_control_methods, 0);
+	lua_pop( ls, 1);
 }
 
 static const struct luaL_Reg mewa_compiler_methods[] = {
 	{ "__gc",	mewa_destroy_compiler },
 	{ "__tostring",	mewa_compiler_tostring },
 	{ "run",	mewa_compiler_run },
-	{ NULL,		NULL },
+	{ nullptr,	nullptr }
 };
 
 static const struct luaL_Reg mewa_functions[] = {
 	{ "compiler",	mewa_new_compiler },
-	{ NULL,  	NULL }
+	{ nullptr,  	nullptr }
 };
 
 DLL_PUBLIC int luaopen_mewa( lua_State* ls)
 {
-	/* Create the metatable and put it on the stack. */
+	create_memblock_control_class( ls);
+
 	luaL_newmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
 	lua_pushvalue( ls, -1);
 

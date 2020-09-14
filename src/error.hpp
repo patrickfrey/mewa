@@ -29,7 +29,8 @@ public:
 		Ok=0,
 		LogicError=401,
 		FileReadError=402,
-		ExpectedFilenameAsArgument=403,
+		InternalSourceExpectedNullTerminated=403,
+		ExpectedFilenameAsArgument=404,
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
 		ArrayBoundReadInLexer=423,
@@ -106,9 +107,10 @@ private:
 		else switch ((Code)code_)
 		{
 			case Ok: return "";
-			case FileReadError: return "Unknown error reading file, could not read until end of file";
-			case ExpectedFilenameAsArgument: return "Expected file name as argument";
 			case LogicError: return "Logic error";
+			case FileReadError: return "Unknown error reading file, could not read until end of file";
+			case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
+			case ExpectedFilenameAsArgument: return "Expected file name as argument";
 			case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
 			case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
 			case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";

@@ -107,6 +107,8 @@ private:
 class Scanner
 {
 public:
+	explicit Scanner( const std::string_view& src_)
+		:m_src(src_),m_srcitr(src_.data()),m_line(1){void checkNullTerminated();}
 	explicit Scanner( const std::string& src_)
 		:m_src(src_),m_srcitr(src_.c_str()),m_line(1){}
 	Scanner( const Scanner& o)
@@ -122,6 +124,8 @@ public:
 
 	std::size_t restsize() const		{return m_src.size() - (m_srcitr - m_src.data());}
 
+private:
+	void checkNullTerminated();
 private:
 	std::string_view m_src;
 	char const* m_srcitr;

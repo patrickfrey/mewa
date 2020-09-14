@@ -19,7 +19,7 @@
 
 namespace mewa {
 
-void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string& source, std::ostream* dbgout);
+void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, std::ostream* dbgout);
 
 } //namespace
 #else
