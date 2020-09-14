@@ -171,6 +171,47 @@ V = "*" E
 [10]
 	N = V "=" E . , $ -> REDUCE N #3
 
+-- Action table:
+[1]
+	IDENT => Shift goto 5
+	'*' => Shift goto 6
+[2]
+	$ => Accept
+[3]
+	$ => Reduce #1 N
+[4]
+	$ => Reduce #1 E
+	'=' => Shift goto 7
+[5]
+	$ => Reduce #1 V
+	'=' => Reduce #1 V
+[6]
+	IDENT => Shift goto 5
+	'*' => Shift goto 6
+[7]
+	IDENT => Shift goto 5
+	'*' => Shift goto 6
+[8]
+	$ => Reduce #2 V
+	'=' => Reduce #2 V
+[9]
+	$ => Reduce #1 E
+	'=' => Reduce #1 E
+[10]
+	$ => Reduce #3 N
+
+-- Goto table:
+[1]
+	N => 2
+	E => 3
+	V => 4
+[6]
+	E => 8
+	V => 9
+[7]
+	E => 10
+	V => 9
+
 )"};
 		if (verbose)
 		{

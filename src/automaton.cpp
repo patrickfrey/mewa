@@ -483,13 +483,14 @@ struct ReductionDef
 {
 	Priority priority;
 	int head;
+	int callidx;
 	int count;
 	std::string_view headname;
 
 	ReductionDef()
-		:priority(),head(-1),count(-1),headname("",0){}
+		:priority(),head(-1),callidx(-1),count(-1),headname("",0){}
 	ReductionDef( const ReductionDef& o)
-		:priority(o.priority),head(o.head),count(o.count),headname(o.headname){}
+		:priority(o.priority),head(o.head),callidx(o.callidx),count(o.count),headname(o.headname){}
 };
 
 static ReductionDef getReductionDef( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
@@ -506,10 +507,11 @@ static ReductionDef getReductionDef( const TransitionState& state, int terminal,
 				rt.priority = item.priority;
 				rt.head = prod.left.index();
 				rt.headname = prod.left.name();
+				rt.callidx = prod.callidx;
 				rt.count = prod.right.size();
 				last_prodidx = item.prodindex;
 			}
-			else if (rt.head != prod.left.index() || rt.count != (int)prod.right.size())
+			else if (rt.head != prod.left.index() || rt.count != (int)prod.right.size() || rt.callidx != prod.callidx)
 			{
 				throw Error( Error::ReduceReduceConflictInGrammarDef, prod.tostring() + ", " + prodlist[ last_prodidx].tostring() + " <- " + getLexemName(lexer,terminal));
 			}
@@ -1347,7 +1349,7 @@ static void printLr0States( const std::map<TransitionState,int>& lr0statemap, co
 }
 
 static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, const std::map<TransitionState,int>& lr1statemap, const CalculateClosureLr1& calcClosureLr1,
-			 const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
+			 const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
 {
 	std::map<int,TransitionState> stateinvmap;
 	for (auto const& st : lr1statemap)
@@ -1374,6 +1376,7 @@ static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, 
 					{
 						ReductionDef rd = getReductionDef( invst.second, item.follow, prodlist, lexer);
 						dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
+						if (rd.callidx) dbgout.out() << " CALL " << calls[ rd.callidx-1].tostring();
 					}
 					catch (const Error& err)
 					{
@@ -1431,6 +1434,73 @@ static void printFunctionCalls( const std::vector<Automaton::Call>& calls, Autom
 	}
 }
 
+static void printStateTransitions( const Automaton& automaton, const Lexer& lexer, Automaton::DebugOutput dbgout)
+{
+	if (!automaton.actions().empty())
+	{
+		dbgout.out() << "-- Action table:" << std::endl;
+		int prevState = -1;
+		for (auto at : automaton.actions())
+		{
+			auto actionKey = at.first;
+			auto actionVal = at.second;
+			if (prevState != actionKey.state())
+			{
+				dbgout.out() << "[" << actionKey.state() << "]" << std::endl;
+				prevState = actionKey.state();
+			}
+			dbgout.out() << "\t" << getLexemName( lexer, actionKey.terminal()) << " => " << automaton.actionString( actionVal) << std::endl;
+		}
+		dbgout.out() << std::endl;
+	}
+	if (!automaton.gotos().empty())
+	{
+		dbgout.out() << "-- Goto table:" << std::endl;
+		int prevState = -1;
+		for (auto gto : automaton.gotos())
+		{
+			auto gotoKey = gto.first;
+			auto gotoVal = gto.second;
+			if (prevState != gotoKey.state())
+			{
+				dbgout.out() << "[" << gotoKey.state() << "]" << std::endl;
+				prevState = gotoKey.state();
+			}
+			dbgout.out() << "\t" << automaton.nonterminal( gotoKey.nonterminal()) << " => " << gotoVal.state() << std::endl;
+		}
+		dbgout.out() << std::endl;
+	}
+}
+
+std::string Automaton::actionString( const Action& action) const
+{
+	char buf[ 2048];
+	std::size_t len = 0;
+	switch (action.type())
+	{
+		case Automaton::Action::Shift:
+			len = std::snprintf( buf, sizeof( buf), "%s goto %d", "Shift", action.state());
+			break;
+		case Automaton::Action::Reduce:
+		{
+			if (action.call())
+			{
+				std::string callstr = call( action.call()).tostring();
+				len = std::snprintf( buf, sizeof( buf), "%s #%d %s call %s", "Reduce", action.count(), nonterminal( action.nonterminal()).c_str(), callstr.c_str());
+			}
+			else
+			{
+				len = std::snprintf( buf, sizeof( buf), "%s #%d %s", "Reduce", action.count(), nonterminal( action.nonterminal()).c_str());
+			}
+			break;
+		}
+		case Automaton::Action::Accept:
+			len = std::snprintf( buf, sizeof( buf), "%s", "Accept");
+	}
+	if (len >= sizeof(buf)) len = sizeof(buf);
+	return std::string( buf, len);
+}
+
 std::string Automaton::Call::tostring() const
 {
 	std::string rt( m_function);
@@ -1474,7 +1544,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	if (dbgout.enabled( DebugOutput::States))
 	{
 		printLr0States( stateAssignmentsLr0, calcClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
-		printLalr1States( stateAssignmentsLr0, stateAssignmentsLr1, calcClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
+		printLalr1States( stateAssignmentsLr0, stateAssignmentsLr1, calcClosureLr1, langdef.prodlist, langdef.lexer, langdef.calls, dbgout);
 	}
 	if (dbgout.enabled( DebugOutput::FunctionCalls))
 	{
@@ -1505,7 +1575,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 
 		if (isAcceptState( lr1State, langdef.prodlist))
 		{
-			m_actions[ ActionKey( stateidx, 0/*EOF terminal*/)] = Action( Action::Accept, 0);
+			m_actions[ ActionKey( stateidx, 0/*EOF terminal*/)] = Action::accept();
 			++nofAcceptStates;
 		}
 		auto gtos = getGotoNodes( lr1State, langdef.prodlist);
@@ -1520,8 +1590,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 				Priority shiftPriority = getShiftPriority( lr1State, terminal, langdef.prodlist, langdef.lexer);
 
 				ActionKey key( stateidx, terminal);
-				Action action( Action::Shift, to_stateidx);
-				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, shiftPriority, warnings, langdef.lexer);
+				insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, Action::shift(to_stateidx), shiftPriority, warnings, langdef.lexer);
 			}
 			else
 			{
@@ -1539,9 +1608,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 			ReductionDef rd = getReductionDef( lr1State, terminal, langdef.prodlist, langdef.lexer);
 
 			ActionKey key( stateidx, terminal);
-			Action action( Action::Reduce, rd.head, rd.count);
-
-			insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, action, rd.priority, warnings, langdef.lexer);
+			insertAction( priorityMap, m_actions, langdef.prodlist, lr1State, terminal, key, Action::reduce( rd.head, rd.callidx, rd.count), rd.priority, warnings, langdef.lexer);
 		}
 	}
 	if (nofAcceptStates == 0)
@@ -1553,8 +1620,10 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::swap( m_lexer, langdef.lexer);
 	std::swap( m_calls, langdef.calls);
 	std::swap( m_nonterminals, langdef.nonterminals);
+
+	if (dbgout.enabled( DebugOutput::StateTransitions))
+	{
+		printStateTransitions( *this, m_lexer, dbgout);
+	}
 }
-
-
-
 

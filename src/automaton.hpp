@@ -52,7 +52,7 @@ public:
 		DebugOutput( const DebugOutput& o) 
 			:m_enabledMask(o.m_enabledMask),m_out(o.m_out){}
 
-		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, All=0xFF};
+		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, StateTransitions=0x20, All=0xFF};
 
 		DebugOutput& enable( Type type_)	{m_enabledMask |= (int)(type_); return *this;}
 		bool enabled( Type type_) const		{return (m_enabledMask & (int)(type_)) == (int)(type_);}
@@ -101,13 +101,14 @@ public:
 
 		Action()
 			:m_type(Shift),m_value(0),m_call(0),m_count(0){}
-		Action( Type type_, int value_, int call_=0, int count_=0)
+		Action( Type type_, int value_, int call_, int count_)
 			:m_type(type_),m_value(value_),m_call(call_),m_count(count_){}
 		Action( const Action& o)
 			:m_type(o.m_type),m_value(o.m_value),m_call(o.m_call),m_count(o.m_count){}
 
 		Type type() const		{return m_type;}
-		int value() const		{return m_value;}
+		int state() const		{return m_value;}
+		int nonterminal() const		{return m_value;}
 		int call() const		{return m_call;}
 		int count() const		{return m_count;}
 
@@ -128,6 +129,10 @@ public:
 				        (pkg >> ShiftProductionLength) & MaskCall/*call*/,
 					(pkg) & MaskProductionLength/*count*/);
 		}
+
+		static Action accept()						{return Action( Accept, 0/*state|nonterminal*/, 0/*call*/, 0/*count*/);}
+		static Action shift( int follow_state)				{return Action( Shift, follow_state, 0/*call*/, 0/*count*/);}
+		static Action reduce( int nonterminal_, int call_, int count_)	{return Action( Reduce, nonterminal_, call_, count_);}
 
 	private:
 		Type m_type;
@@ -281,6 +286,7 @@ public:
 	const std::string& nonterminal( int nonterminalidx) const	{return m_nonterminals[ nonterminalidx-1];}
 	const std::vector<std::string>& nonterminals() const		{return m_nonterminals;}
 	std::string tostring() const;
+	std::string actionString( const Action& action) const;
 
 private:
 	std::string m_language;

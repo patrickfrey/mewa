@@ -72,7 +72,7 @@ static bool feedTerminal( std::vector<State>& stateStack, const mewa::Automaton&
 	switch (nexti->second.type())
 	{
 		case mewa::Automaton::Action::Shift:
-			stateStack.push_back( State( nexti->second.value()));
+			stateStack.push_back( State( nexti->second.state()));
 			break;
 		case mewa::Automaton::Action::Reduce:
 		{
@@ -81,8 +81,7 @@ static bool feedTerminal( std::vector<State>& stateStack, const mewa::Automaton&
 				throw mewa::Error( mewa::Error::LanguageAutomatonCorrupted, line);
 			}
 			stateStack.resize( stateStack.size() - nexti->second.count());
-			int nonterminal = nexti->second.value();
-			auto gtoi = automaton.gotos().find( {stateStack.back().index, nonterminal});
+			auto gtoi = automaton.gotos().find( {stateStack.back().index, nexti->second.nonterminal()});
 			if (gtoi == automaton.gotos().end())
 			{
 				throw mewa::Error( mewa::Error::LanguageAutomatonMissingGoto, stateTransitionInfo( stateStack.back().index, terminal, automaton.lexer()), line);
@@ -114,12 +113,12 @@ static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateSta
 			case mewa::Automaton::Action::Shift:
 				dbgout << "Shift token " << automaton.lexer().lexemName( lexem.id());
 				if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
-				dbgout << " at line " << lexem.line() << " in state " << stateStack.back().index << ", goto " << nexti->second.value()
+				dbgout << " at line " << lexem.line() << " in state " << stateStack.back().index << ", goto " << nexti->second.state()
 					<< std::endl;
 				break;
 			case mewa::Automaton::Action::Reduce:
 			{
-				dbgout << "Reduce #" << nexti->second.count() << " to " << automaton.nonterminal( nexti->second.value())
+				dbgout << "Reduce #" << nexti->second.count() << " to " << automaton.nonterminal( nexti->second.nonterminal())
 					<< " by token " << automaton.lexer().lexemName( lexem.id());
 				if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
 				dbgout << " at line " << lexem.line() << " in state " << stateStack.back().index;
@@ -127,8 +126,7 @@ static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateSta
 				{
 					dbgout << ", call " << automaton.call( nexti->second.call()).tostring();
 				}
-				int nonterminal = nexti->second.value();
-				auto gtoi = automaton.gotos().find( {stateStack.back().index, nonterminal});
+				auto gtoi = automaton.gotos().find( {stateStack.back().index, nexti->second.nonterminal()});
 				if (gtoi != automaton.gotos().end())
 				{
 					dbgout << ", goto " << gtoi->second.state();
