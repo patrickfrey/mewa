@@ -14,6 +14,7 @@ verify_test_result() {
 	then
 		echo $TNAM OK
 	else
+                echo "diff $OUTF $EXPF"
 		echo $TNAM ERR
 	fi
 }
@@ -29,11 +30,8 @@ verify_test_result "test dump states dumped from language1 grammar"  build/test2
 
 build/mewa -g -o build/language1.lua examples/language1.g
 chmod +x build/language1.lua
-build/language1.lua examples/language1.prg > build/test3.out
+build/language1.lua -d build/test3.out -o build/test4.out examples/language1.prg
 verify_test_result "test debug output compiling example program with language1 compiler"  build/test3.out tests/test3.exp
+verify_test_result "test output compiling example program with language1 compiler"  build/test4.out tests/test4.exp
 
-build/mewa -g -o build/language1.lua examples/language1.g
-chmod +x build/language1.lua
-build/language1.lua examples/language1.prg > build/test3.out
-verify_test_result "test compile example program with language1 compiler"  build/test3.out tests/test3.exp
 

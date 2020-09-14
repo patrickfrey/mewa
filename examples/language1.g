@@ -1,4 +1,3 @@
-
 % LANGUAGE test ;
 % TYPESYSTEM typesystem1 ;
 % COMMENT "/*" "*/" ;
@@ -44,6 +43,7 @@ functiondefinition	= "function" typespec IDENT
 				"{" statementlist "}"
 			;
 parameters/L		= paramdecl "," parameters
+                        | paramdecl
 			| ε
 			;
 paramdecl		= typespec IDENT
