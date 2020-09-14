@@ -54,11 +54,11 @@ public:
 
 		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, StateTransitions=0x20, All=0xFF};
 
-		DebugOutput& enable( Type type_)	{m_enabledMask |= (int)(type_); return *this;}
-		bool enabled( Type type_) const		{return (m_enabledMask & (int)(type_)) == (int)(type_);}
-		bool enabled() const			{return m_enabledMask != 0;}
+		DebugOutput& enable( Type type_) noexcept	{m_enabledMask |= (int)(type_); return *this;}
+		bool enabled( Type type_) const noexcept	{return (m_enabledMask & (int)(type_)) == (int)(type_);}
+		bool enabled() const noexcept			{return m_enabledMask != 0;}
 
-		std::ostream& out() const		{return m_out;}
+		std::ostream& out() const noexcept		{return m_out;}
 
 	private:
 		int m_enabledMask;
@@ -73,14 +73,14 @@ public:
 		ActionKey( const ActionKey& o)
 			:m_state(o.m_state),m_terminal(o.m_terminal){}
 
-		int state() const		{return m_state;}
-		int terminal() const		{return m_terminal;}
+		int state() const noexcept				{return m_state;}
+		int terminal() const noexcept				{return m_terminal;}
 
-		bool operator < (const ActionKey& o) const	{return m_state == o.m_state ? m_terminal < o.m_terminal : m_state < o.m_state;}
-		bool operator == (const ActionKey& o) const	{return m_state == o.m_state && m_terminal == o.m_terminal;}
-		bool operator != (const ActionKey& o) const	{return m_state != o.m_state || m_terminal != o.m_terminal;}
+		bool operator < (const ActionKey& o) const noexcept	{return m_state == o.m_state ? m_terminal < o.m_terminal : m_state < o.m_state;}
+		bool operator == (const ActionKey& o) const noexcept	{return m_state == o.m_state && m_terminal == o.m_terminal;}
+		bool operator != (const ActionKey& o) const noexcept	{return m_state != o.m_state || m_terminal != o.m_terminal;}
 
-		int packed() const
+		int packed() const noexcept
 		{
 			return ((int)m_state << ShiftTerminal) | (int)m_terminal;
 		}
@@ -106,16 +106,16 @@ public:
 		Action( const Action& o)
 			:m_type(o.m_type),m_value(o.m_value),m_call(o.m_call),m_count(o.m_count){}
 
-		Type type() const		{return m_type;}
-		int state() const		{return m_value;}
-		int nonterminal() const		{return m_value;}
-		int call() const		{return m_call;}
-		int count() const		{return m_count;}
+		Type type() const noexcept		{return m_type;}
+		int state() const noexcept		{return m_value;}
+		int nonterminal() const noexcept	{return m_value;}
+		int call() const noexcept		{return m_call;}
+		int count() const noexcept		{return m_count;}
 
-		bool operator == (const Action& o) const	{return m_type == o.m_type && m_value == o.m_value && m_call == o.m_call && m_count == o.m_count;}
-		bool operator != (const Action& o) const	{return m_type != o.m_type || m_value != o.m_value || m_call != o.m_call || m_count != o.m_count;}
+		bool operator == (const Action& o) const noexcept	{return m_type == o.m_type && m_value == o.m_value && m_call == o.m_call && m_count == o.m_count;}
+		bool operator != (const Action& o) const noexcept	{return m_type != o.m_type || m_value != o.m_value || m_call != o.m_call || m_count != o.m_count;}
 
-		int packed() const
+		int packed() const noexcept
 		{
 			return ((int)m_type << (ShiftState + ShiftProductionLength + ShiftCall))
 				| ((int)m_value << (ShiftProductionLength + ShiftCall))
@@ -149,14 +149,14 @@ public:
 		GotoKey( const GotoKey& o)
 			:m_state(o.m_state),m_nonterminal(o.m_nonterminal){}
 
-		int state() const		{return m_state;}
-		int nonterminal() const		{return m_nonterminal;}
+		int state() const noexcept				{return m_state;}
+		int nonterminal() const noexcept			{return m_nonterminal;}
 
-		bool operator < (const GotoKey& o) const	{return m_state == o.m_state ? m_nonterminal < o.m_nonterminal : m_state < o.m_state;}
-		bool operator == (const GotoKey& o) const	{return m_state == o.m_state && m_nonterminal == o.m_nonterminal;}
-		bool operator != (const GotoKey& o) const	{return m_state != o.m_state || m_nonterminal != o.m_nonterminal;}
+		bool operator < (const GotoKey& o) const noexcept	{return m_state == o.m_state ? m_nonterminal < o.m_nonterminal : m_state < o.m_state;}
+		bool operator == (const GotoKey& o) const noexcept	{return m_state == o.m_state && m_nonterminal == o.m_nonterminal;}
+		bool operator != (const GotoKey& o) const noexcept	{return m_state != o.m_state || m_nonterminal != o.m_nonterminal;}
 
-		int packed() const
+		int packed() const noexcept
 		{
 			return ((int)m_state << ShiftTerminal) | (int)m_nonterminal;
 		}
@@ -180,12 +180,12 @@ public:
 		Goto( const Goto& o)
 			:m_state(o.m_state){}
 
-		int state() const				{return m_state;}
+		int state() const noexcept				{return m_state;}
 
-		bool operator == (const Goto& o) const 	{return m_state == o.m_state;}
-		bool operator != (const Goto& o) const 	{return m_state != o.m_state;}
+		bool operator == (const Goto& o) const noexcept 	{return m_state == o.m_state;}
+		bool operator != (const Goto& o) const noexcept 	{return m_state != o.m_state;}
 
-		int packed() const
+		int packed() const noexcept
 		{
 			return (int)m_state;
 		}
@@ -223,11 +223,11 @@ public:
 		Call& operator=( Call&& o)
 			{m_function=std::move(o.m_function); m_arg=std::move(o.m_arg); m_argtype=o.m_argtype; return *this;}
 
-		const std::string& function() const			{return m_function;}
-		const std::string& arg() const				{return m_arg;}
-		ArgumentType argtype() const				{return m_argtype;}
+		const std::string& function() const noexcept			{return m_function;}
+		const std::string& arg() const noexcept				{return m_arg;}
+		ArgumentType argtype() const noexcept				{return m_argtype;}
 
-		bool operator < (const Call& o) const
+		bool operator < (const Call& o) const noexcept
 		{
 			return m_function == o.m_function
 					? m_arg == o.m_arg
@@ -275,16 +275,16 @@ public:
 
 	void build( const std::string& source, std::vector<Error>& warnings, DebugOutput dbgout = DebugOutput());
 
-	const std::string& language() const				{return m_language;}
-	const std::string& typesystem() const				{return m_typesystem;}
-	const Lexer& lexer() const					{return m_lexer;}
-	const std::map<ActionKey,Action>& actions() const		{return m_actions;}
-	const std::map<GotoKey,Goto>& gotos() const			{return m_gotos;}
-	const Call& call( int callidx) const				{return m_calls[ callidx-1];}
-	const std::vector<Call>& calls() const				{return m_calls;}
+	const std::string& language() const noexcept				{return m_language;}
+	const std::string& typesystem() const noexcept				{return m_typesystem;}
+	const Lexer& lexer() const noexcept					{return m_lexer;}
+	const std::map<ActionKey,Action>& actions() const noexcept		{return m_actions;}
+	const std::map<GotoKey,Goto>& gotos() const noexcept			{return m_gotos;}
+	const Call& call( int callidx) const					{return m_calls[ callidx-1];}
+	const std::vector<Call>& calls() const noexcept				{return m_calls;}
 
-	const std::string& nonterminal( int nonterminalidx) const	{return m_nonterminals[ nonterminalidx-1];}
-	const std::vector<std::string>& nonterminals() const		{return m_nonterminals;}
+	const std::string& nonterminal( int nonterminalidx) const		{return m_nonterminals[ nonterminalidx-1];}
+	const std::vector<std::string>& nonterminals() const noexcept		{return m_nonterminals;}
 	std::string tostring() const;
 	std::string actionString( const Action& action) const;
 

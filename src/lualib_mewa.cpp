@@ -23,6 +23,8 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <iomanip>
+#include <iostream>
 #include <fstream>
 #include <lua.h>
 #include <lauxlib.h>
@@ -86,7 +88,7 @@ public:
 	ObjectReference( OBJECT&& obj_)
 		:m_obj(std::move(obj_)){}
 	virtual ~ObjectReference(){}
-	const OBJECT& obj() const		{return m_obj;}
+	const OBJECT& obj() const noexcept		{return m_obj;}
 private:
 	OBJECT m_obj;
 };

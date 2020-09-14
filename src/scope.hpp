@@ -33,12 +33,12 @@ public:
 	Scope& operator=( const Scope& o)
 		{first=o.first; second=o.second; return *this;}
 
-	bool contains( const Scope& o) const
+	bool contains( const Scope& o) const noexcept
 	{
 		return o.first >= first && o.second <= second;
 	}
 
-	bool contains( Timestmp timestmp) const
+	bool contains( Timestmp timestmp) const noexcept
 	{
 		return timestmp >= first && timestmp < second;
 	}
@@ -77,10 +77,10 @@ public:
 	ScopedKey& operator=( ScopedKey&& o)
 		{m_key=std::move(o.m_key); m_scope=o.m_scope; return *this;}
 
-	const KEYTYPE& key() const						{return m_key;}
-	const Scope scope() const						{return m_scope;}
+	const KEYTYPE& key() const noexcept						{return m_key;}
+	const Scope scope() const noexcept						{return m_scope;}
 
-	bool matches( const KEYTYPE& key_, Scope::Timestmp timestmp) const	{return m_key == key_ && m_scope.contains( timestmp);}
+	bool matches( const KEYTYPE& key_, Scope::Timestmp timestmp) const noexcept	{return m_key == key_ && m_scope.contains( timestmp);}
 
 private:
 	KEYTYPE m_key;
@@ -114,7 +114,7 @@ public:
 	ScopedMap( ScopedMap&& o) = default;
 	ScopedMap& operator=( ScopedMap&& o) = default;
 
-	const_iterator scoped_find( const KEYTYPE& key, const Scope::Timestmp timestmp) const
+	const_iterator scoped_find( const KEYTYPE& key, const Scope::Timestmp timestmp) const noexcept
 	{
 		auto rt = ParentClass::end();
 		auto it = ParentClass::lower_bound( ScopedKey<KEYTYPE>( key, Scope( 0, timestmp+1)));

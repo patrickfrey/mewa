@@ -92,16 +92,16 @@ public:
 	ProductionNode& operator=( const ProductionNode& o)
 		{m_type=o.m_type; m_index=o.m_index; return *this;}
 
-	Type type() const					{return m_type;}
-	int index() const					{return m_index;}
+        Type type() const noexcept					{return m_type;}
+        int index() const noexcept					{return m_index;}
 
-	void defineAsTerminal( int index_)			{m_type = Terminal; m_index = index_;}
-	void defineAsNonTerminal( int index_)			{m_type = NonTerminal; m_index = index_;}
+        void defineAsTerminal( int index_) noexcept			{m_type = Terminal; m_index = index_;}
+        void defineAsNonTerminal( int index_) noexcept			{m_type = NonTerminal; m_index = index_;}
 
-	bool operator == (const ProductionNode& o) const	{return m_type == o.m_type && m_index == o.m_index;}
-	bool operator != (const ProductionNode& o) const	{return m_type != o.m_type || m_index != o.m_index;}
+        bool operator == (const ProductionNode& o) const noexcept	{return m_type == o.m_type && m_index == o.m_index;}
+        bool operator != (const ProductionNode& o) const noexcept	{return m_type != o.m_type || m_index != o.m_index;}
 
-	bool operator < (const ProductionNode& o) const
+	bool operator < (const ProductionNode& o) const noexcept
 	{
 		return m_type == o.m_type
 			? m_index < o.m_index
@@ -125,7 +125,7 @@ public:
 	ProductionNodeDef& operator=( const ProductionNodeDef& o)
 		{ProductionNode::operator=(o); m_name=o.m_name; m_symbol=o.m_symbol; return *this;}
 
-	const std::string_view& name() const			{return m_name;}
+	const std::string_view& name() const noexcept		{return m_name;}
 
 	std::string tostring() const
 	{
@@ -162,10 +162,10 @@ struct Priority {
 	Priority( const Priority& o)
 		:value(o.value),assoziativity(o.assoziativity){}
 
-	bool operator == (const Priority& o) const	{return value == o.value && assoziativity == o.assoziativity;}
-	bool operator != (const Priority& o) const	{return value != o.value || assoziativity != o.assoziativity;}
-	bool operator < (const Priority& o) const 	{return value == o.value ? assoziativity < o.assoziativity : value < o.value;}
-	bool defined() const				{return value != 0 || assoziativity != Assoziativity::Undefined;}
+	bool operator == (const Priority& o) const noexcept	{return value == o.value && assoziativity == o.assoziativity;}
+	bool operator != (const Priority& o) const noexcept	{return value != o.value || assoziativity != o.assoziativity;}
+	bool operator < (const Priority& o) const noexcept 	{return value == o.value ? assoziativity < o.assoziativity : value < o.value;}
+	bool defined() const noexcept				{return value != 0 || assoziativity != Assoziativity::Undefined;}
 
 	std::string tostring() const
 	{
@@ -252,7 +252,7 @@ struct TransitionItem
 	TransitionItem( const TransitionItem& o)
 		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow),priority(o.priority){}
 
-	bool operator < (const TransitionItem& o) const
+	bool operator < (const TransitionItem& o) const noexcept
 	{
 		return prodindex == o.prodindex
 			? prodpos == o.prodpos
@@ -1264,6 +1264,34 @@ static LanguageDef parseLanguageDef( const std::string& source)
 	return rt;
 }
 
+static std::string numTohex( unsigned char nm)
+{
+	static const char hx[ 17] = "0123456789ABCDEF";
+	char buf[ 3];
+	buf[ 0] = hx[ nm / 16];
+	buf[ 1] = hx[ nm % 16];
+	buf[ 2] = 0;
+	return std::string( buf);
+}
+
+static std::string activationToPrintableString( const std::string& astr)
+{
+	std::string rt;
+	for (char const* ai = astr.c_str(); *ai; ++ai)
+	{
+		if ((unsigned char)*ai >= 128U || *ai == '#')
+		{
+			rt.push_back( '#');
+			rt.append( numTohex( *ai));
+		}
+		else
+		{
+			rt.push_back( *ai);
+		}
+	}
+	return rt;
+}
+
 static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 {
 	dbgout.out() << "-- Lexems:" << std::endl;
@@ -1280,19 +1308,25 @@ static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 				dbgout.out() << deftypename << " " << def.bad() << std::endl;
 				break;
 			case Lexer::Definition::NamedPatternLexem:
-				dbgout.out() << deftypename << " " << def.name() << " " << def.pattern() << " " << def.select() << std::endl;
+				dbgout.out() << deftypename << " " << def.name() << " " << def.pattern()
+						<< " " << def.select() << " [" << def.activation() << "] "
+						<< " ~ " << def.id() << std::endl;
 				break;
 			case Lexer::Definition::KeywordLexem:
-				dbgout.out() << deftypename << " " << def.name() << std::endl;
+				dbgout.out() << deftypename << " " << def.name()
+						<< " [" << activationToPrintableString( def.activation()) << "]"
+						<<  " ~ " << def.id() << std::endl;
 				break;
 			case Lexer::Definition::IgnoreLexem:
-				dbgout.out() << deftypename << " " << def.ignore() << std::endl;
+				dbgout.out() << deftypename << " " << def.ignore()
+						<< " [" << activationToPrintableString( def.activation()) << "]" << std::endl;
 				break;
 			case Lexer::Definition::EolnComment:
-				dbgout.out() << deftypename << " " << def.start() << std::endl;
+				dbgout.out() << deftypename << " " << def.start()
+						<< " [" << activationToPrintableString( def.activation()) << "]" << std::endl;
 				break;
 			case Lexer::Definition::BracketComment:
-				dbgout.out() << deftypename << " " << def.start() << " " << def.end() << std::endl;
+				dbgout.out() << deftypename << " " << def.start() << " " << def.end() << " [" << def.activation() << "]" << std::endl;
 				break;
 		}
 	}

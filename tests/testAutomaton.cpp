@@ -76,9 +76,9 @@ int main( int argc, const char* argv[] )
 
 		std::string expected{R"(
 -- Lexems:
-TOKEN IDENT [a-z] 0
-KEYWORD =
-KEYWORD *
+TOKEN IDENT [a-z] 0 [abcdefghijklmnopqrstuvwxyz]  ~ 1
+KEYWORD = [=] ~ 2
+KEYWORD * [*] ~ 3
 
 -- Nonterminals:
 (1) S

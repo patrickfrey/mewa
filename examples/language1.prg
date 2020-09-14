@@ -1,11 +1,11 @@
-function swap( int& a, int& b)
+procedure swap( int& a, int& b)
 {
 	int tmp = a;
 	a = b;
 	b = tmp;
 }
 
-function fibonacci( int n)
+function int fibonacci( int n)
 {
 	int i1 = 0;
 	int i2 = 1;

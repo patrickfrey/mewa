@@ -120,6 +120,9 @@ static int string2int( const std::string& value)
 static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tableName)
 {
 	mewa::Lexer rt;
+	std::vector<std::string> keywords;
+	// ... because keywords need to be loaded after the named token lexems, we need to store them first
+	//     and apply the definitions at the end of parsing, because in a lua map they can appear in any order.
 	int rowcnt = 0;
 
 	lua_pushvalue( ls, li);
@@ -180,11 +183,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		}
 		else if (0==std::strcmp( keystr, "keyword"))
 		{
-			auto keywords = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
-			for (auto keyword : keywords)
-			{
-				rt.defineLexem( keyword);
-			}
+			keywords = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
 		}
 		else if (0==std::strcmp( keystr, "token"))
 		{
@@ -234,6 +233,10 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		lua_pop( ls, 1);
 	}
 	lua_pop( ls, 1);
+	for (auto keyword : keywords)
+	{
+		rt.defineLexem( keyword);
+	}
 	return rt;
 }
 

@@ -80,7 +80,7 @@ static bool extractFirstCharacters( std::string& res, char const*& si, char eb)
 			{
 				char to = parseFirstChar( si, false/*!allowNonAscii*/);
 				if (to < from) std::swap( to, from);
-				for (; from <= to; ++from)
+				for (++from; from <= to; ++from)
 				{
 					res.push_back( from);
 				}
@@ -146,7 +146,7 @@ static std::string inverseCharset( const std::string& charset)
 	return rt;
 }
 
-std::string LexemDef::activationCharacters( const std::string& source_)
+std::string LexemDef::activation( const std::string& source_)
 {
 	std::string rt;
 	bool empty = true;
@@ -170,7 +170,7 @@ std::string LexemDef::activationCharacters( const std::string& source_)
 			empty &= !extractFirstCharacters( rt, si, ']');
 			empty &= !skipMultiplicator( si);
 			if (inverse) rt = inverseCharset( rt);
-			if (empty) rt.append( activationCharacters( std::string( si)));
+			if (empty) rt.append( activation( std::string( si)));
 		}
 		else if (*si == '(')
 		{
@@ -179,7 +179,7 @@ std::string LexemDef::activationCharacters( const std::string& source_)
 				char const* start = si+1;
 				empty &= !skipBrackets( si, ')');
 				empty &= !skipMultiplicator( si);
-				rt.append( activationCharacters( std::string( start, si-start-1)));
+				rt.append( activation( std::string( start, si-start-1)));
 				if (*si != '|') break;
 				++si;
 			}
@@ -320,11 +320,11 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 		throw Error( Error::InvalidRegexInLexer, pattern);
 	}
 	int firstChars = 0;
-	for (int ii=0; ii<256; ++ii)
+	for (unsigned int ii=0; ii<256; ++ii)
 	{
 		if (m_defar.back().activate().test(ii))
 		{
-			m_firstmap.insert( std::pair<char,int>( ii, m_defar.size()-1));
+			m_firstmap.insert( std::pair<unsigned char,int>( ii, m_defar.size()-1));
 			++firstChars;
 		}
 	}
@@ -411,7 +411,7 @@ int Lexer::matchBracketCommentStart( Scanner& scanner) const
 	return -1;
 }
 
-int Lexer::lexemId( const std::string_view& name) const
+int Lexer::lexemId( const std::string_view& name) const noexcept
 {
 	auto lx = m_nameidmap.find( name);
 	return (lx == m_nameidmap.end()) ? 0 : lx->second;
@@ -472,7 +472,7 @@ Lexem Lexer::next( Scanner& scanner) const
 			{
 				if (idx >= (int)m_defar.size()) throw Error( Error::ArrayBoundReadInLexer);
 				auto mm = m_defar[ idx].match( start, scanner.restsize());
-				if (maxlen < mm.second)
+				if (maxlen <= mm.second && (maxlen < mm.second || m_defar[ idx].keyword())) //... keywords preferred if length is the same
 				{
 					maxlen = mm.second;
 					matchstart = mm.first.data();
@@ -504,30 +504,34 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 	std::vector<Lexer::Definition> rt;
 	if (m_errorLexemName != "?")
 	{
-		rt.push_back( Definition( Definition::BadLexem, {m_errorLexemName}));
+		rt.push_back( Definition( Definition::BadLexem, {m_errorLexemName}, 0/*select*/, 0/*id*/, ""/*activation*/));
 	}
 	for (auto const& def : m_defar)
 	{
 		if (def.name().empty())
 		{
-			rt.push_back( Definition( Definition::IgnoreLexem, {def.source()}, 0/*select*/,def.id()));
+			rt.push_back( Definition( Definition::IgnoreLexem, {def.source()}, 0/*select*/,def.id(), def.activation()));
 		}
 		else if (def.keyword())
 		{
-			rt.push_back( Definition( Definition::KeywordLexem, {def.name()}, 0/*select*/, def.id()));
+			rt.push_back( Definition( Definition::KeywordLexem, {def.name()}, 0/*select*/, def.id(), def.activation()));
 		}
 		else
 		{
-			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select(), def.id()));
+			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select(), def.id(), def.activation()));
 		}
 	}
 	for (auto const& bc : m_bracketComments)
 	{
-		rt.push_back( Definition( Definition::BracketComment, {bc.first,bc.second}));
+		rt.push_back(
+			Definition( Definition::BracketComment, {bc.first,bc.second}, 0/*select*/,
+					MATCH_BRACKET_COMMENT/*id*/, std::string( bc.first.c_str(), 1)/*activation*/));
 	}
 	for (auto const& cc : m_eolnComments)
 	{
-		rt.push_back( Definition( Definition::EolnComment, {cc}));
+		rt.push_back(
+			Definition( Definition::EolnComment, {cc}, 0/*select*/,
+					MATCH_EOLN_COMMENT/*id*/, std::string( cc.c_str(), 1)/*activation*/));
 	}
 	return rt;
 }

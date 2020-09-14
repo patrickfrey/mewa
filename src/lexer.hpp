@@ -28,7 +28,7 @@ public:
 	LexemDef( const std::string& name_, const std::string& source_, int id_, bool keyword_, std::size_t select_)
 		:m_name(name_),m_source(source_),m_pattern(source_),m_activate(),m_select(select_),m_id(id_),m_keyword(keyword_)
 	{
-		std::string achrs( activationCharacters( source_));
+		std::string achrs( activation( source_));
 		for (char ch : achrs) {m_activate.set( (unsigned char)ch);}
 	}
 
@@ -51,17 +51,18 @@ public:
 		 m_select=o.m_select; m_id=o.m_id; m_keyword=o.m_keyword;
 		 return *this;}
 
-	const std::string& name() const			{return m_name;}
-	const std::string& source() const		{return m_source;}
-	const std::bitset<256> activate() const		{return m_activate;}
-	std::size_t select() const			{return m_select;}
-	int id() const					{return m_id;}
-	bool keyword() const				{return m_keyword;}
+	const std::string& name() const noexcept		{return m_name;}
+	const std::string& source() const noexcept		{return m_source;}
+	const std::bitset<256> activate() const noexcept	{return m_activate;}
+	std::size_t select() const noexcept			{return m_select;}
+	int id() const noexcept					{return m_id;}
+	bool keyword() const noexcept				{return m_keyword;}
+	std::string activation() const				{return activation( m_source);}
 
 	std::pair<std::string_view,int> match( const char* srcptr, std::size_t srclen) const;
 
 private:
-	static std::string activationCharacters( const std::string& source_);
+	static std::string activation( const std::string& source_);
 
 private:
 	std::string m_name;
@@ -90,11 +91,11 @@ public:
 	Lexem& operator=( Lexem&& o)
 		{m_name=std::move(o.m_name); m_value=std::move(o.m_value); m_id=o.m_id; m_line=o.m_line; return *this;}
 
-	const std::string_view& name() const	{return m_name;}
-	const std::string_view& value() const	{return m_value;}
-	int id() const				{return m_id;}
-	int line() const			{return m_line;}
-	bool empty() const			{return m_value.empty() && m_name.empty();}
+	const std::string_view& name() const noexcept	{return m_name;}
+	const std::string_view& value() const noexcept	{return m_value;}
+	int id() const noexcept				{return m_id;}
+	int line() const noexcept			{return m_line;}
+	bool empty() const noexcept			{return m_value.empty() && m_name.empty();}
 
 private:
 	std::string_view m_name;
@@ -116,13 +117,13 @@ public:
 	Scanner& operator=( const Scanner& o)
 		{m_src=o.m_src; m_srcitr=o.m_srcitr; m_line=o.m_line; return *this;}
 
-	int line() const			{return m_line;}
+	int line() const noexcept			{return m_line;}
 
 	char const* next( int incr=0);
 	bool scan( const char* end);
 	bool match( const char* str);
 
-	std::size_t restsize() const		{return m_src.size() - (m_srcitr - m_src.data());}
+	std::size_t restsize() const noexcept		{return m_src.size() - (m_srcitr - m_src.data());}
 
 private:
 	void checkNullTerminated();
@@ -153,30 +154,32 @@ public:
 			static const char* ar[] = {"bad","token","keyword","ignore","comment","comment"};
 			return ar[ type_];
 		}
-		const char* typeName() const
+		const char* typeName() const noexcept
 		{
 			return typeName( m_type);
 		}
 		Definition( const Definition& o)
-			:m_type(o.m_type),m_arg(o.m_arg),m_select(o.m_select),m_id(o.m_id){}
-		Definition( Type type_, const std::vector<std::string>& arg_, int select_=0, int id_=-1)
-			:m_type(type_),m_arg(arg_),m_select(select_),m_id(id_){}
+			:m_type(o.m_type),m_arg(o.m_arg),m_select(o.m_select),m_id(o.m_id),m_activation(o.m_activation){}
+		Definition( Type type_, const std::vector<std::string>& arg_, int select_, int id_, const std::string& activation_)
+			:m_type(type_),m_arg(arg_),m_select(select_),m_id(id_),m_activation(activation_){}
 
-		Type type() const				{return m_type;}
-		int id() const					{return m_id;}
-		const std::string& name() const			{return m_arg[0];}
-		const std::string bad() const			{return m_arg.empty() ? std::string() : m_arg[0];}
-		const std::string pattern() const		{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
-		int select() const				{return m_select;}
-		const std::string ignore() const		{return m_arg.empty() ? std::string() : m_arg[0];}
-		const std::string start() const			{return m_arg.empty() ? std::string() : m_arg[0];}
-		const std::string end() const			{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
+		Type type() const noexcept		{return m_type;}
+		int id() const noexcept			{return m_id;}
+		const std::string& name() const		{return m_arg[0];}
+		const std::string bad() const		{return m_arg.empty() ? std::string() : m_arg[0];}
+		const std::string pattern() const	{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
+		int select() const noexcept		{return m_select;}
+		const std::string ignore() const	{return m_arg.empty() ? std::string() : m_arg[0];}
+		const std::string start() const		{return m_arg.empty() ? std::string() : m_arg[0];}
+		const std::string end() const		{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
+		const std::string& activation() const	{return m_activation;}
 
 	private:
 		Type m_type;
 		std::vector<std::string> m_arg;
 		int m_select;
 		int m_id;
+		std::string m_activation;
 	};
 
 public:
@@ -211,12 +214,12 @@ public:
 	void defineEolnComment( const std::string_view& opr);
 	void defineBracketComment( const std::string_view& start, const std::string_view& end);
 
-	int lexemId( const std::string_view& name) const;
+	int lexemId( const std::string_view& name) const noexcept;
 	const std::string& lexemName( int id) const;
 	bool isKeyword( int id) const;
 	Lexem next( Scanner& scanner) const;
 
-	int nofTerminals() const			{return m_namelist.size();}
+	int nofTerminals() const noexcept		{return m_namelist.size();}
 
 	std::vector<Definition> getDefinitions() const;
 
@@ -235,7 +238,7 @@ private:
 private:
 	std::string m_errorLexemName;
 	std::vector<LexemDef> m_defar;
-	std::multimap<char,int> m_firstmap;
+	std::multimap<unsigned char,int> m_firstmap;
 	std::map<std::string, int, std::less<> > m_nameidmap;
 	std::vector<std::string> m_namelist;
 	BracketCommentDefList m_bracketComments;
