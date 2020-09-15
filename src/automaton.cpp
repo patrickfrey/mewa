@@ -27,12 +27,12 @@ static std::string getLexemName( const Lexer& lexer, int terminal)
         return terminal ? lexer.lexemName( terminal) : std::string("$");
 }
 
-static std::set<int> getLr1FirstSet(
+static FlatSet<int> getLr1FirstSet(
 				const ProductionDef& prod, int prodpos, int follow,
 				const std::map<int, std::set<int> >& nonTerminalFirstSetMap,
 				const std::set<int>& nullableNonterminalSet)
 {
-	std::set<int> rt;
+	FlatSet<int> rt;
 	for (; prodpos < (int)prod.right.size(); ++prodpos)
 	{
 		const ProductionNodeDef& nd = prod.right[ prodpos];
@@ -47,7 +47,6 @@ static std::set<int> getLr1FirstSet(
 			if (fi != nonTerminalFirstSetMap.end())
 			{
 				rt.insert( fi->second.begin(), fi->second.end());
-
 				if (nullableNonterminalSet.find( nd.index()) == nullableNonterminalSet.end())
 				{
 					break;
@@ -61,9 +60,6 @@ static std::set<int> getLr1FirstSet(
 	}
 	return rt;
 }
-
-//!!! calculate for each nonterminal N -> FlatSet<int> with packed transition items created for cover (N on left side of production)
-//!!! because of different follows non transitive 
 
 static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const ProductionDefList& prodlist)
 {
@@ -97,6 +93,10 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 	return rt;
 }
 
+//!!! calculate for each nonterminal N -> FlatSet<int> with packed transition items created for cover (N on left side of production)
+//!!! because of different follows non transitive 
+//!!! IDEA Use setid as follow instead of terminal index to reduce size of sets, translate follow indices to sets at the end when joining the sets
+
 static TransitionState getLr1TransitionStateClosure(
 				const TransitionState& ts,
 				const ProductionDefList& prodlist,
@@ -113,13 +113,13 @@ static TransitionState getLr1TransitionStateClosure(
 		auto item = TransitionItem::unpack( orig[ oidx]);
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
-		std::set<int> firstOfRest = getLr1FirstSet( prod, item.prodpos+1, item.follow, nonTerminalFirstSetMap, nullableNonterminalSet);
-
 		if (item.prodpos < (int)prod.right.size())
 		{
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
+				FlatSet<int> firstOfRest = getLr1FirstSet( prod, item.prodpos+1, item.follow, nonTerminalFirstSetMap, nullableNonterminalSet);
+
 				auto prodrange = prodlist.equal_range( nd.index());
 				for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
 				{

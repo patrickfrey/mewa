@@ -21,6 +21,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <iterator>
 
 namespace mewa {
 
@@ -279,8 +280,18 @@ public:
 	FlatSet& operator=( FlatSet<TYPE>&& o)
 		{std::vector<TYPE>::operator=(std::move(o)); return *this;}
 	FlatSet( const std::initializer_list<TYPE>& itemlist)
-		{std::vector<TYPE>::reserve( reserveSize( itemlist.size())); for (const auto& item : itemlist) insertInOrder( item.packed());}
+		{std::vector<TYPE>::reserve( reserveSize( itemlist.size()));
+		 for (const auto& item : itemlist) insertInOrder( *item);}
 	~FlatSet(){}
+
+	template <typename ITERATOR>
+	bool insert( ITERATOR start, ITERATOR end)
+	{
+		bool rt = false;
+		std::vector<TYPE>::reserve( reserveSize( std::distance<ITERATOR>( start, end)));
+		for (auto itr = start; itr != end; ++itr) rt |= insertInOrder( *itr);
+		return rt;
+	}
 
 	bool insert( TYPE elem)
 	{
