@@ -62,14 +62,19 @@ static std::set<int> getLr1FirstSet(
 	return rt;
 }
 
-static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const std::vector<ProductionDef>& prodlist)
+//!!! calculate for each nonterminal N -> FlatSet<int> with packed transition items created for cover (N on left side of production)
+//!!! because of different follows non transitive 
+
+static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const ProductionDefList& prodlist)
 {
 	TransitionState rt( ts);
-	std::vector<TransitionItem> orig( ts.unpack());
+	std::vector<int> orig;
+	orig.reserve( ts.packedElements().capacity());
+	orig.insert( orig.end(), ts.packedElements().begin(), ts.packedElements().end());
 
 	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
 	{
-		auto const& item = orig[ oidx];
+		auto item = TransitionItem::unpack( orig[ oidx]);
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -77,15 +82,13 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
-				for (auto prodidx = 0U; prodidx != prodlist.size(); ++prodidx)
+				auto prodrange = prodlist.equal_range( nd.index());
+				for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
 				{
-					if (prodlist[ prodidx].left.index() == nd.index())
+					TransitionItem insitem( hi.index(), 0, 0/*follow*/, 0/*priority*/);
+					if (rt.insert( insitem) == true/*insert took place*/)
 					{
-						TransitionItem insitem( prodidx, 0, 0/*follow*/, 0/*priority*/);
-						if (rt.insert( insitem) == true/*insert took place*/)
-						{
-							orig.push_back( insitem);
-						}
+						orig.push_back( insitem.packed());
 					}
 				}
 			}
@@ -96,38 +99,36 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 
 static TransitionState getLr1TransitionStateClosure(
 				const TransitionState& ts,
-				const std::vector<ProductionDef>& prodlist,
+				const ProductionDefList& prodlist,
 				const std::map<int, std::set<int> >& nonTerminalFirstSetMap,
 				const std::set<int>& nullableNonterminalSet)
 {
 	TransitionState rt( ts);
-	std::vector<TransitionItem> orig( ts.unpack());
+	std::vector<int> orig;
+	orig.reserve( ts.packedElements().capacity());
+	orig.insert( orig.end(), ts.packedElements().begin(), ts.packedElements().end());
 
 	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
 	{
-		auto item = orig[ oidx];
+		auto item = TransitionItem::unpack( orig[ oidx]);
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
+		std::set<int> firstOfRest = getLr1FirstSet( prod, item.prodpos+1, item.follow, nonTerminalFirstSetMap, nullableNonterminalSet);
+
 		if (item.prodpos < (int)prod.right.size())
 		{
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
-				for (auto prodidx = 0U; prodidx != prodlist.size(); ++prodidx)
+				auto prodrange = prodlist.equal_range( nd.index());
+				for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
 				{
-					const ProductionDef& trigger_prod = prodlist[ prodidx];
-					if (trigger_prod.left.index() == nd.index())
+					for (auto follow :firstOfRest)
 					{
-						std::set<int> firstOfRest = getLr1FirstSet( 
-										prod, item.prodpos+1, item.follow,
-										nonTerminalFirstSetMap, nullableNonterminalSet);
-						for (auto follow :firstOfRest)
+						TransitionItem insitem( hi.index(), 0/*prodpos*/, follow, hi->priority);
+						if (rt.insert( insitem) == true/*insert took place*/)
 						{
-							TransitionItem insitem( prodidx, 0, follow, trigger_prod.priority);
-							if (rt.insert( insitem) == true/*insert took place*/)
-							{
-								orig.push_back( insitem);
-							}
+							orig.push_back( insitem.packed());
 						}
 					}
 				}
@@ -160,7 +161,7 @@ public:
 	}
 
 private:
-	const std::vector<ProductionDef>& m_prodlist;
+	ProductionDefList m_prodlist;
 };
 
 class CalculateClosureLr1
@@ -178,7 +179,7 @@ public:
 	}
 
 private:
-	const std::vector<ProductionDef>& m_prodlist;
+	ProductionDefList m_prodlist;
 	const std::map<int, std::set<int> >& m_nonTerminalFirstSetMap;
 	const std::set<int>& m_nullableNonterminalSet;
 };

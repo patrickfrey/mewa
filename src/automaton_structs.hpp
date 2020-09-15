@@ -17,8 +17,10 @@
 #include <string>
 #include <string_view>
 #include <set>
+#include <unordered_map>
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 namespace mewa {
 
@@ -261,17 +263,100 @@ struct TransitionItem
 	}
 };
 
+template <typename TYPE>
+class FlatSet :public std::vector<TYPE>
+{
+public:
+	FlatSet()
+		:std::vector<TYPE>(){}
+	FlatSet( const FlatSet<TYPE>& o)
+		{std::vector<TYPE>::reserve( reserveSize( o.size())); std::vector<TYPE>::insert( std::vector<TYPE>::end(), o.begin(), o.end());}
+	FlatSet( FlatSet<TYPE>&& o)
+		:std::vector<TYPE>(std::move(o)){}
+	FlatSet& operator=( const FlatSet<TYPE>& o)
+		{std::vector<TYPE>::reserve( reserveSize( o.size())); 
+		 std::vector<TYPE>::insert( std::vector<TYPE>::end(), o.begin(), o.end()); return *this;}
+	FlatSet& operator=( FlatSet<TYPE>&& o)
+		{std::vector<TYPE>::operator=(std::move(o)); return *this;}
+	FlatSet( const std::initializer_list<TYPE>& itemlist)
+		{std::vector<TYPE>::reserve( reserveSize( itemlist.size())); for (const auto& item : itemlist) insertInOrder( item.packed());}
+	~FlatSet(){}
+
+	bool insert( TYPE elem)
+	{
+		return insertInOrder( elem);
+	}
+	bool operator == (const FlatSet<TYPE>& o) const noexcept	{return compare( o) == 0;}
+	bool operator != (const FlatSet<TYPE>& o) const noexcept	{return compare( o) != 0;}
+	bool operator < (const FlatSet<TYPE>& o) const noexcept		{return compare( o) < 0;}
+
+private:
+	static std::size_t reserveSize( std::size_t minCapacity)
+	{
+		enum {MinSize=128};
+		std::size_t mm = MinSize;
+		for (; mm < minCapacity && mm >= (std::size_t)MinSize; mm*=2){}
+		if (mm < minCapacity) throw std::bad_alloc();
+		return mm;
+	}
+	void increaseCapacity( std::size_t nofElements)
+	{
+		if (std::vector<TYPE>::capacity() == std::vector<TYPE>::size())
+		{
+			std::vector<TYPE>::reserve( reserveSize( std::vector<TYPE>::size()+nofElements));
+		}
+	}
+	bool insertInOrder( TYPE elem)
+	{
+		increaseCapacity( 1);
+		typename std::vector<TYPE>::iterator pi = std::lower_bound( std::vector<TYPE>::begin(), std::vector<TYPE>::end(), elem);
+		if (pi == std::vector<TYPE>::end())
+		{
+			std::vector<TYPE>::push_back( elem);
+			return true;
+		}
+		else if (*pi > elem)
+		{
+			std::vector<TYPE>::insert( pi, elem);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	int compare(const FlatSet<TYPE>& o) const noexcept
+	{
+		if (std::vector<TYPE>::size() == o.size())
+		{
+			auto ti = std::vector<TYPE>::begin(), te = std::vector<TYPE>::end();
+			auto oi = o.begin(), oe = o.end();
+			for (; ti != te && oi != oe; ++oi,++ti)
+			{
+				if (*ti != *oi) return *ti < *oi ? -1 : +1;
+			}
+			return 0;
+		}
+		else
+		{
+			return std::vector<TYPE>::size() < o.size() ? -1:+1;
+		}
+	}
+};
+
+
 class TransitionState
 {
 public:
 	TransitionState()
 		:m_packedElements(){}
 	TransitionState( const TransitionState& o)
-		:m_packedElements(o.m_packedElements){}
+		:m_packedElements( o.m_packedElements){} 
 	TransitionState( TransitionState&& o)
 		:m_packedElements(std::move(o.m_packedElements)){}
 	TransitionState& operator=( const TransitionState& o)
-		{m_packedElements=o.m_packedElements; return *this;}
+		{m_packedElements=o.m_packedElements; return *this;} 
 	TransitionState& operator=( TransitionState&& o)
 		{m_packedElements=std::move(o.m_packedElements); return *this;}
 	TransitionState( const std::initializer_list<TransitionItem>& itemlist)
@@ -280,11 +365,11 @@ public:
 
 	bool insert( const TransitionItem& itm)
 	{
-		return m_packedElements.insert( itm.packed()).second;
+		return m_packedElements.insert( itm.packed());
 	}
 	void join( const TransitionState& o)
 	{
-		m_packedElements.insert( o.m_packedElements.begin(), o.m_packedElements.end());
+		for (auto elem : o.m_packedElements) m_packedElements.insert( elem);
 	}
 
 	bool empty() const noexcept
@@ -295,6 +380,7 @@ public:
 	std::vector<TransitionItem> unpack() const noexcept
 	{
 		std::vector<TransitionItem> rt;
+		rt.reserve( m_packedElements.size());
 		for (auto packedElement : m_packedElements)
 		{
 			rt.push_back( TransitionItem::unpack( packedElement));
@@ -310,26 +396,12 @@ public:
 	{
 		return (m_packedElements != o.m_packedElements);
 	}
-
 	bool operator < (const TransitionState& o) const noexcept
 	{
-		if (m_packedElements.size() == o.m_packedElements.size())
-		{
-			auto ti = m_packedElements.begin(), te = m_packedElements.end();
-			auto oi = o.m_packedElements.begin(), oe = o.m_packedElements.end();
-			for (; ti != te && oi != oe; ++oi,++ti)
-			{
-				if (*ti != *oi) return *ti < *oi;
-			}
-			return false;
-		}
-		else
-		{
-			return m_packedElements.size() < o.m_packedElements.size();
-		}
+		return (m_packedElements < o.m_packedElements);
 	}
 
-	const std::set<int>& packedElements() const noexcept
+	const std::vector<int>& packedElements() const noexcept
 	{
 		return m_packedElements;
 	}
@@ -357,9 +429,92 @@ private:
 		aa = (aa^0xb55a4f09) ^ (aa>>16);
 		return aa;
 	}
+private:
+	FlatSet<int> m_packedElements;
+};
+
+class ProductionDefList
+{
+public:
+	typedef std::unordered_multimap<int,std::size_t> LeftIndexMap;
+
+	explicit ProductionDefList( const std::vector<ProductionDef>& ar_)
+		:m_ar(ar_){init_leftindexmap();}
+
+	typedef std::vector<ProductionDef>::const_iterator const_iterator;
+
+	const_iterator begin() const		{return m_ar.begin();}
+	const_iterator end() const		{return m_ar.end();}
+
+	class head_iterator
+	{
+	public:
+		head_iterator( const_iterator start_, LeftIndexMap::const_iterator range_itr_)
+			:m_start( start_),m_range_itr(range_itr_){}
+		head_iterator( const head_iterator& o)
+			:m_start( o.m_start),m_range_itr(o.m_range_itr){}
+
+		bool operator == (const head_iterator& o) const
+		{
+			return m_range_itr == o.m_range_itr;
+		}
+		bool operator != (const head_iterator& o) const
+		{
+			return m_range_itr != o.m_range_itr;
+		}
+
+		head_iterator& operator++()
+		{
+			++m_range_itr;
+			return *this;
+		}
+		head_iterator operator++(int)
+		{
+			head_iterator rt( *this);
+			++m_range_itr;
+			return rt;
+		}
+		const ProductionDef& operator*() const
+		{
+			return *(m_start + m_range_itr->second);
+		}
+		const ProductionDef* operator->() const
+		{
+			return &*(m_start + m_range_itr->second);
+		}
+		std::size_t index() const
+		{
+			return m_range_itr->second;
+		}
+
+	private:
+		const_iterator m_start;
+		LeftIndexMap::const_iterator m_range_itr;
+	};
+
+	std::pair<head_iterator,head_iterator> equal_range( int leftindex) const
+	{
+		auto range = m_leftindexmap.equal_range( leftindex);
+		return std::pair<head_iterator,head_iterator>( {m_ar.begin(), range.first}, {m_ar.begin(), range.second});
+	}
+
+	const ProductionDef& operator[]( std::size_t idx) const
+	{
+		return m_ar[ idx];
+	}
 
 private:
-	std::set<int> m_packedElements;
+	void init_leftindexmap()
+	{
+		for (std::size_t pidx=0; pidx<m_ar.size(); ++pidx)
+		{
+			m_leftindexmap.insert( {m_ar[pidx].left.index(), pidx});
+		}
+	}
+
+private:
+	std::vector<ProductionDef> m_ar;
+ 	LeftIndexMap m_leftindexmap;
 };
 
 }//namespace
