@@ -43,7 +43,7 @@ functiondefinition	= "function" typespec IDENT
 				"{" statementlist "}"
 			;
 parameters/L		= paramdecl "," parameters
-                        | paramdecl
+			| paramdecl
 			| ε
 			;
 paramdecl		= typespec IDENT
@@ -61,10 +61,10 @@ statement		= functiondefinition
 			| "while" "(" expression ")" "{" statementlist "}"
 			| "{" statementlist "}"
 			;
-variabledefinition	= typespec IDENT "=" expression ";"
-			| typespec IDENT ";"
-			| typespec IDENT "[" "]" "=" expression ";"
-			| typespec IDENT "[" "]" ";"
+variabledefinition	= typespec IDENT "=" expression
+			| typespec IDENT
+			| typespec IDENT "[" "]" "=" expression
+			| typespec IDENT "[" "]"
 			;  
 returnstatement	   	= "return" expression
 			;
@@ -76,21 +76,44 @@ expression/L1		= IDENT
 			| "(" expression ")"
 			;
 expression/L2		= expression  "="  expression		(operator assign)
+			| expression  "+="  expression		(operator assign_add)
+			| expression  "-="  expression		(operator assign_sub)
+			| expression  "*="  expression		(operator assign_mul)
+			| expression  "/="  expression		(operator assign_div)
+			| expression  "%="  expression		(operator assign_mod)
 			;
-expression/L3		= expression  "+"  expression		(operator add)
+expression/L3		= expression  "||"  expression		(operator logical_or)
+			;
+expression/L4		= expression  "&&"  expression		(operator logical_and)
+			;
+expression/L5		= expression  "|"  expression		(operator bitwise_or)
+			;			
+expression/L6		= expression  "^"  expression		(operator bitwise_xor)
+			| expression  "&"  expression		(operator bitwise_and)
+			;			
+expression/L7		= expression  "=="  expression		(operator cmpeq)
+			| expression  "!="  expression		(operator cmpne)
+			| expression  "<="  expression		(operator cmple)
+			| expression  "<"  expression		(operator cmplt)
+			| expression  ">="  expression		(operator cmpge)
+			| expression  ">"  expression		(operator cmpgt)
+			;
+expression/L8		= expression  "+"  expression		(operator add)
 			| expression  "-"  expression		(operator sub) 
 			| "-"  expression			(operator minus)
 			| "+"  expression			(operator plus) 
+			| "~"  expression			(operator minus)
+			| "!"  expression			(operator plus) 
 			;
-expression/L4		= expression  "*"  expression		(operator mul)	
+expression/L9		= expression  "*"  expression		(operator mul)
 			| expression  "/"  expression		(operator div)
 			| expression  "%"  expression		(operator mod)
 			;
-expression/L5		= expression "->" IDENT
+expression/L10		= expression "->" IDENT
 			| expression "." IDENT
 			| "*" expression
 			;
-expression/L6		= expression  "(" expressionlist ")"
+expression/L11		= expression  "(" expressionlist ")"
 			| expression  "(" ")"
 			| expression  "[" expressionlist "]"
 			;

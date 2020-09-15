@@ -188,8 +188,11 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 	for (; !lexem.empty(); lexem = automaton.lexer().next( scanner))
 	{
 		if (lexem.id() <= 0) throw mewa::Error( mewa::Error::BadCharacterInGrammarDef, lexem.value());
-		if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
-		while (!feedLexem( stateStack, automaton, lexem)){}
+		do
+		{
+			if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
+		}
+		while (!feedLexem( stateStack, automaton, lexem));
 	}
 	while (!feedLexem( stateStack, automaton, lexem/* empty ~ end of input*/)){}
 }

@@ -63,9 +63,11 @@ public:
 		ShiftShiftConflictInGrammarDef=563,
 
 		ComplexityMaxStateInGrammarDef=571,
-		ComplexityMaxProductionLengthInGrammarDef=572,
-		ComplexityMaxNonterminalInGrammarDef=573,
-		ComplexityMaxTerminalInGrammarDef=574,
+		ComplexityMaxNofProductionsInGrammarDef=572,
+		ComplexityMaxProductionLengthInGrammarDef=573,
+		ComplexityMaxProductionPriorityInGrammarDef=574,
+		ComplexityMaxNonterminalInGrammarDef=575,
+		ComplexityMaxTerminalInGrammarDef=576,
 
 		BadKeyInGeneratedLuaTable=591,
 		BadValueInGeneratedLuaTable=592,
@@ -143,7 +145,9 @@ private:
 			case ShiftShiftConflictInGrammarDef: return "SHIFT/SHIFT conflict in the grammar definition";
 
 			case ComplexityMaxStateInGrammarDef: return "To many states in the resulting tables of the grammar";
+			case ComplexityMaxNofProductionsInGrammarDef: return "Too many productions defined in the grammar";
 			case ComplexityMaxProductionLengthInGrammarDef: return "To many productions in the resulting tables of the grammar";
+			case ComplexityMaxProductionPriorityInGrammarDef: return "Priority value assigned to production exceeds maximum value allowed";
 			case ComplexityMaxNonterminalInGrammarDef: return "To many nonterminals in the resulting tables of the grammar";
 			case ComplexityMaxTerminalInGrammarDef: return "To many terminals (lexems) in the resulting tables of the grammar";
 

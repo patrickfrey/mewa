@@ -10,9 +10,10 @@ LINKSO="$LINK -shared -llua5.2"
 $COMP -Isrc -c src/lexer.cpp -o build/lexer.o
 $COMP -Isrc -c src/automaton.cpp -o build/automaton.o
 $COMP -Isrc -c src/automaton_tostring.cpp -o build/automaton_tostring.o
+$COMP -Isrc -c src/automaton_parser.cpp -o build/automaton_parser.o
 $COMP -Isrc -c src/fileio.cpp -o build/fileio.o
 
-ar rcs build/libmewa.a build/lexer.o build/automaton.o build/automaton_tostring.o build/fileio.o
+ar rcs build/libmewa.a build/lexer.o build/automaton.o build/automaton_tostring.o build/automaton_parser.o build/fileio.o
 
 $COMP -Isrc -I/usr/include/lua5.2 -c src/lualib_mewa.cpp -o build/lualib_mewa.o
 $COMP -Isrc -I/usr/include/lua5.2 -c src/lua_load_automaton.cpp -o build/lua_load_automaton.o

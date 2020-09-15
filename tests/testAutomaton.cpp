@@ -15,6 +15,7 @@
 #endif
 
 #include "automaton.hpp"
+#include "automaton_structs.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
 #include "utilitiesForTests.hpp"
@@ -226,7 +227,7 @@ V = "*" E
 		}
 
 		// [2] Test packing
-		for (int ii=0; ii<1000; ++ii)
+		for (int ii=0; ii<100000; ++ii)
 		{
 			Automaton::ActionKey actionKey( 
 							random.get( 0, Automaton::MaxState)/*state*/,
@@ -241,11 +242,17 @@ V = "*" E
 							random.get( 0, Automaton::MaxNonterminal)/*nonterminal*/);
 			Automaton::Goto gto( 
 							random.get( 0, Automaton::MaxState)/*state*/);
+			TransitionItem titm( 
+					random.get( 0, Automaton::MaxNofProductions)/*prodindex*/,
+					random.get( 0, Automaton::MaxProductionLength)/*prodpos*/,
+					random.get( 0, Automaton::MaxTerminal)/*follow*/,
+					Priority( random.get( 0, Automaton::MaxPriority), (Assoziativity)random.get( 0, Automaton::MaxAssoziativity))/*priority*/);
 
 			Automaton::ActionKey actionKey2 = Automaton::ActionKey::unpack( actionKey.packed());
 			Automaton::Action action2 = Automaton::Action::unpack( action.packed());
 			Automaton::GotoKey gtoKey2 = Automaton::GotoKey::unpack( gtoKey.packed());
 			Automaton::Goto gto2 = Automaton::Goto::unpack( gto.packed());
+			TransitionItem titm2 = TransitionItem::unpack( titm.packed());
 
 			if (actionKey2 != actionKey)
 			{
@@ -262,6 +269,10 @@ V = "*" E
 			if (gto2 != gto)
 			{
 				throw std::runtime_error( "packing/unpacking of goto structure failed");
+			}
+			if (titm != titm2)
+			{
+				throw std::runtime_error( "packing/unpacking of state transition item failed");
 			}
 		}
 		std::cerr << "OK" << std::endl;

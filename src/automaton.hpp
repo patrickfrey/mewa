@@ -29,18 +29,30 @@ public:
 		ShiftState = 14, 
 			MaxState = 1<<ShiftState,
 			MaskState = MaxState-1,
-		ShiftProductionLength = 5,
+		ShiftProductionLength = 4,
 			MaxProductionLength = 1<<ShiftProductionLength,
 			MaskProductionLength = MaxProductionLength-1,
-		ShiftNonterminal = 10,
+		ShiftNofProductions = 9,
+			MaxNofProductions = 1<<ShiftNofProductions,
+			MaskNofProductions = MaxNofProductions-1,
+		ShiftNonterminal = 8,
 			MaxNonterminal = 1<<ShiftNonterminal,
 			MaskNonterminal = MaxNonterminal-1,
-		ShiftTerminal = 10,
+		ShiftTerminal = 8,
 			MaxTerminal = 1<<ShiftTerminal,
 			MaskTerminal = MaxTerminal-1,
 		ShiftCall = 10,
 			MaxCall = 1<<ShiftCall,
-			MaskCall = MaxCall-1
+			MaskCall = MaxCall-1,
+		ShiftPriority = 5,
+			MaxPriority = 1<<ShiftPriority,
+			MaskPriority = MaxPriority-1,
+		ShiftAssoziativity = 2,
+			MaxAssoziativity = 1<<ShiftAssoziativity,
+			MaskAssoziativity = MaxAssoziativity-1,
+		ShiftPriorityWithAssoziativity = ShiftPriority+ShiftAssoziativity,
+			MaxPriorityWithAssoziativity = 1<<ShiftPriorityWithAssoziativity,
+			MaskPriorityWithAssoziativity = MaxPriorityWithAssoziativity-1
 	};
 
 public:
@@ -84,7 +96,7 @@ public:
 		{
 			return ((int)m_state << ShiftTerminal) | (int)m_terminal;
 		}
-		static ActionKey unpack( int pkg)
+		static ActionKey unpack( int pkg) noexcept
 		{
 			return ActionKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*terminal*/);
 		}
@@ -122,7 +134,7 @@ public:
 				| ((int)m_call << ShiftProductionLength)
 				| (int)m_count;
 		}
-		static Action unpack( int pkg)
+		static Action unpack( int pkg) noexcept
 		{
 			return Action( (Type)((pkg >> (ShiftState + ShiftProductionLength + ShiftCall)) & 3)/*type*/,
 					(pkg >> (ShiftProductionLength + ShiftCall)) & MaskState/*value*/,
@@ -160,7 +172,7 @@ public:
 		{
 			return ((int)m_state << ShiftTerminal) | (int)m_nonterminal;
 		}
-		static GotoKey unpack( int pkg)
+		static GotoKey unpack( int pkg) noexcept
 		{
 			return GotoKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*nonterminal*/);
 		}
@@ -189,7 +201,7 @@ public:
 		{
 			return (int)m_state;
 		}
-		static Goto unpack( int pkg)
+		static Goto unpack( int pkg) noexcept
 		{
 			return Goto( pkg);
 		}
