@@ -18,6 +18,7 @@
 #include <string_view>
 #include <set>
 #include <vector>
+#include <functional>
 
 namespace mewa {
 
@@ -41,14 +42,14 @@ public:
 	ProductionNode& operator=( const ProductionNode& o)
 		{m_type=o.m_type; m_index=o.m_index; return *this;}
 
-        Type type() const noexcept					{return m_type;}
-        int index() const noexcept					{return m_index;}
+	Type type() const noexcept					{return m_type;}
+	int index() const noexcept					{return m_index;}
 
-        void defineAsTerminal( int index_) noexcept			{m_type = Terminal; m_index = index_;}
-        void defineAsNonTerminal( int index_) noexcept			{m_type = NonTerminal; m_index = index_;}
+	void defineAsTerminal( int index_) noexcept			{m_type = Terminal; m_index = index_;}
+	void defineAsNonTerminal( int index_) noexcept			{m_type = NonTerminal; m_index = index_;}
 
-        bool operator == (const ProductionNode& o) const noexcept	{return m_type == o.m_type && m_index == o.m_index;}
-        bool operator != (const ProductionNode& o) const noexcept	{return m_type != o.m_type || m_index != o.m_index;}
+	bool operator == (const ProductionNode& o) const noexcept	{return m_type == o.m_type && m_index == o.m_index;}
+	bool operator != (const ProductionNode& o) const noexcept	{return m_type != o.m_type || m_index != o.m_index;}
 
 	bool operator < (const ProductionNode& o) const noexcept
 	{
@@ -275,6 +276,7 @@ public:
 		{m_packedElements=std::move(o.m_packedElements); return *this;}
 	TransitionState( const std::initializer_list<TransitionItem>& itemlist)
 		{for (const auto& item : itemlist) m_packedElements.insert( item.packed());}
+	~TransitionState(){}
 
 	bool insert( const TransitionItem& itm)
 	{
@@ -300,6 +302,15 @@ public:
 		return rt;
 	}
 
+	bool operator == (const TransitionState& o) const noexcept
+	{
+		return (m_packedElements == o.m_packedElements);
+	}
+	bool operator != (const TransitionState& o) const noexcept
+	{
+		return (m_packedElements != o.m_packedElements);
+	}
+
 	bool operator < (const TransitionState& o) const noexcept
 	{
 		if (m_packedElements.size() == o.m_packedElements.size())
@@ -318,11 +329,52 @@ public:
 		}
 	}
 
+	const std::set<int>& packedElements() const noexcept
+	{
+		return m_packedElements;
+	}
+
+	std::size_t hash() const noexcept
+	{
+		constexpr std::size_t kc = 2654435761/*Knuth's multiplicative hashing scheme*/;
+		std::size_t rt = kc * m_packedElements.size();
+		for (auto elem : m_packedElements)
+		{
+			rt += (rt << 13) + hashUint( ((rt >> 17) ^ rt) + elem);
+		}
+		return rt;
+	}
+
+private:
+	// \brief Robert Jenkins' 32 bit integer hash function
+	static unsigned int hashUint( unsigned int aa)
+	{
+		aa = (aa+0x7ed55d16) + (aa<<12);
+		aa = (aa^0xc761c23c) ^ (aa>>19);
+		aa = (aa+0x165667b1) + (aa<<5);
+		aa = (aa+0xd3a2646c) ^ (aa<<9);
+		aa = (aa+0xfd7046c5) + (aa<<3);
+		aa = (aa^0xb55a4f09) ^ (aa>>16);
+		return aa;
+	}
+
 private:
 	std::set<int> m_packedElements;
 };
 
 }//namespace
+
+namespace std
+{
+	template<> struct hash<mewa::TransitionState>
+	{
+	public:
+		std::size_t operator()( mewa::TransitionState const& st) const noexcept
+		{
+			return st.hash();
+		}
+	};
+}
 
 #else
 #error Building mewa requires C++17

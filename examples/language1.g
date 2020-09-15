@@ -61,10 +61,10 @@ statement		= functiondefinition
 			| "while" "(" expression ")" "{" statementlist "}"
 			| "{" statementlist "}"
 			;
-variabledefinition	= typespec IDENT "=" expression
-			| typespec IDENT
-			| typespec IDENT "[" "]" "=" expression
-			| typespec IDENT "[" "]"
+variabledefinition	= "var" typespec IDENT "=" expression
+			| "var" typespec IDENT
+			| "var" typespec IDENT "[" "]" "=" expression
+			| "var" typespec IDENT "[" "]"
 			;  
 returnstatement	   	= "return" expression
 			;
@@ -118,6 +118,7 @@ expression/L11		= expression  "(" expressionlist ")"
 			| expression  "[" expressionlist "]"
 			;
 expressionlist		= expression "," expressionlist
+                        | expression
 			| ε
 			;
 

@@ -28,6 +28,11 @@
 #error Building mewa requires C++17
 #endif
 
+static std::string getLexemName( const mewa::Lexer& lexer, int terminal)
+{
+        return terminal ? lexer.lexemName( terminal) : std::string("$");
+}
+
 static std::string expectedTerminalList( const std::map<mewa::Automaton::ActionKey,mewa::Automaton::Action>& actions, int state, const mewa::Lexer& lexer)
 {
 	std::string rt;
@@ -36,7 +41,7 @@ static std::string expectedTerminalList( const std::map<mewa::Automaton::ActionK
 	for (; ai != actions.end() && ai->first.state() == state; ++ai,++aidx)
 	{
 		if (aidx) rt.append(", ");
-		rt.append( ai->first.terminal() ? lexer.lexemName( ai->first.terminal()) : std::string("$"));
+		rt.append( getLexemName( lexer, ai->first.terminal()));
 	}
 	return rt;
 }
@@ -46,7 +51,7 @@ static std::string stateTransitionInfo( int state, int terminal, const mewa::Lex
 	char buf[ 64];
 	std::snprintf( buf, sizeof(buf), "state %d, token ", state);
 	std::string rt( buf);
-	rt.append( terminal ? lexer.lexemName( terminal) : std::string("$"));
+	rt.append( getLexemName( lexer, terminal));
 	return rt;
 }
 
@@ -118,7 +123,7 @@ static bool feedLexem( std::vector<State>& stateStack, const mewa::Automaton& au
 			return false;
 		}
 		case mewa::Automaton::Action::Accept:
-			if (stateStack.size() != 1 || lexem.id()/*terminal*/ != 0)
+			if (lexem.id()/*terminal*/ != 0)
 			{
 				throw mewa::Error( mewa::Error::LanguageAutomatonUnexpectedAccept, lexem.line());
 			}
@@ -132,7 +137,7 @@ static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateSta
 	auto nexti = automaton.actions().find( {stateStack.back().index,lexem.id()/*terminal*/});
 	if (nexti == automaton.actions().end())
 	{
-		dbgout << "Error token " << automaton.lexer().lexemName( lexem.id());
+		dbgout << "Error token " << getLexemName( automaton.lexer(), lexem.id());
 		if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
 		dbgout << " at line " << lexem.line() << " in state " << stateStack.back().index << std::endl;
 	}
@@ -141,19 +146,15 @@ static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateSta
 		switch (nexti->second.type())
 		{
 			case mewa::Automaton::Action::Shift:
-				dbgout << "Shift token " << automaton.lexer().lexemName( lexem.id());
+				dbgout << "Shift token " << getLexemName( automaton.lexer(), lexem.id());
 				if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
 				dbgout << " at line " << lexem.line() << " in state " << stateStack.back().index << ", goto " << nexti->second.state() << std::endl;
-				if (nexti->second.state() == 12)
-				{
-					std::cerr << " HALLY GALLY" << std::endl;
-				}
 				break;
 			case mewa::Automaton::Action::Reduce:
 			{
 				dbgout << "Reduce #" << nexti->second.count() << " to " << automaton.nonterminal( nexti->second.nonterminal())
-					<< " by token " << automaton.lexer().lexemName( lexem.id());
-				if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
+					<< " by token " << getLexemName( automaton.lexer(), lexem.id());
+				if (lexem.id() && !automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
 				dbgout << " at line " << lexem.line() << " in state " << stateStack.back().index;
 				if (nexti->second.call())
 				{
@@ -194,6 +195,8 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 		}
 		while (!feedLexem( stateStack, automaton, lexem));
 	}
-	while (!feedLexem( stateStack, automaton, lexem/* empty ~ end of input*/)){}
+	while (!feedLexem( stateStack, automaton, lexem/* empty ~ end of input*/))
+	{
+		if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
+	}
 }
-

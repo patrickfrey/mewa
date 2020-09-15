@@ -1,14 +1,14 @@
 procedure swap( int& a, int& b)
 {
-	int tmp = a;
+        var int tmp = a;
 	a = b;
 	b = tmp;
 }
 
 function int fibonacci( int n)
 {
-	int i1 = 0;
-	int i2 = 1;
+        var int i1 = 0;
+        var int i2 = 1;
 	while (i < n)
 	{
 		i1 = i2 + i1;

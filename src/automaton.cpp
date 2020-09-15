@@ -15,6 +15,7 @@
 #include "lexer.hpp"
 #include "error.hpp"
 #include <set>
+#include <unordered_map>
 #include <string_view>
 #include <algorithm>
 #include <type_traits>
@@ -68,7 +69,7 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 
 	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
 	{
-		auto item = orig[ oidx];
+		auto const& item = orig[ oidx];
 
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
@@ -334,7 +335,7 @@ static std::string getStateTransitionString( const TransitionState& state, int t
 template <class CalculateClosureFunctor>
 static TransitionState getGotoState(
 				const TransitionState& state, const ProductionNode& gto,
-				const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calcClosure)
+				const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calculateClosure)
 {
 	TransitionState gtoState;
 	std::vector<TransitionItem> itemlist = state.unpack();
@@ -350,31 +351,33 @@ static TransitionState getGotoState(
 			}
 		}
 	}
-	return calcClosure( gtoState);
+	return calculateClosure( gtoState);
 }
 
 template <class CalculateClosureFunctor>
-static std::map<TransitionState,int> getAutomatonStateAssignments( const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calcClosure)
+static std::unordered_map<TransitionState,int> getAutomatonStateAssignments( const std::vector<ProductionDef>& prodlist, const CalculateClosureFunctor& calculateClosure)
 {
-	std::map<TransitionState,int> rt;
+	std::unordered_map<TransitionState,int> rt;
 
-	rt.insert( {calcClosure( {{0,0,0,0}}), 1});
+	rt.insert( {calculateClosure( {{0,0,0,0}}), 1});
 	std::vector<TransitionState> statestk( {rt.begin()->first});
 
 	for (std::size_t stkidx = 0; stkidx < statestk.size(); ++stkidx)
 	{
-		auto state = statestk[ stkidx];
-
+		std::vector<TransitionState> newstates;
+		auto const state = statestk[ stkidx];
 		auto gtos = getGotoNodes( state, prodlist);
+		
 		for (auto const& gto : gtos)
 		{
-			auto newState = getGotoState( state, gto, prodlist, calcClosure);
+			auto newState = getGotoState( state, gto, prodlist, calculateClosure);
 			if (newState.empty()) throw Error( Error::LogicError);
 			if (rt.insert( {newState,rt.size()+1}).second == true/*insert took place*/)
 			{
-				statestk.push_back( newState);
+				newstates.push_back( newState);
 			}
 		}
+		statestk.insert( statestk.end(), newstates.begin(), newstates.end());
 	}
 	return rt;
 }
@@ -624,8 +627,10 @@ static void printProductions( const std::vector<ProductionDef>& prodlist, Automa
 	dbgout.out() << std::endl;
 }
 
-static void printLr0States( const std::map<TransitionState,int>& lr0statemap, const CalculateClosureLr1& calcClosureLr0,
-			    const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
+static void printLr0States(
+		const std::unordered_map<TransitionState,int>& lr0statemap,
+		const CalculateClosureLr1& calculateClosureLr0,
+		const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
 {
 	std::map<int,TransitionState> stateinvmap;
 	for (auto const& st : lr0statemap)
@@ -645,8 +650,12 @@ static void printLr0States( const std::map<TransitionState,int>& lr0statemap, co
 	dbgout.out() << std::endl;
 }
 
-static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, const std::map<TransitionState,int>& lr1statemap, const CalculateClosureLr1& calcClosureLr1,
-			 const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
+static void printLalr1States(
+		const std::unordered_map<TransitionState,int>& lr0statemap,
+		const std::unordered_map<TransitionState,int>& lr1statemap,
+		const CalculateClosureLr1& calculateClosureLr1,
+		const std::vector<ProductionDef>& prodlist, const Lexer& lexer,
+		const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
 {
 	std::map<int,TransitionState> stateinvmap;
 	for (auto const& st : lr1statemap)
@@ -685,8 +694,8 @@ static void printLalr1States( const std::map<TransitionState,int>& lr0statemap, 
 			}
 			else
 			{
-				auto gto = prodlist[ item.prodindex].right[ item.prodpos];
-				auto gtoState = getGotoState( invst.second, gto, prodlist, calcClosureLr1);
+				auto const& gto = prodlist[ item.prodindex].right[ item.prodpos];
+				auto gtoState = getGotoState( invst.second, gto, prodlist, calculateClosureLr1);
 				if (gtoState.empty()) throw Error( Error::LogicError);
 				int to_stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( gtoState));
 
@@ -853,16 +862,16 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::set<int> nullableNonterminalSet = getNullableNonterminalSet( langdef.prodlist);
 	std::map<int, std::set<int> > nonTerminalFirstSetMap = getNonTerminalFirstSetMap( langdef.prodlist, nullableNonterminalSet);
 
-	CalculateClosureLr0 calcClosureLr0( langdef.prodlist);
-	CalculateClosureLr1 calcClosureLr1( langdef.prodlist, nonTerminalFirstSetMap, nullableNonterminalSet);
+	CalculateClosureLr0 calculateClosureLr0( langdef.prodlist);
+	CalculateClosureLr1 calculateClosureLr1( langdef.prodlist, nonTerminalFirstSetMap, nullableNonterminalSet);
 
-	std::map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( langdef.prodlist, calcClosureLr0);
-	std::map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( langdef.prodlist, calcClosureLr1);
+	std::unordered_map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( langdef.prodlist, calculateClosureLr0);
+	std::unordered_map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( langdef.prodlist, calculateClosureLr1);
 
 	if (dbgout.enabled( DebugOutput::States))
 	{
-		printLr0States( stateAssignmentsLr0, calcClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
-		printLalr1States( stateAssignmentsLr0, stateAssignmentsLr1, calcClosureLr1, langdef.prodlist, langdef.lexer, langdef.calls, dbgout);
+		printLr0States( stateAssignmentsLr0, calculateClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
+		printLalr1States( stateAssignmentsLr0, stateAssignmentsLr1, calculateClosureLr1, langdef.prodlist, langdef.lexer, langdef.calls, dbgout);
 	}
 	if (dbgout.enabled( DebugOutput::FunctionCalls))
 	{
@@ -891,7 +900,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 		auto gtos = getGotoNodes( lr1State, langdef.prodlist);
 		for (auto const& gto : gtos)
 		{
-			auto gtoState = getGotoState( lr1State, gto, langdef.prodlist, calcClosureLr1);
+			auto gtoState = getGotoState( lr1State, gto, langdef.prodlist, calculateClosureLr1);
 			if (gtoState.empty()) throw Error( Error::LogicError);
 			int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( gtoState));
 			if (gto.type() == ProductionNode::Terminal)
