@@ -147,10 +147,12 @@ private:
 static void mergeTransitionState( TransitionState& state, FollowMap& followMap)
 {
 	TransitionState newstate;
-	for (std::size_t oidx = 0; oidx < state.size(); ++oidx)
+	std::size_t oidx = 0;
+	while (oidx < state.size())
 	{
 		auto item = TransitionItem::unpack( state[ oidx]);
 		int joinedFollow = item.follow;
+
 		std::size_t oidx2 = oidx+1; 
 		for (; oidx2 < state.size(); ++oidx2)
 		{
@@ -179,7 +181,7 @@ static void mergeTransitionState( TransitionState& state, FollowMap& followMap)
 		{
 			newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
 		}
-		oidx = oidx2-1;
+		oidx = oidx2;
 	}
 	if (!newstate.empty())
 	{
@@ -190,7 +192,7 @@ static void mergeTransitionState( TransitionState& state, FollowMap& followMap)
 static TransitionState getLr1TransitionStateClosure(
 				const TransitionState& ts,
 				const ProductionDefList& prodlist,
-				const FollowMap& followMap)
+				FollowMap& followMap)
 {
 	TransitionState rt( ts);
 	std::vector<int> orig;
@@ -230,6 +232,7 @@ static TransitionState getLr1TransitionStateClosure(
 			}
 		}
 	}
+	mergeTransitionState( rt, FollowMap);
 	return rt;
 }
 
