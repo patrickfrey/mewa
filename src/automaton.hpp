@@ -38,7 +38,7 @@ public:
 		ShiftNonterminal = 8,
 			MaxNonterminal = 1<<ShiftNonterminal,
 			MaskNonterminal = MaxNonterminal-1,
-		ShiftTerminal = 8,
+		ShiftTerminal = 10,
 			MaxTerminal = 1<<ShiftTerminal,
 			MaskTerminal = MaxTerminal-1,
 		ShiftCall = 10,

@@ -17,6 +17,7 @@
 #include <string>
 #include <string_view>
 #include <set>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <functional>
@@ -356,6 +357,31 @@ private:
 	}
 };
 
+struct IntHash
+{
+	// \brief Robert Jenkins' 32 bit integer hash function
+	static unsigned int jenkins32bitIntegerHash( unsigned int aa)
+	{
+		aa = (aa+0x7ed55d16) + (aa<<12);
+		aa = (aa^0xc761c23c) ^ (aa>>19);
+		aa = (aa+0x165667b1) + (aa<<5);
+		aa = (aa+0xd3a2646c) ^ (aa<<9);
+		aa = (aa+0xfd7046c5) + (aa<<3);
+		aa = (aa^0xb55a4f09) ^ (aa>>16);
+		return aa;
+	}
+
+	static std::size_t hashIntVector( const std::vector<int>& ar)
+	{
+		constexpr std::size_t kc = 2654435761/*Knuth's multiplicative hashing scheme*/;
+		std::size_t rt = kc * ar.size();
+		for (auto elem : ar)
+		{
+			rt += (rt << 13) + IntHash::jenkins32bitIntegerHash( ((rt >> 17) ^ rt) + elem);
+		}
+		return rt;
+	}
+};
 
 class TransitionState
 {
@@ -412,34 +438,16 @@ public:
 		return (m_packedElements < o.m_packedElements);
 	}
 
-	const std::vector<int>& packedElements() const noexcept
+	const FlatSet<int>& packedElements() const noexcept
 	{
 		return m_packedElements;
 	}
 
 	std::size_t hash() const noexcept
 	{
-		constexpr std::size_t kc = 2654435761/*Knuth's multiplicative hashing scheme*/;
-		std::size_t rt = kc * m_packedElements.size();
-		for (auto elem : m_packedElements)
-		{
-			rt += (rt << 13) + hashUint( ((rt >> 17) ^ rt) + elem);
-		}
-		return rt;
+		return IntHash::hashIntVector( m_packedElements);
 	}
 
-private:
-	// \brief Robert Jenkins' 32 bit integer hash function
-	static unsigned int hashUint( unsigned int aa)
-	{
-		aa = (aa+0x7ed55d16) + (aa<<12);
-		aa = (aa^0xc761c23c) ^ (aa>>19);
-		aa = (aa+0x165667b1) + (aa<<5);
-		aa = (aa+0xd3a2646c) ^ (aa<<9);
-		aa = (aa+0xfd7046c5) + (aa<<3);
-		aa = (aa^0xb55a4f09) ^ (aa>>16);
-		return aa;
-	}
 private:
 	FlatSet<int> m_packedElements;
 };
@@ -535,12 +543,66 @@ namespace std
 	template<> struct hash<mewa::TransitionState>
 	{
 	public:
+		hash<mewa::TransitionState>(){}
 		std::size_t operator()( mewa::TransitionState const& st) const noexcept
 		{
 			return st.hash();
 		}
 	};
+
+	template<> struct hash<mewa::FlatSet<int> >
+	{
+	public:
+		hash<mewa::FlatSet<int> >(){}
+		std::size_t operator()( mewa::FlatSet<int> const& fs) const noexcept
+		{
+			return mewa::IntHash::hashIntVector( fs);
+		}
+	};
 }
+
+namespace mewa {
+class IntSetHandleMap
+{
+public:
+	IntSetHandleMap()
+		:m_map(1024),m_inv(){m_inv.reserve(1024);}
+	IntSetHandleMap( const IntSetHandleMap& o)
+		:m_map(o.m_map),m_inv(o.m_inv){}
+
+	int get( const FlatSet<int>& elem)
+	{
+		auto ins = m_map.insert( {elem, m_inv.size()+1});
+		if (ins.second/*insert took place*/)
+		{
+			m_inv.push_back( elem);
+			return m_inv.size();
+		}
+		else
+		{
+			return ins.first->second;
+		}
+	}
+
+	const FlatSet<int>& content( int handle) const
+	{
+		return m_inv[ handle-1];
+	}
+
+	int join( int handle1, int handle2)
+	{
+		FlatSet<int> newelem( content( handle1));
+		const FlatSet<int>& add = content( handle2);
+		newelem.insert( add.begin(), add.end());
+		return get( newelem);
+	}
+
+private:
+	typedef FlatSet<int> Sequence;
+	std::unordered_map<Sequence,int> m_map;
+	std::vector<Sequence> m_inv;
+};
+} //namespace
 
 #else
 #error Building mewa requires C++17
