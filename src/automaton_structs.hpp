@@ -442,6 +442,10 @@ public:
 	{
 		return m_packedElements;
 	}
+	FlatSet<int>& packedElements() noexcept
+	{
+		return m_packedElements;
+	}
 
 	std::size_t hash() const noexcept
 	{

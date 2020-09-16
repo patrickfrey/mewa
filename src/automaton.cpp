@@ -27,18 +27,19 @@ static std::string getLexemName( const Lexer& lexer, int terminal)
         return terminal ? lexer.lexemName( terminal) : std::string("$");
 }
 
-static FlatSet<int> getLr1FirstSet(
-				const ProductionDef& prod, int prodpos, int follow,
+static std::pair<FlatSet<int>,bool> getLr1FirstSet(
+				const ProductionDef& prod, int prodpos, 
 				const std::map<int, std::set<int> >& nonTerminalFirstSetMap,
 				const std::set<int>& nullableNonterminalSet)
 {
-	FlatSet<int> rt;
+	std::pair<FlatSet<int>,bool> rt;
+	rt.second = false;
 	for (; prodpos < (int)prod.right.size(); ++prodpos)
 	{
 		const ProductionNodeDef& nd = prod.right[ prodpos];
 		if (nd.type() == ProductionNodeDef::Terminal)
 		{
-			rt.insert( nd.index());
+			rt.first.insert( nd.index());
 			break;
 		}
 		else if (nd.type() == ProductionNodeDef::NonTerminal)
@@ -46,7 +47,7 @@ static FlatSet<int> getLr1FirstSet(
 			auto fi = nonTerminalFirstSetMap.find( nd.index());
 			if (fi != nonTerminalFirstSetMap.end())
 			{
-				rt.insert( fi->second.begin(), fi->second.end());
+				rt.first.insert( fi->second.begin(), fi->second.end());
 				if (nullableNonterminalSet.find( nd.index()) == nullableNonterminalSet.end())
 				{
 					break;
@@ -56,7 +57,7 @@ static FlatSet<int> getLr1FirstSet(
 	}
 	if (prodpos == (int)prod.right.size())
 	{
-		rt.insert( follow);
+		rt.second = true;
 	}
 	return rt;
 }
@@ -97,11 +98,99 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 //!!! because of different follows non transitive 
 //!!! IDEA Use setid as follow instead of terminal index to reduce size of sets, translate follow indices to sets at the end when joining the sets
 
+struct FollowMap
+{
+	FollowMap( const ProductionDefList& prodlist, const std::map<int, std::set<int> >& nonTerminalFirstSetMap, const std::set<int>& nullableNonterminalSet)
+	{
+		for (auto prod : prodlist)
+		{
+			for (std::size_t pi = 0; pi < prod.right.size(); ++pi)
+			{
+				const ProductionNodeDef& nd = prod.right[ pi];
+				if (nd.type() == ProductionNodeDef::NonTerminal)
+				{
+					std::pair<FlatSet<int>,bool> firstOfRest = getLr1FirstSet( prod, pi+1, nonTerminalFirstSetMap, nullableNonterminalSet);
+					Handle fh( m_firstOfRestMap.get( firstOfRest.first), firstOfRest.second);
+					if (!m_nonterminalNodeToFollowHandleMap.insert( nd, fh).second)
+					{
+						throw Error( Error::LogicError);
+					}
+				}
+			}
+		}
+	}
+	struct Handle
+	{
+		int handle;
+		bool inherit;
+
+		Handle()
+			:handle(0),inherit(false){}
+		Handle( int handle_, bool inherit_)
+			:handle(handle_),inherit(inherit_){}
+		Handle( const Handle& o)
+			:handle(o.handle),inherit(o.inherit){}
+	};
+
+	const Handle& get( const ProductionNodeDef& nd)
+	{
+		auto fi = m_nonterminalNodeToFollowHandleMap.find( nd);
+		if (fi == m_nonterminalNodeToFollowHandleMap.end()) throw Error( Error::LogicError);
+		return fi->second;
+	}
+
+private:
+	std::map<ProductionNodeDef, FollowHandle> m_nonterminalNodeToFollowHandleMap;
+	IntSetHandleMap m_firstOfRestMap;
+};
+
+static void mergeTransitionState( TransitionState& state, FollowMap& followMap)
+{
+	TransitionState newstate;
+	for (std::size_t oidx = 0; oidx < state.size(); ++oidx)
+	{
+		auto item = TransitionItem::unpack( state[ oidx]);
+		int joinedFollow = item.follow;
+		std::size_t oidx2 = oidx+1; 
+		for (; oidx2 < state.size(); ++oidx2)
+		{
+			auto item2 = TransitionItem::unpack( state[ oidx2]);
+			if (item2.prodindex != item.prodindex || item2.prodpos != item.prodpos)
+			{
+				break;
+			}
+			joinedFollow = followMap.join( item2.follow, joinedFollow);
+			if (item.priority != item2.priority)
+			{
+				throw Error( Error::PriorityConflictInGrammarDef,
+						prodlist[ item.prodidx].tostring( item.prodpos)
+						+ ", " + prodlist[ item2.prodidx].tostring( item2.prodpos));
+			}
+		}
+		if (newState.empty())
+		{
+			if (joinedFollow != item.follow)
+			{
+				newstate.packedElements().insert( state.packedElements().begin(), state.packedElements().begin()+oidx);
+				newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
+			}
+		}
+		else
+		{
+			newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
+		}
+		oidx = oidx2-1;
+	}
+	if (!newstate.empty())
+	{
+		state = newstate;
+	}
+}
+
 static TransitionState getLr1TransitionStateClosure(
 				const TransitionState& ts,
 				const ProductionDefList& prodlist,
-				const std::map<int, std::set<int> >& nonTerminalFirstSetMap,
-				const std::set<int>& nullableNonterminalSet)
+				const FollowMap& followMap)
 {
 	TransitionState rt( ts);
 	std::vector<int> orig;
@@ -118,14 +207,20 @@ static TransitionState getLr1TransitionStateClosure(
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
-				FlatSet<int> firstOfRest = getLr1FirstSet( prod, item.prodpos+1, item.follow, nonTerminalFirstSetMap, nullableNonterminalSet);
-
+				auto followHandle = followMap.get( nd);
 				auto prodrange = prodlist.equal_range( nd.index());
 				for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
 				{
-					for (auto follow :firstOfRest)
 					{
-						TransitionItem insitem( hi.index(), 0/*prodpos*/, follow, hi->priority);
+						TransitionItem insitem( hi.index(), 0/*prodpos*/, followHandle.handle, hi->priority);
+						if (rt.insert( insitem) == true/*insert took place*/)
+						{
+							orig.push_back( insitem.packed());
+						}
+					}
+					if (followHandle.inherit)
+					{
+						TransitionItem insitem( hi.index(), 0/*prodpos*/, item.follow, hi->priority);
 						if (rt.insert( insitem) == true/*insert took place*/)
 						{
 							orig.push_back( insitem.packed());
@@ -219,6 +314,7 @@ static Priority getShiftPriority( const TransitionState& state, int terminal, co
 {
 	Priority priority;
 	int last_prodidx = -1;
+	int last_prodpos = -1;
 	std::vector<TransitionItem> itemlist = state.unpack();
 	for (auto const& item : itemlist)
 	{
@@ -232,11 +328,12 @@ static Priority getShiftPriority( const TransitionState& state, int terminal, co
 				{
 					priority = item.priority;
 					last_prodidx = item.prodindex;
+					last_prodpos = item.prodpos;
 				}
 				else if (priority != item.priority)
 				{
 					throw Error( Error::PriorityConflictInGrammarDef, prod.tostring( item.prodpos)
-						+ ", " + prodlist[ last_prodidx].tostring( item.prodpos)
+						+ ", " + prodlist[ last_prodidx].tostring( last_prodpos)
 						+ " -> " + getLexemName(lexer,terminal));
 				}
 			}
