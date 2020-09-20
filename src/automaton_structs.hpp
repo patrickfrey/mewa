@@ -282,7 +282,7 @@ public:
 		{std::vector<TYPE>::operator=(std::move(o)); return *this;}
 	FlatSet( const std::initializer_list<TYPE>& itemlist)
 		{std::vector<TYPE>::reserve( reserveSize( itemlist.size()));
-		 for (const auto& item : itemlist) insertInOrder( *item);}
+		 for (const auto& item : itemlist) insertInOrder( item);}
 	~FlatSet(){}
 
 	template <typename ITERATOR>
@@ -301,6 +301,12 @@ public:
 	bool operator == (const FlatSet<TYPE>& o) const noexcept	{return compare( o) == 0;}
 	bool operator != (const FlatSet<TYPE>& o) const noexcept	{return compare( o) != 0;}
 	bool operator < (const FlatSet<TYPE>& o) const noexcept		{return compare( o) < 0;}
+
+	bool contains( TYPE elem) const noexcept
+	{
+		typename std::vector<TYPE>::const_iterator pi = std::lower_bound( std::vector<TYPE>::begin(), std::vector<TYPE>::end(), elem);
+		return (pi != std::vector<TYPE>::end() && *pi == elem);
+	}
 
 private:
 	static std::size_t reserveSize( std::size_t minCapacity)
@@ -360,7 +366,7 @@ private:
 struct IntHash
 {
 	// \brief Robert Jenkins' 32 bit integer hash function
-	static unsigned int jenkins32bitIntegerHash( unsigned int aa)
+	static unsigned int jenkins32bitIntegerHash( unsigned int aa) noexcept
 	{
 		aa = (aa+0x7ed55d16) + (aa<<12);
 		aa = (aa^0xc761c23c) ^ (aa>>19);
@@ -371,7 +377,7 @@ struct IntHash
 		return aa;
 	}
 
-	static std::size_t hashIntVector( const std::vector<int>& ar)
+	static std::size_t hashIntVector( const std::vector<int>& ar) noexcept
 	{
 		constexpr std::size_t kc = 2654435761/*Knuth's multiplicative hashing scheme*/;
 		std::size_t rt = kc * ar.size();
@@ -409,6 +415,15 @@ public:
 		for (auto elem : o.m_packedElements) m_packedElements.insert( elem);
 	}
 
+	int operator[]( std::size_t idx) const noexcept
+	{
+		return m_packedElements[ idx];
+	}
+
+	std::size_t size() const noexcept
+	{
+		return m_packedElements.size();
+	}
 	bool empty() const noexcept
 	{
 		return m_packedElements.empty();
@@ -461,13 +476,13 @@ class ProductionDefList
 public:
 	typedef std::unordered_multimap<int,std::size_t> LeftIndexMap;
 
-	explicit ProductionDefList( const std::vector<ProductionDef>& ar_)
+	ProductionDefList( const std::vector<ProductionDef>& ar_)
 		:m_ar(ar_){init_leftindexmap();}
 
 	typedef std::vector<ProductionDef>::const_iterator const_iterator;
 
-	const_iterator begin() const		{return m_ar.begin();}
-	const_iterator end() const		{return m_ar.end();}
+	const_iterator begin() const noexcept		{return m_ar.begin();}
+	const_iterator end() const noexcept		{return m_ar.end();}
 
 	class head_iterator
 	{
@@ -477,35 +492,35 @@ public:
 		head_iterator( const head_iterator& o)
 			:m_start( o.m_start),m_range_itr(o.m_range_itr){}
 
-		bool operator == (const head_iterator& o) const
+		bool operator == (const head_iterator& o) const noexcept
 		{
 			return m_range_itr == o.m_range_itr;
 		}
-		bool operator != (const head_iterator& o) const
+		bool operator != (const head_iterator& o) const noexcept
 		{
 			return m_range_itr != o.m_range_itr;
 		}
 
-		head_iterator& operator++()
+		head_iterator& operator++() noexcept
 		{
 			++m_range_itr;
 			return *this;
 		}
-		head_iterator operator++(int)
+		head_iterator operator++(int) noexcept
 		{
 			head_iterator rt( *this);
 			++m_range_itr;
 			return rt;
 		}
-		const ProductionDef& operator*() const
+		const ProductionDef& operator*() const noexcept
 		{
 			return *(m_start + m_range_itr->second);
 		}
-		const ProductionDef* operator->() const
+		const ProductionDef* operator->() const noexcept
 		{
 			return &*(m_start + m_range_itr->second);
 		}
-		std::size_t index() const
+		std::size_t index() const noexcept
 		{
 			return m_range_itr->second;
 		}
@@ -515,15 +530,20 @@ public:
 		LeftIndexMap::const_iterator m_range_itr;
 	};
 
-	std::pair<head_iterator,head_iterator> equal_range( int leftindex) const
+	std::pair<head_iterator,head_iterator> equal_range( int leftindex) const noexcept
 	{
 		auto range = m_leftindexmap.equal_range( leftindex);
 		return std::pair<head_iterator,head_iterator>( {m_ar.begin(), range.first}, {m_ar.begin(), range.second});
 	}
 
-	const ProductionDef& operator[]( std::size_t idx) const
+	const ProductionDef& operator[]( std::size_t idx) const noexcept
 	{
 		return m_ar[ idx];
+	}
+
+	std::size_t size() const noexcept
+	{
+		return m_ar.size();
 	}
 
 private:
@@ -569,14 +589,14 @@ namespace mewa {
 class IntSetHandleMap
 {
 public:
-	IntSetHandleMap()
-		:m_map(1024),m_inv(){m_inv.reserve(1024);}
+	explicit IntSetHandleMap( int startidx_=1)
+		:m_map(1024),m_inv(),m_startidx(startidx_){m_inv.reserve(1024);}
 	IntSetHandleMap( const IntSetHandleMap& o)
-		:m_map(o.m_map),m_inv(o.m_inv){}
+		:m_map(o.m_map),m_inv(o.m_inv),m_startidx(o.m_startidx){}
 
 	int get( const FlatSet<int>& elem)
 	{
-		auto ins = m_map.insert( {elem, m_inv.size()+1});
+		auto ins = m_map.insert( {elem, m_inv.size()+m_startidx});
 		if (ins.second/*insert took place*/)
 		{
 			m_inv.push_back( elem);
@@ -588,9 +608,9 @@ public:
 		}
 	}
 
-	const FlatSet<int>& content( int handle) const
+	const FlatSet<int>& content( int handle) const noexcept
 	{
-		return m_inv[ handle-1];
+		return m_inv[ handle-m_startidx];
 	}
 
 	int join( int handle1, int handle2)
@@ -601,10 +621,16 @@ public:
 		return get( newelem);
 	}
 
+	std::size_t size() const noexcept
+	{
+		return m_inv.size();
+	}
+
 private:
 	typedef FlatSet<int> Sequence;
 	std::unordered_map<Sequence,int> m_map;
 	std::vector<Sequence> m_inv;
+	int m_startidx;
 };
 } //namespace
 
