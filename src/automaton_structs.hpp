@@ -281,6 +281,8 @@ struct TransitionItem
 	}
 };
 
+typedef std::unordered_multimap<int,int> TransitionItemGotoMap;
+
 template <typename TYPE>
 class FlatSet :public std::vector<TYPE>
 {
@@ -604,6 +606,12 @@ public:
 		:m_map(1024),m_inv(),m_startidx(startidx_){m_inv.reserve(1024);}
 	IntSetHandleMap( const IntSetHandleMap& o)
 		:m_map(o.m_map),m_inv(o.m_inv),m_startidx(o.m_startidx){}
+	IntSetHandleMap& operator=( const IntSetHandleMap& o)
+		{m_map=o.m_map; m_inv=o.m_inv; m_startidx=o.m_startidx; return *this;}
+	IntSetHandleMap( IntSetHandleMap&& o)
+		:m_map(std::move(o.m_map)),m_inv(std::move(o.m_inv)),m_startidx(o.m_startidx){}
+	IntSetHandleMap& operator=( IntSetHandleMap&& o)
+		{m_map=std::move(o.m_map); m_inv=std::move(o.m_inv); m_startidx=o.m_startidx; return *this;}
 
 	int get( const FlatSet<int>& elem)
 	{
@@ -641,6 +649,8 @@ public:
 
 private:
 	typedef FlatSet<int> Sequence;
+
+private:
 	std::unordered_map<Sequence,int> m_map;
 	std::vector<Sequence> m_inv;
 	int m_startidx;

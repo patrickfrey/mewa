@@ -14,11 +14,13 @@
 #include "automaton_parser.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
+#include "strings.hpp"
 #include <set>
 #include <unordered_map>
 #include <string_view>
 #include <algorithm>
 #include <type_traits>
+#include <memory_resource>
 
 using namespace mewa;
 
@@ -112,7 +114,7 @@ struct FollowMap
 					FollowKey key( prodindex, prodpos);
 					if (!m_nonterminalNodeToFollowHandleMap.insert( {key, fh}).second)
 					{
-						throw Error( Error::LogicError);
+						throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 					}
 				}
 			}
@@ -150,7 +152,10 @@ struct FollowMap
 	const Handle& get( const FollowKey& nd)
 	{
 		auto fi = m_nonterminalNodeToFollowHandleMap.find( nd);
-		if (fi == m_nonterminalNodeToFollowHandleMap.end()) throw Error( Error::LogicError);
+		if (fi == m_nonterminalNodeToFollowHandleMap.end())
+		{
+			throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
 		return fi->second;
 	}
 
@@ -160,7 +165,10 @@ struct FollowMap
 		{
 			throw Error( Error::ComplexityLR1FollowSetsInGrammarDef);
 		}
-		return m_followMap.join( handle1, handle2);
+		auto ji = m_joinMap.find( {handle1, handle2});
+		if (ji != m_joinMap.end()) return ji->second;
+
+		return m_joinMap[ {handle1, handle2}] = m_followMap.join( handle1, handle2);
 	}
 
 	std::string follow2String( int follow, const Lexer& lexer) const
@@ -191,8 +199,30 @@ struct FollowMap
 		return m_followMap.content( handle);
 	}
 
+	void remap( const std::set<int>& usedHandles)
+	{
+		m_joinMap.clear();
+		m_nonterminalNodeToFollowHandleMap.clear();
+		IntSetHandleMap newFollowMap( 0/*startidx*/);
+		if (usedHandles.empty() || *usedHandles.begin() != 0)
+		{
+			throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
+		int hidx = 0;
+		for (auto handle : usedHandles)
+		{
+			if (hidx != newFollowMap.get( m_followMap.content( handle)))
+			{
+				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+			}
+			++hidx;
+		}
+		m_followMap = std::move( newFollowMap);
+	}
+
 private:
 	std::map<FollowKey, Handle> m_nonterminalNodeToFollowHandleMap;
+	std::map<std::pair<int,int>,int> m_joinMap;
 	IntSetHandleMap m_followMap;
 };
 
@@ -350,7 +380,6 @@ private:
 	FollowMap m_followMap;
 };
 
-
 static std::vector<ProductionNode> getGotoNodes( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
 	std::vector<ProductionNode> rt;
@@ -366,107 +395,9 @@ static std::vector<ProductionNode> getGotoNodes( const TransitionState& state, c
 	return rt;
 }
 
-static FlatSet<int> getReduceFollow( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
-{
-	FlatSet<int> rt;
-	for (int elem : state.packedElements())
-	{
-		auto item = TransitionItem::unpack( elem);
-		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos == (int)prod.right.size())
-		{
-			rt.insert( item.follow);
-		}
-	}
-	return rt;
-}
-
-static Priority getShiftPriority( const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer)
-{
-	Priority priority;
-	int last_prodidx = -1;
-	int last_prodpos = -1;
-	for (int elem : state.packedElements())
-	{
-		auto item = TransitionItem::unpack( elem);
-		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.right.size())
-		{
-			const ProductionNodeDef& nd = prod.right[ item.prodpos];
-			if (nd.type() == ProductionNode::Terminal && nd.index() == terminal)
-			{
-				if (last_prodidx == -1)
-				{
-					priority = item.priority;
-					last_prodidx = item.prodindex;
-					last_prodpos = item.prodpos;
-				}
-				else if (priority != item.priority)
-				{
-					throw Error( Error::PriorityConflictInGrammarDef, prod.tostring( item.prodpos)
-						+ ", " + prodlist[ last_prodidx].tostring( last_prodpos)
-						+ " -> " + getLexemName(lexer,terminal));
-				}
-			}
-		}
-	}
-	return priority;
-}
-
-struct ReductionDef
-{
-	Priority priority;
-	int head;
-	int callidx;
-	int count;
-	std::string_view headname;
-
-	ReductionDef()
-		:priority(),head(-1),callidx(-1),count(-1),headname("",0){}
-	ReductionDef( const ReductionDef& o)
-		:priority(o.priority),head(o.head),callidx(o.callidx),count(o.count),headname(o.headname){}
-};
-
-static ReductionDef getReductionDef( const TransitionState& state, int follow, const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const FollowMap& followMap)
-{
-	ReductionDef rt;
-	int last_prodidx = -1;
-	for (int elem : state.packedElements())
-	{
-		auto item = TransitionItem::unpack( elem);
-		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos == (int)prod.right.size() && item.follow == follow)
-		{
-			if (last_prodidx == -1)
-			{
-				rt.priority = item.priority;
-				rt.head = prod.left.index();
-				rt.headname = prod.left.name();
-				rt.callidx = prod.callidx;
-				rt.count = prod.right.size();
-				last_prodidx = item.prodindex;
-			}
-			else if (rt.head != prod.left.index() || rt.count != (int)prod.right.size() || rt.callidx != prod.callidx)
-			{
-				throw Error( Error::ReduceReduceConflictInGrammarDef,
-						prod.tostring() + ", "
-						+ prodlist[ last_prodidx].tostring() + " <- "
-						+ followMap.follow2String( follow, lexer));
-			}
-			else if (rt.priority != item.priority)
-			{
-				throw Error( Error::PriorityConflictInGrammarDef,
-						prod.tostring() + ", "
-						+ prodlist[ last_prodidx].tostring() + " <- "
-						+ followMap.follow2String( follow, lexer));
-			}
-		}
-	}
-	return rt;
-}
-
 static std::string getStateTransitionString(
-	const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const FollowMap& followMap)
+	const TransitionState& state, int terminal, const std::vector<ProductionDef>& prodlist,
+	const Lexer& lexer, const FollowMap& followMap)
 {
 	const char* redustr = nullptr;
 	const char* shiftstr = nullptr;
@@ -508,10 +439,163 @@ static std::string getStateTransitionString(
 	}
 }
 
+struct ProductionShiftNode
+{
+	ProductionNode node;
+	int goto_stateidx;
+	Priority priority;
+
+	ProductionShiftNode( ProductionNode node_, int goto_stateidx_, const Priority priority_)
+		:node(node_),goto_stateidx(goto_stateidx_),priority(priority_){}
+	ProductionShiftNode( const ProductionShiftNode& o)
+		:node(o.node),goto_stateidx(o.goto_stateidx),priority(o.priority){}
+};
+
+static std::vector<ProductionShiftNode> getShiftNodes(
+	const TransitionState& state, const TransitionItemGotoMap& gotoMap, const std::vector<ProductionDef>& prodlist)
+{
+	std::vector<ProductionShiftNode> rt;
+	int buffer[ 2048];
+	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	std::pmr::multimap<ProductionNode,int> nodemap( &memrsc);
+	std::pmr::map<ProductionNode,Priority> prioritymap;
+
+	for (int elem : state.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos < (int)prod.right.size())
+		{
+			const ProductionNodeDef& nd = prod.right[ item.prodpos]; 
+			int gkey = TransitionItem( item.prodindex, item.prodpos+1, 0/*follow*/, Priority()).packed();
+			auto gtorange = gotoMap.equal_range( gkey);
+
+			auto crange = nodemap.equal_range( nd);
+			if (crange.first == crange.second)
+			{
+				for (auto gtoi = gtorange.first; gtoi != gtorange.second; ++gtoi)
+				{
+					nodemap.insert( {nd,gtoi->second} );
+				}
+			}
+			else
+			{
+				std::pmr::vector<int> keep( &memrsc); //... intersection of goto candidates
+				for (auto ci = crange.first; ci != crange.second; ++ci)
+				{
+					for (auto gtoi = gtorange.first; gtoi != gtorange.second; ++gtoi)
+					{
+						if (ci->second == gtoi->second)
+						{
+							keep.push_back( ci->second);
+							break;
+						}
+					}
+				}
+				if (keep.empty())
+				{
+					std::string nodestr = nd.tostring();
+					std::string prodprefix = prod.prefix_tostring( item.prodpos);
+					throw Error( Error::ShiftShiftConflictInGrammarDef, prodprefix + " -> " + nodestr);
+				}
+				nodemap.erase( nd);
+				for (auto kp : keep)
+				{
+					nodemap.insert( {nd,kp} );
+				}
+			}
+			auto pins = prioritymap.insert( {nd,prod.priority} );
+			if (pins.second == false/*no insert took place*/)
+			{
+				if (pins.first->second != prod.priority)
+				{
+					std::string nodestr = nd.tostring();
+					std::string prodprefix = prod.prefix_tostring( item.prodpos);
+					throw Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr);
+				}
+			}
+		}
+	}
+	for (auto const& nda : nodemap)
+	{
+		rt.push_back( ProductionShiftNode( nda.first, nda.second, prioritymap.at( nda.first)));
+	}
+	return rt;
+}
+
+static FlatSet<int> getReduceFollow( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
+{
+	FlatSet<int> rt;
+	for (int elem : state.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos == (int)prod.right.size())
+		{
+			rt.insert( item.follow);
+		}
+	}
+	return rt;
+}
+
+struct ReductionDef
+{
+	Priority priority;
+	int head;
+	int callidx;
+	int count;
+	int prodindex;
+	std::string_view headname;
+
+	ReductionDef()
+		:priority(),head(-1),callidx(-1),count(-1),prodindex(-1),headname("",0){}
+	ReductionDef( const ReductionDef& o)
+		:priority(o.priority),head(o.head),callidx(o.callidx),count(o.count),prodindex(o.prodindex),headname(o.headname){}
+};
+
+static ReductionDef getReductionDef( const TransitionState& state, int follow, const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const FollowMap& followMap)
+{
+	ReductionDef rt;
+	int last_prodidx = -1;
+	for (int elem : state.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos == (int)prod.right.size() && item.follow == follow)
+		{
+			if (last_prodidx == -1)
+			{
+				rt.priority = item.priority;
+				rt.head = prod.left.index();
+				rt.headname = prod.left.name();
+				rt.callidx = prod.callidx;
+				rt.count = prod.right.size();
+				rt.prodindex = item.prodindex;
+				last_prodidx = item.prodindex;
+			}
+			else if (rt.head != prod.left.index() || rt.count != (int)prod.right.size() || rt.callidx != prod.callidx)
+			{
+				throw Error( Error::ReduceReduceConflictInGrammarDef,
+						prod.tostring() + ", "
+						+ prodlist[ last_prodidx].tostring() + " <- "
+						+ followMap.follow2String( follow, lexer));
+			}
+			else if (rt.priority != item.priority)
+			{
+				throw Error( Error::PriorityConflictInGrammarDef,
+						prod.tostring() + ", "
+						+ prodlist[ last_prodidx].tostring() + " <- "
+						+ followMap.follow2String( follow, lexer));
+			}
+		}
+	}
+	return rt;
+}
+
 template <class CalculateClosureFunctor>
 static TransitionState getGotoState(
-				const TransitionState& state, const ProductionNode& gto,
-				const std::vector<ProductionDef>& prodlist, CalculateClosureFunctor& calculateClosure)
+		const TransitionState& state, const ProductionNode& gto,
+		const std::vector<ProductionDef>& prodlist, CalculateClosureFunctor& calculateClosure)
 {
 	TransitionState gtoState;
 	for (int elem : state.packedElements())
@@ -531,7 +615,8 @@ static TransitionState getGotoState(
 }
 
 template <class CalculateClosureFunctor>
-static std::unordered_map<TransitionState,int> getAutomatonStateAssignments( const std::vector<ProductionDef>& prodlist, CalculateClosureFunctor& calculateClosure)
+static std::unordered_map<TransitionState,int> getAutomatonStateAssignments(
+	const std::vector<ProductionDef>& prodlist, CalculateClosureFunctor& calculateClosure)
 {
 	std::unordered_map<TransitionState,int> rt;
 
@@ -543,11 +628,10 @@ static std::unordered_map<TransitionState,int> getAutomatonStateAssignments( con
 		std::vector<TransitionState> newstates;
 		auto const state = statestk[ stkidx];
 		auto gtos = getGotoNodes( state, prodlist);
-		
 		for (auto const& gto : gtos)
 		{
 			auto newState = getGotoState( state, gto, prodlist, calculateClosure);
-			if (newState.empty()) throw Error( Error::LogicError);
+			if (newState.empty()) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			if (rt.insert( {newState,rt.size()+1}).second == true/*insert took place*/)
 			{
 				newstates.push_back( newState);
@@ -638,7 +722,7 @@ static std::map<int, std::set<int> >
 	}
 	if (nullableNonterminalSetVerify != nullableNonterminalSet)
 	{
-		throw Error( Error::LogicError);
+		throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 	}
 	return rt;
 }
@@ -656,6 +740,49 @@ static std::map<int,TransitionState> calculateLalr1StateMap(
 		rt[ stateidx] = joinLr1TransitionStates( rt[ stateidx], st.first, prodlist, followMap);
 	}
 	return rt;
+}
+
+static std::set<int> getLalr1UsedFollowHandles( const std::map<int,TransitionState>& lalr1States)
+{
+	std::set<int> rt;
+	for (const auto& st : lalr1States)
+	{
+		for (auto elem : st.second.packedElements())
+		{
+			auto item = TransitionItem::unpack( elem);
+			rt.insert( item.follow);
+		}
+	}
+	return rt;
+}
+
+TransitionItemGotoMap calculateLalr1TransitionItemGotoMap(
+	const std::map<int,TransitionState>& lalr1States, const std::vector<ProductionDef>& prodlist)
+{
+	TransitionItemGotoMap rt;
+	for (auto const& st : lalr1States)
+	{
+		for (auto elem : st.second.packedElements())
+		{
+			auto item = TransitionItem::unpack( elem);
+			if (item.prodpos > 0)
+			{
+				int key = TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, Priority()).packed();
+				rt.insert( {key, st.first} );
+			}
+		}
+	}
+	return rt;
+}
+
+static void printGotoMap( std::ostream& out, const TransitionItemGotoMap& map)
+{
+	std::multimap<int,int> orderedmap( map.begin(), map.end());
+	for (auto kv : orderedmap)
+	{
+		auto item = TransitionItem::unpack( kv.first);
+		out << string_format( "prod %d, pos %d => %d", item.prodindex, item.prodpos, kv.second) << std::endl;
+	}
 }
 
 static void insertAction(
@@ -844,8 +971,7 @@ static void printLr0States(
 
 static void printLalr1States(
 		const std::map<int,TransitionState>& lalr1States,
-		const std::unordered_map<TransitionState,int>& lr0statemap,
-		CalculateClosureLr1& calculateClosureLr1,
+		const TransitionItemGotoMap& gotoMap,
 		const std::vector<ProductionDef>& prodlist, const FollowMap& followMap, const Lexer& lexer,
 		const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
 {
@@ -853,52 +979,45 @@ static void printLalr1States(
 	followMap.printFollowSets( dbgout.out(), lexer);
 	dbgout.out() << std::endl;
 
+	std::cerr << "-- LALR(1) GOTO Map:" << std::endl;
+	printGotoMap( dbgout.out(), gotoMap);
+	std::cerr << std::endl;
+
 	dbgout.out() << "-- LALR(1) States (Merged LR(1) elements assigned to LR(0) states):" << std::endl;
 	for (auto const& invst : lalr1States)
 	{
 		dbgout.out() << "[" << invst.first << "]" << std::endl;
-		for (int elem : invst.second.packedElements())
+		if (isAcceptState( invst.second, prodlist))
 		{
-			auto item = TransitionItem::unpack( elem);
-			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << ", FOLLOW [" << item.follow << "]";
-			if (item.prodpos == (int)prodlist[ item.prodindex].right.size())
+			dbgout.out() << " -> ACCEPT" << std::endl;
+		}
+		auto shiftNodes = getShiftNodes( invst.second, gotoMap, prodlist);
+		for (auto const& shft : shiftNodes)
+		{
+			if (shft.node.type() == ProductionNodeDef::Terminal)
 			{
-				if (item.prodindex == 0 && item.follow == 0)
-				{
-					dbgout.out() << " -> ACCEPT";
-				}
-				else
-				{
-					try
-					{
-						ReductionDef rd = getReductionDef( invst.second, item.follow, prodlist, lexer, followMap);
-						dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
-						if (rd.callidx) dbgout.out() << " CALL " << calls[ rd.callidx-1].tostring();
-					}
-					catch (const Error& err)
-					{
-						dbgout.out() << std::endl;
-						throw err;
-					}
-				}
+				dbgout.out() << " -> SHIFT " << getLexemName( lexer, shft.node.index()) << " GOTO " << shft.goto_stateidx << std::endl;
 			}
 			else
 			{
-				auto const& gto = prodlist[ item.prodindex].right[ item.prodpos];
-				auto gtoState = getGotoState( invst.second, gto, prodlist, calculateClosureLr1);
-				if (gtoState.empty()) throw Error( Error::LogicError);
-				int to_stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( gtoState));
-
-				if (gto.type() == ProductionNodeDef::Terminal)
-				{
-					dbgout.out() << " -> SHIFT " << gto.tostring() << " GOTO " << to_stateidx;
-				}
-				else
-				{
-					dbgout.out() << " -> GOTO " << to_stateidx;
-				}
+				dbgout.out() << " -> GOTO " << shft.goto_stateidx << std::endl;
 			}
-			dbgout.out() << std::endl;
+		}
+		auto reduFollows = getReduceFollow( invst.second, prodlist);
+		for (auto follow : reduFollows)
+		{
+			try
+			{
+				ReductionDef rd = getReductionDef( invst.second, follow, prodlist, lexer, followMap);
+				dbgout.out() << "\t" << prodlist[ rd.prodindex].tostring() << ", FOLLOW [" << follow << "]";			
+				dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
+				if (rd.callidx) dbgout.out() << " CALL " << calls[ rd.callidx-1].tostring();
+			}
+			catch (const Error& err)
+			{
+				dbgout.out() << std::endl;
+				throw err;
+			}
 		}
 	}
 	dbgout.out() << std::endl;
@@ -1059,11 +1178,15 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::unordered_map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( langdef.prodlist, calculateClosureLr0);
 	std::unordered_map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( langdef.prodlist, calculateClosureLr1);
 	std::map<int,TransitionState> lalr1States = calculateLalr1StateMap( stateAssignmentsLr0, stateAssignmentsLr1, langdef.prodlist, followMap);
+	TransitionItemGotoMap lalr1TransitionItemGotoMap = calculateLalr1TransitionItemGotoMap( lalr1States, langdef.prodlist);
+
+	std::set<int> usedFollowHandles = getLalr1UsedFollowHandles( lalr1States);
+	followMap.remap( usedFollowHandles);
 
 	if (dbgout.enabled( DebugOutput::States))
 	{
 		printLr0States( stateAssignmentsLr0, langdef.prodlist, langdef.lexer, dbgout);
-		printLalr1States( lalr1States, stateAssignmentsLr0, calculateClosureLr1, langdef.prodlist, followMap, langdef.lexer, langdef.calls, dbgout);
+		printLalr1States( lalr1States, lalr1TransitionItemGotoMap, langdef.prodlist, followMap, langdef.lexer, langdef.calls, dbgout);
 	}
 	if (dbgout.enabled( DebugOutput::FunctionCalls))
 	{
@@ -1079,48 +1202,46 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	std::map<ActionKey,Priority> priorityMap;
 	int nofAcceptStates = 0;
 
-	for (auto const& lr1StateAssign : stateAssignmentsLr1)
+	for (auto const& lalr1StateAssign : lalr1States)
 	{
-		auto const& lr1State = lr1StateAssign.first;
-		int stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( lr1State));
+		int stateidx = lalr1StateAssign.first;
+		auto const& lalr1State = lalr1StateAssign.second;
 
-		if (isAcceptState( lr1State, langdef.prodlist))
+		if (isAcceptState( lalr1State, langdef.prodlist))
 		{
 			m_actions[ ActionKey( stateidx, 0/*EOF terminal*/)] = Action::accept();
 			++nofAcceptStates;
 		}
-		auto gtos = getGotoNodes( lr1State, langdef.prodlist);
-		for (auto const& gto : gtos)
+		std::vector<ProductionShiftNode> shiftNodes = getShiftNodes( lalr1State, lalr1TransitionItemGotoMap, langdef.prodlist);
+		for (auto const& shft : shiftNodes)
 		{
-			auto gtoState = getGotoState( lr1State, gto, langdef.prodlist, calculateClosureLr1);
-			if (gtoState.empty()) throw Error( Error::LogicError);
-			int to_stateidx = stateAssignmentsLr0.at( getLr0TransitionStateFromLr1State( gtoState));
-			if (gto.type() == ProductionNode::Terminal)
+			int to_stateidx = shft.goto_stateidx;
+			if (shft.node.type() == ProductionNode::Terminal)
 			{
-				int terminal = gto.index();
-				Priority shiftPriority = getShiftPriority( lr1State, terminal, langdef.prodlist, langdef.lexer);
+				int terminal = shft.node.index();
 
 				ActionKey key( stateidx, terminal);
 				insertAction( priorityMap, m_actions, langdef.prodlist, followMap,
-					      lr1State, terminal, key, Action::shift(to_stateidx), shiftPriority, warnings, langdef.lexer);
+						lalr1State, terminal, key, Action::shift(to_stateidx),
+						shft.priority, warnings, langdef.lexer);
 			}
 			else
 			{
-				auto gtoins = m_gotos.insert( {GotoKey( stateidx, gto.index()), Goto( to_stateidx)} );
+				auto gtoins = m_gotos.insert( {GotoKey( stateidx, shft.node.index()), Goto( to_stateidx)} );
 				if (gtoins.second == false && gtoins.first->second != Goto( to_stateidx))
 				{
-					throw Error( Error::LogicError); //.... should not happen
+					throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__)); //.... should not happen
 				}
 			}
 		}
-		auto reduFollows = getReduceFollow( lr1State, langdef.prodlist);
+		auto reduFollows = getReduceFollow( lalr1State, langdef.prodlist);
 		for (auto follow : reduFollows)
 		{
-			ReductionDef rd = getReductionDef( lr1State, follow, langdef.prodlist, langdef.lexer, followMap);
+			ReductionDef rd = getReductionDef( lalr1State, follow, langdef.prodlist, langdef.lexer, followMap);
 			for (int terminal : followMap.content( follow))
 			{
 				ActionKey key( stateidx, terminal);
-				insertAction( priorityMap, m_actions, langdef.prodlist, followMap, lr1State, terminal, key, 
+				insertAction( priorityMap, m_actions, langdef.prodlist, followMap, lalr1State, terminal, key, 
 						Action::reduce( rd.head, rd.callidx, rd.count), rd.priority, warnings, langdef.lexer);
 			}
 		}

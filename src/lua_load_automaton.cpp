@@ -13,6 +13,7 @@
 #include "lua_load_automaton.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
+#include "strings.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -27,23 +28,6 @@
 #if __cplusplus < 201703L
 #error Building mewa requires C++17
 #endif
-
-#ifdef __GNUC__
-static std::string stringf( const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
-#else
-static std::string stringf( const char* fmt, ...);
-#endif
-static std::string stringf( const char* fmt, ...)
-{
-	std::string rt;
-	va_list ap;
-	va_start( ap, fmt);
-	char msgbuf[ 4096];
-	int len = ::vsnprintf( msgbuf, sizeof(msgbuf), fmt, ap);
-	if (len > (int)sizeof( msgbuf)) len = sizeof( msgbuf);
-	va_end( ap);
-	return std::string( msgbuf, len);
-}
 
 template <typename KEY, typename VAL>
 static std::map<KEY,VAL> parsePackedTable( lua_State *ls, int li, const char* tableName)
@@ -60,16 +44,16 @@ static std::map<KEY,VAL> parsePackedTable( lua_State *ls, int li, const char* ta
 		int packedkey = lua_tointeger( ls, -2);
 		if (packedkey <= 0)
 		{
-			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName, rowcnt));
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName, rowcnt));
 		}
 		int packedval = lua_tointeger( ls, -1);
 		if (packedval <= 0)
 		{
-			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s', row %d", tableName, rowcnt));
+			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName, rowcnt));
 		}
 		if (rt.insert( {KEY::unpack(packedkey), VAL::unpack(packedval)}).second == false/*element key already exists*/)
 		{
-			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s', row %d", tableName, rowcnt));
+			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName, rowcnt));
 		}
 		lua_pop( ls, 1);
 	}
@@ -90,13 +74,13 @@ static std::vector<std::string> parseStringArray( lua_State *ls, int li, const s
 		++rowcnt;
 		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
 		{
-			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
 		std::size_t vallen;
 		const char* valstr = lua_tolstring( ls, -1, &vallen);
 		if (!valstr)
 		{
-			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
+			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
 		rt.push_back( std::string( valstr, vallen));
 		lua_pop( ls, 1);
@@ -133,12 +117,14 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		++rowcnt;
 		if (!lua_isstring( ls, -2))
 		{
-			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName, rowcnt));
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+						mewa::string_format( "table '%s', row %d", tableName, rowcnt));
 		}
 		const char* keystr = lua_tostring( ls, -2);
 		if (!lua_istable( ls, -1))
 		{
-			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
+			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+						mewa::string_format( "table '%s/%s', row %d", tableName, keystr, rowcnt));
 		}
 		if (0==std::strcmp( keystr, "comment"))
 		{
@@ -150,14 +136,16 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 				++colcnt;
 				if (!lua_isnumber( ls, -2) || colcnt != lua_tointeger( ls, -2))
 				{
-					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+								mewa::string_format( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
 				}
 				if (lua_istable( ls, -1))
 				{
-					auto arg = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+					auto arg = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 					if (arg.size() > 2 || arg.empty())
 					{
-						throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+						throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+									mewa::string_format( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
 					}
 					else if (arg.size() == 1)
 					{
@@ -175,7 +163,8 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 				}
 				else
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
 				}
 				lua_pop( ls, 1);
 			}
@@ -183,7 +172,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		}
 		else if (0==std::strcmp( keystr, "keyword"))
 		{
-			keywords = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+			keywords = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 		}
 		else if (0==std::strcmp( keystr, "token"))
 		{
@@ -195,12 +184,14 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 				++colcnt;
 				if (!lua_isnumber( ls, -2) || colcnt != lua_tointeger( ls, -2))
 				{
-					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
+					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+								mewa::string_format( "table '%s/%s', row %d col %d", tableName, keystr, rowcnt, colcnt));
 				}
-				auto arg = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+				auto arg = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 				if (arg.size() > 3 || arg.empty())
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "table '%s/%s', row %d", tableName, keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "table '%s/%s', row %d", tableName, keystr, rowcnt));
 				}
 				else if (arg.size() > 2)
 				{
@@ -216,7 +207,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		}
 		else if (0==std::strcmp( keystr, "bad"))
 		{
-			auto badlexems = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+			auto badlexems = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 			for (auto badlexem : badlexems)
 			{
 				rt.defineBadLexem( badlexem);
@@ -224,7 +215,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 		}
 		else if (0==std::strcmp( keystr, "ignore"))
 		{
-			auto ignores = parseStringArray( ls, -1, stringf( "%s/%s", tableName, keystr));
+			auto ignores = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 			for (auto ignore : ignores)
 			{
 				rt.defineIgnore( ignore);
@@ -255,7 +246,8 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 		++rowcnt;
 		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
 		{
-			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+						mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
 		std::size_t vallen;
 		const char* valstr;
@@ -266,7 +258,8 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 			case 1: 
 				if (!lua_isstring( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
+					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+								mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 				}
 				valstr = lua_tolstring( ls, -1, &vallen);
 				argstr = std::strchr( valstr, ' ');
@@ -283,7 +276,8 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 			case 2: 
 				if (lua_type( ls, -1) != LUA_TFUNCTION)
 				{
-					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
+					throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+								mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 				}
 				break;
 			case 3:
@@ -294,7 +288,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 	}
 	if (rowcnt < 2)
 	{
-		throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s'", tableName.c_str()));
+		throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s'", tableName.c_str()));
 	}
 	lua_pop( ls, 1);
 	return mewa::Automaton::Call( function, arg, argtype);
@@ -313,7 +307,8 @@ static std::vector<mewa::Automaton::Call> parseCallList( lua_State *ls, int li, 
 		++rowcnt;
 		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
 		{
-			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "table '%s', row %d", tableName.c_str(), rowcnt));
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+						mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
 		if (lua_istable( ls, -1))
 		{
@@ -346,14 +341,16 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			++rowcnt;
 			if (!lua_isstring( ls, -2))
 			{
-				throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, stringf( "automaton definition, row %d", rowcnt));
+				throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
+							mewa::string_format( "automaton definition, row %d", rowcnt));
 			}
 			const char* keystr = lua_tostring( ls, -2);
 			if (0==std::strcmp( keystr, "language"))
 			{
 				if (!lua_isstring( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				language = lua_tostring( ls, -1);
 			}
@@ -361,7 +358,8 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_isstring( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				typesystem = lua_tostring( ls, -1);
 			}
@@ -369,7 +367,8 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				lexer = parseLexerDefinitions( ls, -1, keystr);
 			}
@@ -377,7 +376,8 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				nonterminals = parseStringArray( ls, -1, keystr);
 			}
@@ -385,7 +385,8 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				actions = parsePackedTable<mewa::Automaton::ActionKey,mewa::Automaton::Action>( ls, -1, keystr);
 			}
@@ -393,7 +394,8 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				gotos = parsePackedTable<mewa::Automaton::GotoKey,mewa::Automaton::Goto>( ls, -1, keystr);
 			}
@@ -401,14 +403,15 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 			{
 				if (!lua_istable( ls, -1))
 				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, stringf( "automaton definition '%s', row %d", keystr, rowcnt));
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+								mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 				}
 				calls = parseCallList( ls, -1, keystr);
 			}
 		}
 		catch (const mewa::Error& err)
 		{
-			throw mewa::Error( err.code(), stringf( "%s, row %d", err.arg(), rowcnt));
+			throw mewa::Error( err.code(), mewa::string_format( "%s, row %d", err.arg(), rowcnt));
 		}
 		lua_pop( ls, 1);
 	}
