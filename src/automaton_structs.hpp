@@ -167,16 +167,32 @@ struct ProductionDef
 
 	std::string tostring( int pos) const
 	{
-		char callstrbuf[ 64];
-		callstrbuf[ 0] = 0;
+		std::string rt = head_tostring() + " = ";
+		std::string prev = element_range_tostring( right.begin(), right.begin() + pos);
+		if (prev.empty())
+		{
+			rt.append( ".");
+		}
+		else
+		{
+			rt.append( prev);
+			rt.append( " .");
+		}
+		std::string post = element_range_tostring( right.begin() + pos, right.end());
+		if (!post.empty())
+		{
+			rt.push_back( ' ');
+			rt.append( post);
+		}
 		if (callidx)
 		{
+			char callstrbuf[ 64];
+			callstrbuf[ 0] = 0;
 			std::snprintf( callstrbuf, sizeof(callstrbuf), " (%d)", callidx);
+
+			rt.append( callstrbuf);
 		}
-		return head_tostring() + " = "
-			+ element_range_tostring( right.begin(), right.begin() + pos) + " . "
-			+ element_range_tostring( right.begin() + pos, right.end())
-			+ callstrbuf;
+		return rt;
 	}
 
 	std::string prefix_tostring( int pos) const
@@ -415,11 +431,6 @@ public:
 		for (auto elem : o.m_packedElements) m_packedElements.insert( elem);
 	}
 
-	int operator[]( std::size_t idx) const noexcept
-	{
-		return m_packedElements[ idx];
-	}
-
 	std::size_t size() const noexcept
 	{
 		return m_packedElements.size();
@@ -596,16 +607,18 @@ public:
 
 	int get( const FlatSet<int>& elem)
 	{
+		int rt;
 		auto ins = m_map.insert( {elem, m_inv.size()+m_startidx});
 		if (ins.second/*insert took place*/)
 		{
+			rt = m_inv.size() + m_startidx;
 			m_inv.push_back( elem);
-			return m_inv.size();
 		}
 		else
 		{
-			return ins.first->second;
+			rt = ins.first->second;
 		}
+		return rt;
 	}
 
 	const FlatSet<int>& content( int handle) const noexcept
@@ -623,7 +636,7 @@ public:
 
 	std::size_t size() const noexcept
 	{
-		return m_inv.size();
+		return m_inv.size()+m_startidx;
 	}
 
 private:

@@ -196,19 +196,32 @@ private:
 	IntSetHandleMap m_followMap;
 };
 
+static void checkTransitionStateFollow( TransitionState& state, const char* what)
+{
+	for (std::size_t ii=1; ii<state.size(); ++ii)
+	{
+		auto item = TransitionItem::unpack( state.packedElements()[ ii]);
+		auto prev = TransitionItem::unpack( state.packedElements()[ ii-1]);
+		if (item.prodindex == prev.prodindex && item.prodpos == prev.prodpos)
+		{
+			std::cerr << "HALLY GALLY " << what << std::endl;
+		}
+	}
+}
+
 static void mergeTransitionStateFollow( TransitionState& state, FollowMap& followMap, const ProductionDefList& prodlist)
 {
 	TransitionState newstate;
 	std::size_t oidx = 0;
 	while (oidx < state.size())
 	{
-		auto item = TransitionItem::unpack( state[ oidx]);
+		auto item = TransitionItem::unpack( state.packedElements()[ oidx]);
 		int joinedFollow = item.follow;
 
 		std::size_t oidx2 = oidx+1; 
 		for (; oidx2 < state.size(); ++oidx2)
 		{
-			auto item2 = TransitionItem::unpack( state[ oidx2]);
+			auto item2 = TransitionItem::unpack( state.packedElements()[ oidx2]);
 			if (item2.prodindex != item.prodindex || item2.prodpos != item.prodpos)
 			{
 				break;
@@ -221,24 +234,11 @@ static void mergeTransitionStateFollow( TransitionState& state, FollowMap& follo
 						+ ", " + prodlist[ item2.prodindex].tostring( item2.prodpos));
 			}
 		}
-		if (newstate.empty())
-		{
-			if (joinedFollow != item.follow)
-			{
-				newstate.packedElements().insert( state.packedElements().begin(), state.packedElements().begin()+oidx);
-				newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
-			}
-		}
-		else
-		{
-			newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
-		}
+		newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
 		oidx = oidx2;
 	}
-	if (!newstate.empty())
-	{
-		state = newstate;
-	}
+	checkTransitionStateFollow( newstate, "merge");
+	state = std::move( newstate);
 }
 
 static TransitionState getLr1TransitionStateClosure(
@@ -288,12 +288,20 @@ static TransitionState getLr1TransitionStateClosure(
 	return rt;
 }
 
+static TransitionState joinLr1TransitionStates( const TransitionState& s1, const TransitionState& s2, const ProductionDefList& prodlist, FollowMap& followMap)
+{
+	TransitionState rt( s1);
+	rt.join( s2);
+	mergeTransitionStateFollow( rt, followMap, prodlist);
+	return rt;
+}
+
 static TransitionState getLr0TransitionStateFromLr1State( const TransitionState& ts)
 {
 	TransitionState rt;
-	std::vector<TransitionItem> itemlist = ts.unpack();
-	for (auto const& item : itemlist)
+	for (auto elem : ts.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, 0/*priority*/));
 	}
 	return rt;
@@ -332,6 +340,10 @@ public:
 	{
 		return m_followMap;
 	}
+	FollowMap& followMap()
+	{
+		return m_followMap;
+	}
 
 private:
 	ProductionDefList m_prodlist;
@@ -342,9 +354,9 @@ private:
 static std::vector<ProductionNode> getGotoNodes( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
 	std::vector<ProductionNode> rt;
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
@@ -357,9 +369,9 @@ static std::vector<ProductionNode> getGotoNodes( const TransitionState& state, c
 static FlatSet<int> getReduceFollow( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
 	FlatSet<int> rt;
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos == (int)prod.right.size())
 		{
@@ -374,9 +386,9 @@ static Priority getShiftPriority( const TransitionState& state, int terminal, co
 	Priority priority;
 	int last_prodidx = -1;
 	int last_prodpos = -1;
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
@@ -419,9 +431,9 @@ static ReductionDef getReductionDef( const TransitionState& state, int follow, c
 {
 	ReductionDef rt;
 	int last_prodidx = -1;
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos == (int)prod.right.size() && item.follow == follow)
 		{
@@ -459,9 +471,9 @@ static std::string getStateTransitionString(
 	const char* redustr = nullptr;
 	const char* shiftstr = nullptr;
 	std::string prodstr;
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
@@ -502,9 +514,9 @@ static TransitionState getGotoState(
 				const std::vector<ProductionDef>& prodlist, CalculateClosureFunctor& calculateClosure)
 {
 	TransitionState gtoState;
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
@@ -548,9 +560,9 @@ static std::unordered_map<TransitionState,int> getAutomatonStateAssignments( con
 
 static bool isAcceptState( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
-	std::vector<TransitionItem> itemlist = state.unpack();
-	for (auto const& item : itemlist)
+	for (int elem : state.packedElements())
 	{
+		auto item = TransitionItem::unpack( elem);
 		if (item.prodindex == 0 && item.prodpos == (int)prodlist[ 0].right.size() && item.follow == 0)
 		{
 			return true;
@@ -627,6 +639,21 @@ static std::map<int, std::set<int> >
 	if (nullableNonterminalSetVerify != nullableNonterminalSet)
 	{
 		throw Error( Error::LogicError);
+	}
+	return rt;
+}
+
+static std::map<int,TransitionState> calculateLalr1StateMap(
+		const std::unordered_map<TransitionState,int>& lr0statemap,
+		const std::unordered_map<TransitionState,int>& lr1statemap,
+		const std::vector<ProductionDef>& prodlist,
+		FollowMap& followMap)
+{
+	std::map<int,TransitionState> rt;
+	for (auto const& st : lr1statemap)
+	{
+		int stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( st.first));
+		rt[ stateidx] = joinLr1TransitionStates( rt[ stateidx], st.first, prodlist, followMap);
 	}
 	return rt;
 }
@@ -795,7 +822,6 @@ static void printProductions( const std::vector<ProductionDef>& prodlist, Automa
 
 static void printLr0States(
 		const std::unordered_map<TransitionState,int>& lr0statemap,
-		const CalculateClosureLr1& calculateClosureLr0,
 		const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
 {
 	std::map<int,TransitionState> stateinvmap;
@@ -807,9 +833,9 @@ static void printLr0States(
 	for (auto const& invst : stateinvmap)
 	{
 		dbgout.out() << "[" << invst.first << "]" << std::endl;
-		std::vector<TransitionItem> itemlist = invst.second.unpack();
-		for (auto const& item : itemlist)
+		for (int elem : invst.second.packedElements())
 		{
+			auto item = TransitionItem::unpack( elem);
 			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << std::endl;
 		}
 	}
@@ -817,30 +843,23 @@ static void printLr0States(
 }
 
 static void printLalr1States(
+		const std::map<int,TransitionState>& lalr1States,
 		const std::unordered_map<TransitionState,int>& lr0statemap,
-		const std::unordered_map<TransitionState,int>& lr1statemap,
 		CalculateClosureLr1& calculateClosureLr1,
-		const std::vector<ProductionDef>& prodlist, const Lexer& lexer,
+		const std::vector<ProductionDef>& prodlist, const FollowMap& followMap, const Lexer& lexer,
 		const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
 {
-	const FollowMap& followMap = calculateClosureLr1.followMap();
-	std::map<int,TransitionState> stateinvmap;
-	for (auto const& st : lr1statemap)
-	{
-		int stateidx = lr0statemap.at( getLr0TransitionStateFromLr1State( st.first));
-		stateinvmap[ stateidx].join( st.first);
-	}
 	dbgout.out() << "-- LR(1) FOLLOW sets:" << std::endl;
 	followMap.printFollowSets( dbgout.out(), lexer);
 	dbgout.out() << std::endl;
 
 	dbgout.out() << "-- LALR(1) States (Merged LR(1) elements assigned to LR(0) states):" << std::endl;
-	for (auto const& invst : stateinvmap)
+	for (auto const& invst : lalr1States)
 	{
 		dbgout.out() << "[" << invst.first << "]" << std::endl;
-		std::vector<TransitionItem> itemlist = invst.second.unpack();
-		for (auto const& item : itemlist)
+		for (int elem : invst.second.packedElements())
 		{
+			auto item = TransitionItem::unpack( elem);
 			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << ", FOLLOW [" << item.follow << "]";
 			if (item.prodpos == (int)prodlist[ item.prodindex].right.size())
 			{
@@ -1035,15 +1054,16 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 
 	CalculateClosureLr0 calculateClosureLr0( langdef.prodlist);
 	CalculateClosureLr1 calculateClosureLr1( langdef.prodlist, nonTerminalFirstSetMap, nullableNonterminalSet);
-	const FollowMap& followMap = calculateClosureLr1.followMap();
+	FollowMap& followMap = calculateClosureLr1.followMap();
 
 	std::unordered_map<TransitionState,int> stateAssignmentsLr0 = getAutomatonStateAssignments( langdef.prodlist, calculateClosureLr0);
 	std::unordered_map<TransitionState,int> stateAssignmentsLr1 = getAutomatonStateAssignments( langdef.prodlist, calculateClosureLr1);
+	std::map<int,TransitionState> lalr1States = calculateLalr1StateMap( stateAssignmentsLr0, stateAssignmentsLr1, langdef.prodlist, followMap);
 
 	if (dbgout.enabled( DebugOutput::States))
 	{
-		printLr0States( stateAssignmentsLr0, calculateClosureLr1, langdef.prodlist, langdef.lexer, dbgout);
-		printLalr1States( stateAssignmentsLr0, stateAssignmentsLr1, calculateClosureLr1, langdef.prodlist, langdef.lexer, langdef.calls, dbgout);
+		printLr0States( stateAssignmentsLr0, langdef.prodlist, langdef.lexer, dbgout);
+		printLalr1States( lalr1States, stateAssignmentsLr0, calculateClosureLr1, langdef.prodlist, followMap, langdef.lexer, langdef.calls, dbgout);
 	}
 	if (dbgout.enabled( DebugOutput::FunctionCalls))
 	{

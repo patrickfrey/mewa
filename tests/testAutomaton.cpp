@@ -97,80 +97,77 @@ V = "*" E
 
 -- LR(0) States:
 [1]
-	S =  . N
-	N =  . V "=" E
-	N =  . E
-	E =  . V
-	V =  . IDENT
-	V =  . "*" E
+	S = . N
+	N = . V "=" E
+	N = . E
+	E = . V
+	V = . IDENT
+	V = . "*" E
 [2]
-	S = N . 
+	S = N .
 [3]
-	N = E . 
-[4]
 	N = V . "=" E
-	E = V . 
+	E = V .
+[4]
+	N = E .
 [5]
-	V = IDENT . 
+	V = IDENT .
 [6]
-	E =  . V
-	V =  . IDENT
-	V =  . "*" E
+	E = . V
+	V = . IDENT
+	V = . "*" E
 	V = "*" . E
 [7]
 	N = V "=" . E
-	E =  . V
-	V =  . IDENT
-	V =  . "*" E
+	E = . V
+	V = . IDENT
+	V = . "*" E
 [8]
-	V = "*" E . 
+	E = V .
 [9]
-	E = V . 
+	V = "*" E .
 [10]
-	N = V "=" E . 
+	N = V "=" E .
+
+-- LR(1) FOLLOW sets:
+[0]: {$}
+[1]: {}
+[2]: {'='}
+[3]: {$ '='}
 
 -- LALR(1) States (Merged LR(1) elements assigned to LR(0) states):
 [1]
-	S =  . N, $ -> GOTO 2
-	N =  . V "=" E, $ -> GOTO 4
-	N =  . E, $ -> GOTO 3
-	E =  . V, $ -> GOTO 4
-	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
-	V =  . IDENT, '=' -> SHIFT IDENT GOTO 5
-	V =  . "*" E, $ -> SHIFT "*" GOTO 6
-	V =  . "*" E, '=' -> SHIFT "*" GOTO 6
+	S = . N, FOLLOW [0] -> GOTO 2
+	N = . V "=" E, FOLLOW [0] -> GOTO 3
+	N = . E, FOLLOW [0] -> GOTO 4
+	E = . V, FOLLOW [0] -> GOTO 3
+	V = . IDENT, FOLLOW [3] -> SHIFT IDENT GOTO 5
+	V = . "*" E, FOLLOW [3] -> SHIFT "*" GOTO 6
 [2]
-	S = N . , $ -> ACCEPT
+	S = N ., FOLLOW [0] -> ACCEPT
 [3]
-	N = E . , $ -> REDUCE N #1
+	N = V . "=" E, FOLLOW [0] -> SHIFT "=" GOTO 7
+	E = V ., FOLLOW [0] -> REDUCE E #1
 [4]
-	N = V . "=" E, $ -> SHIFT "=" GOTO 7
-	E = V . , $ -> REDUCE E #1
+	N = E ., FOLLOW [0] -> REDUCE N #1
 [5]
-	V = IDENT . , $ -> REDUCE V #1
-	V = IDENT . , '=' -> REDUCE V #1
+	V = IDENT ., FOLLOW [3] -> REDUCE V #1
 [6]
-	E =  . V, $ -> GOTO 9
-	E =  . V, '=' -> GOTO 9
-	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
-	V =  . IDENT, '=' -> SHIFT IDENT GOTO 5
-	V =  . "*" E, $ -> SHIFT "*" GOTO 6
-	V =  . "*" E, '=' -> SHIFT "*" GOTO 6
-	V = "*" . E, $ -> GOTO 8
-	V = "*" . E, '=' -> GOTO 8
+	E = . V, FOLLOW [3] -> GOTO 8
+	V = . IDENT, FOLLOW [3] -> SHIFT IDENT GOTO 5
+	V = . "*" E, FOLLOW [3] -> SHIFT "*" GOTO 6
+	V = "*" . E, FOLLOW [3] -> GOTO 9
 [7]
-	N = V "=" . E, $ -> GOTO 10
-	E =  . V, $ -> GOTO 9
-	V =  . IDENT, $ -> SHIFT IDENT GOTO 5
-	V =  . "*" E, $ -> SHIFT "*" GOTO 6
+	N = V "=" . E, FOLLOW [0] -> GOTO 10
+	E = . V, FOLLOW [0] -> GOTO 8
+	V = . IDENT, FOLLOW [0] -> SHIFT IDENT GOTO 5
+	V = . "*" E, FOLLOW [0] -> SHIFT "*" GOTO 6
 [8]
-	V = "*" E . , $ -> REDUCE V #2
-	V = "*" E . , '=' -> REDUCE V #2
+	E = V ., FOLLOW [3] -> REDUCE E #1
 [9]
-	E = V . , $ -> REDUCE E #1
-	E = V . , '=' -> REDUCE E #1
+	V = "*" E ., FOLLOW [3] -> REDUCE V #2
 [10]
-	N = V "=" E . , $ -> REDUCE N #3
+	N = V "=" E ., FOLLOW [0] -> REDUCE N #3
 
 -- Action table:
 [1]
@@ -179,10 +176,10 @@ V = "*" E
 [2]
 	$ => Accept
 [3]
-	$ => Reduce #1 N
-[4]
 	$ => Reduce #1 E
 	'=' => Shift goto 7
+[4]
+	$ => Reduce #1 N
 [5]
 	$ => Reduce #1 V
 	'=' => Reduce #1 V
@@ -193,25 +190,25 @@ V = "*" E
 	IDENT => Shift goto 5
 	'*' => Shift goto 6
 [8]
-	$ => Reduce #2 V
-	'=' => Reduce #2 V
-[9]
 	$ => Reduce #1 E
 	'=' => Reduce #1 E
+[9]
+	$ => Reduce #2 V
+	'=' => Reduce #2 V
 [10]
 	$ => Reduce #3 N
 
 -- Goto table:
 [1]
 	N => 2
-	E => 3
-	V => 4
+	E => 4
+	V => 3
 [6]
-	E => 8
-	V => 9
+	E => 9
+	V => 8
 [7]
 	E => 10
-	V => 9
+	V => 8
 
 )"};
 		if (verbose)
