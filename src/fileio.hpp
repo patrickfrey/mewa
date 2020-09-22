@@ -18,6 +18,7 @@ namespace mewa {
 
 void writeFile( const std::string& filename, const std::string& content);
 std::string readFile( const std::string& filename);
+void removeFile( const std::string& filename);
 
 }//namespace
 

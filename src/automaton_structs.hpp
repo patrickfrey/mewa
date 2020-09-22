@@ -281,7 +281,6 @@ struct TransitionItem
 	}
 };
 
-typedef std::unordered_multimap<int,int> TransitionItemGotoMap;
 
 template <typename TYPE>
 class FlatSet :public std::vector<TYPE>
@@ -316,6 +315,12 @@ public:
 	{
 		return insertInOrder( elem);
 	}
+
+	void clear()
+	{
+		std::vector<TYPE>::clear();
+	}
+
 	bool operator == (const FlatSet<TYPE>& o) const noexcept	{return compare( o) == 0;}
 	bool operator != (const FlatSet<TYPE>& o) const noexcept	{return compare( o) != 0;}
 	bool operator < (const FlatSet<TYPE>& o) const noexcept		{return compare( o) < 0;}
@@ -475,6 +480,11 @@ public:
 		return m_packedElements;
 	}
 
+	void clear()
+	{
+		m_packedElements.clear();
+	}
+
 	std::size_t hash() const noexcept
 	{
 		return IntHash::hashIntVector( m_packedElements);
@@ -599,6 +609,7 @@ namespace std
 }
 
 namespace mewa {
+	
 class IntSetHandleMap
 {
 public:
@@ -655,6 +666,9 @@ private:
 	std::vector<Sequence> m_inv;
 	int m_startidx;
 };
+
+typedef std::unordered_map<FlatSet<int>,int> TransitionItemGotoMap;
+
 } //namespace
 
 #else

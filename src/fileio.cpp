@@ -61,3 +61,17 @@ std::string mewa::readFile( const std::string& filename)
 	return rt;
 }
 
+void mewa::removeFile( const std::string& filename)
+{
+	while (0>::remove( filename.c_str()))
+	{
+		int ec = errno;
+		if (ec == EINTR) continue;
+		if (ec != ENOENT)
+		{
+			throw Error( (Error::Code)ec, filename);
+		}
+		break;
+	}
+}
+
