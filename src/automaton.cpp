@@ -64,33 +64,49 @@ static std::pair<FlatSet<int>,bool> getLr1FirstSet(
 	return rt;
 }
 
+static void collectStartNonterminals( std::pmr::set<int>& result, int nonterminal, const ProductionDefList& prodlist)
+{
+	if (result.insert( nonterminal).second == true/*insert took place*/)
+	{
+		auto prodrange = prodlist.equal_range( nonterminal);
+		for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
+		{
+			auto const& prod = prodlist[ hi.index()];
+			if (!prod.right.empty() && prod.right[0].type() == ProductionNodeDef::NonTerminal)
+			{
+				collectStartNonterminals( result, prod.right[0].index()/*nonterminal*/, prodlist);
+			}
+		}
+	}
+}
+
 static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const ProductionDefList& prodlist)
 {
-	TransitionState rt( ts);
-	std::vector<int> orig;
-	orig.reserve( ts.packedElements().capacity());
-	orig.insert( orig.end(), ts.packedElements().begin(), ts.packedElements().end());
+	int buffer[ 2048];
+	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	std::pmr::set<int> nonterminals( &memrsc);
 
-	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
+	for (int elem : ts.packedElements())
 	{
-		auto item = TransitionItem::unpack( orig[ oidx]);
-
+		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (nd.type() == ProductionNodeDef::NonTerminal)
 			{
-				auto prodrange = prodlist.equal_range( nd.index());
-				for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
-				{
-					TransitionItem insitem( hi.index(), 0, 0/*follow*/, 0/*priority*/);
-					if (rt.insert( insitem) == true/*insert took place*/)
-					{
-						orig.push_back( insitem.packed());
-					}
-				}
+				collectStartNonterminals( nonterminals, nd.index()/*nonterminal*/, prodlist);
 			}
+		}
+	}
+	TransitionState rt( ts);
+	for (auto nonterminal : nonterminals)
+	{
+		auto prodrange = prodlist.equal_range( nonterminal);
+		for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
+		{
+			int prodindex = hi.index();
+			rt.insert( TransitionItem( prodindex, 0/*prodpos*/, 0/*follow*/, prodlist[ prodindex].priority));
 		}
 	}
 	return rt;
@@ -364,19 +380,17 @@ private:
 	FollowMap m_followMap;
 };
 
-static std::vector<ProductionNode> getGotoNodes( const TransitionState& state, const std::vector<ProductionDef>& prodlist)
+static void collectGotoNodes( std::pmr::set<ProductionNode>& result, const TransitionState& state, const std::vector<ProductionDef>& prodlist)
 {
-	std::vector<ProductionNode> rt;
 	for (int elem : state.packedElements())
 	{
 		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
-			rt.push_back( prod.right[ item.prodpos]);
+			result.insert( prod.right[ item.prodpos]);
 		}
 	}
-	return rt;
 }
 
 static std::string getStateTransitionString(
@@ -589,9 +603,14 @@ static std::unordered_map<TransitionState,int> getAutomatonStateAssignments(
 
 	for (std::size_t stkidx = 0; stkidx < statestk.size(); ++stkidx)
 	{
+		int buffer[ 512];
+		std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+		std::pmr::set<ProductionNode> gtos( &memrsc);
+
 		std::vector<TransitionState> newstates;
 		auto const state = statestk[ stkidx];
-		auto gtos = getGotoNodes( state, prodlist);
+		collectGotoNodes( gtos, state, prodlist);
+
 		for (auto const& gto : gtos)
 		{
 			auto newState = getGotoState( state, gto, prodlist, calculateClosure);

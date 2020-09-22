@@ -124,6 +124,11 @@ int main( int argc, const char* argv[] )
 			std::cerr << "ERR test output (build/testScope.out) differs expected build/testScope.exp" << std::endl;
 			return 3;
 		}
+		else
+		{
+			removeFile( "build/testScope.out");
+			removeFile( "build/testScope.exp");
+		}
 		std::cerr << "OK" << std::endl;
 		return 0;
 	}

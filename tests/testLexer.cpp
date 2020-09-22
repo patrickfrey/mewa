@@ -246,6 +246,11 @@ CARDINAL [0]
 			std::cerr << "ERR test output (build/testLexer.out) differs expected build/testLexer.exp" << std::endl;
 			return 3;
 		}
+		else
+		{
+			removeFile( "build/testLexer.out");
+			removeFile( "build/testLexer.exp");
+		}
 		std::cerr << "OK" << std::endl;
 	}
 	catch (const mewa::Error& err)

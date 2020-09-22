@@ -95,7 +95,7 @@ E = V
 V = IDENT
 V = "*" E
 
--- LR(0) States:
+-- LR(0) states:
 [1]
 	S = . N
 	N = . V "=" E
@@ -106,10 +106,10 @@ V = "*" E
 [2]
 	S = N .
 [3]
+	N = E .
+[4]
 	N = V . "=" E
 	E = V .
-[4]
-	N = E .
 [5]
 	V = IDENT .
 [6]
@@ -123,49 +123,69 @@ V = "*" E
 	V = . IDENT
 	V = . "*" E
 [8]
-	E = V .
-[9]
 	V = "*" E .
+[9]
+	E = V .
 [10]
 	N = V "=" E .
 
--- LR(1) FOLLOW sets:
+-- LR(0) GOTO state cores (for calculation of SHIFT follow state):
+[2]
+	S = N .
+[3]
+	N = E .
+[4]
+	N = V . "=" E
+	E = V .
+[5]
+	V = IDENT .
+[6]
+	V = "*" . E
+[7]
+	N = V "=" . E
+[8]
+	V = "*" E .
+[9]
+	E = V .
+[10]
+	N = V "=" E .
+
+-- LR(1) used FOLLOW sets labeled:
 [0]: {$}
-[1]: {}
-[2]: {'='}
 [3]: {$ '='}
 
--- LALR(1) States (Merged LR(1) elements assigned to LR(0) states):
+-- LALR(1) states (merged LR(1) elements assigned to LR(0) states):
 [1]
 	S = . N, FOLLOW [0] -> GOTO 2
-	N = . V "=" E, FOLLOW [0] -> GOTO 3
-	N = . E, FOLLOW [0] -> GOTO 4
-	E = . V, FOLLOW [0] -> GOTO 3
+	N = . E, FOLLOW [0] -> GOTO 3
+	N = . V "=" E, FOLLOW [0] -> GOTO 4
+	E = . V, FOLLOW [0] -> GOTO 4
 	V = . IDENT, FOLLOW [3] -> SHIFT IDENT GOTO 5
-	V = . "*" E, FOLLOW [3] -> SHIFT "*" GOTO 6
+	V = . "*" E, FOLLOW [3] -> SHIFT '*' GOTO 6
 [2]
-	S = N ., FOLLOW [0] -> ACCEPT
+	S = N . -> ACCEPT
+	S = N ., FOLLOW [0] -> REDUCE S #1
 [3]
-	N = V . "=" E, FOLLOW [0] -> SHIFT "=" GOTO 7
-	E = V ., FOLLOW [0] -> REDUCE E #1
-[4]
 	N = E ., FOLLOW [0] -> REDUCE N #1
+[4]
+	N = V . "=" E, FOLLOW [0] -> SHIFT '=' GOTO 7
+	E = V ., FOLLOW [0] -> REDUCE E #1
 [5]
 	V = IDENT ., FOLLOW [3] -> REDUCE V #1
 [6]
-	E = . V, FOLLOW [3] -> GOTO 8
+	V = "*" . E, FOLLOW [3] -> GOTO 8
+	E = . V, FOLLOW [3] -> GOTO 9
 	V = . IDENT, FOLLOW [3] -> SHIFT IDENT GOTO 5
-	V = . "*" E, FOLLOW [3] -> SHIFT "*" GOTO 6
-	V = "*" . E, FOLLOW [3] -> GOTO 9
+	V = . "*" E, FOLLOW [3] -> SHIFT '*' GOTO 6
 [7]
 	N = V "=" . E, FOLLOW [0] -> GOTO 10
-	E = . V, FOLLOW [0] -> GOTO 8
+	E = . V, FOLLOW [0] -> GOTO 9
 	V = . IDENT, FOLLOW [0] -> SHIFT IDENT GOTO 5
-	V = . "*" E, FOLLOW [0] -> SHIFT "*" GOTO 6
+	V = . "*" E, FOLLOW [0] -> SHIFT '*' GOTO 6
 [8]
-	E = V ., FOLLOW [3] -> REDUCE E #1
-[9]
 	V = "*" E ., FOLLOW [3] -> REDUCE V #2
+[9]
+	E = V ., FOLLOW [3] -> REDUCE E #1
 [10]
 	N = V "=" E ., FOLLOW [0] -> REDUCE N #3
 
@@ -176,10 +196,10 @@ V = "*" E
 [2]
 	$ => Accept
 [3]
+	$ => Reduce #1 N
+[4]
 	$ => Reduce #1 E
 	'=' => Shift goto 7
-[4]
-	$ => Reduce #1 N
 [5]
 	$ => Reduce #1 V
 	'=' => Reduce #1 V
@@ -190,25 +210,25 @@ V = "*" E
 	IDENT => Shift goto 5
 	'*' => Shift goto 6
 [8]
-	$ => Reduce #1 E
-	'=' => Reduce #1 E
-[9]
 	$ => Reduce #2 V
 	'=' => Reduce #2 V
+[9]
+	$ => Reduce #1 E
+	'=' => Reduce #1 E
 [10]
 	$ => Reduce #3 N
 
 -- Goto table:
 [1]
 	N => 2
-	E => 4
-	V => 3
+	E => 3
+	V => 4
 [6]
-	E => 9
-	V => 8
+	E => 8
+	V => 9
 [7]
 	E => 10
-	V => 8
+	V => 9
 
 )"};
 		if (verbose)
@@ -221,6 +241,11 @@ V = "*" E
 			writeFile( "build/testAutomaton.exp", expected);
 			std::cerr << "ERR test output (build/testAutomaton.out) differs expected build/testAutomaton.exp" << std::endl;
 			return 3;
+		}
+		else
+		{
+			removeFile( "build/testAutomaton.out");
+			removeFile( "build/testAutomaton.exp");
 		}
 
 		// [2] Test packing
