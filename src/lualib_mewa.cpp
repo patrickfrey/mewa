@@ -42,12 +42,15 @@ extern "C" int luaopen_mewa( lua_State* ls);
 
 struct CallTableName
 {
-	char buf[ 64];
+	char buf[ 20];
 
 	void init()
 	{
 		static int callTableIdx = 0;
-		(void)std::snprintf( buf, sizeof(buf), MEWA_CALLTABLE_FMT, ++callTableIdx);
+		if ((int)sizeof(buf) <= std::snprintf( buf, sizeof(buf), MEWA_CALLTABLE_FMT, ++callTableIdx))
+		{
+			throw mewa::Error( mewa::Error::TooManyInstancesCreated, MEWA_COMPILER_METATABLE_NAME);
+		}
 	}
 };
 
@@ -78,7 +81,7 @@ struct mewa_compiler_userdata_t
 class MemoryBlock
 {
 public:
-	virtual ~MemoryBlock(){}
+	virtual ~MemoryBlock(){};
 };
 
 template <class OBJECT>
@@ -172,12 +175,16 @@ static int mewa_new_compiler( lua_State* ls)
 
 	luaL_checktype( ls, 1, LUA_TTABLE);
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
-	mw->init();
+	bool success = true;
+	try
+	{
+		mw->init();
+	}
+	CATCH_EXCEPTION( success)
 	lua_pushstring( ls, "call");
 	lua_gettable( ls, 1);
 	lua_setglobal( ls, mw->callTableName.buf);
 
-	bool success = true;
 	try
 	{
 		new (&mw->automaton) mewa::Automaton( mewa::luaLoadAutomaton( ls, 1));

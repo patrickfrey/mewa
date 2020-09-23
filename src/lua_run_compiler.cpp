@@ -21,6 +21,7 @@
 #include <map>
 #include <utility>
 #include <typeinfo>
+#include <memory_resource>
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -75,21 +76,33 @@ static std::string tokenString( const mewa::Lexem& lexem, const mewa::Lexer& lex
 	return rt;
 }
 
+static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
+{
+	lua_createtable( ls, 0/*size array*/, 2/*size struct*/);
+	lua_pushstring( ls, "name");
+	lua_pushlstring( ls, lexem.name().data(), lexem.name().size());
+	lua_settable( ls, -3);
+	lua_pushstring( ls, "value");
+	lua_pushlstring( ls, lexem.value().data(), lexem.value().size());
+	lua_settable( ls, -3);
+}
+
 struct State
 {
 	int index;
+	int luastki;
 
 	State()
-		:index(0){}
-	State( int index_)
-		:index(index_){}
+		:index(0),luastki(-1){}
+	State( int index_, int luastki_=-1)
+		:index(index_),luastki(luastki_){}
 	State( const State& o)
-		:index(o.index){}
+		:index(o.index),luastki(o.luastki){}
 };
 
 /// \brief Feed lexem to the automaton state
 /// \return true, if the lexem has been consumed, false if we have to feed the same lexem again
-static bool feedLexem( std::vector<State>& stateStack, const mewa::Automaton& automaton, const mewa::Lexem& lexem)
+static bool feedLexem( lua_State* ls, std::pmr::vector<State>& stateStack, const mewa::Automaton& automaton, const mewa::Lexem& lexem)
 {
 	auto nexti = automaton.actions().find( {stateStack.back().index, lexem.id()/*terminal*/});
 	if (nexti == automaton.actions().end())
@@ -100,7 +113,16 @@ static bool feedLexem( std::vector<State>& stateStack, const mewa::Automaton& au
 	switch (nexti->second.type())
 	{
 		case mewa::Automaton::Action::Shift:
-			stateStack.push_back( State( nexti->second.state()));
+			if (!automaton.lexer().isKeyword( lexem.id()))
+			{
+				int last_luastki = stateStack.empty() ? 0 : stateStack.back().luastki;
+				stateStack.push_back( State( nexti->second.state(), last_luastki+1));
+				luaPushLexem( ls, lexem);
+			}
+			else
+			{
+				stateStack.push_back( State( nexti->second.state()));
+			}
 			return true;
 
 		case mewa::Automaton::Action::Reduce:
@@ -132,7 +154,7 @@ static bool feedLexem( std::vector<State>& stateStack, const mewa::Automaton& au
 	return false;
 }
 
-static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateStack, const mewa::Automaton& automaton, const mewa::Lexem& lexem)
+static void printDebugAction( std::ostream& dbgout, std::pmr::vector<State>& stateStack, const mewa::Automaton& automaton, const mewa::Lexem& lexem)
 {
 	auto nexti = automaton.actions().find( {stateStack.back().index,lexem.id()/*terminal*/});
 	if (nexti == automaton.actions().end())
@@ -182,8 +204,13 @@ static void printDebugAction( std::ostream& dbgout, std::vector<State>& stateSta
 
 void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, std::ostream* dbgout)
 {
+	int buffer[ 2048];
+	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+
 	mewa::Scanner scanner( source);
-	std::vector<State> stateStack( {{1}} );
+	std::pmr::vector<State> stateStack( &memrsc );	// ... use pmr to avoid memory leak on lua error exit
+	stateStack.reserve( (sizeof buffer - sizeof stateStack) / sizeof(State));
+	stateStack.push_back( {1} );
 
 	mewa::Lexem lexem = automaton.lexer().next( scanner);
 	for (; !lexem.empty(); lexem = automaton.lexer().next( scanner))
@@ -193,9 +220,9 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 		{
 			if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
 		}
-		while (!feedLexem( stateStack, automaton, lexem));
+		while (!feedLexem( ls, stateStack, automaton, lexem));
 	}
-	while (!feedLexem( stateStack, automaton, lexem/* empty ~ end of input*/))
+	while (!feedLexem( ls, stateStack, automaton, lexem/* empty ~ end of input*/))
 	{
 		if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
 	}

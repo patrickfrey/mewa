@@ -299,17 +299,27 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 		}
 		else
 		{
-			auto ins = m_nameidmap.insert( std::pair<std::string,int>( std::string(name), m_nameidmap.size()+1));
+			std::size_t id_ = m_nameidmap.size()+1;
+			while (m_id2keyword.size() <= id_)
+			{
+				m_id2keyword.push_back( false);
+			}
+			auto ins = m_nameidmap.insert( {std::string(name), id_} );
 			if (ins.second/*insert took place*/)
 			{
 				if (keyword_)
 				{
 					m_namelist.push_back( nameString( name));
+					m_id2keyword[ id_] = true;
 				}
 				else
 				{
 					m_namelist.push_back( std::string( name));
 				}
+			}
+			else if (keyword_)
+			{
+				throw Error( Error::KeywordDefinedTwiceInLexer, name);
 			}
 			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, keyword_, select));
 			rt = ins.first->second;
@@ -339,7 +349,7 @@ int Lexer::defineLexem( const std::string_view& name, const std::string_view& pa
 
 void Lexer::defineIgnore( const std::string_view& pattern)
 {
-	(void)defineLexem_( "", pattern, true/*keyword*/, 0);
+	(void)defineLexem_( "", pattern, false/*keyword*/, 0/*select*/);
 }
 
 static std::string stringToRegex( const std::string_view& opr)
@@ -425,8 +435,7 @@ const std::string& Lexer::lexemName( int id) const
 
 bool Lexer::isKeyword( int id) const
 {
-	return m_nameidmap.find( lexemName( id)) == m_nameidmap.end();
-	// ... lexemName of keyword has quotes added
+	return m_id2keyword[ id];
 }
 
 Lexem Lexer::next( Scanner& scanner) const

@@ -35,6 +35,8 @@ public:
 		SyntaxErrorInLexer=422,
 		ArrayBoundReadInLexer=423,
 		InvalidRegexInLexer=424,
+		KeywordDefinedTwiceInLexer=425,
+		TooManyInstancesCreated=426,
 
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,
@@ -118,6 +120,8 @@ private:
 			case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
 			case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";
 			case InvalidRegexInLexer: return "Bad regular expression definition for the lexer";
+			case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
+			case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";
