@@ -80,38 +80,6 @@ static void collectStartNonterminals( std::pmr::set<int>& result, int nontermina
 	}
 }
 
-static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const ProductionDefList& prodlist)
-{
-	int buffer[ 2048];
-	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
-	std::pmr::set<int> nonterminals( &memrsc);
-
-	for (int elem : ts.packedElements())
-	{
-		auto item = TransitionItem::unpack( elem);
-		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.right.size())
-		{
-			const ProductionNodeDef& nd = prod.right[ item.prodpos];
-			if (nd.type() == ProductionNodeDef::NonTerminal)
-			{
-				collectStartNonterminals( nonterminals, nd.index()/*nonterminal*/, prodlist);
-			}
-		}
-	}
-	TransitionState rt( ts);
-	for (auto nonterminal : nonterminals)
-	{
-		auto prodrange = prodlist.equal_range( nonterminal);
-		for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
-		{
-			int prodindex = hi.index();
-			rt.insert( TransitionItem( prodindex, 0/*prodpos*/, 0/*follow*/, prodlist[ prodindex].priority));
-		}
-	}
-	return rt;
-}
-
 struct FollowMap
 {
 	FollowMap( const ProductionDefList& prodlist, const std::map<int, std::set<int> >& nonTerminalFirstSetMap, const std::set<int>& nullableNonterminalSet)
@@ -240,6 +208,131 @@ private:
 	IntSetHandleMap m_followMap;
 };
 
+static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const ProductionDefList& prodlist)
+{
+	int buffer[ 2048];
+	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	std::pmr::set<int> nonterminals( &memrsc);
+
+	for (int elem : ts.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos < (int)prod.right.size())
+		{
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
+			if (nd.type() == ProductionNodeDef::NonTerminal)
+			{
+				collectStartNonterminals( nonterminals, nd.index()/*nonterminal*/, prodlist);
+			}
+		}
+	}
+	TransitionState rt( ts);
+	for (auto nonterminal : nonterminals)
+	{
+		auto prodrange = prodlist.equal_range( nonterminal);
+		for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
+		{
+			rt.insert( TransitionItem( hi.index()/*prodindex*/, 0/*prodpos*/, 0/*follow*/, Priority()));
+		}
+	}
+	return rt;
+}
+
+static TransitionState getLr1TransitionStateClosure( 
+		const TransitionState& ts, const ProductionDefList& prodlist, FollowMap& followMap)
+{
+	TransitionState rt;
+	TransitionState lr0closure = getLr0TransitionStateClosure( ts, prodlist);
+
+	int buffer[ 2048];
+	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	std::pmr::map<int,int> nonterminal2FollowMap( &memrsc);
+
+	// [1] Initialize inherited FOLLOW set elements of left side nonterminals:
+	for (auto elem : ts.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		auto nfins = nonterminal2FollowMap.insert( {prod.left.index()/*nonterminal*/, item.follow} );
+		if (nfins.second == false /*already exists*/)
+		{
+			nfins.first->second = followMap.join( item.follow, nfins.first->second);
+		}
+	}
+	// [2] For L -> AX Add elements of FIRST(X) to FOLLOW(A):
+	for (auto elem : lr0closure.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+		if (item.prodpos < (int)prod.right.size())
+		{
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
+			if (nd.type() == ProductionNodeDef::NonTerminal)
+			{
+				auto entry = followMap.get( {item.prodindex, item.prodpos});
+				int follow = entry.handle;
+
+				auto nfins = nonterminal2FollowMap.insert( {nd.index()/*nonterminal*/, follow} );
+				if (nfins.second == false/*no insert took place*/)
+				{
+					follow = followMap.join( follow, nfins.first->second);
+					nfins.first->second = follow;
+				}
+			}
+		}
+	}
+	// [3] Until stable (no changes), add FOLLOW(L) to FOLLOW(A) for L->AX and X possibly empty (inherit flag):
+	bool changed = true;
+	while (changed)
+	{
+		changed = false;
+
+		for (auto elem : lr0closure.packedElements())
+		{
+			auto item = TransitionItem::unpack( elem);
+
+			const ProductionDef& prod = prodlist[ item.prodindex];
+			if (item.prodpos < (int)prod.right.size())
+			{
+				const ProductionNodeDef& nd = prod.right[ item.prodpos];
+				if (nd.type() == ProductionNodeDef::NonTerminal)
+				{
+					auto entry = followMap.get( {item.prodindex, item.prodpos});
+					if (entry.inherit)
+					{
+						auto inhi = nonterminal2FollowMap.find( nd.index());
+						if (inhi != nonterminal2FollowMap.end())
+						{
+							auto lfti = nonterminal2FollowMap.find( prod.left.index()/*nonterminal*/);
+							if (lfti != nonterminal2FollowMap.end())
+							{
+								int follow = followMap.join( inhi->second, lfti->second);
+								if (inhi->second != follow)
+								{
+									changed = true;
+									inhi->second = follow;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	// [4] Derive LR(1) elements from inherited elements with the priority and the FOLLOW sets initialized
+	for (auto elem : lr0closure.packedElements())
+	{
+		auto item = TransitionItem::unpack( elem);
+		const ProductionDef& prod = prodlist[ item.prodindex];
+
+		item.priority = prodlist[ item.prodindex].priority;
+		item.follow = nonterminal2FollowMap.at( prod.left.index());
+		rt.insert( item);
+	}
+	return rt;
+}
+
 static void mergeTransitionStateFollow( TransitionState& state, FollowMap& followMap, const ProductionDefList& prodlist)
 {
 	TransitionState newstate;
@@ -271,52 +364,6 @@ static void mergeTransitionStateFollow( TransitionState& state, FollowMap& follo
 	state = std::move( newstate);
 }
 
-static TransitionState getLr1TransitionStateClosure(
-				const TransitionState& ts,
-				const ProductionDefList& prodlist,
-				FollowMap& followMap)
-{
-	TransitionState rt( ts);
-	std::vector<int> orig;
-	orig.reserve( ts.packedElements().capacity());
-	orig.insert( orig.end(), ts.packedElements().begin(), ts.packedElements().end());
-
-	for (std::size_t oidx = 0; oidx < orig.size(); ++oidx)
-	{
-		auto item = TransitionItem::unpack( orig[ oidx]);
-
-		const ProductionDef& prod = prodlist[ item.prodindex];
-		if (item.prodpos < (int)prod.right.size())
-		{
-			const ProductionNodeDef& nd = prod.right[ item.prodpos];
-			if (nd.type() == ProductionNodeDef::NonTerminal)
-			{
-				auto followHandle = followMap.get( {item.prodindex, item.prodpos});
-				auto prodrange = prodlist.equal_range( nd.index());
-				for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
-				{
-					{
-						TransitionItem insitem( hi.index(), 0/*prodpos*/, followHandle.handle, hi->priority);
-						if (rt.insert( insitem) == true/*insert took place*/)
-						{
-							orig.push_back( insitem.packed());
-						}
-					}
-					if (followHandle.inherit)
-					{
-						TransitionItem insitem( hi.index(), 0/*prodpos*/, item.follow, hi->priority);
-						if (rt.insert( insitem) == true/*insert took place*/)
-						{
-							orig.push_back( insitem.packed());
-						}
-					}
-				}
-			}
-		}
-	}
-	mergeTransitionStateFollow( rt, followMap, prodlist);
-	return rt;
-}
 
 static TransitionState joinLr1TransitionStates( const TransitionState& s1, const TransitionState& s2, const ProductionDefList& prodlist, FollowMap& followMap)
 {
@@ -332,7 +379,7 @@ static TransitionState getLr0TransitionStateFromLr1State( const TransitionState&
 	for (auto elem : ts.packedElements())
 	{
 		auto item = TransitionItem::unpack( elem);
-		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, 0/*priority*/));
+		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, Priority()));
 	}
 	return rt;
 }
