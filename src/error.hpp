@@ -37,6 +37,7 @@ public:
 		InvalidRegexInLexer=424,
 		KeywordDefinedTwiceInLexer=425,
 		TooManyInstancesCreated=426,
+		CompiledSourceTooComplex=427,
 
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,
@@ -122,6 +123,7 @@ private:
 			case InvalidRegexInLexer: return "Bad regular expression definition for the lexer";
 			case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
 			case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
+			case CompiledSourceTooComplex: return "Too complex source file (counter overflow)";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";

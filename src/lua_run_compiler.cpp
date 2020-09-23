@@ -13,6 +13,7 @@
 #include "lua_run_compiler.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
+#include "strings.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -21,6 +22,7 @@
 #include <map>
 #include <utility>
 #include <typeinfo>
+#include <limits>
 #include <memory_resource>
 #include <lua.h>
 #include <lauxlib.h>
@@ -76,29 +78,139 @@ static std::string tokenString( const mewa::Lexem& lexem, const mewa::Lexer& lex
 	return rt;
 }
 
-static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
-{
-	lua_createtable( ls, 0/*size array*/, 2/*size struct*/);
-	lua_pushstring( ls, "name");
-	lua_pushlstring( ls, lexem.name().data(), lexem.name().size());
-	lua_settable( ls, -3);
-	lua_pushstring( ls, "value");
-	lua_pushlstring( ls, lexem.value().data(), lexem.value().size());
-	lua_settable( ls, -3);
-}
-
 struct State
 {
 	int index;
 	int luastki;
+	int luastkn;
 
 	State()
-		:index(0),luastki(-1){}
-	State( int index_, int luastki_=-1)
-		:index(index_),luastki(luastki_){}
+		:index(0),luastki(0),luastkn(0){}
+	State( int index_)
+		:index(index_),luastki(0),luastkn(0){}
+	State( int index_, int luastki_, int luastkn_)
+		:index(index_),luastki(luastki_),luastkn(luastkn_){}
 	State( const State& o)
-		:index(o.index),luastki(o.luastki){}
+		:index(o.index),luastki(o.luastki),luastkn(o.luastkn){}
 };
+
+static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
+{
+	lua_createtable( ls, 0/*size array*/, 2/*size struct*/);				// STK [TABLE]
+	lua_pushlstring( ls, lexem.name().data(), lexem.name().size());				// STK [TABLE] "arg" [NAME]
+	lua_pushstring( ls, "name");								// STK [TABLE] "name"
+	lua_rawset( ls, -3);									// STK [TABLE]
+	lua_pushstring( ls, "value");								// STK [TABLE] "value"
+	lua_pushlstring( ls, lexem.value().data(), lexem.value().size());			// STK [TABLE] "value" [VALUE]
+	lua_rawset( ls, -3);									// STK [TABLE]
+}
+
+static void luaReduceStruct( lua_State* ls, std::pmr::vector<State>& stateStack, int nn, const std::string_view& name, int callidx)
+{
+	int stk_start = 0;
+	int stk_end = 0;
+	if (nn > 0)
+	{
+		std::size_t si = stateStack.size(), se = stateStack.size() - nn;
+		for (; si > se; --si)
+		{
+			const State& st = stateStack[ si-1];
+			if (st.luastki)
+			{
+				stk_end = st.luastki + st.luastkn;
+				break;
+			}
+		}
+		for (; si > se; --si)
+		{
+			const State& st = stateStack[ si-1];
+			if (st.luastki)
+			{
+				stk_start = st.luastki;
+			}
+		}
+												// STK [ARG1]...[ARGN]
+		lua_createtable( ls, 0/*size array*/, 2/*size struct*/); 			// STK [ARG1]...[ARGN] [TABLE]
+		lua_pushstring( ls, "name");							// STK [ARG1]...[ARGN] [TABLE] "name"
+		lua_pushlstring( ls, name.data(), name.size());					// STK [ARG1]...[ARGN] [TABLE] [NAME]
+		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
+		lua_pushstring( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
+		lua_createtable( ls, stk_end-stk_start/*size array*/, 0/*size struct*/);	// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
+		int li = -(stk_end-stk_start)-3, le = -3;
+		for (int tidx=0; li != le; ++li,++tidx)
+		{
+			lua_pushvalue( ls, li);							// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB] [ARGi]
+			lua_rawseti( ls, -4, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
+		}
+		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
+		lua_replace( ls, -1-nn);							// STK [TABLE] [ARG2]...[ARGN]
+		if (nn > 1) lua_pop( ls, nn-1);							// STK [TABLE]
+	}
+}
+
+static void adjustStateCountersOnStack( std::pmr::vector<State>& stateStack)
+{
+	int ofs = 0;
+	for (auto elem : stateStack)
+	{
+		if (elem.luastki) {ofs = elem.luastki-1; break;}
+	}
+	if (!ofs) throw mewa::Error( mewa::Error::CompiledSourceTooComplex);
+	for (auto elem : stateStack)
+	{
+		if (elem.luastki) {elem.luastki -= ofs;}
+	}
+}
+
+static int getNextLuaStackIndex( std::pmr::vector<State>& stateStack)
+{
+	int rt = 1;
+	for (auto si = stateStack.rbegin(), se = stateStack.rend(); si != se; ++si)
+	{
+		if (si->luastkn)
+		{
+			rt = si->luastki + si->luastkn;
+			if (rt >= std::numeric_limits<int>::max())
+			{
+				adjustStateCountersOnStack( stateStack);
+				rt = getNextLuaStackIndex( stateStack);
+			}
+			break;
+		}
+	}
+	return rt;
+}
+
+static int getLuaStackReductionSize( const std::pmr::vector<State>& stateStack, int nn) noexcept
+{
+	int start = 0;
+	int end = 0;
+	for (auto si = stateStack.end() - nn; si != stateStack.end(); ++si)
+	{
+		if (si->luastki) {start = si->luastki; break;}
+	}
+	for (auto si = stateStack.rbegin(), se = stateStack.rbegin() + nn; si != se; ++si)
+	{
+		if (si->luastkn) {end = si->luastki + si->luastkn; break;}
+	}
+	return end-start;
+}
+
+#ifdef MEWA_LOWLEVEL_DEBUG
+static int countLuaStackElements( const std::pmr::vector<State>& stateStack)
+{
+	return getLuaStackReductionSize( stateStack, stateStack.size());
+}
+
+static void dumpStateStack( std::ostream& out, const std::pmr::vector<State>& stateStack, const char* title)
+{
+	std::cerr << "Stack " << title << ":" << std::endl;
+	for (auto elem : stateStack)
+	{
+		std::cerr << "\tState " << elem.index << "[" << elem.luastki << " :" << elem.luastkn << "]" << std::endl;
+	}
+}
+#endif
 
 /// \brief Feed lexem to the automaton state
 /// \return true, if the lexem has been consumed, false if we have to feed the same lexem again
@@ -115,8 +227,8 @@ static bool feedLexem( lua_State* ls, std::pmr::vector<State>& stateStack, const
 		case mewa::Automaton::Action::Shift:
 			if (!automaton.lexer().isKeyword( lexem.id()))
 			{
-				int last_luastki = stateStack.empty() ? 0 : stateStack.back().luastki;
-				stateStack.push_back( State( nexti->second.state(), last_luastki+1));
+				int next_luastki = getNextLuaStackIndex( stateStack);
+				stateStack.push_back( State( nexti->second.state(), next_luastki, 1));
 				luaPushLexem( ls, lexem);
 			}
 			else
@@ -131,12 +243,26 @@ static bool feedLexem( lua_State* ls, std::pmr::vector<State>& stateStack, const
 			{
 				throw mewa::Error( mewa::Error::LanguageAutomatonCorrupted, lexem.line());
 			}
+			int luaStackNofElements = getLuaStackReductionSize( stateStack, nexti->second.count());
+			if (nexti->second.call())
+			{
+				int callidx = nexti->second.call();
+				auto const& call = automaton.call( callidx);
+				luaReduceStruct( ls, stateStack, luaStackNofElements, call.arg().size() ? call.arg() : call.function(), callidx);
+				luaStackNofElements = 1;
+			}
 			stateStack.resize( stateStack.size() - nexti->second.count());
+
 			auto gtoi = automaton.gotos().find( {stateStack.back().index, nexti->second.nonterminal()});
 			if (gtoi == automaton.gotos().end())
 			{
 				throw mewa::Error( mewa::Error::LanguageAutomatonMissingGoto,
 							stateTransitionInfo( stateStack.back().index, lexem.id()/*terminal*/, automaton.lexer()), lexem.line());
+			}
+			else if (luaStackNofElements)
+			{
+				int next_luastki = getNextLuaStackIndex( stateStack);
+				stateStack.push_back( State( gtoi->second.state(), next_luastki, luaStackNofElements));
 			}
 			else
 			{
@@ -206,24 +332,33 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 {
 	int buffer[ 2048];
 	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	int nofLuaStackElements = lua_gettop( ls);
 
-	mewa::Scanner scanner( source);
+	Scanner scanner( source);
 	std::pmr::vector<State> stateStack( &memrsc );	// ... use pmr to avoid memory leak on lua error exit
 	stateStack.reserve( (sizeof buffer - sizeof stateStack) / sizeof(State));
 	stateStack.push_back( {1} );
 
-	mewa::Lexem lexem = automaton.lexer().next( scanner);
+	Lexem lexem = automaton.lexer().next( scanner);
 	for (; !lexem.empty(); lexem = automaton.lexer().next( scanner))
 	{
-		if (lexem.id() <= 0) throw mewa::Error( mewa::Error::BadCharacterInGrammarDef, lexem.value());
+		if (lexem.id() <= 0) throw Error( Error::BadCharacterInGrammarDef, lexem.value());
 		do
 		{
 			if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
 		}
 		while (!feedLexem( ls, stateStack, automaton, lexem));
+
+		// Runtime check of stack indices:
+		if (!stateStack.empty() && stateStack.back().luastkn
+			&& (lua_gettop( ls) - nofLuaStackElements + 1) != stateStack.back().luastki + stateStack.back().luastkn)
+		{
+			throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
 	}
 	while (!feedLexem( ls, stateStack, automaton, lexem/* empty ~ end of input*/))
 	{
 		if (dbgout) printDebugAction( *dbgout, stateStack, automaton, lexem);
 	}
 }
+
