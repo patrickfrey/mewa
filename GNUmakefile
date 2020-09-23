@@ -76,9 +76,9 @@ test : all
 	$(BUILDDIR)/testScope
 	$(BUILDDIR)/testAutomaton
 check: test
-luatest:
+luatest: all
 	tests/luatest.sh
-install:
+install: all
 	cp $(PROGRAM) $(DESTINATION)
 	cp MANPAGE $(MANPAGES)/man1/mewa.1
 	gzip -f $(MANPAGES)/man1/mewa.1

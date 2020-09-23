@@ -267,8 +267,7 @@ V = "*" E
 			TransitionItem titm( 
 					random.get( 0, Automaton::MaxNofProductions)/*prodindex*/,
 					random.get( 0, Automaton::MaxProductionLength)/*prodpos*/,
-					random.get( 0, Automaton::MaxTerminal)/*follow*/,
-					Priority( random.get( 0, Automaton::MaxPriority), (Assoziativity)random.get( 0, Automaton::MaxAssoziativity))/*priority*/);
+					random.get( 0, Automaton::MaxTerminal)/*follow*/);
 
 			Automaton::ActionKey actionKey2 = Automaton::ActionKey::unpack( actionKey.packed());
 			Automaton::Action action2 = Automaton::Action::unpack( action.packed());

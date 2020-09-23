@@ -1,0 +1,148 @@
+Shift token "procedure" at line 1 in state 1, goto 9
+Shift token IDENT = "swap" at line 1 in state 9, goto 19
+Shift token '(' at line 1 in state 19, goto 28
+Shift token IDENT = "int" at line 1 in state 28, goto 15
+Reduce #1 to typename by token '&' at line 1 in state 15, goto 16
+Shift token '&' at line 1 in state 16, goto 23
+Reduce #2 to typespec by token IDENT = "a" at line 1 in state 23, goto 35
+Shift token IDENT = "a" at line 1 in state 35, goto 42
+Reduce #2 to paramdecl by token ',' at line 1 in state 42, goto 37
+Shift token ',' at line 1 in state 37, goto 44
+Shift token IDENT = "int" at line 1 in state 44, goto 15
+Reduce #1 to typename by token '&' at line 1 in state 15, goto 16
+Shift token '&' at line 1 in state 16, goto 23
+Reduce #2 to typespec by token IDENT = "b" at line 1 in state 23, goto 35
+Shift token IDENT = "b" at line 1 in state 35, goto 42
+Reduce #2 to paramdecl by token ')' at line 1 in state 42, goto 37
+Reduce #1 to parameters by token ')' at line 1 in state 37, goto 60
+Reduce #3 to parameters by token ')' at line 1 in state 60, goto 36
+Shift token ')' at line 1 in state 36, goto 43
+Shift token '{' at line 2 in state 43, goto 59
+Shift token "var" at line 3 in state 59, goto 10
+Shift token IDENT = "int" at line 3 in state 10, goto 15
+Reduce #1 to typename by token IDENT = "tmp" at line 3 in state 15, goto 16
+Reduce #1 to typespec by token IDENT = "tmp" at line 3 in state 16, goto 20
+Shift token IDENT = "tmp" at line 3 in state 20, goto 29
+Shift token '=' at line 3 in state 29, goto 38
+Shift token IDENT = "a" at line 3 in state 38, goto 46
+Reduce #1 to expression by token ';' at line 3 in state 46, goto 45
+Reduce #5 to variabledefinition by token ';' at line 3 in state 45, goto 99
+Shift token ';' at line 3 in state 99, goto 140
+Reduce #2 to statement by token IDENT = "a" at line 4 in state 140, goto 98
+Shift token IDENT = "a" at line 4 in state 98, goto 46
+Reduce #1 to expression by token '=' at line 4 in state 46, goto 101
+Shift token '=' at line 4 in state 101, goto 65
+Shift token IDENT = "b" at line 4 in state 65, goto 46
+Reduce #1 to expression by token ';' at line 4 in state 46, goto 112
+Reduce #3 to expression by token ';' at line 4 in state 112, call operator assign, goto 101
+Shift token ';' at line 4 in state 101, goto 142
+Reduce #2 to statement by token IDENT = "b" at line 5 in state 142, goto 98
+Shift token IDENT = "b" at line 5 in state 98, goto 46
+Reduce #1 to expression by token '=' at line 5 in state 46, goto 101
+Shift token '=' at line 5 in state 101, goto 65
+Shift token IDENT = "tmp" at line 5 in state 65, goto 46
+Reduce #1 to expression by token ';' at line 5 in state 46, goto 112
+Reduce #3 to expression by token ';' at line 5 in state 112, call operator assign, goto 101
+Shift token ';' at line 5 in state 101, goto 142
+Reduce #2 to statement by token '}' at line 6 in state 142, goto 98
+Reduce #0 to statementlist by token '}' at line 6 in state 98, goto 139
+Reduce #2 to statementlist by token '}' at line 6 in state 139, goto 139
+Reduce #2 to statementlist by token '}' at line 6 in state 139, goto 139
+Reduce #2 to statementlist by token '}' at line 6 in state 139, goto 97
+Shift token '}' at line 6 in state 97, goto 138
+Reduce #8 to functiondefinition by token "function" at line 8 in state 138, goto 5
+Reduce #1 to definition by token "function" at line 8 in state 5, goto 3
+Shift token "function" at line 8 in state 3, goto 8
+Shift token IDENT = "int" at line 8 in state 8, goto 15
+Reduce #1 to typename by token IDENT = "fibonacci" at line 8 in state 15, goto 16
+Reduce #1 to typespec by token IDENT = "fibonacci" at line 8 in state 16, goto 17
+Shift token IDENT = "fibonacci" at line 8 in state 17, goto 26
+Shift token '(' at line 8 in state 26, goto 32
+Shift token IDENT = "int" at line 8 in state 32, goto 15
+Reduce #1 to typename by token IDENT = "n" at line 8 in state 15, goto 16
+Reduce #1 to typespec by token IDENT = "n" at line 8 in state 16, goto 35
+Shift token IDENT = "n" at line 8 in state 35, goto 42
+Reduce #2 to paramdecl by token ')' at line 8 in state 42, goto 37
+Reduce #1 to parameters by token ')' at line 8 in state 37, goto 40
+Shift token ')' at line 8 in state 40, goto 58
+Shift token '{' at line 9 in state 58, goto 94
+Shift token "var" at line 10 in state 94, goto 10
+Shift token IDENT = "int" at line 10 in state 10, goto 15
+Reduce #1 to typename by token IDENT = "i1" at line 10 in state 15, goto 16
+Reduce #1 to typespec by token IDENT = "i1" at line 10 in state 16, goto 20
+Shift token IDENT = "i1" at line 10 in state 20, goto 29
+Shift token '=' at line 10 in state 29, goto 38
+Shift token CARDINAL = "0" at line 10 in state 38, goto 49
+Reduce #1 to expression by token ';' at line 10 in state 49, goto 45
+Reduce #5 to variabledefinition by token ';' at line 10 in state 45, goto 99
+Shift token ';' at line 10 in state 99, goto 140
+Reduce #2 to statement by token "var" at line 11 in state 140, goto 98
+Shift token "var" at line 11 in state 98, goto 10
+Shift token IDENT = "int" at line 11 in state 10, goto 15
+Reduce #1 to typename by token IDENT = "i2" at line 11 in state 15, goto 16
+Reduce #1 to typespec by token IDENT = "i2" at line 11 in state 16, goto 20
+Shift token IDENT = "i2" at line 11 in state 20, goto 29
+Shift token '=' at line 11 in state 29, goto 38
+Shift token CARDINAL = "1" at line 11 in state 38, goto 49
+Reduce #1 to expression by token ';' at line 11 in state 49, goto 45
+Reduce #5 to variabledefinition by token ';' at line 11 in state 45, goto 99
+Shift token ';' at line 11 in state 99, goto 140
+Reduce #2 to statement by token "while" at line 12 in state 140, goto 98
+Shift token "while" at line 12 in state 98, goto 104
+Shift token '(' at line 12 in state 104, goto 145
+Shift token IDENT = "i" at line 12 in state 145, goto 46
+Reduce #1 to expression by token '<' at line 12 in state 46, goto 153
+Shift token '<' at line 12 in state 153, goto 77
+Shift token IDENT = "n" at line 12 in state 77, goto 46
+Reduce #1 to expression by token ')' at line 12 in state 46, goto 124
+Reduce #3 to expression by token ')' at line 12 in state 124, call operator, goto 153
+Shift token ')' at line 12 in state 153, goto 156
+Shift token '{' at line 13 in state 156, goto 158
+Shift token IDENT = "i1" at line 14 in state 158, goto 46
+Reduce #1 to expression by token '=' at line 14 in state 46, goto 101
+Shift token '=' at line 14 in state 101, goto 65
+Shift token IDENT = "i2" at line 14 in state 65, goto 46
+Reduce #1 to expression by token '+' at line 14 in state 46, goto 112
+Shift token '+' at line 14 in state 112, goto 80
+Shift token IDENT = "i1" at line 14 in state 80, goto 46
+Reduce #1 to expression by token ';' at line 14 in state 46, goto 127
+Reduce #3 to expression by token ';' at line 14 in state 127, call operator add, goto 112
+Reduce #3 to expression by token ';' at line 14 in state 112, call operator assign, goto 101
+Shift token ';' at line 14 in state 101, goto 142
+Reduce #2 to statement by token IDENT = "swap" at line 15 in state 142, goto 98
+Shift token IDENT = "swap" at line 15 in state 98, goto 46
+Reduce #1 to expression by token '(' at line 15 in state 46, goto 101
+Shift token '(' at line 15 in state 101, goto 64
+Shift token IDENT = "i1" at line 15 in state 64, goto 46
+Reduce #1 to expression by token ',' at line 15 in state 46, goto 109
+Shift token ',' at line 15 in state 109, goto 147
+Shift token IDENT = "i2" at line 15 in state 147, goto 46
+Reduce #1 to expression by token ')' at line 15 in state 46, goto 109
+Reduce #1 to expressionlist by token ')' at line 15 in state 109, goto 154
+Reduce #3 to expressionlist by token ')' at line 15 in state 154, goto 110
+Shift token ')' at line 15 in state 110, goto 148
+Reduce #4 to expression by token ';' at line 15 in state 148, goto 101
+Shift token ';' at line 15 in state 101, goto 142
+Reduce #2 to statement by token '}' at line 16 in state 142, goto 98
+Reduce #0 to statementlist by token '}' at line 16 in state 98, goto 139
+Reduce #2 to statementlist by token '}' at line 16 in state 139, goto 139
+Reduce #2 to statementlist by token '}' at line 16 in state 139, goto 160
+Shift token '}' at line 16 in state 160, goto 162
+Reduce #7 to statement by token "return" at line 17 in state 162, goto 98
+Shift token "return" at line 17 in state 98, goto 105
+Shift token IDENT = "i2" at line 17 in state 105, goto 46
+Reduce #1 to expression by token ';' at line 17 in state 46, goto 146
+Reduce #2 to returnstatement by token ';' at line 17 in state 146, goto 100
+Shift token ';' at line 17 in state 100, goto 141
+Reduce #2 to statement by token '}' at line 18 in state 141, goto 98
+Reduce #0 to statementlist by token '}' at line 18 in state 98, goto 139
+Reduce #2 to statementlist by token '}' at line 18 in state 139, goto 139
+Reduce #2 to statementlist by token '}' at line 18 in state 139, goto 139
+Reduce #2 to statementlist by token '}' at line 18 in state 139, goto 139
+Reduce #2 to statementlist by token '}' at line 18 in state 139, goto 136
+Shift token '}' at line 18 in state 136, goto 150
+Reduce #1 to definition by token $ at line 20 in state 5, goto 3
+Reduce #0 to definitionlist by token $ at line 20 in state 3, goto 11
+Reduce #2 to definitionlist by token $ at line 20 in state 11, goto 11
+Reduce #2 to definitionlist by token $ at line 20 in state 11, goto 2
+Accept

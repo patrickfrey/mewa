@@ -225,20 +225,17 @@ struct TransitionItem
 	int prodindex;		// [0..MaxNofProductions]
 	int prodpos;		// [0..MaxProductionLength]
 	int follow;		// [0..MaxTerminal]
-	Priority priority;	// [0..2*MaxPriority]
 
-	TransitionItem( int prodindex_, int prodpos_, int follow_, const Priority priority_)
-		:prodindex(prodindex_),prodpos(prodpos_),follow(follow_),priority(priority_){}
+	TransitionItem( int prodindex_, int prodpos_, int follow_)
+		:prodindex(prodindex_),prodpos(prodpos_),follow(follow_){}
 	TransitionItem( const TransitionItem& o)
-		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow),priority(o.priority){}
+		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow){}
 
 	bool operator < (const TransitionItem& o) const noexcept
 	{
 		return prodindex == o.prodindex
 			? prodpos == o.prodpos
-				? follow == o.follow
-					? priority < o.priority
-					: follow < o.follow
+				? follow < o.follow
 				: prodpos < o.prodpos
 			: prodindex < o.prodindex;
 	}
@@ -253,31 +250,28 @@ struct TransitionItem
 
 	bool equal( const TransitionItem& o) const noexcept
 	{
-		return prodindex == o.prodindex && prodpos == o.prodpos && follow == o.follow && priority == o.priority;
+		return prodindex == o.prodindex && prodpos == o.prodpos && follow == o.follow;
 	}
 
 	int packed() const noexcept
 	{
 		static_assert (Automaton::ShiftNofProductions
 				+ Automaton::ShiftProductionLength
-				+ Automaton::ShiftTerminal
-				+ Automaton::ShiftPriorityWithAssoziativity <= 31, "sizeof packed transition item"); 
+				+ Automaton::ShiftTerminal <= 31, "sizeof packed transition item"); 
 		int rt = 0;
-		rt |= prodindex << (Automaton::ShiftProductionLength + Automaton::ShiftTerminal + Automaton::ShiftPriorityWithAssoziativity);
-		rt |= prodpos << (Automaton::ShiftTerminal + Automaton::ShiftPriorityWithAssoziativity);
-		rt |= follow << Automaton::ShiftPriorityWithAssoziativity;
-		rt |= priority.packed();
+		rt |= prodindex << (Automaton::ShiftProductionLength + Automaton::ShiftTerminal);
+		rt |= prodpos << (Automaton::ShiftTerminal);
+		rt |= follow;
 		return rt;
 	}
 
 	static TransitionItem unpack( int pkg) noexcept
 	{
-		int prodindex_ = pkg >> (Automaton::ShiftProductionLength + Automaton::ShiftTerminal + Automaton::ShiftPriorityWithAssoziativity);
-		int prodpos_ = (pkg >> (Automaton::ShiftTerminal + Automaton::ShiftPriorityWithAssoziativity)) & Automaton::MaskProductionLength;
-		int follow_ = (pkg >> Automaton::ShiftPriorityWithAssoziativity) & Automaton::MaskTerminal;
-		Priority priority_( Priority::unpack( pkg & Automaton::MaskPriorityWithAssoziativity));
+		int prodindex_ = pkg >> (Automaton::ShiftProductionLength + Automaton::ShiftTerminal);
+		int prodpos_ = (pkg >> Automaton::ShiftTerminal) & Automaton::MaskProductionLength;
+		int follow_ = pkg & Automaton::MaskTerminal;
 
-		return TransitionItem( prodindex_, prodpos_, follow_, priority_);
+		return TransitionItem( prodindex_, prodpos_, follow_);
 	}
 };
 

@@ -14,34 +14,34 @@ luac.out
 *.elf
 
 # Precompiled Headers
-*.gch
-*.pch
+build/*.gch
+build/*.pch
 
 # Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.def
-*.exp
+build/*.lib
+build/*.a
+build/*.la
+build/*.lo
+build/*.def
+build/*.exp
 
 # Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+build/*.dll
+build/*.so
+build/*.so.*
+build/*.dylib
 
 # Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+build/*.exe
+build/*.out
+build/*.app
+build/*.i*86
+build/*.x86_64
+build/*.hex
 
 # Build
-build/*
-<<<<<<< HEAD
+build/
+build/*.out
+build/*.exp
 .depend
-=======
->>>>>>> ec76b10de6faaa3f9eac5bac893e27f3cfcecbfb
+

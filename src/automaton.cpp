@@ -233,7 +233,7 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 		auto prodrange = prodlist.equal_range( nonterminal);
 		for (auto hi = prodrange.first; hi != prodrange.second; ++hi)
 		{
-			rt.insert( TransitionItem( hi.index()/*prodindex*/, 0/*prodpos*/, 0/*follow*/, Priority()));
+			rt.insert( TransitionItem( hi.index()/*prodindex*/, 0/*prodpos*/, 0/*follow*/));
 		}
 	}
 	return rt;
@@ -326,7 +326,6 @@ static TransitionState getLr1TransitionStateClosure(
 		auto item = TransitionItem::unpack( elem);
 		const ProductionDef& prod = prodlist[ item.prodindex];
 
-		item.priority = prodlist[ item.prodindex].priority;
 		item.follow = nonterminal2FollowMap.at( prod.left.index());
 		rt.insert( item);
 	}
@@ -351,14 +350,14 @@ static void mergeTransitionStateFollow( TransitionState& state, FollowMap& follo
 				break;
 			}
 			joinedFollow = followMap.join( item2.follow, joinedFollow);
-			if (item.priority != item2.priority)
+			if (prodlist[ item.prodindex].priority != prodlist[ item2.prodindex].priority)
 			{
 				throw Error( Error::PriorityConflictInGrammarDef,
 						prodlist[ item.prodindex].tostring( item.prodpos)
 						+ ", " + prodlist[ item2.prodindex].tostring( item2.prodpos));
 			}
 		}
-		newstate.insert( {item.prodindex, item.prodpos, joinedFollow, item.priority});
+		newstate.insert( TransitionItem( item.prodindex, item.prodpos, joinedFollow));
 		oidx = oidx2;
 	}
 	state = std::move( newstate);
@@ -379,7 +378,7 @@ static TransitionState getLr0TransitionStateFromLr1State( const TransitionState&
 	for (auto elem : ts.packedElements())
 	{
 		auto item = TransitionItem::unpack( elem);
-		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, Priority()));
+		rt.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/));
 	}
 	return rt;
 }
@@ -512,7 +511,7 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 		if (item.prodpos < (int)prod.right.size())
 		{
 			const ProductionNodeDef& nd = prod.right[ item.prodpos]; 
-			int succ = TransitionItem( item.prodindex, item.prodpos+1, 0/*follow*/, Priority()).packed();
+			int succ = TransitionItem( item.prodindex, item.prodpos+1, 0/*follow*/).packed();
 
 			nodemap.insert( {nd,succ} );
 
@@ -594,7 +593,7 @@ static ReductionDef getReductionDef( const TransitionState& state, int follow, c
 		{
 			if (last_prodidx == -1)
 			{
-				rt.priority = item.priority;
+				rt.priority = prod.priority;
 				rt.head = prod.left.index();
 				rt.headname = prod.left.name();
 				rt.callidx = prod.callidx;
@@ -609,7 +608,7 @@ static ReductionDef getReductionDef( const TransitionState& state, int follow, c
 						+ prodlist[ last_prodidx].tostring() + " <- "
 						+ followMap.follow2String( follow, lexer));
 			}
-			else if (rt.priority != item.priority)
+			else if (rt.priority != prod.priority)
 			{
 				throw Error( Error::PriorityConflictInGrammarDef,
 						prod.tostring() + ", "
@@ -636,7 +635,7 @@ static TransitionState getGotoState(
 			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			if (gto == nd)
 			{
-				gtoState.insert( TransitionItem( item.prodindex, item.prodpos+1, item.follow, item.priority));
+				gtoState.insert( TransitionItem( item.prodindex, item.prodpos+1, item.follow));
 			}
 		}
 	}
@@ -649,7 +648,7 @@ static std::unordered_map<TransitionState,int> getAutomatonStateAssignments(
 {
 	std::unordered_map<TransitionState,int> rt;
 
-	rt.insert( {calculateClosure( {{0,0,0,0}}), 1});
+	rt.insert( {calculateClosure( {{0,0,0}}), 1});
 	std::vector<TransitionState> statestk( {rt.begin()->first});
 
 	for (std::size_t stkidx = 0; stkidx < statestk.size(); ++stkidx)
@@ -787,7 +786,7 @@ TransitionItemGotoMap calculateLalr1TransitionItemGotoMap(
 		for (auto elem : st.second.packedElements())
 		{
 			auto item = TransitionItem::unpack( elem);
-			if (item.prodpos > 0) key.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/, Priority()).packed());
+			if (item.prodpos > 0) key.insert( TransitionItem( item.prodindex, item.prodpos, 0/*follow*/).packed());
 		}
 		if (rt.insert( {key,st.first} ).second == false /*no insert, already exists*/)
 		{
