@@ -27,9 +27,9 @@
 
 using namespace mewa;
 
-#define ERRCODE_MEMORY_ALLOCATION	12 /*ENOMEM*/
-#define ERRCODE_RUNTIME_ERROR 		-2
-#define ERRCODE_INVALID_ARGUMENTS 	-1
+#define ERRCODE_MEMORY_ALLOCATION	3
+#define ERRCODE_RUNTIME_ERROR 		2
+#define ERRCODE_INVALID_ARGUMENTS 	1
 
 static void printUsage()
 {

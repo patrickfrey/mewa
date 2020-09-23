@@ -516,14 +516,17 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 
 			nodemap.insert( {nd,succ} );
 
-			auto pins = prioritymap.insert( {nd,prod.priority} );
-			if (pins.second == false/*no insert took place*/)
+			if (nd.type() == ProductionNodeDef::Terminal)
 			{
-				if (pins.first->second != prod.priority)
+				auto pins = prioritymap.insert( {nd,prod.priority} );
+				if (pins.second == false/*no insert took place*/)
 				{
-					std::string nodestr = nd.tostring();
-					std::string prodprefix = prod.prefix_tostring( item.prodpos);
-					throw Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr);
+					if (pins.first->second != prod.priority)
+					{
+						std::string nodestr = nd.tostring();
+						std::string prodprefix = prod.prefix_tostring( item.prodpos);
+						throw Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr);
+					}
 				}
 			}
 		}
@@ -543,7 +546,8 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 		{
 			throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 		}
-		rt.push_back( ProductionShiftNode( nd, gtoi->second/*goto_stateidx*/, prioritymap.at( nd)));
+		auto priority = nd.type() == ProductionNodeDef::Terminal ? prioritymap.at( nd) : Priority();
+		rt.push_back( ProductionShiftNode( nd, gtoi->second/*goto_stateidx*/, priority));
 	}
 	return rt;
 }
