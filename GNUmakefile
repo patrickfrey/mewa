@@ -1,11 +1,12 @@
 # Build flavor parameters:
 ifeq ($(strip $(COMPILER)),clang)
-CC=/usr/bin/clang
-DEBUGFLAGS:=-fstandalone-debug
+CC=clang
 else ifeq ($(strip $(COMPILER)),gcc)
-CC=/usr/bin/g++
+CC=g++
 else
-CC=/usr/bin/clang
+CC=clang
+endif
+ifeq ($(strip $(CC)),clang)
 DEBUGFLAGS:=-fstandalone-debug
 endif
 AR=ar rcs
@@ -19,14 +20,15 @@ endif
 
 # Project settings:
 BUILDDIR := build
-MANPAGES := /usr/local/man
-DESTINATION := /usr/local/bin
+MANPAGES := `man --path | awk  '1' RS=":" | awk 'NR==1{print $1}'`
 LUAVER   := 5.2
+LUAINC   := /usr/include/lua$(LUAVER)
+DESTINATION := /usr/local/bin
 SRCDIR   := src
 TESTDIR  := tests
 STDFLAGS := -std=c++17
 CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread $(DEBUGFLAGS)
-INCFLAGS := -I$(SRCDIR) -I/usr/include/lua$(LUAVER)
+INCFLAGS := -I$(SRCDIR) -I$(LUAINC)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
 LUALIBS  := -llua$(LUAVER)

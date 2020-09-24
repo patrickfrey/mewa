@@ -277,7 +277,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 			case 2: 
 				if (lua_type( ls, -1) != LUA_TFUNCTION)
 				{
-					throw mewa::Error( mewa::Error::UnresolvableFunctionInLuaCallTable, function);
+					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 				}
 				break;
 			case 3:
@@ -288,7 +288,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 	}
 	if (rowcnt < 2)
 	{
-		throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
+		throw mewa::Error( mewa::Error::UnresolvableFunctionInLuaCallTable, function);
 	}
 	else if (!arg.empty() && rowcnt < 3)
 	{

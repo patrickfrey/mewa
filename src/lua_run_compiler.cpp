@@ -98,8 +98,8 @@ struct State
 static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
 {
 	lua_createtable( ls, 0/*size array*/, 3/*size struct*/);				// STK [TABLE]
-	lua_pushlstring( ls, lexem.name().data(), lexem.name().size());				// STK [TABLE] "arg" [NAME]
 	lua_pushliteral( ls, "name");								// STK [TABLE] "name"
+	lua_pushlstring( ls, lexem.name().data(), lexem.name().size());				// STK [TABLE] "arg" [NAME]
 	lua_rawset( ls, -3);									// STK [TABLE]
 	lua_pushliteral( ls, "value");								// STK [TABLE] "value"
 	lua_pushlstring( ls, lexem.value().data(), lexem.value().size());			// STK [TABLE] "value" [VALUE]
@@ -262,31 +262,33 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 
 static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 {
-	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack);
+	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 	lua_pushvalue( ls, li);						// STK: [NODE]
 	lua_pushliteral( ls, "call");					// STK: [NODE] "call"
 	lua_gettable( ls, -2);						// STK: [NODE] [CALL]
 	if (lua_isnil( ls, -1))
 	{
-		lua_pop( ls, 1);				// STK: [NODE]
-		lua_pushliteral( ls, "name");			// STK: [NODE] "name"
-		lua_gettable( ls, -2);				// STK: [NODE] [NAME]
-		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack);
+		lua_pop( ls, 1);					// STK: [NODE]
+		/*[-]*/std::cerr << "STACK VALUE" << std::endl;
+		/*[-]*/serializeLuaValue( std::cerr, ls, -1, "\n");
+		lua_pushliteral( ls, "name");				// STK: [NODE] "name"
+		lua_gettable( ls, -2);					// STK: [NODE] [NAME]
+		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 		std::string namestr( lua_tostring( ls, -1));
-		lua_pop( ls, 1);				// STK: [NODE]
-		lua_pushliteral( ls, "value");			// STK: [NODE] "value"
-		lua_gettable( ls, -2);				// STK: [NODE] [VALUE]
-		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack);
+		lua_pop( ls, 1);					// STK: [NODE]
+		lua_pushliteral( ls, "value");				// STK: [NODE] "value"
+		lua_gettable( ls, -2);					// STK: [NODE] [VALUE]
+		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 		std::string valuestr( lua_tostring( ls, -1));
-		lua_pop( ls, 2);				// STK:
+		lua_pop( ls, 2);					// STK:
 		throw mewa::Error( mewa::Error::NoLuaFunctionDefinedForItem, namestr + " = " + valuestr);
 	}
 	else
 	{
 		int nargs = 1;
 		lua_rawgeti( ls, -1, 1);				// STK: [NODE] [CALL] [FUNCNAME]
-		lua_rawgeti( ls, -1, 2);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
-		lua_rawgeti( ls, -1, 2);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG]
+		lua_rawgeti( ls, -2, 2);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
+		lua_rawgeti( ls, -3, 2);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG]
 		if (lua_isnil( ls, -1))
 		{
 			lua_pop( ls, 1);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC]

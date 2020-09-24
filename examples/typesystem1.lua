@@ -34,6 +34,13 @@ return {
 	mul = {},
 	div = {},
 	mod = {},
+
+	arrow = {},
+	member = {},
+	ptrderef = {},
+	call = {},
+	arrayaccess = {},
+
 	cmpeq = {},
 	cmpne = {},
 	cmple = {},
@@ -41,8 +48,31 @@ return {
 	cmpge = {},
 	cmpgt = {},
 
-	operator = function( arg)
-		print( "operator " .. arg)
-	end
+	puretype = {},
+	consttype = {},
+	reftype = {},
+	constreftype = {},
+	ptrtype = {},
+	constptrtype = {},
+	ptrreftype = {},
+	constptrreftype = {},
+	movereftype = {},
+
+	vardef = function( arg) end,
+	vardef_assign = function( arg) end,
+	vardef_array = function( arg) end,
+	vardef_array_assign = function( arg) end,
+	operator = function( arg) end,
+	stm_expression = function( arg) end,
+	stm_return = function( arg) end,
+	conditional_if = function( arg) end,
+	conditional_while = function( arg) end,
+
+	namespaceref = function( arg) end,
+	typedef = function( arg) end,
+	typespec = function( arg) end,
+	funcdef = function( arg) end,
+	procdef = function( arg) end,
+	program = function( arg) end
 }
 

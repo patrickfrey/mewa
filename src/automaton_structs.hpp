@@ -159,13 +159,12 @@ struct ProductionDef
 	ProductionDef& operator=( const ProductionDef& o)
 		{left=o.left; right=o.right; priority=o.priority; callidx=o.callidx; return *this;}
 
-	std::string tostring() const
+	std::string prodstring() const
 	{
-		return head_tostring() + " = "
-			+ element_range_tostring( right.begin(), right.end());
+		return head_tostring() + " = " + element_range_tostring( right.begin(), right.end());
 	}
 
-	std::string tostring( int pos) const
+	std::string prodstring( int pos) const
 	{
 		std::string rt = head_tostring() + " = ";
 		std::string prev = element_range_tostring( right.begin(), right.begin() + pos);
@@ -184,6 +183,29 @@ struct ProductionDef
 			rt.push_back( ' ');
 			rt.append( post);
 		}
+		return rt;
+	}
+
+	std::string tostring() const
+	{
+		return prodstring() + callstring();
+	}
+
+	std::string tostring( int pos) const
+	{
+		return prodstring( pos) + callstring();
+	}
+
+	std::string prefix_tostring( int pos) const
+	{
+		return head_tostring() + " = "
+			+ element_range_tostring( right.begin(), right.begin() + pos) + " ...";
+	}
+
+private:
+	std::string callstring() const
+	{
+		std::string rt;
 		if (callidx)
 		{
 			char callstrbuf[ 64];
@@ -195,13 +217,6 @@ struct ProductionDef
 		return rt;
 	}
 
-	std::string prefix_tostring( int pos) const
-	{
-		return head_tostring() + " = "
-			+ element_range_tostring( right.begin(), right.begin() + pos) + " ...";
-	}
-
-private:	
 	std::string head_tostring() const
 	{
 		return priority.defined() ? (std::string( left.name()) + "/" + priority.tostring()) : (std::string( left.name()));

@@ -129,7 +129,7 @@ V = "*" E
 [10]
 	N = V "=" E .
 
--- LR(0) GOTO state cores (for calculation of SHIFT follow state):
+-- LR(0) state cores (for calculation of SHIFT follow state):
 [2]
 	S = N .
 [3]

@@ -119,17 +119,19 @@ static void printCallTable( std::ostream& outstream, const char* tablename, cons
 	for (auto call : table)
 	{
 		outstream << ((tidx++) ? ",\n\t\t{ " : "\n\t\t{ ");
-		printString( outstream, call.function() + " " + call.arg());
 
 		switch (call.argtype())
 		{
 			case Automaton::Call::NoArg:
+				printString( outstream, call.function());
 				outstream << ", " << g_typeSystemModulePrefix << call.function();
 				break;
 			case Automaton::Call::StringArg:
+				printString( outstream, call.function() + " " + call.arg());
 				outstream << ", " << g_typeSystemModulePrefix << call.function() << ", \"" << call.arg() << "\"}";
 				break;
 			case Automaton::Call::ReferenceArg:
+				printString( outstream, call.function() + " " + call.arg());
 				if (isConstantArgument( call.arg()))
 				{
 					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << call.arg();

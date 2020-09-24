@@ -796,7 +796,7 @@ TransitionItemGotoMap calculateLalr1TransitionItemGotoMap(
 	return rt;
 }
 
-static void printGotoMap( std::ostream& out, const TransitionItemGotoMap& map, const std::vector<ProductionDef>& prodlist)
+static void printLalr1StateCores( std::ostream& out, const TransitionItemGotoMap& map, const std::vector<ProductionDef>& prodlist)
 {
 	std::map<int,FlatSet<int> > invmap;
 	for (auto const& kv : map)
@@ -811,7 +811,7 @@ static void printGotoMap( std::ostream& out, const TransitionItemGotoMap& map, c
 			for (auto elem : kv.second)
 			{
 				auto item = TransitionItem::unpack( elem);
-				out << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << std::endl;
+				out << "\t" << prodlist[ item.prodindex].prodstring( item.prodpos) << std::endl;
 			}
 		}
 	}
@@ -995,7 +995,7 @@ static void printLr0States(
 		for (int elem : invst.second.packedElements())
 		{
 			auto item = TransitionItem::unpack( elem);
-			dbgout.out() << "\t" << prodlist[ item.prodindex].tostring( item.prodpos) << std::endl;
+			dbgout.out() << "\t" << prodlist[ item.prodindex].prodstring( item.prodpos) << std::endl;
 		}
 	}
 	dbgout.out() << std::endl;
@@ -1007,8 +1007,8 @@ static void printLalr1States(
 		const std::vector<ProductionDef>& prodlist, const FollowMap& followMap, const Lexer& lexer,
 		const std::vector<Automaton::Call>& calls, Automaton::DebugOutput dbgout)
 {
-	dbgout.out() << "-- LR(0) GOTO state cores (for calculation of SHIFT follow state):" << std::endl;
-	printGotoMap( dbgout.out(), gotoMap, prodlist);
+	dbgout.out() << "-- LR(0) state cores (for calculation of SHIFT follow state):" << std::endl;
+	printLalr1StateCores( dbgout.out(), gotoMap, prodlist);
 	dbgout.out() << std::endl;
 
 	dbgout.out() << "-- LR(1) used FOLLOW sets labeled:" << std::endl;
@@ -1034,7 +1034,7 @@ static void printLalr1States(
 				auto const& prod = prodlist[ item.prodindex];
 				if (item.prodpos < prod.right.size() && prod.right[ item.prodpos] == shft.node)
 				{
-					dbgout.out() << "\t" << prod.tostring( item.prodpos) << ", FOLLOW [" << item.follow << "]";
+					dbgout.out() << "\t" << prod.prodstring( item.prodpos) << ", FOLLOW [" << item.follow << "]";
 					if (shft.node.type() == ProductionNodeDef::Terminal)
 					{
 						dbgout.out() << " -> SHIFT " << getLexemName( lexer, shft.node.index()) << " GOTO " << shft.goto_stateidx;

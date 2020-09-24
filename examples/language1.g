@@ -11,7 +11,7 @@ FLOAT	: '[0123456789]+[.][0123456789]+' ;
 FLOAT	: '[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+' ;
 
 
-program		   	= definitionlist
+program		   	= definitionlist			(program)
 			;
 definitionlist/L	= definition definitionlist
 			| ε
@@ -21,26 +21,26 @@ definition		= functiondefinition
 			| variabledefinition ";"
 			;
 typename/L1		= IDENT
-			| IDENT "::" typename
+			| IDENT "::" typename			(namespaceref)
 			;
-typespec/L1		= typename
-			| "const" typename
-			| typename "&"
-			| "const" typename "&"
-			| typename "^"
-			| "const" typename "^"
-			| typename "^" "&"
-			| "const" typename "^" "&"
-			| typename "&&"
+typespec/L1		= typename				(typespec puretype)
+			| "const" typename			(typespec consttype)
+			| typename "&"				(typespec reftype)
+			| "const" typename "&"			(typespec constreftype)
+			| typename "^"				(typespec ptrtype)
+			| "const" typename "^"			(typespec constptrtype)
+			| typename "^" "&"			(typespec ptrreftype)
+			| "const" typename "^" "&"		(typespec constptrreftype)
+			| typename "&&"				(typespec movereftype)
 			;
-typedefinition		= "typedef" typename IDENT
+typedefinition		= "typedef" typename IDENT		(typedef)
 			;
 functiondefinition	= "function" typespec IDENT
 				"(" parameters ")"
-				"{" statementlist "}"
+				"{" statementlist "}"		(funcdef)
 			| "procedure" IDENT
 				"(" parameters ")"
-				"{" statementlist "}"
+				"{" statementlist "}"		(procdef)
 			;
 parameters/L		= paramdecl "," parameters
 			| paramdecl
@@ -54,19 +54,19 @@ statementlist/L		= statement statementlist
 statement		= functiondefinition
 			| typedefinition ";"
 			| variabledefinition ";"
-			| expression ";"
+			| expression ";"								(stm_expression)
 			| returnstatement ";"
-			| "if" "(" expression ")" "{" statementlist "}"
-			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"
-			| "while" "(" expression ")" "{" statementlist "}"
+			| "if" "(" expression ")" "{" statementlist "}"					(conditional_if)
+			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	(conditional_if)
+			| "while" "(" expression ")" "{" statementlist "}"				(conditional_while)
 			| "{" statementlist "}"
 			;
-variabledefinition	= "var" typespec IDENT "=" expression
-			| "var" typespec IDENT
-			| "var" typespec IDENT "[" "]" "=" expression
-			| "var" typespec IDENT "[" "]"
+variabledefinition	= "var" typespec IDENT "=" expression						(vardef_assign)
+			| "var" typespec IDENT								(vardef)
+			| "var" typespec IDENT "[" "]" "=" expression					(vardef_array_assign)
+			| "var" typespec IDENT "[" "]"							(vardef_array)
 			;  
-returnstatement	   	= "return" expression
+returnstatement	   	= "return" expression								(stm_return)
 			;
 expression/L1		= IDENT
 			| CARDINAL
@@ -109,13 +109,13 @@ expression/L9		= expression  "*"  expression		(operator mul)
 			| expression  "/"  expression		(operator div)
 			| expression  "%"  expression		(operator mod)
 			;
-expression/L10		= expression "->" IDENT
-			| expression "." IDENT
-			| "*" expression
+expression/L10		= expression "->" IDENT			(operator arrow)
+			| expression "." IDENT			(operator member)
+			| "*" expression			(operator ptrderef)
 			;
-expression/L11		= expression  "(" expressionlist ")"
-			| expression  "(" ")"
-			| expression  "[" expressionlist "]"
+expression/L11		= expression  "(" expressionlist ")"	(operator call)
+			| expression  "(" ")"			(operator call)
+			| expression  "[" expressionlist "]"	(operator arrayaccess)
 			;
 expressionlist		= expression "," expressionlist
                         | expression
