@@ -19,7 +19,11 @@
 
 namespace mewa {
 
-void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, std::ostream* dbgout);
+// \param[in] ls Lua state
+// \param[in] source source to compile
+// \param[in] calltable Name of Lua global variable addressing the call table of the compiler
+// \param[in] dbgout optional debug output, null if not defined
+void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, std::ostream* dbgout);
 
 } //namespace
 #else

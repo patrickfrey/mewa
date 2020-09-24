@@ -242,10 +242,11 @@ static int mewa_compiler_run( lua_State* ls)
 		if (!lua_checkstack( ls, 10)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
 
 		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
-		if (!lua_isstring( ls, 2)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[1] " + lua_typename( ls, lua_type( ls, 2)));
+		if (!lua_isstring( ls, 2)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument,
+								std::string(functionName) + "[1] " + lua_typename( ls, lua_type( ls, 2)));
 		const char* filename = lua_tostring( ls, 2);
 		std::string source = mewa::readFile( filename);
-		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));
+		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));		// STK: [COMPILER] [INPUTFILE] [SOURCE]
 
 		if (nn >= 3)
 		{
@@ -283,21 +284,21 @@ static int mewa_compiler_run( lua_State* ls)
 				const char* debugFilename = lua_tostring( ls, 4);
 				if (0==std::strcmp( debugFilename, "stderr"))
 				{
-					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, &std::cerr);
+					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, mw->callTableName.buf, &std::cerr);
 				}
 				else if (0==std::strcmp( debugFilename, "stdout"))
 				{
-					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, &std::cout);
+					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, mw->callTableName.buf, &std::cout);
 				}
 				else
 				{
 					std::ofstream debugStream( debugFilename, std::ios_base::out | std::ios_base::trunc);
-					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, &debugStream);
+					mewa::luaRunCompiler( ls, mw->automaton, sourceptr, mw->callTableName.buf, &debugStream);
 				}
 			}
 			else
 			{
-				mewa::luaRunCompiler( ls, mw->automaton, sourceptr, nullptr/*no debug output*/);
+				mewa::luaRunCompiler( ls, mw->automaton, sourceptr, mw->callTableName.buf, nullptr/*no debug output*/);
 			}
 			if (hasRedirectedOutput)
 			{

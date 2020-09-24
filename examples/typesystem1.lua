@@ -17,6 +17,16 @@ return {
 	end,
 
 	assign = {},
+	assign_add = {},
+	assign_sub = {},
+	assign_mul = {},
+	assign_div = {},
+	assign_mod = {},
+	logical_or = {},
+	logical_and = {},
+	bitwise_or = {},
+	bitwise_xor = {},
+	bitwise_and = {},
 	add = {},
 	sub = {},
 	minus = {},
@@ -24,6 +34,12 @@ return {
 	mul = {},
 	div = {},
 	mod = {},
+	cmpeq = {},
+	cmpne = {},
+	cmple = {},
+	cmplt = {},
+	cmpge = {},
+	cmpgt = {},
 
 	operator = function( arg)
 		print( "operator " .. arg)

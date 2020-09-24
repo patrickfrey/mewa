@@ -95,7 +95,7 @@ Reduce #1 to expression by token '<' at line 12 in state 46, goto 153
 Shift token '<' at line 12 in state 153, goto 77
 Shift token IDENT = "n" at line 12 in state 77, goto 46
 Reduce #1 to expression by token ')' at line 12 in state 46, goto 124
-Reduce #3 to expression by token ')' at line 12 in state 124, call operator, goto 153
+Reduce #3 to expression by token ')' at line 12 in state 124, call operator cmplt, goto 153
 Shift token ')' at line 12 in state 153, goto 156
 Shift token '{' at line 13 in state 156, goto 158
 Shift token IDENT = "i1" at line 14 in state 158, goto 46
