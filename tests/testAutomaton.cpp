@@ -255,7 +255,8 @@ V = "*" E
 							random.get( 0, Automaton::MaxState)/*state*/,
 							random.get( 0, Automaton::MaxTerminal)/*terminal*/);
 			Automaton::Action::Type atype = (Automaton::Action::Type)random.get( 0, 3);
-			Automaton::Action action( atype,
+			Automaton::Action::ScopeFlag scopeflag = (Automaton::Action::ScopeFlag)random.get( 0, 3);
+			Automaton::Action action( atype, scopeflag,
 							random.get( 0, Automaton::MaxState)/*value*/,
 							random.get( 0, Automaton::MaxCall)/*call*/,
 							random.get( 0, Automaton::MaxProductionLength)/*count*/);

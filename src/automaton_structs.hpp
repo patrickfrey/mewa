@@ -144,6 +144,7 @@ struct Priority {
 	}
 };
 
+typedef Automaton::Action::ScopeFlag ScopeFlag;
 
 struct ProductionDef
 {
@@ -151,13 +152,19 @@ struct ProductionDef
 	ProductionNodeDefList right;
 	Priority priority;
 	int callidx;
+	ScopeFlag scope;
 
-	ProductionDef( const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_, int callidx_ = 0)
-		:left(leftname_,true/*symbol*/),right(right_),priority(priority_),callidx(callidx_){}
+	ProductionDef( const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_, 
+			int callidx_=0, const ScopeFlag scope_=Automaton::Action::NoScope)
+		:left(leftname_,true/*symbol*/),right(right_),priority(priority_),callidx(callidx_),scope(scope_){}
 	ProductionDef( const ProductionDef& o)
-		:left(o.left),right(o.right),priority(o.priority),callidx(o.callidx){}
+		:left(o.left),right(o.right),priority(o.priority),callidx(o.callidx),scope(o.scope){}
 	ProductionDef& operator=( const ProductionDef& o)
-		{left=o.left; right=o.right; priority=o.priority; callidx=o.callidx; return *this;}
+		{left=o.left; right=o.right; priority=o.priority; callidx=o.callidx; scope=o.scope; return *this;}
+	ProductionDef( ProductionDef&& o)
+		:left(std::move(o.left)),right(std::move(o.right)),priority(o.priority),callidx(o.callidx),scope(o.scope){}
+	ProductionDef& operator=( ProductionDef&& o)
+		{left=std::move(o.left); right=std::move(o.right); priority=o.priority; callidx=o.callidx; scope=o.scope; return *this;}
 
 	std::string prodstring() const
 	{
@@ -203,15 +210,30 @@ struct ProductionDef
 	}
 
 private:
+	const char* scopeFlagName() const noexcept
+	{
+		return Automaton::Action::scopeFlagName(scope);
+	}
+
 	std::string callstring() const
 	{
 		std::string rt;
-		if (callidx)
+		if (callidx || scope)
 		{
 			char callstrbuf[ 64];
 			callstrbuf[ 0] = 0;
-			std::snprintf( callstrbuf, sizeof(callstrbuf), " (%d)", callidx);
-
+			if (scope && callidx)
+			{
+				std::snprintf( callstrbuf, sizeof(callstrbuf), " (%s:%d)", scopeFlagName(), callidx);
+			}
+			else if (scope)
+			{
+				std::snprintf( callstrbuf, sizeof(callstrbuf), " (%s)", scopeFlagName());
+			}
+			else
+			{
+				std::snprintf( callstrbuf, sizeof(callstrbuf), " (%d)", callidx);
+			}
 			rt.append( callstrbuf);
 		}
 		return rt;

@@ -26,7 +26,10 @@ class Automaton
 {
 public:
 	enum {
-		ShiftState = 14, 
+		ShiftActionType = 2,
+			MaxActionType = 1<<ShiftActionType,
+			MaskActionType = MaxActionType-1,
+		ShiftState = 12,
 			MaxState = 1<<ShiftState,
 			MaskState = MaxState-1,
 		ShiftProductionLength = 4,
@@ -50,6 +53,9 @@ public:
 		ShiftAssoziativity = 2,
 			MaxAssoziativity = 1<<ShiftAssoziativity,
 			MaskAssoziativity = MaxAssoziativity-1,
+		ShiftScopeFlag = 2,
+			MaxScopeFlag = 1<<ShiftScopeFlag,
+			MaskScopeFlag = MaxScopeFlag-1,
 		ShiftPriorityWithAssoziativity = ShiftPriority+ShiftAssoziativity,
 			MaxPriorityWithAssoziativity = 1<<ShiftPriorityWithAssoziativity,
 			MaskPriorityWithAssoziativity = MaxPriorityWithAssoziativity-1
@@ -98,6 +104,8 @@ public:
 		}
 		static ActionKey unpack( int pkg) noexcept
 		{
+			static_assert (ShiftState + ShiftTerminal <= 31, "sizeof packed action key structure"); 
+
 			return ActionKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*terminal*/);
 		}
 
@@ -109,48 +117,62 @@ public:
 	class Action
 	{
 	public:
-		enum Type :short {Shift,Reduce,Accept};
+		enum Type 	:char {Shift,Reduce,Accept};
+		enum ScopeFlag	:char {NoScope,Step,Scope};
 
 		Action()
-			:m_type(Shift),m_value(0),m_call(0),m_count(0){}
-		Action( Type type_, int value_, int call_, int count_)
-			:m_type(type_),m_value(value_),m_call(call_),m_count(count_){}
+			:m_type(Shift),m_scopeflag(NoScope),m_value(0),m_call(0),m_count(0){}
+		Action( Type type_, ScopeFlag scopeflag_, int value_, int call_, int count_)
+			:m_type(type_),m_scopeflag(scopeflag_),m_value(value_),m_call(call_),m_count(count_){}
 		Action( const Action& o)
-			:m_type(o.m_type),m_value(o.m_value),m_call(o.m_call),m_count(o.m_count){}
+			:m_type(o.m_type),m_scopeflag(o.m_scopeflag),m_value(o.m_value),m_call(o.m_call),m_count(o.m_count){}
+
+		static const char* scopeFlagName( ScopeFlag scopeflag_) noexcept
+			{static const char* ar[3] = {"","step","scope"}; return ar[ scopeflag_];}
 
 		Type type() const noexcept		{return m_type;}
+		ScopeFlag scopeflag() const noexcept	{return m_scopeflag;}
 		int state() const noexcept		{return m_value;}
 		int nonterminal() const noexcept	{return m_value;}
 		int call() const noexcept		{return m_call;}
 		int count() const noexcept		{return m_count;}
 
-		bool operator == (const Action& o) const noexcept	{return m_type == o.m_type && m_value == o.m_value && m_call == o.m_call && m_count == o.m_count;}
-		bool operator != (const Action& o) const noexcept	{return m_type != o.m_type || m_value != o.m_value || m_call != o.m_call || m_count != o.m_count;}
-
+		bool operator == (const Action& o) const noexcept	{return m_type == o.m_type && m_scopeflag == o.m_scopeflag
+										&& m_value == o.m_value && m_call == o.m_call && m_count == o.m_count;}
+		bool operator != (const Action& o) const noexcept	{return m_type != o.m_type || m_scopeflag != o.m_scopeflag
+										|| m_value != o.m_value || m_call != o.m_call || m_count != o.m_count;}
 		int packed() const noexcept
 		{
-			return ((int)m_type << (ShiftState + ShiftProductionLength + ShiftCall))
+			return ((int)m_type << (ShiftProductionLength + ShiftCall + ShiftState + ShiftScopeFlag))
+				| ((int)m_scopeflag << (ShiftProductionLength + ShiftCall + ShiftState))
 				| ((int)m_value << (ShiftProductionLength + ShiftCall))
 				| ((int)m_call << ShiftProductionLength)
 				| (int)m_count;
 		}
 		static Action unpack( int pkg) noexcept
 		{
-			return Action( (Type)((pkg >> (ShiftState + ShiftProductionLength + ShiftCall)) & 3)/*type*/,
+			static_assert (ShiftProductionLength + ShiftCall + ShiftState + ShiftScopeFlag + ShiftActionType <= 31, "sizeof packed action structure"); 
+
+			return Action( (Type)((pkg >> (ShiftProductionLength + ShiftCall + ShiftState + ShiftScopeFlag)) & MaskActionType)/*type*/,
+					(ScopeFlag)((pkg >> (ShiftProductionLength + ShiftCall + ShiftState)) & MaskScopeFlag)/*scopeflag*/,
 					(pkg >> (ShiftProductionLength + ShiftCall)) & MaskState/*value*/,
 				        (pkg >> ShiftProductionLength) & MaskCall/*call*/,
 					(pkg) & MaskProductionLength/*count*/);
 		}
 
-		static Action accept()						{return Action( Accept, 0/*state|nonterminal*/, 0/*call*/, 0/*count*/);}
-		static Action shift( int follow_state)				{return Action( Shift, follow_state, 0/*call*/, 0/*count*/);}
-		static Action reduce( int nonterminal_, int call_, int count_)	{return Action( Reduce, nonterminal_, call_, count_);}
+		static Action accept() noexcept
+			{return Action( Accept, NoScope/*scopeflag*/, 0/*state|nonterminal*/, 0/*call*/, 0/*count*/);}
+		static Action shift( int follow_state) noexcept
+			{return Action( Shift, NoScope/*scopeflag*/, follow_state, 0/*call*/, 0/*count*/);}
+		static Action reduce( int nonterminal_, ScopeFlag scopeflag_, int call_, int count_) noexcept
+			{return Action( Reduce, scopeflag_, nonterminal_, call_, count_);}
 
 	private:
-		Type m_type;
-		short m_value;
-		short m_call;
-		short m_count;
+		Type m_type;							//< Type of action
+		ScopeFlag m_scopeflag;						//< Scope/Step flag
+		short m_value;							//< Follow state (SHIFT), Nonterminal (REDUCE)
+		short m_call;							//< Index of function to call (REDUCE)
+		short m_count;							//< Number of elements on stack (right hand of production) to replace (REDUCE)
 	};
 
 	class GotoKey
@@ -174,6 +196,8 @@ public:
 		}
 		static GotoKey unpack( int pkg) noexcept
 		{
+			static_assert (ShiftState + ShiftTerminal <= 31, "sizeof packed goto-key structure"); 
+
 			return GotoKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*nonterminal*/);
 		}
 
@@ -203,6 +227,8 @@ public:
 		}
 		static Goto unpack( int pkg) noexcept
 		{
+			static_assert (ShiftState <= 31, "sizeof packed goto structure"); 
+
 			return Goto( pkg);
 		}
 

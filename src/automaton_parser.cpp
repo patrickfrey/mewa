@@ -41,7 +41,9 @@ public:
 		CALL,
 		OPENBRK,
 		CLOSEBRK,
-		OR
+		OR,
+		STEP,
+		SCOPE
 	};
 
 	GrammarLexer()
@@ -64,6 +66,8 @@ public:
 		defineLexem( "(");
 		defineLexem( ")");
 		defineLexem( "|");
+		defineLexem( ">>");
+		defineLexem( "{}");
 	}
 };
 
@@ -188,7 +192,8 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 		lexem = grammarLexer.next( scanner);
 		for (; !lexem.empty(); lexem = grammarLexer.next( scanner))
 		{
-			switch ((GrammarLexer::LexemType)lexem.id())
+			GrammarLexer::LexemType lexemtype = (GrammarLexer::LexemType)lexem.id();
+			switch (lexemtype)
 			{
 				case GrammarLexer::ERROR:
 					throw Error( Error::BadCharacterInGrammarDef, lexem.value());
@@ -235,9 +240,6 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 						priority = convertStringToPriority( lexem.value());
 						state = ParseAssign;
 					}
-					else if (state == ParsePattern)
-					{
-					}
 					else
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
@@ -280,6 +282,25 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 							rt.calls.push_back( cint.first->first);
 						}
 						state = ParseEndOfProduction;
+					}
+					else if (state == ParseCallName)
+					{
+						state = ParseEndOfProduction;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::STEP:
+				case GrammarLexer::SCOPE:
+					if (state == ParseCallName)
+					{
+						if (rt.prodlist.back().scope != Automaton::Action::NoScope)
+						{
+							throw Error( Error::DuplicateScopeInGrammarDef);
+						}
+						rt.prodlist.back().scope = lexemtype == GrammarLexer::STEP ? Automaton::Action::Step : Automaton::Action::Scope;
 					}
 					else
 					{
@@ -462,7 +483,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					}
 					else if (state == ParseProductionElement || state == ParseEndOfProduction || state == ParseCall)
 					{
-						// ... everything already done
+						/* nothing to do anymore here ... */
 					}
 					else
 					{

@@ -114,10 +114,11 @@ struct CompilerContext
 	std::pmr::vector<State> stateStack;		//< Compiler automaton state stack
 	int calltable;					//< Lua stack address of call table
 	int calltablesize;				//< Number of elements in the call table
+	int scopestep;					//< Counter for step and scope structure
 	std::ostream* dbgout;				//< Debug output or NULL if undefined
 
 	CompilerContext( std::pmr::memory_resource* memrsc, std::size_t buffersize, int calltable_, int calltablesize_, std::ostream* dbgout_)
-		:stateStack(memrsc),calltable(calltable_),calltablesize(calltablesize_),dbgout(dbgout_)
+		:stateStack(memrsc),calltable(calltable_),calltablesize(calltablesize_),scopestep(0),dbgout(dbgout_)
 	{
 		stateStack.reserve( (buffersize - sizeof stateStack) / sizeof(State));
 		stateStack.push_back( {1} );

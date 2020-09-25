@@ -573,12 +573,13 @@ struct ReductionDef
 	int callidx;
 	int count;
 	int prodindex;
+	ScopeFlag scope;
 	std::string_view headname;
 
 	ReductionDef()
-		:priority(),head(-1),callidx(-1),count(-1),prodindex(-1),headname("",0){}
+		:priority(),head(-1),callidx(-1),count(-1),prodindex(-1),scope(Automaton::Action::NoScope),headname("",0){}
 	ReductionDef( const ReductionDef& o)
-		:priority(o.priority),head(o.head),callidx(o.callidx),count(o.count),prodindex(o.prodindex),headname(o.headname){}
+		:priority(o.priority),head(o.head),callidx(o.callidx),count(o.count),prodindex(o.prodindex),scope(o.scope),headname(o.headname){}
 };
 
 static ReductionDef getReductionDef( const TransitionState& state, int follow, const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const FollowMap& followMap)
@@ -1285,7 +1286,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 			{
 				ActionKey key( stateidx, terminal);
 				insertAction( priorityMap, m_actions, langdef.prodlist, followMap, lalr1State, terminal, key, 
-						Action::reduce( rd.head, rd.callidx, rd.count), rd.priority, warnings, langdef.lexer);
+						Action::reduce( rd.head, rd.scope, rd.callidx, rd.count), rd.priority, warnings, langdef.lexer);
 			}
 		}
 	}

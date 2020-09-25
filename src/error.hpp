@@ -43,7 +43,7 @@ public:
 		ValueOutOfRangeInGrammarDef=502,
 		UnexpectedEofInGrammarDef=503,
 		UnexpectedTokenInGrammarDef=504,
-		ExpectedPatternInGrammarDef=505,
+		DuplicateScopeInGrammarDef=505,
 
 		PriorityDefNotForLexemsInGrammarDef=521,
 		UnexpectedEndOfRuleInGrammarDef=531,
@@ -138,7 +138,7 @@ private:
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";
 			case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
 			case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
-			case ExpectedPatternInGrammarDef: return "Expected regular expression as first element of a lexem definition in the grammar";
+			case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
 
 			case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 			case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";

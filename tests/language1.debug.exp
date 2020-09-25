@@ -88,9 +88,9 @@ typespec/L1 = "const" typename "^" (8)
 typespec/L1 = typename "^" "&" (9)
 typespec/L1 = "const" typename "^" "&" (10)
 typespec/L1 = typename "&&" (11)
-typedefinition = "typedef" typename IDENT (12)
-functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist "}" (13)
-functiondefinition = "procedure" IDENT "(" parameters ")" "{" statementlist "}" (14)
+typedefinition = "typedef" typename IDENT (step:12)
+functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist "}" (scope:13)
+functiondefinition = "procedure" IDENT "(" parameters ")" "{" statementlist "}" (scope:14)
 parameters/L0 = paramdecl "," parameters
 parameters/L0 = paramdecl
 parameters/L0 = 
@@ -100,17 +100,17 @@ statementlist/L0 =
 statement = functiondefinition
 statement = typedefinition ";"
 statement = variabledefinition ";"
-statement = expression ";" (15)
+statement = expression ";" (step:15)
 statement = returnstatement ";"
-statement = "if" "(" expression ")" "{" statementlist "}" (16)
-statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" (16)
-statement = "while" "(" expression ")" "{" statementlist "}" (17)
-statement = "{" statementlist "}"
-variabledefinition = "var" typespec IDENT "=" expression (18)
-variabledefinition = "var" typespec IDENT (19)
-variabledefinition = "var" typespec IDENT "[" "]" "=" expression (20)
-variabledefinition = "var" typespec IDENT "[" "]" (21)
-returnstatement = "return" expression (22)
+statement = "if" "(" expression ")" "{" statementlist "}" (scope:16)
+statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" (scope:16)
+statement = "while" "(" expression ")" "{" statementlist "}" (scope:17)
+statement = "{" statementlist "}" (scope)
+variabledefinition = "var" typespec IDENT "=" expression (step:18)
+variabledefinition = "var" typespec IDENT (step:19)
+variabledefinition = "var" typespec IDENT "[" "]" "=" expression (step:20)
+variabledefinition = "var" typespec IDENT "[" "]" (step:21)
+returnstatement = "return" expression (step:22)
 expression/L1 = IDENT
 expression/L1 = CARDINAL
 expression/L1 = FLOAT
@@ -4775,7 +4775,7 @@ expressionlist =
 	variabledefinition = "var" typespec . IDENT "[" "]" "=" expression, FOLLOW [3] -> SHIFT IDENT GOTO 29
 	variabledefinition = "var" typespec . IDENT "[" "]", FOLLOW [3] -> SHIFT IDENT GOTO 29
 [21]
-	typedefinition = "typedef" typename IDENT . (12), FOLLOW [3] -> REDUCE typedefinition #3 CALL typedef
+	typedefinition = "typedef" typename IDENT . (step:12), FOLLOW [3] -> REDUCE typedefinition #3 CALL typedef
 [22]
 	typename/L1 = IDENT "::" . typename, FOLLOW [38] -> GOTO 30
 	typename/L1 = . IDENT, FOLLOW [38] -> SHIFT IDENT GOTO 15
@@ -4815,7 +4815,7 @@ expressionlist =
 	variabledefinition = "var" typespec IDENT . "=" expression, FOLLOW [3] -> SHIFT '=' GOTO 38
 	variabledefinition = "var" typespec IDENT . "[" "]" "=" expression, FOLLOW [3] -> SHIFT '[' GOTO 39
 	variabledefinition = "var" typespec IDENT . "[" "]", FOLLOW [3] -> SHIFT '[' GOTO 39
-	variabledefinition = "var" typespec IDENT . (19), FOLLOW [3] -> REDUCE variabledefinition #3 CALL vardef
+	variabledefinition = "var" typespec IDENT . (step:19), FOLLOW [3] -> REDUCE variabledefinition #3 CALL vardef
 [30]
 	typename/L1 = IDENT "::" typename . (2), FOLLOW [38] -> REDUCE typename #3 CALL namespaceref
 [31]
@@ -4945,7 +4945,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [66] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [66] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [66] -> SHIFT '.' GOTO 86
-	variabledefinition = "var" typespec IDENT "=" expression . (18), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_assign
+	variabledefinition = "var" typespec IDENT "=" expression . (step:18), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_assign
 [46]
 	expression/L1 = IDENT ., FOLLOW [97] -> REDUCE expression #1
 [47]
@@ -5198,7 +5198,7 @@ expressionlist =
 	expression/L10 = . "*" expression, FOLLOW [97] -> SHIFT '*' GOTO 56
 [57]
 	variabledefinition = "var" typespec IDENT "[" "]" . "=" expression, FOLLOW [3] -> SHIFT '=' GOTO 93
-	variabledefinition = "var" typespec IDENT "[" "]" . (21), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_array
+	variabledefinition = "var" typespec IDENT "[" "]" . (step:21), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_array
 [58]
 	functiondefinition = "function" typespec IDENT "(" parameters ")" . "{" statementlist "}", FOLLOW [93] -> SHIFT '{' GOTO 94
 [59]
@@ -7416,13 +7416,13 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [66] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [66] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [66] -> SHIFT '.' GOTO 86
-	variabledefinition = "var" typespec IDENT "[" "]" "=" expression . (20), FOLLOW [3] -> REDUCE variabledefinition #7 CALL vardef_array_assign
+	variabledefinition = "var" typespec IDENT "[" "]" "=" expression . (step:20), FOLLOW [3] -> REDUCE variabledefinition #7 CALL vardef_array_assign
 [136]
 	functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 150
 [137]
 	statement = typedefinition ";" ., FOLLOW [93] -> REDUCE statement #2
 [138]
-	functiondefinition = "procedure" IDENT "(" parameters ")" "{" statementlist "}" . (14), FOLLOW [93] -> REDUCE functiondefinition #8 CALL procdef
+	functiondefinition = "procedure" IDENT "(" parameters ")" "{" statementlist "}" . (scope:14), FOLLOW [93] -> REDUCE functiondefinition #8 CALL procdef
 [139]
 	statementlist/L0 = statement statementlist ., FOLLOW [9] -> REDUCE statementlist #2
 [140]
@@ -7430,7 +7430,7 @@ expressionlist =
 [141]
 	statement = returnstatement ";" ., FOLLOW [93] -> REDUCE statement #2
 [142]
-	statement = expression ";" . (15), FOLLOW [93] -> REDUCE statement #2 CALL stm_expression
+	statement = expression ";" . (step:15), FOLLOW [93] -> REDUCE statement #2 CALL stm_expression
 [143]
 	statement = "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 151
 [144]
@@ -7542,7 +7542,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [66] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [66] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [66] -> SHIFT '.' GOTO 86
-	returnstatement = "return" expression . (22), FOLLOW [3] -> REDUCE returnstatement #2 CALL stm_return
+	returnstatement = "return" expression . (step:22), FOLLOW [3] -> REDUCE returnstatement #2 CALL stm_return
 [147]
 	expression/L2 = . expression "=" expression, FOLLOW [127] -> GOTO 109
 	expression/L2 = . expression "+=" expression, FOLLOW [127] -> GOTO 109
@@ -7591,9 +7591,9 @@ expressionlist =
 [149]
 	expression/L11 = expression "[" expressionlist "]" . (51), FOLLOW [97] -> REDUCE expression #4 CALL operator arrayaccess
 [150]
-	functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist "}" . (13), FOLLOW [93] -> REDUCE functiondefinition #9 CALL funcdef
+	functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist "}" . (scope:13), FOLLOW [93] -> REDUCE functiondefinition #9 CALL funcdef
 [151]
-	statement = "{" statementlist "}" ., FOLLOW [93] -> REDUCE statement #3
+	statement = "{" statementlist "}" . (scope), FOLLOW [93] -> REDUCE statement #3
 [152]
 	expression/L6 = expression . "&" expression, FOLLOW [123] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [123] -> SHIFT '^' GOTO 62
@@ -7786,9 +7786,9 @@ expressionlist =
 	statement = "while" "(" expression ")" "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 162
 [161]
 	statement = "if" "(" expression ")" "{" statementlist "}" . "else" "{" statementlist "}", FOLLOW [93] -> SHIFT "else" GOTO 163
-	statement = "if" "(" expression ")" "{" statementlist "}" . (16), FOLLOW [93] -> REDUCE statement #7 CALL conditional_if
+	statement = "if" "(" expression ")" "{" statementlist "}" . (scope:16), FOLLOW [93] -> REDUCE statement #7 CALL conditional_if
 [162]
-	statement = "while" "(" expression ")" "{" statementlist "}" . (17), FOLLOW [93] -> REDUCE statement #7 CALL conditional_while
+	statement = "while" "(" expression ")" "{" statementlist "}" . (scope:17), FOLLOW [93] -> REDUCE statement #7 CALL conditional_while
 [163]
 	statement = "if" "(" expression ")" "{" statementlist "}" "else" . "{" statementlist "}", FOLLOW [93] -> SHIFT '{' GOTO 164
 [164]
@@ -7853,7 +7853,7 @@ expressionlist =
 [165]
 	statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 166
 [166]
-	statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" . (16), FOLLOW [93] -> REDUCE statement #11 CALL conditional_if
+	statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" . (scope:16), FOLLOW [93] -> REDUCE statement #11 CALL conditional_if
 
 -- Function calls:
 (1) program

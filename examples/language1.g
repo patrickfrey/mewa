@@ -11,7 +11,7 @@ FLOAT	: '[0123456789]+[.][0123456789]+' ;
 FLOAT	: '[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+' ;
 
 
-program		   	= definitionlist			(program)
+program		   	= definitionlist								(program)
 			;
 definitionlist/L	= definition definitionlist
 			| ε
@@ -21,26 +21,26 @@ definition		= functiondefinition
 			| variabledefinition ";"
 			;
 typename/L1		= IDENT
-			| IDENT "::" typename			(namespaceref)
+			| IDENT "::" typename								(namespaceref)
 			;
-typespec/L1		= typename				(typespec puretype)
-			| "const" typename			(typespec consttype)
-			| typename "&"				(typespec reftype)
-			| "const" typename "&"			(typespec constreftype)
-			| typename "^"				(typespec ptrtype)
-			| "const" typename "^"			(typespec constptrtype)
-			| typename "^" "&"			(typespec ptrreftype)
-			| "const" typename "^" "&"		(typespec constptrreftype)
-			| typename "&&"				(typespec movereftype)
+typespec/L1		= typename									(typespec puretype)
+			| "const" typename								(typespec consttype)
+			| typename "&"									(typespec reftype)
+			| "const" typename "&"								(typespec constreftype)
+			| typename "^"									(typespec ptrtype)
+			| "const" typename "^"								(typespec constptrtype)
+			| typename "^" "&"								(typespec ptrreftype)
+			| "const" typename "^" "&"							(typespec constptrreftype)
+			| typename "&&"									(typespec movereftype)
 			;
-typedefinition		= "typedef" typename IDENT		(typedef)
+typedefinition		= "typedef" typename IDENT							(>>typedef)
 			;
 functiondefinition	= "function" typespec IDENT
 				"(" parameters ")"
-				"{" statementlist "}"		(funcdef)
+				"{" statementlist "}"							({}funcdef)
 			| "procedure" IDENT
 				"(" parameters ")"
-				"{" statementlist "}"		(procdef)
+				"{" statementlist "}"							({}procdef)
 			;
 parameters/L		= paramdecl "," parameters
 			| paramdecl
@@ -54,19 +54,19 @@ statementlist/L		= statement statementlist
 statement		= functiondefinition
 			| typedefinition ";"
 			| variabledefinition ";"
-			| expression ";"								(stm_expression)
+			| expression ";"								(>>stm_expression)
 			| returnstatement ";"
-			| "if" "(" expression ")" "{" statementlist "}"					(conditional_if)
-			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	(conditional_if)
-			| "while" "(" expression ")" "{" statementlist "}"				(conditional_while)
-			| "{" statementlist "}"
+			| "if" "(" expression ")" "{" statementlist "}"					({}conditional_if)
+			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	({}conditional_if)
+			| "while" "(" expression ")" "{" statementlist "}"				({}conditional_while)
+			| "{" statementlist "}"								({})
 			;
-variabledefinition	= "var" typespec IDENT "=" expression						(vardef_assign)
-			| "var" typespec IDENT								(vardef)
-			| "var" typespec IDENT "[" "]" "=" expression					(vardef_array_assign)
-			| "var" typespec IDENT "[" "]"							(vardef_array)
+variabledefinition	= "var" typespec IDENT "=" expression						(>>vardef_assign)
+			| "var" typespec IDENT								(>>vardef)
+			| "var" typespec IDENT "[" "]" "=" expression					(>>vardef_array_assign)
+			| "var" typespec IDENT "[" "]"							(>>vardef_array)
 			;  
-returnstatement	   	= "return" expression								(stm_return)
+returnstatement	   	= "return" expression								(>>stm_return)
 			;
 expression/L1		= IDENT
 			| CARDINAL
@@ -75,47 +75,47 @@ expression/L1		= IDENT
 			| SQSTRING
 			| "(" expression ")"
 			;
-expression/L2		= expression  "="  expression		(operator assign)
-			| expression  "+="  expression		(operator assign_add)
-			| expression  "-="  expression		(operator assign_sub)
-			| expression  "*="  expression		(operator assign_mul)
-			| expression  "/="  expression		(operator assign_div)
-			| expression  "%="  expression		(operator assign_mod)
+expression/L2		= expression  "="  expression							(operator assign)
+			| expression  "+="  expression							(operator assign_add)
+			| expression  "-="  expression							(operator assign_sub)
+			| expression  "*="  expression							(operator assign_mul)
+			| expression  "/="  expression							(operator assign_div)
+			| expression  "%="  expression							(operator assign_mod)
 			;
-expression/L3		= expression  "||"  expression		(operator logical_or)
+expression/L3		= expression  "||"  expression							(operator logical_or)
 			;
-expression/L4		= expression  "&&"  expression		(operator logical_and)
+expression/L4		= expression  "&&"  expression							(operator logical_and)
 			;
-expression/L5		= expression  "|"  expression		(operator bitwise_or)
+expression/L5		= expression  "|"  expression							(operator bitwise_or)
 			;			
-expression/L6		= expression  "^"  expression		(operator bitwise_xor)
-			| expression  "&"  expression		(operator bitwise_and)
+expression/L6		= expression  "^"  expression							(operator bitwise_xor)
+			| expression  "&"  expression							(operator bitwise_and)
 			;			
-expression/L7		= expression  "=="  expression		(operator cmpeq)
-			| expression  "!="  expression		(operator cmpne)
-			| expression  "<="  expression		(operator cmple)
-			| expression  "<"  expression		(operator cmplt)
-			| expression  ">="  expression		(operator cmpge)
-			| expression  ">"  expression		(operator cmpgt)
+expression/L7		= expression  "=="  expression							(operator cmpeq)
+			| expression  "!="  expression							(operator cmpne)
+			| expression  "<="  expression							(operator cmple)
+			| expression  "<"  expression							(operator cmplt)
+			| expression  ">="  expression							(operator cmpge)
+			| expression  ">"  expression							(operator cmpgt)
 			;
-expression/L8		= expression  "+"  expression		(operator add)
-			| expression  "-"  expression		(operator sub) 
-			| "-"  expression			(operator minus)
-			| "+"  expression			(operator plus) 
-			| "~"  expression			(operator minus)
-			| "!"  expression			(operator plus) 
+expression/L8		= expression  "+"  expression							(operator add)
+			| expression  "-"  expression							(operator sub) 
+			| "-"  expression								(operator minus)
+			| "+"  expression								(operator plus) 
+			| "~"  expression								(operator minus)
+			| "!"  expression								(operator plus) 
 			;
-expression/L9		= expression  "*"  expression		(operator mul)
-			| expression  "/"  expression		(operator div)
-			| expression  "%"  expression		(operator mod)
+expression/L9		= expression  "*"  expression							(operator mul)
+			| expression  "/"  expression							(operator div)
+			| expression  "%"  expression							(operator mod)
 			;
-expression/L10		= expression "->" IDENT			(operator arrow)
-			| expression "." IDENT			(operator member)
-			| "*" expression			(operator ptrderef)
+expression/L10		= expression "->" IDENT								(operator arrow)
+			| expression "." IDENT								(operator member)
+			| "*" expression								(operator ptrderef)
 			;
-expression/L11		= expression  "(" expressionlist ")"	(operator call)
-			| expression  "(" ")"			(operator call)
-			| expression  "[" expressionlist "]"	(operator arrayaccess)
+expression/L11		= expression  "(" expressionlist ")"						(operator call)
+			| expression  "(" ")"								(operator call)
+			| expression  "[" expressionlist "]"						(operator arrayaccess)
 			;
 expressionlist		= expression "," expressionlist
                         | expression
