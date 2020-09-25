@@ -1253,7 +1253,14 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 
 		if (isAcceptState( lalr1State, langdef.prodlist))
 		{
-			m_actions[ ActionKey( stateidx, 0/*EOF terminal*/)] = Action::accept();
+			auto const& prod = langdef.prodlist[0];
+			if (prod.left.index() != 1) throw Error( Error::LogicError); //... start production is first production
+
+			int nonterminal_ = prod.left.index();
+			ScopeFlag scopeflag_ = prod.scope;
+			int call_ = prod.callidx;
+			int count_ = prod.right.size();
+			m_actions[ ActionKey( stateidx, 0/*EOF terminal*/)] = Action::accept( nonterminal_, scopeflag_, call_, count_);
 			++nofAcceptStates;
 		}
 		std::vector<ProductionShiftNode> shiftNodes = getShiftNodes( lalr1State, lalr1TransitionItemGotoMap, langdef.prodlist);

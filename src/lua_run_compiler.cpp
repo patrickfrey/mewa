@@ -362,8 +362,6 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 	if (lua_isnil( ls, -1))
 	{
 		lua_pop( ls, 1);					// STK: [NODE]
-		/*[-]*/std::cerr << "STACK VALUE" << std::endl;
-		/*[-]*/serializeLuaValue( std::cerr, ls, -1, "\n");
 		lua_pushliteral( ls, "name");				// STK: [NODE] "name"
 		lua_gettable( ls, -2);					// STK: [NODE] [NAME]
 		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
@@ -404,6 +402,7 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 		{
 			*ctx.dbgout << "Lua call result [" << li-ctx.calltable << "]" << std::endl;
 			serializeLuaValue( *ctx.dbgout, ls, -1, "\n"/*indent*/);
+			*ctx.dbgout << std::endl;
 		}
 	}
 }
@@ -434,6 +433,7 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 			}
 			return true;
 
+		case mewa::Automaton::Action::Accept:
 		case mewa::Automaton::Action::Reduce:
 		{
 			int reductionSize = nexti->second.count();
@@ -458,29 +458,34 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 			}
 			ctx.stateStack.resize( ctx.stateStack.size() - reductionSize);
 
-			auto gtoi = automaton.gotos().find( {ctx.stateStack.back().index, nexti->second.nonterminal()});
-			if (gtoi == automaton.gotos().end())
+			if (nexti->second.type() == mewa::Automaton::Action::Accept)
 			{
-				auto info = stateTransitionInfo( ctx.stateStack.back().index, lexem.id()/*terminal*/, automaton.lexer());
-				throw mewa::Error( mewa::Error::LanguageAutomatonMissingGoto, info, lexem.line());
-			}
-			else if (luaStackNofElements)
-			{
-				int next_luastki = getNextLuaStackIndex( ctx.stateStack);
-				ctx.stateStack.push_back( State( gtoi->second.state(), next_luastki, luaStackNofElements, scopeStart));
+				if (lexem.id()/*terminal*/ != 0)
+				{
+					throw mewa::Error( mewa::Error::LanguageAutomatonUnexpectedAccept, lexem.line());
+				}
+				return true;
 			}
 			else
 			{
-				ctx.stateStack.push_back( State( gtoi->second.state(), 0/*luastki*/, 0/*luastkn*/, scopeStart));
+				auto gtoi = automaton.gotos().find( {ctx.stateStack.back().index, nexti->second.nonterminal()});
+				if (gtoi == automaton.gotos().end())
+				{
+					auto info = stateTransitionInfo( ctx.stateStack.back().index, lexem.id()/*terminal*/, automaton.lexer());
+					throw mewa::Error( mewa::Error::LanguageAutomatonMissingGoto, info, lexem.line());
+				}
+				else if (luaStackNofElements)
+				{
+					int next_luastki = getNextLuaStackIndex( ctx.stateStack);
+					ctx.stateStack.push_back( State( gtoi->second.state(), next_luastki, luaStackNofElements, scopeStart));
+				}
+				else
+				{
+					ctx.stateStack.push_back( State( gtoi->second.state(), 0/*luastki*/, 0/*luastkn*/, scopeStart));
+				}
+				return false;
 			}
-			return false;
 		}
-		case mewa::Automaton::Action::Accept:
-			if (lexem.id()/*terminal*/ != 0)
-			{
-				throw mewa::Error( mewa::Error::LanguageAutomatonUnexpectedAccept, lexem.line());
-			}
-			return true;
 	}
 	return false;
 }

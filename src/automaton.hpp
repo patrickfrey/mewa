@@ -160,8 +160,8 @@ public:
 					(pkg) & MaskProductionLength/*count*/);
 		}
 
-		static Action accept() noexcept
-			{return Action( Accept, NoScope/*scopeflag*/, 0/*state|nonterminal*/, 0/*call*/, 0/*count*/);}
+		static Action accept( int nonterminal_, ScopeFlag scopeflag_, int call_, int count_) noexcept
+			{return Action( Accept, scopeflag_, nonterminal_, call_, count_);}
 		static Action shift( int follow_state) noexcept
 			{return Action( Shift, NoScope/*scopeflag*/, follow_state, 0/*call*/, 0/*count*/);}
 		static Action reduce( int nonterminal_, ScopeFlag scopeflag_, int call_, int count_) noexcept
