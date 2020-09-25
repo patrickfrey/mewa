@@ -84,16 +84,80 @@ struct State
 	int index;			//< Compiler automaton state index
 	int luastki;			//< Index of first element on the Lua stack
 	int luastkn;			//< Number of elements on the Lua stack
+	int scopecnt;			//< Scope counter on creation
 
 	State()
-		:index(0),luastki(0),luastkn(0){}
-	State( int index_)
-		:index(index_),luastki(0),luastkn(0){}
-	State( int index_, int luastki_, int luastkn_)
-		:index(index_),luastki(luastki_),luastkn(luastkn_){}
+		:index(0),luastki(0),luastkn(0),scopecnt(0){}
+	State( int index_, int luastki_, int luastkn_, int scopecnt_)
+		:index(index_),luastki(luastki_),luastkn(luastkn_),scopecnt(scopecnt_){}
 	State( const State& o)
-		:index(o.index),luastki(o.luastki),luastkn(o.luastkn){}
+		:index(o.index),luastki(o.luastki),luastkn(o.luastkn),scopecnt(o.scopecnt){}
 };
+
+static void adjustStateCountersOnStack( std::pmr::vector<State>& stateStack)
+{
+	int ofs = 0;
+	for (auto elem : stateStack)
+	{
+		if (elem.luastki) {ofs = elem.luastki-1; break;}
+	}
+	if (!ofs) throw mewa::Error( mewa::Error::CompiledSourceTooComplex);
+	for (auto elem : stateStack)
+	{
+		if (elem.luastki) {elem.luastki -= ofs;}
+	}
+}
+
+static int getNextLuaStackIndex( std::pmr::vector<State>& stateStack)
+{
+	int rt = 1;
+	for (auto si = stateStack.rbegin(), se = stateStack.rend(); si != se; ++si)
+	{
+		if (si->luastkn)
+		{
+			rt = si->luastki + si->luastkn;
+			if (rt >= std::numeric_limits<int>::max())
+			{
+				adjustStateCountersOnStack( stateStack);
+				rt = getNextLuaStackIndex( stateStack);
+			}
+			break;
+		}
+	}
+	return rt;
+}
+
+static int getLuaStackReductionSize( const std::pmr::vector<State>& stateStack, int nn) noexcept
+{
+	int start = 0;
+	int end = 0;
+	for (auto si = stateStack.end() - nn; si != stateStack.end(); ++si)
+	{
+		if (si->luastki) {start = si->luastki; break;}
+	}
+	for (auto si = stateStack.rbegin(), se = stateStack.rbegin() + nn; si != se; ++si)
+	{
+		if (si->luastkn) {end = si->luastki + si->luastkn; break;}
+	}
+	return end-start;
+}
+
+#ifdef MEWA_LOWLEVEL_DEBUG
+static int countLuaStackElements( const std::pmr::vector<State>& stateStack)
+{
+	return getLuaStackReductionSize( stateStack, stateStack.size());
+}
+
+static void dumpStateStack( std::ostream& out, const std::pmr::vector<State>& stateStack, const char* title)
+{
+	std::cerr << "Stack " << title << ":" << std::endl;
+	for (auto elem : stateStack)
+	{
+		std::cerr << "\tState " << elem.index << "[" << elem.luastki << " :" << elem.luastkn << "]" << std::endl;
+	}
+}
+#endif
+
 
 static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
 {
@@ -121,17 +185,19 @@ struct CompilerContext
 		:stateStack(memrsc),calltable(calltable_),calltablesize(calltablesize_),scopestep(0),dbgout(dbgout_)
 	{
 		stateStack.reserve( (buffersize - sizeof stateStack) / sizeof(State));
-		stateStack.push_back( {1} );
+		stateStack.push_back( State( 1/*index*/, 0/*luastki*/, 0/*luastkn*/, 0/*scopecnt*/) );
 	}
 };
 
-static void luaReduceStruct( lua_State* ls, CompilerContext& ctx, int nn, const std::string_view& name, int callidx)
+static void luaReduceStruct( 
+		lua_State* ls, CompilerContext& ctx, int reductionSize, const std::string_view& name,
+		int callidx, const mewa::Automaton::Action::ScopeFlag scopeflag, int scopeStart)
 {
 	int stk_start = 0;
 	int stk_end = 0;
-	if (nn > 0)
+	if (reductionSize > 0)
 	{
-		std::size_t si = ctx.stateStack.size(), se = ctx.stateStack.size() - nn;
+		std::size_t si = ctx.stateStack.size(), se = ctx.stateStack.size() - reductionSize;
 		for (; si > se; --si)
 		{
 			const State& st = ctx.stateStack[ si-1];
@@ -149,8 +215,10 @@ static void luaReduceStruct( lua_State* ls, CompilerContext& ctx, int nn, const 
 				stk_start = st.luastki;
 			}
 		}
+		int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 3:4;
 												// STK [ARG1]...[ARGN]
-		lua_createtable( ls, 0/*size array*/, 3/*size struct*/ + 1/*reserve 1 scope*/); // STK [ARG1]...[ARGN] [TABLE]
+		lua_createtable( ls, 0/*size array*/, structsize);	 			// STK [ARG1]...[ARGN] [TABLE]
+
 		lua_pushliteral( ls, "name");							// STK [ARG1]...[ARGN] [TABLE] "name"
 		lua_pushlstring( ls, name.data(), name.size());					// STK [ARG1]...[ARGN] [TABLE] [NAME]
 		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
@@ -159,17 +227,41 @@ static void luaReduceStruct( lua_State* ls, CompilerContext& ctx, int nn, const 
  		lua_rawgeti( ls, ctx.calltable, callidx);					// STK [ARG1]...[ARGN] [TABLE] [CALLSTRUCT]
 		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
 
+		switch (scopeflag)
+		{
+			case mewa::Automaton::Action::NoScope:
+				break;
+			case mewa::Automaton::Action::Step:
+				ctx.scopestep += 1;
+				lua_pushliteral( ls, "step");					// STK [ARG1]...[ARGN] [TABLE] "step"
+				lua_pushinteger( ls, ctx.scopestep);				// STK [ARG1]...[ARGN] [TABLE] [COUNTER]
+				lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
+				break;
+			case mewa::Automaton::Action::Scope:
+			{
+				ctx.scopestep += 1;
+				lua_pushliteral( ls, "scope");					// STK [ARG1]...[ARGN] [TABLE] "scope"
+				lua_createtable( ls, 0/*size array*/, structsize);	 	// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
+				lua_pushinteger( ls, scopeStart);				// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE] [SCOPESTART]
+				lua_rawseti( ls, -2, 1);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
+				lua_pushinteger( ls, ctx.scopestep /*scope end*/);		// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE] [SCOPEEND]
+				lua_rawseti( ls, -2, 2);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
+				lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
+				break;
+			}
+		}
 		lua_pushliteral( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
 		lua_createtable( ls, stk_end-stk_start/*size array*/, 0/*size struct*/);	// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
-		int li = -(stk_end-stk_start)-3, le = -3;
+		int nofLuaStackElements = stk_end-stk_start;
+		int li = -nofLuaStackElements-3, le = -3;
 		for (int tidx=0; li != le; ++li,++tidx)
 		{
 			lua_pushvalue( ls, li);							// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB] [ARGi]
 			lua_rawseti( ls, -4, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
 		}
 		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
-		lua_replace( ls, -1-nn);							// STK [TABLE] [ARG2]...[ARGN]
-		if (nn > 1) lua_pop( ls, nn-1);							// STK [TABLE]
+		lua_replace( ls, -1-nofLuaStackElements);					// STK [TABLE] [ARG2]...[ARGN]
+		if (nofLuaStackElements > 1) lua_pop( ls, nofLuaStackElements-1);		// STK [TABLE]
 	}
 }
 
@@ -316,69 +408,6 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 	}
 }
 
-static void adjustStateCountersOnStack( std::pmr::vector<State>& stateStack)
-{
-	int ofs = 0;
-	for (auto elem : stateStack)
-	{
-		if (elem.luastki) {ofs = elem.luastki-1; break;}
-	}
-	if (!ofs) throw mewa::Error( mewa::Error::CompiledSourceTooComplex);
-	for (auto elem : stateStack)
-	{
-		if (elem.luastki) {elem.luastki -= ofs;}
-	}
-}
-
-static int getNextLuaStackIndex( std::pmr::vector<State>& stateStack)
-{
-	int rt = 1;
-	for (auto si = stateStack.rbegin(), se = stateStack.rend(); si != se; ++si)
-	{
-		if (si->luastkn)
-		{
-			rt = si->luastki + si->luastkn;
-			if (rt >= std::numeric_limits<int>::max())
-			{
-				adjustStateCountersOnStack( stateStack);
-				rt = getNextLuaStackIndex( stateStack);
-			}
-			break;
-		}
-	}
-	return rt;
-}
-
-static int getLuaStackReductionSize( const std::pmr::vector<State>& stateStack, int nn) noexcept
-{
-	int start = 0;
-	int end = 0;
-	for (auto si = stateStack.end() - nn; si != stateStack.end(); ++si)
-	{
-		if (si->luastki) {start = si->luastki; break;}
-	}
-	for (auto si = stateStack.rbegin(), se = stateStack.rbegin() + nn; si != se; ++si)
-	{
-		if (si->luastkn) {end = si->luastki + si->luastkn; break;}
-	}
-	return end-start;
-}
-
-#ifdef MEWA_LOWLEVEL_DEBUG
-static int countLuaStackElements( const std::pmr::vector<State>& stateStack)
-{
-	return getLuaStackReductionSize( stateStack, stateStack.size());
-}
-
-static void dumpStateStack( std::ostream& out, const std::pmr::vector<State>& stateStack, const char* title)
-{
-	std::cerr << "Stack " << title << ":" << std::endl;
-	for (auto elem : stateStack)
-	{
-		std::cerr << "\tState " << elem.index << "[" << elem.luastki << " :" << elem.luastkn << "]" << std::endl;
-	}
-}
-#endif
 
 /// \brief Feed next lexem to the automaton state
 /// \return true, if the lexem has been consumed, false if we have to feed the same lexem again
@@ -396,30 +425,38 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 			if (!automaton.lexer().isKeyword( lexem.id()))
 			{
 				int next_luastki = getNextLuaStackIndex( ctx.stateStack);
-				ctx.stateStack.push_back( State( nexti->second.state(), next_luastki, 1));
+				ctx.stateStack.push_back( State( nexti->second.state(), next_luastki, 1, ctx.scopestep));
 				luaPushLexem( ls, lexem);
 			}
 			else
 			{
-				ctx.stateStack.push_back( State( nexti->second.state()));
+				ctx.stateStack.push_back( State( nexti->second.state(), 0/*luastki*/, 0/*luastkn*/, ctx.scopestep));
 			}
 			return true;
 
 		case mewa::Automaton::Action::Reduce:
 		{
-			if ((int)ctx.stateStack.size() <= nexti->second.count() || nexti->second.count() < 0)
+			int reductionSize = nexti->second.count();
+			if ((int)ctx.stateStack.size() <= reductionSize || reductionSize < 0)
 			{
 				throw mewa::Error( mewa::Error::LanguageAutomatonCorrupted, lexem.line());
 			}
-			int luaStackNofElements = getLuaStackReductionSize( ctx.stateStack, nexti->second.count());
+			int luaStackNofElements;
+			int scopeStart = reductionSize == 0 ? ctx.scopestep : ctx.stateStack[ ctx.stateStack.size() - reductionSize].scopecnt;
+
 			if (nexti->second.call())
 			{
 				int callidx = nexti->second.call();
 				auto const& call = automaton.call( callidx);
-				luaReduceStruct( ls, ctx, luaStackNofElements, call.arg().size() ? call.arg() : call.function(), callidx);
+				const std::string& nodename = call.arg().size() ? call.arg() : call.function();
+				luaReduceStruct( ls, ctx, reductionSize, nodename, callidx, nexti->second.scopeflag(), scopeStart);
 				luaStackNofElements = 1;
 			}
-			ctx.stateStack.resize( ctx.stateStack.size() - nexti->second.count());
+			else
+			{
+				luaStackNofElements = getLuaStackReductionSize( ctx.stateStack, reductionSize);
+			}
+			ctx.stateStack.resize( ctx.stateStack.size() - reductionSize);
 
 			auto gtoi = automaton.gotos().find( {ctx.stateStack.back().index, nexti->second.nonterminal()});
 			if (gtoi == automaton.gotos().end())
@@ -430,11 +467,11 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 			else if (luaStackNofElements)
 			{
 				int next_luastki = getNextLuaStackIndex( ctx.stateStack);
-				ctx.stateStack.push_back( State( gtoi->second.state(), next_luastki, luaStackNofElements));
+				ctx.stateStack.push_back( State( gtoi->second.state(), next_luastki, luaStackNofElements, scopeStart));
 			}
 			else
 			{
-				ctx.stateStack.push_back( State( gtoi->second.state()));
+				ctx.stateStack.push_back( State( gtoi->second.state(), 0/*luastki*/, 0/*luastkn*/, scopeStart));
 			}
 			return false;
 		}
