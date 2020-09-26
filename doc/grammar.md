@@ -38,12 +38,17 @@ Additionally _mewa_ provides the operators '**>>**' and '**{}**' to assign **sco
 
 1. _name_ **=** _itemlist_ **;**
     * Simple EBNF rule definition with _name_ as left hand _nonterminal_ and _itemlist_ as space separated list of identifiers (nonterminals or lexem names) and strings (keywords and operators as implicitely defiend lexems).
-2. _name_ **=** _itemlist_ **(** _luafunction_ **)** **;**
-    * EBNF rule definition as in (1.) but with _luafunction_ as a single identifier or an pair of identifiers referring to a function and an optional context argument defined in the typesystem Lua module. A rule defined with a function form a node in the resulting AST (abstract syntax tree). The result node has all non keyword/operator lexems or other nodes defined inside its right hand part of the rule that are not bound by other nodes as subnodes.
-3. _name_ **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
-    * EBNF rule definition as in (2.) but an with increment defined for the **scope** counter.
-4. _name_ **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
-    * EBNF rule definition as in (2.) but with a **scope** structure (start and end of the scope) defined for the result node
+2. _name_/_priority_ **=** _itemlist_ **;**
+    * Same as 1. but with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a cardinal number. The **L** defines the rule to be left handed, meaning that _REDUCE_ is prefered in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right handed, meaning that _SHIFT_ is prefered in self including rules. The cardinal number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of SHIFT actions must be consistent for a state.
+3a. _name_ **=** _itemlist_ **(** _luafunction_ **)** **;**
+3b. _name_/_priority_ **=** _itemlist_ **(** _luafunction_ **)** **;**
+    * EBNF rule definition as in (1. or 2.) but with _luafunction_ as a single identifier or an pair of identifiers referring to a function and an optional context argument defined in the typesystem Lua module. A rule defined with a function form a node in the resulting AST (abstract syntax tree). The result node has all non keyword/operator lexems or other nodes defined inside its right hand part of the rule that are not bound by other nodes as subnodes.
+4a. _name_ **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
+4b. _name_/_priority_ **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
+    * EBNF rule definition as in (1. or 2.) but an with increment defined for the **scope** counter.
+5a. _name_ **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
+5b. _name_/_priority_ **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
+    * EBNF rule definition as in (1. or 2.) but with a **scope** structure (start and end of the scope) defined for the result node
 
 ## Scope of AST Nodes and Definitions
 The scope of a node in the resulting AST is defined as a pair of cardinal numbers **[** _start_ , _end_ **]**.
