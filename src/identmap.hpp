@@ -49,7 +49,12 @@ struct IdentKeyEnvelop
 
 	bool operator == (const IdentKeyEnvelop& o) const noexcept
 	{
-		return (key->size == o.key->size() && 0==std::memcmp( key->buf, o.key->buf, key->size));
+		int length = (key.size + 3) / 4;
+		uint32_t const* kk = reinterpret_cast<uint32_t const*>( key);
+		uint32_t const* ll = reinterpret_cast<uint32_t const*>( o.key);
+
+		for (int ki = 0; ki < length && kk[ ki] == ll[ ki]; ++ki) {}
+		return ki == length;
 	}
 
 	std::size_t hash() const noexcept
