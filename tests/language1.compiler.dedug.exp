@@ -146,3 +146,303 @@ Reduce #0 to definitionlist by token $ at line 20 in state 3, goto 11
 Reduce #2 to definitionlist by token $ at line 20 in state 11, goto 11
 Reduce #2 to definitionlist by token $ at line 20 in state 11, goto 2
 Accept
+Lua call result [1]
+{
+	{
+		arg = {
+			{
+				line = 1,
+				name = "IDENT",
+				value = "swap"},
+			{
+				arg = {
+					{
+						line = 1,
+						name = "IDENT",
+						value = "int"}},
+				call = {
+					"typespec reftype",
+					<function>,
+					{}},
+				name = "reftype"},
+			{
+				line = 1,
+				name = "IDENT",
+				value = "a"},
+			{
+				arg = {
+					{
+						line = 1,
+						name = "IDENT",
+						value = "int"}},
+				call = {
+					"typespec reftype",
+					<function>,
+					{}},
+				name = "reftype"},
+			{
+				line = 1,
+				name = "IDENT",
+				value = "b"},
+			{
+				arg = {
+					{
+						arg = {
+							{
+								line = 3,
+								name = "IDENT",
+								value = "int"}},
+						call = {
+							"typespec puretype",
+							<function>,
+							{}},
+						name = "puretype"},
+					{
+						line = 3,
+						name = "IDENT",
+						value = "tmp"},
+					{
+						line = 3,
+						name = "IDENT",
+						value = "a"}},
+				call = {
+					"vardef_assign",
+					<function>},
+				name = "vardef_assign",
+				step = 1},
+			{
+				arg = {
+					{
+						arg = {
+							{
+								line = 4,
+								name = "IDENT",
+								value = "a"},
+							{
+								line = 4,
+								name = "IDENT",
+								value = "b"}},
+						call = {
+							"operator assign",
+							<function>,
+							{}},
+						name = "assign"}},
+				call = {
+					"stm_expression",
+					<function>},
+				name = "stm_expression",
+				step = 2},
+			{
+				arg = {
+					{
+						arg = {
+							{
+								line = 5,
+								name = "IDENT",
+								value = "b"},
+							{
+								line = 5,
+								name = "IDENT",
+								value = "tmp"}},
+						call = {
+							"operator assign",
+							<function>,
+							{}},
+						name = "assign"}},
+				call = {
+					"stm_expression",
+					<function>},
+				name = "stm_expression",
+				step = 3}},
+		call = {
+			"procdef",
+			<function>},
+		name = "procdef",
+		scope = {
+			0,
+			4}},
+	{
+		arg = {
+			{
+				arg = {
+					{
+						line = 8,
+						name = "IDENT",
+						value = "int"}},
+				call = {
+					"typespec puretype",
+					<function>,
+					{}},
+				name = "puretype"},
+			{
+				line = 8,
+				name = "IDENT",
+				value = "fibonacci"},
+			{
+				arg = {
+					{
+						line = 8,
+						name = "IDENT",
+						value = "int"}},
+				call = {
+					"typespec puretype",
+					<function>,
+					{}},
+				name = "puretype"},
+			{
+				line = 8,
+				name = "IDENT",
+				value = "n"},
+			{
+				arg = {
+					{
+						arg = {
+							{
+								line = 10,
+								name = "IDENT",
+								value = "int"}},
+						call = {
+							"typespec puretype",
+							<function>,
+							{}},
+						name = "puretype"},
+					{
+						line = 10,
+						name = "IDENT",
+						value = "i1"},
+					{
+						line = 10,
+						name = "CARDINAL",
+						value = "0"}},
+				call = {
+					"vardef_assign",
+					<function>},
+				name = "vardef_assign",
+				step = 5},
+			{
+				arg = {
+					{
+						arg = {
+							{
+								line = 11,
+								name = "IDENT",
+								value = "int"}},
+						call = {
+							"typespec puretype",
+							<function>,
+							{}},
+						name = "puretype"},
+					{
+						line = 11,
+						name = "IDENT",
+						value = "i2"},
+					{
+						line = 11,
+						name = "CARDINAL",
+						value = "1"}},
+				call = {
+					"vardef_assign",
+					<function>},
+				name = "vardef_assign",
+				step = 6},
+			{
+				arg = {
+					{
+						arg = {
+							{
+								line = 12,
+								name = "IDENT",
+								value = "i"},
+							{
+								line = 12,
+								name = "IDENT",
+								value = "n"}},
+						call = {
+							"operator cmplt",
+							<function>,
+							{}},
+						name = "cmplt"},
+					{
+						arg = {
+							{
+								arg = {
+									{
+										line = 14,
+										name = "IDENT",
+										value = "i1"},
+									{
+										arg = {
+											{
+												line = 14,
+												name = "IDENT",
+												value = "i2"},
+											{
+												line = 14,
+												name = "IDENT",
+												value = "i1"}},
+										call = {
+											"operator add",
+											<function>,
+											{}},
+										name = "add"}},
+								call = {
+									"operator assign",
+									<function>,
+									{}},
+								name = "assign"}},
+						call = {
+							"stm_expression",
+							<function>},
+						name = "stm_expression",
+						step = 7},
+					{
+						arg = {
+							{
+								arg = {
+									{
+										line = 15,
+										name = "IDENT",
+										value = "swap"},
+									{
+										line = 15,
+										name = "IDENT",
+										value = "i1"},
+									{
+										line = 15,
+										name = "IDENT",
+										value = "i2"}},
+								call = {
+									"operator call",
+									<function>,
+									{}},
+								name = "call"}},
+						call = {
+							"stm_expression",
+							<function>},
+						name = "stm_expression",
+						step = 8}},
+				call = {
+					"conditional_while",
+					<function>},
+				name = "conditional_while",
+				scope = {
+					6,
+					9}},
+			{
+				arg = {
+					{
+						line = 17,
+						name = "IDENT",
+						value = "i2"}},
+				call = {
+					"stm_return",
+					<function>},
+				name = "stm_return",
+				step = 10}},
+		call = {
+			"funcdef",
+			<function>},
+		name = "funcdef",
+		scope = {
+			4,
+			11}}}

@@ -10,6 +10,7 @@
 #include "export.hpp"
 #include "lua_load_automaton.hpp"
 #include "lua_run_compiler.hpp"
+#include "lua_object_reference.hpp"
 #include "automaton.hpp"
 #include "lexer.hpp"
 #include "scope.hpp"
@@ -40,7 +41,6 @@ extern "C" int luaopen_mewa( lua_State* ls);
 #define MEWA_COMPILER_METATABLE_NAME 	"mewa.compiler"
 #define MEWA_TYPESYSTEM_METATABLE_NAME 	"mewa.typesystem"
 #define MEWA_CALLTABLE_FMT	 	"mewa.calls.%d"
-#define MEMBLOCK_METATABLE_NAME 	"mewa.local.memblock"
 
 struct CallTableName
 {
@@ -80,35 +80,6 @@ struct mewa_compiler_userdata_t
 	}
 };
 
-class MemoryBlock
-{
-public:
-	virtual ~MemoryBlock(){};
-};
-
-template <class OBJECT>
-class ObjectReference :public MemoryBlock
-{
-public:
-	ObjectReference( OBJECT&& obj_)
-		:m_obj(std::move(obj_)){}
-	virtual ~ObjectReference(){}
-	const OBJECT& obj() const noexcept		{return m_obj;}
-private:
-	OBJECT m_obj;
-};
-
-// \brief Structure to give control of memory to lua to avoid memory leaks in case of Lua exceptions
-struct memblock_userdata_t
-{
-	MemoryBlock* memoryBlock;
-
-	void destroy()
-	{
-		if (memoryBlock) delete memoryBlock;
-	}
-};
-
 #define CATCH_EXCEPTION( success) \
 	catch (const std::runtime_error& err)\
 	{\
@@ -129,17 +100,15 @@ struct memblock_userdata_t
 
 static int destroy_memblock( lua_State* ls)
 {
-	memblock_userdata_t* mb = (memblock_userdata_t*)luaL_checkudata( ls, 1, MEMBLOCK_METATABLE_NAME);
+	memblock_userdata_t* mb = (memblock_userdata_t*)luaL_checkudata( ls, 1, mewa::MemoryBlock::metatablename());
 	mb->destroy();
 	return 0;
 }
 
 static std::string_view move_string_on_lua_stack( lua_State* ls, std::string&& str)
 {
-	memblock_userdata_t* mb = (memblock_userdata_t*)lua_newuserdata( ls, sizeof(memblock_userdata_t));
-	luaL_getmetatable( ls, MEMBLOCK_METATABLE_NAME);
-	lua_setmetatable( ls, -2);
-	ObjectReference<std::string>* obj = new ObjectReference<std::string>( std::move(str));
+	memblock_userdata_t* mb = memblock_userdata_t::create( ls);
+	mewa::ObjectReference<std::string>* obj = new mewa::ObjectReference<std::string>( std::move(str));
 	mb->memoryBlock = obj;
 	return obj->obj();
 }
@@ -332,7 +301,7 @@ static const struct luaL_Reg memblock_control_methods[] = {
 
 static void create_memblock_control_class( lua_State* ls)
 {
-	luaL_newmetatable( ls, MEMBLOCK_METATABLE_NAME);
+	luaL_newmetatable( ls, mewa::MemoryBlock::metatablename());
 	lua_pushvalue( ls, -1);
 
 	lua_setfield( ls, -2, "__index");
