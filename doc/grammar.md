@@ -1,4 +1,4 @@
-# The EBNF Definition language
+# The EBNF Definition Language
 The language to define the EBNF has 3 types of declarations.
 All declarations are terminated with a semicolon ';'.
 Here is the list of declaration types explained.
