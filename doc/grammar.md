@@ -17,7 +17,8 @@ The following commands are known:
 ## Lexem Declarations
 Lexem declarations start with an identifier followed by a colon '**:**', a pattern and an optional selection index:
 
-* _lexemname_ **:** _pattern_ [ _select_ ] **;**
+* _lexemname_ **:** _pattern_ **;**
+* _lexemname_ **:** _pattern_ _select_ **;**
 
 The name _lexemname_ defines the identifier this lexem can be referred to in the grammar.
 The regular expression string _pattern_ quoted in single or double quotes defines the pattern that matches the lexem.
@@ -35,7 +36,29 @@ Rule declarations start with an identifier followed by an assignment '**=**' and
 At the end of each production we can declare one optional call to the typesystem module written in Lua.
 Additionally _mewa_ provides the operators '**>>**' and '**{}**' to assign scope info to the nodes of the AST initially built.
 
-* _nonterminal_ **=** { _keyword_ | _nonterminal_ }  [ ( [ '>>' | '{}' ] _luafunction_ [ _arg_ ]) ] **;**
+1. _name_ **=** _itemlist_ **;**
+    * Simple EBNF rule definition with _name_ as left hand _nonterminal_ and _itemlist_ as space separated list of identifiers (nonterminals or lexem names) and strings (keywords and operators as implicitely defiend lexems).
+2. _name_ **=** _itemlist_ **(** _luafunction_ **)** **;**
+    * EBNF rule definition as in (1.) but with _luafunction_ as a single identifier or an pair of identifiers referring to a function and an optional context argument defined in the typesystem Lua module. A rule defined with a function form a node in the resulting AST (abstract syntax tree). The result node has all non keyword/operator lexems or other nodes defined inside its right hand part of the rule that are not bound by other nodes as subnodes.
+3. _name_ **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
+    * EBNF rule definition as in (2.) but an with increment defined for the scope counter.
+4. _name_ **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
+    * EBNF rule definition as in (2.) but with a scope defined for the result node
+
+## Scope of AST Nodes and Definitions
+The scope of a node in the resulting AST is defined as a pair of cardinal numbers **[** _start_ , _end_ **]**.
+The definitions of types in the typesystem will include the scope info to select the valid definition amongst definitions with the same name.
+A definition is valid if its scope counter is inside the scope checked:
+* _counter_ **>=** _start_
+* _counter_ **<** _end_.
+
+
+
+
+
+
+
+
 
 
 
