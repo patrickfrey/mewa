@@ -73,6 +73,7 @@ return {
 	typespec = function( arg) end,
 	funcdef = function( arg) end,
 	procdef = function( arg) end,
+	paramdef = function( arg) end,
 	program = function( arg) return arg end
 }
 

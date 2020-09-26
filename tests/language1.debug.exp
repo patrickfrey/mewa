@@ -94,61 +94,61 @@ functiondefinition = "procedure" IDENT "(" parameters ")" "{" statementlist "}" 
 parameters/L0 = paramdecl "," parameters
 parameters/L0 = paramdecl
 parameters/L0 = 
-paramdecl = typespec IDENT
+paramdecl = typespec IDENT (15)
 statementlist/L0 = statement statementlist
 statementlist/L0 = 
 statement = functiondefinition
 statement = typedefinition ";"
 statement = variabledefinition ";"
-statement = expression ";" (step:15)
+statement = expression ";" (step:16)
 statement = returnstatement ";"
-statement = "if" "(" expression ")" "{" statementlist "}" (scope:16)
-statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" (scope:16)
-statement = "while" "(" expression ")" "{" statementlist "}" (scope:17)
+statement = "if" "(" expression ")" "{" statementlist "}" (scope:17)
+statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" (scope:17)
+statement = "while" "(" expression ")" "{" statementlist "}" (scope:18)
 statement = "{" statementlist "}" (scope)
-variabledefinition = "var" typespec IDENT "=" expression (step:18)
-variabledefinition = "var" typespec IDENT (step:19)
-variabledefinition = "var" typespec IDENT "[" "]" "=" expression (step:20)
-variabledefinition = "var" typespec IDENT "[" "]" (step:21)
-returnstatement = "return" expression (step:22)
+variabledefinition = "var" typespec IDENT "=" expression (step:19)
+variabledefinition = "var" typespec IDENT (step:20)
+variabledefinition = "var" typespec IDENT "[" "]" "=" expression (step:21)
+variabledefinition = "var" typespec IDENT "[" "]" (step:22)
+returnstatement = "return" expression (step:23)
 expression/L1 = IDENT
 expression/L1 = CARDINAL
 expression/L1 = FLOAT
 expression/L1 = DQSTRING
 expression/L1 = SQSTRING
 expression/L1 = "(" expression ")"
-expression/L2 = expression "=" expression (23)
-expression/L2 = expression "+=" expression (24)
-expression/L2 = expression "-=" expression (25)
-expression/L2 = expression "*=" expression (26)
-expression/L2 = expression "/=" expression (27)
-expression/L2 = expression "%=" expression (28)
-expression/L3 = expression "||" expression (29)
-expression/L4 = expression "&&" expression (30)
-expression/L5 = expression "|" expression (31)
-expression/L6 = expression "^" expression (32)
-expression/L6 = expression "&" expression (33)
-expression/L7 = expression "==" expression (34)
-expression/L7 = expression "!=" expression (35)
-expression/L7 = expression "<=" expression (36)
-expression/L7 = expression "<" expression (37)
-expression/L7 = expression ">=" expression (38)
-expression/L7 = expression ">" expression (39)
-expression/L8 = expression "+" expression (40)
-expression/L8 = expression "-" expression (41)
-expression/L8 = "-" expression (42)
-expression/L8 = "+" expression (43)
-expression/L8 = "~" expression (42)
-expression/L8 = "!" expression (43)
-expression/L9 = expression "*" expression (44)
-expression/L9 = expression "/" expression (45)
-expression/L9 = expression "%" expression (46)
-expression/L10 = expression "->" IDENT (47)
-expression/L10 = expression "." IDENT (48)
-expression/L10 = "*" expression (49)
-expression/L11 = expression "(" expressionlist ")" (50)
-expression/L11 = expression "(" ")" (50)
-expression/L11 = expression "[" expressionlist "]" (51)
+expression/L2 = expression "=" expression (24)
+expression/L2 = expression "+=" expression (25)
+expression/L2 = expression "-=" expression (26)
+expression/L2 = expression "*=" expression (27)
+expression/L2 = expression "/=" expression (28)
+expression/L2 = expression "%=" expression (29)
+expression/L3 = expression "||" expression (30)
+expression/L4 = expression "&&" expression (31)
+expression/L5 = expression "|" expression (32)
+expression/L6 = expression "^" expression (33)
+expression/L6 = expression "&" expression (34)
+expression/L7 = expression "==" expression (35)
+expression/L7 = expression "!=" expression (36)
+expression/L7 = expression "<=" expression (37)
+expression/L7 = expression "<" expression (38)
+expression/L7 = expression ">=" expression (39)
+expression/L7 = expression ">" expression (40)
+expression/L8 = expression "+" expression (41)
+expression/L8 = expression "-" expression (42)
+expression/L8 = "-" expression (43)
+expression/L8 = "+" expression (44)
+expression/L8 = "~" expression (43)
+expression/L8 = "!" expression (44)
+expression/L9 = expression "*" expression (45)
+expression/L9 = expression "/" expression (46)
+expression/L9 = expression "%" expression (47)
+expression/L10 = expression "->" IDENT (48)
+expression/L10 = expression "." IDENT (49)
+expression/L10 = "*" expression (50)
+expression/L11 = expression "(" expressionlist ")" (51)
+expression/L11 = expression "(" ")" (51)
+expression/L11 = expression "[" expressionlist "]" (52)
 expressionlist = expression "," expressionlist
 expressionlist = expression
 expressionlist = 
@@ -4815,7 +4815,7 @@ expressionlist =
 	variabledefinition = "var" typespec IDENT . "=" expression, FOLLOW [3] -> SHIFT '=' GOTO 38
 	variabledefinition = "var" typespec IDENT . "[" "]" "=" expression, FOLLOW [3] -> SHIFT '[' GOTO 39
 	variabledefinition = "var" typespec IDENT . "[" "]", FOLLOW [3] -> SHIFT '[' GOTO 39
-	variabledefinition = "var" typespec IDENT . (step:19), FOLLOW [3] -> REDUCE variabledefinition #3 CALL vardef
+	variabledefinition = "var" typespec IDENT . (step:20), FOLLOW [3] -> REDUCE variabledefinition #3 CALL vardef
 [30]
 	typename/L1 = IDENT "::" typename . (2), FOLLOW [38] -> REDUCE typename #3 CALL namespaceref
 [31]
@@ -4897,7 +4897,7 @@ expressionlist =
 [41]
 	typespec/L1 = "const" typename "^" "&" . (10), FOLLOW [7] -> REDUCE typespec #4 CALL typespec constptrreftype
 [42]
-	paramdecl = typespec IDENT ., FOLLOW [40] -> REDUCE paramdecl #2
+	paramdecl = typespec IDENT . (15), FOLLOW [40] -> REDUCE paramdecl #2 CALL paramdef
 [43]
 	functiondefinition = "procedure" IDENT "(" parameters ")" . "{" statementlist "}", FOLLOW [93] -> SHIFT '{' GOTO 59
 [44]
@@ -4945,7 +4945,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [66] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [66] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [66] -> SHIFT '.' GOTO 86
-	variabledefinition = "var" typespec IDENT "=" expression . (step:18), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_assign
+	variabledefinition = "var" typespec IDENT "=" expression . (step:19), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_assign
 [46]
 	expression/L1 = IDENT ., FOLLOW [97] -> REDUCE expression #1
 [47]
@@ -5198,7 +5198,7 @@ expressionlist =
 	expression/L10 = . "*" expression, FOLLOW [97] -> SHIFT '*' GOTO 56
 [57]
 	variabledefinition = "var" typespec IDENT "[" "]" . "=" expression, FOLLOW [3] -> SHIFT '=' GOTO 93
-	variabledefinition = "var" typespec IDENT "[" "]" . (step:21), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_array
+	variabledefinition = "var" typespec IDENT "[" "]" . (step:22), FOLLOW [3] -> REDUCE variabledefinition #5 CALL vardef_array
 [58]
 	functiondefinition = "function" typespec IDENT "(" parameters ")" . "{" statementlist "}", FOLLOW [93] -> SHIFT '{' GOTO 94
 [59]
@@ -6290,7 +6290,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L8 = "+" expression . (43), FOLLOW [97] -> REDUCE expression #2 CALL operator plus
+	expression/L8 = "+" expression . (44), FOLLOW [97] -> REDUCE expression #2 CALL operator plus
 [89]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6319,7 +6319,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L8 = "-" expression . (42), FOLLOW [97] -> REDUCE expression #2 CALL operator minus
+	expression/L8 = "-" expression . (43), FOLLOW [97] -> REDUCE expression #2 CALL operator minus
 [90]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6348,7 +6348,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L8 = "~" expression . (42), FOLLOW [97] -> REDUCE expression #2 CALL operator minus
+	expression/L8 = "~" expression . (43), FOLLOW [97] -> REDUCE expression #2 CALL operator minus
 [91]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6377,7 +6377,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L8 = "!" expression . (43), FOLLOW [97] -> REDUCE expression #2 CALL operator plus
+	expression/L8 = "!" expression . (44), FOLLOW [97] -> REDUCE expression #2 CALL operator plus
 [92]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6406,7 +6406,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L10 = "*" expression . (49), FOLLOW [97] -> REDUCE expression #2 CALL operator ptrderef
+	expression/L10 = "*" expression . (50), FOLLOW [97] -> REDUCE expression #2 CALL operator ptrderef
 [93]
 	variabledefinition = "var" typespec IDENT "[" "]" "=" . expression, FOLLOW [3] -> GOTO 135
 	expression/L2 = . expression "=" expression, FOLLOW [66] -> GOTO 135
@@ -6736,7 +6736,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L6 = expression "&" expression . (33), FOLLOW [97] -> REDUCE expression #3 CALL operator bitwise_and
+	expression/L6 = expression "&" expression . (34), FOLLOW [97] -> REDUCE expression #3 CALL operator bitwise_and
 [107]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6765,7 +6765,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L6 = expression "^" expression . (32), FOLLOW [97] -> REDUCE expression #3 CALL operator bitwise_xor
+	expression/L6 = expression "^" expression . (33), FOLLOW [97] -> REDUCE expression #3 CALL operator bitwise_xor
 [108]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6794,7 +6794,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L4 = expression "&&" expression . (30), FOLLOW [97] -> REDUCE expression #3 CALL operator logical_and
+	expression/L4 = expression "&&" expression . (31), FOLLOW [97] -> REDUCE expression #3 CALL operator logical_and
 [109]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6828,7 +6828,7 @@ expressionlist =
 [110]
 	expression/L11 = expression "(" expressionlist . ")", FOLLOW [97] -> SHIFT ')' GOTO 148
 [111]
-	expression/L11 = expression "(" ")" . (50), FOLLOW [97] -> REDUCE expression #3 CALL operator call
+	expression/L11 = expression "(" ")" . (51), FOLLOW [97] -> REDUCE expression #3 CALL operator call
 [112]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6857,7 +6857,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L2 = expression "=" expression . (23), FOLLOW [97] -> REDUCE expression #3 CALL operator assign
+	expression/L2 = expression "=" expression . (24), FOLLOW [97] -> REDUCE expression #3 CALL operator assign
 [113]
 	expression/L11 = expression "[" expressionlist . "]", FOLLOW [97] -> SHIFT ']' GOTO 149
 [114]
@@ -6888,7 +6888,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L2 = expression "+=" expression . (24), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_add
+	expression/L2 = expression "+=" expression . (25), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_add
 [115]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6917,7 +6917,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L2 = expression "-=" expression . (25), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_sub
+	expression/L2 = expression "-=" expression . (26), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_sub
 [116]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6946,7 +6946,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L2 = expression "*=" expression . (26), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_mul
+	expression/L2 = expression "*=" expression . (27), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_mul
 [117]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -6975,7 +6975,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L2 = expression "/=" expression . (27), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_div
+	expression/L2 = expression "/=" expression . (28), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_div
 [118]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7004,7 +7004,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L2 = expression "%=" expression . (28), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_mod
+	expression/L2 = expression "%=" expression . (29), FOLLOW [97] -> REDUCE expression #3 CALL operator assign_mod
 [119]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7033,7 +7033,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L3 = expression "||" expression . (29), FOLLOW [97] -> REDUCE expression #3 CALL operator logical_or
+	expression/L3 = expression "||" expression . (30), FOLLOW [97] -> REDUCE expression #3 CALL operator logical_or
 [120]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7062,7 +7062,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L5 = expression "|" expression . (31), FOLLOW [97] -> REDUCE expression #3 CALL operator bitwise_or
+	expression/L5 = expression "|" expression . (32), FOLLOW [97] -> REDUCE expression #3 CALL operator bitwise_or
 [121]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7091,7 +7091,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L7 = expression "==" expression . (34), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpeq
+	expression/L7 = expression "==" expression . (35), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpeq
 [122]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7120,7 +7120,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L7 = expression "!=" expression . (35), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpne
+	expression/L7 = expression "!=" expression . (36), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpne
 [123]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7149,7 +7149,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L7 = expression "<=" expression . (36), FOLLOW [97] -> REDUCE expression #3 CALL operator cmple
+	expression/L7 = expression "<=" expression . (37), FOLLOW [97] -> REDUCE expression #3 CALL operator cmple
 [124]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7178,7 +7178,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L7 = expression "<" expression . (37), FOLLOW [97] -> REDUCE expression #3 CALL operator cmplt
+	expression/L7 = expression "<" expression . (38), FOLLOW [97] -> REDUCE expression #3 CALL operator cmplt
 [125]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7207,7 +7207,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L7 = expression ">=" expression . (38), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpge
+	expression/L7 = expression ">=" expression . (39), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpge
 [126]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7236,7 +7236,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L7 = expression ">" expression . (39), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpgt
+	expression/L7 = expression ">" expression . (40), FOLLOW [97] -> REDUCE expression #3 CALL operator cmpgt
 [127]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7265,7 +7265,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L8 = expression "+" expression . (40), FOLLOW [97] -> REDUCE expression #3 CALL operator add
+	expression/L8 = expression "+" expression . (41), FOLLOW [97] -> REDUCE expression #3 CALL operator add
 [128]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7294,7 +7294,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L8 = expression "-" expression . (41), FOLLOW [97] -> REDUCE expression #3 CALL operator sub
+	expression/L8 = expression "-" expression . (42), FOLLOW [97] -> REDUCE expression #3 CALL operator sub
 [129]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7323,7 +7323,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L9 = expression "*" expression . (44), FOLLOW [97] -> REDUCE expression #3 CALL operator mul
+	expression/L9 = expression "*" expression . (45), FOLLOW [97] -> REDUCE expression #3 CALL operator mul
 [130]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7352,7 +7352,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L9 = expression "/" expression . (45), FOLLOW [97] -> REDUCE expression #3 CALL operator div
+	expression/L9 = expression "/" expression . (46), FOLLOW [97] -> REDUCE expression #3 CALL operator div
 [131]
 	expression/L6 = expression . "&" expression, FOLLOW [97] -> SHIFT '&' GOTO 61
 	expression/L6 = expression . "^" expression, FOLLOW [97] -> SHIFT '^' GOTO 62
@@ -7381,11 +7381,11 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [97] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [97] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 86
-	expression/L9 = expression "%" expression . (46), FOLLOW [97] -> REDUCE expression #3 CALL operator mod
+	expression/L9 = expression "%" expression . (47), FOLLOW [97] -> REDUCE expression #3 CALL operator mod
 [132]
-	expression/L10 = expression "->" IDENT . (47), FOLLOW [97] -> REDUCE expression #3 CALL operator arrow
+	expression/L10 = expression "->" IDENT . (48), FOLLOW [97] -> REDUCE expression #3 CALL operator arrow
 [133]
-	expression/L10 = expression "." IDENT . (48), FOLLOW [97] -> REDUCE expression #3 CALL operator member
+	expression/L10 = expression "." IDENT . (49), FOLLOW [97] -> REDUCE expression #3 CALL operator member
 [134]
 	expression/L1 = "(" expression ")" ., FOLLOW [97] -> REDUCE expression #3
 [135]
@@ -7416,7 +7416,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [66] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [66] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [66] -> SHIFT '.' GOTO 86
-	variabledefinition = "var" typespec IDENT "[" "]" "=" expression . (step:20), FOLLOW [3] -> REDUCE variabledefinition #7 CALL vardef_array_assign
+	variabledefinition = "var" typespec IDENT "[" "]" "=" expression . (step:21), FOLLOW [3] -> REDUCE variabledefinition #7 CALL vardef_array_assign
 [136]
 	functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 150
 [137]
@@ -7430,7 +7430,7 @@ expressionlist =
 [141]
 	statement = returnstatement ";" ., FOLLOW [93] -> REDUCE statement #2
 [142]
-	statement = expression ";" . (step:15), FOLLOW [93] -> REDUCE statement #2 CALL stm_expression
+	statement = expression ";" . (step:16), FOLLOW [93] -> REDUCE statement #2 CALL stm_expression
 [143]
 	statement = "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 151
 [144]
@@ -7542,7 +7542,7 @@ expressionlist =
 	expression/L9 = expression . "%" expression, FOLLOW [66] -> SHIFT '%' GOTO 84
 	expression/L10 = expression . "->" IDENT, FOLLOW [66] -> SHIFT "->" GOTO 85
 	expression/L10 = expression . "." IDENT, FOLLOW [66] -> SHIFT '.' GOTO 86
-	returnstatement = "return" expression . (step:22), FOLLOW [3] -> REDUCE returnstatement #2 CALL stm_return
+	returnstatement = "return" expression . (step:23), FOLLOW [3] -> REDUCE returnstatement #2 CALL stm_return
 [147]
 	expression/L2 = . expression "=" expression, FOLLOW [127] -> GOTO 109
 	expression/L2 = . expression "+=" expression, FOLLOW [127] -> GOTO 109
@@ -7587,9 +7587,9 @@ expressionlist =
 	expression/L10 = . "*" expression, FOLLOW [127] -> SHIFT '*' GOTO 56
 	expressionlist = ., FOLLOW [128] -> REDUCE expressionlist #0
 [148]
-	expression/L11 = expression "(" expressionlist ")" . (50), FOLLOW [97] -> REDUCE expression #4 CALL operator call
+	expression/L11 = expression "(" expressionlist ")" . (51), FOLLOW [97] -> REDUCE expression #4 CALL operator call
 [149]
-	expression/L11 = expression "[" expressionlist "]" . (51), FOLLOW [97] -> REDUCE expression #4 CALL operator arrayaccess
+	expression/L11 = expression "[" expressionlist "]" . (52), FOLLOW [97] -> REDUCE expression #4 CALL operator arrayaccess
 [150]
 	functiondefinition = "function" typespec IDENT "(" parameters ")" "{" statementlist "}" . (scope:13), FOLLOW [93] -> REDUCE functiondefinition #9 CALL funcdef
 [151]
@@ -7786,9 +7786,9 @@ expressionlist =
 	statement = "while" "(" expression ")" "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 162
 [161]
 	statement = "if" "(" expression ")" "{" statementlist "}" . "else" "{" statementlist "}", FOLLOW [93] -> SHIFT "else" GOTO 163
-	statement = "if" "(" expression ")" "{" statementlist "}" . (scope:16), FOLLOW [93] -> REDUCE statement #7 CALL conditional_if
+	statement = "if" "(" expression ")" "{" statementlist "}" . (scope:17), FOLLOW [93] -> REDUCE statement #7 CALL conditional_if
 [162]
-	statement = "while" "(" expression ")" "{" statementlist "}" . (scope:17), FOLLOW [93] -> REDUCE statement #7 CALL conditional_while
+	statement = "while" "(" expression ")" "{" statementlist "}" . (scope:18), FOLLOW [93] -> REDUCE statement #7 CALL conditional_while
 [163]
 	statement = "if" "(" expression ")" "{" statementlist "}" "else" . "{" statementlist "}", FOLLOW [93] -> SHIFT '{' GOTO 164
 [164]
@@ -7853,7 +7853,7 @@ expressionlist =
 [165]
 	statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist . "}", FOLLOW [93] -> SHIFT '}' GOTO 166
 [166]
-	statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" . (scope:16), FOLLOW [93] -> REDUCE statement #11 CALL conditional_if
+	statement = "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}" . (scope:17), FOLLOW [93] -> REDUCE statement #11 CALL conditional_if
 
 -- Function calls:
 (1) program
@@ -7870,43 +7870,44 @@ expressionlist =
 (12) typedef
 (13) funcdef
 (14) procdef
-(15) stm_expression
-(16) conditional_if
-(17) conditional_while
-(18) vardef_assign
-(19) vardef
-(20) vardef_array_assign
-(21) vardef_array
-(22) stm_return
-(23) operator, assign
-(24) operator, assign_add
-(25) operator, assign_sub
-(26) operator, assign_mul
-(27) operator, assign_div
-(28) operator, assign_mod
-(29) operator, logical_or
-(30) operator, logical_and
-(31) operator, bitwise_or
-(32) operator, bitwise_xor
-(33) operator, bitwise_and
-(34) operator, cmpeq
-(35) operator, cmpne
-(36) operator, cmple
-(37) operator, cmplt
-(38) operator, cmpge
-(39) operator, cmpgt
-(40) operator, add
-(41) operator, sub
-(42) operator, minus
-(43) operator, plus
-(44) operator, mul
-(45) operator, div
-(46) operator, mod
-(47) operator, arrow
-(48) operator, member
-(49) operator, ptrderef
-(50) operator, call
-(51) operator, arrayaccess
+(15) paramdef
+(16) stm_expression
+(17) conditional_if
+(18) conditional_while
+(19) vardef_assign
+(20) vardef
+(21) vardef_array_assign
+(22) vardef_array
+(23) stm_return
+(24) operator, assign
+(25) operator, assign_add
+(26) operator, assign_sub
+(27) operator, assign_mul
+(28) operator, assign_div
+(29) operator, assign_mod
+(30) operator, logical_or
+(31) operator, logical_and
+(32) operator, bitwise_or
+(33) operator, bitwise_xor
+(34) operator, bitwise_and
+(35) operator, cmpeq
+(36) operator, cmpne
+(37) operator, cmple
+(38) operator, cmplt
+(39) operator, cmpge
+(40) operator, cmpgt
+(41) operator, add
+(42) operator, sub
+(43) operator, minus
+(44) operator, plus
+(45) operator, mul
+(46) operator, div
+(47) operator, mod
+(48) operator, arrow
+(49) operator, member
+(50) operator, ptrderef
+(51) operator, call
+(52) operator, arrayaccess
 
 -- Action table:
 [1]
@@ -8045,8 +8046,8 @@ expressionlist =
 [41]
 	IDENT => Reduce #4 typespec call typespec constptrreftype
 [42]
-	')' => Reduce #2 paramdecl
-	',' => Reduce #2 paramdecl
+	')' => Reduce #2 paramdecl call paramdef
+	',' => Reduce #2 paramdecl call paramdef
 [43]
 	'{' => Shift goto 59
 [44]

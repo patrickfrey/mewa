@@ -6,14 +6,14 @@ Reduce #1 to typename by token '&' at line 1 in state 15, goto 16
 Shift token '&' at line 1 in state 16, goto 23
 Reduce #2 to typespec by token IDENT = "a" at line 1 in state 23, call typespec reftype, goto 35
 Shift token IDENT = "a" at line 1 in state 35, goto 42
-Reduce #2 to paramdecl by token ',' at line 1 in state 42, goto 37
+Reduce #2 to paramdecl by token ',' at line 1 in state 42, call paramdef, goto 37
 Shift token ',' at line 1 in state 37, goto 44
 Shift token IDENT = "int" at line 1 in state 44, goto 15
 Reduce #1 to typename by token '&' at line 1 in state 15, goto 16
 Shift token '&' at line 1 in state 16, goto 23
 Reduce #2 to typespec by token IDENT = "b" at line 1 in state 23, call typespec reftype, goto 35
 Shift token IDENT = "b" at line 1 in state 35, goto 42
-Reduce #2 to paramdecl by token ')' at line 1 in state 42, goto 37
+Reduce #2 to paramdecl by token ')' at line 1 in state 42, call paramdef, goto 37
 Reduce #1 to parameters by token ')' at line 1 in state 37, goto 60
 Reduce #3 to parameters by token ')' at line 1 in state 60, goto 36
 Shift token ')' at line 1 in state 36, goto 43
@@ -62,7 +62,7 @@ Shift token IDENT = "int" at line 8 in state 32, goto 15
 Reduce #1 to typename by token IDENT = "n" at line 8 in state 15, goto 16
 Reduce #1 to typespec by token IDENT = "n" at line 8 in state 16, call typespec puretype, goto 35
 Shift token IDENT = "n" at line 8 in state 35, goto 42
-Reduce #2 to paramdecl by token ')' at line 8 in state 42, goto 37
+Reduce #2 to paramdecl by token ')' at line 8 in state 42, call paramdef, goto 37
 Reduce #1 to parameters by token ')' at line 8 in state 37, goto 40
 Shift token ')' at line 8 in state 40, goto 58
 Shift token '{' at line 9 in state 58, goto 94
@@ -157,33 +157,45 @@ Lua call result [1]
 			{
 				arg = {
 					{
-						line = 1,
-						name = "IDENT",
-						value = "int"}},
-				call = {
-					"typespec reftype",
-					<function>,
-					{}},
-				name = "reftype"},
-			{
-				line = 1,
-				name = "IDENT",
-				value = "a"},
-			{
-				arg = {
+						arg = {
+							{
+								line = 1,
+								name = "IDENT",
+								value = "int"}},
+						call = {
+							"typespec reftype",
+							<function>,
+							{}},
+						name = "reftype"},
 					{
 						line = 1,
 						name = "IDENT",
-						value = "int"}},
+						value = "a"}},
 				call = {
-					"typespec reftype",
-					<function>,
-					{}},
-				name = "reftype"},
+					"paramdef",
+					<function>},
+				name = "paramdef"},
 			{
-				line = 1,
-				name = "IDENT",
-				value = "b"},
+				arg = {
+					{
+						arg = {
+							{
+								line = 1,
+								name = "IDENT",
+								value = "int"}},
+						call = {
+							"typespec reftype",
+							<function>,
+							{}},
+						name = "reftype"},
+					{
+						line = 1,
+						name = "IDENT",
+						value = "b"}},
+				call = {
+					"paramdef",
+					<function>},
+				name = "paramdef"},
 			{
 				arg = {
 					{
@@ -281,18 +293,24 @@ Lua call result [1]
 			{
 				arg = {
 					{
+						arg = {
+							{
+								line = 8,
+								name = "IDENT",
+								value = "int"}},
+						call = {
+							"typespec puretype",
+							<function>,
+							{}},
+						name = "puretype"},
+					{
 						line = 8,
 						name = "IDENT",
-						value = "int"}},
+						value = "n"}},
 				call = {
-					"typespec puretype",
-					<function>,
-					{}},
-				name = "puretype"},
-			{
-				line = 8,
-				name = "IDENT",
-				value = "n"},
+					"paramdef",
+					<function>},
+				name = "paramdef"},
 			{
 				arg = {
 					{

@@ -46,7 +46,7 @@ parameters/L		= paramdecl "," parameters
 			| paramdecl
 			| ε
 			;
-paramdecl		= typespec IDENT
+paramdecl		= typespec IDENT								(paramdef)
 			;
 statementlist/L		= statement statementlist
 			| ε
