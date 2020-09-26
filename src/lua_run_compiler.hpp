@@ -13,9 +13,11 @@
 #define _MEWA_LUA_RUN_COMPILER_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include "automaton.hpp"
-#include <lua.h>
 #include <string>
 #include <iostream>
+extern "C" {
+#include <lua.h>
+}
 
 namespace mewa {
 

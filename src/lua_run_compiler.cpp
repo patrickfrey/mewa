@@ -25,8 +25,10 @@
 #include <limits>
 #include <cmath>
 #include <memory_resource>
+extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
+}
 
 #if __cplusplus < 201703L
 #error Building mewa requires C++17
@@ -250,14 +252,14 @@ static void luaReduceStruct(
 				break;
 			}
 		}
-		lua_pushliteral( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
-		lua_createtable( ls, stk_end-stk_start/*size array*/, 0/*size struct*/);	// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
 		int nofLuaStackElements = stk_end-stk_start;
+		lua_pushliteral( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
+		lua_createtable( ls, nofLuaStackElements/*size array*/, 0/*size struct*/);	// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
 		int li = -nofLuaStackElements-3, le = -3;
-		for (int tidx=0; li != le; ++li,++tidx)
+		for (int tidx=1; li != le; ++li,++tidx)
 		{
 			lua_pushvalue( ls, li);							// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB] [ARGi]
-			lua_rawseti( ls, -4, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
+			lua_rawseti( ls, -2, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
 		}
 		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
 		lua_replace( ls, -1-nofLuaStackElements);					// STK [TABLE] [ARG2]...[ARGN]
@@ -299,22 +301,24 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 	out << "{";
 	while (lua_next( ls, -2))
 	{
-		if (lua_isstring( ls, -2))
+		if (lua_type( ls, -2) == LUA_TSTRING)
 		{
 			out << indent << lua_tostring( ls, -2) << " = ";
 			serializeLuaValue( out, ls, -1, indent);
 		}
 		else if (lua_isnumber( ls, -2))
 		{
-			out << "[";
-			serializeLuaNumber( out, ls, li);
+			out << indent << "[";
+			serializeLuaNumber( out, ls, -2);
 			out << "] = ";
 			serializeLuaValue( out, ls, -1, indent);
 		}
 		else
 		{
-			out << "[";
-			serializeLuaValue( out, ls, -2, indent);
+			out << indent << "[";
+			lua_pushvalue( ls, -2);
+			serializeLuaValue( out, ls, -1, indent);
+			lua_pop( ls, 1);
 			out << "] = ";
 			serializeLuaValue( out, ls, -1, indent);
 		}
@@ -364,12 +368,18 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 		lua_pop( ls, 1);					// STK: [NODE]
 		lua_pushliteral( ls, "name");				// STK: [NODE] "name"
 		lua_gettable( ls, -2);					// STK: [NODE] [NAME]
-		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
+		if (lua_type( ls, -1) != LUA_TSTRING)
+		{
+			throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
 		std::string namestr( lua_tostring( ls, -1));
 		lua_pop( ls, 1);					// STK: [NODE]
 		lua_pushliteral( ls, "value");				// STK: [NODE] "value"
 		lua_gettable( ls, -2);					// STK: [NODE] [VALUE]
-		if (!lua_isstring( ls, -1)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
+		if (lua_type( ls, -1) != LUA_TSTRING)
+		{
+			throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
 		std::string valuestr( lua_tostring( ls, -1));
 		lua_pop( ls, 2);					// STK:
 		throw mewa::Error( mewa::Error::NoLuaFunctionDefinedForItem, namestr + " = " + valuestr);

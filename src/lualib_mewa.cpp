@@ -26,8 +26,10 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
+}
 
 #if __cplusplus < 201703L
 #error Building mewa requires C++17
@@ -242,7 +244,7 @@ static int mewa_compiler_run( lua_State* ls)
 		if (!lua_checkstack( ls, 10)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
 
 		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
-		if (!lua_isstring( ls, 2)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument,
+		if (lua_type( ls, 2) != LUA_TSTRING) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument,
 								std::string(functionName) + "[1] " + lua_typename( ls, lua_type( ls, 2)));
 		const char* filename = lua_tostring( ls, 2);
 		std::string source = mewa::readFile( filename);
@@ -253,7 +255,11 @@ static int mewa_compiler_run( lua_State* ls)
 			bool hasRedirectedOutput = !lua_isnil( ls, 3);
 			if (hasRedirectedOutput)
 			{
-				if (!lua_isstring( ls, 3)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[2] " + lua_typename( ls, lua_type( ls, 3)));
+				if (lua_type( ls, 3) != LUA_TSTRING)
+				{
+					throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument,
+								std::string(functionName) + "[2] " + lua_typename( ls, lua_type( ls, 3)));
+				}
 				const char* outputFileName = lua_tostring( ls, 3);
 				mw->closeOutput();
 				if (0==std::strcmp( outputFileName, "stderr"))
@@ -280,7 +286,11 @@ static int mewa_compiler_run( lua_State* ls)
 			}
 			if (nn >= 4 && !lua_isnil( ls, 4))
 			{
-				if (!lua_isstring( ls, 4)) throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument, std::string(functionName) + "[3] " + lua_typename( ls, lua_type( ls, 4)));
+				if (lua_type( ls, 4) != LUA_TSTRING)
+				{
+					throw mewa::Error( mewa::Error::ExpectedFilenameAsArgument,
+								std::string(functionName) + "[3] " + lua_typename( ls, lua_type( ls, 4)));
+				}
 				const char* debugFilename = lua_tostring( ls, 4);
 				if (0==std::strcmp( debugFilename, "stderr"))
 				{

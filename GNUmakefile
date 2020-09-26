@@ -82,6 +82,7 @@ check: test
 
 install: all
 	cp $(PROGRAM) $(DESTINATION)
+	mkdir -p $(MANPAGES)/man1
 	cp MANPAGE $(MANPAGES)/man1/mewa.1
 	gzip -f $(MANPAGES)/man1/mewa.1
 

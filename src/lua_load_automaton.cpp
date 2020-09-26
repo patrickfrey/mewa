@@ -22,8 +22,10 @@
 #include <map>
 #include <utility>
 #include <typeinfo>
+extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
+}
 
 #if __cplusplus < 201703L
 #error Building mewa requires C++17
@@ -115,7 +117,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 	while (lua_next( ls, -2))
 	{
 		++rowcnt;
-		if (!lua_isstring( ls, -2))
+		if (lua_type( ls, -2) != LUA_TSTRING)
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
 						mewa::string_format( "table '%s', row %d", tableName, rowcnt));
@@ -156,7 +158,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 						rt.defineBracketComment( arg[0], arg[1]);
 					}
 				}
-				else if (lua_isstring( ls, -1))
+				else if (lua_type( ls, -1) == LUA_TSTRING)
 				{
 					auto arg = lua_tostring( ls, -1);
 					rt.defineEolnComment( arg);
@@ -252,11 +254,11 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 		std::size_t vallen;
 		const char* valstr;
 		const char* argstr;
-		
+
 		switch (rowcnt)
 		{
 			case 1: 
-				if (!lua_isstring( ls, -1))
+				if (lua_type( ls, -1) != LUA_TSTRING)
 				{
 					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
 								mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
@@ -281,7 +283,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 				}
 				break;
 			case 3:
-				argtype = lua_isstring( ls, -1) ? mewa::Automaton::Call::StringArg : mewa::Automaton::Call::ReferenceArg;
+				argtype = (lua_type( ls, -1) == LUA_TSTRING) ? mewa::Automaton::Call::StringArg : mewa::Automaton::Call::ReferenceArg;
 				break;
 		}
 		lua_pop( ls, 1);
@@ -341,7 +343,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 	while (lua_next( ls, -2))
 	{
 		++rowcnt;
-		if (!lua_isstring( ls, -2))
+		if (lua_type( ls, -2) != LUA_TSTRING)
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
 						mewa::string_format( "automaton definition, row %d", rowcnt));
@@ -349,7 +351,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 		const char* keystr = lua_tostring( ls, -2);
 		if (0==std::strcmp( keystr, "language"))
 		{
-			if (!lua_isstring( ls, -1))
+			if (lua_type( ls, -1) != LUA_TSTRING)
 			{
 				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
 							mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
@@ -358,7 +360,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 		}
 		else if (0==std::strcmp( keystr, "typesystem"))
 		{
-			if (!lua_isstring( ls, -1))
+			if (lua_type( ls, -1) != LUA_TSTRING)
 			{
 				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
 							mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));

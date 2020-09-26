@@ -13,7 +13,9 @@
 #define _MEWA_LUA_LOAD_AUTOMATON_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include "automaton.hpp"
+extern "C" {
 #include <lua.h>
+}
 
 namespace mewa {
 
