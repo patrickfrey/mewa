@@ -52,6 +52,10 @@ A definition is valid if its scope counter is inside the scope checked:
 * _counter_ **>=** _start_
 * _counter_ **<** _end_.
 
+## Example
+1. [Simple Procedural Language 1](../blob/master/example/language1.g)
+* Grammar of a simple procedural programming language with variable declarations and functions/procedures.
+
 
 
 
