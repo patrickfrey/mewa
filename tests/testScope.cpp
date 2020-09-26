@@ -92,7 +92,10 @@ int main( int argc, const char* argv[] )
 		std::ostringstream outputbuf;
 		outputbuf << "\n";
 
-		ScopedMap<std::string,std::string> smap;
+		int buffer[ 2048];
+		std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+
+		ScopedMap<std::string,std::string> smap( &memrsc);
 		for (auto test : tests)
 		{
 			smap.insert( ScopedMap<std::string,std::string>::value_type(
