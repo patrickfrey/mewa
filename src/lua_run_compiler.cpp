@@ -194,7 +194,7 @@ struct CompilerContext
 };
 
 static void luaReduceStruct( 
-		lua_State* ls, CompilerContext& ctx, int reductionSize, const std::string_view& name,
+		lua_State* ls, CompilerContext& ctx, int reductionSize,
 		int callidx, const mewa::Automaton::Action::ScopeFlag scopeflag, int scopeStart)
 {
 	int stk_start = 0;
@@ -219,13 +219,9 @@ static void luaReduceStruct(
 				stk_start = st.luastki;
 			}
 		}
-		int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 3:4;
+		int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 2:3;
 												// STK [ARG1]...[ARGN]
 		lua_createtable( ls, 0/*size array*/, structsize);	 			// STK [ARG1]...[ARGN] [TABLE]
-
-		lua_pushliteral( ls, "name");							// STK [ARG1]...[ARGN] [TABLE] "name"
-		lua_pushlstring( ls, name.data(), name.size());					// STK [ARG1]...[ARGN] [TABLE] [NAME]
-		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
 
 		lua_pushliteral( ls, "call");							// STK [ARG1]...[ARGN] [TABLE] "call"
  		lua_rawgeti( ls, ctx.calltable, callidx);					// STK [ARG1]...[ARGN] [TABLE] [CALLSTRUCT]
@@ -576,9 +572,7 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 			if (nexti->second.call())
 			{
 				int callidx = nexti->second.call();
-				auto const& call = automaton.call( callidx);
-				const std::string& nodename = call.arg().size() ? call.arg() : call.function();
-				luaReduceStruct( ls, ctx, reductionSize, nodename, callidx, nexti->second.scopeflag(), scopeStart);
+				luaReduceStruct( ls, ctx, reductionSize, callidx, nexti->second.scopeflag(), scopeStart);
 				luaStackNofElements = 1;
 			}
 			else

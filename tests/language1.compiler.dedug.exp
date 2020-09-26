@@ -165,16 +165,14 @@ Lua call result [1]
 						call = {
 							"typespec reftype",
 							<function>,
-							{}},
-						name = "reftype"},
+							{}}},
 					{
 						line = 1,
 						name = "IDENT",
 						value = "a"}},
 				call = {
 					"paramdef",
-					<function>},
-				name = "paramdef"},
+					<function>}},
 			{
 				arg = {
 					{
@@ -186,16 +184,14 @@ Lua call result [1]
 						call = {
 							"typespec reftype",
 							<function>,
-							{}},
-						name = "reftype"},
+							{}}},
 					{
 						line = 1,
 						name = "IDENT",
 						value = "b"}},
 				call = {
 					"paramdef",
-					<function>},
-				name = "paramdef"},
+					<function>}},
 			{
 				arg = {
 					{
@@ -207,8 +203,7 @@ Lua call result [1]
 						call = {
 							"typespec puretype",
 							<function>,
-							{}},
-						name = "puretype"},
+							{}}},
 					{
 						line = 3,
 						name = "IDENT",
@@ -220,7 +215,6 @@ Lua call result [1]
 				call = {
 					"vardef_assign",
 					<function>},
-				name = "vardef_assign",
 				step = 1},
 			{
 				arg = {
@@ -237,12 +231,10 @@ Lua call result [1]
 						call = {
 							"operator assign",
 							<function>,
-							{}},
-						name = "assign"}},
+							{}}}},
 				call = {
 					"stm_expression",
 					<function>},
-				name = "stm_expression",
 				step = 2},
 			{
 				arg = {
@@ -259,17 +251,14 @@ Lua call result [1]
 						call = {
 							"operator assign",
 							<function>,
-							{}},
-						name = "assign"}},
+							{}}}},
 				call = {
 					"stm_expression",
 					<function>},
-				name = "stm_expression",
 				step = 3}},
 		call = {
 			"procdef",
 			<function>},
-		name = "procdef",
 		scope = {
 			0,
 			4}},
@@ -284,8 +273,7 @@ Lua call result [1]
 				call = {
 					"typespec puretype",
 					<function>,
-					{}},
-				name = "puretype"},
+					{}}},
 			{
 				line = 8,
 				name = "IDENT",
@@ -301,16 +289,14 @@ Lua call result [1]
 						call = {
 							"typespec puretype",
 							<function>,
-							{}},
-						name = "puretype"},
+							{}}},
 					{
 						line = 8,
 						name = "IDENT",
 						value = "n"}},
 				call = {
 					"paramdef",
-					<function>},
-				name = "paramdef"},
+					<function>}},
 			{
 				arg = {
 					{
@@ -322,8 +308,7 @@ Lua call result [1]
 						call = {
 							"typespec puretype",
 							<function>,
-							{}},
-						name = "puretype"},
+							{}}},
 					{
 						line = 10,
 						name = "IDENT",
@@ -335,7 +320,6 @@ Lua call result [1]
 				call = {
 					"vardef_assign",
 					<function>},
-				name = "vardef_assign",
 				step = 5},
 			{
 				arg = {
@@ -348,8 +332,7 @@ Lua call result [1]
 						call = {
 							"typespec puretype",
 							<function>,
-							{}},
-						name = "puretype"},
+							{}}},
 					{
 						line = 11,
 						name = "IDENT",
@@ -361,7 +344,6 @@ Lua call result [1]
 				call = {
 					"vardef_assign",
 					<function>},
-				name = "vardef_assign",
 				step = 6},
 			{
 				arg = {
@@ -378,8 +360,7 @@ Lua call result [1]
 						call = {
 							"operator cmplt",
 							<function>,
-							{}},
-						name = "cmplt"},
+							{}}},
 					{
 						arg = {
 							{
@@ -401,17 +382,14 @@ Lua call result [1]
 										call = {
 											"operator add",
 											<function>,
-											{}},
-										name = "add"}},
+											{}}}},
 								call = {
 									"operator assign",
 									<function>,
-									{}},
-								name = "assign"}},
+									{}}}},
 						call = {
 							"stm_expression",
 							<function>},
-						name = "stm_expression",
 						step = 7},
 					{
 						arg = {
@@ -432,17 +410,14 @@ Lua call result [1]
 								call = {
 									"operator call",
 									<function>,
-									{}},
-								name = "call"}},
+									{}}}},
 						call = {
 							"stm_expression",
 							<function>},
-						name = "stm_expression",
 						step = 8}},
 				call = {
 					"conditional_while",
 					<function>},
-				name = "conditional_while",
 				scope = {
 					6,
 					9}},
@@ -455,12 +430,10 @@ Lua call result [1]
 				call = {
 					"stm_return",
 					<function>},
-				name = "stm_return",
 				step = 10}},
 		call = {
 			"funcdef",
 			<function>},
-		name = "funcdef",
 		scope = {
 			4,
 			11}}}
