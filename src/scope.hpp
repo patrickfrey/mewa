@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <string>
 #include <map>
+#include <memory_resource>
 
 namespace mewa {
 
@@ -102,13 +103,13 @@ struct ScopedMapOrder
 
 template <typename KEYTYPE, typename VALTYPE>
 class ScopedMap
-	:public std::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> >
+	:public std::pmr::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> >
 {
 public:
-	typedef std::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> > ParentClass;
+	typedef std::pmr::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> > ParentClass;
 	typedef typename ParentClass::const_iterator const_iterator;
 
-	ScopedMap() = default;
+	explicit ScopedMap( std::pmr::memory_resource* memrsc) :ParentClass( memrsc) {}
 	ScopedMap( const ScopedMap& o) = default;
 	ScopedMap& operator=( const ScopedMap& o) = default;
 	ScopedMap( ScopedMap&& o) = default;

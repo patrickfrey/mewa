@@ -20,7 +20,6 @@
 #include <string_view>
 #include <algorithm>
 #include <type_traits>
-#include <memory_resource>
 
 using namespace mewa;
 
