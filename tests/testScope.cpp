@@ -50,7 +50,7 @@ private:
 struct TestCase
 {
 	const char* key;
-	Scope::Timestmp timestmp;
+	Scope::Step step;
 };
 
 int main( int argc, const char* argv[] )
@@ -125,8 +125,8 @@ int main( int argc, const char* argv[] )
 		int ti = 0;
 		for (; queries[ti].key; ++ti)
 		{
-			if (verbose) std::cerr << "Find '" << queries[ti].key << "'/" << queries[ti].timestmp << ": " << std::endl;
-			auto ri = smap.scoped_find( queries[ti].key, queries[ti].timestmp);
+			if (verbose) std::cerr << "Find '" << queries[ti].key << "'/" << queries[ti].step << ": " << std::endl;
+			auto ri = smap.scoped_find( queries[ti].key, queries[ti].step);
 			if (ri != smap.end())
 			{
 				if (verbose)

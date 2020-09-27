@@ -210,6 +210,7 @@ public:
 		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
 		return env.hash();
 	}
+
 	std::string_view inv( int id) const noexcept
 	{
 		const IdentKey* key = m_inv[ id-1];

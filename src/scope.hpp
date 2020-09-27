@@ -24,11 +24,11 @@ namespace mewa {
 struct Scope
 {
 public:
-	typedef int Timestmp;
+	typedef int Step;
 
 public:
-	Scope( Timestmp first_, Timestmp second_)
-		:first(first_ >= 0 ? first_ : 0),second(second_ >= 0 ? second_ : std::numeric_limits<Timestmp>::max()){}
+	Scope( Step first_, Step second_)
+		:first(first_ >= 0 ? first_ : 0),second(second_ >= 0 ? second_ : std::numeric_limits<Step>::max()){}
 	Scope( const Scope& o)
 		:first(o.first),second(o.second){}
 	Scope& operator=( const Scope& o)
@@ -39,15 +39,15 @@ public:
 		return o.first >= first && o.second <= second;
 	}
 
-	bool contains( Timestmp timestmp) const noexcept
+	bool contains( Step step) const noexcept
 	{
-		return timestmp >= first && timestmp < second;
+		return step >= first && step < second;
 	}
 
 	std::string tostring() const
 	{
 		char buf[ 128];
-		if (second == std::numeric_limits<Timestmp>::max())
+		if (second == std::numeric_limits<Step>::max())
 		{
 			std::snprintf( buf, sizeof(buf), "[%d,INF]", first);
 		}
@@ -59,8 +59,8 @@ public:
 	}
 
 public:
-	Timestmp first;
-	Timestmp second;
+	Step first;
+	Step second;
 };
 
 template <typename KEYTYPE>
@@ -81,7 +81,7 @@ public:
 	const KEYTYPE& key() const noexcept						{return m_key;}
 	const Scope scope() const noexcept						{return m_scope;}
 
-	bool matches( const KEYTYPE& key_, Scope::Timestmp timestmp) const noexcept	{return m_key == key_ && m_scope.contains( timestmp);}
+	bool matches( const KEYTYPE& key_, Scope::Step step) const noexcept		{return m_key == key_ && m_scope.contains( step);}
 
 private:
 	KEYTYPE m_key;
@@ -115,13 +115,13 @@ public:
 	ScopedMap( ScopedMap&& o) = default;
 	ScopedMap& operator=( ScopedMap&& o) = default;
 
-	const_iterator scoped_find( const KEYTYPE& key, const Scope::Timestmp timestmp) const noexcept
+	const_iterator scoped_find( const KEYTYPE& key, const Scope::Step step) const noexcept
 	{
 		auto rt = ParentClass::end();
-		auto it = ParentClass::lower_bound( ScopedKey<KEYTYPE>( key, Scope( 0, timestmp+1)));
-		for (; it != this->end() && it->first.key() == key && it->first.scope().second > timestmp; ++it)
+		auto it = ParentClass::lower_bound( ScopedKey<KEYTYPE>( key, Scope( 0, step+1)));
+		for (; it != this->end() && it->first.key() == key && it->first.scope().second > step; ++it)
 		{
-			if (it->first.scope().first <= timestmp)
+			if (it->first.scope().first <= step)
 			{
 				if (rt == ParentClass::end() || rt->first.scope().contains( it->first.scope()))
 				{

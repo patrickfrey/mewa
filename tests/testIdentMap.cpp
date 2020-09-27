@@ -117,11 +117,11 @@ int main( int argc, const char* argv[] )
 			std::cerr << "Usage: testIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
 			throw std::runtime_error( "too many arguments");
 		}
-		static const char* alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJLMNOPQRSTUVWXYZ_-0123456789     ";
+		static const char* alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJLMNOPQRSTUVWXYZ_-0123456789     "; //< key alphabet
+		std::unordered_map<std::string,int> refmap;			//< reference map to test the ident map against
+		std::unordered_map<std::size_t,std::string> hashmap;		//< map to count hash function collisions
 
-		std::unordered_map<std::string,int> refmap;
-		std::unordered_map<std::size_t,std::string> hashmap;
-
+		// Create the ident map and the map to test against:
 		struct Buffer
 		{
 			void* ptr;
@@ -140,16 +140,13 @@ int main( int argc, const char* argv[] )
 		IdentMap testmap( &map_memrsc, &str_memrsc, nofInitBuckets);
 		int countHashCollisions = 0;
 
+		// Insert the defined number (nofTests) of distinct random keys into the test map and into the tested ident map:
 		for (int ti=0; ti<nofTests; ++ti)
 		{
 			std::string key = genTestKey( alphabet, maxKeyLength);
 			auto ins = refmap.insert( {key, ti+1});
-			while (ins.second == false)
+			while (ins.second == false/*no insert took place*/)
 			{
-				if (testmap.get( key) != ins.first->second)
-				{
-					throw std::runtime_error( string_format( "ident assigned to existing key '%s' does not match value %d", key.c_str(), ins.first->second));
-				}
 				key = genTestKey( alphabet, maxKeyLength);
 				ins = refmap.insert( {key, ti+1});
 			}
@@ -177,6 +174,7 @@ int main( int argc, const char* argv[] )
 			}
 			if (verbose) std::cerr << string_format( "test key '%s'", key.c_str()) << std::endl;
 		}
+		// Check that test keys keys are correctly assigned in the ident map:
 		for (auto kv : refmap)
 		{
 			if (verbose) std::cerr << string_format( "lookup key '%s'", kv.first.c_str()) << std::endl;
@@ -185,6 +183,7 @@ int main( int argc, const char* argv[] )
 				throw std::runtime_error( string_format( "ident of key '%s' not assigned to value %d", kv.first.c_str(), kv.second));
 			}
 		}
+		// Check that all keys in the ident map are real test keys with correct assignment:
 		int ki = 1, ke = testmap.size()+1;
 		for (; ki != ke; ++ki)
 		{
