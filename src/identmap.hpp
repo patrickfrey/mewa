@@ -14,6 +14,7 @@
 #if __cplusplus >= 201703L
 #include "error.hpp"
 #include "strings.hpp"
+#include "crc32.hpp"
 #include <utility>
 #include <unordered_map>
 #include <cstring>
@@ -82,7 +83,7 @@ private:
 	// Hash function copied from https://www.burtleburtle.net/bob/c/lookup3.c
 	// lookup3.c, by Bob Jenkins, May 2006, Public Domain.
 
-	static uint32_t rot( uint32_t n, uint32_t d) noexcept
+	static inline uint32_t rot( uint32_t n, uint32_t d) noexcept
 	{
 		return (n<<d)|(n>>(32-d));
 	}
@@ -96,7 +97,7 @@ private:
 		{
 			a = b = c = 0xdeadbeef + initval;
 		}
-		void mix() noexcept
+		inline void mix() noexcept
 		{
 			a -= c;  a ^= rot(c, 4);  c += b;
 			b -= a;  b ^= rot(a, 6);  a += c;
@@ -105,7 +106,7 @@ private:
 			b -= a;  b ^= rot(a,19);  a += c;
 			c -= b;  c ^= rot(b, 4);  b += a;
 		}
-		void final() noexcept
+		inline void final() noexcept
 		{
 			c ^= b; c -= rot(b,14);
 			a ^= c; a -= rot(c,11);

@@ -216,7 +216,7 @@ private:
 
 }//namespace
 #else
-#error Building mewa requires C++11
+#error Building mewa requires C++17
 #endif
 #endif
 

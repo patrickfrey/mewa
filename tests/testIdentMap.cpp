@@ -121,10 +121,23 @@ int main( int argc, const char* argv[] )
 
 		std::unordered_map<std::string,int> refmap;
 		std::unordered_map<std::size_t,std::string> hashmap;
-		int buffer[ 2048];
-		std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 
-		IdentMap testmap( &memrsc, &memrsc, nofInitBuckets);
+		struct Buffer
+		{
+			void* ptr;
+
+			Buffer( void* ptr_) :ptr(ptr_){}
+			~Buffer() {if (ptr) std::free( ptr);}
+		};
+		std::size_t map_bufsize = nofInitBuckets * sizeof( std::pair<IdentKeyEnvelop, int>);
+		std::size_t str_bufsize = nofTests * (maxKeyLength / 10 + 3);
+		Buffer map_buffer( std::malloc( map_bufsize));
+		Buffer str_buffer( std::malloc( str_bufsize));
+
+		std::pmr::monotonic_buffer_resource map_memrsc( map_buffer.ptr, map_bufsize);
+		std::pmr::monotonic_buffer_resource str_memrsc( str_buffer.ptr, str_bufsize);
+
+		IdentMap testmap( &map_memrsc, &str_memrsc, nofInitBuckets);
 		int countHashCollisions = 0;
 
 		for (int ti=0; ti<nofTests; ++ti)
