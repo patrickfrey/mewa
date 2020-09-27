@@ -17,6 +17,7 @@
 #include "lexer.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
+#include "strings.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -35,11 +36,32 @@ int main( int argc, const char* argv[] )
 			{
 				verbose = true;
 			}
-			if (0==std::strcmp( argv[argi], "-h"))
+			else if (0==std::strcmp( argv[argi], "-h"))
 			{
 				std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
+				break;
+			}
+			else if (0==std::strcmp( argv[argi], "--"))
+			{
+				++argi;
+				break;
+			}
+			else if (argv[argi][0] == '-')
+			{
+				std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
+				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
+			}
+			else
+			{
+				break;
 			}
 		}
+		if (argi < argc)
+		{
+			std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
+			throw std::runtime_error( "no arguments except options expected");
+		}
+
 		Lexer lexer;
 		lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
 		lexer.defineLexem( "CARDINAL", "[0-9]*");

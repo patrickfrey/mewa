@@ -18,6 +18,7 @@
 #include "automaton_structs.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
+#include "strings.hpp"
 #include "utilitiesForTests.hpp"
 #include <iostream>
 #include <sstream>
@@ -25,6 +26,8 @@
 #include <vector>
 
 using namespace mewa;
+
+static PseudoRandom g_random;
 
 int main( int argc, const char* argv[] )
 {
@@ -38,12 +41,31 @@ int main( int argc, const char* argv[] )
 			{
 				verbose = true;
 			}
-			if (0==std::strcmp( argv[argi], "-h"))
+			else if (0==std::strcmp( argv[argi], "-h"))
 			{
 				std::cerr << "Usage: testAutomaton [-h][-V]" << std::endl;
+				break;
+			}
+			else if (0==std::strcmp( argv[argi], "--"))
+			{
+				++argi;
+				break;
+			}
+			else if (argv[argi][0] == '-')
+			{
+				std::cerr << "Usage: testAutomaton [-h][-V]" << std::endl;
+				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
+			}
+			else
+			{
+				break;
 			}
 		}
-		PseudoRandom random;
+		if (argi < argc)
+		{
+			std::cerr << "Usage: testAutomaton [-h][-V]" << std::endl;
+			throw std::runtime_error( "no arguments except options expected");
+		}
 
 		// [1] Test Automaton building
 		std::ostringstream outputstream;
@@ -252,23 +274,23 @@ V = "*" E
 		for (int ii=0; ii<100000; ++ii)
 		{
 			Automaton::ActionKey actionKey( 
-							random.get( 0, Automaton::MaxState)/*state*/,
-							random.get( 0, Automaton::MaxTerminal)/*terminal*/);
-			Automaton::Action::Type atype = (Automaton::Action::Type)random.get( 0, 3);
-			Automaton::Action::ScopeFlag scopeflag = (Automaton::Action::ScopeFlag)random.get( 0, 3);
+							g_random.get( 0, Automaton::MaxState)/*state*/,
+							g_random.get( 0, Automaton::MaxTerminal)/*terminal*/);
+			Automaton::Action::Type atype = (Automaton::Action::Type)g_random.get( 0, 3);
+			Automaton::Action::ScopeFlag scopeflag = (Automaton::Action::ScopeFlag)g_random.get( 0, 3);
 			Automaton::Action action( atype, scopeflag,
-							random.get( 0, Automaton::MaxState)/*value*/,
-							random.get( 0, Automaton::MaxCall)/*call*/,
-							random.get( 0, Automaton::MaxProductionLength)/*count*/);
+							g_random.get( 0, Automaton::MaxState)/*value*/,
+							g_random.get( 0, Automaton::MaxCall)/*call*/,
+							g_random.get( 0, Automaton::MaxProductionLength)/*count*/);
 			Automaton::GotoKey gtoKey( 
-							random.get( 0, Automaton::MaxState)/*state*/,
-							random.get( 0, Automaton::MaxNonterminal)/*nonterminal*/);
+							g_random.get( 0, Automaton::MaxState)/*state*/,
+							g_random.get( 0, Automaton::MaxNonterminal)/*nonterminal*/);
 			Automaton::Goto gto( 
-							random.get( 0, Automaton::MaxState)/*state*/);
+							g_random.get( 0, Automaton::MaxState)/*state*/);
 			TransitionItem titm( 
-					random.get( 0, Automaton::MaxNofProductions)/*prodindex*/,
-					random.get( 0, Automaton::MaxProductionLength)/*prodpos*/,
-					random.get( 0, Automaton::MaxTerminal)/*follow*/);
+							g_random.get( 0, Automaton::MaxNofProductions)/*prodindex*/,
+							g_random.get( 0, Automaton::MaxProductionLength)/*prodpos*/,
+							g_random.get( 0, Automaton::MaxTerminal)/*follow*/);
 
 			Automaton::ActionKey actionKey2 = Automaton::ActionKey::unpack( actionKey.packed());
 			Automaton::Action action2 = Automaton::Action::unpack( action.packed());

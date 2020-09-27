@@ -36,7 +36,7 @@ LIBOBJS  := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_to
 MODOBJS  := $(BUILDDIR)/lualib_mewa.o $(BUILDDIR)/lua_load_automaton.o $(BUILDDIR)/lua_run_compiler.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
-TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testAutomaton
+TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testIdentMap $(BUILDDIR)/testAutomaton
 PROGRAM  := $(BUILDDIR)/mewa 
 
 # Build targets:
@@ -76,6 +76,7 @@ $(MODULE): $(LIBRARY) $(MODOBJS)
 test : all
 	$(BUILDDIR)/testLexer
 	$(BUILDDIR)/testScope
+	$(BUILDDIR)/testIdentMap
 	$(BUILDDIR)/testAutomaton
 	tests/luatest.sh
 check: test

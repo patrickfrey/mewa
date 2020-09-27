@@ -17,6 +17,7 @@
 #include "scope.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
+#include "strings.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -64,10 +65,30 @@ int main( int argc, const char* argv[] )
 			{
 				verbose = true;
 			}
-			if (0==std::strcmp( argv[argi], "-h"))
+			else if (0==std::strcmp( argv[argi], "-h"))
 			{
 				std::cerr << "Usage: testScope [-h][-V]" << std::endl;
+				return 0;
 			}
+			else if (0==std::strcmp( argv[argi], "--"))
+			{
+				++argi;
+				break;
+			}
+			else if (argv[argi][0] == '-')
+			{
+				std::cerr << "Usage: testScope [-h][-V]" << std::endl;
+				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
+			}
+			else
+			{
+				break;
+			}
+		}
+		if (argi < argc)
+		{
+			std::cerr << "Usage: testScope [-h][-V]" << std::endl;
+			throw std::runtime_error( "no arguments except options expected");
 		}
 
 		static const std::vector<TestKeyValue> tests = {

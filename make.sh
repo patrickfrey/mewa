@@ -23,11 +23,13 @@ $COMP -Isrc -c src/mewa.cpp -o build/mewa.o
 
 $COMP -Isrc -c tests/testLexer.cpp -o build/testLexer.o
 $COMP -Isrc -c tests/testScope.cpp -o build/testScope.o
+$COMP -Isrc -c tests/testIdentMap.cpp -o build/testIdentMap.o
 $COMP -Isrc -c tests/testAutomaton.cpp -o build/testAutomaton.o
 
 $LINK -o build/mewa build/mewa.o build/libmewa.a
 $LINK -o build/testLexer build/testLexer.o build/libmewa.a
 $LINK -o build/testScope build/testScope.o build/libmewa.a
+$LINK -o build/testIdentMap build/testIdentMap.o build/libmewa.a
 $LINK -o build/testAutomaton build/testAutomaton.o build/libmewa.a
 $LINKSO -o build/mewa.so build/lualib_mewa.o build/lua_load_automaton.o build/lua_run_compiler.o build/libmewa.a
 
