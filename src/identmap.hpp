@@ -14,7 +14,6 @@
 #if __cplusplus >= 201703L
 #include "error.hpp"
 #include "strings.hpp"
-#include "crc32.hpp"
 #include <utility>
 #include <unordered_map>
 #include <cstring>
@@ -60,6 +59,7 @@ struct IdentKey
 struct IdentKeyEnvelop
 {
 	const IdentKey* key;
+
 	IdentKeyEnvelop() :key(0){}
 	IdentKeyEnvelop( const IdentKey* key_) :key(key_){}
 

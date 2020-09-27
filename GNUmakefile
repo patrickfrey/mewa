@@ -34,7 +34,7 @@ LDLIBS   := -lm -lstdc++
 LUALIBS  := -llua$(LUAVER)
 LIBOBJS  := $(BUILDDIR)/lexer.o $(BUILDDIR)/automaton.o \
 		$(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/automaton_parser.o \
-		$(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o $(BUILDDIR)/crc32.o
+                $(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o
 MODOBJS  := $(BUILDDIR)/lualib_mewa.o $(BUILDDIR)/lua_load_automaton.o $(BUILDDIR)/lua_run_compiler.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
