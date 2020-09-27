@@ -133,6 +133,46 @@ public:
 	}
 };
 
+template <typename KEYTYPE, typename VALTYPE>
+class ScopedRelationMap
+{
+public:
+	class ResultElement
+	{
+	public:
+		ResultElement( const Scope scope_, const KEYTYPE type_, const VALTYPE value_)
+			:m_scope(scope_),m_type(type_),m_value(value_){}
+		ResultElement( const ResultElement& o)
+			:m_scope(o.m_scope),m_type(o.m_type),m_value(o.m_value){}
+
+		Scope scope() const noexcept		{return m_scope;}
+		KEYTYPE type() const noexcept		{return m_type;}
+		VALTYPE value() const noexcept		{return m_value;}
+
+	private:
+		Scope m_scope;
+		KEYTYPE m_type;
+		VALTYPE m_value;
+	};
+
+	typedef std::pmr::multimap<ScopedKey<KEYTYPE>, std::pair<KEYTYPE,VALTYPE>, ScopedMapOrder<KEYTYPE> > ScopedRelMapType;
+
+	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc)
+		:m_scoped_map( memrsc) {}
+	ScopedRelationMap( const ScopedRelationMap& o) = default;
+	ScopedRelationMap& operator=( const ScopedRelationMap& o) = default;
+	ScopedRelationMap( ScopedRelationMap&& o) = default;
+	ScopedRelationMap& operator=( ScopedRelationMap&& o) = default;
+
+	std::pmr::vector<ResultElement> scoped_find( const KEYTYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
+	{
+		std::pmr::vector<ResultElement> rt( res_memrsc);
+		return rt;
+	}
+private:
+	ScopedRelMapType m_scoped_map;
+};
+
 }//namespace
 
 #else
