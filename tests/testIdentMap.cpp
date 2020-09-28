@@ -51,27 +51,6 @@ static std::string genTestKey( const char* alphabet, std::size_t maxkeylen)
 	return rt;
 }
 
-static bool isDigit( char ch) noexcept
-{
-	return ch >= '0' && ch <= '9';
-}
-
-static int getCardinalNumberArgument( const char* arg, const char* what)
-{
-	char const* ai = arg;
-	int rt = 0;
-	for (; isDigit(*ai); ++ai)
-	{
-		rt = rt * 10 + (*ai - '0');
-		if (rt < 0) throw std::runtime_error( string_format( "value %s out of range", what));
-	}
-	if (*ai || rt == 0)
-	{
-		throw std::runtime_error( string_format( "value %s is not a positive number", what));
-	}
-	return rt;
-}
-
 int main( int argc, const char* argv[] )
 {
 	try
@@ -108,9 +87,9 @@ int main( int argc, const char* argv[] )
 				break;
 			}
 		}
-		if (argi < argc) nofTests = getCardinalNumberArgument( argv[ argi++], "number of tests");
-		if (argi < argc) maxKeyLength = getCardinalNumberArgument( argv[ argi++], "max key length");
-		if (argi < argc) nofInitBuckets = getCardinalNumberArgument( argv[ argi++], "number of buckets on initialization");
+		if (argi < argc) nofTests = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of tests");
+		if (argi < argc) maxKeyLength = ArgParser::getCardinalNumberArgument( argv[ argi++], "max key length");
+		if (argi < argc) nofInitBuckets = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of buckets on initialization");
 
 		if (argi < argc)
 		{

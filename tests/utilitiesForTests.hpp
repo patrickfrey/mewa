@@ -89,5 +89,30 @@ private:
 	unsigned int m_incr;
 };
 
+
+struct ArgParser
+{
+	static bool isDigit( char ch) noexcept
+	{
+		return ch >= '0' && ch <= '9';
+	}
+
+	static int getCardinalNumberArgument( const char* arg, const char* what)
+	{
+		char const* ai = arg;
+		int rt = 0;
+		for (; isDigit(*ai); ++ai)
+		{
+			rt = rt * 10 + (*ai - '0');
+			if (rt < 0) throw std::runtime_error( mewa::string_format( "value %s out of range", what));
+		}
+		if (*ai || rt == 0)
+		{
+			throw std::runtime_error( mewa::string_format( "value %s is not a positive number", what));
+		}
+		return rt;
+	}
+};
+
 #endif
 

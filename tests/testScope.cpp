@@ -13,7 +13,6 @@
 #if __cplusplus < 201703L
 #error Building mewa requires at least C++17
 #endif
-
 #include "scope.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
@@ -22,6 +21,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <set>
+#include <limits>
 #include <cstring>
 
 using namespace mewa;
@@ -52,6 +53,7 @@ struct TestCase
 	const char* key;
 	Scope::Step step;
 };
+
 
 int main( int argc, const char* argv[] )
 {
@@ -140,7 +142,7 @@ int main( int argc, const char* argv[] )
 					<< ri->first.key() << " -> " << ri->second << std::endl;
 			}
 		}
-				std::string output = outputbuf.str();
+		std::string output = outputbuf.str();
 		if (output != expected)
 		{
 			writeFile( "build/testScope.out", output);

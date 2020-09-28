@@ -270,7 +270,7 @@ V = "*" E
 			removeFile( "build/testAutomaton.exp");
 		}
 
-		// [2] Test packing
+		// [2] Test packing of structures used in automaton:
 		for (int ii=0; ii<100000; ++ii)
 		{
 			Automaton::ActionKey actionKey( 

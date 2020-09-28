@@ -27,40 +27,43 @@ public:
 	typedef int Step;
 
 public:
-	Scope( Step first_, Step second_)
-		:first(first_ >= 0 ? first_ : 0),second(second_ >= 0 ? second_ : std::numeric_limits<Step>::max()){}
+	Scope( Step start_, Step end_)
+		:m_start(start_ >= 0 ? start_ : 0),m_end(end_ >= 0 ? end_ : std::numeric_limits<Step>::max()){}
 	Scope( const Scope& o)
-		:first(o.first),second(o.second){}
+		:m_start(o.m_start),m_end(o.m_end){}
 	Scope& operator=( const Scope& o)
-		{first=o.first; second=o.second; return *this;}
+		{m_start=o.m_start; m_end=o.m_end; return *this;}
 
 	bool contains( const Scope& o) const noexcept
 	{
-		return o.first >= first && o.second <= second;
+		return o.m_start >= m_start && o.m_end <= m_end;
 	}
 
 	bool contains( Step step) const noexcept
 	{
-		return step >= first && step < second;
+		return step >= m_start && step < m_end;
 	}
 
 	std::string tostring() const
 	{
 		char buf[ 128];
-		if (second == std::numeric_limits<Step>::max())
+		if (m_end == std::numeric_limits<Step>::max())
 		{
-			std::snprintf( buf, sizeof(buf), "[%d,INF]", first);
+			std::snprintf( buf, sizeof(buf), "[%d,INF]", m_start);
 		}
 		else
 		{
-			std::snprintf( buf, sizeof(buf), "[%d,%d]", first, second);
+			std::snprintf( buf, sizeof(buf), "[%d,%d]", m_start, m_end);
 		}
 		return std::string( buf);
 	}
 
+	Step start() const noexcept	{return m_start;}
+	Step end() const noexcept	{return m_end;}
+
 public:
-	Step first;
-	Step second;
+	Step m_start;
+	Step m_end;
 };
 
 template <typename KEYTYPE>
@@ -94,9 +97,9 @@ struct ScopedMapOrder
 	bool operator()( const ScopedKey<KEYTYPE>& a, const ScopedKey<KEYTYPE>& b) const
 	{
 		return a.key() == b.key()
-			? a.scope().second == b.scope().second
-				? a.scope().first < b.scope().first
-				: a.scope().second < b.scope().second
+			? a.scope().end() == b.scope().end()
+				? a.scope().start() < b.scope().start()
+				: a.scope().end() < b.scope().end()
 			: a.key() < b.key();
 	}
 };
@@ -118,10 +121,10 @@ public:
 	const_iterator scoped_find( const KEYTYPE& key, const Scope::Step step) const noexcept
 	{
 		auto rt = ParentClass::end();
-		auto it = ParentClass::lower_bound( ScopedKey<KEYTYPE>( key, Scope( 0, step+1)));
-		for (; it != this->end() && it->first.key() == key && it->first.scope().second > step; ++it)
+		auto it = ParentClass::upper_bound( ScopedKey<KEYTYPE>( key, Scope( step, step)));
+		for (; it != this->end() && it->first.key() == key && it->first.scope().end() > step; ++it)
 		{
-			if (it->first.scope().first <= step)
+			if (it->first.scope().start() <= step)
 			{
 				if (rt == ParentClass::end() || rt->first.scope().contains( it->first.scope()))
 				{
@@ -133,6 +136,7 @@ public:
 	}
 };
 
+#if 0
 template <typename KEYTYPE, typename VALTYPE>
 class ScopedRelationMap
 {
@@ -167,11 +171,13 @@ public:
 	std::pmr::vector<ResultElement> scoped_find( const KEYTYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
 	{
 		std::pmr::vector<ResultElement> rt( res_memrsc);
+		!!!!
 		return rt;
 	}
 private:
 	ScopedRelMapType m_scoped_map;
 };
+#endif
 
 }//namespace
 
