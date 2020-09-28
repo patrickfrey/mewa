@@ -136,48 +136,65 @@ public:
 	}
 };
 
-#if 0
-template <typename KEYTYPE, typename VALTYPE>
+
+template <typename RELNODETYPE, typename VALTYPE>
 class ScopedRelationMap
+	:public std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> >
 {
 public:
 	class ResultElement
 	{
 	public:
-		ResultElement( const Scope scope_, const KEYTYPE type_, const VALTYPE value_)
+		ResultElement( const Scope scope_, const RELNODETYPE type_, const VALTYPE value_)
 			:m_scope(scope_),m_type(type_),m_value(value_){}
 		ResultElement( const ResultElement& o)
 			:m_scope(o.m_scope),m_type(o.m_type),m_value(o.m_value){}
 
 		Scope scope() const noexcept		{return m_scope;}
-		KEYTYPE type() const noexcept		{return m_type;}
+		RELNODETYPE type() const noexcept	{return m_type;}
 		VALTYPE value() const noexcept		{return m_value;}
 
 	private:
 		Scope m_scope;
-		KEYTYPE m_type;
+		RELNODETYPE m_type;
 		VALTYPE m_value;
 	};
 
-	typedef std::pmr::multimap<ScopedKey<KEYTYPE>, std::pair<KEYTYPE,VALTYPE>, ScopedMapOrder<KEYTYPE> > ScopedRelMapType;
+	typedef std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> > ParentClass;
 
-	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc)
-		:m_scoped_map( memrsc) {}
+	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc) :ParentClass( memrsc) {}
 	ScopedRelationMap( const ScopedRelationMap& o) = default;
 	ScopedRelationMap& operator=( const ScopedRelationMap& o) = default;
 	ScopedRelationMap( ScopedRelationMap&& o) = default;
 	ScopedRelationMap& operator=( ScopedRelationMap&& o) = default;
 
-	std::pmr::vector<ResultElement> scoped_find( const KEYTYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
+	std::pmr::vector<ResultElement> scoped_find( const RELNODETYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
 	{
+		int buffer[ 2048];
+		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
+		std::pmr::map<RELNODETYPE,int> candidatemap( &local_memrsc);
+
 		std::pmr::vector<ResultElement> rt( res_memrsc);
-		!!!!
+
+		auto it = ParentClass::upper_bound( ScopedKey<RELNODETYPE>( key, Scope( step, step)));
+		for (; it != this->end() && it->first.key() == key && it->first.scope().end() > step; ++it)
+		{
+			if (it->first.scope().start() <= step)
+			{
+				auto ins = candidatemap.insert( {it->second.first, rt.size()});
+				if (ins.second /*insert took place*/)
+				{
+					rt.push_back( ResultElement( it->first.scope(), it->second.first, it->second.second));
+				}
+				else if (rt[ ins.first.second].scope.contains( it->first.scope()))
+				{
+					rt[ ins.first.second] = ResultElement( it->first.scope(), it->second.first, it->second.second);
+				}
+			}
+		}
 		return rt;
 	}
-private:
-	ScopedRelMapType m_scoped_map;
 };
-#endif
 
 }//namespace
 
