@@ -402,10 +402,6 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 		}
 	}
 	out << "{";
-	/*[-]*/if (hasNameKeys && 0==std::strcmp( std::get<const char*>(keyvec[0].value), "1"))
-	/*[-]*/{
-	/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
-	/*[-]*/}
 	if (hasNameKeys)
 	{
 		int kidx = 0;

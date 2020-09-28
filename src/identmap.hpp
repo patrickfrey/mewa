@@ -161,7 +161,8 @@ namespace std
 
 namespace mewa {
 
-class IdentMap :public std::pmr::unordered_map<IdentKeyEnvelop, int>
+class IdentMap
+	:public std::pmr::unordered_map<IdentKeyEnvelop, int>
 {
 public:
 	typedef std::pmr::unordered_map<IdentKeyEnvelop, int> ParentClass;
