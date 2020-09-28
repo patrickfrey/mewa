@@ -170,8 +170,8 @@ public:
 
 	std::pmr::vector<ResultElement> scoped_find( const RELNODETYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
 	{
-		int buffer[ 2048];
-		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
+		int local_membuffer[ 512];
+		std::pmr::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
 		std::pmr::map<RELNODETYPE,int> candidatemap( &local_memrsc);
 
 		std::pmr::vector<ResultElement> rt( res_memrsc);
@@ -186,9 +186,9 @@ public:
 				{
 					rt.push_back( ResultElement( it->first.scope(), it->second.first, it->second.second));
 				}
-				else if (rt[ ins.first.second].scope.contains( it->first.scope()))
+				else if (rt[ ins.first->second].scope().contains( it->first.scope()))
 				{
-					rt[ ins.first.second] = ResultElement( it->first.scope(), it->second.first, it->second.second);
+					rt[ ins.first->second] = ResultElement( it->first.scope(), it->second.first, it->second.second);
 				}
 			}
 		}

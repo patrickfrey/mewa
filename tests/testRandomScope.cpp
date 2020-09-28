@@ -180,16 +180,16 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 	}
 }
 
-static std::pair<std::string,Scope::Step> selectQuery( const NodeDefTree* nd)
+static std::pair<std::string,Scope::Step> selectVarQuery( const NodeDefTree* nd)
 {
 	std::pair<std::string,Scope::Step> rt;
 	if (nd->chld && g_random.get( 0,4) > 0)
 	{
-		rt = selectQuery( nd->chld);
+		rt = selectVarQuery( nd->chld);
 	}
 	if (rt.first.empty() && nd->next && g_random.get( 0,3) > 0)
 	{
-		rt = selectQuery( nd->next);
+		rt = selectVarQuery( nd->next);
 	}
 	if (rt.first.empty() && !nd->item.vars.empty())
 	{
@@ -199,14 +199,33 @@ static std::pair<std::string,Scope::Step> selectQuery( const NodeDefTree* nd)
 	return rt;
 }
 
-static std::string findNode( const NodeDefTree* nd, const std::string& var, Scope::Step step)
+static std::pair<std::string,Scope::Step> selectRelQuery( const NodeDefTree* nd)
+{
+	std::pair<std::string,Scope::Step> rt;
+	if (nd->chld && g_random.get( 0,4) > 0)
+	{
+		rt = selectRelQuery( nd->chld);
+	}
+	if (rt.first.empty() && nd->next && g_random.get( 0,3) > 0)
+	{
+		rt = selectRelQuery( nd->next);
+	}
+	if (rt.first.empty() && !nd->item.relations.empty())
+	{
+		rt.second = g_random.get( nd->item.scope.start(), nd->item.scope.end());
+		rt.first = nd->item.relations[ g_random.get( 0, nd->item.relations.size())].first;
+	}
+	return rt;
+}
+
+static std::string findVariable( const NodeDefTree* nd, const std::string& var, Scope::Step step)
 {
 	std::string rt;
 	if (nd->item.scope.contains( step))
 	{
 		if (nd->chld)
 		{
-			rt = findNode( nd->chld, var, step);
+			rt = findVariable( nd->chld, var, step);
 		}
 		if (rt.empty())
 		{
@@ -222,21 +241,42 @@ static std::string findNode( const NodeDefTree* nd, const std::string& var, Scop
 	}
 	else if (nd->next)
 	{
-		rt = findNode( nd->next, var, step);
+		rt = findVariable( nd->next, var, step);
 	}
 	return rt;
 }
 
-static void randomQuery( const VarMap& varmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
+static void collectRelations( std::map<std::string,int>& result, const NodeDefTree* nd, const std::string& first, Scope::Step step)
 {
-	std::pair<std::string,Scope::Step> qry;
-	qry = selectQuery( nd);
+	if (nd->item.scope.contains( step))
+	{
+		for (auto const& rel : nd->item.relations)
+		{
+			if (rel.first == first)
+			{
+				result[ rel.second] = nd->item.id;
+			}
+		}
+		if (nd->chld)
+		{
+			collectRelations( result, nd->chld, first, step);
+		}
+	}
+	else if (nd->next)
+	{
+		collectRelations( result, nd->next, first, step);
+	}
+}
+
+static void randomVarQuery( const VarMap& varmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
+{
+	std::pair<std::string,Scope::Step> qry = selectVarQuery( nd);
 	if (qry.first.empty())
 	{
 		qry.first = randomVariable( alphabetsize);
 		qry.second = g_random.get( 0, std::numeric_limits<int>::max());
 	}
-	std::string expc = findNode( nd, qry.first/*var*/, qry.second/*step*/);
+	std::string expc = findVariable( nd, qry.first/*var*/, qry.second/*step*/);
 	std::string resc;
 
 	auto ri = varmap.scoped_find( qry.first/*var*/, qry.second/*step*/);
@@ -248,14 +288,65 @@ static void randomQuery( const VarMap& varmap, const NodeDefTree* nd, int alphab
 	std::string rescstr = resc.empty() ? std::string("<no result>") : resc;
 	if (verbose)
 	{
-		std::cerr << mewa::string_format( "Query '%s' at step %d: Expected '%s', got '%s'",
+		std::cerr << mewa::string_format( "Query variable '%s' at step %d: Expected '%s', got '%s'",
 							qry.first.c_str(), qry.second, expcstr.c_str(), rescstr.c_str())
 				<< std::endl;
 	}
 	if (resc != expc)
 	{
 		throw std::runtime_error(
-				mewa::string_format( "Random query %s [%d] result not as expected: %s != %s",
+				mewa::string_format( "Random query variable '%s' [%d] result not as expected: '%s' != '%s'",
+							qry.first.c_str(), qry.second, rescstr.c_str(), expcstr.c_str()));
+	}
+}
+
+static std::string relationsToString( const std::map<std::string,int>& ar)
+{
+	std::string rt;
+	rt.append( "{");
+	int ridx = 0;
+	for (auto const& elem : ar)
+	{
+		if (ridx++) rt.append( ", ");
+		rt.append( elem.first);
+		rt.append( string_format(" -> %d", elem.second));
+	}
+	rt.append( "}");
+	return rt;
+}
+
+static void randomRelQuery( const RelMap& relmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
+{
+	std::pair<std::string,Scope::Step> qry = selectRelQuery( nd);
+	if (qry.first.empty())
+	{
+		qry.first = randomVariable( alphabetsize);
+		qry.second = g_random.get( 0, std::numeric_limits<int>::max());
+	}
+	std::map<std::string,int> expc;
+	collectRelations( expc, nd, qry.first/*first (relation)*/, qry.second/*step*/);
+
+	int local_membuffer[ 512];
+	std::pmr::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
+
+	std::map<std::string,int> resc;
+	auto results = relmap.scoped_find( qry.first/*var*/, qry.second/*step*/, &local_memrsc);
+	for (auto const& result : results)
+	{
+		resc.insert( {result.type(), result.value()});
+	}
+	std::string expcstr = relationsToString( expc);
+	std::string rescstr = relationsToString( resc);
+	if (verbose)
+	{
+		std::cerr << mewa::string_format( "Query relations of '%s' at step %d: Expected %s, got %s",
+							qry.first.c_str(), qry.second, expcstr.c_str(), rescstr.c_str())
+				<< std::endl;
+	}
+	if (resc != expc)
+	{
+		throw std::runtime_error(
+				mewa::string_format( "Random query relations of '%s' [%d] result not as expected: %s != %s",
 							qry.first.c_str(), qry.second, rescstr.c_str(), expcstr.c_str()));
 	}
 }
@@ -296,7 +387,11 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 
 	for (int qi = 0; qi < nofqueries; ++qi)
 	{
-		randomQuery( varmap, tree.get(), alphabetsize, verbose);
+		randomVarQuery( varmap, tree.get(), alphabetsize, verbose);
+	}
+	for (int qi = 0; qi < nofqueries; ++qi)
+	{
+		randomRelQuery( relmap, tree.get(), alphabetsize, verbose);
 	}
 }
 
