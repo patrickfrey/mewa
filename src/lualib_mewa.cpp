@@ -12,7 +12,7 @@
 #include "lua_run_compiler.hpp"
 #include "lua_object_reference.hpp"
 #include "automaton.hpp"
-#include "typesystem.hpp"
+#include "typedb.hpp"
 #include "lexer.hpp"
 #include "scope.hpp"
 #include "error.hpp"
@@ -83,7 +83,7 @@ struct mewa_compiler_userdata_t
 
 struct mewa_typedb_userdata_t
 {
-	mewa::TypeSystem* impl;
+	mewa::TypeDatabase* impl;
 
 	void init()
 	{
@@ -92,7 +92,7 @@ struct mewa_typedb_userdata_t
 	void create()
 	{
 		destroy();
-		impl = new mewa::TypeSystem();
+		impl = new mewa::TypeDatabase();
 	}
 	void destroy()
 	{

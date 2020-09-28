@@ -7,10 +7,10 @@
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-/// \brief Type system implementation
-/// \file "typesystem.hpp"
-#ifndef _MEWA_TYPESYSTEM_HPP_INCLUDED
-#define _MEWA_TYPESYSTEM_HPP_INCLUDED
+/// \brief Type system data implementation
+/// \file "typedb.hpp"
+#ifndef _MEWA_TYPEDB_HPP_INCLUDED
+#define _MEWA_TYPEDB_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include "scope.hpp"
 #include "identmap.hpp"
@@ -19,12 +19,12 @@
 
 namespace mewa {
 
-class TypeSystemMemory
+class TypeDatabaseMemory
 {
 public:
 	enum {NofIdentInitBuckets = 1<<18};
 
-	TypeSystemMemory()
+	TypeDatabaseMemory()
 		:m_identmap_memrsc( m_identmap_membuffer, sizeof(m_identmap_membuffer))
 		,m_identstr_memrsc( m_identstr_membuffer, sizeof(m_identstr_membuffer))
 		,m_typetab_memrsc( m_typetab_membuffer, sizeof(m_typetab_membuffer))
@@ -48,13 +48,13 @@ private:
 };
 
 
-class TypeSystem
+class TypeDatabase
 {
 public:
-	TypeSystem( std::unique_ptr<TypeSystemMemory>&& memory_ = std::unique_ptr<TypeSystemMemory>( new TypeSystemMemory()))
+	TypeDatabase( std::unique_ptr<TypeDatabaseMemory>&& memory_ = std::unique_ptr<TypeDatabaseMemory>( new TypeDatabaseMemory()))
 		:m_typeTable( memory_->resource_typetab())
 		,m_reduTable( memory_->resource_redutab())
-		,m_identMap( memory_->resource_identmap(), memory_->resource_identstr(), TypeSystemMemory::NofIdentInitBuckets)
+		,m_identMap( memory_->resource_identmap(), memory_->resource_identstr(), TypeDatabaseMemory::NofIdentInitBuckets)
 		,m_memory(std::move(memory_)){}
 
 	std::string tostring() const
@@ -71,7 +71,7 @@ private:
 	TypeTable m_typeTable;
 	ReductionTable m_reduTable;
 	IdentMap m_identMap;
-	std::unique_ptr<TypeSystemMemory> m_memory;
+	std::unique_ptr<TypeDatabaseMemory> m_memory;
 };
 
 }//namespace
