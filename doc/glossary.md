@@ -14,7 +14,7 @@ The Query for 'ABC' in an instruction with scope step 56 assigned, returns the 3
 ## Scope Step
 Counter that is incremented for every production in the grammar marked with the operators '>>' or '{}'. The scope step defines the start and the end of the scope assigned to productions by the scope operator '{}'. A scope starts with the scope step counter value when first entering a state with a production marked as '{}' and ends with one step after the value of the scope step when replacing the right side of the production with the left side on the parser stack (reduction).
 
-### Typesystem
+## Typesystem
 A set of term rewrite rules to reduce structures of types to types and in this process construct a program that represents the structure. Further reading [Wikipedia: Type theory](https://en.wikipedia.org/wiki/Type_theory).
 
 

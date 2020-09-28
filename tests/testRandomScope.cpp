@@ -130,14 +130,15 @@ static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidt
 	return rt;
 }
 
-typedef ScopedMap<std::string,std::string> DefMap;
+typedef ScopedMap<std::string,std::string> VarMap;
+typedef ScopedRelationMap<std::string,int> RelMap;
 
 static std::string varConstructor( const std::string& var, int nodeid)
 {
 	return mewa::string_format( "%s:%d", var.c_str(), nodeid);
 }
 
-static void insertDefinitions( DefMap& defmap, NodeDefTree const* nd)
+static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 {
 	std::vector<NodeDefTree const*> stk;
 	stk.push_back( nd);
@@ -153,7 +154,28 @@ static void insertDefinitions( DefMap& defmap, NodeDefTree const* nd)
 
 		for (auto const& def : cur.item.vars)
 		{
-			defmap.insert( {{def,cur.item.scope}, varConstructor( def, cur.item.id)});
+			varmap.insert( {{def,cur.item.scope}, varConstructor( def, cur.item.id)});
+		}
+	}
+}
+
+static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
+{
+	std::vector<NodeDefTree const*> stk;
+	stk.push_back( nd);
+	std::size_t si = 0;
+	for (; si < stk.size(); ++si)
+	{
+		NodeDefTree const* next = stk[ si]->next;
+		NodeDefTree const* chld = stk[ si]->chld;
+		if (next) stk.push_back( next);
+		if (chld) stk.push_back( chld);
+
+		NodeDefTree const& cur = *stk[ si];
+
+		for (auto const& rel : cur.item.relations)
+		{
+			relmap.insert( {{rel.first, cur.item.scope}, {rel.second, cur.item.id}});
 		}
 	}
 }
@@ -205,7 +227,7 @@ static std::string findNode( const NodeDefTree* nd, const std::string& var, Scop
 	return rt;
 }
 
-static void randomQuery( const DefMap& defmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
+static void randomQuery( const VarMap& varmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
 {
 	std::pair<std::string,Scope::Step> qry;
 	qry = selectQuery( nd);
@@ -217,8 +239,8 @@ static void randomQuery( const DefMap& defmap, const NodeDefTree* nd, int alphab
 	std::string expc = findNode( nd, qry.first/*var*/, qry.second/*step*/);
 	std::string resc;
 
-	auto ri = defmap.scoped_find( qry.first/*var*/, qry.second/*step*/);
-	if (ri != defmap.end())
+	auto ri = varmap.scoped_find( qry.first/*var*/, qry.second/*step*/);
+	if (ri != varmap.end())
 	{
 		resc = ri->second;
 	}
@@ -252,7 +274,8 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 
 	g_idCounter = 0;
-	DefMap defmap( &memrsc);
+	VarMap varmap( &memrsc);
+	RelMap relmap( &memrsc);
 	int depth = g_random.get( 1, maxdepth+1);
 	Scope scope( 0, g_random.get( 0, std::numeric_limits<int>::max()));
 	std::unique_ptr<NodeDefTree> tree;
@@ -268,11 +291,12 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 		std::cerr << "Random Tree:" << std::endl;
 		tree->print( std::cerr);
 	}
-	insertDefinitions( defmap, tree.get());
+	insertDefinitions( varmap, tree.get());
+	insertRelations( relmap, tree.get());
 
 	for (int qi = 0; qi < nofqueries; ++qi)
 	{
-		randomQuery( defmap, tree.get(), alphabetsize, verbose);
+		randomQuery( varmap, tree.get(), alphabetsize, verbose);
 	}
 }
 
