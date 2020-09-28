@@ -142,6 +142,8 @@ class ScopedRelationMap
 	:public std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> >
 {
 public:
+	typedef std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> > ParentClass;
+
 	class ResultElement
 	{
 	public:
@@ -159,8 +161,6 @@ public:
 		RELNODETYPE m_type;
 		VALTYPE m_value;
 	};
-
-	typedef std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> > ParentClass;
 
 	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc) :ParentClass( memrsc) {}
 	ScopedRelationMap( const ScopedRelationMap& o) = default;

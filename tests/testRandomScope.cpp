@@ -32,26 +32,29 @@ using namespace mewa;
 static PseudoRandom g_random;
 static int g_idCounter = 0;
 
-struct ScopeDef
+struct NodeDef
 {
+	typedef std::pair<std::string,std::string> Relation;
+
 	Scope scope;
 	int id;
-	std::vector<std::string> defs;
+	std::vector<std::string> vars;
+	std::vector<Relation> relations;
 
-	ScopeDef( const ScopeDef& o)
-		:scope(o.scope),id(o.id),defs(o.defs){}
-	ScopeDef( const Scope scope_, int id_, const std::vector<std::string>& defs_)
-		:scope(scope_),id(id_),defs(defs_){}
+	NodeDef( const NodeDef& o)
+		:scope(o.scope),id(o.id),vars(o.vars),relations(o.relations){}
+	NodeDef( const Scope scope_, int id_, const std::vector<std::string>& vars_, const std::vector<Relation>& relations_)
+		:scope(scope_),id(id_),vars(vars_),relations(relations_){}
 };
 
 namespace std
 {
-	ostream& operator<<( ostream& os, const ScopeDef& sc)
+	ostream& operator<<( ostream& os, const NodeDef& sc)
 	{
 		os << "[" << sc.scope.start() << "," << sc.scope.end() << "] ";
 		os << "{";
 		int didx = 0;
-		for (auto const& def : sc.defs)
+		for (auto const& def : sc.vars)
 		{
 			if (didx++) os << ", ";
 			os << def;
@@ -61,7 +64,7 @@ namespace std
 	}
 }//namespace std
 
-typedef test::Tree<ScopeDef> ScopeDefTree;
+typedef test::Tree<NodeDef> NodeDefTree;
 
 static std::string randomVariable( int alphabetsize)
 {
@@ -80,15 +83,23 @@ static std::string randomVariable( int alphabetsize)
 
 static std::vector<std::string> randomDefs( int nn, int alphabetsize)
 {
-	std::set<std::string> defs;
+	std::set<std::string> vars;
 	int ii = 0, ee = g_random.get( 0, nn);
-	for (; ii < ee; ++ii) defs.insert( randomVariable( alphabetsize));
-	return std::vector<std::string>( defs.begin(), defs.end());
+	for (; ii < ee; ++ii) vars.insert( randomVariable( alphabetsize));
+	return std::vector<std::string>( vars.begin(), vars.end());
 }
 
-static ScopeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidth, int members, int alphabetsize)
+static std::vector<NodeDef::Relation> randomRelations( int nn, int alphabetsize)
 {
-	ScopeDefTree* rt = new ScopeDefTree( ScopeDef( scope, ++g_idCounter, randomDefs( members, alphabetsize)));
+	std::set<NodeDef::Relation> relations;
+	int ii = 0, ee = g_random.get( 0, nn);
+	for (; ii < ee; ++ii) relations.insert( NodeDef::Relation( randomVariable( alphabetsize), randomVariable( alphabetsize)));
+	return std::vector<NodeDef::Relation>( relations.begin(), relations.end());
+}
+
+static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidth, int members, int alphabetsize)
+{
+	NodeDefTree* rt = new NodeDefTree( NodeDef( scope, ++g_idCounter, randomDefs( members, alphabetsize), randomRelations( members, alphabetsize)));
 
 	if (g_random.get( 0, g_random.get( 0, depth)) > 0)
 	{
@@ -126,28 +137,28 @@ static std::string varConstructor( const std::string& var, int nodeid)
 	return mewa::string_format( "%s:%d", var.c_str(), nodeid);
 }
 
-static void insertDefinitions( DefMap& defmap, ScopeDefTree const* nd)
+static void insertDefinitions( DefMap& defmap, NodeDefTree const* nd)
 {
-	std::vector<ScopeDefTree const*> stk;
+	std::vector<NodeDefTree const*> stk;
 	stk.push_back( nd);
 	std::size_t si = 0;
 	for (; si < stk.size(); ++si)
 	{
-		ScopeDefTree const* next = stk[ si]->next;
-		ScopeDefTree const* chld = stk[ si]->chld;
+		NodeDefTree const* next = stk[ si]->next;
+		NodeDefTree const* chld = stk[ si]->chld;
 		if (next) stk.push_back( next);
 		if (chld) stk.push_back( chld);
 
-		ScopeDefTree const& cur = *stk[ si];
+		NodeDefTree const& cur = *stk[ si];
 
-		for (auto const& def : cur.item.defs)
+		for (auto const& def : cur.item.vars)
 		{
 			defmap.insert( {{def,cur.item.scope}, varConstructor( def, cur.item.id)});
 		}
 	}
 }
 
-static std::pair<std::string,Scope::Step> selectQuery( const ScopeDefTree* nd)
+static std::pair<std::string,Scope::Step> selectQuery( const NodeDefTree* nd)
 {
 	std::pair<std::string,Scope::Step> rt;
 	if (nd->chld && g_random.get( 0,4) > 0)
@@ -158,15 +169,15 @@ static std::pair<std::string,Scope::Step> selectQuery( const ScopeDefTree* nd)
 	{
 		rt = selectQuery( nd->next);
 	}
-	if (rt.first.empty() && !nd->item.defs.empty())
+	if (rt.first.empty() && !nd->item.vars.empty())
 	{
 		rt.second = g_random.get( nd->item.scope.start(), nd->item.scope.end());
-		rt.first = nd->item.defs[ g_random.get( 0, nd->item.defs.size())];
+		rt.first = nd->item.vars[ g_random.get( 0, nd->item.vars.size())];
 	}
 	return rt;
 }
 
-static std::string findNode( const ScopeDefTree* nd, const std::string& var, Scope::Step step)
+static std::string findNode( const NodeDefTree* nd, const std::string& var, Scope::Step step)
 {
 	std::string rt;
 	if (nd->item.scope.contains( step))
@@ -177,7 +188,7 @@ static std::string findNode( const ScopeDefTree* nd, const std::string& var, Sco
 		}
 		if (rt.empty())
 		{
-			for (auto const& def : nd->item.defs)
+			for (auto const& def : nd->item.vars)
 			{
 				if (def == var)
 				{
@@ -194,7 +205,7 @@ static std::string findNode( const ScopeDefTree* nd, const std::string& var, Sco
 	return rt;
 }
 
-static void randomQuery( const DefMap& defmap, const ScopeDefTree* nd, int alphabetsize, bool verbose)
+static void randomQuery( const DefMap& defmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
 {
 	std::pair<std::string,Scope::Step> qry;
 	qry = selectQuery( nd);
@@ -227,7 +238,7 @@ static void randomQuery( const DefMap& defmap, const ScopeDefTree* nd, int alpha
 	}
 }
 
-static int countNodes( const ScopeDefTree* nd)
+static int countNodes( const NodeDefTree* nd)
 {
 	int rt = 1;
 	if (nd->chld) rt += countNodes( nd->chld);
@@ -244,7 +255,7 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	DefMap defmap( &memrsc);
 	int depth = g_random.get( 1, maxdepth+1);
 	Scope scope( 0, g_random.get( 0, std::numeric_limits<int>::max()));
-	std::unique_ptr<ScopeDefTree> tree;
+	std::unique_ptr<NodeDefTree> tree;
 	int minNofNodes = 10;
 	do {
 		tree.reset( createRandomTree( scope, depth, maxwidth, members, g_random.get( 1, alphabetsize)));
