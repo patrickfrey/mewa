@@ -39,6 +39,10 @@ public:
 		TooManyInstancesCreated=426,
 		CompiledSourceTooComplex=427,
 
+		TooManyTypeArguments=430,
+		PriorityOutOfRange=431,
+		DuplicateDefinition=432,
+
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,
 		UnexpectedEofInGrammarDef=503,
@@ -133,6 +137,10 @@ private:
 			case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
 			case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
 			case CompiledSourceTooComplex: return "Too complex source file (counter overflow)";
+
+			case TooManyTypeArguments: return "Too many arguments in type definition";
+			case PriorityOutOfRange: return "Priority value out of range";
+			case DuplicateDefinition: return "Duplicate definition";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";

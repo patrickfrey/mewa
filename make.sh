@@ -13,12 +13,12 @@ $COMP -Isrc -c src/automaton_tostring.cpp -o build/automaton_tostring.o
 $COMP -Isrc -c src/automaton_parser.cpp -o build/automaton_parser.o
 $COMP -Isrc -c src/fileio.cpp -o build/fileio.o
 $COMP -Isrc -c src/strings.cpp -o build/strings.o
-$COMP -Isrc -c src/typesystem.cpp -o build/typesystem.o
+$COMP -Isrc -c src/typedb.cpp -o build/typedb.o
 
 ar rcs build/libmewa.a \
 	build/lexer.o \
 	build/automaton.o build/automaton_tostring.o build/automaton_parser.o \
-	build/typesystem.o \
+	build/typedb.o \
 	build/fileio.o build/strings.o \
 
 

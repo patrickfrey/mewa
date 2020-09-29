@@ -361,7 +361,7 @@ static int mewa_typedb_tostring( lua_State* ls)
 	bool success = true;
 	try
 	{
-		std::string result = mw->impl->tostring();
+		std::string result;
 		resultptr = move_string_on_lua_stack( ls, std::move( result));
 	}
 	CATCH_EXCEPTION( success)

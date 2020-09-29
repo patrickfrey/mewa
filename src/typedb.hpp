@@ -13,8 +13,10 @@
 #define _MEWA_TYPEDB_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include "scope.hpp"
+#include "error.hpp"
+#include "strings.hpp"
 #include "identmap.hpp"
-#include <string>
+#include <string_view>
 #include <memory>
 
 namespace mewa {
@@ -25,10 +27,10 @@ public:
 	enum {NofIdentInitBuckets = 1<<18};
 
 	TypeDatabaseMemory()
-		:m_identmap_memrsc( m_identmap_membuffer, sizeof(m_identmap_membuffer))
-		,m_identstr_memrsc( m_identstr_membuffer, sizeof(m_identstr_membuffer))
-		,m_typetab_memrsc( m_typetab_membuffer, sizeof(m_typetab_membuffer))
-		,m_redutab_memrsc( m_redutab_membuffer, sizeof(m_redutab_membuffer)){}
+		:m_identmap_memrsc( m_identmap_membuffer, sizeof m_identmap_membuffer)
+		,m_identstr_memrsc( m_identstr_membuffer, sizeof m_identstr_membuffer)
+		,m_typetab_memrsc( m_typetab_membuffer, sizeof m_typetab_membuffer)
+		,m_redutab_memrsc( m_redutab_membuffer, sizeof m_redutab_membuffer){}
 
 	std::pmr::memory_resource* resource_identmap() noexcept		{return &m_identmap_memrsc;}
 	std::pmr::memory_resource* resource_identstr() noexcept		{return &m_identstr_memrsc;}
@@ -55,22 +57,128 @@ public:
 		:m_typeTable( memory_->resource_typetab())
 		,m_reduTable( memory_->resource_redutab())
 		,m_identMap( memory_->resource_identmap(), memory_->resource_identstr(), TypeDatabaseMemory::NofIdentInitBuckets)
-		,m_memory(std::move(memory_)){}
-
-	std::string tostring() const
+		,m_parameterMap()
+		,m_typerecMap()
+		,m_typeInvTable()
+		,m_memory(std::move(memory_))
 	{
-		std::string rt;
-		return rt;
+		m_parameterMap.reserve( TypeDatabaseMemory::NofIdentInitBuckets);
+		m_typerecMap.reserve( TypeDatabaseMemory::NofIdentInitBuckets);
+		m_typeInvTable.reserve( TypeDatabaseMemory::NofIdentInitBuckets);
 	}
 
+public:
+	struct Parameter
+	{
+		int type;
+		int constructor;
+
+		Parameter( const Parameter& o)
+			:type(o.type),constructor(o.constructor){}
+		Parameter( int type_, int constructor_)
+			:type(type_),constructor(constructor_){}
+	};
+	struct ResultBuffer
+	{
+		int buffer[ 1024];
+		std::pmr::monotonic_buffer_resource memrsc;
+
+		ResultBuffer()
+			:memrsc( buffer, sizeof buffer){}
+	};
+	struct ReductionResult
+	{
+		int type;
+		int constructor;
+
+		ReductionResult( const ReductionResult& o)
+			:type(o.type),constructor(o.constructor){}
+		ReductionResult( int type_, int constructor_)
+			:type(type_),constructor(constructor_){}
+	};
+	struct ResolveResult
+	{
+		int type;
+		int constructor;
+
+		ResolveResult( const ResolveResult& o)
+			:type(o.type),constructor(o.constructor){}
+		ResolveResult( int type_, int constructor_)
+			:type(type_),constructor(constructor_){}
+	};
+
+public:
+	/// \brief Define a new type, throws if already defined in the same scope with same the signature and the same priority
+	/// \param[in] scope Scope the scope of this definition
+	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
+	/// \param[in] name name of the type
+	/// \param[in] constructor handle for the constructor of the type
+	/// \param[in] parameter list of parameters as part of the function signature
+	/// \param[in] priority The priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
+	/// \return the handle assigned to the new created type
+	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const std::vector<Parameter>& parameter, int priority);
+
+	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
+	/// \param[in] scope Scope the scope of this definition
+	/// \param[in] toType target type of the reduction
+	/// \param[in] fromType source type of the reduction
+	/// \param[in] constructor handle for the constructor that implements the construction of the target type from the source type
+	void defineReduction( const Scope& scope, int toType, int fromType, int constructor);
+
+	/// \brief Perform a reduction of a type to another type and return the smallest path of reductions
+	/// \param[in] scope step the scope step of the search defining what are valid reductions
+	/// \param[in] toType target type of the reduction
+	/// \param[in] fromType source type of the reduction
+	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
+	/// \return the shortest path found, throws if two path of same length are found
+	std::pmr::vector<ReductionResult> reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf);
+
+	/// \brief Resolve a type name in a context of a context reducible from the context passed
+	/// \param[in] scope step the scope step of the search defining what are valid reductions
+	/// \param[in] contextType the context (realm,namespace) of the query type. The searched item has a context type that is reachable via a path of type reductions.
+	/// \param[in] name name of the type searched
+	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
+	/// \return the shortest path found, throws if two path of same length are found	
+	std::pmr::vector<ResolveResult> resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf);
+
+	/// \brief Get the string representation of a type
+	/// \param[in] type handle of the type (return value of defineType)
+	/// \return the complete string assigned to a type
+	std::string typeToString( int type) const;
+
 private:
+	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
+
+private:
+	enum {
+		MaxNofParameter = 1U<<15,
+		MaxPriority = 1U<<15
+	};
 	typedef std::pair<int,int> TypeDef;
 	typedef ScopedMap<TypeDef,int> TypeTable;
-	typedef ScopedMap<int,int> ReductionTable;
+	typedef ScopedRelationMap<int,int> ReductionTable;
+
+	struct TypeRecord
+	{
+		int constructor;
+		short priority;
+		short parameterlen;
+		int parameter;
+		int next;
+
+		TypeRecord( const TypeRecord& o)
+			:constructor(o.constructor),priority(o.priority),parameter(o.parameter),next(o.next){}
+		TypeRecord( int constructor_, int parameter_, short parameterlen_, short priority_)
+			:constructor(constructor_),priority(priority_),parameter(parameter_),next(0){}
+	};
 
 	TypeTable m_typeTable;
 	ReductionTable m_reduTable;
 	IdentMap m_identMap;
+	std::vector<Parameter> m_parameterMap;
+	std::vector<TypeRecord> m_typerecMap;
+	std::vector<TypeDef> m_typeInvTable;
+
 	std::unique_ptr<TypeDatabaseMemory> m_memory;
 };
 

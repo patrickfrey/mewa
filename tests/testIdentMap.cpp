@@ -143,8 +143,16 @@ int main( int argc, const char* argv[] )
 				++countHashCollisions;
 			}
 
+			// Check that key does not have to be 0 terminated:
+			std::string_view keyname = key;
+			std::string keydup;
+			if (g_random.get( 1, 10) == 1)
+			{
+				keydup = key + "_";
+				keyname = std::string_view( keydup.c_str(), keydup.size()-1);
+			}
 			// Test value of id assigned to inserted key:
-			int testid = testmap.get( key);
+			int testid = testmap.get( keyname);
 			if (testid != ins.first->second)
 			{
 				throw std::runtime_error(
