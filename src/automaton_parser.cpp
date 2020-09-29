@@ -443,6 +443,11 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
 							rt.typesystem = std::string( cmdargs[ 0]);
 						}
+						else if (caseInsensitiveEqual( cmdname, "CMDLINE"))
+						{
+							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
+							rt.cmdline = std::string( cmdargs[ 0]);
+						}
 						else if (caseInsensitiveEqual( cmdname, "IGNORE"))
 						{
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);

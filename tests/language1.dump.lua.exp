@@ -1,6 +1,7 @@
 {
 	language = "test",
 	typesystem = "typesystem1",
+	cmdline = "cmdlinearg",
 	lexer = {
 		comment = {{ "/*", "*/" },"//" },
 		keyword = {

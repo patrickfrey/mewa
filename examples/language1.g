@@ -1,5 +1,6 @@
 % LANGUAGE test ;
 % TYPESYSTEM typesystem1 ;
+% CMDLINE cmdlinearg ;
 % COMMENT "/*" "*/" ;
 % COMMENT "//" ;
 
@@ -118,7 +119,7 @@ expression/L11		= expression  "(" expressionlist ")"						(operator call)
 			| expression  "[" expressionlist "]"						(operator arrayaccess)
 			;
 expressionlist		= expression "," expressionlist
-                        | expression
+			| expression
 			| ε
 			;
 

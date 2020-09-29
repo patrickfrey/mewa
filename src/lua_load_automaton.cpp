@@ -334,6 +334,7 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 
 	std::string language;
 	std::string typesystem;
+	std::string cmdline;
 	mewa::Lexer lexer;
 	std::map<mewa::Automaton::ActionKey,mewa::Automaton::Action> actions;
 	std::map<mewa::Automaton::GotoKey,mewa::Automaton::Goto> gotos;
@@ -366,6 +367,15 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 							mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
 			}
 			typesystem = lua_tostring( ls, -1);
+		}
+		else if (0==std::strcmp( keystr, "cmdline"))
+		{
+			if (lua_type( ls, -1) != LUA_TSTRING)
+			{
+				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+							mewa::string_format( "automaton definition '%s', row %d", keystr, rowcnt));
+			}
+			cmdline = lua_tostring( ls, -1);
 		}
 		else if (0==std::strcmp( keystr, "lexer"))
 		{
@@ -415,6 +425,6 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 		lua_pop( ls, 1);
 	}
 	lua_pop( ls, 1);
-	return mewa::Automaton( language, typesystem, lexer, actions, gotos, calls, nonterminals);
+	return mewa::Automaton( language, typesystem, cmdline, lexer, actions, gotos, calls, nonterminals);
 }
 

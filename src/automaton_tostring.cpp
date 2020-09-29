@@ -230,6 +230,10 @@ std::string Automaton::tostring() const
 	{
 		outstream << "\ttypesystem = \"" << typesystem() << "\",\n";
 	}
+	if (!cmdline().empty())
+	{
+		outstream << "\tcmdline = \"" << cmdline() << "\",\n";
+	}
 	printLexems( outstream, "lexer", lexer(), true/*sep*/);
 	printStringArray( outstream, "nonterminal", m_nonterminals, true/*sep*/);
 	printTable( outstream, "action", actions(), true/*sep*/);

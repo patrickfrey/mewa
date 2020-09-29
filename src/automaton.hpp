@@ -284,30 +284,33 @@ public:
 
 public:
 	Automaton()
-		:m_language(),m_typesystem(),m_lexer(),m_actions(),m_gotos(),m_calls(),m_nonterminals(){}
+		:m_language(),m_typesystem(),m_cmdline(),m_lexer(),m_actions(),m_gotos(),m_calls(),m_nonterminals(){}
 	Automaton( const Automaton& o)
-		:m_language(o.m_language),m_typesystem(o.m_typesystem),m_lexer(o.m_lexer),m_actions(o.m_actions),m_gotos(o.m_gotos)
+		:m_language(o.m_language),m_typesystem(o.m_typesystem),m_cmdline(o.m_cmdline)
+		,m_lexer(o.m_lexer),m_actions(o.m_actions),m_gotos(o.m_gotos)
 		,m_calls(o.m_calls),m_nonterminals(o.m_nonterminals){}
 	Automaton& operator=( const Automaton& o)
-		{m_language=o.m_language; m_typesystem=o.m_typesystem; m_lexer=o.m_lexer; m_actions=o.m_actions; m_gotos=o.m_gotos;
+		{m_language=o.m_language; m_typesystem=o.m_typesystem; m_cmdline=o.m_cmdline;
+		 m_lexer=o.m_lexer; m_actions=o.m_actions; m_gotos=o.m_gotos;
 		 m_calls=o.m_calls; m_nonterminals=o.m_nonterminals; return *this;}
 	Automaton( Automaton&& o)
-		:m_language(std::move(o.m_language)),m_typesystem(std::move(o.m_typesystem))
+		:m_language(std::move(o.m_language)),m_typesystem(std::move(o.m_typesystem)),m_cmdline(std::move(o.m_cmdline))
 		,m_lexer(std::move(o.m_lexer)),m_actions(std::move(o.m_actions)),m_gotos(std::move(o.m_gotos))
 		,m_calls(std::move(o.m_calls)),m_nonterminals(std::move(o.m_nonterminals)){}
 	Automaton& operator=( Automaton&& o)
-		{m_language=std::move(o.m_language); m_typesystem=std::move(o.m_typesystem);
+		{m_language=std::move(o.m_language); m_typesystem=std::move(o.m_typesystem); m_cmdline=std::move(o.m_cmdline);
 		m_lexer=std::move(o.m_lexer); m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos);
 		m_calls=std::move(o.m_calls); m_nonterminals=std::move(o.m_nonterminals); return *this;}
-	Automaton( const std::string& language_, const std::string& typesystem_,
+	Automaton( const std::string& language_, const std::string& typesystem_, const std::string& cmdline_,
 			const Lexer& lexer_, const std::map<ActionKey,Action>& actions_, const std::map<GotoKey,Goto>& gotos_,
 			const std::vector<Call>& calls_, const std::vector<std::string>& nonterminals_)
-		:m_language(language_),m_typesystem(typesystem_),m_lexer(lexer_),m_actions(actions_),m_gotos(gotos_)
+		:m_language(language_),m_typesystem(typesystem_),m_cmdline(cmdline_)
+		,m_lexer(lexer_),m_actions(actions_),m_gotos(gotos_)
 		,m_calls(calls_),m_nonterminals(nonterminals_){}
-	Automaton( std::string&& language_, std::string&& typesystem_,
+	Automaton( std::string&& language_, std::string&& typesystem_, std::string&& cmdline_,
 			Lexer&& lexer_, std::map<ActionKey,Action>&& actions_, std::map<GotoKey,Goto>&& gotos_,
 			std::vector<Call>&& calls_, std::vector<std::string>&& nonterminals_)
-		:m_language(std::move(language_)),m_typesystem(std::move(typesystem_))
+		:m_language(std::move(language_)),m_typesystem(std::move(typesystem_)),m_cmdline(std::move(cmdline_))
 		,m_lexer(std::move(lexer_)),m_actions(std::move(actions_)),m_gotos(std::move(gotos_))
 		,m_calls(std::move(calls_)),m_nonterminals(std::move(nonterminals_)){}
 
@@ -315,6 +318,7 @@ public:
 
 	const std::string& language() const noexcept				{return m_language;}
 	const std::string& typesystem() const noexcept				{return m_typesystem;}
+	const std::string& cmdline() const noexcept				{return m_cmdline;}
 	const Lexer& lexer() const noexcept					{return m_lexer;}
 	const std::map<ActionKey,Action>& actions() const noexcept		{return m_actions;}
 	const std::map<GotoKey,Goto>& gotos() const noexcept			{return m_gotos;}
@@ -329,6 +333,7 @@ public:
 private:
 	std::string m_language;
 	std::string m_typesystem;
+	std::string m_cmdline;
 	Lexer m_lexer;
 	std::map<ActionKey,Action> m_actions;
 	std::map<GotoKey,Goto> m_gotos;

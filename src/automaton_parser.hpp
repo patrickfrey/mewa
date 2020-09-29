@@ -26,6 +26,7 @@ struct LanguageDef
 {
 	std::string language;
 	std::string typesystem;
+	std::string cmdline;
 	Lexer lexer;
 	std::vector<ProductionDef> prodlist;
 	std::vector<Automaton::Call> calls;

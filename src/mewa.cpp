@@ -63,18 +63,31 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-static const std::string g_defaultTemplate{R"(#!/usr/bin/lua
+static const std::string g_defaultTemplate_no_cmdline{R"(#!/usr/bin/lua
 
 typesystem = require( "%typesystem%")
 mewa = require("mewa")
 
 compilerdef = %automaton%
+compiler = mewa.compiler( compilerdef)
+if #arg == 0 then error( "arguments missing") end
+if #arg > 1 then error( "too many arguments") end
+compiler:run( arg[0])
+)"};
 
+static const std::string g_defaultTemplate_with_cmdline{R"(#!/usr/bin/lua
+
+typesystem = require( "%typesystem%")
+cmdline = require( "%cmdline%")
+mewa = require("mewa")
+
+compilerdef = %automaton%
 compiler = mewa.compiler( compilerdef)
 
-inputfile,outputfile,dbgout = typesystem:parseArguments( arg)
+inputfile,outputfile,dbgout = cmdline:parse( "%language%", typesystem, arg)
 compiler:run( inputfile, outputfile, dbgout)
 )"};
+
 
 
 static std::string mapTemplateKey( const std::string& content, const char* key, const std::string& value)
@@ -99,6 +112,8 @@ static std::string mapTemplate( const std::string& templat, const Automaton& aut
 {
 	std::string rt = templat;
 	rt = mapTemplateKey( rt, "typesystem", automaton.typesystem());
+	rt = mapTemplateKey( rt, "language", automaton.language());
+	rt = mapTemplateKey( rt, "cmdline", automaton.cmdline());
 	rt = mapTemplateKey( rt, "automaton", automaton.tostring());
 	return rt;
 }
@@ -130,7 +145,7 @@ int main( int argc, const char* argv[] )
 		std::string inputFilename;
 		std::string outputFilename;
 		std::string debugFilename;
-		std::string templat = g_defaultTemplate;
+		std::string templat;
 
 		int argi = 1;
 		for (; argi < argc; ++argi)
@@ -244,6 +259,17 @@ int main( int argc, const char* argv[] )
 		}
 		for (auto warning : warnings) printWarning( inputFilename, warning);
 
+		if (templat.empty())
+		{
+			if (automaton.cmdline().empty())
+			{
+				templat = g_defaultTemplate_no_cmdline;
+			}
+			else
+			{
+				templat = g_defaultTemplate_with_cmdline;
+			}
+		}
 		switch (cmd)
 		{
 			case NoCommand:

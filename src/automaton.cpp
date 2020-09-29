@@ -1300,6 +1300,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	}
 	std::swap( m_language, langdef.language);
 	std::swap( m_typesystem, langdef.typesystem);
+	std::swap( m_cmdline, langdef.cmdline);
 	std::swap( m_lexer, langdef.lexer);
 	std::swap( m_calls, langdef.calls);
 	std::swap( m_nonterminals, langdef.nonterminals);
