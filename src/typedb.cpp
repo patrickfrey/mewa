@@ -43,6 +43,14 @@ std::string TypeDatabase::typeToString( int type) const
 	return rt;
 }
 
+TypeDatabase::ParameterList TypeDatabase::parameters( int type) const noexcept
+{
+	if (type == 0) return ParameterList( 0, nullptr);
+	const TypeRecord& rec = m_typerecMap[ type-1];
+	if (rec.parameter < 0) return ParameterList( 0, nullptr);
+	return ParameterList( rec.parameterlen, m_parameterMap.data() + rec.parameter - 1);
+}
+
 bool TypeDatabase::compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept
 {
 	if (paramlen1 != paramlen2) return false;
@@ -197,9 +205,9 @@ struct ReduQueueElem
 };
 
 
-std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
+TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
 {
-	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
+	ReduceResult rt( resbuf);
 	if (toType == fromType) return rt;
 	
 	int buffer[ 1024];
@@ -229,7 +237,7 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reduce( Scope::Ste
 			{
 				if (redu.type() == toType)
 				{
-					stack.collectResult( rt, index);
+					stack.collectResult( rt.reductions, index);
 					done = true;
 					break;
 				}
@@ -244,7 +252,7 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reduce( Scope::Ste
 }
 
 
-TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf)
+TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, int nofParameters, ResultBuffer& resbuf)
 {
 	ResolveResult rt( resbuf);
 	int nameid = m_identMap.get( name);
@@ -281,8 +289,11 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 					int typerecidx = search->second;
 					while (typerecidx > 0)
 					{
-						const TypeRecord& rec = m_typerecMap[ search->second-1];
-						rt.items.push_back( ResolveResultItem( redu.type(), rec.constructor, rec.parameter, rec.parameterlen));
+						const TypeRecord& rec = m_typerecMap[ typerecidx-1];
+						if (nofParameters == -1 || nofParameters == (int)rec.parameterlen)
+						{
+							rt.items.push_back( ResolveResultItem( typerecidx, rec.constructor));
+						}
 						typerecidx = rec.next;
 					}
 					done = true;

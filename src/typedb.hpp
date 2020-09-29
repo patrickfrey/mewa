@@ -78,11 +78,35 @@ public:
 		Parameter( int type_, int constructor_) noexcept
 			:type(type_),constructor(constructor_){}
 	};
+	struct ParameterList
+	{
+		int arsize;
+		const Parameter* ar;
+
+		ParameterList( int arsize_, const Parameter* ar_)
+			:arsize(arsize_),ar(ar_){}
+		ParameterList( const ParameterList& o)
+			:arsize(o.arsize),ar(o.ar){}
+
+		int size() const noexcept
+		{
+			return arsize;
+		}
+
+		const Parameter& operator[]( int idx) const noexcept
+		{
+			return ar[ idx];
+		}
+	};
 	struct ResultBuffer
 	{
 		int buffer[ 1024];
 		std::pmr::monotonic_buffer_resource memrsc;
 
+		int buffersize() const noexcept
+		{
+			return sizeof buffer;
+		}
 		ResultBuffer() noexcept
 			:memrsc( buffer, sizeof buffer){}
 	};
@@ -100,13 +124,21 @@ public:
 	{
 		int type;
 		int constructor;
-		int parameter;
-		int parameterlen;
 
 		ResolveResultItem( const ResolveResultItem& o) noexcept
-			:type(o.type),constructor(o.constructor),parameter(o.parameter),parameterlen(o.parameterlen){}
-		ResolveResultItem( int type_, int constructor_, int parameter_, int parameterlen_) noexcept
-			:type(type_),constructor(constructor_),parameter(parameter_),parameterlen(parameterlen_){}
+			:type(o.type),constructor(o.constructor){}
+		ResolveResultItem( int type_, int constructor_) noexcept
+			:type(type_),constructor(constructor_){}
+	};
+	struct ReduceResult
+	{
+		std::pmr::vector<ReductionResult> reductions;
+
+		ReduceResult( ResultBuffer& resbuf) noexcept
+			:reductions(&resbuf.memrsc)
+		{
+			reductions.reserve( resbuf.buffersize() / sizeof(ReductionResult));
+		}
 	};
 	struct ResolveResult
 	{
@@ -116,8 +148,8 @@ public:
 		ResolveResult( ResultBuffer& resbuf) noexcept
 			:reductions(&resbuf.memrsc),items(&resbuf.memrsc)
 		{
-			reductions.reserve( sizeof resbuf.buffer / 2 / sizeof(ReductionResult));
-			items.reserve( sizeof resbuf.buffer / 2 / sizeof(ResolveResultItem));
+			reductions.reserve( resbuf.buffersize() / 2 / sizeof(ReductionResult));
+			items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
 		}
 	};
 
@@ -145,20 +177,26 @@ public:
 	/// \param[in] fromType source type of the reduction
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found
-	std::pmr::vector<ReductionResult> reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf);
+	ReduceResult reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf);
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
 	/// \param[in] scope step the scope step of the search defining what are valid reductions
 	/// \param[in] contextType the context (realm,namespace) of the query type. The searched item has a context type that is reachable via a path of type reductions.
 	/// \param[in] name name of the type searched
+	/// \param[in] nofParameters expected number of parameters or -1 if not specified
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found	
-	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf);
+	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, int nofParameters, ResultBuffer& resbuf);
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type handle of the type (return value of defineType)
 	/// \return the complete string assigned to a type
 	std::string typeToString( int type) const;
+
+	/// \brief Get the parameters attached to a type
+	/// \param[in] type handle of the type (return value of defineType)
+	/// \return a view on the list of parameters
+	ParameterList parameters( int type) const noexcept;
 
 private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
