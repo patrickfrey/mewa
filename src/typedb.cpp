@@ -13,6 +13,8 @@
 #include "error.hpp"
 #include "identmap.hpp"
 #include <utility>
+#include <algorithm>
+#include <queue>
 
 using namespace mewa;
 
@@ -55,7 +57,7 @@ bool TypeDatabase::compareParameterSignature( int param1, short paramlen1, int p
 int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const std::vector<Parameter>& parameter, int priority)
 {
 	if (parameter.size() >= MaxNofParameter) throw Error( Error::TooManyTypeArguments, string_format( "%zu", parameter.size()));
-	if (m_parameterMap.size() + parameter.size() >= std::numeric_limits<int>::max()) throw Error( Error::CompiledSourceTooComplex);
+	if ((int)(m_parameterMap.size() + parameter.size()) >= std::numeric_limits<int>::max()) throw Error( Error::CompiledSourceTooComplex);
 	if (priority > MaxPriority) throw Error( Error::PriorityOutOfRange, string_format( "%d", priority));
 	int parameterlen = parameter.size();
 	int parameteridx = parameter.empty() ? 0 : (int)(m_parameterMap.size()+1);
@@ -110,59 +112,189 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	return typerec;
 }
 
-struct ReduStackElem
-{
-	int type;
-	int constructor;
-	int prev;
-
-	ReduStackElem( const ReduStackElem& o)
-		:type(o.type),constructor(o.constructor),prev(o.prev){}
-	ReduStackElem( int type_, int constructor_, int prev_)
-		:type(type_),constructor(constructor_),prev(prev_){}
-};
-
-struct ReduStack
-{
-	std::pmr::vector<ReduStackElem> ar;
-
-	ReduStack( std::pmr::memory_resource* memrsc)
-		:ar( memrsc){}
-
-	void pushIfNew( int type, int constructor, int prev)
-	{
-		while (prev < 0)
-		{
-			const ReduStackElem& ee = ar[ prev];
-			if (ee.type == type) return;
-			prev = ee.prev;
-		}
-		ar.push_back( {type,constructor,prev});
-	}
-};
 
 void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor)
 {
 	m_reduTable.insert( {{fromType, scope}, {toType, constructor}} );
 }
 
+
+struct ReduStackElem
+{
+	int type;
+	int constructor;
+	int prev;
+
+	ReduStackElem( const ReduStackElem& o) noexcept
+		:type(o.type),constructor(o.constructor),prev(o.prev){}
+	ReduStackElem( int type_, int constructor_, int prev_) noexcept
+		:type(type_),constructor(constructor_),prev(prev_){}
+};
+
+class ReduStack
+{
+public:
+	ReduStack( std::pmr::memory_resource* memrsc, int buffersize)
+		:m_ar( memrsc)
+	{
+		m_ar.reserve( buffersize / sizeof(ReduStackElem));
+	}
+
+	int pushIfNew( int type, int constructor, int prev)
+	{
+		int rt = -1;
+		int index = prev;
+		while (index >= 0)
+		{
+			const ReduStackElem& ee = m_ar[ index];
+			if (ee.type == type) return rt;
+			index = ee.prev;
+		}
+		rt = m_ar.size();
+		m_ar.push_back( {type,constructor,prev});
+		return rt;
+	}
+	int size() const noexcept
+	{
+		return m_ar.size();
+	}
+	const ReduStackElem& operator[]( int idx) const noexcept
+	{
+		return m_ar[ idx];
+	}
+
+	void collectResult( std::pmr::vector<TypeDatabase::ReductionResult>& result, int index)
+	{
+		while (index >= 0)
+		{
+			const ReduStackElem& ee = m_ar[ index];
+			result.push_back( {ee.type, ee.constructor} );
+			index = ee.prev;
+		}
+		std::reverse( result.begin(), result.end());
+	}
+
+private:
+	std::pmr::vector<ReduStackElem> m_ar;
+};
+
+struct ReduQueueElem
+{
+	int length;
+	int index;
+
+	ReduQueueElem() noexcept
+		:length(0),index(-1){}
+	ReduQueueElem( int length_, int index_) noexcept
+		:length(length_),index(index_){}
+	ReduQueueElem( const ReduQueueElem& o) noexcept
+		:length(o.length),index(o.index){}
+
+	bool operator < (const ReduQueueElem& o) const noexcept
+	{
+		return length == o.length ? index < o.index : length < o.length;
+	}
+};
+
+
 std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
 {
-	int buffer[ 2048];
+	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
+	if (toType == fromType) return rt;
+	
+	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
-	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
-	
-	ReduStack stack( &stack_memrsc);
+	ReduStack stack( &stack_memrsc, sizeof buffer);
+	std::priority_queue<ReduQueueElem> priorityQueue;
+
+	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/);
+	priorityQueue.push( ReduQueueElem( 0/*length*/, 0/*index*/));
+
+	bool done = false;
+	while (!done && !priorityQueue.empty())
+	{
+		auto qe = priorityQueue.top();
+		priorityQueue.pop();
+		auto const& elem = stack[ qe.index];
+
+		int redu_buffer[ 512];
+		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+		auto redulist = m_reduTable.scoped_find( elem.type, step, &redu_memrsc);
+
+		for (auto const& redu : redulist)
+		{
+			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
+			if (index >= 0)
+			{
+				if (redu.type() == toType)
+				{
+					stack.collectResult( rt, index);
+					done = true;
+					break;
+				}
+				else
+				{
+					priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
+				}
+			}
+		}
+	}
 	return rt;
 }
 
-std::pmr::vector<TypeDatabase::ResolveResult> TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf)
+
+TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf)
 {
-	int buffer[ 2048];
+	ResolveResult rt( resbuf);
+	int nameid = m_identMap.get( name);
+
+	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
-	std::pmr::vector<ResolveResult> rt( &resbuf.memrsc);	
+	ReduStack stack( &stack_memrsc, sizeof buffer);
+	std::priority_queue<ReduQueueElem> priorityQueue;
+
+	stack.pushIfNew( contextType, 0/*constructor*/, -1/*prev*/);
+	priorityQueue.push( ReduQueueElem( 0/*length*/, 0/*index*/));
+
+	bool done = false;
+	while (!done && !priorityQueue.empty())
+	{
+		auto qe = priorityQueue.top();
+		priorityQueue.pop();
+		auto const& elem = stack[ qe.index];
+
+		int redu_buffer[ 512];
+		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+		auto redulist = m_reduTable.scoped_find( elem.type, step, &redu_memrsc);
+
+		for (auto const& redu : redulist)
+		{
+			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
+			if (index >= 0)
+			{
+				auto search = m_typeTable.scoped_find( TypeDef( redu.type(), nameid), step);
+				if (search != m_typeTable.end())
+				{
+					stack.collectResult( rt.reductions, index);
+					int typerecidx = search->second;
+					while (typerecidx > 0)
+					{
+						const TypeRecord& rec = m_typerecMap[ search->second-1];
+						rt.items.push_back( ResolveResultItem( redu.type(), rec.constructor, rec.parameter, rec.parameterlen));
+						typerecidx = rec.next;
+					}
+					done = true;
+					break;
+				}
+				else
+				{
+					priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
+				}
+			}
+		}
+	}
 	return rt;
 }
 

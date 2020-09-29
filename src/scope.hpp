@@ -27,11 +27,11 @@ public:
 	typedef int Step;
 
 public:
-	Scope( Step start_, Step end_)
+	Scope( Step start_, Step end_) noexcept
 		:m_start(start_ >= 0 ? start_ : 0),m_end(end_ >= 0 ? end_ : std::numeric_limits<Step>::max()){}
-	Scope( const Scope& o)
+	Scope( const Scope& o) noexcept
 		:m_start(o.m_start),m_end(o.m_end){}
-	Scope& operator=( const Scope& o)
+	Scope& operator=( const Scope& o) noexcept
 		{m_start=o.m_start; m_end=o.m_end; return *this;}
 
 	bool contains( const Scope& o) const noexcept
@@ -76,9 +76,9 @@ public:
 		:m_key(o.m_key),m_scope(o.m_scope){}
 	ScopedKey& operator=( const ScopedKey& o)
 		{m_key=o.m_key; m_scope=o.m_scope; return *this;}
-	ScopedKey( ScopedKey&& o)
+	ScopedKey( ScopedKey&& o) noexcept
 		:m_key(std::move(o.m_key)),m_scope(o.m_scope){}
-	ScopedKey& operator=( ScopedKey&& o)
+	ScopedKey& operator=( ScopedKey&& o) noexcept
 		{m_key=std::move(o.m_key); m_scope=o.m_scope; return *this;}
 
 	const KEYTYPE& key() const noexcept						{return m_key;}
@@ -94,7 +94,7 @@ private:
 template <typename KEYTYPE>
 struct ScopedMapOrder
 {
-	bool operator()( const ScopedKey<KEYTYPE>& a, const ScopedKey<KEYTYPE>& b) const
+	bool operator()( const ScopedKey<KEYTYPE>& a, const ScopedKey<KEYTYPE>& b) const noexcept
 	{
 		return a.key() == b.key()
 			? a.scope().end() == b.scope().end()
@@ -112,11 +112,11 @@ public:
 	typedef std::pmr::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> > ParentClass;
 	typedef typename ParentClass::const_iterator const_iterator;
 
-	explicit ScopedMap( std::pmr::memory_resource* memrsc) :ParentClass( memrsc) {}
+	explicit ScopedMap( std::pmr::memory_resource* memrsc) noexcept :ParentClass( memrsc) {}
 	ScopedMap( const ScopedMap& o) = default;
 	ScopedMap& operator=( const ScopedMap& o) = default;
-	ScopedMap( ScopedMap&& o) = default;
-	ScopedMap& operator=( ScopedMap&& o) = default;
+	ScopedMap( ScopedMap&& o) noexcept = default;
+	ScopedMap& operator=( ScopedMap&& o) noexcept = default;
 
 	const_iterator scoped_find( const KEYTYPE& key, const Scope::Step step) const noexcept
 	{
@@ -147,26 +147,24 @@ public:
 	class ResultElement
 	{
 	public:
-		ResultElement( const Scope scope_, const RELNODETYPE type_, const VALTYPE value_)
-			:m_scope(scope_),m_type(type_),m_value(value_){}
+		ResultElement( const RELNODETYPE type_, const VALTYPE value_)
+			:m_type(type_),m_value(value_){}
 		ResultElement( const ResultElement& o)
-			:m_scope(o.m_scope),m_type(o.m_type),m_value(o.m_value){}
+			:m_type(o.m_type),m_value(o.m_value){}
 
-		Scope scope() const noexcept		{return m_scope;}
 		RELNODETYPE type() const noexcept	{return m_type;}
 		VALTYPE value() const noexcept		{return m_value;}
 
 	private:
-		Scope m_scope;
 		RELNODETYPE m_type;
 		VALTYPE m_value;
 	};
 
-	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc) :ParentClass( memrsc) {}
+	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc) noexcept :ParentClass( memrsc) {}
 	ScopedRelationMap( const ScopedRelationMap& o) = default;
 	ScopedRelationMap& operator=( const ScopedRelationMap& o) = default;
-	ScopedRelationMap( ScopedRelationMap&& o) = default;
-	ScopedRelationMap& operator=( ScopedRelationMap&& o) = default;
+	ScopedRelationMap( ScopedRelationMap&& o) noexcept = default;
+	ScopedRelationMap& operator=( ScopedRelationMap&& o) noexcept = default;
 
 	std::pmr::vector<ResultElement> scoped_find( const RELNODETYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
 	{
@@ -175,6 +173,7 @@ public:
 		std::pmr::map<RELNODETYPE,int> candidatemap( &local_memrsc);
 
 		std::pmr::vector<ResultElement> rt( res_memrsc);
+		std::pmr::vector<Scope> scopear( res_memrsc);
 
 		auto it = ParentClass::upper_bound( ScopedKey<RELNODETYPE>( key, Scope( step, step)));
 		for (; it != this->end() && it->first.key() == key && it->first.scope().end() > step; ++it)
@@ -184,11 +183,13 @@ public:
 				auto ins = candidatemap.insert( {it->second.first, rt.size()});
 				if (ins.second /*insert took place*/)
 				{
-					rt.push_back( ResultElement( it->first.scope(), it->second.first, it->second.second));
+					scopear.push_back( it->first.scope());
+					rt.push_back( ResultElement( it->second.first, it->second.second));
 				}
-				else if (rt[ ins.first->second].scope().contains( it->first.scope()))
+				else if (scopear[ ins.first->second].contains( it->first.scope()))
 				{
-					rt[ ins.first->second] = ResultElement( it->first.scope(), it->second.first, it->second.second);
+					scopear[ ins.first->second] = it->first.scope();
+					rt[ ins.first->second] = ResultElement( it->second.first, it->second.second);
 				}
 			}
 		}

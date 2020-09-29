@@ -60,8 +60,8 @@ struct IdentKeyEnvelop
 {
 	const IdentKey* key;
 
-	IdentKeyEnvelop() :key(0){}
-	IdentKeyEnvelop( const IdentKey* key_) :key(key_){}
+	IdentKeyEnvelop() noexcept :key(0){}
+	IdentKeyEnvelop( const IdentKey* key_) noexcept :key(key_){}
 
 	bool operator == (const IdentKeyEnvelop& o) const noexcept
 	{
@@ -93,7 +93,7 @@ private:
 		uint32_t b;
 		uint32_t c;
 
-		explicit Bank( uint32_t initval=0)
+		explicit Bank( uint32_t initval=0) noexcept
 		{
 			a = b = c = 0xdeadbeef + initval;
 		}
@@ -117,7 +117,7 @@ private:
 			c ^= b; c -= rot(b,24);
 		}
 	};
-	static std::size_t hashword2( const IdentKey* key)
+	static std::size_t hashword2( const IdentKey* key) noexcept
 	{
 		Bank bank;
 		int length = key->alignedsize();
@@ -174,9 +174,9 @@ public:
 		:ParentClass(o),m_str_memrsc(o.m_str_memrsc),m_inv(o.m_inv) {}
 	IdentMap& operator=( const IdentMap& o)
 		{ParentClass::operator=(o); m_str_memrsc=o.m_str_memrsc; m_inv=o.m_inv; return *this;}
-	IdentMap( IdentMap&& o)
+	IdentMap( IdentMap&& o) noexcept
 		:ParentClass(o),m_str_memrsc(o.m_str_memrsc),m_inv(std::move(o.m_inv)) {}
-	IdentMap& operator=( IdentMap&& o)
+	IdentMap& operator=( IdentMap&& o) noexcept
 		{ParentClass::operator=(o); m_str_memrsc=o.m_str_memrsc; m_inv=std::move(o.m_inv); return *this;}
 
 	int get( const std::string_view& str)
@@ -224,7 +224,7 @@ public:
 	}
 
 private:
-	std::size_t growSize() const
+	std::size_t growSize() const noexcept
 	{
 		// ... array duplication strategy
 		enum {InitSize=1<<14};

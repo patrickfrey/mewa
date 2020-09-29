@@ -26,7 +26,7 @@ class TypeDatabaseMemory
 public:
 	enum {NofIdentInitBuckets = 1<<18};
 
-	TypeDatabaseMemory()
+	TypeDatabaseMemory() noexcept
 		:m_identmap_memrsc( m_identmap_membuffer, sizeof m_identmap_membuffer)
 		,m_identstr_memrsc( m_identstr_membuffer, sizeof m_identstr_membuffer)
 		,m_typetab_memrsc( m_typetab_membuffer, sizeof m_typetab_membuffer)
@@ -73,9 +73,9 @@ public:
 		int type;
 		int constructor;
 
-		Parameter( const Parameter& o)
+		Parameter( const Parameter& o) noexcept
 			:type(o.type),constructor(o.constructor){}
-		Parameter( int type_, int constructor_)
+		Parameter( int type_, int constructor_) noexcept
 			:type(type_),constructor(constructor_){}
 	};
 	struct ResultBuffer
@@ -83,7 +83,7 @@ public:
 		int buffer[ 1024];
 		std::pmr::monotonic_buffer_resource memrsc;
 
-		ResultBuffer()
+		ResultBuffer() noexcept
 			:memrsc( buffer, sizeof buffer){}
 	};
 	struct ReductionResult
@@ -91,20 +91,34 @@ public:
 		int type;
 		int constructor;
 
-		ReductionResult( const ReductionResult& o)
+		ReductionResult( const ReductionResult& o) noexcept
 			:type(o.type),constructor(o.constructor){}
-		ReductionResult( int type_, int constructor_)
+		ReductionResult( int type_, int constructor_) noexcept
 			:type(type_),constructor(constructor_){}
 	};
-	struct ResolveResult
+	struct ResolveResultItem
 	{
 		int type;
 		int constructor;
+		int parameter;
+		int parameterlen;
 
-		ResolveResult( const ResolveResult& o)
-			:type(o.type),constructor(o.constructor){}
-		ResolveResult( int type_, int constructor_)
-			:type(type_),constructor(constructor_){}
+		ResolveResultItem( const ResolveResultItem& o) noexcept
+			:type(o.type),constructor(o.constructor),parameter(o.parameter),parameterlen(o.parameterlen){}
+		ResolveResultItem( int type_, int constructor_, int parameter_, int parameterlen_) noexcept
+			:type(type_),constructor(constructor_),parameter(parameter_),parameterlen(parameterlen_){}
+	};
+	struct ResolveResult
+	{
+		std::pmr::vector<ReductionResult> reductions;
+		std::pmr::vector<ResolveResultItem> items;
+
+		ResolveResult( ResultBuffer& resbuf) noexcept
+			:reductions(&resbuf.memrsc),items(&resbuf.memrsc)
+		{
+			reductions.reserve( sizeof resbuf.buffer / 2 / sizeof(ReductionResult));
+			items.reserve( sizeof resbuf.buffer / 2 / sizeof(ResolveResultItem));
+		}
 	};
 
 public:
@@ -139,7 +153,7 @@ public:
 	/// \param[in] name name of the type searched
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found	
-	std::pmr::vector<ResolveResult> resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf);
+	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf);
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type handle of the type (return value of defineType)

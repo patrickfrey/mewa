@@ -78,18 +78,14 @@ private:
 class Lexem
 {
 public:
-	explicit Lexem( int line_) //...empty Lexem ~ EOF
+	explicit Lexem( int line_) noexcept //...empty Lexem ~ EOF
 		:m_name(),m_value(),m_id(0),m_line(line_){}
-	Lexem( const std::string_view& name_, int id_, const std::string_view& value_, int line_)
+	Lexem( const std::string_view& name_, int id_, const std::string_view& value_, int line_) noexcept
 		:m_name(name_),m_value(value_),m_id(id_),m_line(line_){}
-	Lexem( const Lexem& o)
+	Lexem( const Lexem& o) noexcept
 		:m_name(o.m_name),m_value(o.m_value),m_id(o.m_id),m_line(o.m_line){}
-	Lexem& operator=( const Lexem& o)
+	Lexem& operator=( const Lexem& o) noexcept
 		{m_name=o.m_name; m_value=o.m_value; m_id=o.m_id; m_line=o.m_line; return *this;}
-	Lexem( Lexem&& o)
-		:m_name(std::move(o.m_name)),m_value(std::move(o.m_value)),m_id(o.m_id),m_line(o.m_line){}
-	Lexem& operator=( Lexem&& o)
-		{m_name=std::move(o.m_name); m_value=std::move(o.m_value); m_id=o.m_id; m_line=o.m_line; return *this;}
 
 	const std::string_view& name() const noexcept	{return m_name;}
 	const std::string_view& value() const noexcept	{return m_value;}

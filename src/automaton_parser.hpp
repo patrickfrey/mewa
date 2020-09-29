@@ -36,7 +36,7 @@ struct LanguageDef
 		:language(),typesystem(),lexer(),prodlist(),calls(),nonterminals(){};
 	LanguageDef( const LanguageDef& o)
 		:language(o.language),typesystem(o.typesystem),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls),nonterminals(o.nonterminals){}
-	LanguageDef( LanguageDef&& o)
+	LanguageDef( LanguageDef&& o) noexcept
 		:language(std::move(o.language)),typesystem(std::move(o.typesystem))
 		,lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)),nonterminals(std::move(o.nonterminals)){}
 };

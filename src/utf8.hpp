@@ -40,12 +40,12 @@ enum {
 };
 
 /// \brief Return true, if the character passed as argument is a non start character of a multi byte encoded unicode character
-static inline bool utf8mid( unsigned char ch)
+static inline bool utf8mid( unsigned char ch) noexcept
 {
 	return (ch & B11000000) == B10000000;
 }
 
-static inline int bitScanReverse( const unsigned char& idx)
+static inline int bitScanReverse( const unsigned char& idx) noexcept
 {
 	uint32_t xx = idx;
 	if (!xx) return 0;
@@ -62,7 +62,7 @@ static inline int bitScanReverse( const unsigned char& idx)
 #endif
 }
 
-static inline int utf8charlen( unsigned char ch)
+static inline int utf8charlen( unsigned char ch) noexcept
 {
 	unsigned char cl = 9-bitScanReverse( (ch^0xFFU));
 	return cl>2?(cl-1):1;

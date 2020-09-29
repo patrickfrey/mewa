@@ -65,7 +65,7 @@ struct mewa_compiler_userdata_t
 
 	void init()
 	{
-		std::memset( &automaton, 0, sizeof( automaton));
+		new (&automaton) mewa::Automaton();
 		outputFileHandle = nullptr;
 		callTableName.init();
 	}

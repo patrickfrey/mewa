@@ -37,13 +37,13 @@ public:
 	};
 
 public:
-	ProductionNode()
+	ProductionNode() noexcept
 		:m_type(Unresolved),m_index(0){}
-	ProductionNode( Type type_, int index_)
+	ProductionNode( Type type_, int index_) noexcept
 		:m_type(type_),m_index(index_){}
-	ProductionNode( const ProductionNode& o)
+	ProductionNode( const ProductionNode& o) noexcept
 		:m_type(o.m_type),m_index(o.m_index){}
-	ProductionNode& operator=( const ProductionNode& o)
+	ProductionNode& operator=( const ProductionNode& o) noexcept
 		{m_type=o.m_type; m_index=o.m_index; return *this;}
 
 	Type type() const noexcept					{return m_type;}
@@ -72,11 +72,11 @@ class ProductionNodeDef
 	:public ProductionNode
 {
 public:
-	ProductionNodeDef( const std::string_view& name_, bool symbol_)
+	ProductionNodeDef( const std::string_view& name_, bool symbol_) noexcept
 		:ProductionNode(),m_name(name_),m_symbol(symbol_){}
-	ProductionNodeDef( const ProductionNodeDef& o)
+	ProductionNodeDef( const ProductionNodeDef& o) noexcept
 		:ProductionNode(o),m_name(o.m_name),m_symbol(o.m_symbol){}
-	ProductionNodeDef& operator=( const ProductionNodeDef& o)
+	ProductionNodeDef& operator=( const ProductionNodeDef& o) noexcept
 		{ProductionNode::operator=(o); m_name=o.m_name; m_symbol=o.m_symbol; return *this;}
 
 	const std::string_view& name() const noexcept		{return m_name;}
@@ -111,11 +111,11 @@ struct Priority {
 	short value;
 	Assoziativity assoziativity;
 
-	Priority( short value_=0, Assoziativity assoziativity_ = Assoziativity::Undefined)
+	Priority( short value_=0, Assoziativity assoziativity_ = Assoziativity::Undefined) noexcept
 		:value(value_),assoziativity(assoziativity_){}
-	Priority( const Priority& o)
+	Priority( const Priority& o) noexcept
 		:value(o.value),assoziativity(o.assoziativity){}
-	Priority& operator=( const Priority& o)
+	Priority& operator=( const Priority& o) noexcept
 		{value=o.value; assoziativity=o.assoziativity; return *this;}
 
 	bool operator == (const Priority& o) const noexcept	{return value == o.value && assoziativity == o.assoziativity;}
@@ -161,9 +161,9 @@ struct ProductionDef
 		:left(o.left),right(o.right),priority(o.priority),callidx(o.callidx),scope(o.scope){}
 	ProductionDef& operator=( const ProductionDef& o)
 		{left=o.left; right=o.right; priority=o.priority; callidx=o.callidx; scope=o.scope; return *this;}
-	ProductionDef( ProductionDef&& o)
+	ProductionDef( ProductionDef&& o) noexcept
 		:left(std::move(o.left)),right(std::move(o.right)),priority(o.priority),callidx(o.callidx),scope(o.scope){}
-	ProductionDef& operator=( ProductionDef&& o)
+	ProductionDef& operator=( ProductionDef&& o) noexcept
 		{left=std::move(o.left); right=std::move(o.right); priority=o.priority; callidx=o.callidx; scope=o.scope; return *this;}
 
 	std::string prodstring() const
@@ -263,9 +263,9 @@ struct TransitionItem
 	int prodpos;		// [0..MaxProductionLength]
 	int follow;		// [0..MaxTerminal]
 
-	TransitionItem( int prodindex_, int prodpos_, int follow_)
+	TransitionItem( int prodindex_, int prodpos_, int follow_) noexcept
 		:prodindex(prodindex_),prodpos(prodpos_),follow(follow_){}
-	TransitionItem( const TransitionItem& o)
+	TransitionItem( const TransitionItem& o) noexcept
 		:prodindex(o.prodindex),prodpos(o.prodpos),follow(o.follow){}
 
 	bool operator < (const TransitionItem& o) const noexcept
@@ -317,16 +317,16 @@ template <typename TYPE>
 class FlatSet :public std::vector<TYPE>
 {
 public:
-	FlatSet()
+	FlatSet() noexcept
 		:std::vector<TYPE>(){}
 	FlatSet( const FlatSet<TYPE>& o)
 		{std::vector<TYPE>::reserve( reserveSize( o.size())); std::vector<TYPE>::insert( std::vector<TYPE>::end(), o.begin(), o.end());}
-	FlatSet( FlatSet<TYPE>&& o)
+	FlatSet( FlatSet<TYPE>&& o) noexcept
 		:std::vector<TYPE>(std::move(o)){}
 	FlatSet& operator=( const FlatSet<TYPE>& o)
 		{std::vector<TYPE>::reserve( reserveSize( o.size())); 
 		 std::vector<TYPE>::insert( std::vector<TYPE>::end(), o.begin(), o.end()); return *this;}
-	FlatSet& operator=( FlatSet<TYPE>&& o)
+	FlatSet& operator=( FlatSet<TYPE>&& o) noexcept
 		{std::vector<TYPE>::operator=(std::move(o)); return *this;}
 	FlatSet( const std::initializer_list<TYPE>& itemlist)
 		{std::vector<TYPE>::reserve( reserveSize( itemlist.size()));
@@ -450,11 +450,11 @@ public:
 		:m_packedElements(){}
 	TransitionState( const TransitionState& o)
 		:m_packedElements( o.m_packedElements){} 
-	TransitionState( TransitionState&& o)
+	TransitionState( TransitionState&& o) noexcept
 		:m_packedElements(std::move(o.m_packedElements)){}
 	TransitionState& operator=( const TransitionState& o)
 		{m_packedElements=o.m_packedElements; return *this;} 
-	TransitionState& operator=( TransitionState&& o)
+	TransitionState& operator=( TransitionState&& o) noexcept
 		{m_packedElements=std::move(o.m_packedElements); return *this;}
 	TransitionState( const std::initializer_list<TransitionItem>& itemlist)
 		{for (const auto& item : itemlist) m_packedElements.insert( item.packed());}
@@ -650,9 +650,9 @@ public:
 		:m_map(o.m_map),m_inv(o.m_inv),m_startidx(o.m_startidx){}
 	IntSetHandleMap& operator=( const IntSetHandleMap& o)
 		{m_map=o.m_map; m_inv=o.m_inv; m_startidx=o.m_startidx; return *this;}
-	IntSetHandleMap( IntSetHandleMap&& o)
+	IntSetHandleMap( IntSetHandleMap&& o) noexcept
 		:m_map(std::move(o.m_map)),m_inv(std::move(o.m_inv)),m_startidx(o.m_startidx){}
-	IntSetHandleMap& operator=( IntSetHandleMap&& o)
+	IntSetHandleMap& operator=( IntSetHandleMap&& o) noexcept
 		{m_map=std::move(o.m_map); m_inv=std::move(o.m_inv); m_startidx=o.m_startidx; return *this;}
 
 	int get( const FlatSet<int>& elem)

@@ -1033,7 +1033,7 @@ static void printLalr1States(
 			{
 				auto item = TransitionItem::unpack( elem);
 				auto const& prod = prodlist[ item.prodindex];
-				if (item.prodpos < prod.right.size() && prod.right[ item.prodpos] == shft.node)
+				if (item.prodpos < (int)prod.right.size() && prod.right[ item.prodpos] == shft.node)
 				{
 					dbgout.out() << "\t" << prod.prodstring( item.prodpos) << ", FOLLOW [" << item.follow << "]";
 					if (shft.node.type() == ProductionNodeDef::Terminal)

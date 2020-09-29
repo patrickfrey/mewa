@@ -65,9 +65,9 @@ public:
 	class DebugOutput
 	{
 	public:
-		DebugOutput( std::ostream& out_ = std::cerr) 
+		DebugOutput( std::ostream& out_ = std::cerr) noexcept
 			:m_enabledMask(0),m_out(out_){}
-		DebugOutput( const DebugOutput& o) 
+		DebugOutput( const DebugOutput& o) noexcept
 			:m_enabledMask(o.m_enabledMask),m_out(o.m_out){}
 
 		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, StateTransitions=0x20, All=0xFF};
@@ -120,11 +120,11 @@ public:
 		enum Type 	:char {Shift,Reduce,Accept};
 		enum ScopeFlag	:char {NoScope,Step,Scope};
 
-		Action()
+		Action() noexcept
 			:m_type(Shift),m_scopeflag(NoScope),m_value(0),m_call(0),m_count(0){}
-		Action( Type type_, ScopeFlag scopeflag_, int value_, int call_, int count_)
+		Action( Type type_, ScopeFlag scopeflag_, int value_, int call_, int count_) noexcept
 			:m_type(type_),m_scopeflag(scopeflag_),m_value(value_),m_call(call_),m_count(count_){}
-		Action( const Action& o)
+		Action( const Action& o) noexcept
 			:m_type(o.m_type),m_scopeflag(o.m_scopeflag),m_value(o.m_value),m_call(o.m_call),m_count(o.m_count){}
 
 		static const char* scopeFlagName( ScopeFlag scopeflag_) noexcept
@@ -178,9 +178,9 @@ public:
 	class GotoKey
 	{
 	public:
-		GotoKey( int state_, int nonterminal_)
+		GotoKey( int state_, int nonterminal_) noexcept
 			:m_state(state_),m_nonterminal(nonterminal_){}
-		GotoKey( const GotoKey& o)
+		GotoKey( const GotoKey& o) noexcept
 			:m_state(o.m_state),m_nonterminal(o.m_nonterminal){}
 
 		int state() const noexcept				{return m_state;}
@@ -209,11 +209,11 @@ public:
 	class Goto
 	{
 	public:
-		Goto()
+		Goto() noexcept
 			:m_state(0){}
-		explicit Goto( int state_)
+		explicit Goto( int state_) noexcept
 			:m_state(state_){}
-		Goto( const Goto& o)
+		Goto( const Goto& o) noexcept
 			:m_state(o.m_state){}
 
 		int state() const noexcept				{return m_state;}
@@ -246,19 +246,19 @@ public:
 			ReferenceArg
 		};
 
-		Call()
+		Call() noexcept
 			:m_function(),m_arg(),m_argtype(NoArg){}
 		Call( const std::string& function_, const std::string& arg_, ArgumentType argtype_)
 			:m_function(function_),m_arg(arg_),m_argtype(argtype_){}
-		Call( std::string&& function_, std::string&& arg_, ArgumentType argtype_)
+		Call( std::string&& function_, std::string&& arg_, ArgumentType argtype_) noexcept
 			:m_function(std::move(function_)),m_arg(std::move(arg_)),m_argtype(argtype_){}
 		Call( const Call& o)
 			:m_function(o.m_function),m_arg(o.m_arg),m_argtype(o.m_argtype){}
 		Call& operator=( const Call& o)
 			{m_function=o.m_function; m_arg=o.m_arg; m_argtype=o.m_argtype; return *this;}
-		Call( Call&& o)
+		Call( Call&& o) noexcept
 			:m_function(std::move(o.m_function)),m_arg(std::move(o.m_arg)),m_argtype(o.m_argtype){}
-		Call& operator=( Call&& o)
+		Call& operator=( Call&& o) noexcept
 			{m_function=std::move(o.m_function); m_arg=std::move(o.m_arg); m_argtype=o.m_argtype; return *this;}
 
 		const std::string& function() const noexcept			{return m_function;}
@@ -293,11 +293,11 @@ public:
 		{m_language=o.m_language; m_typesystem=o.m_typesystem; m_cmdline=o.m_cmdline;
 		 m_lexer=o.m_lexer; m_actions=o.m_actions; m_gotos=o.m_gotos;
 		 m_calls=o.m_calls; m_nonterminals=o.m_nonterminals; return *this;}
-	Automaton( Automaton&& o)
+	Automaton( Automaton&& o) noexcept
 		:m_language(std::move(o.m_language)),m_typesystem(std::move(o.m_typesystem)),m_cmdline(std::move(o.m_cmdline))
 		,m_lexer(std::move(o.m_lexer)),m_actions(std::move(o.m_actions)),m_gotos(std::move(o.m_gotos))
 		,m_calls(std::move(o.m_calls)),m_nonterminals(std::move(o.m_nonterminals)){}
-	Automaton& operator=( Automaton&& o)
+	Automaton& operator=( Automaton&& o) noexcept
 		{m_language=std::move(o.m_language); m_typesystem=std::move(o.m_typesystem); m_cmdline=std::move(o.m_cmdline);
 		m_lexer=std::move(o.m_lexer); m_actions=std::move(o.m_actions); m_gotos=std::move(o.m_gotos);
 		m_calls=std::move(o.m_calls); m_nonterminals=std::move(o.m_nonterminals); return *this;}
@@ -309,7 +309,7 @@ public:
 		,m_calls(calls_),m_nonterminals(nonterminals_){}
 	Automaton( std::string&& language_, std::string&& typesystem_, std::string&& cmdline_,
 			Lexer&& lexer_, std::map<ActionKey,Action>&& actions_, std::map<GotoKey,Goto>&& gotos_,
-			std::vector<Call>&& calls_, std::vector<std::string>&& nonterminals_)
+			std::vector<Call>&& calls_, std::vector<std::string>&& nonterminals_) noexcept
 		:m_language(std::move(language_)),m_typesystem(std::move(typesystem_)),m_cmdline(std::move(cmdline_))
 		,m_lexer(std::move(lexer_)),m_actions(std::move(actions_)),m_gotos(std::move(gotos_))
 		,m_calls(std::move(calls_)),m_nonterminals(std::move(nonterminals_)){}
