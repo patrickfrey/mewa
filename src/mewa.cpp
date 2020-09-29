@@ -33,10 +33,10 @@ using namespace mewa;
 
 static void printUsage()
 {
-	std::cerr << "Usage: mewa [-h][-v][-V][-g][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPUTFILE" << std::endl;
-	std::cerr << "Description: Build a lua module implementing a compiler described as\n";
-	std::cerr << "             an EBNF and some lua hooks implementing the type system\n";
-	std::cerr << "             and the code generation.\n";
+	std::cerr << "Usage: mewa [-h][-v][-V][-g][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
+	std::cerr << "Description: Build a lua module implementing a compiler described in\n";
+	std::cerr << "             a BNF dialect with some lua hooks implementing the type\n";
+	std::cerr << "             system and the code generation.\n";
 	std::cerr << "Options:\n";
 	std::cerr << " -h           : Print this usage\n";
 	std::cerr << " -v           : Print version of mewa\n";
@@ -46,7 +46,8 @@ static void printUsage()
 	std::cerr << " -d <DBGF>    : Write the debug output to file with path DBGF instead of stdout.\n";
 	std::cerr << " -t <TEMPLAT> : Use content of file TEMPLAT as template for generated lua module (-g).\n";
 	std::cerr << "Arguments:\n";
-	std::cerr << "INPUTFILE   : Contains the EBNF of the grammar to process with the Lua hooks embedded.\n";
+	std::cerr << "INPFILE       : Contains the description of the grammar to process\n";
+	std::cerr << "                attributed with the Lua hooks doing the job.\n";
 }
 
 static void printWarning( const std::string& filename, const Error& error)

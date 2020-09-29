@@ -1,7 +1,8 @@
 # The Grammar Definition Language
-The language to define the grammar is derived from [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) and has 3 types of declarations.
-All declarations are terminated with a semicolon ';'.
-Here is the list of declaration types explained.
+_Mewa_ uses a language to describe a grammar similar to the language defined by [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). If you are familiar with _Yacc/Bison_ you won't have problems to adapt to _Mewa_.
+
+## Differences to Yacc/Bison
+Unlike in _Yacc/Bison_ where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where space has no meaning and the lexems can only be described as regular expression matches. The annotation of the rules with code in _Yacc/Bison_ is also different and more restricted in _Mewa_. Instead of arbitrary code to be generated and invoked when the annotated rule matches, _Mewa_ has one Lua callback function per rule that is called on a match. The operator precedence in _Yacc/Bison_ has a counterpart with the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right handed assoziativity are attached to productions and not to terminals (operators). Attaching the precedence info to rules (_Mewa_) and not to the terminals (_Yacc/Bison_) can theoretically lead to more reported conflicts in the grammar definition. In practice both ways are equivalent. While the _Yacc/Bison_ is a little bit more intuitive (it's natural to talk about operator precedence), with _Mewa_ you have one class of rules less to write.
 
 ## Language Attribute Declarations
 Language attribute declarations start with a '%' followed by the command and its arguments separated by spaces.

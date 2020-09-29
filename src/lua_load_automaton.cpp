@@ -7,8 +7,8 @@
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-/// \brief Function to load an automaton from a definition as Lua structure printed by the mewa program ("mewa -g EBNF")
-	/// \file "lua_load_automaton.cpp"
+/// \brief Function to load an automaton from a definition as Lua structure printed by the mewa program
+/// \file "lua_load_automaton.cpp"
 
 #include "lua_load_automaton.hpp"
 #include "lexer.hpp"

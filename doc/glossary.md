@@ -19,23 +19,22 @@ A set of term rewrite rules to reduce structures of types to types and in this p
 
 
 ## Glossary of Formal Languages
+### Context Free Grammar
+Type of grammar with rewrite rules that substitute one nonterminal by a (possibly empty) sequence of terminals or nonterminals independent of the context. Also referred to as Chomsky Type 2 grammar. and Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
+
 ### Terminal
 A basic item of the language. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
 
 ### Nonterminal
 A named structure of the language. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
 
-### Context Free Grammar
-Type of grammar with rewrite rules that substitute one nonterminal by a (possibly empty) sequence of terminals or nonterminals independent of the context. Also referred to as Chomsky Type 2 grammar. and Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
+### BNF / EBNF / Yacc/Bison
+Languages to describe a context free grammar. There exist many dialects for a formal description of a context free language grammar based on BNF. The most silimar to _Mewa_ is the language used in [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). Further reading in [Wikipedia: Backus-Naur form](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) and [Wikipedia: Extended Backus-Naur form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form). 
 
 ### LALR(1)
 The class of language covered by grammars that can be implemented with _mewa_. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/LALR_parser).
 
-### EBNF
-Language to describe a context free grammar. Further reading in [Wikipedia: Extended Backus-Naur form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form).
-
-#### The _Mewa_ Grammar Description Language ###
-_Mewa_ uses a language to describe a grammar derived from EBNF. It does not use commas to separate elements on the right hand of a production and it uses rules with regular expressions to describe lexems. It also restricts itself to classes of languages where space has no meaning. It adds callbacks to the typesystem and some commands to define scope in the language. See [The _Mewa_ Grammar](grammar.md).
-
+### Lexer
+Component that scans the input and produces a stream of items called lexems that are the atoms the grammar of the language is based on. It provides a sequence of items like identifiers, cardinal or floating point numbers, strings or operators instead of characters. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non whitespace character in the input. Contradicting _lexem_ definitions are resoved in _Mewa_ by selecting the longest match or the first definition for matches of the same length.
 
 
