@@ -10,6 +10,7 @@
 /// \brief LALR(1) Parser generator tostring (Lua syntax) implementation
 /// \file "automaton_tostring.cpp"
 #include "automaton.hpp"
+#include "version.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
 #include <iostream>
@@ -222,6 +223,7 @@ std::string Automaton::tostring() const
 {
 	std::ostringstream outstream;
 	outstream << "{\n";
+	outstream << "\tmewa = \"" << MEWA_VERSION_STRING << "\",\n";
 	if (!language().empty())
 	{
 		outstream << "\tlanguage = \"" << language() << "\",\n";

@@ -14,6 +14,7 @@
 #include "lexer.hpp"
 #include "error.hpp"
 #include "strings.hpp"
+#include "version.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -326,12 +327,36 @@ static std::vector<mewa::Automaton::Call> parseCallList( lua_State *ls, int li, 
 	return rt;
 }
 
+static int parseVersion( char const* vstr)
+{
+	char const* vi = vstr;
+	int rt = 0;
+	for (; *vi >= '0' && *vi <= '9'; ++vi)
+	{
+		rt = rt * 10 + (*vi - '0');
+		if (rt > 100) throw mewa::Error( mewa::Error::BadMewaVersion, vstr);
+	}
+	rt = rt * 100;
+	if (*vi != '.') throw mewa::Error( mewa::Error::BadMewaVersion, vstr);
+	int minor = 0;
+	for (++vi; *vi >= '0' && *vi <= '9'; ++vi)
+	{
+		minor = minor * 10 + (*vi - '0');
+		if (minor > 100) throw mewa::Error( mewa::Error::BadMewaVersion, vstr);
+	}
+	if (*vi != '.' && *vi != '\0') throw mewa::Error( mewa::Error::BadMewaVersion, vstr);
+	rt += minor;
+	if (rt == 0) throw mewa::Error( mewa::Error::BadMewaVersion, vstr);
+	return rt;
+}
+
 mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 {
 	lua_pushvalue( ls, li);
 	lua_pushnil( ls);
 	int rowcnt = 0;
 
+	int version = 0;
 	std::string language;
 	std::string typesystem;
 	std::string cmdline;
@@ -350,7 +375,16 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 						mewa::string_format( "automaton definition, row %d", rowcnt));
 		}
 		const char* keystr = lua_tostring( ls, -2);
-		if (0==std::strcmp( keystr, "language"))
+		if (0==std::strcmp( keystr, "mewa"))
+		{
+			if (lua_type( ls, -1) != LUA_TSTRING) throw Error( Error::BadMewaVersion, "not a string");
+			version = parseVersion( lua_tostring( ls, -1));
+			if (version >= ((MEWA_MAJOR_VERSION+1) * 100))
+			{
+				throw mewa::Error( mewa::Error::IncompatibleMewaMajorVersion, parseVersion( lua_tostring( ls, -1)));
+			}
+		}
+		else if (0==std::strcmp( keystr, "language"))
 		{
 			if (lua_type( ls, -1) != LUA_TSTRING)
 			{
@@ -425,6 +459,10 @@ mewa::Automaton mewa::luaLoadAutomaton( lua_State *ls, int li)
 		lua_pop( ls, 1);
 	}
 	lua_pop( ls, 1);
-	return mewa::Automaton( language, typesystem, cmdline, lexer, actions, gotos, calls, nonterminals);
+	if (version == 0)
+	{
+		throw mewa::Error( mewa::Error::MissingMewaVersion);
+	}
+	return mewa::Automaton( version, language, typesystem, cmdline, lexer, actions, gotos, calls, nonterminals);
 }
 
