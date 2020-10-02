@@ -18,12 +18,22 @@ else
 DEBUGFLAGS=-O3
 endif
 
+ifeq ($(strip $(PREFIX)),/usr)
+MANPAGES := `man --path | awk  '1' RS=":" | grep /usr/share | awk 'NR==1{print $1}'`
+else ifeq ($(strip $(PREFIX)),/usr/local)
+MANPAGES := `man --path | awk  '1' RS=":" | grep /usr/local | awk 'NR==1{print $1}'`
+else ifeq ($(strip $(PREFIX)),)
+MANPAGES := `man --path | awk  '1' RS=":" | grep /usr/local | awk 'NR==1{print $1}'`
+PREFIX   := /usr/local
+else
+MANPAGES := $(PREFIX)/man
+endif
+
+include Lua.inc
+
 # Project settings:
 BUILDDIR := build
-MANPAGES := `man --path | awk  '1' RS=":" | awk 'NR==1{print $1}'`
-LUAVER   := 5.2
-LUAINC   := /usr/include/lua$(LUAVER)
-DESTINATION := /usr/local/bin
+DESTINATION := $(PREFIX)/bin
 SRCDIR   := src
 TESTDIR  := tests
 STDFLAGS := -std=c++17
@@ -31,7 +41,7 @@ CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisib
 INCFLAGS := -I$(SRCDIR) -I$(LUAINC)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
-LUALIBS  := -llua$(LUAVER)
+LUALIBS  := -llua$(LUAVER) -L$(LUALIBDIR)
 LIBOBJS  := $(BUILDDIR)/lexer.o \
 		$(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/automaton_parser.o \
 		$(BUILDDIR)/typedb.o \

@@ -17,6 +17,9 @@ Install packages with 'apt-get'/aptitude.
         git clone https://github.com/patrickfrey/mewa
         cd mewa
 
+# Configure to find Lua includes and to write the file Lua.inc included by make
+        ./configure
+
 # Build with GNU C/C++
         make -DCOMPILER=gcc -DRELEASE=true
 
@@ -27,5 +30,5 @@ Install packages with 'apt-get'/aptitude.
         make test
 
 # Install
-        make install
+        make PREFIX=/usr/local install
 

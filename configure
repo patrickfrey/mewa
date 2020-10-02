@@ -1,0 +1,44 @@
+#!/bin/sh
+
+findLuaInclude() {
+    VERSION=$1
+    PATH=$2
+    FILE=`/usr/bin/find $PATH -name luaconf.h | /usr/bin/grep $VERSION`
+    if [ x$FILE != 'x' ]; then
+        PATH=`/usr/bin/dirname $FILE`
+        echo $PATH
+    fi
+}
+
+findLuaLib() {
+    VERSION=$1
+    PATH=$2
+    FILE=`/usr/bin/find $PATH -name "liblua$VERSION.so"`
+    if [ x$FILE != 'x' ]; then
+        PATH=`/usr/bin/dirname $FILE`
+        echo $PATH
+    fi
+}
+
+writeLuaInclude() {
+    VERSION=$1
+    INCPATH=$2
+    LIBPATH=$3
+    echo "LUAVER   := $VERSION" > Lua.inc
+    echo "LUAINC   := $INCPATH" >> Lua.inc
+    echo "LUALIBDIR:= $LIBPATH" >> Lua.inc
+}
+
+SEARCHPATH=/usr
+for VERSION in 5.4 5.3 5.2; do
+    INCPATH=`findLuaInclude $VERSION $SEARCHPATH`
+    LIBPATH=`findLuaLib $VERSION $SEARCHPATH`
+    if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
+        writeLuaInclude $VERSION $INCPATH $LIBPATH
+        exit 0
+    fi
+done
+
+echo "Lua not found!"
+exit 1
+
