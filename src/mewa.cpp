@@ -65,7 +65,8 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-static const std::string g_defaultTemplate_no_cmdline{R"(
+static const std::string g_defaultTemplate_no_cmdline{R"(#!%luabin%
+
 typesystem = require( "%typesystem%")
 mewa = require("mewa")
 
@@ -76,7 +77,8 @@ if #arg > 1 then error( "too many arguments") end
 compiler:run( arg[0])
 )"};
 
-static const std::string g_defaultTemplate_with_cmdline{R"(
+static const std::string g_defaultTemplate_with_cmdline{R"(#!%luabin%
+
 typesystem = require( "%typesystem%")
 cmdline = require( "%cmdline%")
 mewa = require("mewa")
@@ -278,11 +280,11 @@ int main( int argc, const char* argv[] )
 		{
 			if (automaton.cmdline().empty())
 			{
-				templat = std::string("#!") + luabin + "\n" + g_defaultTemplate_no_cmdline;
+				templat = g_defaultTemplate_no_cmdline;
 			}
 			else
 			{
-				templat = std::string("#!") + luabin + "\n" + g_defaultTemplate_with_cmdline;
+				templat = g_defaultTemplate_with_cmdline;
 			}
 		}
 		switch (cmd)
