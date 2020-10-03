@@ -96,7 +96,7 @@ test : all
 	$(BUILDDIR)/testRandomScope
 	$(BUILDDIR)/testIdentMap
 	$(BUILDDIR)/testAutomaton
-	tests/luatest.sh
+	tests/luatest.sh "$(LUABIN)"
 check: test
 
 install: all
