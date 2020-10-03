@@ -1,4 +1,4 @@
-#!/usr/bin/lua
+#!%luabin%
 
 typesystem = require( "%typesystem%")
 mewa = require("mewa")

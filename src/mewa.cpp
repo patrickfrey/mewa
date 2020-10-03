@@ -34,7 +34,7 @@ using namespace mewa;
 
 static void printUsage()
 {
-	std::cerr << "Usage: mewa [-h][-v][-V][-g][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
+	std::cerr << "Usage: mewa [-h][-v][-V][-g][-b LUABIN][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
 	std::cerr << "Description: Build a lua module implementing a compiler described in\n";
 	std::cerr << "             a BNF dialect with some lua hooks implementing the type\n";
 	std::cerr << "             system and the code generation.\n";
@@ -43,6 +43,7 @@ static void printUsage()
 	std::cerr << " -v           : Print version of mewa\n";
 	std::cerr << " -V           : Verbose output to stderr\n";
 	std::cerr << " -g           : Action do generate parsing tables for import by lua module for 'mewa'\n";
+	std::cerr << " -b <LUABIN>  : Specify the path of the Lua program in the header of generated scripts.\n";
 	std::cerr << " -o <OUTF>    : Write the output to file with path OUTF instead of stderr.\n";
 	std::cerr << " -d <DBGF>    : Write the debug output to file with path DBGF instead of stdout.\n";
 	std::cerr << " -t <TEMPLAT> : Use content of file TEMPLAT as template for generated lua module (-g).\n";
@@ -64,8 +65,7 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-static const std::string g_defaultTemplate_no_cmdline{R"(#!/usr/bin/lua
-
+static const std::string g_defaultTemplate_no_cmdline{R"(
 typesystem = require( "%typesystem%")
 mewa = require("mewa")
 
@@ -76,8 +76,7 @@ if #arg > 1 then error( "too many arguments") end
 compiler:run( arg[0])
 )"};
 
-static const std::string g_defaultTemplate_with_cmdline{R"(#!/usr/bin/lua
-
+static const std::string g_defaultTemplate_with_cmdline{R"(
 typesystem = require( "%typesystem%")
 cmdline = require( "%cmdline%")
 mewa = require("mewa")
@@ -109,9 +108,10 @@ static std::string mapTemplateKey( const std::string& content, const char* key, 
 	return rt;
 }
 
-static std::string mapTemplate( const std::string& templat, const Automaton& automaton)
+static std::string mapTemplate( const std::string& templat, const Automaton& automaton, const std::string& luabin)
 {
 	std::string rt = templat;
+	rt = mapTemplateKey( rt, "luabin", luabin);
 	rt = mapTemplateKey( rt, "typesystem", automaton.typesystem());
 	rt = mapTemplateKey( rt, "language", automaton.language());
 	rt = mapTemplateKey( rt, "cmdline", automaton.cmdline());
@@ -119,15 +119,15 @@ static std::string mapTemplate( const std::string& templat, const Automaton& aut
 	return rt;
 }
 
-static void printAutomaton( const std::string& filename, const std::string& templat, const Automaton& automaton)
+static void printAutomaton( const std::string& filename, const std::string& templat, const Automaton& automaton, const std::string& luabin)
 {
 	if (filename.empty())
 	{
-		std::cout << mapTemplate( templat, automaton) << std::endl;
+		std::cout << mapTemplate( templat, automaton, luabin) << std::endl;
 	}
 	else
 	{
-		std::string content = mapTemplate( templat, automaton);
+		std::string content = mapTemplate( templat, automaton, luabin);
 		content.push_back( '\n');
 		writeFile( filename, content);
 	}
@@ -147,6 +147,7 @@ int main( int argc, const char* argv[] )
 		std::string outputFilename;
 		std::string debugFilename;
 		std::string templat;
+		std::string luabin = "/usr/bin/lua";
 
 		int argi = 1;
 		for (; argi < argc; ++argi)
@@ -163,6 +164,17 @@ int main( int argc, const char* argv[] )
 			else if (0==std::strcmp( argv[argi], "-h"))
 			{
 				printUsage();
+			}
+			else if (0==std::strcmp( argv[argi], "-b"))
+			{
+				++argi;
+				if (argi == argc || argv[argi][0] == '-') 
+				{
+					std::cerr << "Option -b requires a path (lua program) as argument" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
+				luabin = argv[argi];
 			}
 			else if (0==std::strcmp( argv[argi], "-o"))
 			{
@@ -266,11 +278,11 @@ int main( int argc, const char* argv[] )
 		{
 			if (automaton.cmdline().empty())
 			{
-				templat = g_defaultTemplate_no_cmdline;
+				templat = std::string("#!") + luabin + "\n" + g_defaultTemplate_no_cmdline;
 			}
 			else
 			{
-				templat = g_defaultTemplate_with_cmdline;
+				templat = std::string("#!") + luabin + "\n" + g_defaultTemplate_with_cmdline;
 			}
 		}
 		switch (cmd)
@@ -278,7 +290,7 @@ int main( int argc, const char* argv[] )
 			case NoCommand:
 				break;
 			case GenerateCompilerForLua:
-				printAutomaton( outputFilename, templat, automaton);
+				printAutomaton( outputFilename, templat, automaton, luabin);
 				break;
 		}
 		if (!warnings.empty())

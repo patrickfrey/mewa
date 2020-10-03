@@ -24,6 +24,9 @@ Do generate parsing tables for import by lua module for \fImewa\fR
 \fB\-o\fR \fIfile\fR
 Write the output (parsing tables) to \fIfile\fR instead of stdout.  
 .TP
+\fB\-b\fR \fIluapath\fR
+Specify \fIluapath\fR as path of the Lua interpreter in the header of generated scripts. Default is "/usr/bin/lua".
+.TP
 \fB\-d\fR \fIfile\fR
 Write the verbose debug output (productions,states,functions,etc.) to \fIfile\fR instead of stdout.  
 .TP
