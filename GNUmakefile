@@ -29,6 +29,10 @@ else
 MANPAGES := $(PREFIX)/man
 endif
 
+ifeq ($(wildcard Lua.inc),)
+$(error File Lua.inc not found. Please run ./configure first!)
+endif
+
 include Lua.inc
 
 # Project settings:
