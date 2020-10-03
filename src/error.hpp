@@ -71,6 +71,7 @@ public:
 		ShiftReduceConflictInGrammarDef=561,
 		ReduceReduceConflictInGrammarDef=562,
 		ShiftShiftConflictInGrammarDef=563,
+		ConflictsInGrammarDef=564,
 
 		ComplexityMaxStateInGrammarDef=571,
 		ComplexityMaxNofProductionsInGrammarDef=572,
@@ -173,6 +174,7 @@ private:
 			case ShiftReduceConflictInGrammarDef: return "SHIFT/REDUCE conflict in the grammar definition";
 			case ReduceReduceConflictInGrammarDef: return "REDUCE/REDUCE conflict in the grammar definition";
 			case ShiftShiftConflictInGrammarDef: return "SHIFT/SHIFT conflict in the grammar definition";
+			case ConflictsInGrammarDef: return "Conflicts detected in the grammar definition";
 
 			case ComplexityMaxStateInGrammarDef: return "To many states in the resulting tables of the grammar";
 			case ComplexityMaxNofProductionsInGrammarDef: return "Too many productions defined in the grammar";

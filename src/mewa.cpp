@@ -17,6 +17,7 @@
 #include "automaton.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
+#include "strings.hpp"
 #include "version.hpp"
 #include <iostream>
 #include <sstream>
@@ -257,8 +258,10 @@ int main( int argc, const char* argv[] )
 			std::string dbgoutput = dbgoutstream.str();
 			writeFile( debugFilename, dbgoutput);
 		}
-		for (auto warning : warnings) printWarning( inputFilename, warning);
-
+		for (auto warning : warnings)
+		{
+			printWarning( inputFilename, warning);
+		}
 		if (templat.empty())
 		{
 			if (automaton.cmdline().empty())
@@ -277,6 +280,10 @@ int main( int argc, const char* argv[] )
 			case GenerateCompilerForLua:
 				printAutomaton( outputFilename, templat, automaton);
 				break;
+		}
+		if (!warnings.empty())
+		{
+			throw mewa::Error( mewa::Error::ConflictsInGrammarDef, mewa::string_format( "%zu", warnings.size()));
 		}
 		return 0;
 	}

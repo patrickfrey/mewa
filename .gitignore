@@ -39,6 +39,9 @@ build/*.i*86
 build/*.x86_64
 build/*.hex
 
+# Configure
+Lua.inc
+
 # Build
 build/
 build/*.out
