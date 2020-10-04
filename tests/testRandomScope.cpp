@@ -130,6 +130,7 @@ static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidt
 	return rt;
 }
 
+typedef ScopedSet<int> IdSet;
 typedef ScopedMap<std::string,std::string> VarMap;
 typedef ScopedRelationMap<std::string,int> RelMap;
 
@@ -138,8 +139,22 @@ static std::string varConstructor( const std::string& var, int nodeid)
 	return mewa::string_format( "%s:%d", var.c_str(), nodeid);
 }
 
+template <typename ELEM>
+static void shuffle( std::vector<ELEM>& ar)
+{
+	for (std::size_t ii=0; ii<ar.size()/2; ++ii)
+	{
+		std::size_t first = g_random.get( 0, ar.size());
+		std::size_t second = g_random.get( 0, ar.size());
+		if (first != second) std::swap( ar[ first], ar[ second]);
+	}
+}
+
 static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 {
+	typedef std::pair< std::pair< std::string, Scope>, std::string> Insert;
+	std::vector<Insert> inserts;
+
 	std::vector<NodeDefTree const*> stk;
 	stk.push_back( nd);
 	std::size_t si = 0;
@@ -154,13 +169,20 @@ static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 
 		for (auto const& def : cur.item.vars)
 		{
-			varmap.insert( {{def,cur.item.scope}, varConstructor( def, cur.item.id)});
+			inserts.push_back( {{def,cur.item.scope}, varConstructor( def, cur.item.id)} );
 		}
+	}
+	shuffle( inserts);
+	for (auto kv : inserts)
+	{
+		varmap.insert( {{kv.first.first,kv.first.second}, kv.second} );
 	}
 }
 
 static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 {
+	typedef std::pair< std::pair< std::string, Scope>, std::pair< std::string, int> > Insert;
+	std::vector<Insert> inserts;
 	std::vector<NodeDefTree const*> stk;
 	stk.push_back( nd);
 	std::size_t si = 0;
@@ -175,8 +197,36 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 
 		for (auto const& rel : cur.item.relations)
 		{
-			relmap.insert( {{rel.first, cur.item.scope}, {rel.second, cur.item.id}});
+			inserts.push_back( {{rel.first, cur.item.scope}, {rel.second, cur.item.id}});
 		}
+	}
+	shuffle( inserts);
+	for (auto kv : inserts)
+	{
+		relmap.insert( {{kv.first.first,kv.first.second}, {kv.second.first,kv.second.second}} );
+	}
+}
+
+static void insertIds( IdSet& idset, NodeDefTree const* nd)
+{
+	std::vector<std::pair<Scope,int> > inserts;
+	std::vector<NodeDefTree const*> stk;
+	stk.push_back( nd);
+	std::size_t si = 0;
+	for (; si < stk.size(); ++si)
+	{
+		NodeDefTree const* next = stk[ si]->next;
+		NodeDefTree const* chld = stk[ si]->chld;
+		if (next) stk.push_back( next);
+		if (chld) stk.push_back( chld);
+
+		NodeDefTree const& cur = *stk[ si];
+		inserts.push_back( {cur.item.scope,cur.item.id});
+	}
+	shuffle( inserts);
+	for (auto kv : inserts)
+	{
+		idset.set( kv.first, kv.second);
 	}
 }
 
@@ -351,6 +401,10 @@ static void randomRelQuery( const RelMap& relmap, const NodeDefTree* nd, int alp
 	}
 }
 
+static void randomIdQuery( const IdSet& idset, const NodeDefTree* nd, bool verbose)
+{
+}
+
 static int countNodes( const NodeDefTree* nd)
 {
 	int rt = 1;
@@ -367,6 +421,8 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	g_idCounter = 0;
 	VarMap varmap( &memrsc);
 	RelMap relmap( &memrsc);
+	IdSet idset( &memrsc, -1/*nullval*/, 1024/*initsize*/);
+
 	int depth = g_random.get( 1, maxdepth+1);
 	Scope scope( 0, g_random.get( 0, std::numeric_limits<int>::max()));
 	std::unique_ptr<NodeDefTree> tree;
@@ -384,6 +440,7 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	}
 	insertDefinitions( varmap, tree.get());
 	insertRelations( relmap, tree.get());
+	insertIds( idset, tree.get());
 
 	for (int qi = 0; qi < nofqueries; ++qi)
 	{
@@ -392,6 +449,10 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	for (int qi = 0; qi < nofqueries; ++qi)
 	{
 		randomRelQuery( relmap, tree.get(), alphabetsize, verbose);
+	}
+	for (int qi = 0; qi < nofqueries; ++qi)
+	{
+		randomIdQuery( idset, tree.get(), verbose);
 	}
 }
 

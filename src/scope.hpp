@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <string>
 #include <map>
+#include <vector>
 #include <memory_resource>
 
 namespace mewa {
@@ -66,6 +67,106 @@ public:
 	Step m_end;
 };
 
+
+template <typename VALTYPE>
+struct ScopedUpValue
+{
+	Scope::Step start;
+	VALTYPE value;
+	int prev;
+
+	ScopedUpValue( const Scope::Step start_, const VALTYPE value_, int prev_=-1)
+		:start(start_),value(value_),prev(prev_){}
+	ScopedUpValue( const ScopedUpValue& o)
+		:start(o.start),value(o.value),prev(o.prev){}
+};
+
+template <typename VALTYPE>
+class ScopedSet
+{
+public:
+	ScopedSet( std::pmr::memory_resource* memrsc, const VALTYPE nullval_, std::size_t initsize)
+		:m_map( memrsc),m_ar(),m_nullval(nullval_) {m_ar.reserve(initsize);}
+	ScopedSet( const ScopedSet& o) = default;
+	ScopedSet& operator=( const ScopedSet& o) = default;
+	ScopedSet( ScopedSet&& o) noexcept = default;
+	ScopedSet& operator=( ScopedSet&& o) noexcept = default;
+
+	void set( const Scope scope, const VALTYPE value)
+	{
+		auto ins = m_map.insert( {scope.end(), m_ar.size()});
+		if (ins.second/*insert took place*/)
+		{
+			m_ar.push_back( UpValue( scope.start(), value));
+		}
+		else if (ins.first->second == -1)
+		{
+			ins.first->second = m_ar.size();
+			m_ar.push_back( UpValue( scope.start(), value));
+		}
+		else
+		{
+			int pred_index = -1;
+			int index = ins.first->second;
+			while (index >= 0)
+			{
+				UpValue& uv = m_ar[ index];
+				if (uv.start == scope.start())
+				{
+					uv.value = value;
+					break;
+				}
+				else if (uv.start > scope.start())
+				{
+					//... The covering scope gets further up the list  {(A)..{(B)..{(C)..}}} ~ (C)-prev>(B)-prev->(A)
+					pred_index = index;
+					index = uv.prev;
+				}
+				else if (pred_index == -1)
+				{
+					ins.first->second = m_ar.size();
+					m_ar.push_back( UpValue( scope.start(), value, index));
+					break;
+				}
+				else
+				{
+					m_ar[ pred_index].prev = m_ar.size();
+					m_ar.push_back( UpValue( scope.start(), value, index));
+					break;
+				}
+			}
+			if (index == -1)
+			{
+				//... no insert yet, value on top of the predecessor list
+				m_ar[ pred_index].prev = m_ar.size();
+				m_ar.push_back( UpValue( scope.start(), value));
+			}
+		}
+	}
+
+	VALTYPE get( const Scope::Step step) const
+	{
+		auto ref = m_map.upper_bound( step);
+		if (ref == m_map.end()) return m_nullval;
+		int ai = ref->second;
+		while (ai >= 0)
+		{
+			if (m_ar[ ai].start <= step) return m_ar[ ai].value;
+			ai = m_ar[ ai].prev;
+		}
+		return m_nullval;
+	}
+
+private:
+	typedef ScopedUpValue<VALTYPE> UpValue;
+
+private:
+	std::pmr::map<Scope::Step,int> m_map;	//> map scope end -> index in m_ar upvalue list
+	std::vector<UpValue> m_ar;		//> upvalue lists list
+	VALTYPE m_nullval;			//> value returned by get if not found
+};
+
+
 template <typename KEYTYPE>
 class ScopedKey
 {
@@ -103,6 +204,7 @@ struct ScopedMapOrder
 			: a.key() < b.key();
 	}
 };
+
 
 template <typename KEYTYPE, typename VALTYPE>
 class ScopedMap
