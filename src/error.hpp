@@ -46,6 +46,9 @@ public:
 		PriorityOutOfRange=441,
 		DuplicateDefinition=442,
 
+		UnresolvableType=451,
+		AmbiguousTypeReference=452,
+
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,
 		UnexpectedEofInGrammarDef=503,
@@ -148,6 +151,9 @@ private:
 			case TooManyTypeArguments: return "Too many arguments in type definition";
 			case PriorityOutOfRange: return "Priority value out of range";
 			case DuplicateDefinition: return "Duplicate definition";
+
+			case UnresolvableType: return "Failed to resolve item/type";
+			case AmbiguousTypeReference: return "Ambiguous item/type reference";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";
