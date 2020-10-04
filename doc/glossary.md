@@ -1,5 +1,8 @@
 # Glossary
 
+# Name _Mewa_
+Polish name for seagull. It's difficult to find short memorizable names. I stick to names of birds in the polish language without non ascii characters.
+
 ## Scope
 Pair of cardinal numbers (represented as integers) that define an area the first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope step of the instruction that queries the definition.
 

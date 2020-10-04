@@ -36,17 +36,25 @@ static void printUsage()
 {
 	std::cerr << "Usage: mewa [-h][-v][-V][-g][-b LUABIN][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
 	std::cerr << "Description: Build a lua module implementing a compiler described in\n";
-	std::cerr << "             a BNF dialect with some lua hooks implementing the type\n";
+	std::cerr << "             a Bison/Yacc-like BNF dialect with lua callbacks implementing the type\n";
 	std::cerr << "             system and the code generation.\n";
 	std::cerr << "Options:\n";
-	std::cerr << " -h           : Print this usage\n";
-	std::cerr << " -v           : Print version of mewa\n";
-	std::cerr << " -V           : Verbose output to stderr\n";
-	std::cerr << " -g           : Action do generate parsing tables for import by lua module for 'mewa'\n";
+	std::cerr << " --help,\n";
+	std::cerr << " -h           : Print this usage.\n";
+	std::cerr << " --version,\n";
+	std::cerr << " -v           : Print the current version of mewa.\n";
+	std::cerr << " --verbose,\n";
+	std::cerr << " -V           : Do verbose output to stderr.\n";
+	std::cerr << " --generate-compiler,\n";
+	std::cerr << " -g           : Do generate a compiler as a Lua module.\n";
+	std::cerr << " --luabin <LUABIN>,\n";
 	std::cerr << " -b <LUABIN>  : Specify the path of the Lua program in the header of generated scripts.\n";
+	std::cerr << " --output <OUTF>,\n";
 	std::cerr << " -o <OUTF>    : Write the output to file with path OUTF instead of stderr.\n";
+	std::cerr << " --dbgout <DBGF>,\n";
 	std::cerr << " -d <DBGF>    : Write the debug output to file with path DBGF instead of stdout.\n";
-	std::cerr << " -t <TEMPLAT> : Use content of file TEMPLAT as template for generated lua module (-g).\n";
+	std::cerr << " --template <TEMPLATE>,\n";
+	std::cerr << " -t <TEMPLATE>: Use content of file TEMPLATE as template for generated lua module (-g).\n";
 	std::cerr << "Arguments:\n";
 	std::cerr << "INPFILE       : Contains the description of the grammar to process\n";
 	std::cerr << "                attributed with the Lua hooks doing the job.\n";
@@ -154,65 +162,20 @@ int main( int argc, const char* argv[] )
 		int argi = 1;
 		for (; argi < argc; ++argi)
 		{
-			if (0==std::strcmp( argv[argi], "-V"))
+			if (0==std::strcmp( argv[argi], "-V") || 0==std::strcmp( argv[argi], "--verbose"))
 			{
 				verbose = true;
 			}
-			else if (0==std::strcmp( argv[argi], "-v"))
+			else if (0==std::strcmp( argv[argi], "-v") || 0==std::strcmp( argv[argi], "--version"))
 			{
 				std::cout << "mewa version " << MEWA_VERSION_STRING << std::endl;
 				return 0;
 			}
-			else if (0==std::strcmp( argv[argi], "-h"))
+			else if (0==std::strcmp( argv[argi], "-h") || 0==std::strcmp( argv[argi], "--help"))
 			{
 				printUsage();
 			}
-			else if (0==std::strcmp( argv[argi], "-b"))
-			{
-				++argi;
-				if (argi == argc || argv[argi][0] == '-') 
-				{
-					std::cerr << "Option -b requires a path (lua program) as argument" << std::endl << std::endl;
-					printUsage();
-					return ERRCODE_INVALID_ARGUMENTS;
-				}
-				luabin = argv[argi];
-			}
-			else if (0==std::strcmp( argv[argi], "-o"))
-			{
-				++argi;
-				if (argi == argc || argv[argi][0] == '-') 
-				{
-					std::cerr << "Option -o requires a file path as argument" << std::endl << std::endl;
-					printUsage();
-					return ERRCODE_INVALID_ARGUMENTS;
-				}
-				outputFilename = argv[argi];
-			}
-			else if (0==std::strcmp( argv[argi], "-d"))
-			{
-				++argi;
-				if (argi == argc || argv[argi][0] == '-') 
-				{
-					std::cerr << "Option -d requires a file path as argument" << std::endl << std::endl;
-					printUsage();
-					return ERRCODE_INVALID_ARGUMENTS;
-				}
-				debugFilename = argv[argi];
-				verbose = true;
-			}
-			else if (0==std::strcmp( argv[argi], "-t"))
-			{
-				++argi;
-				if (argi == argc || argv[argi][0] == '-') 
-				{
-					std::cerr << "Option -t requires a file path as argument" << std::endl << std::endl;
-					printUsage();
-					return ERRCODE_INVALID_ARGUMENTS;
-				}
-				templat = readFile( argv[argi]);
-			}
-			else if (0==std::strcmp( argv[argi], "-g"))
+			else if (0==std::strcmp( argv[argi], "-g") || 0==std::strcmp( argv[argi], "--generate-compiler"))
 			{
 				if (cmd != NoCommand)
 				{
@@ -221,6 +184,84 @@ int main( int argc, const char* argv[] )
 					return ERRCODE_INVALID_ARGUMENTS;
 				}
 				cmd = GenerateCompilerForLua;
+			}
+			else if (0==std::memcmp( argv[argi], "-b", 2) || 0==std::memcmp( argv[argi], "--luabin=", 9))
+			{
+				int optofs = (argv[argi][1] == '-') ? 9:2;
+				if (argv[argi][ optofs])
+				{
+					luabin = argv[argi]+optofs;
+				}
+				else
+				{
+					++argi;
+					if (argi == argc || argv[argi][0] == '-') 
+					{
+						std::cerr << "Option -b,--luabin requires a path (lua program) as argument" << std::endl << std::endl;
+						printUsage();
+						return ERRCODE_INVALID_ARGUMENTS;
+					}
+					luabin = argv[argi];
+				}
+			}
+			else if (0==std::memcmp( argv[argi], "-o", 2) || 0==std::memcmp( argv[argi], "--output=", 9))
+			{
+				int optofs = (argv[argi][1] == '-') ? 9:2;
+				if (argv[argi][ optofs])
+				{
+					outputFilename = argv[argi]+optofs;
+				}
+				else
+				{
+					++argi;
+					if (argi == argc || argv[argi][0] == '-') 
+					{
+						std::cerr << "Option -o,--output requires a file path as argument" << std::endl << std::endl;
+						printUsage();
+						return ERRCODE_INVALID_ARGUMENTS;
+					}
+					outputFilename = argv[argi];
+				}
+			}
+			else if (0==std::memcmp( argv[argi], "-d", 2) || 0==std::memcmp( argv[argi], "--dbgout=", 9))
+			{
+				int optofs = (argv[argi][1] == '-') ? 9:2;
+				if (argv[argi][ optofs])
+				{
+					debugFilename = argv[argi]+optofs;
+					verbose = true;
+				}
+				else
+				{
+					++argi;
+					if (argi == argc || argv[argi][0] == '-') 
+					{
+						std::cerr << "Option -d,--dbgout requires a file path as argument" << std::endl << std::endl;
+						printUsage();
+						return ERRCODE_INVALID_ARGUMENTS;
+					}
+					debugFilename = argv[argi];
+					verbose = true;
+				}
+			}
+			else if (0==std::memcmp( argv[argi], "-t", 2) || 0==std::memcmp( argv[argi], "--template=", 11))
+			{
+				int optofs = (argv[argi][1] == '-') ? 11:2;
+				if (argv[argi][ optofs])
+				{
+					templat = argv[argi]+optofs;
+				}
+				else
+				{
+					++argi;
+					if (argi == argc || argv[argi][0] == '-') 
+					{
+						std::cerr << "Option -t requires a file path as argument" << std::endl << std::endl;
+						printUsage();
+						return ERRCODE_INVALID_ARGUMENTS;
+					}
+					templat = readFile( argv[argi]);
+				}
 			}
 			else if (0==std::strcmp( argv[argi], "--"))
 			{

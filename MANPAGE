@@ -1,37 +1,58 @@
 .\" Manpage for mewa.
 .\" Contact patrickpfrey@yahoo.com.
-.TH man 1 "09 Sep 2020" "0.1" "mewa man page"
+.TH man 1 "04 Oct 2020" "0.1" "mewa man page"
 .SH NAME
-mewa \- compiler compiler
+.B mewa
+\- compiler compiler
 .SH SYNOPSIS
-mewa [-h][-v][-g][-o OUTF][-o DBGF] INPUTFILE
+.B mewa
+[OPTION]... INPUTFILE
 .SH DESCRIPTION
 .PP
-mewa is a compiler compiler that builds a lua module implementing a compiler described as an EBNF in the file INPUTFILE with some lua hooks implementing the type system and the code generation.
+.B mewa
+is a compiler compiler that builds a
+.BR Lua
+module implementing a compiler described as a formal grammar in the file \fIINPUTFILE\fR with some 
+.BR Lua
+callbacks of functions implementing the type system and the code generation.
 .TP
-\fB\-h\fR
-Print this usage
+\fB\-h\fR, \fB\--help\fR
+Print this usage.
 .TP
-\fB\-v\fR
-Print version of mewa
+\fB\-v\fR, \fB\--version\fR
+Print the current version of
+.B mewa
 .TP
-\fB\-V\fR
-Verbose debug output to stderr
+\fB\-V\fR, \fB\--verbose\fR
+Verbose debug output to stderr.
 .TP
-\fB\-g\fR
-Do generate parsing tables for import by lua module for \fImewa\fR
+\fB\-g\fR, \fB\--generate-compiler\fR
+Do generate a compiler as a
+.BR Lua
+module described by the grammar in the input file.
 .TP
-\fB\-o\fR \fIfile\fR
+\fB\-o\fR, \fB\--output=\fR \fIfile\fR
 Write the output (parsing tables) to \fIfile\fR instead of stdout.  
 .TP
-\fB\-b\fR \fIluapath\fR
-Specify \fIluapath\fR as path of the Lua interpreter in the header of generated scripts. Default is "/usr/bin/lua".
+\fB\-b\fR, \fB\--luabin=\fR \fIluapath\fR
+Specify \fIluapath\fR as path of the
+.BR Lua
+interpreter in the header of generated scripts. Default is "\fI/usr/bin/lua\fR".
 .TP
-\fB\-d\fR \fIfile\fR
+\fB\-d\fR, \fB\--dbgout=\fR \fIfile\fR
 Write the verbose debug output (productions,states,functions,etc.) to \fIfile\fR instead of stdout.  
 .TP
-\fB\-t\fR \fIfile\fR
-Use \fIfile\fR content as template for generated lua module (option -g). The template contains the substitutes %typesystem% (name of the module implementing the typesystem) and %automaton% (Lua table with the generated automaton of the compiler) to be replaced.
+\fB\-t\fR, \fB\--template=\fR \fIfile\fR
+Use \fIfile\fR content as template for the generated
+.BR Lua
+module (option -g/--generate-compiler). The template contains the substitutes \fI%typesystem%\fR (name of the module implementing the type system), \fI%automaton%\fR (
+.BR
+Lua
+table with the generated automaton of the compiler), \fI%language%\fR (name of the language), \fI%luabin%\fR (path of the lua program executing the script, specified by option -b/--luabin) and \fI%cmdline%\fR (name of the module implementing the command-line parser).
+.SH AUTHOR
+Written by Patrick P. Frey (patrickpfrey@yahoo.com)
+.SH REPORTING BUGS
+Report bugs on <https://github.com/patrickfrey/mewa/issues>
 .SH COPYRIGHT
 Copyright \(co 2020 Patrick P. Frey.
 
@@ -42,7 +63,8 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .SH SEE ALSO
 lua(1)
-.SH BUGS
-No known bugs.
-.SH AUTHOR
-Patrick P. Frey (patrickpfrey@yahoo.com)
+.PP
+.br
+Full documentation and examples at: <https://github.com/patrickfrey/mewa/blob/master/README.md>
+.br
+
