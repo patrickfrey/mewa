@@ -48,6 +48,7 @@ public:
 
 		UnresolvableType=451,
 		AmbiguousTypeReference=452,
+		ScopeHierarchyError=453,
 
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,
@@ -154,6 +155,7 @@ private:
 
 			case UnresolvableType: return "Failed to resolve item/type";
 			case AmbiguousTypeReference: return "Ambiguous item/type reference";
+			case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
 			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";

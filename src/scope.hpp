@@ -12,6 +12,8 @@
 #ifndef _MEWA_SCOPE_HPP_INCLUDED
 #define _MEWA_SCOPE_HPP_INCLUDED
 #if __cplusplus >= 201703L
+#include "error.hpp"
+#include "strings.hpp"
 #include <utility>
 #include <limits>
 #include <cstdio>
@@ -45,6 +47,15 @@ public:
 		return step >= m_start && step < m_end;
 	}
 
+	bool operator == ( const Scope& o) const noexcept
+	{
+		return o.m_start == m_start && o.m_end == m_end;
+	}
+	bool operator != ( const Scope& o) const noexcept
+	{
+		return o.m_start != m_start || o.m_end != m_end;
+	}
+
 	std::string tostring() const
 	{
 		char buf[ 128];
@@ -71,14 +82,14 @@ public:
 template <typename VALTYPE>
 struct ScopedUpValue
 {
-	Scope::Step start;
+	Scope scope;
 	VALTYPE value;
 	int prev;
 
-	ScopedUpValue( const Scope::Step start_, const VALTYPE value_, int prev_=-1)
-		:start(start_),value(value_),prev(prev_){}
-	ScopedUpValue( const ScopedUpValue& o)
-		:start(o.start),value(o.value),prev(o.prev){}
+	ScopedUpValue( const Scope scope_, const VALTYPE value_, int prev_) noexcept
+		:scope(scope_),value(value_),prev(prev_){}
+	ScopedUpValue( const ScopedUpValue& o) noexcept
+		:scope(o.scope),value(o.value),prev(o.prev){}
 };
 
 template <typename VALTYPE>
@@ -94,67 +105,135 @@ public:
 
 	void set( const Scope scope, const VALTYPE value)
 	{
+		int uplink = rightNeighborUpLink( scope);
 		auto ins = m_map.insert( {scope.end(), m_ar.size()});
 		if (ins.second/*insert took place*/)
 		{
-			m_ar.push_back( UpValue( scope.start(), value));
+			(void)allocateUpValue( scope, value, uplink);
 		}
 		else if (ins.first->second == -1)
 		{
-			ins.first->second = m_ar.size();
-			m_ar.push_back( UpValue( scope.start(), value));
+			ins.first->second = allocateUpValue( scope, value, uplink);
 		}
 		else
 		{
-			int pred_index = -1;
-			int index = ins.first->second;
-			while (index >= 0)
+			int pred_ai = -1;
+			int ai = ins.first->second;
+			while (ai >= 0)
 			{
-				UpValue& uv = m_ar[ index];
-				if (uv.start == scope.start())
+				UpValue& uv = m_ar[ ai];
+
+				if (uv.scope == scope)
 				{
 					uv.value = value;
 					break;
 				}
-				else if (uv.start > scope.start())
+				else if (scope.contains( uv.scope))
 				{
 					//... The covering scope gets further up the list  {(A)..{(B)..{(C)..}}} ~ (C)-prev>(B)-prev->(A)
-					pred_index = index;
-					index = uv.prev;
+					pred_ai = ai;
+					ai = uv.prev;
 				}
-				else if (pred_index == -1)
+				else if (!uv.scope.contains( scope))
 				{
-					ins.first->second = m_ar.size();
-					m_ar.push_back( UpValue( scope.start(), value, index));
+					throw Error( Error::ScopeHierarchyError, uv.scope.tostring() + " <-> " + scope.tostring());
+				}
+				else if (pred_ai == -1)
+				{
+					ins.first->second = allocateUpValue( scope, value, ai);
 					break;
 				}
 				else
 				{
-					m_ar[ pred_index].prev = m_ar.size();
-					m_ar.push_back( UpValue( scope.start(), value, index));
+					m_ar[ pred_ai].prev = allocateUpValue( scope, value, ai);
 					break;
 				}
 			}
-			if (index == -1)
+			if (ai == -1)
 			{
 				//... no insert yet, value on top of the predecessor list
-				m_ar[ pred_index].prev = m_ar.size();
-				m_ar.push_back( UpValue( scope.start(), value));
+				m_ar[ pred_ai].prev = allocateUpValue( scope, value, uplink);
 			}
 		}
 	}
 
-	VALTYPE get( const Scope::Step step) const
+	VALTYPE get( const Scope::Step step) const noexcept
 	{
 		auto ref = m_map.upper_bound( step);
 		if (ref == m_map.end()) return m_nullval;
 		int ai = ref->second;
 		while (ai >= 0)
 		{
-			if (m_ar[ ai].start <= step) return m_ar[ ai].value;
+			if (m_ar[ ai].scope.start() <= step) return m_ar[ ai].value;
 			ai = m_ar[ ai].prev;
 		}
 		return m_nullval;
+	}
+
+private:
+	int allocateUpValue( const Scope scope, const VALTYPE value, int uplink)
+	{
+		int rt = m_ar.size();
+		m_ar.push_back( UpValue( scope, value, uplink));
+		linkLeftNeighbours( scope, rt);
+		return rt;
+	}
+
+	int rightNeighborUpLink( const Scope scope) const noexcept
+	{
+		auto ref = m_map.upper_bound( scope.end());
+		if (ref == m_map.end()) return -1;
+		int ai = ref->second;
+
+		while (ai >= 0)
+		{
+			const UpValue& uv = m_ar[ ai];
+
+			if (uv.scope.contains( scope))
+			{
+				return ai;
+			}
+			else
+			{
+				ai = uv.prev;
+			}
+		}
+		return ai;
+	}
+
+	void linkLeftNeighbours( const Scope scope, int newindex)
+	{
+		auto ref = m_map.upper_bound( scope.start());
+		if (ref == m_map.end()) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		for (; ref->first != scope.end(); ++ref)
+		{
+			int pred_ai = -1;
+			int ai = ref->second;
+
+			while (ai >= 0)
+			{
+				UpValue& uv = m_ar[ ai];
+
+				if (scope == uv.scope)
+				{
+					pred_ai = -1;
+					break;
+				}
+				else if (scope.contains( uv.scope))
+				{
+					pred_ai = ai;
+					ai = uv.prev;
+				}
+				else
+				{
+					break;
+				}
+			}
+			if (pred_ai != -1)
+			{
+				m_ar[ pred_ai].prev = newindex;
+			}
+		}
 	}
 
 private:
@@ -224,7 +303,7 @@ public:
 	{
 		auto rt = ParentClass::end();
 		auto it = ParentClass::upper_bound( ScopedKey<KEYTYPE>( key, Scope( step, step)));
-		for (; it != this->end() && it->first.key() == key && it->first.scope().end() > step; ++it)
+		for (; it != this->end() && it->first.key() == key; ++it)
 		{
 			if (it->first.scope().start() <= step)
 			{
@@ -278,7 +357,7 @@ public:
 		std::pmr::vector<Scope> scopear( res_memrsc);
 
 		auto it = ParentClass::upper_bound( ScopedKey<RELNODETYPE>( key, Scope( step, step)));
-		for (; it != this->end() && it->first.key() == key && it->first.scope().end() > step; ++it)
+		for (; it != this->end() && it->first.key() == key; ++it)
 		{
 			if (it->first.scope().start() <= step)
 			{

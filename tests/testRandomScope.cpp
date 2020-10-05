@@ -51,8 +51,8 @@ namespace std
 {
 	ostream& operator<<( ostream& os, const NodeDef& sc)
 	{
-		os << "[" << sc.scope.start() << "," << sc.scope.end() << "] ";
-		os << "{";
+		os << "[" << sc.scope.start() << "," << sc.scope.end() << "] -> " << sc.id;
+		os << " {";
 		int didx = 0;
 		for (auto const& def : sc.vars)
 		{
@@ -99,6 +99,8 @@ static std::vector<NodeDef::Relation> randomRelations( int nn, int alphabetsize)
 
 static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidth, int members, int alphabetsize)
 {
+	if (scope.start() == scope.end()) throw mewa::Error( mewa::Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+
 	NodeDefTree* rt = new NodeDefTree( NodeDef( scope, ++g_idCounter, randomDefs( members, alphabetsize), randomRelations( members, alphabetsize)));
 
 	if (g_random.get( 0, g_random.get( 0, depth)) > 0)
@@ -108,8 +110,9 @@ static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidt
 		std::vector<Scope> scopear;
 		if (width >= 1)
 		{
-			int step = se / width + 1;
-			for (; si + step <= se; si += step)
+			int step = se / width;
+			if (step == 0) ++step;
+			for (; si + step > 0 && si + step <= se; si += step)
 			{
 				scopear.push_back( Scope( scope.start()+si, scope.start()+si+step));
 			}
@@ -296,6 +299,27 @@ static std::string findVariable( const NodeDefTree* nd, const std::string& var, 
 	return rt;
 }
 
+static int findInnerScopeId( const NodeDefTree* nd, Scope::Step step)
+{
+	int rt = -1;
+	if (nd->item.scope.contains( step))
+	{
+		if (nd->chld)
+		{
+			rt = findInnerScopeId( nd->chld, step);
+		}
+		if (rt == -1)
+		{
+			rt = nd->item.id;
+		}
+	}
+	else if (nd->next)
+	{
+		rt = findInnerScopeId( nd->next, step);
+	}
+	return rt;
+}
+
 static void collectRelations( std::map<std::string,int>& result, const NodeDefTree* nd, const std::string& first, Scope::Step step)
 {
 	if (nd->item.scope.contains( step))
@@ -326,6 +350,10 @@ static void randomVarQuery( const VarMap& varmap, const NodeDefTree* nd, int alp
 		qry.first = randomVariable( alphabetsize);
 		qry.second = g_random.get( 0, std::numeric_limits<int>::max());
 	}
+	/*[-]*/if (qry.second == 1827193198 && qry.first == "E")
+	/*[-]*/{
+	/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
+	/*[-]*/}
 	std::string expc = findVariable( nd, qry.first/*var*/, qry.second/*step*/);
 	std::string resc;
 
@@ -345,7 +373,7 @@ static void randomVarQuery( const VarMap& varmap, const NodeDefTree* nd, int alp
 	if (resc != expc)
 	{
 		throw std::runtime_error(
-				mewa::string_format( "Random query variable '%s' [%d] result not as expected: '%s' != '%s'",
+				mewa::string_format( "Random query variable '%s' [%d] result '%s' not as expected '%s'",
 							qry.first.c_str(), qry.second, rescstr.c_str(), expcstr.c_str()));
 	}
 }
@@ -396,13 +424,61 @@ static void randomRelQuery( const RelMap& relmap, const NodeDefTree* nd, int alp
 	if (resc != expc)
 	{
 		throw std::runtime_error(
-				mewa::string_format( "Random query relations of '%s' [%d] result not as expected: %s != %s",
+				mewa::string_format( "Random query relations of '%s' [%d] result '%s' not as expected '%s'",
 							qry.first.c_str(), qry.second, rescstr.c_str(), expcstr.c_str()));
 	}
 }
 
-static void randomIdQuery( const IdSet& idset, const NodeDefTree* nd, bool verbose)
+static void randomIdQueries( const IdSet& idset, const NodeDefTree* nd, int nofqueries, bool verbose)
 {
+	std::vector<Scope::Step> queries;
+	std::vector<NodeDefTree const*> stk;
+	std::map<int,Scope> id2ScopeMap;
+	stk.push_back( nd);
+	std::size_t si = 0;
+	for (; si < stk.size(); ++si)
+	{
+		NodeDefTree const* next = stk[ si]->next;
+		NodeDefTree const* chld = stk[ si]->chld;
+		if (next) stk.push_back( next);
+		if (chld) stk.push_back( chld);
+
+		NodeDefTree const& cur = *stk[ si];
+		id2ScopeMap.insert( {cur.item.id, cur.item.scope} );
+
+		for (int ii=0; ii<10; ++ii)
+		{
+			int queryid = g_random.get( cur.item.scope.start(), cur.item.scope.end());
+			queries.push_back( queryid);
+		}
+	}
+	shuffle( queries);
+	if ((int)queries.size() > nofqueries)
+	{
+		queries.resize( nofqueries);
+	}
+	for (auto query : queries)
+	{
+		int result = idset.get( query);
+		int expect = findInnerScopeId( nd, query);
+
+		if (verbose)
+		{
+			auto const& resultScope = id2ScopeMap.at( result);
+			std::cerr << mewa::string_format( "Query scope step [%d] object query results to [%d] [%d,%d]", 
+								query, result, resultScope.start(), resultScope.end())
+					<< std::endl;
+		}
+		if (result != expect)
+		{
+			auto const& resultScope = id2ScopeMap.at( result);
+			auto const& expectScope = id2ScopeMap.at( expect);
+			throw std::runtime_error(
+				mewa::string_format( "Random scope step [%d] object query result [%d] in [%d,%d] not as expected [%d] in [%d,%d]",
+							query, result, resultScope.start(), resultScope.end(),
+							expect, expectScope.start(), expectScope.end()));
+		}
+	}
 }
 
 static int countNodes( const NodeDefTree* nd)
@@ -424,7 +500,7 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	IdSet idset( &memrsc, -1/*nullval*/, 1024/*initsize*/);
 
 	int depth = g_random.get( 1, maxdepth+1);
-	Scope scope( 0, g_random.get( 0, std::numeric_limits<int>::max()));
+	Scope scope( 0, g_random.get( 1, std::numeric_limits<int>::max()));
 	std::unique_ptr<NodeDefTree> tree;
 	int minNofNodes = 10;
 	do {
@@ -450,10 +526,7 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	{
 		randomRelQuery( relmap, tree.get(), alphabetsize, verbose);
 	}
-	for (int qi = 0; qi < nofqueries; ++qi)
-	{
-		randomIdQuery( idset, tree.get(), verbose);
-	}
+	randomIdQueries( idset, tree.get(), nofqueries, verbose);
 }
 
 int main( int argc, const char* argv[] )
