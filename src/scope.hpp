@@ -92,76 +92,21 @@ struct ScopedUpValue
 		:scope(o.scope),value(o.value),prev(o.prev){}
 };
 
+
 template <typename VALTYPE>
-class ScopedSet
+class ScopedUpValueInvTree
 {
 public:
-	ScopedSet( std::pmr::memory_resource* memrsc, const VALTYPE nullval_, std::size_t initsize)
-		:m_map( memrsc),m_ar(),m_nullval(nullval_) {m_ar.reserve(initsize);}
-	ScopedSet( const ScopedSet& o) = default;
-	ScopedSet& operator=( const ScopedSet& o) = default;
-	ScopedSet( ScopedSet&& o) noexcept = default;
-	ScopedSet& operator=( ScopedSet&& o) noexcept = default;
+	ScopedUpValueInvTree( const VALTYPE nullval_, std::size_t initsize)
+		:m_ar(),m_nullval(nullval_) {m_ar.reserve(initsize);}
+	ScopedUpValueInvTree( const ScopedUpValueInvTree& o) = default;
+	ScopedUpValueInvTree& operator=( const ScopedUpValueInvTree& o) = default;
+	ScopedUpValueInvTree( ScopedUpValueInvTree&& o) noexcept = default;
+	ScopedUpValueInvTree& operator=( ScopedUpValueInvTree&& o) noexcept = default;
 
-	void set( const Scope scope, const VALTYPE value)
+	VALTYPE getInnerValue( int index, const Scope::Step step) const noexcept
 	{
-		int uplink = rightNeighborUpLink( scope);
-		auto ins = m_map.insert( {scope.end(), m_ar.size()});
-		if (ins.second/*insert took place*/)
-		{
-			(void)allocateUpValue( scope, value, uplink);
-		}
-		else if (ins.first->second == -1)
-		{
-			ins.first->second = allocateUpValue( scope, value, uplink);
-		}
-		else
-		{
-			int pred_ai = -1;
-			int ai = ins.first->second;
-			while (ai >= 0)
-			{
-				UpValue& uv = m_ar[ ai];
-
-				if (uv.scope == scope)
-				{
-					uv.value = value;
-					break;
-				}
-				else if (scope.contains( uv.scope))
-				{
-					//... The covering scope gets further up the list  {(A)..{(B)..{(C)..}}} ~ (C)-prev>(B)-prev->(A)
-					pred_ai = ai;
-					ai = uv.prev;
-				}
-				else if (!uv.scope.contains( scope))
-				{
-					throw Error( Error::ScopeHierarchyError, uv.scope.tostring() + " <-> " + scope.tostring());
-				}
-				else if (pred_ai == -1)
-				{
-					ins.first->second = allocateUpValue( scope, value, ai);
-					break;
-				}
-				else
-				{
-					m_ar[ pred_ai].prev = allocateUpValue( scope, value, ai);
-					break;
-				}
-			}
-			if (ai == -1)
-			{
-				//... no insert yet, value on top of the predecessor list
-				m_ar[ pred_ai].prev = allocateUpValue( scope, value, uplink);
-			}
-		}
-	}
-
-	VALTYPE get( const Scope::Step step) const noexcept
-	{
-		auto ref = m_map.upper_bound( step);
-		if (ref == m_map.end()) return m_nullval;
-		int ai = ref->second;
+		int ai = index;
 		while (ai >= 0)
 		{
 			if (m_ar[ ai].scope.start() <= step) return m_ar[ ai].value;
@@ -170,20 +115,67 @@ public:
 		return m_nullval;
 	}
 
-private:
-	int allocateUpValue( const Scope scope, const VALTYPE value, int uplink)
+	int nextIndex() const noexcept
+	{
+		return m_ar.size();
+	}
+
+	int pushUpValue( const Scope scope, const VALTYPE value, int uplink)
 	{
 		int rt = m_ar.size();
 		m_ar.push_back( UpValue( scope, value, uplink));
-		linkLeftNeighbours( scope, rt);
 		return rt;
 	}
 
-	int rightNeighborUpLink( const Scope scope) const noexcept
+	int insertUpValue( int& index, const Scope scope, const VALTYPE value, int uplink)
 	{
-		auto ref = m_map.upper_bound( scope.end());
-		if (ref == m_map.end()) return -1;
-		int ai = ref->second;
+		int rt = -1;
+		int pred_ai = -1;
+		int ai = index;
+		while (ai >= 0)
+		{
+			UpValue& uv = m_ar[ ai];
+
+			if (uv.scope == scope)
+			{
+				// ... already known, no insert
+				uv.value = value;
+				break;
+			}
+			else if (scope.contains( uv.scope))
+			{
+				//... The covering scope gets further up the list  {(A)..{(B)..{(C)..}}} ~ (C)-prev>(B)-prev->(A)
+				pred_ai = ai;
+				ai = uv.prev;
+			}
+			else if (!uv.scope.contains( scope))
+			{
+				throw Error( Error::ScopeHierarchyError, uv.scope.tostring() + " <-> " + scope.tostring());
+			}
+			else if (pred_ai == -1)
+			{
+				// ... insert in front
+				rt = index = pushUpValue( scope, value, ai);
+				break;
+			}
+			else
+			{
+				// ... insert inbetween pred_ai and ai
+				rt = m_ar[ pred_ai].prev = pushUpValue( scope, value, ai);
+				break;
+			}
+		}
+		if (ai == -1)
+		{
+			//... insert at end of list
+			rt = m_ar[ pred_ai].prev = pushUpValue( scope, value, uplink);
+		}
+		return rt;
+	}
+
+	int rightNeighborUpLink( int index, const Scope scope) const noexcept
+	{
+		int ai = index;
 
 		while (ai >= 0)
 		{
@@ -201,48 +193,100 @@ private:
 		return ai;
 	}
 
-	void linkLeftNeighbours( const Scope scope, int newindex)
+	void linkLeftNeighbours( int index, const Scope scope, int newindex)
 	{
-		auto ref = m_map.upper_bound( scope.start());
-		if (ref == m_map.end()) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
-		for (; ref->first != scope.end(); ++ref)
+		int pred_ai = -1;
+		int ai = index;
+
+		while (ai >= 0)
 		{
-			int pred_ai = -1;
-			int ai = ref->second;
+			UpValue& uv = m_ar[ ai];
 
-			while (ai >= 0)
+			if (scope == uv.scope)
 			{
-				UpValue& uv = m_ar[ ai];
-
-				if (scope == uv.scope)
-				{
-					pred_ai = -1;
-					break;
-				}
-				else if (scope.contains( uv.scope))
-				{
-					pred_ai = ai;
-					ai = uv.prev;
-				}
-				else
-				{
-					break;
-				}
+				pred_ai = -1;
+				break;
 			}
-			if (pred_ai != -1)
+			else if (scope.contains( uv.scope))
 			{
-				m_ar[ pred_ai].prev = newindex;
+				pred_ai = ai;
+				ai = uv.prev;
+			}
+			else
+			{
+				break;
 			}
 		}
+		if (pred_ai != -1)
+		{
+			m_ar[ pred_ai].prev = newindex;
+		}
+	}
+
+	const VALTYPE& nullval() const noexcept
+	{
+		return m_nullval;
 	}
 
 private:
 	typedef ScopedUpValue<VALTYPE> UpValue;
 
 private:
-	std::pmr::map<Scope::Step,int> m_map;	//> map scope end -> index in m_ar upvalue list
 	std::vector<UpValue> m_ar;		//> upvalue lists list
 	VALTYPE m_nullval;			//> value returned by get if not found
+};
+
+
+template <typename VALTYPE>
+class ScopedSet
+{
+public:
+	ScopedSet( std::pmr::memory_resource* memrsc, const VALTYPE nullval_, std::size_t initsize)
+		:m_map( memrsc),m_invtree(nullval_,initsize){}
+	ScopedSet( const ScopedSet& o) = default;
+	ScopedSet& operator=( const ScopedSet& o) = default;
+	ScopedSet( ScopedSet&& o) noexcept = default;
+	ScopedSet& operator=( ScopedSet&& o) noexcept = default;
+
+	void set( const Scope scope, const VALTYPE value)
+	{
+		auto rightnode = m_map.upper_bound( scope.end());
+		int uplink = (rightnode == m_map.end()) ? -1 : m_invtree.rightNeighborUpLink( rightnode->second, scope);
+		int newindex = -1;
+
+		auto ins = m_map.insert( {scope.end(), m_invtree.nextIndex()});
+		if (ins.second/*insert took place*/)
+		{
+			newindex = m_invtree.pushUpValue( scope, value, uplink);
+		}
+		else
+		{
+			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink);
+		}
+		if (newindex >= 0)
+		{
+			auto leftnode = m_map.upper_bound( scope.start());
+			if (leftnode == m_map.end()) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+			for (; leftnode->first != scope.end(); ++leftnode)
+			{
+				m_invtree.linkLeftNeighbours( leftnode->second, scope, newindex);
+			}
+		}
+	}
+
+	VALTYPE get( const Scope::Step step) const noexcept
+	{
+		auto ref = m_map.upper_bound( step);
+		if (ref == m_map.end()) return m_invtree.nullval();
+		return m_invtree.getInnerValue( ref->second, step);
+	}
+
+private:
+	typedef ScopedUpValue<VALTYPE> UpValue;
+
+private:
+	std::pmr::map<Scope::Step,int> m_map;		//> map scope end -> index in m_ar upvalue list
+	ScopedUpValueInvTree<VALTYPE> m_invtree;	//> upvalue inv tree
 };
 
 
