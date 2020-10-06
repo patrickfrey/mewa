@@ -147,17 +147,6 @@ static std::string varConstructor( const std::string& var, int nodeid)
 	return mewa::string_format( "%s:%d", var.c_str(), nodeid);
 }
 
-template <typename ELEM>
-static void shuffle( std::vector<ELEM>& ar)
-{
-	for (std::size_t ii=0; ii<ar.size()/2; ++ii)
-	{
-		std::size_t first = g_random.get( 0, ar.size());
-		std::size_t second = g_random.get( 0, ar.size());
-		if (first != second) std::swap( ar[ first], ar[ second]);
-	}
-}
-
 static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 {
 	struct Insert
@@ -192,7 +181,7 @@ static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 			inserts.push_back( {cur.item.scope, def, varConstructor( def, cur.item.id)} );
 		}
 	}
-	shuffle( inserts);
+	shuffle( inserts, g_random);
 	for (auto ins : inserts)
 	{
 		varmap.set( ins.scope, ins.key, ins.value);
@@ -233,7 +222,7 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 			inserts.push_back( {cur.item.scope, rel.first, rel.second, cur.item.id});
 		}
 	}
-	shuffle( inserts);
+	shuffle( inserts, g_random);
 	for (auto ins : inserts)
 	{
 		relmap.set( ins.scope, ins.left, ins.right, ins.value);
@@ -256,7 +245,7 @@ static void insertIds( IdSet& idset, NodeDefTree const* nd)
 		NodeDefTree const& cur = *stk[ si];
 		inserts.push_back( {cur.item.scope,cur.item.id});
 	}
-	shuffle( inserts);
+	shuffle( inserts, g_random);
 	for (auto kv : inserts)
 	{
 		idset.set( kv.first, kv.second);
@@ -478,7 +467,7 @@ static void randomIdQueries( const IdSet& idset, const NodeDefTree* nd, int nofq
 			queries.push_back( queryid);
 		}
 	}
-	shuffle( queries);
+	shuffle( queries, g_random);
 	if ((int)queries.size() > nofqueries)
 	{
 		queries.resize( nofqueries);

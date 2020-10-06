@@ -114,5 +114,16 @@ struct ArgParser
 	}
 };
 
+template <typename ELEM>
+static void shuffle( std::vector<ELEM>& ar, PseudoRandom& random)
+{
+	for (std::size_t ii=0; ii<ar.size()/2; ++ii)
+	{
+		std::size_t first = random.get( 0, ar.size());
+		std::size_t second = random.get( 0, ar.size());
+		if (first != second) std::swap( ar[ first], ar[ second]);
+	}
+}
+
 #endif
 

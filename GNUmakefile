@@ -54,7 +54,8 @@ MODOBJS  := $(BUILDDIR)/lualib_mewa.o $(BUILDDIR)/lua_load_automaton.o $(BUILDDI
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
 TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
-		$(BUILDDIR)/testIdentMap $(BUILDDIR)/testAutomaton $(BUILDDIR)/testTypeDb
+		$(BUILDDIR)/testIdentMap $(BUILDDIR)/testAutomaton \
+		$(BUILDDIR)/testTypeDb $(BUILDDIR)/testRandomTypeDb
 PROGRAM  := $(BUILDDIR)/mewa 
 
 # Build targets:
@@ -98,6 +99,7 @@ test : all
 	$(BUILDDIR)/testIdentMap
 	$(BUILDDIR)/testAutomaton
 	$(BUILDDIR)/testTypeDb
+	$(BUILDDIR)/testRandomTypeDb
 	tests/luatest.sh "$(LUABIN)"
 check: test
 

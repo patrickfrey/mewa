@@ -27,30 +27,30 @@ struct Tree
 	Tree* chld;
 
 	Tree( const ITEM& item_)
-		:item(item_),next(0),chld(0){}
+		:item(item_),next(nullptr),chld(nullptr){}
 	Tree( const Tree& o)
 		:item(o.item)
-		,next( o.next ? new Tree( *o.next) : 0)
-		,chld( o.chld ? new Tree( *o.chld) : 0){}
+		,next( o.next ? new Tree( *o.next) : nullptr)
+		,chld( o.chld ? new Tree( *o.chld) : nullptr){}
 
 	Tree& operator=( const Tree& o)
 	{
 		item = o.item;
-		next = o.next ? new Tree( *o.next) : 0;
-		chld = o.chld ? new Tree( *o.chld) : 0;
+		next = o.next ? new Tree( *o.next) : nullptr;
+		chld = o.chld ? new Tree( *o.chld) : nullptr;
 		return *this;
 	}
 	Tree( Tree&& o)
 		:item( std::move( o.item))
 		,next( o.next)
 		,chld( o.chld)
-		{o.next=0; o.chld=0;}
+		{o.next=nullptr; o.chld=nullptr;}
 
 	Tree& operator=( Tree&& o)
 	{
 		item = std::move( o.item);
-		next = o.next; o.next = 0;
-		chld = o.chld; o.chld = 0;
+		next = o.next; o.next = nullptr;
+		chld = o.chld; o.chld = nullptr;
 		return *this;
 	}
 	~Tree()
@@ -104,9 +104,9 @@ struct Tree
 		print( out, 0);
 	}
 
-	int size() const
+	int size() const noexcept
 	{
-		Tree* np = this;
+		Tree const* np = this;
 		int ii = 1;
 		for (; np->next; np=np->next,++ii){}
 		return ii;
