@@ -27,11 +27,10 @@ class TypeDatabase
 {
 public:
 	explicit TypeDatabase( std::size_t initmemsize = 1<<26)
-		:m_memory(),m_typeTable(),m_reduTable(),m_identMap(),m_parameterMap(),m_typerecMap()
+		:m_memblock(initmemsize),m_memory()
+		,m_typeTable(),m_reduTable(),m_identMap(),m_parameterMap(),m_typerecMap()
 	{
-		void* mem = std::malloc( initmemsize);
-		if (!mem) throw std::bad_alloc();
-		m_memory.reset( new Memory( mem, initmemsize));
+		m_memory.reset( new Memory( m_memblock.ptr, m_memblock.size));
 
 		m_typeTable.reset( new TypeTable( m_memory->resource_typetab(), 0/*nullval*/, m_memory->nofScopedMapInitBuckets()));
 		m_reduTable.reset( new ReductionTable( m_memory->resource_redutab(), m_memory->nofReductionMapInitBuckets()));
@@ -178,6 +177,23 @@ private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
 
 private:
+	struct MemoryBlock
+	{
+		void* ptr;
+		std::size_t size;
+
+		explicit MemoryBlock( std::size_t size_)
+		{
+			size = size_;
+			ptr = std::malloc( size);
+			if (!ptr) std::bad_alloc();
+		}
+		~MemoryBlock()
+		{
+			std::free(ptr);
+		}
+	};
+
 	class Memory
 	{
 	public:
@@ -231,6 +247,7 @@ private:
 			:constructor(constructor_),priority(priority_),parameter(parameter_),next(0),inv(inv_){}
 	};
 
+	MemoryBlock m_memblock;				//< memory block used first by m_memory
 	std::unique_ptr<Memory> m_memory;		//< memory resource used by maps (has to be defined before tables and maps as these depend on it!)
 	std::unique_ptr<TypeTable> m_typeTable;		//< table of types
 	std::unique_ptr<ReductionTable> m_reduTable;	//< table of reductions
