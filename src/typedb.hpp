@@ -23,50 +23,15 @@
 
 namespace mewa {
 
-class TypeDatabaseMemory
-{
-public:
-	TypeDatabaseMemory( void* buffer, std::size_t buffersize) noexcept
-		:m_identmap_memrsc( (char*)buffer+(0*buffersize/4), buffersize/4)
-		,m_identstr_memrsc( (char*)buffer+(1*buffersize/4), buffersize/4)
-		,m_typetab_memrsc(  (char*)buffer+(2*buffersize/4), buffersize/4)
-		,m_redutab_memrsc(  (char*)buffer+(3*buffersize/4), buffersize/4)
-		,m_nofInitBuckets( buffersize / (1<<6)){}
-
-	std::pmr::memory_resource* resource_identmap() noexcept		{return &m_identmap_memrsc;}
-	std::pmr::memory_resource* resource_identstr() noexcept		{return &m_identstr_memrsc;}
-	std::pmr::memory_resource* resource_typetab() noexcept		{return &m_typetab_memrsc;}
-	std::pmr::memory_resource* resource_redutab() noexcept		{return &m_redutab_memrsc;}
-
-	std::size_t nofIdentInitBuckets() const noexcept		{return m_nofInitBuckets;}
-	std::size_t nofScopedMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
-	std::size_t nofReductionMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
-	std::size_t nofParameterMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
-	std::size_t nofTypeRecordMapInitBuckets() const noexcept	{return m_nofInitBuckets;}
-
-private:
-	std::pmr::monotonic_buffer_resource m_identmap_memrsc;
-	std::pmr::monotonic_buffer_resource m_identstr_memrsc;
-	std::pmr::monotonic_buffer_resource m_typetab_memrsc;
-	std::pmr::monotonic_buffer_resource m_redutab_memrsc;
-	std::size_t m_nofInitBuckets;
-};
-
-
 class TypeDatabase
 {
 public:
 	explicit TypeDatabase( std::size_t initmemsize = 1<<26)
-		:m_memory()
-		,m_typeTable()
-		,m_reduTable()
-		,m_identMap()
-		,m_parameterMap()
-		,m_typerecMap()
+		:m_memory(),m_typeTable(),m_reduTable(),m_identMap(),m_parameterMap(),m_typerecMap()
 	{
 		void* mem = std::malloc( initmemsize);
 		if (!mem) throw std::bad_alloc();
-		m_memory.reset( new TypeDatabaseMemory( mem, initmemsize));
+		m_memory.reset( new Memory( mem, initmemsize));
 
 		m_typeTable.reset( new TypeTable( m_memory->resource_typetab(), 0/*nullval*/, m_memory->nofScopedMapInitBuckets()));
 		m_reduTable.reset( new ReductionTable( m_memory->resource_redutab(), m_memory->nofReductionMapInitBuckets()));
@@ -213,6 +178,36 @@ private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
 
 private:
+	class Memory
+	{
+	public:
+		Memory( void* buffer, std::size_t buffersize) noexcept
+			:m_identmap_memrsc( (char*)buffer+(0*buffersize/4), buffersize/4)
+			,m_identstr_memrsc( (char*)buffer+(1*buffersize/4), buffersize/4)
+			,m_typetab_memrsc(  (char*)buffer+(2*buffersize/4), buffersize/4)
+			,m_redutab_memrsc(  (char*)buffer+(3*buffersize/4), buffersize/4)
+			,m_nofInitBuckets( buffersize / (1<<6)){}
+
+		std::pmr::memory_resource* resource_identmap() noexcept		{return &m_identmap_memrsc;}
+		std::pmr::memory_resource* resource_identstr() noexcept		{return &m_identstr_memrsc;}
+		std::pmr::memory_resource* resource_typetab() noexcept		{return &m_typetab_memrsc;}
+		std::pmr::memory_resource* resource_redutab() noexcept		{return &m_redutab_memrsc;}
+
+		std::size_t nofIdentInitBuckets() const noexcept		{return m_nofInitBuckets;}
+		std::size_t nofScopedMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
+		std::size_t nofReductionMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
+		std::size_t nofParameterMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
+		std::size_t nofTypeRecordMapInitBuckets() const noexcept	{return m_nofInitBuckets;}
+
+	private:
+		std::pmr::monotonic_buffer_resource m_identmap_memrsc;
+		std::pmr::monotonic_buffer_resource m_identstr_memrsc;
+		std::pmr::monotonic_buffer_resource m_typetab_memrsc;
+		std::pmr::monotonic_buffer_resource m_redutab_memrsc;
+		std::size_t m_nofInitBuckets;
+	};
+
+private:
 	enum {
 		MaxNofParameter = 1U<<15,
 		MaxPriority = 1U<<15
@@ -236,12 +231,12 @@ private:
 			:constructor(constructor_),priority(priority_),parameter(parameter_),next(0),inv(inv_){}
 	};
 
-	std::unique_ptr<TypeDatabaseMemory> m_memory;	//< memory resource used by maps (has to be defined before tables and maps as these depend on it!)
-	std::unique_ptr<TypeTable> m_typeTable;
-	std::unique_ptr<ReductionTable> m_reduTable;
-	std::unique_ptr<IdentMap> m_identMap;
-	std::vector<Parameter> m_parameterMap;
-	std::vector<TypeRecord> m_typerecMap;
+	std::unique_ptr<Memory> m_memory;		//< memory resource used by maps (has to be defined before tables and maps as these depend on it!)
+	std::unique_ptr<TypeTable> m_typeTable;		//< table of types
+	std::unique_ptr<ReductionTable> m_reduTable;	//< table of reductions
+	std::unique_ptr<IdentMap> m_identMap;		//< identifier string to integer map
+	std::vector<Parameter> m_parameterMap;		//< map cardinal to parameter arrays
+	std::vector<TypeRecord> m_typerecMap;		//< type definition structures
 };
 
 }//namespace
