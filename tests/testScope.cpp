@@ -27,24 +27,19 @@
 
 using namespace mewa;
 
-class TestKey
-	:public ScopedKey<std::string>
-{
-public:
-	TestKey( const char* key_, const Scope scope_)
-		:ScopedKey<std::string>( key_, scope_){}
-};
-
 class TestKeyValue
-	:public TestKey
 {
 public:
 	TestKeyValue( const char* key_, const Scope scope_, const char* value_)
-		:TestKey( key_, scope_),m_value(value_){}
+		:m_scope(scope_),m_key(key_),m_value(value_){}
 
+	const Scope& scope() const			{return m_scope;}
+	const std::string& key() const			{return m_key;}
 	const std::string& value() const		{return m_value;}
 
 private:
+	Scope m_scope;
+	std::string m_key;
 	std::string m_value;
 };
 
@@ -106,11 +101,11 @@ int main( int argc, const char* argv[] )
 		};
 		static const TestCase queries[] = {{"Ali",3},{"Ala",2},{"Baba",5},{"Baba",79},{"Baba",78},{0,0}};
 		std::string expected{R"(
-[3,99] Ali -> Ali 2
-[2,121] Ala -> Ala 1
-[3,93] Baba -> Baba 2
-[3,93] Baba -> Baba 2
-[7,79] Baba -> Baba 3
+Ali -> Ali 2
+Ala -> Ala 1
+Baba -> Baba 2
+Baba -> Baba 2
+Baba -> Baba 3
 )"};
 		std::ostringstream outputbuf;
 		outputbuf << "\n";
@@ -118,28 +113,23 @@ int main( int argc, const char* argv[] )
 		int buffer[ 2048];
 		std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 
-		ScopedMap<std::string,std::string> smap( &memrsc);
+		ScopedMap<std::string,std::string> smap( &memrsc, "", 1024);
 		for (auto test : tests)
 		{
-			smap.insert( ScopedMap<std::string,std::string>::value_type(
-					ScopedKey<std::string>( test.key(), test.scope()), test.value()));
+			smap.set( test.scope(), test.key(), test.value());
 		}
 		int ti = 0;
 		for (; queries[ti].key; ++ti)
 		{
 			if (verbose) std::cerr << "Find '" << queries[ti].key << "'/" << queries[ti].step << ": " << std::endl;
-			auto ri = smap.scoped_find( queries[ti].key, queries[ti].step);
-			if (ri != smap.end())
+			auto value = smap.get( queries[ti].step, queries[ti].key);
+			if (!value.empty())
 			{
 				if (verbose)
 				{
-					std::cerr
-						<< ri->first.scope().tostring() << " "
-						<< ri->first.key() << " -> " << ri->second << std::endl;
+					std::cerr << queries[ti].key << " -> " << value << std::endl;
 				}
-				outputbuf 
-					<< ri->first.scope().tostring() << " "
-					<< ri->first.key() << " -> " << ri->second << std::endl;
+				outputbuf << queries[ti].key << " -> " << value << std::endl;
 			}
 		}
 		std::string output = outputbuf.str();

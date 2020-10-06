@@ -79,10 +79,11 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	m_typeInvTable.push_back( TypeDef( contextType, m_identMap.get( name)));
 
 	int lastIndex = 0;
-	auto ins = m_typeTable.insert( {{m_typeInvTable.back(), scope}, typerec});
-	if (ins.second == false/*already exists*/)
+	int prev_typerec = m_typeTable.getOrSet( scope, m_typeInvTable.back(), typerec);
+	if (prev_typerec/*already exists*/)
 	{
-		int tri = ins.first->second;
+		// Check if there is a conflict:
+		int tri = prev_typerec;
 		while (tri)
 		{
 			auto& tr = m_typerecMap[ tri-1];
@@ -94,6 +95,7 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 					tr.constructor = constructor;
 					m_typerecMap.pop_back();
 					m_typeInvTable.pop_back();
+					m_parameterMap.resize( m_parameterMap.size()-parameter.size());
 					typerec = tri;
 				}
 				else if (priority == tr.priority)
@@ -104,6 +106,8 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 				{
 					// .... ignore 2nd definition with lower priority
 					m_typerecMap.pop_back();
+					m_typeInvTable.pop_back();
+					m_parameterMap.resize( m_parameterMap.size()-parameter.size());
 					typerec = tri;
 				}
 				break;
@@ -123,7 +127,7 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 
 void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor)
 {
-	m_reduTable.insert( {{fromType, scope}, {toType, constructor}} );
+	m_reduTable.set( scope, fromType, toType, constructor );
 }
 
 
@@ -228,7 +232,7 @@ TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, i
 
 		int redu_buffer[ 512];
 		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-		auto redulist = m_reduTable.scoped_find( elem.type, step, &redu_memrsc);
+		auto redulist = m_reduTable.get( elem.type, step, &redu_memrsc);
 
 		for (auto const& redu : redulist)
 		{
@@ -275,18 +279,17 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 
 		int redu_buffer[ 512];
 		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-		auto redulist = m_reduTable.scoped_find( elem.type, step, &redu_memrsc);
+		auto redulist = m_reduTable.get( step, elem.type, &redu_memrsc);
 
 		for (auto const& redu : redulist)
 		{
 			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
 			if (index >= 0)
 			{
-				auto search = m_typeTable.scoped_find( TypeDef( redu.type(), nameid), step);
-				if (search != m_typeTable.end())
+				int typerecidx = m_typeTable.get( step, TypeDef( redu.type(), nameid));
+				if (typerecidx)
 				{
 					stack.collectResult( rt.reductions, index);
-					int typerecidx = search->second;
 					while (typerecidx > 0)
 					{
 						const TypeRecord& rec = m_typerecMap[ typerecidx-1];

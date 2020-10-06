@@ -97,6 +97,9 @@ template <typename VALTYPE>
 class ScopedUpValueInvTree
 {
 public:
+	typedef ScopedUpValue<VALTYPE> UpValue;
+
+public:
 	ScopedUpValueInvTree( const VALTYPE nullval_, std::size_t initsize)
 		:m_ar(),m_nullval(nullval_) {m_ar.reserve(initsize);}
 	ScopedUpValueInvTree( const ScopedUpValueInvTree& o) = default;
@@ -115,6 +118,40 @@ public:
 		return m_nullval;
 	}
 
+	class const_iterator
+	{
+	public:
+		explicit const_iterator( const std::vector<UpValue>& ar_, int index_=-1) noexcept
+			:m_ar(ar_.data()),m_index(index_){}
+
+		const_iterator& operator++() noexcept				{m_index = m_ar[ m_index].prev; return *this;}
+		const_iterator operator++(int) noexcept				{const_iterator rt(m_ar,m_index); m_index = m_ar[ m_index].prev; return rt;}
+
+		bool operator==( const const_iterator& o) const noexcept	{return m_ar==o.m_ar && m_index == o.m_index;}
+		bool operator!=( const const_iterator& o) const noexcept	{return m_ar!=o.m_ar || m_index != o.m_index;}
+
+		VALTYPE operator*() const noexcept				{return m_ar[ m_index].value;}
+
+	private:
+		UpValue const* m_ar;
+		int m_index;
+	};
+
+	const_iterator first( int index, const Scope::Step step) const noexcept
+	{
+		int ai = index;
+		while (ai >= 0)
+		{
+			if (m_ar[ ai].scope.start() <= step) return const_iterator( m_ar, ai);
+			ai = m_ar[ ai].prev;
+		}
+		return const_iterator( m_ar);
+	}
+	const_iterator end() const noexcept
+	{
+		return const_iterator( m_ar);
+	}
+
 	int nextIndex() const noexcept
 	{
 		return m_ar.size();
@@ -124,6 +161,28 @@ public:
 	{
 		int rt = m_ar.size();
 		m_ar.push_back( UpValue( scope, value, uplink));
+		return rt;
+	}
+
+	VALTYPE findUpValue( int index, const Scope scope) const noexcept
+	{
+		VALTYPE rt = m_nullval;
+		int ai = index;
+		while (ai >= 0)
+		{
+			const UpValue& uv = m_ar[ ai];
+			if (uv.scope.end() != scope.end()) return rt;
+			if (uv.scope.start() == scope.start())
+			{
+				rt = uv.value;
+				break;
+			}
+			if (uv.scope.start() < scope.start())
+			{
+				break;
+			}
+			ai = uv.prev;
+		}
 		return rt;
 	}
 
@@ -138,7 +197,7 @@ public:
 
 			if (uv.scope == scope)
 			{
-				// ... already known, no insert
+				// ... already known, no insert, but overwrite
 				uv.value = value;
 				break;
 			}
@@ -229,9 +288,6 @@ public:
 	}
 
 private:
-	typedef ScopedUpValue<VALTYPE> UpValue;
-
-private:
 	std::vector<UpValue> m_ar;		//> upvalue lists list
 	VALTYPE m_nullval;			//> value returned by get if not found
 };
@@ -276,9 +332,13 @@ public:
 
 	VALTYPE get( const Scope::Step step) const noexcept
 	{
+		VALTYPE rt = m_invtree.nullval();
 		auto ref = m_map.upper_bound( step);
-		if (ref == m_map.end()) return m_invtree.nullval();
-		return m_invtree.getInnerValue( ref->second, step);
+		if (ref != m_map.end())
+		{
+			rt = m_invtree.getInnerValue( ref->second, step);
+		}
+		return rt;
 	}
 
 private:
@@ -294,81 +354,145 @@ template <typename KEYTYPE>
 class ScopedKey
 {
 public:
-	ScopedKey( const KEYTYPE& key_, const Scope scope_)
-		:m_key(key_),m_scope(scope_){}
+	ScopedKey( const KEYTYPE& key_, const Scope::Step end_)
+		:m_key(key_),m_end(end_){}
 	ScopedKey( const ScopedKey& o)
-		:m_key(o.m_key),m_scope(o.m_scope){}
+		:m_key(o.m_key),m_end(o.m_end){}
 	ScopedKey& operator=( const ScopedKey& o)
-		{m_key=o.m_key; m_scope=o.m_scope; return *this;}
-	ScopedKey( ScopedKey&& o) noexcept
-		:m_key(std::move(o.m_key)),m_scope(o.m_scope){}
-	ScopedKey& operator=( ScopedKey&& o) noexcept
-		{m_key=std::move(o.m_key); m_scope=o.m_scope; return *this;}
+		{m_key=o.m_key; m_end=o.m_end; return *this;}
 
 	const KEYTYPE& key() const noexcept						{return m_key;}
-	const Scope scope() const noexcept						{return m_scope;}
+	const Scope::Step end() const noexcept						{return m_end;}
 
-	bool matches( const KEYTYPE& key_, Scope::Step step) const noexcept		{return m_key == key_ && m_scope.contains( step);}
+	bool operator < (const ScopedKey& o) const noexcept
+	{
+		return m_key == o.m_key ? m_end < o.m_end : m_key < o.m_key;
+	}
 
 private:
 	KEYTYPE m_key;
-	Scope m_scope;
-};
-
-template <typename KEYTYPE>
-struct ScopedMapOrder
-{
-	bool operator()( const ScopedKey<KEYTYPE>& a, const ScopedKey<KEYTYPE>& b) const noexcept
-	{
-		return a.key() == b.key()
-			? a.scope().end() == b.scope().end()
-				? a.scope().start() < b.scope().start()
-				: a.scope().end() < b.scope().end()
-			: a.key() < b.key();
-	}
+	Scope::Step m_end;
 };
 
 
 template <typename KEYTYPE, typename VALTYPE>
 class ScopedMap
-	:public std::pmr::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> >
 {
 public:
-	typedef std::pmr::map<ScopedKey<KEYTYPE>, VALTYPE, ScopedMapOrder<KEYTYPE> > ParentClass;
-	typedef typename ParentClass::const_iterator const_iterator;
+	typedef std::pmr::map<ScopedKey<KEYTYPE>, int> Map;
 
-	explicit ScopedMap( std::pmr::memory_resource* memrsc) noexcept :ParentClass( memrsc) {}
+	ScopedMap( std::pmr::memory_resource* memrsc, const VALTYPE nullval_, std::size_t initsize)
+		:m_map( memrsc),m_invtree(nullval_,initsize){}
 	ScopedMap( const ScopedMap& o) = default;
 	ScopedMap& operator=( const ScopedMap& o) = default;
 	ScopedMap( ScopedMap&& o) noexcept = default;
 	ScopedMap& operator=( ScopedMap&& o) noexcept = default;
 
-	const_iterator scoped_find( const KEYTYPE& key, const Scope::Step step) const noexcept
+	void set( const Scope scope, const KEYTYPE& key, const VALTYPE& value)
 	{
-		auto rt = ParentClass::end();
-		auto it = ParentClass::upper_bound( ScopedKey<KEYTYPE>( key, Scope( step, step)));
-		for (; it != this->end() && it->first.key() == key; ++it)
+		ScopedKey<KEYTYPE> sk( key, scope.end());
+		auto rightnode = m_map.upper_bound( sk);
+		int uplink = (rightnode == m_map.end() || rightnode->first.key() != key)
+			? -1
+			: m_invtree.rightNeighborUpLink( rightnode->second, scope);
+		int newindex = -1;
+
+		auto ins = m_map.insert( {sk, m_invtree.nextIndex()} );
+		if (ins.second/*insert took place*/)
 		{
-			if (it->first.scope().start() <= step)
+			newindex = m_invtree.pushUpValue( scope, value, uplink);
+		}
+		else
+		{
+			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink);
+		}
+		if (newindex >= 0)
+		{
+			auto leftnode = m_map.upper_bound( {key,scope.start()} );
+			if (leftnode == m_map.end() || leftnode->first.key() != key)
 			{
-				if (rt == ParentClass::end() || rt->first.scope().contains( it->first.scope()))
-				{
-					rt = it;
-				}
+				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+			}
+			for (; leftnode->first.end() != scope.end(); ++leftnode)
+			{
+				m_invtree.linkLeftNeighbours( leftnode->second, scope, newindex);
+			}
+		}
+	};
+
+	VALTYPE getOrSet( const Scope scope, const KEYTYPE& key, const VALTYPE value)
+	{
+		VALTYPE rt = m_invtree.nullval();
+		ScopedKey<KEYTYPE> sk( key, scope.end());
+		auto rightnode = m_map.upper_bound( sk);
+		int uplink = (rightnode == m_map.end() || rightnode->first.key() != key)
+			? -1
+			: m_invtree.rightNeighborUpLink( rightnode->second, scope);
+		int newindex = -1;
+
+		auto ins = m_map.insert( {sk, m_invtree.nextIndex()});
+		if (ins.second/*insert took place*/)
+		{
+			newindex = m_invtree.pushUpValue( scope, value, uplink);
+		}
+		else
+		{
+			rt = m_invtree.findUpValue( ins.first->second, scope);
+			if (rt != m_invtree.nullval()) return rt;
+
+			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink);
+		}
+		if (newindex >= 0)
+		{
+			auto leftnode = m_map.upper_bound( {key,scope.start()});
+			if (leftnode == m_map.end() || leftnode->first.key() != key)
+			{
+				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+			}
+			for (; leftnode->first.end() != scope.end(); ++leftnode)
+			{
+				m_invtree.linkLeftNeighbours( leftnode->second, scope, newindex);
 			}
 		}
 		return rt;
 	}
+
+	VALTYPE get( const Scope::Step step, const KEYTYPE& key) const noexcept
+	{
+		auto rt = m_invtree.nullval();
+		ScopedKey<KEYTYPE> sk( key, step);
+		auto it = m_map.upper_bound( sk);
+		if (it != m_map.end() && it->first.key() == key)
+		{
+			rt = m_invtree.getInnerValue( it->second, step);
+		}
+		return rt;
+	}
+
+	typedef typename ScopedUpValueInvTree<VALTYPE>::const_iterator invtree_iterator;
+
+	std::pair<invtree_iterator,invtree_iterator> match_range( const Scope::Step step, const KEYTYPE& key) const noexcept
+	{
+		std::pair<invtree_iterator,invtree_iterator> rt( m_invtree.end(), m_invtree.end());
+		ScopedKey<KEYTYPE> sk( key, step);
+		auto it = m_map.upper_bound( sk);
+		if (it != m_map.end() && it->first.key() == key)
+		{
+			rt.first = m_invtree.first( it->second, step);
+		}
+		return rt;
+	}
+
+private:
+	Map m_map;
+	ScopedUpValueInvTree<VALTYPE> m_invtree;
 };
 
 
 template <typename RELNODETYPE, typename VALTYPE>
 class ScopedRelationMap
-	:public std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> >
 {
 public:
-	typedef std::pmr::multimap<ScopedKey<RELNODETYPE>, std::pair<RELNODETYPE,VALTYPE>, ScopedMapOrder<RELNODETYPE> > ParentClass;
-
 	class ResultElement
 	{
 	public:
@@ -385,41 +509,80 @@ public:
 		VALTYPE m_value;
 	};
 
-	explicit ScopedRelationMap( std::pmr::memory_resource* memrsc) noexcept :ParentClass( memrsc) {}
+	ScopedRelationMap( std::pmr::memory_resource* memrsc, std::size_t initsize)
+		:m_map( memrsc, -1/*nullval*/, initsize),m_list() {m_list.reserve(initsize);}
 	ScopedRelationMap( const ScopedRelationMap& o) = default;
 	ScopedRelationMap& operator=( const ScopedRelationMap& o) = default;
 	ScopedRelationMap( ScopedRelationMap&& o) noexcept = default;
 	ScopedRelationMap& operator=( ScopedRelationMap&& o) noexcept = default;
 
-	std::pmr::vector<ResultElement> scoped_find( const RELNODETYPE& key, const Scope::Step step, std::pmr::memory_resource* res_memrsc) const noexcept
+	void set( const Scope scope, const RELNODETYPE& left, const RELNODETYPE& right, const VALTYPE& value)
 	{
-		int local_membuffer[ 512];
+		int newlistindex = m_list.size();
+		int li = m_map.getOrSet( scope, left, newlistindex);
+		int prev_li = -1;
+		while (li >= 0)
+		{
+			const ListElement& le = m_list[ li];
+			if (le.related == right)
+			{
+				throw Error( Error::DuplicateDefinition);
+			}
+			prev_li = li;
+			li = le.next;
+		}
+		m_list.push_back( ListElement( right, value, -1/*next*/));
+		if (prev_li >= 0)
+		{
+			m_list[ prev_li].next = newlistindex;
+		}
+	}
+
+	std::pmr::vector<ResultElement> get( const Scope::Step step, const RELNODETYPE& key, std::pmr::memory_resource* res_memrsc) const noexcept
+	{
+		int local_membuffer[ 2048];
 		std::pmr::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
 		std::pmr::map<RELNODETYPE,int> candidatemap( &local_memrsc);
 
 		std::pmr::vector<ResultElement> rt( res_memrsc);
-		std::pmr::vector<Scope> scopear( res_memrsc);
 
-		auto it = ParentClass::upper_bound( ScopedKey<RELNODETYPE>( key, Scope( step, step)));
-		for (; it != this->end() && it->first.key() == key; ++it)
+		auto range = m_map.match_range( step, key);
+		for (auto ri = range.first; ri != range.second; ++ri)
 		{
-			if (it->first.scope().start() <= step)
+			int li = *ri;
+			while (li >= 0)
 			{
-				auto ins = candidatemap.insert( {it->second.first, rt.size()});
+				const ListElement& le = m_list[ li];
+				auto ins = candidatemap.insert( {le.related, rt.size()});
 				if (ins.second /*insert took place*/)
 				{
-					scopear.push_back( it->first.scope());
-					rt.push_back( ResultElement( it->second.first, it->second.second));
+					rt.push_back( ResultElement( le.related/*type*/, le.value));
 				}
-				else if (scopear[ ins.first->second].contains( it->first.scope()))
-				{
-					scopear[ ins.first->second] = it->first.scope();
-					rt[ ins.first->second] = ResultElement( it->second.first, it->second.second);
-				}
+				li = le.next;
 			}
 		}
 		return rt;
 	}
+
+private:
+	struct ListElement
+	{
+		RELNODETYPE related;
+		VALTYPE value;
+		int next;
+
+		ListElement( const RELNODETYPE& related_, const VALTYPE& value_, int next_)
+			:related(related_),value(value_),next(next_){}
+		ListElement( const ListElement& o)
+			:related(o.related),value(o.value),next(o.next){}
+	};
+
+	typedef ScopedMap<RELNODETYPE,int> Map;
+	typedef std::vector<ListElement> List;
+
+private:
+	Map m_map;
+	List m_list;
 };
 
 }//namespace

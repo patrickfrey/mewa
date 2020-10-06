@@ -24,7 +24,11 @@ namespace mewa {
 class TypeDatabaseMemory
 {
 public:
-	enum {NofIdentInitBuckets = 1<<18};
+	enum {
+		NofIdentInitBuckets = 1<<18,
+		NofScopedMapInitBuckets = 1<<18,
+		NofReductionMapInitBuckets = 1<<18
+	};
 
 	TypeDatabaseMemory() noexcept
 		:m_identmap_memrsc( m_identmap_membuffer, sizeof m_identmap_membuffer)
@@ -42,7 +46,7 @@ private:
 	int m_identstr_membuffer[ 1<<22];
 	int m_typetab_membuffer[ 1<<22];
 	int m_redutab_membuffer[ 1<<22];
-	
+
 	std::pmr::monotonic_buffer_resource m_identmap_memrsc;
 	std::pmr::monotonic_buffer_resource m_identstr_memrsc;
 	std::pmr::monotonic_buffer_resource m_typetab_memrsc;
@@ -54,8 +58,8 @@ class TypeDatabase
 {
 public:
 	TypeDatabase( std::unique_ptr<TypeDatabaseMemory>&& memory_ = std::unique_ptr<TypeDatabaseMemory>( new TypeDatabaseMemory()))
-		:m_typeTable( memory_->resource_typetab())
-		,m_reduTable( memory_->resource_redutab())
+		:m_typeTable( memory_->resource_typetab(), 0/*nullval*/, TypeDatabaseMemory::NofScopedMapInitBuckets)
+		,m_reduTable( memory_->resource_redutab(), TypeDatabaseMemory::NofReductionMapInitBuckets)
 		,m_identMap( memory_->resource_identmap(), memory_->resource_identstr(), TypeDatabaseMemory::NofIdentInitBuckets)
 		,m_parameterMap()
 		,m_typerecMap()
@@ -73,6 +77,8 @@ public:
 		int type;
 		int constructor;
 
+		Parameter() noexcept
+			:type(0),constructor(0){}
 		Parameter( const Parameter& o) noexcept
 			:type(o.type),constructor(o.constructor){}
 		Parameter( int type_, int constructor_) noexcept

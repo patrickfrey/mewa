@@ -38,9 +38,10 @@ public:
 		KeywordDefinedTwiceInLexer=425,
 		TooManyInstancesCreated=426,
 		CompiledSourceTooComplex=427,
-		BadMewaVersion=428,
-		MissingMewaVersion=429,
-		IncompatibleMewaMajorVersion=430,
+
+		BadMewaVersion=437,
+		MissingMewaVersion=438,
+		IncompatibleMewaMajorVersion=439,
 
 		TooManyTypeArguments=440,
 		PriorityOutOfRange=441,
@@ -145,6 +146,7 @@ private:
 			case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
 			case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
 			case CompiledSourceTooComplex: return "Too complex source file (counter overflow)";
+
 			case BadMewaVersion: return "Bad mewa version";
 			case MissingMewaVersion: return "Missing mewa version";
 			case IncompatibleMewaMajorVersion: return "Incompatible mewa major version. You need a higher version of the mewa Lua module";

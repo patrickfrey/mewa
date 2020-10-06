@@ -59,6 +59,11 @@ namespace std
 			if (didx++) os << ", ";
 			os << def;
 		}
+		for (auto const& rel : sc.relations)
+		{
+			if (didx++) os << ", ";
+			os << rel.first << "->" << rel.second;
+		}
 		os << "}";
 		return os;
 	}
@@ -155,7 +160,19 @@ static void shuffle( std::vector<ELEM>& ar)
 
 static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 {
-	typedef std::pair< std::pair< std::string, Scope>, std::string> Insert;
+	struct Insert
+	{
+		Scope scope;
+		std::string key;
+		std::string value;
+
+		Insert()
+			:scope(0,0),key(),value(){}
+		Insert( const Scope scope_, const std::string& key_, const std::string& value_)
+			:scope(scope_),key(key_),value(value_){}
+		Insert( const Insert& o)
+			:scope(o.scope),key(o.key),value(o.value){}
+	};
 	std::vector<Insert> inserts;
 
 	std::vector<NodeDefTree const*> stk;
@@ -172,19 +189,32 @@ static void insertDefinitions( VarMap& varmap, NodeDefTree const* nd)
 
 		for (auto const& def : cur.item.vars)
 		{
-			inserts.push_back( {{def,cur.item.scope}, varConstructor( def, cur.item.id)} );
+			inserts.push_back( {cur.item.scope, def, varConstructor( def, cur.item.id)} );
 		}
 	}
 	shuffle( inserts);
-	for (auto kv : inserts)
+	for (auto ins : inserts)
 	{
-		varmap.insert( {{kv.first.first,kv.first.second}, kv.second} );
+		varmap.set( ins.scope, ins.key, ins.value);
 	}
 }
 
 static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 {
-	typedef std::pair< std::pair< std::string, Scope>, std::pair< std::string, int> > Insert;
+	struct Insert
+	{
+		Scope scope;
+		std::string left;
+		std::string right;
+		int value;
+
+		Insert()
+			:scope(0,0),left(),right(),value(){}
+		Insert( const Scope scope_, const std::string& left_, const std::string& right_, int value_)
+			:scope(scope_),left(left_),right(right_),value(value_){}
+		Insert( const Insert& o)
+			:scope(o.scope),left(o.left),right(o.right),value(o.value){}
+	};
 	std::vector<Insert> inserts;
 	std::vector<NodeDefTree const*> stk;
 	stk.push_back( nd);
@@ -200,13 +230,13 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 
 		for (auto const& rel : cur.item.relations)
 		{
-			inserts.push_back( {{rel.first, cur.item.scope}, {rel.second, cur.item.id}});
+			inserts.push_back( {cur.item.scope, rel.first, rel.second, cur.item.id});
 		}
 	}
 	shuffle( inserts);
-	for (auto kv : inserts)
+	for (auto ins : inserts)
 	{
-		relmap.insert( {{kv.first.first,kv.first.second}, {kv.second.first,kv.second.second}} );
+		relmap.set( ins.scope, ins.left, ins.right, ins.value);
 	}
 }
 
@@ -342,6 +372,13 @@ static void collectRelations( std::map<std::string,int>& result, const NodeDefTr
 	}
 }
 
+static std::map<std::string,int> getRelations( const NodeDefTree* nd, const std::string& first, Scope::Step step)
+{
+	std::map<std::string,int> rt;
+	collectRelations( rt, nd, first, step);
+	return rt;
+}
+
 static void randomVarQuery( const VarMap& varmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
 {
 	std::pair<std::string,Scope::Step> qry = selectVarQuery( nd);
@@ -350,18 +387,9 @@ static void randomVarQuery( const VarMap& varmap, const NodeDefTree* nd, int alp
 		qry.first = randomVariable( alphabetsize);
 		qry.second = g_random.get( 0, std::numeric_limits<int>::max());
 	}
-	/*[-]*/if (qry.second == 1827193198 && qry.first == "E")
-	/*[-]*/{
-	/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
-	/*[-]*/}
 	std::string expc = findVariable( nd, qry.first/*var*/, qry.second/*step*/);
-	std::string resc;
+	std::string resc = varmap.get( qry.second/*step*/, qry.first/*key*/);
 
-	auto ri = varmap.scoped_find( qry.first/*var*/, qry.second/*step*/);
-	if (ri != varmap.end())
-	{
-		resc = ri->second;
-	}
 	std::string expcstr = expc.empty() ? std::string("<no result>") : expc;
 	std::string rescstr = resc.empty() ? std::string("<no result>") : resc;
 	if (verbose)
@@ -378,7 +406,7 @@ static void randomVarQuery( const VarMap& varmap, const NodeDefTree* nd, int alp
 	}
 }
 
-static std::string relationsToString( const std::map<std::string,int>& ar)
+static std::string relationsToString( const std::string& left, const std::map<std::string,int>& ar)
 {
 	std::string rt;
 	rt.append( "{");
@@ -386,8 +414,7 @@ static std::string relationsToString( const std::map<std::string,int>& ar)
 	for (auto const& elem : ar)
 	{
 		if (ridx++) rt.append( ", ");
-		rt.append( elem.first);
-		rt.append( string_format(" -> %d", elem.second));
+		rt.append( string_format("%s->%s:%d", left.c_str(), elem.first.c_str(), elem.second));
 	}
 	rt.append( "}");
 	return rt;
@@ -401,20 +428,19 @@ static void randomRelQuery( const RelMap& relmap, const NodeDefTree* nd, int alp
 		qry.first = randomVariable( alphabetsize);
 		qry.second = g_random.get( 0, std::numeric_limits<int>::max());
 	}
-	std::map<std::string,int> expc;
-	collectRelations( expc, nd, qry.first/*first (relation)*/, qry.second/*step*/);
+	std::map<std::string,int> expc = getRelations( nd, qry.first/*first (relation)*/, qry.second/*step*/);
 
 	int local_membuffer[ 512];
 	std::pmr::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
 
 	std::map<std::string,int> resc;
-	auto results = relmap.scoped_find( qry.first/*var*/, qry.second/*step*/, &local_memrsc);
+	auto results = relmap.get( qry.second/*step*/, qry.first/*var*/, &local_memrsc);
 	for (auto const& result : results)
 	{
 		resc.insert( {result.type(), result.value()});
 	}
-	std::string expcstr = relationsToString( expc);
-	std::string rescstr = relationsToString( resc);
+	std::string expcstr = relationsToString( qry.first, expc);
+	std::string rescstr = relationsToString( qry.first, resc);
 	if (verbose)
 	{
 		std::cerr << mewa::string_format( "Query relations of '%s' at step %d: Expected %s, got %s",
@@ -495,8 +521,8 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 
 	g_idCounter = 0;
-	VarMap varmap( &memrsc);
-	RelMap relmap( &memrsc);
+	VarMap varmap( &memrsc, ""/*nullval*/, 1024/*initsize*/);
+	RelMap relmap( &memrsc, 1024/*initsize*/);
 	IdSet idset( &memrsc, -1/*nullval*/, 1024/*initsize*/);
 
 	int depth = g_random.get( 1, maxdepth+1);
