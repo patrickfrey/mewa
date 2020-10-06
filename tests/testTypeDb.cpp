@@ -34,12 +34,38 @@ struct TestTypeDef
 	const char* resultType;
 	char const* ar[12];		//< nullptr terminated list of items
 	int priority;
+
+	std::string tostring() const
+	{
+		std::ostringstream buf;
+		buf << ar[0];
+		if (ar[0][0]) buf << "::";
+		buf << ar[1];
+		if (resultType[0])
+		{
+			buf << "(";
+			for (std::size_t ai = 0; ar[ ai+2]; ++ai)
+			{
+				if (ai) buf << ", ";
+				buf << ar[ ai+2];
+			}
+			buf << ") -> " << resultType;
+		}
+		return buf.str();
+	}
 };
 
 struct TestReductionDef
 {
 	char const* fromType;
 	char const* toType;
+
+	std::string tostring() const
+	{
+		std::ostringstream buf;
+		buf << toType << " <- " << fromType;
+		return buf.str();
+	}
 };
 
 struct TestScopeDef
@@ -49,8 +75,8 @@ struct TestScopeDef
 	TestTypeDef types[ 32];		//< {nullptr,..} terminated list of type definitions
 };
 
-static int nofTests = 1;
-static TestScopeDef tests[1] = {
+static int nofTestScopeDefs = 1;
+static TestScopeDef testScopeDefs[1] = {
 	{
 		{0,1000},
 		{
@@ -103,6 +129,17 @@ static TestScopeDef tests[1] = {
 	}
 };
 
+struct TestQueryDef
+{
+	Scope::Step step;
+	char const* ar[12];	//< nullptr terminated list of items
+};
+
+static TestQueryDef testQueries[ 64] = {
+	{0,{nullptr}}
+};
+
+
 static int getContextType( TypeDatabase* typedb, const Scope::Step step, const char* tpstr)
 {
 	std::vector<std::string_view> split;
@@ -120,8 +157,8 @@ static int getContextType( TypeDatabase* typedb, const Scope::Step step, const c
 	for (auto const& item : split)
 	{
 		TypeDatabase::ResultBuffer resbuf;
-		auto res = typedb->resolve( step, contextType, item, 0, resbuf);
-		if (res.items.empty() != 1) throw Error( Error::UnresolvableType, item);
+		auto res = typedb->resolve( step, contextType, item, resbuf);
+		if (res.items.empty()) throw Error( Error::UnresolvableType, item);
 		if (res.items.size() > 1) throw Error( Error::AmbiguousTypeReference, item);
 
 		contextType = res.items[0].type;
@@ -157,7 +194,7 @@ struct TypeDatabaseImpl
 static std::string typeLabel( char const* const* arg)
 {
 	std::string rt;
-	while (*arg)
+	for (; *arg; ++arg)
 	{
 		if (!rt.empty()) rt.push_back('_');
 		rt.append( *arg);
@@ -194,20 +231,27 @@ static void defineReduction( TypeDatabaseImpl& tdbimpl, const TestReductionDef& 
 	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId);
 }
 
-static void defineTestScopeDef( TypeDatabaseImpl& tdbimpl, const TestScopeDef& def)
+static void defineTestScopeDef( TypeDatabaseImpl& tdbimpl, const TestScopeDef& def, bool verbose)
 {
 	int ti = 0;
+	if (verbose) std::cerr << "In scope " << def.scope.tostring() << std::endl;
 	for (; def.types[ti].ar[0]; ++ti)
 	{
+		if (verbose) std::cerr << "Define type " << def.types[ ti].tostring() << std::endl;
 		defineType( tdbimpl, def.types[ ti], def.scope);
 	}
 	int ri = 0;
 	for (; def.redus[ri].fromType; ++ri)
 	{
+		if (verbose) std::cerr << "Define reduction " << def.redus[ ri].tostring() << std::endl;
 		defineReduction( tdbimpl, def.redus[ ri], def.scope);
 	}
+	if (verbose) std::cerr << std::endl;
 }
 
+static void testQuery( const TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, bool verbose)
+{
+}
 
 int main( int argc, const char* argv[] )
 {
@@ -249,9 +293,13 @@ int main( int argc, const char* argv[] )
 		std::unique_ptr<TypeDatabase> typedb( new TypeDatabase());
 		TypeDatabaseImpl tdbimpl( typedb.get());
 
-		for (int ti=1; ti < nofTests; ++ti)
+		for (int ti=0; ti < nofTestScopeDefs; ++ti)
 		{
-			defineTestScopeDef( tdbimpl, tests[ ti]);
+			defineTestScopeDef( tdbimpl, testScopeDefs[ ti], verbose);
+		}
+		for (int qi=0; testQueries[ qi].ar[0]; ++qi)
+		{
+			testQuery( tdbimpl, testQueries[ qi], verbose);
 		}
 		std::string expected{R"(
 )"};

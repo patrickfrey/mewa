@@ -155,8 +155,8 @@ private:
 			case PriorityOutOfRange: return "Priority value out of range";
 			case DuplicateDefinition: return "Duplicate definition";
 
-			case UnresolvableType: return "Failed to resolve item/type";
-			case AmbiguousTypeReference: return "Ambiguous item/type reference";
+			case UnresolvableType: return "Failed to resolve type";
+			case AmbiguousTypeReference: return "Ambiguous type reference";
 			case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";

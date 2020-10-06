@@ -209,24 +209,28 @@ struct ReduQueueElem
 TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
 {
 	ReduceResult rt( resbuf);
-	if (toType == fromType) return rt;
 	
 	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem> priorityQueue;
+	//NOTE: no pmr variant found for priority_queue
 
 	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/);
 	priorityQueue.push( ReduQueueElem( 0/*length*/, 0/*index*/));
 
-	bool done = false;
-	while (!done && !priorityQueue.empty())
+	while (!priorityQueue.empty())
 	{
 		auto qe = priorityQueue.top();
 		priorityQueue.pop();
 		auto const& elem = stack[ qe.index];
 
+		if (elem.type == toType)
+		{
+			stack.collectResult( rt.reductions, qe.index);
+			break;
+		}
 		int redu_buffer[ 512];
 		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 		auto redulist = m_reduTable->get( elem.type, step, &redu_memrsc);
@@ -236,24 +240,24 @@ TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, i
 			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
 			if (index >= 0)
 			{
-				if (redu.type() == toType)
-				{
-					stack.collectResult( rt.reductions, index);
-					done = true;
-					break;
-				}
-				else
-				{
-					priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
-				}
+				priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
 			}
 		}
 	}
 	return rt;
 }
 
+void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const
+{
+	while (typerecidx > 0)
+	{
+		const TypeRecord& rec = m_typerecMap[ typerecidx-1];
+		items.push_back( ResolveResultItem( typerecidx, rec.constructor));
+		typerecidx = rec.next;
+	}
+}
 
-TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, int nofParameters, ResultBuffer& resbuf)
+TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf)
 {
 	ResolveResult rt( resbuf);
 	int nameid = m_identMap->get( name);
@@ -263,16 +267,25 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem> priorityQueue;
+	//NOTE: no pmr variant found for priority_queue
 
 	stack.pushIfNew( contextType, 0/*constructor*/, -1/*prev*/);
 	priorityQueue.push( ReduQueueElem( 0/*length*/, 0/*index*/));
 
-	bool done = false;
-	while (!done && !priorityQueue.empty())
+	while (!priorityQueue.empty())
 	{
 		auto qe = priorityQueue.top();
 		priorityQueue.pop();
 		auto const& elem = stack[ qe.index];
+
+		int typerecidx = m_typeTable->get( step, TypeDef( elem.type, nameid));
+		if (typerecidx)
+		{
+			//... we found a match and because of Dikstra we are finished
+			stack.collectResult( rt.reductions, qe.index);
+			collectResultItems( rt.items, typerecidx);
+			break;
+		}
 
 		int redu_buffer[ 512];
 		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
@@ -283,26 +296,8 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
 			if (index >= 0)
 			{
-				int typerecidx = m_typeTable->get( step, TypeDef( redu.type(), nameid));
-				if (typerecidx)
-				{
-					stack.collectResult( rt.reductions, index);
-					while (typerecidx > 0)
-					{
-						const TypeRecord& rec = m_typerecMap[ typerecidx-1];
-						if (nofParameters == -1 || nofParameters == (int)rec.parameterlen)
-						{
-							rt.items.push_back( ResolveResultItem( typerecidx, rec.constructor));
-						}
-						typerecidx = rec.next;
-					}
-					done = true;
-					break;
-				}
-				else
-				{
-					priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
-				}
+				//... type not used yet in a previous search (avoid cycles)
+				priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
 			}
 		}
 	}

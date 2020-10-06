@@ -158,10 +158,9 @@ public:
 	/// \param[in] scope step the scope step of the search defining what are valid reductions
 	/// \param[in] contextType the context (realm,namespace) of the query type. The searched item has a context type that is reachable via a path of type reductions.
 	/// \param[in] name name of the type searched
-	/// \param[in] nofParameters expected number of parameters or -1 if not specified
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found	
-	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, int nofParameters, ResultBuffer& resbuf);
+	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf);
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type handle of the type (return value of defineType)
@@ -175,6 +174,7 @@ public:
 
 private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
+	void collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const;
 
 private:
 	struct MemoryBlock
