@@ -17,6 +17,8 @@
 #include "strings.hpp"
 #include "identmap.hpp"
 #include <string_view>
+#include <vector>
+#include <cstdlib>
 #include <memory>
 
 namespace mewa {
@@ -24,51 +26,54 @@ namespace mewa {
 class TypeDatabaseMemory
 {
 public:
-	enum {
-		NofIdentInitBuckets = 1<<18,
-		NofScopedMapInitBuckets = 1<<18,
-		NofReductionMapInitBuckets = 1<<18
-	};
-
-	TypeDatabaseMemory() noexcept
-		:m_identmap_memrsc( m_identmap_membuffer, sizeof m_identmap_membuffer)
-		,m_identstr_memrsc( m_identstr_membuffer, sizeof m_identstr_membuffer)
-		,m_typetab_memrsc( m_typetab_membuffer, sizeof m_typetab_membuffer)
-		,m_redutab_memrsc( m_redutab_membuffer, sizeof m_redutab_membuffer){}
+	TypeDatabaseMemory( void* buffer, std::size_t buffersize) noexcept
+		:m_identmap_memrsc( (char*)buffer+(0*buffersize/4), buffersize/4)
+		,m_identstr_memrsc( (char*)buffer+(1*buffersize/4), buffersize/4)
+		,m_typetab_memrsc(  (char*)buffer+(2*buffersize/4), buffersize/4)
+		,m_redutab_memrsc(  (char*)buffer+(3*buffersize/4), buffersize/4)
+		,m_nofInitBuckets( buffersize / (1<<6)){}
 
 	std::pmr::memory_resource* resource_identmap() noexcept		{return &m_identmap_memrsc;}
 	std::pmr::memory_resource* resource_identstr() noexcept		{return &m_identstr_memrsc;}
 	std::pmr::memory_resource* resource_typetab() noexcept		{return &m_typetab_memrsc;}
 	std::pmr::memory_resource* resource_redutab() noexcept		{return &m_redutab_memrsc;}
 
-private:
-	int m_identmap_membuffer[ 1<<22];
-	int m_identstr_membuffer[ 1<<22];
-	int m_typetab_membuffer[ 1<<22];
-	int m_redutab_membuffer[ 1<<22];
+	std::size_t nofIdentInitBuckets() const noexcept		{return m_nofInitBuckets;}
+	std::size_t nofScopedMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
+	std::size_t nofReductionMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
+	std::size_t nofParameterMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
+	std::size_t nofTypeRecordMapInitBuckets() const noexcept	{return m_nofInitBuckets;}
 
+private:
 	std::pmr::monotonic_buffer_resource m_identmap_memrsc;
 	std::pmr::monotonic_buffer_resource m_identstr_memrsc;
 	std::pmr::monotonic_buffer_resource m_typetab_memrsc;
 	std::pmr::monotonic_buffer_resource m_redutab_memrsc;
+	std::size_t m_nofInitBuckets;
 };
 
 
 class TypeDatabase
 {
 public:
-	TypeDatabase( std::unique_ptr<TypeDatabaseMemory>&& memory_ = std::unique_ptr<TypeDatabaseMemory>( new TypeDatabaseMemory()))
-		:m_typeTable( memory_->resource_typetab(), 0/*nullval*/, TypeDatabaseMemory::NofScopedMapInitBuckets)
-		,m_reduTable( memory_->resource_redutab(), TypeDatabaseMemory::NofReductionMapInitBuckets)
-		,m_identMap( memory_->resource_identmap(), memory_->resource_identstr(), TypeDatabaseMemory::NofIdentInitBuckets)
+	explicit TypeDatabase( std::size_t initmemsize = 1<<26)
+		:m_memory()
+		,m_typeTable()
+		,m_reduTable()
+		,m_identMap()
 		,m_parameterMap()
 		,m_typerecMap()
-		,m_typeInvTable()
-		,m_memory(std::move(memory_))
 	{
-		m_parameterMap.reserve( TypeDatabaseMemory::NofIdentInitBuckets);
-		m_typerecMap.reserve( TypeDatabaseMemory::NofIdentInitBuckets);
-		m_typeInvTable.reserve( TypeDatabaseMemory::NofIdentInitBuckets);
+		void* mem = std::malloc( initmemsize);
+		if (!mem) throw std::bad_alloc();
+		m_memory.reset( new TypeDatabaseMemory( mem, initmemsize));
+
+		m_typeTable.reset( new TypeTable( m_memory->resource_typetab(), 0/*nullval*/, m_memory->nofScopedMapInitBuckets()));
+		m_reduTable.reset( new ReductionTable( m_memory->resource_redutab(), m_memory->nofReductionMapInitBuckets()));
+		m_identMap.reset( new IdentMap( m_memory->resource_identmap(), m_memory->resource_identstr(), m_memory->nofIdentInitBuckets()));
+
+		m_parameterMap.reserve( m_memory->nofParameterMapInitBuckets());
+		m_typerecMap.reserve( m_memory->nofTypeRecordMapInitBuckets());
 	}
 
 public:
@@ -223,21 +228,20 @@ private:
 		short parameterlen;
 		int parameter;
 		int next;
+		TypeDef inv;
 
 		TypeRecord( const TypeRecord& o)
-			:constructor(o.constructor),priority(o.priority),parameter(o.parameter),next(o.next){}
-		TypeRecord( int constructor_, int parameter_, short parameterlen_, short priority_)
-			:constructor(constructor_),priority(priority_),parameter(parameter_),next(0){}
+			:constructor(o.constructor),priority(o.priority),parameter(o.parameter),next(o.next),inv(o.inv){}
+		TypeRecord( int constructor_, int parameter_, short parameterlen_, short priority_, const TypeDef& inv_)
+			:constructor(constructor_),priority(priority_),parameter(parameter_),next(0),inv(inv_){}
 	};
 
-	TypeTable m_typeTable;
-	ReductionTable m_reduTable;
-	IdentMap m_identMap;
+	std::unique_ptr<TypeDatabaseMemory> m_memory;	//< memory resource used by maps (has to be defined before tables and maps as these depend on it!)
+	std::unique_ptr<TypeTable> m_typeTable;
+	std::unique_ptr<ReductionTable> m_reduTable;
+	std::unique_ptr<IdentMap> m_identMap;
 	std::vector<Parameter> m_parameterMap;
 	std::vector<TypeRecord> m_typerecMap;
-	std::vector<TypeDef> m_typeInvTable;
-
-	std::unique_ptr<TypeDatabaseMemory> m_memory;
 };
 
 }//namespace

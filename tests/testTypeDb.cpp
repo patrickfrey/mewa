@@ -31,8 +31,8 @@ using namespace mewa;
 
 struct TestTypeDef
 {
+	const char* resultType;
 	char const* ar[12];		//< nullptr terminated list of items
-	char const* constructor;
 	int priority;
 };
 
@@ -40,10 +40,9 @@ struct TestReductionDef
 {
 	char const* fromType;
 	char const* toType;
-	char const* constructor;
 };
 
-struct TestScopeTypeDefs
+struct TestScopeDef
 {
 	Scope scope;
 	TestReductionDef redus[ 32]; 	//< {nullptr,..} terminated list of reduction definitions
@@ -51,46 +50,55 @@ struct TestScopeTypeDefs
 };
 
 static int nofTests = 1;
-static TestScopeTypeDefs tests[1] = {
+static TestScopeDef tests[1] = {
 	{
 		{0,1000},
 		{
-			{"byte","uint","byte2uint"},
-			{"uint","byte","uint2byte"},
-			{"int","uint","int2uint"},
-			{"uint","int","uint2int"},
-			{"long","int","long2int"},
-			{"int","long","int2long"},
-			{"uint","long","uint2long"},
-			{"long","uint","long2uint"},
-			{"long","double","long2double"},
-			{"double","long","double2long"},
-			{"int","float","int2float"},
-			{"float","int","float2int"},
-			{"float","double","float2double"},
-			{"double","float","double2float"},
-			{nullptr,nullptr,nullptr}
+			{"byte","uint"},
+			{"uint","byte"},
+			{"int","uint"},
+			{"uint","int"},
+			{"long","int"},
+			{"int","long"},
+			{"uint","long"},
+			{"long","uint"},
+			{"long","double"},
+			{"double","long"},
+			{"int","float"},
+			{"float","int"},
+			{"float","double"},
+			{"double","float"},
+			{"myclass","float"},
+			{"myclass","double"},
+			{nullptr,nullptr}
 		},
 		{
-			{{"", "byte", nullptr}, "#byte", 0},
-			{{"", "int", nullptr}, "#int", 0},
-			{{"", "uint", nullptr}, "#uint", 0},
-			{{"", "long", nullptr}, "#long", 0},
-			{{"", "float", nullptr}, "#float", 0},
-			{{"", "double", nullptr}, "#double", 0},
-			{{"", "func_int_int_int", "int", "int", "int", nullptr}, "#func_int_int_int", 0},
-			{{"", "func_uint_int_int", "uint", "int", "int", nullptr}, "#func_uint_int_int", 0},
-			{{"", "func_double_int_int", "double", "int", "int", nullptr}, "#func_double_int_int", 0},
-			{{"", "func_double_byte_uint", "double", "byte", "uint", nullptr}, "#func_double_byte_uint", 0},
-			{{"", "func_long_uint_uint", "long", "uint", "uint", nullptr}, "#func_long_uint_uint", 0},
-			{{"", "func_byte_int_int", "byte", "int", "int", nullptr}, "#func_byte_int_int", 0},
-			{{"", "func_byte_int", "byte", "int", nullptr}, "#func_byte_int", 0},
-			{{"", "func_int_int", "int", "int", nullptr}, "#func_int_int", 0},
-			{{"", "func_int_long", "int", "long", nullptr}, "#func_int_long", 0},
-			{{"", "func_int_double", "int", "double", nullptr}, "#func_int_double", 0},
-			{{"", "func_float_float", "float", "float", nullptr}, "#func_float_float", 0},
-			{{"", "func_double_double", "double", "double", nullptr}, "#func_double_double", 0},
-			{{nullptr}, nullptr, 0}
+			{"", {"", "byte", nullptr}, 0},
+			{"", {"", "int", nullptr}, 0},
+			{"", {"", "uint", nullptr}, 0},
+			{"", {"", "long", nullptr}, 0},
+			{"", {"", "float", nullptr}, 0},
+			{"", {"", "double", nullptr}, 0},
+			{"", {"", "func", "int", "int", "int", nullptr}, 0},
+			{"", {"", "func", "uint", "int", "int", nullptr}, 0},
+			{"", {"", "func", "double", "int", "int", nullptr}, 0},
+			{"", {"", "func", "double", "byte", "uint", nullptr}, 0},
+			{"", {"", "func", "long", "uint", "uint", nullptr}, 0},
+			{"", {"", "func", "byte", "int", "int", nullptr}, 0},
+			{"int", {"", "func", "byte", "int", nullptr}, 0},
+			{"int", {"", "func", "int", "int", nullptr}, 0},
+			{"long", {"", "func", "int", "long", nullptr}, 0},
+			{"double", {"", "func", "int", "double", nullptr}, 0},
+			{"float", {"", "func", "float", "float", nullptr}, 0},
+			{"double", {"", "func", "double", "double", nullptr}, 0},
+			{"", {"", "myclass", nullptr}, 0},
+			{"", {"myclass", "constructor myclass", "int", nullptr}, 0},
+			{"", {"myclass", "constructor myclass", "float", "float", nullptr}, 0},
+			{"", {"myclass", "constructor myclass", "myclass", nullptr}, 0},
+			{"", {"myclass", "~myclass", nullptr}, 0},
+			{"", {"myclass", "member", "myclass", nullptr}, 0},
+			{"", {"myclass", "member", "int", nullptr}, 0},
+			{nullptr, {nullptr}, 0}
 		}
 	}
 };
@@ -146,10 +154,21 @@ struct TypeDatabaseImpl
 	}
 };
 
-static int defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, const Scope& scope)
+static std::string typeLabel( char const* const* arg)
+{
+	std::string rt;
+	while (*arg)
+	{
+		if (!rt.empty()) rt.push_back('_');
+		rt.append( *arg);
+	}
+	return rt;
+}
+
+static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, const Scope& scope)
 {
 	int contextType = getContextType( tdbimpl.typedb, scope.start(), tpdef.ar[0]);
-	std::string_view name( tpdef.ar[1]);
+	std::string name( typeLabel( tpdef.ar+1));
 	std::vector<TypeDatabase::Parameter> parameter;
 	int ti = 2;
 	for (; tpdef.ar[ti]; ++ti)
@@ -157,18 +176,38 @@ static int defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, cons
 		int parameterType = getContextType( tdbimpl.typedb, scope.start(), tpdef.ar[ti]);
 		parameter.push_back( {parameterType, tdbimpl.getConstructorFromName( std::string("#") + tpdef.ar[ti])} );
 	}
-	int constructor = tdbimpl.getConstructorFromName( tpdef.constructor);
-	return tdbimpl.typedb->defineType( scope, contextType, name, constructor, parameter, tpdef.priority);
-}
-
-static void defineTestScopeTypeDefs( TypeDatabaseImpl& tdbimpl, const TestScopeTypeDefs& defs)
-{
-	int ti = 0;
-	for (; defs.types[ti].ar[0]; ++ti)
+	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + name);
+	int funcTypeId = tdbimpl.typedb->defineType( scope, contextType, name, constructorId, parameter, tpdef.priority);
+	if (tpdef.resultType[0])
 	{
-		(void)defineType( tdbimpl, defs.types[ti], defs.scope);
+		int resultTypeId = getContextType( tdbimpl.typedb, scope.start(), tpdef.resultType);
+		int resultConstructorId = tdbimpl.getConstructorFromName( std::string("#") + tpdef.resultType);
+		tdbimpl.typedb->defineReduction( scope, resultTypeId, funcTypeId, resultConstructorId);
 	}
 }
+
+static void defineReduction( TypeDatabaseImpl& tdbimpl, const TestReductionDef& rddef, const Scope& scope)
+{
+	int fromTypeId = getContextType( tdbimpl.typedb, scope.start(), rddef.fromType);
+	int toTypeId = getContextType( tdbimpl.typedb, scope.start(), rddef.toType);
+	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + rddef.toType + "<-" + rddef.fromType);
+	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId);
+}
+
+static void defineTestScopeDef( TypeDatabaseImpl& tdbimpl, const TestScopeDef& def)
+{
+	int ti = 0;
+	for (; def.types[ti].ar[0]; ++ti)
+	{
+		defineType( tdbimpl, def.types[ ti], def.scope);
+	}
+	int ri = 0;
+	for (; def.redus[ri].fromType; ++ri)
+	{
+		defineReduction( tdbimpl, def.redus[ ri], def.scope);
+	}
+}
+
 
 int main( int argc, const char* argv[] )
 {
@@ -212,7 +251,7 @@ int main( int argc, const char* argv[] )
 
 		for (int ti=1; ti < nofTests; ++ti)
 		{
-			defineTestScopeTypeDefs( tdbimpl, tests[ ti]);
+			defineTestScopeDef( tdbimpl, tests[ ti]);
 		}
 		std::string expected{R"(
 )"};
