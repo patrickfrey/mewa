@@ -225,7 +225,7 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 	shuffle( inserts, g_random);
 	for (auto ins : inserts)
 	{
-		relmap.set( ins.scope, ins.left, ins.right, ins.value);
+		relmap.set( ins.scope, ins.left, ins.right, ins.value, 1.0/*weight*/);
 	}
 }
 

@@ -15,6 +15,7 @@
 #include <utility>
 #include <algorithm>
 #include <queue>
+#include <limits>
 
 using namespace mewa;
 
@@ -122,9 +123,9 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 }
 
 
-void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor)
+void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight)
 {
-	m_reduTable->set( scope, fromType, toType, constructor );
+	m_reduTable->set( scope, fromType, toType, constructor, weight);
 }
 
 
@@ -189,36 +190,70 @@ private:
 
 struct ReduQueueElem
 {
-	int length;
+	float weight;
 	int index;
 
 	ReduQueueElem() noexcept
-		:length(0),index(-1){}
-	ReduQueueElem( int length_, int index_) noexcept
-		:length(length_),index(index_){}
+		:weight(0.0),index(-1){}
+	ReduQueueElem( float weight_, int index_) noexcept
+		:weight(weight_),index(index_){}
 	ReduQueueElem( const ReduQueueElem& o) noexcept
-		:length(o.length),index(o.index){}
+		:weight(o.weight),index(o.index){}
 
 	bool operator < (const ReduQueueElem& o) const noexcept
 	{
-		return length == o.length ? index < o.index : length < o.length;
+		return weight == o.weight ? index < o.index : weight < o.weight;
+	}
+	bool operator > (const ReduQueueElem& o) const noexcept
+	{
+		return weight == o.weight ? index > o.index : weight > o.weight;
 	}
 };
 
+std::string TypeDatabase::reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const
+{
+	std::string rt;
+	int ridx = 0;
+	for (auto const& redu :reductions)
+	{
+		if (ridx++) rt.append( " -> ");
+		rt.append( typeToString( redu.type));
+	}
+	return rt;
+}
+
+std::string TypeDatabase::reduceResultToString( const ReduceResult& res) const
+{
+	return reductionsToString( res.reductions);
+}
+
+std::string TypeDatabase::resolveResultToString( const ResolveResult& res) const
+{
+	std::string rt = reductionsToString( res.reductions);
+	rt.append( " {");
+	int iidx = 0;
+	for (auto const& item :res.items)
+	{
+		if (iidx++) rt.append( ", ");
+		rt.append( typeToString( item.type));
+	}
+	rt.append( "}");
+	return rt;
+}
 
 TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
 {
 	ReduceResult rt( resbuf);
-	
+
 	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
-	std::priority_queue<ReduQueueElem> priorityQueue;
+	std::priority_queue<ReduQueueElem,std::vector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
 	//NOTE: no pmr variant found for priority_queue
 
 	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/);
-	priorityQueue.push( ReduQueueElem( 0/*length*/, 0/*index*/));
+	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
 
 	while (!priorityQueue.empty())
 	{
@@ -228,19 +263,38 @@ TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, i
 
 		if (elem.type == toType)
 		{
+			//... we found a match and because of Dikstra we are finished
 			stack.collectResult( rt.reductions, qe.index);
+
+			// Search for an alternative solution to report an ambiguous reference error:
+			while (!priorityQueue.empty())
+			{
+				auto alt_qe = priorityQueue.top();
+				if (alt_qe.weight > qe.weight + std::numeric_limits<float>::epsilon()) break;
+				priorityQueue.pop();
+
+				auto const& alt_elem = stack[ alt_qe.index];
+
+				if (alt_elem.type == toType)
+				{
+					ReduceResult alt_rt( resbuf);
+					stack.collectResult( alt_rt.reductions, alt_qe.index);
+
+					throw Error( Error::AmbiguousTypeReference, reduceResultToString( rt) + ", " + reduceResultToString( alt_rt));
+				}
+			}
 			break;
 		}
 		int redu_buffer[ 512];
 		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-		auto redulist = m_reduTable->get( elem.type, step, &redu_memrsc);
+		auto redulist = m_reduTable->get( step, elem.type, &redu_memrsc);
 
 		for (auto const& redu : redulist)
 		{
 			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
 			if (index >= 0)
 			{
-				priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
+				priorityQueue.push( ReduQueueElem( qe.weight + redu.weight(), index));
 			}
 		}
 	}
@@ -266,11 +320,11 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
-	std::priority_queue<ReduQueueElem> priorityQueue;
+	std::priority_queue<ReduQueueElem,std::vector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
 	//NOTE: no pmr variant found for priority_queue
 
 	stack.pushIfNew( contextType, 0/*constructor*/, -1/*prev*/);
-	priorityQueue.push( ReduQueueElem( 0/*length*/, 0/*index*/));
+	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
 
 	while (!priorityQueue.empty())
 	{
@@ -284,6 +338,26 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 			//... we found a match and because of Dikstra we are finished
 			stack.collectResult( rt.reductions, qe.index);
 			collectResultItems( rt.items, typerecidx);
+
+			// Search for an alternative solution to report an ambiguous reference error:
+			while (!priorityQueue.empty())
+			{
+				auto alt_qe = priorityQueue.top();
+				if (alt_qe.weight > qe.weight + std::numeric_limits<float>::epsilon()) break;
+				priorityQueue.pop();
+
+				auto const& alt_elem = stack[ alt_qe.index];
+				int alt_typerecidx = m_typeTable->get( step, TypeDef( alt_elem.type, nameid));
+
+				if (alt_typerecidx)
+				{
+					ResolveResult alt_rt( resbuf);
+					stack.collectResult( alt_rt.reductions, alt_qe.index);
+					collectResultItems( alt_rt.items, alt_typerecidx);
+
+					throw Error( Error::AmbiguousTypeReference, resolveResultToString( rt) + ", " + resolveResultToString( alt_rt));
+				}
+			}
 			break;
 		}
 
@@ -297,7 +371,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 			if (index >= 0)
 			{
 				//... type not used yet in a previous search (avoid cycles)
-				priorityQueue.push( ReduQueueElem( qe.length+1/*length*/, index));
+				priorityQueue.push( ReduQueueElem( qe.weight + redu.weight(), index));
 			}
 		}
 	}

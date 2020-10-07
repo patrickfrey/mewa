@@ -46,6 +46,7 @@ public:
 		TooManyTypeArguments=440,
 		PriorityOutOfRange=441,
 		DuplicateDefinition=442,
+		BadRelationWeight=443,
 
 		UnresolvableType=451,
 		AmbiguousTypeReference=452,
@@ -154,6 +155,7 @@ private:
 			case TooManyTypeArguments: return "Too many arguments in type definition";
 			case PriorityOutOfRange: return "Priority value out of range";
 			case DuplicateDefinition: return "Duplicate definition";
+			case BadRelationWeight: return "Bad weight <= 0.0 given to relation, possibly leading to endless loop in search";
 
 			case UnresolvableType: return "Failed to resolve type";
 			case AmbiguousTypeReference: return "Ambiguous type reference";

@@ -54,7 +54,7 @@ MODOBJS  := $(BUILDDIR)/lualib_mewa.o $(BUILDDIR)/lua_load_automaton.o $(BUILDDI
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
 TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
-		$(BUILDDIR)/testIdentMap $(BUILDDIR)/testAutomaton \
+		$(BUILDDIR)/testRandomIdentMap $(BUILDDIR)/testAutomaton \
 		$(BUILDDIR)/testTypeDb $(BUILDDIR)/testRandomTypeDb
 PROGRAM  := $(BUILDDIR)/mewa 
 
@@ -96,7 +96,7 @@ test : all
 	$(BUILDDIR)/testLexer
 	$(BUILDDIR)/testScope
 	$(BUILDDIR)/testRandomScope
-	$(BUILDDIR)/testIdentMap
+	$(BUILDDIR)/testRandomIdentMap
 	$(BUILDDIR)/testAutomaton
 	$(BUILDDIR)/testTypeDb
 	$(BUILDDIR)/testRandomTypeDb

@@ -7,8 +7,8 @@
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-/// \brief IdentMap test program
-/// \file "testIdentMap.cpp"
+/// \brief IdentMap test program with random keys
+/// \file "testRandomIdentMap.cpp"
 
 #if __cplusplus < 201703L
 #error Building mewa requires at least C++17
@@ -69,7 +69,7 @@ int main( int argc, const char* argv[] )
 			}
 			else if (0==std::strcmp( argv[argi], "-h"))
 			{
-				std::cerr << "Usage: testIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
+				std::cerr << "Usage: testRandomIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
 				return 0;
 			}
 			else if (0==std::strcmp( argv[argi], "--"))
@@ -79,7 +79,7 @@ int main( int argc, const char* argv[] )
 			}
 			else if (argv[argi][0] == '-')
 			{
-				std::cerr << "Usage: testIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
+				std::cerr << "Usage: testRandomIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
 				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
 			}
 			else
@@ -93,7 +93,7 @@ int main( int argc, const char* argv[] )
 
 		if (argi < argc)
 		{
-			std::cerr << "Usage: testIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
+			std::cerr << "Usage: testRandomIdentMap [-h][-V] [<nof tests>] [<max key length>] [<nof buckets>]" << std::endl;
 			throw std::runtime_error( "too many arguments");
 		}
 		static const char* alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJLMNOPQRSTUVWXYZ_-0123456789     "; //< key alphabet

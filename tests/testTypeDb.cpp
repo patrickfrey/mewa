@@ -59,11 +59,16 @@ struct TestReductionDef
 {
 	char const* fromType;
 	char const* toType;
+	float weight;
 
 	std::string tostring() const
 	{
 		std::ostringstream buf;
 		buf << toType << " <- " << fromType;
+		if (weight != 1.0)
+		{
+			buf << " (" << weight << ")";
+		}
 		return buf.str();
 	}
 };
@@ -80,22 +85,22 @@ static TestScopeDef testScopeDefs[1] = {
 	{
 		{0,1000},
 		{
-			{"byte","uint"},
-			{"uint","byte"},
-			{"int","uint"},
-			{"uint","int"},
-			{"long","int"},
-			{"int","long"},
-			{"uint","long"},
-			{"long","uint"},
-			{"long","double"},
-			{"double","long"},
-			{"int","float"},
-			{"float","int"},
-			{"float","double"},
-			{"double","float"},
-			{"myclass","float"},
-			{"myclass","double"},
+			{"byte","uint",1.0},
+			{"uint","byte",1.0},
+			{"int","uint",1.0},
+			{"uint","int",1.0},
+			{"long","int",1.0},
+			{"int","long",1.0},
+			{"uint","long",1.0},
+			{"long","uint",1.0},
+			{"long","double",1.0},
+			{"double","long",1.0},
+			{"int","float",1.0},
+			{"float","int",1.0},
+			{"float","double",1.0},
+			{"double","float",1.0},
+			{"myclass","float",1.0},
+			{"myclass","double",1.0},
 			{nullptr,nullptr}
 		},
 		{
@@ -219,7 +224,7 @@ static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, con
 	{
 		int resultTypeId = getContextType( tdbimpl.typedb, scope.start(), tpdef.resultType);
 		int resultConstructorId = tdbimpl.getConstructorFromName( std::string("#") + tpdef.resultType);
-		tdbimpl.typedb->defineReduction( scope, resultTypeId, funcTypeId, resultConstructorId);
+		tdbimpl.typedb->defineReduction( scope, resultTypeId, funcTypeId, resultConstructorId, 1.0/*weight*/);
 	}
 }
 
@@ -228,7 +233,7 @@ static void defineReduction( TypeDatabaseImpl& tdbimpl, const TestReductionDef& 
 	int fromTypeId = getContextType( tdbimpl.typedb, scope.start(), rddef.fromType);
 	int toTypeId = getContextType( tdbimpl.typedb, scope.start(), rddef.toType);
 	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + rddef.toType + "<-" + rddef.fromType);
-	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId);
+	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId, rddef.weight);
 }
 
 static void defineTestScopeDef( TypeDatabaseImpl& tdbimpl, const TestScopeDef& def, bool verbose)

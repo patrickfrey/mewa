@@ -144,7 +144,8 @@ public:
 	/// \param[in] toType target type of the reduction
 	/// \param[in] fromType source type of the reduction
 	/// \param[in] constructor handle for the constructor that implements the construction of the target type from the source type
-	void defineReduction( const Scope& scope, int toType, int fromType, int constructor);
+	/// \param[in] weight weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
+	void defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight);
 
 	/// \brief Perform a reduction of a type to another type and return the smallest path of reductions
 	/// \param[in] scope step the scope step of the search defining what are valid reductions
@@ -175,6 +176,9 @@ public:
 private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
 	void collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const;
+	std::string reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const;
+	std::string reduceResultToString( const ReduceResult& res) const;
+	std::string resolveResultToString( const ResolveResult& res) const;
 
 private:
 	struct MemoryBlock

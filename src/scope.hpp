@@ -496,17 +496,19 @@ public:
 	class ResultElement
 	{
 	public:
-		ResultElement( const RELNODETYPE type_, const VALTYPE value_)
-			:m_type(type_),m_value(value_){}
+		ResultElement( const RELNODETYPE type_, const VALTYPE value_, float weight_)
+			:m_type(type_),m_value(value_),m_weight(weight_){}
 		ResultElement( const ResultElement& o)
-			:m_type(o.m_type),m_value(o.m_value){}
+			:m_type(o.m_type),m_value(o.m_value),m_weight(o.m_weight){}
 
 		RELNODETYPE type() const noexcept	{return m_type;}
 		VALTYPE value() const noexcept		{return m_value;}
+		float weight() const noexcept		{return m_weight;}
 
 	private:
 		RELNODETYPE m_type;
 		VALTYPE m_value;
+		float m_weight;
 	};
 
 	ScopedRelationMap( std::pmr::memory_resource* memrsc, std::size_t initsize)
@@ -516,8 +518,10 @@ public:
 	ScopedRelationMap( ScopedRelationMap&& o) noexcept = default;
 	ScopedRelationMap& operator=( ScopedRelationMap&& o) noexcept = default;
 
-	void set( const Scope scope, const RELNODETYPE& left, const RELNODETYPE& right, const VALTYPE& value)
+	void set( const Scope scope, const RELNODETYPE& left, const RELNODETYPE& right, const VALTYPE& value, float weight)
 	{
+		if (weight <= std::numeric_limits<float>::epsilon()*10) throw Error( Error::BadRelationWeight, string_format("%.4f",weight));
+
 		int newlistindex = m_list.size();
 		int li = m_map.getOrSet( scope, left, newlistindex);
 		int prev_li = -1;
@@ -531,7 +535,7 @@ public:
 			prev_li = li;
 			li = le.next;
 		}
-		m_list.push_back( ListElement( right, value, -1/*next*/));
+		m_list.push_back( ListElement( right, value, weight, -1/*next*/));
 		if (prev_li >= 0)
 		{
 			m_list[ prev_li].next = newlistindex;
@@ -556,7 +560,7 @@ public:
 				auto ins = candidatemap.insert( {le.related, rt.size()});
 				if (ins.second /*insert took place*/)
 				{
-					rt.push_back( ResultElement( le.related/*type*/, le.value));
+					rt.push_back( ResultElement( le.related/*type*/, le.value, le.weight));
 				}
 				li = le.next;
 			}
@@ -569,12 +573,13 @@ private:
 	{
 		RELNODETYPE related;
 		VALTYPE value;
+		float weight;
 		int next;
 
-		ListElement( const RELNODETYPE& related_, const VALTYPE& value_, int next_)
-			:related(related_),value(value_),next(next_){}
+		ListElement( const RELNODETYPE& related_, const VALTYPE& value_, float weight_, int next_)
+			:related(related_),value(value_),weight(weight_),next(next_){}
 		ListElement( const ListElement& o)
-			:related(o.related),value(o.value),next(o.next){}
+			:related(o.related),value(o.value),weight(o.weight),next(o.next){}
 	};
 
 	typedef ScopedMap<RELNODETYPE,int> Map;
