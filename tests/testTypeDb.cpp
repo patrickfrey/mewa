@@ -73,64 +73,68 @@ struct TestReductionDef
 	}
 };
 
-struct TestScopeDef
+struct TestDef
 {
 	Scope scope;
-	TestReductionDef redus[ 32]; 	//< {nullptr,..} terminated list of reduction definitions
-	TestTypeDef types[ 32];		//< {nullptr,..} terminated list of type definitions
+	TestReductionDef redus[ 64]; 	//< {nullptr,..} terminated list of reduction definitions
+	TestTypeDef types[ 64];		//< {nullptr,..} terminated list of type definitions
 };
 
-static int nofTestScopeDefs = 1;
-static TestScopeDef testScopeDefs[1] = {
+static TestDef testDef = {
+	{0,1000},
 	{
-		{0,1000},
-		{
-			{"byte","uint",1.0},
-			{"uint","byte",1.0},
-			{"int","uint",1.0},
-			{"uint","int",1.0},
-			{"long","int",1.0},
-			{"int","long",1.0},
-			{"uint","long",1.0},
-			{"long","uint",1.0},
-			{"long","double",1.0},
-			{"double","long",1.0},
-			{"int","float",1.0},
-			{"float","int",1.0},
-			{"float","double",1.0},
-			{"double","float",1.0},
-			{"myclass","float",1.0},
-			{"myclass","double",1.0},
-			{nullptr,nullptr}
-		},
-		{
-			{"", {"", "byte", nullptr}, 0},
-			{"", {"", "int", nullptr}, 0},
-			{"", {"", "uint", nullptr}, 0},
-			{"", {"", "long", nullptr}, 0},
-			{"", {"", "float", nullptr}, 0},
-			{"", {"", "double", nullptr}, 0},
-			{"", {"", "func", "int", "int", "int", nullptr}, 0},
-			{"", {"", "func", "uint", "int", "int", nullptr}, 0},
-			{"", {"", "func", "double", "int", "int", nullptr}, 0},
-			{"", {"", "func", "double", "byte", "uint", nullptr}, 0},
-			{"", {"", "func", "long", "uint", "uint", nullptr}, 0},
-			{"", {"", "func", "byte", "int", "int", nullptr}, 0},
-			{"int", {"", "func", "byte", "int", nullptr}, 0},
-			{"int", {"", "func", "int", "int", nullptr}, 0},
-			{"long", {"", "func", "int", "long", nullptr}, 0},
-			{"double", {"", "func", "int", "double", nullptr}, 0},
-			{"float", {"", "func", "float", "float", nullptr}, 0},
-			{"double", {"", "func", "double", "double", nullptr}, 0},
-			{"", {"", "myclass", nullptr}, 0},
-			{"", {"myclass", "constructor myclass", "int", nullptr}, 0},
-			{"", {"myclass", "constructor myclass", "float", "float", nullptr}, 0},
-			{"", {"myclass", "constructor myclass", "myclass", nullptr}, 0},
-			{"", {"myclass", "~myclass", nullptr}, 0},
-			{"", {"myclass", "member", "myclass", nullptr}, 0},
-			{"", {"myclass", "member", "int", nullptr}, 0},
-			{nullptr, {nullptr}, 0}
-		}
+		{"byte","uint",1.0},
+		{"uint","byte",1.0},
+		{"int","uint",1.0},
+		{"uint","int",1.0},
+		{"long","int",1.0},
+		{"int","long",1.0},
+		{"uint","long",1.0},
+		{"long","uint",1.0},
+		{"long","double",1.0},
+		{"double","long",1.0},
+		{"int","float",1.0},
+		{"float","int",1.0},
+		{"float","double",1.0},
+		{"double","float",1.0},
+		{"myclass","float",1.0},
+		{"myclass","double",1.0},
+		{nullptr,nullptr}
+	},
+	{
+		{"", {"", "byte", nullptr}, 0},
+		{"", {"", "int", nullptr}, 0},
+		{"", {"", "uint", nullptr}, 0},
+		{"", {"", "long", nullptr}, 0},
+		{"", {"", "float", nullptr}, 0},
+		{"", {"", "double", nullptr}, 0},
+		{"", {"", "func", "int", "int", "int", nullptr}, 0},
+		{"", {"", "func", "uint", "int", "int", nullptr}, 0},
+		{"", {"", "func", "double", "int", "int", nullptr}, 0},
+		{"", {"", "func", "double", "byte", "uint", nullptr}, 0},
+		{"", {"", "func", "long", "uint", "uint", nullptr}, 0},
+		{"", {"", "func", "byte", "int", "int", nullptr}, 0},
+		{"int", {"", "func", "byte", "int", nullptr}, 0},
+		{"int", {"", "func", "int", "int", nullptr}, 0},
+		{"long", {"", "func", "int", "long", nullptr}, 0},
+		{"double", {"", "func", "int", "double", nullptr}, 0},
+		{"float", {"", "func", "float", "float", nullptr}, 0},
+		{"double", {"", "func", "double", "double", nullptr}, 0},
+		{"", {"", "myclass", nullptr}, 0},
+		{"", {"myclass", "constructor myclass", "int", nullptr}, 0},
+		{"", {"myclass", "constructor myclass", "float", "float", nullptr}, 0},
+		{"", {"myclass", "constructor myclass", "myclass", nullptr}, 0},
+		{"", {"myclass", "~myclass", nullptr}, 0},
+		{"", {"myclass", "member1", "myclass", nullptr}, 0},
+		{"", {"myclass", "member1", "int", nullptr}, 0},
+		{"", {"myclass", "member2", "int", nullptr}, 0},
+		{"", {"", "inhclass", nullptr}, 0},
+		{"", {"inhclass", "constructor inhclass", "float", "float", nullptr}, 0},
+		{"", {"inhclass", "constructor inhclass", "inhclass", nullptr}, 0},
+		{"", {"inhclass", "~inhclass", nullptr}, 0},
+		{"", {"inhclass", "member1", "myclass", nullptr}, 0},
+		{"", {"inhclass", "member1", "int", nullptr}, 0},
+		{nullptr, {nullptr}, 0}
 	}
 };
 
@@ -145,7 +149,7 @@ static TestQueryDef testQueries[ 64] = {
 };
 
 
-static int getContextType( TypeDatabase* typedb, const Scope::Step step, const char* tpstr)
+static int getContextType( TypeDatabase const* typedb, const Scope::Step step, const char* tpstr)
 {
 	std::vector<std::string_view> split;
 	char const* si = tpstr;
@@ -207,19 +211,46 @@ static std::string typeLabel( char const* const* arg)
 	return rt;
 }
 
+struct FunctionDef
+{
+	int contextType;
+	std::string name;
+	std::vector<TypeDatabase::Parameter> parameter;
+
+	FunctionDef( const FunctionDef& o)
+		:contextType(o.contextType),name(o.name),parameter(o.parameter){}
+	FunctionDef( TypeDatabaseImpl& tdbimpl, char const* const* ar, const Scope::Step step)
+	{
+		contextType = getContextType( tdbimpl.typedb, step, ar[0]);
+		name = typeLabel( ar+1);
+		int ti = 2;
+		for (; ar[ti]; ++ti)
+		{
+			int parameterType = getContextType( tdbimpl.typedb, step, ar[ti]);
+			parameter.push_back( {parameterType, tdbimpl.getConstructorFromName( std::string("#") + ar[ti])} );
+		}
+	}
+	std::string tostring( TypeDatabaseImpl& tdbimpl) const
+	{
+		std::string rt = tdbimpl.typedb->typeToString( contextType);
+		rt.append( " -> ");
+		rt.append( name);
+		rt.append( "( ");
+		for (std::size_t pi = 0; pi < parameter.size(); ++pi)
+		{
+			if (pi) rt.append( ", "); 
+			rt.append( tdbimpl.typedb->typeToString( parameter[ pi].type));
+		}
+		rt.push_back( ')');
+		return rt;
+	}
+};
+
 static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, const Scope& scope)
 {
-	int contextType = getContextType( tdbimpl.typedb, scope.start(), tpdef.ar[0]);
-	std::string name( typeLabel( tpdef.ar+1));
-	std::vector<TypeDatabase::Parameter> parameter;
-	int ti = 2;
-	for (; tpdef.ar[ti]; ++ti)
-	{
-		int parameterType = getContextType( tdbimpl.typedb, scope.start(), tpdef.ar[ti]);
-		parameter.push_back( {parameterType, tdbimpl.getConstructorFromName( std::string("#") + tpdef.ar[ti])} );
-	}
-	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + name);
-	int funcTypeId = tdbimpl.typedb->defineType( scope, contextType, name, constructorId, parameter, tpdef.priority);
+	FunctionDef fdef( tdbimpl, tpdef.ar, scope.start());
+	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + fdef.name);
+	int funcTypeId = tdbimpl.typedb->defineType( scope, fdef.contextType, fdef.name, constructorId, fdef.parameter, tpdef.priority);
 	if (tpdef.resultType[0])
 	{
 		int resultTypeId = getContextType( tdbimpl.typedb, scope.start(), tpdef.resultType);
@@ -236,7 +267,7 @@ static void defineReduction( TypeDatabaseImpl& tdbimpl, const TestReductionDef& 
 	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId, rddef.weight);
 }
 
-static void defineTestScopeDef( TypeDatabaseImpl& tdbimpl, const TestScopeDef& def, bool verbose)
+static void defineTest( TypeDatabaseImpl& tdbimpl, const TestDef& def, bool verbose)
 {
 	int ti = 0;
 	if (verbose) std::cerr << "In scope " << def.scope.tostring() << std::endl;
@@ -254,8 +285,13 @@ static void defineTestScopeDef( TypeDatabaseImpl& tdbimpl, const TestScopeDef& d
 	if (verbose) std::cerr << std::endl;
 }
 
-static void testQuery( const TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, bool verbose)
+static void testQuery( TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, bool verbose)
 {
+	FunctionDef fdef( tdbimpl, query.ar, query.step);
+	if (verbose)
+	{
+		std::cerr << "Resolve " << fdef.tostring( tdbimpl) << "[" << query.step << "] :" << std::endl;
+	}
 }
 
 int main( int argc, const char* argv[] )
@@ -298,10 +334,7 @@ int main( int argc, const char* argv[] )
 		std::unique_ptr<TypeDatabase> typedb( new TypeDatabase());
 		TypeDatabaseImpl tdbimpl( typedb.get());
 
-		for (int ti=0; ti < nofTestScopeDefs; ++ti)
-		{
-			defineTestScopeDef( tdbimpl, testScopeDefs[ ti], verbose);
-		}
+		defineTest( tdbimpl, testDef, verbose);
 		for (int qi=0; testQueries[ qi].ar[0]; ++qi)
 		{
 			testQuery( tdbimpl, testQueries[ qi], verbose);

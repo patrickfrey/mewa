@@ -182,7 +182,7 @@ public:
 	int get( const std::string_view& str)
 	{
 		int rt;
-		int buffer[ 1024];
+		int buffer[ 2048];
 		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
 		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
 		auto fi = ParentClass::find( env);
@@ -204,9 +204,18 @@ public:
 		return rt;
 	}
 
+	int lookup( const std::string_view& str) const
+	{
+		int buffer[ 2048];
+		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
+		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
+		auto fi = ParentClass::find( env);
+		return (fi == ParentClass::end()) ? 0 : fi->second;
+	}
+
 	std::size_t hash( const std::string_view& str) const noexcept
 	{
-		int buffer[ 1024];
+		int buffer[ 2048];
 		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
 		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
 		return env.hash();

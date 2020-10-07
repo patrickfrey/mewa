@@ -153,7 +153,7 @@ public:
 	/// \param[in] fromType source type of the reduction
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found
-	ReduceResult reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf);
+	ReduceResult reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
 	/// \param[in] scope step the scope step of the search defining what are valid reductions
@@ -161,7 +161,7 @@ public:
 	/// \param[in] name name of the type searched
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found	
-	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf);
+	ResolveResult resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const;
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type handle of the type (return value of defineType)

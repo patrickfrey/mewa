@@ -263,7 +263,7 @@ private:
 	std::pmr::monotonic_buffer_resource m_memrsc;
 };
 
-TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
+TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
 {
 	ReduceResult rt( resbuf);
 
@@ -332,10 +332,11 @@ void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& item
 	}
 }
 
-TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf)
+TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
 {
 	ResolveResult rt( resbuf);
-	int nameid = m_identMap->get( name);
+	int nameid = m_identMap->lookup( name);
+	if (!nameid) return rt;
 
 	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
