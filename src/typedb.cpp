@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <queue>
 #include <limits>
+#include <memory>
+#include <memory_resource>
 
 using namespace mewa;
 
@@ -241,6 +243,26 @@ std::string TypeDatabase::resolveResultToString( const ResolveResult& res) const
 	return rt;
 }
 
+template <typename ELEMTYPE>
+class LocalMemVector :public std::pmr::vector<ELEMTYPE>
+{
+public:
+	typedef std::pmr::vector<ELEMTYPE> ParentClass;
+
+public:
+	LocalMemVector()
+		:std::pmr::vector<ELEMTYPE>( &m_memrsc),m_memrsc(m_buffer,sizeof m_buffer){}
+	LocalMemVector( const LocalMemVector& o)
+		:std::pmr::vector<ELEMTYPE>( &m_memrsc),m_memrsc(m_buffer,sizeof m_buffer)
+	{
+		insert( ParentClass::end(), o.begin(), o.end());
+	}
+
+private:
+	int m_buffer[ 1024];
+	std::pmr::monotonic_buffer_resource m_memrsc;
+};
+
 TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf)
 {
 	ReduceResult rt( resbuf);
@@ -249,8 +271,7 @@ TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, i
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
-	std::priority_queue<ReduQueueElem,std::vector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
-	//NOTE: no pmr variant found for priority_queue
+	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
 
 	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/);
 	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
@@ -320,8 +341,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int context
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
-	std::priority_queue<ReduQueueElem,std::vector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
-	//NOTE: no pmr variant found for priority_queue
+	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
 
 	stack.pushIfNew( contextType, 0/*constructor*/, -1/*prev*/);
 	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));

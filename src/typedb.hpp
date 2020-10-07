@@ -246,9 +246,9 @@ private:
 		TypeDef inv;
 
 		TypeRecord( const TypeRecord& o)
-			:constructor(o.constructor),priority(o.priority),parameter(o.parameter),next(o.next),inv(o.inv){}
+			:constructor(o.constructor),priority(o.priority),parameterlen(o.parameterlen),parameter(o.parameter),next(o.next),inv(o.inv){}
 		TypeRecord( int constructor_, int parameter_, short parameterlen_, short priority_, const TypeDef& inv_)
-			:constructor(constructor_),priority(priority_),parameter(parameter_),next(0),inv(inv_){}
+			:constructor(constructor_),priority(priority_),parameterlen(parameterlen_),parameter(parameter_),next(0),inv(inv_){}
 	};
 
 	MemoryBlock m_memblock;				//< memory block used first by m_memory
