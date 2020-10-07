@@ -145,6 +145,11 @@ struct TestQueryDef
 };
 
 static TestQueryDef testQueries[ 64] = {
+	{1, {"inhclass", "member1", "long"}},
+	{2, {"inhclass", "member2", "long"}},
+	{12, {"myclass", "member2", "long"}},
+	{871, {"myclass", "member2", "myclass"}},
+	{999, {"inhclass", "member1", "inhclass"}},
 	{0,{nullptr}}
 };
 
@@ -291,6 +296,17 @@ static void testQuery( TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, boo
 	if (verbose)
 	{
 		std::cerr << "Resolve " << fdef.tostring( tdbimpl) << "[" << query.step << "] :" << std::endl;
+	}
+	TypeDatabase::ResultBuffer resbuf;
+	TypeDatabase::ResolveResult result = tdbimpl.typedb->resolve( query.step, fdef.contextType, fdef.name, resbuf);
+	if (verbose)
+	{
+		std::cerr << "Result candidates:" << std::endl;
+		for (auto const& item : result.items)
+		{
+			std::cerr << tdbimpl.typedb->typeToString( item.type) << " ~ " << tdbimpl.getConstructorName( item.constructor) << std::endl;
+		}
+		std::cerr << std::endl;
 	}
 }
 
