@@ -7,22 +7,27 @@
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-/// \brief Functions for reading and writing files
-/// \file "fileio.hpp"
-#ifndef _MEWA_FILEIO_HPP_INCLUDED
-#define _MEWA_FILEIO_HPP_INCLUDED
-#if __cplusplus >= 201703L
+/// \brief Serialization of lua data structures
+/// \file "lua_serialize.hpp"
+#ifndef _MEWA_LUA_SERIALIZE_HPP_INCLUDED
+#define _MEWA_LUA_SERIALIZE_HPP_INCLUDED
+#include "error.hpp"
 #include <string>
-#include <string_view>
+
+#if __cplusplus >= 201703L
+extern "C" {
+#include <lua.h>
+}
 
 namespace mewa {
 
-void writeFile( const std::string& filename, const std::string& content);
-std::string readFile( const std::string& filename);
-void removeFile( const std::string& filename);
+/// \brief Serialize the contents of a lua value on the stack
+/// \param[in] ls Lua state
+/// \param[in] li lua value reference
+/// \return the result string
+std::string luaToString( lua_State* ls, int li);
 
-}//namespace
-
+} //namespace
 #else
 #error Building mewa requires C++17
 #endif

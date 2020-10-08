@@ -27,10 +27,19 @@ class Error
 public:
 	enum Code {
 		Ok=0,
+		MemoryAllocationError=400,
 		LogicError=401,
 		FileReadError=402,
-		InternalSourceExpectedNullTerminated=403,
-		ExpectedFilenameAsArgument=404,
+		SerializationError=403,
+		InternalSourceExpectedNullTerminated=404,
+		ExpectedStringArgument=405,
+		ExpectedIntegerArgument=406,
+		ExpectedNonNegativeIntegerArgument=407,
+		ExpectedCardinalArgument=408,
+		ExpectedFloatingPointArgument=409,
+		ExpectedTableArgument=410,
+		ExpectedUserdataArgument=411,
+
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
 		ArrayBoundReadInLexer=423,
@@ -137,10 +146,19 @@ private:
 		else switch ((Code)code_)
 		{
 			case Ok: return "";
+			case MemoryAllocationError: return "memory allocation error";
 			case LogicError: return "Logic error";
 			case FileReadError: return "Unknown error reading file, could not read until end of file";
+			case SerializationError: return "Unspecified error serializing a lua data structure";
 			case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
-			case ExpectedFilenameAsArgument: return "Expected file name as argument";
+			case ExpectedStringArgument: return "Expected string as argument";
+			case ExpectedIntegerArgument: return "Expected integer as argument";
+			case ExpectedNonNegativeIntegerArgument: return "Expected non negative integer as argument";
+			case ExpectedCardinalArgument: return "Expected positive integer as argument";
+			case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
+			case ExpectedTableArgument: return "Expected table as argument";
+			case ExpectedUserdataArgument:  return "Expected user data as argument";
+
 			case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
 			case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
 			case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";
