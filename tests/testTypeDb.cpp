@@ -57,8 +57,8 @@ struct TestTypeDef
 
 struct TestReductionDef
 {
-	char const* fromType;
 	char const* toType;
+	char const* fromType;
 	float weight;
 
 	std::string tostring() const
@@ -83,22 +83,23 @@ struct TestDef
 static TestDef testDef = {
 	{0,1000},
 	{
-		{"byte","uint",1.0},
+		{"byte","uint",0.5},
 		{"uint","byte",1.0},
-		{"int","uint",1.0},
-		{"uint","int",1.0},
+		{"int","uint",0.8},
+		{"uint","int",0.8},
 		{"long","int",1.0},
-		{"int","long",1.0},
-		{"uint","long",1.0},
+		{"int","long",0.5},
+		{"uint","long",0.5},
 		{"long","uint",1.0},
-		{"long","double",1.0},
+		{"long","double",0.5},
 		{"double","long",1.0},
-		{"int","float",1.0},
+		{"int","float",0.5},
 		{"float","int",1.0},
-		{"float","double",1.0},
+		{"float","double",0.5},
 		{"double","float",1.0},
-		{"myclass","float",1.0},
-		{"myclass","double",1.0},
+		{"float","myclass",0.5},
+		{"double","myclass",1.0},
+		{"myclass","inhclass",1.0},
 		{nullptr,nullptr}
 	},
 	{
@@ -140,7 +141,7 @@ static TestDef testDef = {
 
 struct TestQueryDef
 {
-	Scope::Step step;
+	Scope::Step step;	//< query scope step
 	char const* ar[12];	//< nullptr terminated list of items
 };
 
@@ -220,14 +221,16 @@ struct FunctionDef
 {
 	int contextType;
 	std::string name;
+	std::string label;
 	std::vector<TypeDatabase::Parameter> parameter;
 
 	FunctionDef( const FunctionDef& o)
-		:contextType(o.contextType),name(o.name),parameter(o.parameter){}
+		:contextType(o.contextType),name(o.name),label(o.label),parameter(o.parameter){}
 	FunctionDef( TypeDatabaseImpl& tdbimpl, char const* const* ar, const Scope::Step step)
 	{
 		contextType = getContextType( tdbimpl.typedb, step, ar[0]);
-		name = typeLabel( ar+1);
+		name = ar[1];
+		label = typeLabel( ar+1);
 		int ti = 2;
 		for (; ar[ti]; ++ti)
 		{
@@ -254,7 +257,7 @@ struct FunctionDef
 static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, const Scope& scope)
 {
 	FunctionDef fdef( tdbimpl, tpdef.ar, scope.start());
-	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + fdef.name);
+	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + fdef.label);
 	int funcTypeId = tdbimpl.typedb->defineType( scope, fdef.contextType, fdef.name, constructorId, fdef.parameter, tpdef.priority);
 	if (tpdef.resultType[0])
 	{
@@ -290,23 +293,54 @@ static void defineTest( TypeDatabaseImpl& tdbimpl, const TestDef& def, bool verb
 	if (verbose) std::cerr << std::endl;
 }
 
-static void testQuery( TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, bool verbose)
+struct TestOutput
 {
-	FunctionDef fdef( tdbimpl, query.ar, query.step);
-	if (verbose)
+	std::ostream* out1;
+	std::ostream* out2;
+
+	TestOutput( std::ostream* out1_, std::ostream* out2_)
+		:out1(out1_),out2(out2_){}
+
+	template <typename TYPE>
+	TestOutput& operator << (TYPE elem)
 	{
-		std::cerr << "Resolve " << fdef.tostring( tdbimpl) << "[" << query.step << "] :" << std::endl;
+		if (out1) *out1 << elem;
+		if (out2) *out2 << elem;
+		return *this;
 	}
-	TypeDatabase::ResultBuffer resbuf;
-	TypeDatabase::ResolveResult result = tdbimpl.typedb->resolve( query.step, fdef.contextType, fdef.name, resbuf);
-	if (verbose)
+	TestOutput& operator << (std::ostream& (*pf)(std::ostream&))
 	{
-		std::cerr << "Result candidates:" << std::endl;
+		if (out1) pf(*out1);
+		if (out2) pf(*out2);
+		return *this;
+	}
+};
+
+static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, bool verbose)
+{
+	TestOutput out( &outbuf, verbose ? &std::cerr : nullptr );
+	FunctionDef fdef( tdbimpl, query.ar, query.step);
+	{
+		out << "Reductions of context type " << tdbimpl.typedb->typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
+		TypeDatabase::ResultBuffer resbuf;
+		TypeDatabase::ReduceResult result = tdbimpl.typedb->reductions( query.step, fdef.contextType, resbuf);
+		out << "Context Type reductions:" << std::endl;
+		for (auto const& redu : result.reductions)
+		{
+			out << tdbimpl.typedb->typeToString( redu.type) << " ~ " << tdbimpl.getConstructorName( redu.constructor) << std::endl;
+		}
+		out << std::endl;
+	}
+	{
+		out << "Resolve " << fdef.tostring( tdbimpl) << " [" << query.step << "] :" << std::endl;
+		TypeDatabase::ResultBuffer resbuf;
+		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolve( query.step, fdef.contextType, fdef.name, resbuf);
+		out << "Result candidates:" << std::endl;
 		for (auto const& item : result.items)
 		{
-			std::cerr << tdbimpl.typedb->typeToString( item.type) << " ~ " << tdbimpl.getConstructorName( item.constructor) << std::endl;
+			out << tdbimpl.typedb->typeToString( item.type) << " ~ " << tdbimpl.getConstructorName( item.constructor) << std::endl;
 		}
-		std::cerr << std::endl;
+		out << std::endl;
 	}
 }
 
@@ -375,10 +409,72 @@ int main( int argc, const char* argv[] )
 
 		// Test type resolving:
 		if (verbose) std::cerr << "Do some simple type definition/resolving tests ..." << std::endl;
+		std::string expected{R"(
+Reductions of context type inhclass [1] :
+Context Type reductions:
+myclass ~ #myclass<-inhclass
+
+Resolve inhclass -> member1( long) [1] :
+Result candidates:
+inhclass member1( myclass) ~ #member1_myclass
+inhclass member1( int) ~ #member1_int
+
+Reductions of context type inhclass [2] :
+Context Type reductions:
+myclass ~ #myclass<-inhclass
+
+Resolve inhclass -> member2( long) [2] :
+Result candidates:
+myclass member2( int) ~ #member2_int
+
+Reductions of context type myclass [12] :
+Context Type reductions:
+float ~ #float<-myclass
+double ~ #double<-myclass
+
+Resolve myclass -> member2( long) [12] :
+Result candidates:
+myclass member2( int) ~ #member2_int
+
+Reductions of context type myclass [871] :
+Context Type reductions:
+float ~ #float<-myclass
+double ~ #double<-myclass
+
+Resolve myclass -> member2( myclass) [871] :
+Result candidates:
+myclass member2( int) ~ #member2_int
+
+Reductions of context type inhclass [999] :
+Context Type reductions:
+myclass ~ #myclass<-inhclass
+
+Resolve inhclass -> member1( inhclass) [999] :
+Result candidates:
+inhclass member1( myclass) ~ #member1_myclass
+inhclass member1( int) ~ #member1_int
+
+)"};
+		std::ostringstream outputbuf;
+		outputbuf << "\n";
+
 		defineTest( tdbimpl, testDef, verbose);
 		for (int qi=0; testQueries[ qi].ar[0]; ++qi)
 		{
-			testQuery( tdbimpl, testQueries[ qi], verbose);
+			testQuery( outputbuf, tdbimpl, testQueries[ qi], verbose);
+		}
+		std::string output = outputbuf.str();
+		if (output != expected)
+		{
+			writeFile( "build/testTypeDb.out", output);
+			writeFile( "build/testTypeDb.exp", expected);
+			std::cerr << "ERR test output (build/testTypeDb.out) differs expected build/testTypeDb.exp" << std::endl;
+			return 3;
+		}
+		else
+		{
+			removeFile( "build/testTypeDb.out");
+			removeFile( "build/testTypeDb.exp");
 		}
 		std::cerr << "OK" << std::endl;
 		return 0;
