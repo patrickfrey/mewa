@@ -26,6 +26,7 @@ namespace mewa {
 class Automaton
 {
 public:
+	/// \brief Here we declare some limits to be able to pack multiple values into one 32bit integer
 	enum {
 		ShiftActionType = 2,
 			MaxActionType = 1<<ShiftActionType,
@@ -63,6 +64,7 @@ public:
 	};
 
 public:
+	/// \brief Debug output partially enabled by flags
 	class DebugOutput
 	{
 	public:
@@ -84,6 +86,7 @@ public:
 		std::ostream& m_out;
 	};
 
+	/// \brief Key in the LALR(1) action table (state,terminal -> action)
 	class ActionKey
 	{
 	public:
@@ -115,6 +118,7 @@ public:
 		short m_terminal;
 	};
 
+	/// \brief Action in the LALR(1) action table (state/terminal -> action)
 	class Action
 	{
 	public:
@@ -176,6 +180,7 @@ public:
 		short m_count;							//< Number of elements on stack (right hand of production) to replace (REDUCE)
 	};
 
+	/// \brief Key in the LALR(1) goto table (state/nonterminal -> state)
 	class GotoKey
 	{
 	public:
@@ -207,6 +212,7 @@ public:
 		short m_nonterminal;
 	};
 
+	/// \brief Value in the LALR(1) goto table (state/nonterminal -> state)
 	class Goto
 	{
 	public:
@@ -237,6 +243,7 @@ public:
 		short m_state;
 	};
 
+	/// \brief Encoded callback reference attached to a production to be performed after its reduction
 	class Call
 	{
 	public:

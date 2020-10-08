@@ -15,6 +15,7 @@
 #include "scope.hpp"
 #include "error.hpp"
 #include "strings.hpp"
+#include "iterator.hpp"
 #include "identmap.hpp"
 #include <string_view>
 #include <vector>
@@ -58,22 +59,26 @@ public:
 	struct ParameterList
 	{
 		int arsize;
-		const Parameter* ar;
+		Parameter const* ar;
 
 		ParameterList( int arsize_, const Parameter* ar_)
 			:arsize(arsize_),ar(ar_){}
 		ParameterList( const ParameterList& o)
 			:arsize(o.arsize),ar(o.ar){}
 
-		int size() const noexcept
+		std::size_t size() const noexcept
 		{
 			return arsize;
 		}
-
 		const Parameter& operator[]( int idx) const noexcept
 		{
 			return ar[ idx];
 		}
+
+		typedef CArrayForwardIterator::const_iterator<Parameter> const_iterator;
+
+		const_iterator begin() const noexcept						{return const_iterator( ar);}
+		const_iterator end() const noexcept						{return const_iterator( ar+arsize);}
 	};
 	struct ResultBuffer
 	{

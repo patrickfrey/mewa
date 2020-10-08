@@ -129,6 +129,7 @@ static TestDef testDef = {
 		{"", {"myclass", "member1", "myclass", nullptr}, 0},
 		{"", {"myclass", "member1", "int", nullptr}, 0},
 		{"", {"myclass", "member2", "int", nullptr}, 0},
+		{"", {"myclass", "member2", "float", nullptr}, 0},
 		{"", {"", "inhclass", nullptr}, 0},
 		{"", {"inhclass", "constructor inhclass", "float", "float", nullptr}, 0},
 		{"", {"inhclass", "constructor inhclass", "inhclass", nullptr}, 0},
@@ -149,6 +150,7 @@ static TestQueryDef testQueries[ 64] = {
 	{1, {"inhclass", "member1", "long"}},
 	{2, {"inhclass", "member2", "long"}},
 	{12, {"myclass", "member2", "long"}},
+	{12, {"myclass", "member2", "myclass"}},
 	{871, {"myclass", "member2", "myclass"}},
 	{999, {"inhclass", "member1", "inhclass"}},
 	{0,{nullptr}}
@@ -316,6 +318,16 @@ struct TestOutput
 	}
 };
 
+struct ParameterOp
+{
+	int constructor;
+	int reduConstructor;
+
+	ParameterOp() = default;
+	ParameterOp( int constructor_, int reduConstructor_) :constructor(constructor_),reduConstructor(reduConstructor_){}
+	ParameterOp( const ParameterOp& o) = default;
+};
+
 static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const TestQueryDef& query, bool verbose)
 {
 	TestOutput out( &outbuf, verbose ? &std::cerr : nullptr );
@@ -336,9 +348,98 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 		TypeDatabase::ResultBuffer resbuf;
 		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolve( query.step, fdef.contextType, fdef.name, resbuf);
 		out << "Result candidates:" << std::endl;
+		int minDistance = 0;
+		int bestCandidate = -1;
+		std::vector<std::vector<ParameterOp> > popar;
+		int ii = 0;
 		for (auto const& item : result.items)
 		{
-			out << tdbimpl.typedb->typeToString( item.type) << " ~ " << tdbimpl.getConstructorName( item.constructor) << std::endl;
+			bool matched = false;
+			++ii;
+			int distance = 0;
+			out << "Candidate [" << ii << "]: " << tdbimpl.typedb->typeToString( item.type) << std::endl;
+			TypeDatabase::ParameterList parameters = tdbimpl.typedb->parameters( item.type);
+			int pi = 0;
+			if (fdef.parameter.size() != parameters.size())
+			{
+				out << string_format( "- number of parameters (%zu) do not match (%zu)", fdef.parameter.size(), parameters.size()) << std::endl;
+			}
+			for (auto const& parameter : parameters)
+			{
+				popar.push_back( {} ); 
+				if (fdef.parameter[ pi].type != parameter.type)
+				{
+					++distance;
+					int reduConstructor
+						= tdbimpl.typedb->reductionConstructor( 
+							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/);
+					if (reduConstructor < 0)
+					{
+						std::string pto = tdbimpl.typedb->typeToString( parameter.type);
+						std::string pfrom = tdbimpl.typedb->typeToString( fdef.parameter[ pi].type);
+						out << string_format( "- parameter [%d] does not match ('%s' <-/- '%s', )", pi, pto.c_str(), pfrom.c_str()) << std::endl;
+					}
+					else
+					{
+						std::string pcstr = tdbimpl.getConstructorName( parameter.constructor);
+						std::string rcstr = tdbimpl.getConstructorName( reduConstructor);
+						out << string_format( "- parameter [%d]: %s %s", pi, pcstr.c_str(), rcstr.c_str()) << std::endl;
+						matched = true;
+					}
+					popar.back().push_back( {parameter.constructor, reduConstructor});
+				}
+				else
+				{
+					std::string pcstr = tdbimpl.getConstructorName( parameter.constructor);
+					out << string_format( "- parameter [%d]: %s", pi, pcstr.c_str()) << std::endl;
+					popar.back().push_back( {parameter.constructor, -1/*reduConstructor*/});
+				}
+				++pi;
+			}
+			if (matched)
+			{
+				if (bestCandidate == -1)
+				{
+					bestCandidate = ii-1;
+					minDistance = distance;
+				}
+				else if (distance < minDistance)
+				{
+					bestCandidate = ii-1;
+					minDistance = distance;
+				}
+				else if (distance == minDistance)
+				{
+					std::string cstr1 = tdbimpl.getConstructorName( result.items[ bestCandidate].constructor);
+					std::string cstr2 = tdbimpl.getConstructorName( result.items[ ii-1].constructor);
+					std::cerr << string_format( "ambiguous parameter signature (for '%s' dist %d and '%s' dist %d), can't resolve type",
+									cstr1.c_str(), minDistance, cstr2.c_str(), distance) << std::endl;
+				}
+			}
+		}
+		if (bestCandidate >= 0)
+		{
+			out << "Found match: " << tdbimpl.getConstructorName( result.items[ bestCandidate].constructor);
+			if (!popar[ bestCandidate].empty())
+			{
+				out << "( ";
+				int pidx = 0;
+				for (auto pop : popar[ bestCandidate])
+				{
+					if (pidx++) out << ", ";
+					out << tdbimpl.getConstructorName( pop.constructor);
+					if (pop.reduConstructor >= 0)
+					{
+						out << " <- " <<  tdbimpl.getConstructorName( pop.reduConstructor);
+					}
+				}
+				out << ")";
+			}
+			out << std::endl;
+		}
+		else
+		{
+			out << "no match" << std::endl;
 		}
 		out << std::endl;
 	}
@@ -416,8 +517,11 @@ myclass ~ #myclass<-inhclass
 
 Resolve inhclass -> member1( long) [1] :
 Result candidates:
-inhclass member1( myclass) ~ #member1_myclass
-inhclass member1( int) ~ #member1_int
+Candidate [1]: inhclass member1( myclass)
+- parameter [0] does not match ('myclass' <-/- 'long', )
+Candidate [2]: inhclass member1( int)
+- parameter [0]: #int #int<-long
+Found match: #member1_int( #int <- #int<-long)
 
 Reductions of context type inhclass [2] :
 Context Type reductions:
@@ -425,7 +529,11 @@ myclass ~ #myclass<-inhclass
 
 Resolve inhclass -> member2( long) [2] :
 Result candidates:
-myclass member2( int) ~ #member2_int
+Candidate [1]: myclass member2( int)
+- parameter [0]: #int #int<-long
+Candidate [2]: myclass member2( float)
+- parameter [0] does not match ('float' <-/- 'long', )
+Found match: #member2_int( #int <- #int<-long)
 
 Reductions of context type myclass [12] :
 Context Type reductions:
@@ -434,7 +542,24 @@ double ~ #double<-myclass
 
 Resolve myclass -> member2( long) [12] :
 Result candidates:
-myclass member2( int) ~ #member2_int
+Candidate [1]: myclass member2( int)
+- parameter [0]: #int #int<-long
+Candidate [2]: myclass member2( float)
+- parameter [0] does not match ('float' <-/- 'long', )
+Found match: #member2_int( #int <- #int<-long)
+
+Reductions of context type myclass [12] :
+Context Type reductions:
+float ~ #float<-myclass
+double ~ #double<-myclass
+
+Resolve myclass -> member2( myclass) [12] :
+Result candidates:
+Candidate [1]: myclass member2( int)
+- parameter [0] does not match ('int' <-/- 'myclass', )
+Candidate [2]: myclass member2( float)
+- parameter [0]: #float #float<-myclass
+Found match: #member2_float( #float <- #float<-myclass)
 
 Reductions of context type myclass [871] :
 Context Type reductions:
@@ -443,7 +568,11 @@ double ~ #double<-myclass
 
 Resolve myclass -> member2( myclass) [871] :
 Result candidates:
-myclass member2( int) ~ #member2_int
+Candidate [1]: myclass member2( int)
+- parameter [0] does not match ('int' <-/- 'myclass', )
+Candidate [2]: myclass member2( float)
+- parameter [0]: #float #float<-myclass
+Found match: #member2_float( #float <- #float<-myclass)
 
 Reductions of context type inhclass [999] :
 Context Type reductions:
@@ -451,8 +580,11 @@ myclass ~ #myclass<-inhclass
 
 Resolve inhclass -> member1( inhclass) [999] :
 Result candidates:
-inhclass member1( myclass) ~ #member1_myclass
-inhclass member1( int) ~ #member1_int
+Candidate [1]: inhclass member1( myclass)
+- parameter [0]: #myclass #myclass<-inhclass
+Candidate [2]: inhclass member1( int)
+- parameter [0] does not match ('int' <-/- 'inhclass', )
+Found match: #member1_myclass( #myclass <- #myclass<-inhclass)
 
 )"};
 		std::ostringstream outputbuf;
