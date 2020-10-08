@@ -350,28 +350,35 @@ int main( int argc, const char* argv[] )
 		std::unique_ptr<TypeDatabase> typedb( new TypeDatabase());
 		TypeDatabaseImpl tdbimpl( typedb.get());
 
+		// Test scope sets:
+		if (verbose) std::cerr << "Do some simple scope set tests ..." << std::endl;
+		tdbimpl.typedb->setNamedObject( {0,100}, "blublu", 1);
+		tdbimpl.typedb->setNamedObject( {1,78}, "blublu", 2);
+		tdbimpl.typedb->setNamedObject( {33,45}, "blublu", 3);
+		tdbimpl.typedb->setNamedObject( {0,100}, "gurke", 1);
+		tdbimpl.typedb->setNamedObject( {1,78}, "gurke", 2);
+		tdbimpl.typedb->setNamedObject( {33,45}, "gurke", 3);
+		tdbimpl.typedb->setNamedObject( {0,100}, "register", 1);
+		tdbimpl.typedb->setNamedObject( {1,78}, "register", 2);
+		tdbimpl.typedb->setNamedObject( {33,45}, "register", 3);
+		tdbimpl.typedb->setNamedObject( {0,100}, "blabla", 1);
+		tdbimpl.typedb->setNamedObject( {1,78}, "blabla", 2);
+		tdbimpl.typedb->setNamedObject( {33,45}, "blabla", 3);
+
+		if (tdbimpl.typedb->getNamedObject( 55, "register") != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getNamedObject( 45, "register") != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getNamedObject( 44, "register") != 3) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getNamedObject( 100, "register") != -1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getNamedObject( 1, "gurke") != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getNamedObject( 0, "gurke") != 1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getNamedObject( 99, "gurke") != 1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+
+		// Test type resolving:
+		if (verbose) std::cerr << "Do some simple type definition/resolving tests ..." << std::endl;
 		defineTest( tdbimpl, testDef, verbose);
 		for (int qi=0; testQueries[ qi].ar[0]; ++qi)
 		{
 			testQuery( tdbimpl, testQueries[ qi], verbose);
-		}
-		std::string expected{R"(
-)"};
-		std::ostringstream outputbuf;
-		outputbuf << "\n";
-
-		std::string output = outputbuf.str();
-		if (output != expected)
-		{
-			writeFile( "build/testTypeDb.out", output);
-			writeFile( "build/testTypeDb.exp", expected);
-			std::cerr << "ERR test output (build/testTypeDb.out) differs expected build/testTypeDb.exp" << std::endl;
-			return 3;
-		}
-		else
-		{
-			removeFile( "build/testTypeDb.out");
-			removeFile( "build/testTypeDb.exp");
 		}
 		std::cerr << "OK" << std::endl;
 		return 0;

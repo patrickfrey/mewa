@@ -47,6 +47,7 @@ public:
 		PriorityOutOfRange=441,
 		DuplicateDefinition=442,
 		BadRelationWeight=443,
+		InvalidHandle=444,
 
 		UnresolvableType=451,
 		AmbiguousTypeReference=452,
@@ -156,6 +157,7 @@ private:
 			case PriorityOutOfRange: return "Priority value out of range";
 			case DuplicateDefinition: return "Duplicate definition";
 			case BadRelationWeight: return "Bad weight <= 0.0 given to relation, possibly leading to endless loop in search";
+			case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
 
 			case UnresolvableType: return "Failed to resolve type";
 			case AmbiguousTypeReference: return "Ambiguous type reference";

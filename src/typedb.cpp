@@ -26,12 +26,12 @@ std::string TypeDatabase::typeToString( int type) const
 	std::string rt;
 	if (type == 0) return rt;
 	const TypeDef& td = m_typerecMap[ type-1].inv;
-	if (td.first)
+	if (td.contextType)
 	{
-		rt.append( typeToString( td.first));
+		rt.append( typeToString( td.contextType));
 		rt.push_back( ' ');
 	}
-	rt.append( m_identMap->inv( td.second));
+	rt.append( m_identMap->inv( td.ident));
 	const TypeRecord& rec = m_typerecMap[ type-1];
 	if (rec.parameterlen)
 	{
@@ -44,6 +44,26 @@ std::string TypeDatabase::typeToString( int type) const
 		rt.push_back( ')');
 	}
 	return rt;
+}
+
+void TypeDatabase::setNamedObject( const Scope& scope, const std::string_view& name, int handle)
+{
+	if (handle <= 0) throw Error( Error::InvalidHandle, string_format( "%d", handle));
+
+	int objid = m_identMap->get( name);
+	auto ins = m_objidMap->insert( {objid, m_objSets.size()});
+	if (ins.second == true/*insert took place*/)
+	{
+		m_objSets.push_back( ObjectSet( m_memory->resource_objtab(), -1/*nullval*/, m_memory->nofNamedObjectTableInitBuckets()));
+	}
+	m_objSets[ ins.first->second].set( scope, handle/*value*/);
+}
+
+int TypeDatabase::getNamedObject( const Scope::Step step, const std::string_view& name) const
+{
+	auto oi = m_objidMap->find( m_identMap->lookup( name));
+	if (oi == m_objidMap->end()) return -1/*undefined*/;
+	return m_objSets[ oi->second].get( step);
 }
 
 TypeDatabase::ParameterList TypeDatabase::parameters( int type) const noexcept
@@ -70,11 +90,14 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	if (parameter.size() >= MaxNofParameter) throw Error( Error::TooManyTypeArguments, string_format( "%zu", parameter.size()));
 	if ((int)(m_parameterMap.size() + parameter.size()) >= std::numeric_limits<int>::max()) throw Error( Error::CompiledSourceTooComplex);
 	if (priority > MaxPriority) throw Error( Error::PriorityOutOfRange, string_format( "%d", priority));
+	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
+	if (contextType < 0) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
+
+	m_typerecMap.reserve( m_typerecMap.size()+1);
+
 	int parameterlen = parameter.size();
 	int parameteridx = parameter.empty() ? 0 : (int)(m_parameterMap.size()+1);
 	m_parameterMap.insert( m_parameterMap.end(), parameter.begin(), parameter.end());
-
-	m_typerecMap.reserve( m_typerecMap.size()+1);
 
 	int typerec = m_typerecMap.size()+1;
 	TypeDef typeDef( contextType, m_identMap->get( name));
@@ -127,6 +150,10 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 
 void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight)
 {
+	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
+	if (toType < 0) throw Error( Error::InvalidHandle, string_format( "%d", toType));
+	if (fromType < 0) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
+
 	m_reduTable->set( scope, fromType, toType, constructor, weight);
 }
 
@@ -263,7 +290,35 @@ private:
 	std::pmr::monotonic_buffer_resource m_memrsc;
 };
 
-TypeDatabase::ReduceResult TypeDatabase::reduce( Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
+int TypeDatabase::reductionConstructor( const Scope::Step step, int toType, int fromType) const
+{
+	int redu_buffer[ 512];
+	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
+
+	for (auto const& redu : redulist)
+	{
+		if (toType == redu.type()) return redu.value()/*constructor*/;
+	}
+	return -1;
+}
+
+TypeDatabase::ReduceResult TypeDatabase::reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const
+{
+	ReduceResult rt( resbuf);
+
+	int redu_buffer[ 512];
+	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
+
+	for (auto const& redu : redulist)
+	{
+		rt.reductions.push_back( {redu.type(), redu.value()/*constructor*/});
+	}
+	return rt;
+}
+
+TypeDatabase::ReduceResult TypeDatabase::reduce( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
 {
 	ReduceResult rt( resbuf);
 
@@ -332,7 +387,7 @@ void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& item
 	}
 }
 
-TypeDatabase::ResolveResult TypeDatabase::resolve( Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
+TypeDatabase::ResolveResult TypeDatabase::resolve( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
 {
 	ResolveResult rt( resbuf);
 	int nameid = m_identMap->lookup( name);
