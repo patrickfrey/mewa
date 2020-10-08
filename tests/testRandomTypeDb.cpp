@@ -286,7 +286,7 @@ static std::string reductionsToString( TypeDatabase& typedb, const std::pmr::vec
 	return rt;
 }
 
-static std::string reduceResultToString( TypeDatabase& typedb, const TypeDatabase::ReduceResult& res)
+static std::string deriveResultToString( TypeDatabase& typedb, const TypeDatabase::DeriveResult& res)
 {
 	return reductionsToString( typedb, res.reductions);
 }
@@ -365,11 +365,11 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			{
 				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			}
-			TypeDatabase::ReduceResult redures = typedb.reduce( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf);
-			std::string redu_str = reduceResultToString( typedb, redures);
+			TypeDatabase::DeriveResult deriveres = typedb.derive( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf);
+			std::string redu_str = deriveResultToString( typedb, deriveres);
 			if (verbose)
 			{
-				std::cerr << "Reduce result: " << redu_str << std::endl;
+				std::cerr << "Derive result: " << redu_str << std::endl;
 			}
 			char const* callstr = std::strchr( resc_str.c_str(), '{');
 			if (!callstr)
@@ -378,7 +378,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			}
 			if (!startsWith( resc_str, redu_str) || (callstr-resc_str.c_str()) > redu_str.size()+2)
 			{
-				throw std::runtime_error( string_format( "reduction result not as expected: '%s' prefix of '%s'", redu_str.c_str(), redu_str.c_str()));
+				throw std::runtime_error( string_format( "derive result not as expected: '%s' prefix of '%s'", redu_str.c_str(), redu_str.c_str()));
 			}
 		}
 	}

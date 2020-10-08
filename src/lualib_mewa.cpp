@@ -157,14 +157,31 @@ static const struct luaL_Reg g_printlib [] = {
 	{nullptr, nullptr} /* end of array */
 };
 
+static int checkNofArguments( const char* functionName, lua_State* ls, int minNofArgs, int maxNofArgs)
+{
+	int nn = lua_gettop( ls);
+	if (nn > maxNofArgs)
+	{
+		if (maxNofArgs == 0)
+		{
+			luaL_error( ls, "no arguments expected calling function '%s'", functionName);
+		}
+		else
+		{
+			luaL_error( ls, "too many arguments (%d, maximum %d) calling function '%s'", nn, maxNofArgs, functionName);
+		}
+	}
+	if (nn < minNofArgs)
+	{
+		luaL_error( ls, "too few arguments (%d, minimum %d) calling '%s'", nn, minNofArgs, functionName);
+	}
+	return nn;
+}
 
 static int mewa_new_compiler( lua_State* ls)
 {
 	static const char* functionName = "mewa.compiler";
-	int nn = lua_gettop(ls);
-	if (nn > 1) return luaL_error( ls, "too many arguments calling '%s'", functionName);
-	if (nn < 1) return luaL_error( ls, "too few arguments calling '%s'", functionName);
-
+	checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 	luaL_checktype( ls, 1, LUA_TTABLE);
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
 	bool success = true;
@@ -190,9 +207,7 @@ static int mewa_new_compiler( lua_State* ls)
 static int mewa_destroy_compiler( lua_State* ls)
 {
 	static const char* functionName = "compiler:__gc";
-	int nn = lua_gettop(ls);
-	if (nn > 1) luaL_error( ls, "too many arguments calling '%s'", functionName);
-	if (nn == 0) luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
+	checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 	mw->destroy();
@@ -202,9 +217,7 @@ static int mewa_destroy_compiler( lua_State* ls)
 static int mewa_compiler_tostring( lua_State* ls)
 {
 	static const char* functionName = "compiler:__tostring";
-	int nn = lua_gettop(ls);
-	if (nn > 1) return luaL_error( ls, "too many arguments calling '%s'", functionName);
-	if (nn == 0) return luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
+	checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 	if (!lua_checkstack( ls, 4)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
 
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
@@ -228,9 +241,7 @@ static int mewa_compiler_run( lua_State* ls)
 	bool success = true;
 	try
 	{
-		int nn = lua_gettop(ls);
-		if (nn > 4) return luaL_error( ls, "too many arguments calling '%s'", functionName);
-		if (nn < 2) return luaL_error( ls, "too few arguments calling '%s'", functionName);
+		int nn = checkNofArguments( functionName, ls, 2/*minNofArgs*/, 4/*maxNofArgs*/);
 		if (!lua_checkstack( ls, 10)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
 
 		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
@@ -318,8 +329,7 @@ static int mewa_compiler_run( lua_State* ls)
 static int mewa_new_typedb( lua_State* ls)
 {
 	static const char* functionName = "mewa.typedb";
-	int nn = lua_gettop(ls);
-	if (nn > 0) return luaL_error( ls, "too many arguments calling '%s'", functionName);
+	checkNofArguments( functionName, ls, 0/*minNofArgs*/, 0/*maxNofArgs*/);
 
 	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)lua_newuserdata( ls, sizeof(mewa_typedb_userdata_t));
 	mw->init();
@@ -337,39 +347,63 @@ static int mewa_new_typedb( lua_State* ls)
 static int mewa_destroy_typedb( lua_State* ls)
 {
 	static const char* functionName = "typedb:__gc";
-	int nn = lua_gettop(ls);
-	if (nn > 1) luaL_error( ls, "too many arguments calling '%s'", functionName);
-	if (nn == 0) luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
+	checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 
 	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
 	mw->destroy();
 	return 0;
 }
 
-static int mewa_typedb_tostring( lua_State* ls)
+static int mewa_typedb_get( lua_State* ls)
 {
-	static const char* functionName = "typedb:__tostring";
-	int nn = lua_gettop(ls);
-	if (nn > 1) return luaL_error( ls, "too many arguments calling '%s'", functionName);
-	if (nn == 0) return luaL_error( ls, "no object specified ('.' instead of ':') calling '%s'", functionName);
-	if (!lua_checkstack( ls, 4)) return luaL_error( ls, "no Lua stack left in '%s'", functionName);
-
-	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
-	if (!mw->impl) return 0;
-
-	std::string_view resultptr;
-	bool success = true;
-	try
-	{
-		std::string result;
-		resultptr = move_string_on_lua_stack( ls, std::move( result));
-	}
-	CATCH_EXCEPTION( success)
-
-	lua_pushlstring( ls, resultptr.data(), resultptr.size());
-	lua_replace( ls, -2); // ... dispose the element created with move_string_on_lua_stack
-	return 1;
+	return 0;
 }
+
+static int mewa_typedb_set( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_def_type( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_def_reduction( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_reduction( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_reductions( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_derive_type( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_resolve_type( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_typename( lua_State* ls)
+{
+	return 0;
+}
+
+static int mewa_typedb_parameters( lua_State* ls)
+{
+	return 0;
+}
+
 
 static const struct luaL_Reg memblock_control_methods[] = {
 	{ "__gc",	destroy_memblock },
@@ -387,22 +421,31 @@ static void create_memblock_control_class( lua_State* ls)
 }
 
 static const struct luaL_Reg mewa_compiler_methods[] = {
-	{ "__gc",	mewa_destroy_compiler },
-	{ "__tostring",	mewa_compiler_tostring },
-	{ "run",	mewa_compiler_run },
-	{ nullptr,	nullptr }
+	{ "__gc",		mewa_destroy_compiler },
+	{ "__tostring",		mewa_compiler_tostring },
+	{ "run",		mewa_compiler_run },
+	{ nullptr,		nullptr }
 };
 
 static const struct luaL_Reg mewa_typedb_methods[] = {
-	{ "__gc",	mewa_destroy_typedb },
-	{ "__tostring",	mewa_typedb_tostring },
-	{ nullptr,	nullptr }
+	{ "__gc",		mewa_destroy_typedb },
+	{ "get",		mewa_typedb_get },
+	{ "set",		mewa_typedb_set },
+	{ "def_type",		mewa_typedb_def_type },
+	{ "def_reduction",	mewa_typedb_def_reduction },
+	{ "reduction",		mewa_typedb_reduction },
+	{ "reductions",		mewa_typedb_reductions },
+	{ "derive_type",	mewa_typedb_derive_type },
+	{ "resolve_type",	mewa_typedb_resolve_type },
+	{ "typename",		mewa_typedb_typename },
+	{ "parameters",		mewa_typedb_parameters },
+	{ nullptr,		nullptr }
 };
 
 static const struct luaL_Reg mewa_functions[] = {
-	{ "compiler",	mewa_new_compiler },
-	{ "typedb",	mewa_new_typedb },
-	{ nullptr,  	nullptr }
+	{ "compiler",		mewa_new_compiler },
+	{ "typedb",		mewa_new_typedb },
+	{ nullptr,  		nullptr }
 };
 
 DLL_PUBLIC int luaopen_mewa( lua_State* ls)

@@ -251,9 +251,9 @@ std::string TypeDatabase::reductionsToString( const std::pmr::vector<ReductionRe
 	return rt;
 }
 
-std::string TypeDatabase::reduceResultToString( const ReduceResult& res) const
+std::string TypeDatabase::deriveResultToString( const DeriveResult& res) const
 {
-	return reductionsToString( res.reductions);
+	return reductionsToString( res.reductions) + std::string(" [%.3f]", res.weightsum);
 }
 
 std::string TypeDatabase::resolveResultToString( const ResolveResult& res) const
@@ -290,7 +290,7 @@ private:
 	std::pmr::monotonic_buffer_resource m_memrsc;
 };
 
-int TypeDatabase::reductionConstructor( const Scope::Step step, int toType, int fromType) const
+int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType) const
 {
 	int redu_buffer[ 512];
 	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
@@ -303,9 +303,9 @@ int TypeDatabase::reductionConstructor( const Scope::Step step, int toType, int 
 	return -1;
 }
 
-TypeDatabase::ReduceResult TypeDatabase::reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const
+std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const
 {
-	ReduceResult rt( resbuf);
+	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
 
 	int redu_buffer[ 512];
 	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
@@ -313,14 +313,14 @@ TypeDatabase::ReduceResult TypeDatabase::reductions( const Scope::Step step, int
 
 	for (auto const& redu : redulist)
 	{
-		rt.reductions.push_back( {redu.type(), redu.value()/*constructor*/});
+		rt.push_back( {redu.type(), redu.value()/*constructor*/});
 	}
 	return rt;
 }
 
-TypeDatabase::ReduceResult TypeDatabase::reduce( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
+TypeDatabase::DeriveResult TypeDatabase::derive( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
 {
-	ReduceResult rt( resbuf);
+	DeriveResult rt( resbuf);
 
 	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
@@ -340,6 +340,7 @@ TypeDatabase::ReduceResult TypeDatabase::reduce( const Scope::Step step, int toT
 		if (elem.type == toType)
 		{
 			//... we found a match and because of Dikstra we are finished
+			rt.weightsum = qe.weight;
 			stack.collectResult( rt.reductions, qe.index);
 
 			// Search for an alternative solution to report an ambiguous reference error:
@@ -353,10 +354,11 @@ TypeDatabase::ReduceResult TypeDatabase::reduce( const Scope::Step step, int toT
 
 				if (alt_elem.type == toType)
 				{
-					ReduceResult alt_rt( resbuf);
+					DeriveResult alt_rt( resbuf);
+					alt_rt.weightsum = alt_qe.weight;
 					stack.collectResult( alt_rt.reductions, alt_qe.index);
 
-					throw Error( Error::AmbiguousTypeReference, reduceResultToString( rt) + ", " + reduceResultToString( alt_rt));
+					throw Error( Error::AmbiguousTypeReference, deriveResultToString( rt) + ", " + deriveResultToString( alt_rt));
 				}
 			}
 			break;

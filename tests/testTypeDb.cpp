@@ -335,9 +335,9 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 	{
 		out << "Reductions of context type " << tdbimpl.typedb->typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
 		TypeDatabase::ResultBuffer resbuf;
-		TypeDatabase::ReduceResult result = tdbimpl.typedb->reductions( query.step, fdef.contextType, resbuf);
+		auto reductions = tdbimpl.typedb->reductions( query.step, fdef.contextType, resbuf);
 		out << "Context Type reductions:" << std::endl;
-		for (auto const& redu : result.reductions)
+		for (auto const& redu : reductions)
 		{
 			out << tdbimpl.typedb->typeToString( redu.type) << " ~ " << tdbimpl.getConstructorName( redu.constructor) << std::endl;
 		}
@@ -371,7 +371,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 				{
 					++distance;
 					int reduConstructor
-						= tdbimpl.typedb->reductionConstructor( 
+						= tdbimpl.typedb->reduction( 
 							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/);
 					if (reduConstructor < 0)
 					{

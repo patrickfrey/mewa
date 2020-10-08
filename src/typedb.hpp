@@ -112,12 +112,13 @@ public:
 		ResolveResultItem( int type_, int constructor_) noexcept
 			:type(type_),constructor(constructor_){}
 	};
-	struct ReduceResult
+	struct DeriveResult
 	{
 		std::pmr::vector<ReductionResult> reductions;
+		float weightsum;
 
-		ReduceResult( ResultBuffer& resbuf) noexcept
-			:reductions(&resbuf.memrsc)
+		DeriveResult( ResultBuffer& resbuf) noexcept
+			:reductions(&resbuf.memrsc),weightsum(0.0)
 		{
 			reductions.reserve( resbuf.buffersize() / sizeof(ReductionResult));
 		}
@@ -152,7 +153,7 @@ public:
 	/// \param[in] scope Scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
-	/// \param[in] constructor handle for the constructor of the type
+	/// \parstd::pmr::vector<ReductionResult>am[in] constructor handle for the constructor of the type
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority The priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
@@ -166,27 +167,27 @@ public:
 	/// \param[in] weight weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
 	void defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight);
 
-	/// \brief Get the reduction constructor of a type to another type
+	/// \brief Get the constructor of a reduction of a type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType target type of the reduction
 	/// \param[in] fromType source type of the reduction
 	/// \return the constructor of the reduction found, -1 if not found
-	int reductionConstructor( const Scope::Step step, int toType, int fromType) const;
+	int reduction( const Scope::Step step, int toType, int fromType) const;
 
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] fromType source type of the reduction
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
-	ReduceResult reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const;
+	std::pmr::vector<ReductionResult> reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const;
 
-	/// \brief Perform a sequence reductions of a type to another type and return the smallest path of reductions found
+	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType target type of the reduction
 	/// \param[in] fromType source type of the reduction
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
-	/// \return the shortest path found, throws if two path of same length are found
-	ReduceResult reduce( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
+	/// \return the path found that has the minimal weight sum, throws Error::AmbiguousTypeReference if two path of same length are found
+	DeriveResult derive( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
@@ -210,7 +211,7 @@ private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
 	void collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const;
 	std::string reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const;
-	std::string reduceResultToString( const ReduceResult& res) const;
+	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;
 
 private:
