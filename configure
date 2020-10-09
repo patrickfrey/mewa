@@ -49,11 +49,11 @@ for VERSION in 5.4 5.3 5.2 ; do
 		LIBPATH=`/usr/bin/pkg-config --variable=libdir lua$VERSION`
 		PREFIX=`/usr/bin/pkg-config --variable=prefix lua$VERSION`
 		if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ] && [ x$PREFIX != 'x' ] ; then
-			BINPATH="$PREFIX/bin"
+			BINPATH="$PREFIX/bin/lua$VERSION"
 			writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
 			>&2 echo "/usr/bin/pkg-config --variable=includedir lua$VERSION => $INCPATH"
 			>&2 echo "/usr/bin/pkg-config --variable=libdir lua$VERSION => $LIBPATH"
-			>&2 echo "/usr/bin/pkg-config --variable=prefix lua$VERSION => $PREFIX, BINPATH=$PREFIX/bin"
+			>&2 echo "/usr/bin/pkg-config --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
 			>&2 echo "/usr/bin/pkg-config --variable=version lua$VERSION => $LUAVERSION"
 			>&2 echo "Wrote file Lua.inc"
 			exit 0

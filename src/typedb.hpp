@@ -61,11 +61,19 @@ public:
 		int arsize;
 		Parameter const* ar;
 
-		ParameterList( int arsize_, const Parameter* ar_)
+		ParameterList( const std::vector<Parameter>& ar_) noexcept
+			:arsize(ar_.size()),ar(ar_.data()){}
+		ParameterList( const std::pmr::vector<Parameter>& ar_) noexcept
+			:arsize(ar_.size()),ar(ar_.data()){}
+		ParameterList( int arsize_, const Parameter* ar_) noexcept
 			:arsize(arsize_),ar(ar_){}
-		ParameterList( const ParameterList& o)
+		ParameterList( const ParameterList& o) noexcept
 			:arsize(o.arsize),ar(o.ar){}
 
+		bool empty() const noexcept
+		{
+			return !arsize;
+		}
 		std::size_t size() const noexcept
 		{
 			return arsize;
@@ -157,7 +165,7 @@ public:
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority The priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
-	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const std::vector<Parameter>& parameter, int priority);
+	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority);
 
 	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
 	/// \param[in] scope Scope the scope of this definition

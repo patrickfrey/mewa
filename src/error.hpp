@@ -39,8 +39,9 @@ public:
 		ExpectedFloatingPointArgument=409,
 		ExpectedTableArgument=410,
 		ExpectedArgumentScopeStructure=411,
-		TooFewArguments=412,
-		TooManyArguments=413,
+		ExpectedArgumentParameterStructure=412,
+		TooFewArguments=413,
+		TooManyArguments=414,
 
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
@@ -162,6 +163,7 @@ public:
 			case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
 			case ExpectedTableArgument: return "Expected table as argument";
 			case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
+			case ExpectedArgumentParameterStructure:  return "Expected argument to be a type parameter structure (pair type,constructor)";
 			case TooFewArguments: return "too few arguments";
 			case TooManyArguments: return "too many arguments";
 

@@ -198,9 +198,16 @@ static int checkNofArguments( const char* functionName, lua_State* ls, int minNo
 
 [[noreturn]] static void throwArgumentError( const char* functionName, int li, mewa::Error::Code ec)
 {
-	char idbuf[ 128];
-	std::snprintf( idbuf, sizeof(idbuf), "%s [%d] ", functionName, li);
-	throw mewa::Error( ec, idbuf);
+	if (li >= 1)
+	{
+		char idbuf[ 128];
+		std::snprintf( idbuf, sizeof(idbuf), "%s [%d] ", functionName, li);
+		throw mewa::Error( ec, idbuf);
+	}
+	else
+	{
+		throw mewa::Error( ec);
+	}
 }
 
 static bool isArgumentType( const char* functionName, lua_State* ls, int li, int luaTypeMask)
@@ -219,7 +226,7 @@ static std::string_view getArgumentAsString( const char* functionName, lua_State
 	return std::string_view( str, len);
 }
 
-static int getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec)
+static int getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec = mewa::Error::ExpectedIntegerArgument)
 {
 	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
 	{
@@ -250,6 +257,15 @@ static int getArgumentAsNonNegativeInteger( const char* functionName, lua_State*
 	return rt;
 }
 
+static double getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li)
+{
+	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
+	{
+		throwArgumentError( functionName, li, mewa::Error::ExpectedFloatingPointArgument);
+	}
+	return lua_tonumber( ls, li);
+}
+
 static void checkArgumentAsTable( const char* functionName, lua_State* ls, int li)
 {
 	if (!isArgumentType( functionName, ls, li, (1 << LUA_TTABLE)))
@@ -263,18 +279,26 @@ static mewa::Scope getArgumentAsScope( const char* functionName, lua_State* ls, 
 	checkArgumentAsTable( functionName, ls, li);
 	mewa::Scope::Step start = 0;
 	mewa::Scope::Step end = std::numeric_limits<mewa::Scope::Step>::max();
+	int rowcnt = 0;
 
 	lua_pushvalue( ls, li);
 	lua_pushnil( ls);
 	while (lua_next( ls, -2))
 	{
+		++rowcnt;
 		if (lua_type( ls, -2) == LUA_TNUMBER && lua_type( ls, -1) == LUA_TNUMBER)
 		{
 			double kk = lua_tonumber( ls, -2);
 			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
 			{
-				if ((int)kk == 1) start = lua_tointeger( ls, -1);
-				else if ((int)kk == 2) end = lua_tointeger( ls, -1);
+				if ((int)kk == 1)
+				{
+					start = lua_tointeger( ls, -1);
+				}
+				else if ((int)kk == 2)
+				{
+					end = lua_tointeger( ls, -1);
+				}
 				else
 				{
 					throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
@@ -287,20 +311,106 @@ static mewa::Scope getArgumentAsScope( const char* functionName, lua_State* ls, 
 		}
 		lua_pop( ls, 1);
 	}
-	if (start < 0 || end < 0 || start > end)
+	if (rowcnt != 2 || start < 0 || end < 0 || start > end)
 	{
 		throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
 	}
+	lua_pop( ls, 1);
 	return mewa::Scope( start, end);
 }
 
-static double getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li)
+static int getArgumentAsConstructor( const char* functionName, lua_State* ls, int li, int objtable, int& objcnt)
 {
-	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
+	int handle = ++objcnt;
+	lua_pushvalue( ls, li);
+	lua_rawseti( ls, objtable < 0 ? (objtable-1):objtable, handle);
+	return handle;
+}
+
+static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functionName, lua_State* ls, int li, int objtable, int& objcnt)
+{
+	lua_pushvalue( ls, objtable);
+	lua_pushvalue( ls, li);
+	lua_pushnil( ls);							//STK: [OBJTAB] [PARAMTAB] [KEY] NIL
+	int type = -1;
+	int constructor = -1;
+	int rowcnt = 0;
+
+	while (lua_next( ls, -2))						// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 	{
-		throwArgumentError( functionName, li, mewa::Error::ExpectedFloatingPointArgument);
+		++rowcnt;
+		if (lua_type( ls, -2) == LUA_TNUMBER)
+		{
+			double kk = lua_tonumber( ls, -2);
+			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			{
+				if ((int)kk == 1)
+				{
+					type = lua_tointeger( ls, -1);
+				}
+				else if ((int)kk == 2)
+				{
+					constructor = ++objcnt;
+					lua_pushvalue( ls, -1);			// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
+					lua_rawseti( ls, -5, constructor);	// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+				}
+				else
+				{
+					throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+				}
+			}
+		}
+		else
+		{
+			throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+		}
+		lua_pop( ls, 1);						// STK: [OBJTAB] [PARAMTAB] [KEY]
 	}
-	return lua_tonumber( ls, li);
+	lua_pop( ls, 2);							// STK:
+	if (rowcnt != 2 || type < 0 || constructor <= 0)
+	{
+		throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+	}
+	return mewa::TypeDatabase::Parameter( type, constructor);
+}
+
+static std::pmr::vector<mewa::TypeDatabase::Parameter>
+	getArgumentAsParameterList( const char* functionName, lua_State* ls, int li, int objtable, int& objcnt,std::pmr::memory_resource* memrsc)
+{
+	std::pmr::vector<mewa::TypeDatabase::Parameter> rt( memrsc);
+	checkArgumentAsTable( functionName, ls, li);
+
+	lua_pushvalue( ls, objtable);
+	lua_pushvalue( ls, li);
+	lua_pushnil( ls);										//STK: [OBJTAB] [PARAMTAB] NIL
+	while (lua_next( ls, -2))									// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+	{
+		if (lua_type( ls, -2) == LUA_TNUMBER)
+		{
+			double kk = lua_tonumber( ls, -2);
+			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			{
+				if ((int)kk < 1)
+				{
+					throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+				}
+				std::size_t index = (int)kk;
+				if (index < rt.size())
+				{
+					rt.resize( index, mewa::TypeDatabase::Parameter( -1, -1));
+				}
+				rt[ index] = getArgumentAsParameter( functionName, ls, -1, -4, objcnt);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+			}
+		}
+		else
+		{
+			throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
+		}
+		lua_pop( ls, 1);									//STK: [OBJTAB] [PARAMTAB] [KEY]
+	}
+	lua_pop( ls, 2);										//STK:
+
+	return rt;
 }
 
 static void checkStack( const char* functionName, lua_State* ls, int sz)
@@ -539,11 +649,11 @@ static int mewa_typedb_get( lua_State* ls)
 
 static int mewa_typedb_set( lua_State* ls)
 {
-	static const char* functionName = "typedb:get";
+	static const char* functionName = "typedb:set";
 	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
 
-	std::string_view name;
 	mewa::Scope scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
+	std::string_view name;
 
 	bool success = true;
 	try
@@ -570,7 +680,31 @@ static int mewa_typedb_set( lua_State* ls)
 
 static int mewa_typedb_def_type( lua_State* ls)
 {
-	return 0;
+	static const char* functionName = "typedb:def_type";
+	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+
+	int buffer_parameter[ 1024];
+	std::pmr::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
+
+	bool success = true;
+	try
+	{
+		int nn = checkNofArguments( functionName, ls, 6/*minNofArgs*/, 7/*maxNofArgs*/);
+		checkStack( functionName, ls, 8);
+		mewa::Scope scope = getArgumentAsScope( functionName, ls, 2);
+		int contextType = getArgumentAsCardinal( functionName, ls, 3);
+		std::string_view name = getArgumentAsString( functionName, ls, 4);
+		lua_getglobal( ls, mw->objTableName.buf);
+		int constructor = getArgumentAsConstructor( functionName, ls, 5, -1/*objtable*/, mw->objCount);
+		std::pmr::vector<mewa::TypeDatabase::Parameter> parameter =
+			getArgumentAsParameterList( functionName, ls, 6, -1/*objtable*/, mw->objCount, &memrsc_parameter);
+		int priority = (nn >= 7) ? getArgumentAsInteger( functionName, ls, 7) : 0;
+		lua_pop( ls, 1); // ... obj table
+		int rt = mw->impl->defineType( scope, contextType, name, constructor, parameter, priority);
+		lua_pushinteger( ls, rt);
+	}
+	CATCH_EXCEPTION( success)
+	return 1;
 }
 
 static int mewa_typedb_def_reduction( lua_State* ls)

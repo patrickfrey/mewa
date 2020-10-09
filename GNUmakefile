@@ -38,6 +38,7 @@ include Lua.inc
 # Project settings:
 BUILDDIR := build
 DESTINATION := $(PREFIX)/bin
+MAKEDEP  := Lua.inc GNUmakefile
 SRCDIR   := src
 TESTDIR  := tests
 STDFLAGS := -std=c++17
@@ -55,10 +56,10 @@ MODULE   := $(BUILDDIR)/mewa.so
 TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
 		$(BUILDDIR)/testRandomIdentMap $(BUILDDIR)/testAutomaton \
 		$(BUILDDIR)/testTypeDb $(BUILDDIR)/testRandomTypeDb
-PROGRAM  := $(BUILDDIR)/mewa 
+PROGRAM  := $(BUILDDIR)/mewa
 
 # Build targets:
-all : build $(LIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG)
+all : build $(LIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
 
 clean: build
 	rm $(BUILDDIR)/* .depend
@@ -74,10 +75,10 @@ depend: .depend
 include .depend
 
 # Build rules:
-$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(MAKEDEP)
 	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
-$(BUILDDIR)/%.o: $(TESTDIR)/%.cpp
+$(BUILDDIR)/%.o: $(TESTDIR)/%.cpp $(MAKEDEP)
 	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
