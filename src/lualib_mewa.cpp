@@ -914,9 +914,9 @@ static int mewa_typedb_typename( lua_State* ls)
 	bool success = true;
 	try
 	{
-		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+		checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
 		checkStack( functionName, ls, 2);
-		int type = getArgumentAsNonNegativeInteger( functionName, ls, 1);
+		int type = getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		auto rt = mw->impl->typeToString( type);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
@@ -932,9 +932,9 @@ static int mewa_typedb_parameters( lua_State* ls)
 	bool success = true;
 	try
 	{
-		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+		checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
 		checkStack( functionName, ls, 2);
-		int type = getArgumentAsCardinal( functionName, ls, 1);
+		int type = getArgumentAsCardinal( functionName, ls, 2);
 		auto rt = mw->impl->parameters( type);
 		luaPushParameters( ls, functionName, mw->objTableName.buf, rt);
 	}

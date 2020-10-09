@@ -45,7 +45,7 @@ function testRegisterAllocator()
 	if result ~= expected then
 		error( "testRegisterAllocator() result not as expected!")
 	end
-	print( "Run testRegisterAllocator() => " .. result .. " OK")
+	print( "Run testRegisterAllocator() => " .. result .. "\nOK")
 end
 
 -- Function that tests the typedb define/resolve type 
@@ -55,12 +55,38 @@ function testDefineResolveType()
 	function pushParameter( constructor)
 		return "param " .. constructor.type
 	end
+	function typeReduction( stu_)
+		local stu = stu_
+		return function ( type)
+			return "#" .. stu .. "(" .. type .. ")"
+		end
+	end
+
+	function reduceType( constructor)
+		return "param " .. constructor.type
+	end	
 	local short_type = typedb:def_type( {0,100}, 0, "short", {type="short",code="#short"})
 	local int_type = typedb:def_type( {0,100}, 0, "int", {type="int",code="#int"})
 	local float_type = typedb:def_type( {0,100}, 0, "float", {type="float",code="#float"})
 	local add_short = typedb:def_type( {0,100}, short_type, "+", {op="add",type="short",code="short+short"}, {{short_type, pushParameter}})
 	local add_int = typedb:def_type( {0,100}, int_type, "+", {op="add",type="int",code="int+int"}, {{int_type, pushParameter}})
 	local add_float = typedb:def_type( {0,100}, float_type, "+", {op="add",type="float",code="float+float"}, {{float_type, pushParameter}})
+	typedb:def_reduction( {0,100}, int_type, float_type, typeReduction( "int"), 0.5)
+	typedb:def_reduction( {0,100}, float_type, int_type, typeReduction( "float"), 1.0)
+	typedb:def_reduction( {0,100}, short_type, float_type, typeReduction( "short"), 0.5)
+	typedb:def_reduction( {0,100}, float_type, short_type, typeReduction( "float"), 1.0)
+	typedb:def_reduction( {0,100}, short_type, int_type, typeReduction( "short"), 0.5)
+	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), 1.0)
+
+	local result = "RESULT";
+	local types = {short_type, int_type, float_type}
+	for i,type in ipairs( types) do
+		for i,reduction in ipairs( typedb:reductions( 34, type)) do
+			result = result .. "\nREDU " .. typedb:typename( type) .. " -> " .. typedb:typename( reduction[1])
+					.. " : " .. reduction[2]( typedb:typename( type))
+		end
+	end
+	print( "Run testDefineResolveType() => " .. result .. "\nOK")
 end
 
 testRegisterAllocator()
