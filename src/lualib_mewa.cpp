@@ -705,9 +705,9 @@ static int mewa_typedb_get( lua_State* ls)
 	{
 		checkNofArguments( functionName, ls, 3/*minNofArgs*/, 3/*maxNofArgs*/);
 		checkStack( functionName, ls, 8);
-		mewa::Scope::Step step = getArgumentAsCardinal( functionName, ls, 2);
-		std::string_view name = getArgumentAsString( functionName, ls, 3);
-		handle = mw->impl->getNamedObject( step, name);
+		std::string_view name = getArgumentAsString( functionName, ls, 2);
+		mewa::Scope::Step step = getArgumentAsCardinal( functionName, ls, 3);
+		handle = mw->impl->getNamedObject( name, step);
 	}
 	CATCH_EXCEPTION( success)
 
@@ -732,8 +732,8 @@ static int mewa_typedb_set( lua_State* ls)
 	{
 		checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
 		checkStack( functionName, ls, 8);
-		scope = getArgumentAsScope( functionName, ls, 2);
-		name = getArgumentAsString( functionName, ls, 3);
+		name = getArgumentAsString( functionName, ls, 2);
+		scope = getArgumentAsScope( functionName, ls, 3);
 	}
 	CATCH_EXCEPTION( success)
 
@@ -745,7 +745,7 @@ static int mewa_typedb_set( lua_State* ls)
 
 	try
 	{
-		mw->impl->setNamedObject( scope, name, handle);
+		mw->impl->setNamedObject( name, scope, handle);
 	} CATCH_EXCEPTION(success)
 	return 0;
 }

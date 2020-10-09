@@ -48,7 +48,7 @@ std::string TypeDatabase::typeToString( int type) const
 	return rt;
 }
 
-void TypeDatabase::setNamedObject( const Scope& scope, const std::string_view& name, int handle)
+void TypeDatabase::setNamedObject( const std::string_view& name, const Scope& scope, int handle)
 {
 	if (handle <= 0) throw Error( Error::InvalidHandle, string_format( "%d", handle));
 
@@ -61,7 +61,7 @@ void TypeDatabase::setNamedObject( const Scope& scope, const std::string_view& n
 	m_objSets[ ins.first->second].set( scope, handle/*value*/);
 }
 
-int TypeDatabase::getNamedObject( const Scope::Step step, const std::string_view& name) const
+int TypeDatabase::getNamedObject( const std::string_view& name, const Scope::Step step) const
 {
 	auto oi = m_objidMap->find( m_identMap->lookup( name));
 	if (oi == m_objidMap->end()) return -1/*undefined*/;

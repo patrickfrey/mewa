@@ -146,54 +146,54 @@ public:
 
 public:
 	/// \brief Define an object retrievable by its name within a scope
-	/// \param[in] scope Scope the scope of this definition
-	/// \param[in] name name of the object
-	/// \param[in] handle handle (non negative cardinal number, negative value -1 reserved by the getter for not found) for the object given by the caller
-	void setNamedObject( const Scope& scope, const std::string_view& name, int handle);
+	/// \param[in] name the name of the object
+	/// \param[in] scope the scope of this definition
+	/// \param[in] handle the handle (non negative cardinal number, negative value -1 reserved by the getter for not found) for the object given by the caller
+	void setNamedObject( const std::string_view& name, const Scope& scope, int handle);
 
 	/// \brief Retrieve an object by its name in the innermost scope covering the specified scope step
+	/// \param[in] name the name of the object
 	/// \param[in] step the scope step of the search defining what are valid definitions
-	/// \param[in] name name of the object
 	/// \return handle of the object defined by the caller in the given scope step with the name specified (setObject), or -1 if no object found
-	int getNamedObject( const Scope::Step step, const std::string_view& name) const;
+	int getNamedObject( const std::string_view& name, const Scope::Step step) const;
 
 	/// \brief Define a new type, throws if already defined in the same scope with same the signature and the same priority
-	/// \param[in] scope Scope the scope of this definition
+	/// \param[in] scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
 	/// \parstd::pmr::vector<ReductionResult>am[in] constructor handle for the constructor of the type
 	/// \param[in] parameter list of parameters as part of the function signature
-	/// \param[in] priority The priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
+	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
 	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority);
 
 	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
-	/// \param[in] scope Scope the scope of this definition
-	/// \param[in] toType target type of the reduction
-	/// \param[in] fromType source type of the reduction
-	/// \param[in] constructor handle for the constructor that implements the construction of the target type from the source type
-	/// \param[in] weight weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
+	/// \param[in] scope the scope of this definition
+	/// \param[in] toType the target type of the reduction
+	/// \param[in] fromType the source type of the reduction
+	/// \param[in] constructor the handle for the constructor that implements the construction of the target type from the source type
+	/// \param[in] weight the weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
 	void defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight);
 
 	/// \brief Get the constructor of a reduction of a type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
-	/// \param[in] toType target type of the reduction
-	/// \param[in] fromType source type of the reduction
+	/// \param[in] toType the target type of the reduction
+	/// \param[in] fromType the source type of the reduction
 	/// \return the constructor of the reduction found, -1 if not found
 	int reduction( const Scope::Step step, int toType, int fromType) const;
 
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
-	/// \param[in] fromType source type of the reduction
-	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
+	/// \param[in] fromType the source type of the reduction
+	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
 	std::pmr::vector<ReductionResult> reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
-	/// \param[in] toType target type of the reduction
-	/// \param[in] fromType source type of the reduction
-	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
+	/// \param[in] toType the target type of the reduction
+	/// \param[in] fromType the source type of the reduction
+	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the path found that has the minimal weight sum, throws Error::AmbiguousTypeReference if two path of same length are found
 	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
 
@@ -206,12 +206,12 @@ public:
 	ResolveResult resolveType( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const;
 
 	/// \brief Get the string representation of a type
-	/// \param[in] type handle of the type (return value of defineType)
+	/// \param[in] type the handle of the type (return value of defineType)
 	/// \return the complete string assigned to a type
 	std::string typeToString( int type) const;
 
 	/// \brief Get the parameters attached to a type
-	/// \param[in] type handle of the type (return value of defineType)
+	/// \param[in] type the handle of the type (return value of defineType)
 	/// \return a view on the list of parameters
 	ParameterList parameters( int type) const;
 

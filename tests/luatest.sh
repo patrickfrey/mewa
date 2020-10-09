@@ -34,3 +34,5 @@ build/language1.compiler.lua -d build/language1.compiler.debug.out -o build/lang
 verify_test_result "Lua test (3) debug output compiling example program with language1 compiler"  build/language1.compiler.debug.out tests/language1.compiler.debug.exp
 verify_test_result "Lua test (4) output compiling example program with language1 compiler"  build/language1.compiler.out tests/language1.compiler.exp
 
+$LUABIN tests/typedb.lua
+
