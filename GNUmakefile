@@ -45,7 +45,6 @@ CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisib
 INCFLAGS := -I$(SRCDIR) -I$(LUAINC)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
-LUALIBS  := -llua$(LUAVER) -L$(LUALIBDIR)
 LIBOBJS  := $(BUILDDIR)/lexer.o \
 		$(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/automaton_parser.o \
 		$(BUILDDIR)/typedb.o \
