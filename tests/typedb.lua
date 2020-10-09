@@ -12,11 +12,11 @@ function testRegisterAllocator()
 		local i = 0
 		return function ()
 			i = i + 1
-			return string.format( "%%%d", i)
+			return "%" .. i
 		end
 	end
 
-	-- Define a register allocator function as object with name "register" for 4 scopes defined as {start,end}
+	-- Define a register allocator function as an object with name "register" for 4 scopes defined as {start,end}
 	typedb:set( "register", {0,1000}, register_allocator())
 	typedb:set( "register", {2,300}, register_allocator())
 	typedb:set( "register", {6,50}, register_allocator())
