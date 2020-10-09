@@ -38,7 +38,9 @@ public:
 		ExpectedCardinalArgument=408,
 		ExpectedFloatingPointArgument=409,
 		ExpectedTableArgument=410,
-		ExpectedUserdataArgument=411,
+		ExpectedArgumentScopeStructure=411,
+		TooFewArguments=412,
+		TooManyArguments=413,
 
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
@@ -108,6 +110,8 @@ public:
 		LuaCallErrorERRMEM=592,
 		LuaCallErrorERRERR=593,
 		LuaCallErrorUNKNOWN=594,
+		LuaStackOutOfMemory=595,
+		LuaInvalidUserData=596,
 
 		UnexpectedTokenNotOneOf=601,
 		LanguageAutomatonCorrupted=602,
@@ -136,7 +140,7 @@ public:
 		return std::runtime_error::what();
 	}
 
-private:
+public:
         static const char* code2String( int code_)
 	{
 		if (code_ < 300)
@@ -157,7 +161,9 @@ private:
 			case ExpectedCardinalArgument: return "Expected positive integer as argument";
 			case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
 			case ExpectedTableArgument: return "Expected table as argument";
-			case ExpectedUserdataArgument:  return "Expected user data as argument";
+			case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
+			case TooFewArguments: return "too few arguments";
+			case TooManyArguments: return "too many arguments";
 
 			case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
 			case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
@@ -227,6 +233,8 @@ private:
 			case LuaCallErrorERRMEM: return "Lua memory allocation error (ERRMEM)";
 			case LuaCallErrorERRERR: return "Lua error handler error (ERRERR)";
 			case LuaCallErrorUNKNOWN: return "Lua error handler error (unknown error)";
+			case LuaStackOutOfMemory: return "Lua stack out of memory";
+			case LuaInvalidUserData: return "Userdata argument of this call is invalid";
 
 			case UnexpectedTokenNotOneOf: return "Syntax error, unexpected token (expected one of {...})";
 			case LanguageAutomatonCorrupted: return "Logic error, the automaton for parsing the language is corrupt";
@@ -236,6 +244,7 @@ private:
 		return "Unknown error";
 	}
 
+private:
         static std::string map2string( Code code_, const std::string_view& param_, int line_)
 	{
 		char numbuf[ 128];

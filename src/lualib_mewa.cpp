@@ -159,9 +159,11 @@ static std::string_view move_string_on_lua_stack( lua_State* ls, std::string&& s
 
 static int lua_print_redirected( lua_State* ls) {
 	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
-	if (!mw) luaL_error( ls, "calling print redirected without attached userdata");
-	if (!mw->outputFileHandle) luaL_error( ls, "no valid filehandle in attached userdata of print redirected");
-
+	static const char* functionName = "mewa print redirected";
+	if (!mw || !mw->outputFileHandle)
+	{
+		luaL_error( ls, "%s: %s", functionName, mewa::Error::code2String( mewa::Error::LuaInvalidUserData));
+	}
 	int nargs = lua_gettop( ls);
 	for (int li=1; li <= nargs; ++li)
 	{
@@ -169,7 +171,7 @@ static int lua_print_redirected( lua_State* ls) {
 		const char* str = lua_tolstring( ls, li, &len);
 		std::fwrite( str, 1, len, mw->outputFileHandle);
 		int ec = std::ferror( mw->outputFileHandle);
-		if (ec) luaL_error( ls, "error in print redirected: %s", std::strerror( ec));
+		luaL_error( ls, "%s: %s", functionName, std::strerror( ec));
 		std::fflush( mw->outputFileHandle);
 	}
 	return 0;
@@ -185,43 +187,44 @@ static int checkNofArguments( const char* functionName, lua_State* ls, int minNo
 	int nn = lua_gettop( ls);
 	if (nn > maxNofArgs)
 	{
-		if (maxNofArgs == 0)
-		{
-			throw std::runtime_error( mewa::string_format( "no arguments expected calling function '%s'", functionName));
-		}
-		else
-		{
-			throw std::runtime_error( mewa::string_format( "too many arguments (%d, maximum %d) calling function '%s'", nn, maxNofArgs, functionName));
-		}
+		throw mewa::Error( mewa::Error::TooManyArguments, mewa::string_format( "%s [%d, maximum %d]", functionName, nn, maxNofArgs));
 	}
 	if (nn < minNofArgs)
 	{
-		throw std::runtime_error( mewa::string_format( "too few arguments (%d, minimum %d) calling '%s'", nn, minNofArgs, functionName));
+		throw mewa::Error( mewa::Error::TooFewArguments, mewa::string_format( "%s [%d, maximum %d]", functionName, nn, maxNofArgs));
 	}
 	return nn;
 }
 
-static void checkArgument( const char* functionName, lua_State* ls, int li, int luaTypeMask, const char* expectedTypeName)
+[[noreturn]] static void throwArgumentError( const char* functionName, int li, mewa::Error::Code ec)
 {
-	if (((1U << lua_type( ls, li)) & luaTypeMask) == 0)
-	{
-		char numbuf[ 32];
-		std::snprintf( numbuf, sizeof(numbuf), "[%d] ", li);
-		throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s", li, functionName, expectedTypeName));
-	}
+	char idbuf[ 128];
+	std::snprintf( idbuf, sizeof(idbuf), "%s [%d] ", functionName, li);
+	throw mewa::Error( ec, idbuf);
+}
+
+static bool isArgumentType( const char* functionName, lua_State* ls, int li, int luaTypeMask)
+{
+	return (((1U << lua_type( ls, li)) & luaTypeMask) != 0);
 }
 
 static std::string_view getArgumentAsString( const char* functionName, lua_State* ls, int li)
 {
-	checkArgument( functionName, ls, li, (1 << LUA_TSTRING), "string");
+	if (!isArgumentType( functionName, ls, li, (1 << LUA_TSTRING)))
+	{
+		throwArgumentError( functionName, li, mewa::Error::ExpectedStringArgument);
+	}
 	std::size_t len;
 	const char* str = lua_tolstring( ls, li, &len);
 	return std::string_view( str, len);
 }
 
-static int getArgumentAsInteger( const char* functionName, lua_State* ls, int li, const char* expectedTypeName="integer")
+static int getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec)
 {
-	checkArgument( functionName, ls, li, (1 << LUA_TNUMBER), "integer");
+	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
+	{
+		throwArgumentError( functionName, li, ec);
+	}
 	double val = lua_tonumber( ls, li);
 	if (val - std::floor( val) < std::numeric_limits<double>::epsilon()*4)
 	{
@@ -229,27 +232,30 @@ static int getArgumentAsInteger( const char* functionName, lua_State* ls, int li
 	}
 	else
 	{
-		throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s", li, functionName, "integer"));
+		throwArgumentError( functionName, li, ec);
 	}
 }
 
 static int getArgumentAsCardinal( const char* functionName, lua_State* ls, int li)
 {
-	int rt = getArgumentAsInteger( functionName, ls, li, "positive integer");
-	if (rt <= 0) throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s", li, functionName, "positive integer"));
+	int rt = getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedCardinalArgument);
+	if (rt <= 0) throwArgumentError( functionName, li, mewa::Error::ExpectedCardinalArgument);
 	return rt;
 }
 
 static int getArgumentAsNonNegativeInteger( const char* functionName, lua_State* ls, int li)
 {
-	int rt = getArgumentAsInteger( functionName, ls, li, "positive integer");
-	if (rt < 0) throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s", li, functionName, "non negative integer"));
+	int rt = getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedNonNegativeIntegerArgument);
+	if (rt < 0) throwArgumentError( functionName, li, mewa::Error::ExpectedNonNegativeIntegerArgument);
 	return rt;
 }
 
 static void checkArgumentAsTable( const char* functionName, lua_State* ls, int li)
 {
-	checkArgument( functionName, ls, li, (1 << LUA_TTABLE), "table");
+	if (!isArgumentType( functionName, ls, li, (1 << LUA_TTABLE)))
+	{
+		throwArgumentError( functionName, li, mewa::Error::ExpectedTableArgument);
+	}
 }
 
 static mewa::Scope getArgumentAsScope( const char* functionName, lua_State* ls, int li)
@@ -271,45 +277,42 @@ static mewa::Scope getArgumentAsScope( const char* functionName, lua_State* ls, 
 				else if ((int)kk == 2) end = lua_tointeger( ls, -1);
 				else
 				{
-					throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s",
-									li, functionName, "scope structure (pair of non negative integers, unsigned integer range)"));
+					throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
 				}
 			}
 		}
 		else
 		{
-			throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s",
-							li, functionName, "scope structure (pair of non negative integers, unsigned integer range)"));
+			throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
 		}
 		lua_pop( ls, 1);
 	}
 	if (start < 0 || end < 0 || start > end)
 	{
-		throw std::runtime_error( mewa::string_format( "argument [%d] of function '%s' expected to be a %s",
-							li, functionName, "scope structure (pair of non negative integers, unsigned integer range)"));
+		throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
 	}
 	return mewa::Scope( start, end);
 }
 
-static void checkArgumentAsUserData( const char* functionName, lua_State* ls, int li)
-{
-	checkArgument( functionName, ls, li, (1 << LUA_TTABLE), "table");
-}
-
 static double getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li)
 {
-	checkArgument( functionName, ls, li, (1 << LUA_TNUMBER), "floating point number");
+	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
+	{
+		throwArgumentError( functionName, li, mewa::Error::ExpectedFloatingPointArgument);
+	}
 	return lua_tonumber( ls, li);
 }
 
 static void checkStack( const char* functionName, lua_State* ls, int sz)
 {
-	if (!lua_checkstack( ls, sz)) throw std::runtime_error( mewa::string_format( "no Lua stack left when calling '%s'", functionName));
+	if (!lua_checkstack( ls, sz)) throw mewa::Error( mewa::Error::LuaStackOutOfMemory, functionName);
 }
+
 
 static int mewa_new_compiler( lua_State* ls)
 {
 	static const char* functionName = "mewa.compiler";
+
 	bool success = true;
 	try
 	{
@@ -341,14 +344,14 @@ static int mewa_new_compiler( lua_State* ls)
 static int mewa_destroy_compiler( lua_State* ls)
 {
 	static const char* functionName = "compiler:__gc";
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+
 	bool success = true;
 	try
 	{
 		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 	}
 	CATCH_EXCEPTION( success)
-
-	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 
 	lua_pushnil( ls);
 	lua_setglobal( ls, mw->callTableName.buf);
@@ -360,6 +363,8 @@ static int mewa_destroy_compiler( lua_State* ls)
 static int mewa_compiler_tostring( lua_State* ls)
 {
 	static const char* functionName = "compiler:__tostring";
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+
 	bool success = true;
 	try
 	{
@@ -368,7 +373,6 @@ static int mewa_compiler_tostring( lua_State* ls)
 	}
 	CATCH_EXCEPTION( success)
 
-	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 	std::string_view resultptr;
 	try
 	{
@@ -385,6 +389,8 @@ static int mewa_compiler_tostring( lua_State* ls)
 static int mewa_compiler_run( lua_State* ls)
 {
 	static const char* functionName = "compiler:run( inputfile[ , outputfile[ , dbgoutput]])";
+	mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+
 	bool success = true;
 	try
 	{
@@ -392,7 +398,6 @@ static int mewa_compiler_run( lua_State* ls)
 		checkStack( functionName, ls, 10);
 		std::string_view filename = getArgumentAsString( functionName, ls, 2);
 
-		mewa_compiler_userdata_t* mw = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
 		std::string source = mewa::readFile( std::string(filename));
 		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));		// STK: [COMPILER] [INPUTFILE] [SOURCE]
 
@@ -464,6 +469,7 @@ static int mewa_compiler_run( lua_State* ls)
 static int mewa_new_typedb( lua_State* ls)
 {
 	static const char* functionName = "mewa.typedb";
+
 	bool success = true;
 	try
 	{
@@ -491,14 +497,14 @@ static int mewa_new_typedb( lua_State* ls)
 static int mewa_destroy_typedb( lua_State* ls)
 {
 	static const char* functionName = "typedb:__gc";
+	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+
 	bool success = true;
 	try
 	{
 		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 	}
 	CATCH_EXCEPTION( success)
-
-	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
 
 	lua_pushnil( ls);
 	lua_setglobal( ls, mw->objTableName.buf);
@@ -510,25 +516,32 @@ static int mewa_destroy_typedb( lua_State* ls)
 static int mewa_typedb_get( lua_State* ls)
 {
 	static const char* functionName = "typedb:get";
+	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	int handle = -1;
+
 	bool success = true;
 	try
 	{
-		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+		checkNofArguments( functionName, ls, 3/*minNofArgs*/, 3/*maxNofArgs*/);
 		checkStack( functionName, ls, 8);
+		mewa::Scope::Step step = getArgumentAsCardinal( functionName, ls, 2);
+		std::string_view name = getArgumentAsString( functionName, ls, 3);
+		handle = mw->impl->getNamedObject( step, name);
 	}
 	CATCH_EXCEPTION( success)
 
-	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
-	try
-	{
-		//getNamedObject( const Scope::Step step, const std::string_view& name) const;
-	} CATCH_EXCEPTION(success)
-	return 0;
+	// Get the item addressed with handle from the object table on the top of the stack and return it:
+	lua_getglobal( ls, mw->objTableName.buf);
+	lua_rawgeti( ls, -1, handle);
+
+	return 1;
 }
 
 static int mewa_typedb_set( lua_State* ls)
 {
 	static const char* functionName = "typedb:get";
+	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+
 	std::string_view name;
 	mewa::Scope scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
 
@@ -542,10 +555,8 @@ static int mewa_typedb_set( lua_State* ls)
 	}
 	CATCH_EXCEPTION( success)
 
-	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
-
+	// Put the 4th argument into the object table of this typedb with an index stored as handle in the typedb:
 	int handle = ++mw->objCount;
-
 	lua_getglobal( ls, mw->objTableName.buf);
 	lua_pushvalue( ls, 4);
 	lua_rawseti( ls, -2, handle);
