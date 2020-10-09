@@ -100,9 +100,16 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	m_typerecMap.reserve( m_typerecMap.size()+1);
 
 	int parameterlen = parameter.size();
-	int parameteridx = parameter.empty() ? 0 : (int)(m_parameterMap.size()+1);
-	m_parameterMap.insert( m_parameterMap.end(), parameter.begin(), parameter.end());
-
+	int parameteridx;
+	if (parameter.empty())
+	{
+		parameteridx = 0;
+	}
+	else
+	{
+		parameteridx = (int)m_parameterMap.size()+1;
+		m_parameterMap.insert( m_parameterMap.end(), parameter.begin(), parameter.end());
+	}
 	int typerec = m_typerecMap.size()+1;
 	TypeDef typeDef( contextType, m_identMap->get( name));
 	m_typerecMap.push_back( TypeRecord( constructor, parameteridx, parameterlen, priority, typeDef));

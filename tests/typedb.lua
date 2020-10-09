@@ -48,5 +48,21 @@ function testRegisterAllocator()
 	print( "Run testRegisterAllocator() => " .. result .. " OK")
 end
 
+-- Function that tests the typedb define/resolve type 
+function testDefineResolveType()
+	typedb = mewa.typedb()
+
+	function pushParameter( constructor)
+		return "param " .. constructor.type
+	end
+	local short_type = typedb:def_type( {0,100}, 0, "short", {type="short",code="#short"})
+	local int_type = typedb:def_type( {0,100}, 0, "int", {type="int",code="#int"})
+	local float_type = typedb:def_type( {0,100}, 0, "float", {type="float",code="#float"})
+	local add_short = typedb:def_type( {0,100}, short_type, "+", {op="add",type="short",code="short+short"}, {{short_type, pushParameter}})
+	local add_int = typedb:def_type( {0,100}, int_type, "+", {op="add",type="int",code="int+int"}, {{int_type, pushParameter}})
+	local add_float = typedb:def_type( {0,100}, float_type, "+", {op="add",type="float",code="float+float"}, {{float_type, pushParameter}})
+end
+
 testRegisterAllocator()
+testDefineResolveType()
 

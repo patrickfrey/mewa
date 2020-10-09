@@ -330,7 +330,7 @@ static int getArgumentAsConstructor( const char* functionName, lua_State* ls, in
 static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functionName, lua_State* ls, int li, int objtable, int& objcnt)
 {
 	lua_pushvalue( ls, objtable);
-	lua_pushvalue( ls, li);
+	lua_pushvalue( ls, li < 0 ? (li-1) : li );
 	lua_pushnil( ls);							//STK: [OBJTAB] [PARAMTAB] [KEY] NIL
 	int type = -1;
 	int constructor = -1;
@@ -378,10 +378,11 @@ static std::pmr::vector<mewa::TypeDatabase::Parameter>
 	getArgumentAsParameterList( const char* functionName, lua_State* ls, int li, int objtable, int& objcnt,std::pmr::memory_resource* memrsc)
 {
 	std::pmr::vector<mewa::TypeDatabase::Parameter> rt( memrsc);
+	if (lua_isnil( ls, li)) return rt;
 	checkArgumentAsTable( functionName, ls, li);
 
 	lua_pushvalue( ls, objtable);
-	lua_pushvalue( ls, li);
+	lua_pushvalue( ls, li < 0 ? (li-1) : li);
 	lua_pushnil( ls);										//STK: [OBJTAB] [PARAMTAB] NIL
 	while (lua_next( ls, -2))									// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 	{
@@ -394,12 +395,19 @@ static std::pmr::vector<mewa::TypeDatabase::Parameter>
 				{
 					throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
 				}
-				std::size_t index = (int)kk;
-				if (index < rt.size())
+				std::size_t index = (int)kk-1;
+				if (index == rt.size())
 				{
-					rt.resize( index, mewa::TypeDatabase::Parameter( -1, -1));
+					rt.push_back( getArgumentAsParameter( functionName, ls, -1, -4, objcnt));	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 				}
-				rt[ index] = getArgumentAsParameter( functionName, ls, -1, -4, objcnt);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+				else
+				{
+					if (index > rt.size())
+					{
+						rt.resize( index+1, mewa::TypeDatabase::Parameter( -1, -1));
+					}
+					rt[ index] = getArgumentAsParameter( functionName, ls, -1, -4, objcnt);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+				}
 			}
 		}
 		else
@@ -761,15 +769,15 @@ static int mewa_typedb_def_type( lua_State* ls)
 	bool success = true;
 	try
 	{
-		int nn = checkNofArguments( functionName, ls, 6/*minNofArgs*/, 7/*maxNofArgs*/);
+		int nn = checkNofArguments( functionName, ls, 5/*minNofArgs*/, 7/*maxNofArgs*/);
 		checkStack( functionName, ls, 8);
 		mewa::Scope scope = getArgumentAsScope( functionName, ls, 2);
 		int contextType = getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		std::string_view name = getArgumentAsString( functionName, ls, 4);
 		lua_getglobal( ls, mw->objTableName.buf);
 		int constructor = getArgumentAsConstructor( functionName, ls, 5, -1/*objtable*/, mw->objCount);
-		std::pmr::vector<mewa::TypeDatabase::Parameter> parameter =
-			getArgumentAsParameterList( functionName, ls, 6, -1/*objtable*/, mw->objCount, &memrsc_parameter);
+		std::pmr::vector<mewa::TypeDatabase::Parameter> parameter;
+		if (nn >= 6) parameter = getArgumentAsParameterList( functionName, ls, 6, -1/*objtable*/, mw->objCount, &memrsc_parameter);
 		int priority = (nn >= 7) ? getArgumentAsInteger( functionName, ls, 7) : 0;
 		lua_pop( ls, 1); // ... obj table
 		int rt = mw->impl->defineType( scope, contextType, name, constructor, parameter, priority);
