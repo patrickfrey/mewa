@@ -25,6 +25,8 @@ std::string TypeDatabase::typeToString( int type) const
 {
 	std::string rt;
 	if (type == 0) return rt;
+	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
+
 	const TypeDef& td = m_typerecMap[ type-1].inv;
 	if (td.contextType)
 	{
@@ -66,9 +68,11 @@ int TypeDatabase::getNamedObject( const Scope::Step step, const std::string_view
 	return m_objSets[ oi->second].get( step);
 }
 
-TypeDatabase::ParameterList TypeDatabase::parameters( int type) const noexcept
+TypeDatabase::ParameterList TypeDatabase::parameters( int type) const
 {
 	if (type == 0) return ParameterList( 0, nullptr);
+	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
+
 	const TypeRecord& rec = m_typerecMap[ type-1];
 	if (rec.parameter < 0) return ParameterList( 0, nullptr);
 	return ParameterList( rec.parameterlen, m_parameterMap.data() + rec.parameter - 1);
@@ -91,7 +95,7 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	if ((int)(m_parameterMap.size() + parameter.size()) >= std::numeric_limits<int>::max()) throw Error( Error::CompiledSourceTooComplex);
 	if (priority > MaxPriority) throw Error( Error::PriorityOutOfRange, string_format( "%d", priority));
 	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
-	if (contextType < 0) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
+	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
 
 	m_typerecMap.reserve( m_typerecMap.size()+1);
 
@@ -151,8 +155,8 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight)
 {
 	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
-	if (toType < 0) throw Error( Error::InvalidHandle, string_format( "%d", toType));
-	if (fromType < 0) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
+	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
+	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 
 	m_reduTable->set( scope, fromType, toType, constructor, weight);
 }
@@ -292,6 +296,9 @@ private:
 
 int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType) const
 {
+	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
+	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
+
 	int redu_buffer[ 512];
 	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
@@ -305,6 +312,8 @@ int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType) c
 
 std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const
 {
+	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
+
 	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
 
 	int redu_buffer[ 512];
@@ -318,9 +327,12 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const 
 	return rt;
 }
 
-TypeDatabase::DeriveResult TypeDatabase::derive( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
+TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
 {
 	DeriveResult rt( resbuf);
+
+	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
+	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
 
 	int buffer[ 1024];
 	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
@@ -389,9 +401,12 @@ void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& item
 	}
 }
 
-TypeDatabase::ResolveResult TypeDatabase::resolve( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
+TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
 {
 	ResolveResult rt( resbuf);
+
+	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
+
 	int nameid = m_identMap->lookup( name);
 	if (!nameid) return rt;
 

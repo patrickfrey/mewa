@@ -55,7 +55,8 @@ for VERSION in 5.4 5.3 5.2 ; do
 			>&2 echo "/usr/bin/pkg-config --variable=libdir lua$VERSION => $LIBPATH"
 			>&2 echo "/usr/bin/pkg-config --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
 			>&2 echo "/usr/bin/pkg-config --variable=version lua$VERSION => $LUAVERSION"
-			>&2 echo "Wrote file Lua.inc"
+			>&2 echo "Wrote file Lua.inc:"
+			>&2 cat Lua.inc
 			exit 0
 		fi
 	fi
@@ -73,7 +74,8 @@ for VERSION in 5.4 5.3 5.2; do
 		>&2 echo "Lua library path = $LIBPATH"
 		>&2 echo "Lua binary path = $BINPATH"
 		>&2 echo "Lua version = $VERSION"
-		>&2 echo "Wrote file Lua.inc"
+		>&2 echo "Wrote file Lua.inc:"
+		>&2 cat Lua.inc
 		exit 0
 	fi
 done

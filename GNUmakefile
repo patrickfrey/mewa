@@ -38,7 +38,7 @@ include Lua.inc
 # Project settings:
 BUILDDIR := build
 DESTINATION := $(PREFIX)/bin
-MAKEDEP  := Lua.inc GNUmakefile
+MAKEDEP  := Lua.inc GNUmakefile configure
 SRCDIR   := src
 TESTDIR  := tests
 STDFLAGS := -std=c++17

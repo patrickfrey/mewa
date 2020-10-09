@@ -195,7 +195,7 @@ public:
 	/// \param[in] fromType source type of the reduction
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the path found that has the minimal weight sum, throws Error::AmbiguousTypeReference if two path of same length are found
-	DeriveResult derive( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
+	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
@@ -203,7 +203,7 @@ public:
 	/// \param[in] name name of the type searched
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found	
-	ResolveResult resolve( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const;
+	ResolveResult resolveType( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const;
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type handle of the type (return value of defineType)
@@ -213,7 +213,7 @@ public:
 	/// \brief Get the parameters attached to a type
 	/// \param[in] type handle of the type (return value of defineType)
 	/// \return a view on the list of parameters
-	ParameterList parameters( int type) const noexcept;
+	ParameterList parameters( int type) const;
 
 private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;

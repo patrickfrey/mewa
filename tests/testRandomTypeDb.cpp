@@ -356,7 +356,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	}
 	try
 	{
-		TypeDatabase::ResolveResult result = typedb.resolve( step, ti->second, procnam, resbuf);
+		TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, resbuf);
 		resc_str = resolveResultToString( typedb, result);
 		if (resc_str != "{}")
 		{
@@ -365,7 +365,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			{
 				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			}
-			TypeDatabase::DeriveResult deriveres = typedb.derive( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf);
+			TypeDatabase::DeriveResult deriveres = typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf);
 			std::string redu_str = deriveResultToString( typedb, deriveres);
 			if (verbose)
 			{

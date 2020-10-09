@@ -174,7 +174,7 @@ static int getContextType( TypeDatabase const* typedb, const Scope::Step step, c
 	for (auto const& item : split)
 	{
 		TypeDatabase::ResultBuffer resbuf;
-		auto res = typedb->resolve( step, contextType, item, resbuf);
+		auto res = typedb->resolveType( step, contextType, item, resbuf);
 		if (res.items.empty()) throw Error( Error::UnresolvableType, item);
 		if (res.items.size() > 1) throw Error( Error::AmbiguousTypeReference, item);
 
@@ -344,9 +344,9 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 		out << std::endl;
 	}
 	{
-		out << "Resolve " << fdef.tostring( tdbimpl) << " [" << query.step << "] :" << std::endl;
+		out << "Resolve type " << fdef.tostring( tdbimpl) << " [" << query.step << "] :" << std::endl;
 		TypeDatabase::ResultBuffer resbuf;
-		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolve( query.step, fdef.contextType, fdef.name, resbuf);
+		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolveType( query.step, fdef.contextType, fdef.name, resbuf);
 		out << "Result candidates:" << std::endl;
 		int minDistance = 0;
 		int bestCandidate = -1;
@@ -515,7 +515,7 @@ Reductions of context type inhclass [1] :
 Context Type reductions:
 myclass ~ #myclass<-inhclass
 
-Resolve inhclass -> member1( long) [1] :
+Resolve type inhclass -> member1( long) [1] :
 Result candidates:
 Candidate [1]: inhclass member1( myclass)
 - parameter [0] does not match ('myclass' <-/- 'long', )
@@ -527,7 +527,7 @@ Reductions of context type inhclass [2] :
 Context Type reductions:
 myclass ~ #myclass<-inhclass
 
-Resolve inhclass -> member2( long) [2] :
+Resolve type inhclass -> member2( long) [2] :
 Result candidates:
 Candidate [1]: myclass member2( int)
 - parameter [0]: #int #int<-long
@@ -540,7 +540,7 @@ Context Type reductions:
 float ~ #float<-myclass
 double ~ #double<-myclass
 
-Resolve myclass -> member2( long) [12] :
+Resolve type myclass -> member2( long) [12] :
 Result candidates:
 Candidate [1]: myclass member2( int)
 - parameter [0]: #int #int<-long
@@ -553,7 +553,7 @@ Context Type reductions:
 float ~ #float<-myclass
 double ~ #double<-myclass
 
-Resolve myclass -> member2( myclass) [12] :
+Resolve type myclass -> member2( myclass) [12] :
 Result candidates:
 Candidate [1]: myclass member2( int)
 - parameter [0] does not match ('int' <-/- 'myclass', )
@@ -566,7 +566,7 @@ Context Type reductions:
 float ~ #float<-myclass
 double ~ #double<-myclass
 
-Resolve myclass -> member2( myclass) [871] :
+Resolve type myclass -> member2( myclass) [871] :
 Result candidates:
 Candidate [1]: myclass member2( int)
 - parameter [0] does not match ('int' <-/- 'myclass', )
@@ -578,7 +578,7 @@ Reductions of context type inhclass [999] :
 Context Type reductions:
 myclass ~ #myclass<-inhclass
 
-Resolve inhclass -> member1( inhclass) [999] :
+Resolve type inhclass -> member1( inhclass) [999] :
 Result candidates:
 Candidate [1]: inhclass member1( myclass)
 - parameter [0]: #myclass #myclass<-inhclass
