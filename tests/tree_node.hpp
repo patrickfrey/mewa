@@ -8,9 +8,9 @@
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 /// \brief Tree data structure for building test szenarios
-/// \file "tree.hpp"
-#ifndef _MEWA_TEST_TREE_HPP_INCLUDED
-#define _MEWA_TEST_TREE_HPP_INCLUDED
+/// \file "tree_node.hpp"
+#ifndef _MEWA_TEST_TREE_NODE_HPP_INCLUDED
+#define _MEWA_TEST_TREE_NODE_HPP_INCLUDED
 #if __cplusplus < 201703L
 #error Building mewa requires at least C++17
 #endif
@@ -20,46 +20,46 @@ namespace mewa {
 namespace test {
 
 template <typename ITEM>
-struct Tree
+struct TreeNode
 {
 	ITEM item;
-	Tree* next;
-	Tree* chld;
+	TreeNode* next;
+	TreeNode* chld;
 
-	Tree( const ITEM& item_)
+	TreeNode( const ITEM& item_)
 		:item(item_),next(nullptr),chld(nullptr){}
-	Tree( const Tree& o)
+	TreeNode( const TreeNode& o)
 		:item(o.item)
-		,next( o.next ? new Tree( *o.next) : nullptr)
-		,chld( o.chld ? new Tree( *o.chld) : nullptr){}
+		,next( o.next ? new TreeNode( *o.next) : nullptr)
+		,chld( o.chld ? new TreeNode( *o.chld) : nullptr){}
 
-	Tree& operator=( const Tree& o)
+	TreeNode& operator=( const TreeNode& o)
 	{
 		item = o.item;
-		next = o.next ? new Tree( *o.next) : nullptr;
-		chld = o.chld ? new Tree( *o.chld) : nullptr;
+		next = o.next ? new TreeNode( *o.next) : nullptr;
+		chld = o.chld ? new TreeNode( *o.chld) : nullptr;
 		return *this;
 	}
-	Tree( Tree&& o)
+	TreeNode( TreeNode&& o)
 		:item( std::move( o.item))
 		,next( o.next)
 		,chld( o.chld)
 		{o.next=nullptr; o.chld=nullptr;}
 
-	Tree& operator=( Tree&& o)
+	TreeNode& operator=( TreeNode&& o)
 	{
 		item = std::move( o.item);
 		next = o.next; o.next = nullptr;
 		chld = o.chld; o.chld = nullptr;
 		return *this;
 	}
-	~Tree()
+	~TreeNode()
 	{
 		if (next) delete next;
 		if (chld) delete chld;
 	}
 
-	void addChild( const Tree& nd)
+	void addChild( const TreeNode& nd)
 	{
 		if (chld)
 		{
@@ -67,19 +67,19 @@ struct Tree
 		}
 		else
 		{
-			chld = new Tree( nd);
+			chld = new TreeNode( nd);
 		}
 	}
 
-	void addSibling( const Tree& nd)
+	void addSibling( const TreeNode& nd)
 	{
-		Tree* np = this;
+		TreeNode* np = this;
 		for (; np->next; np = np->next){}
-		np->next = new Tree( nd);
+		np->next = new TreeNode( nd);
 	}
 
 	// \note Pass ownership
-	void addChild( Tree* nd)
+	void addChild( TreeNode* nd)
 	{
 		if (chld)
 		{
@@ -92,9 +92,9 @@ struct Tree
 	}
 
 	// \note Pass ownership
-	void addSibling( Tree* nd)
+	void addSibling( TreeNode* nd)
 	{
-		Tree* np = this;
+		TreeNode* np = this;
 		for (; np->next; np = np->next){}
 		np->next = nd;
 	}
@@ -106,7 +106,7 @@ struct Tree
 
 	int size() const noexcept
 	{
-		Tree const* np = this;
+		TreeNode const* np = this;
 		int ii = 1;
 		for (; np->next; np=np->next,++ii){}
 		return ii;
@@ -116,7 +116,7 @@ private:
 	void print( std::ostream& out, std::size_t indent)
 	{
 		std::string indentstr( indent*2, ' ');
-		Tree* np = this;
+		TreeNode* np = this;
 		do
 		{
 			out << indentstr << np->item << std::endl;

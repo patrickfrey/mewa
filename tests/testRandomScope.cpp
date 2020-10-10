@@ -18,7 +18,7 @@
 #include "fileio.hpp"
 #include "strings.hpp"
 #include "utilitiesForTests.hpp"
-#include "tree.hpp"
+#include "tree_node.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -69,7 +69,7 @@ namespace std
 	}
 }//namespace std
 
-typedef test::Tree<NodeDef> NodeDefTree;
+typedef test::TreeNode<NodeDef> NodeDefTree;
 
 static std::string randomVariable( int alphabetsize)
 {

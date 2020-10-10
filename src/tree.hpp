@@ -8,9 +8,9 @@
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 /// \brief Tree data structure implemented as array of nodes
-/// \file "tree_vector.hpp"
-#ifndef _MEWA_TREE_VECTOR_HPP_INCLUDED
-#define _MEWA_TREE_VECTOR_HPP_INCLUDED
+/// \file "tree.hpp"
+#ifndef _MEWA_TREE_HPP_INCLUDED
+#define _MEWA_TREE_HPP_INCLUDED
 #if __cplusplus < 201703L
 #error Building mewa requires at least C++17
 #endif
@@ -23,28 +23,28 @@
 namespace mewa {
 
 template <typename ITEM>
-class TreeVector
+class Tree
 {
 public:
-	explicit TreeVector( const ITEM& rootNode)
+	explicit Tree( const ITEM& rootNode)
 		:m_ar(),m_lastar()
 	{
 		m_ar.push_back( Node( rootNode));
 		m_lastar.push_back( 0);
 	}
-	TreeVector( const TreeVector& o)
+	Tree( const Tree& o)
 		:m_ar(o.m_ar),m_lastar(o.m_lastar){}
 
-	TreeVector& operator=( const TreeVector& o)
+	Tree& operator=( const Tree& o)
 	{
 		m_ar = o.m_ar;
 		m_lastar = o.m_lastar;
 		return *this;
 	}
-	TreeVector( TreeVector&& o)
+	Tree( Tree&& o)
 		:m_ar( std::move( o.m_ar)),m_lastar( std::move( o.m_lastar)){}
 
-	TreeVector& operator=( TreeVector&& o)
+	Tree& operator=( Tree&& o)
 	{
 		m_ar = std::move( o.m_ar);
 		m_lastar = std::move( o.m_lastar);
@@ -55,6 +55,7 @@ public:
 	{
 	public:
 		const ITEM& item() const noexcept 	{return m_item;}
+		ITEM& item() noexcept 			{return m_item;}
 		std::size_t next() const noexcept 	{return m_next;}
 		std::size_t chld() const noexcept 	{return m_chld;}
 
@@ -64,7 +65,7 @@ public:
 			:m_item(item_),m_next(0),m_chld(0){}
 
 	private:
-		friend class TreeVector;
+		friend class Tree;
 
 		ITEM m_item;
 		std::size_t m_next;
@@ -75,12 +76,14 @@ public:
 		:public CArrayBaseForwardIterator::const_iterator<ITEM>
 	{
 	public:
+		typedef CArrayBaseForwardIterator::const_iterator<ITEM> Parent;
+
 		explicit depthfirst_iterator( const depthfirst_iterator& o)
-			:CArrayBaseForwardIterator::const_iterator<ITEM>(o),m_stack(o.m_stack){}
+			:Parent(o),m_stack(o.m_stack){}
 		explicit depthfirst_iterator( const ITEM* ar, std::size_t arpos, std::size_t arsize) noexcept
-			:CArrayBaseForwardIterator::const_iterator<ITEM>(ar,arpos),m_stack()
+			:Parent(ar,arpos),m_stack()
 		{
-			if (aridx != arsize) m_stack.push_back( arsize);
+			if (arpos != arsize) m_stack.push_back( arpos);
 		}
 		depthfirst_iterator& operator++()
 		{
@@ -104,21 +107,21 @@ public:
 			if ((*this)->chld())
 			{
 				m_stack.push_back( (*this)->position()+1);
-				setPosition( (*this)->chld()-1);
+				Parent::setPosition( (*this)->chld()-1);
 			}
 			else if ((*this)->next())
 			{
-				setPosition( (*this)->next()-1);
+				Parent::setPosition( (*this)->next()-1);
 			}
 			else if (!m_stack.empty())
 			{
 				while (!m_stack.empty())
 				{
-					setPosition( m_stack.top()-1);
+					Parent::setPosition( m_stack.back()-1);
 					m_stack.pop_back();
 					if (!m_stack.empty() && (*this)->next())
 					{
-						setPosition( (*this)->next()-1);
+						Parent::setPosition( (*this)->next()-1);
 						break;
 					}
 				}
@@ -142,7 +145,12 @@ public:
 		return depthfirst_iterator( m_ar, m_ar.size(), m_ar.size());
 	}
 
-	Node& operator[]( std::size_t idx) const noexcept
+	const Node& operator[]( std::size_t idx) const
+	{
+		if (!idx) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		return m_ar[ idx-1];
+	}
+	Node& operator[]( std::size_t idx)
 	{
 		if (!idx) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 		return m_ar[ idx-1];
@@ -181,8 +189,13 @@ public:
 		}
 		else
 		{
-			return addSibling( m_ar[ nodeidx-1].m_chld, item)
+			return addSibling( m_ar[ nodeidx-1].m_chld, item);
 		}
+	}
+
+	std::size_t nextAddIndex() const noexcept
+	{
+		return m_ar.size()+1;
 	}
 
 private:

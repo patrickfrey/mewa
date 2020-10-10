@@ -17,7 +17,7 @@
 #include "error.hpp"
 #include "fileio.hpp"
 #include "strings.hpp"
-#include "tree.hpp"
+#include "tree_node.hpp"
 #include "utilitiesForTests.hpp"
 #include <iostream>
 #include <sstream>
@@ -106,7 +106,7 @@ namespace std
 	}
 }//namespace std
 
-typedef test::Tree<NodeDef> NodeDefTree;
+typedef test::TreeNode<NodeDef> NodeDefTree;
 
 static void addChildren( NodeDefTree* nd)
 {

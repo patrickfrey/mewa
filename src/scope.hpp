@@ -15,6 +15,7 @@
 #include "error.hpp"
 #include "strings.hpp"
 #include "memory_resource.hpp"
+#include "tree.hpp"
 #include <utility>
 #include <limits>
 #include <cstdio>
@@ -78,6 +79,14 @@ public:
 	Step m_end;
 };
 
+struct ScopeCompare
+{
+	ScopeCompare(){}
+	bool operator()( const Scope& aa, const Scope& bb) const
+	{
+		return aa.end() == bb.end() ? aa.start() < bb.start() : aa.end() < bb.end();
+	}
+};
 
 template <typename VALTYPE>
 struct ScopedUpValue
@@ -130,12 +139,20 @@ public:
 		bool operator==( const const_iterator& o) const noexcept	{return m_ar==o.m_ar && m_index == o.m_index;}
 		bool operator!=( const const_iterator& o) const noexcept	{return m_ar!=o.m_ar || m_index != o.m_index;}
 
-		VALTYPE operator*() const noexcept				{return m_ar[ m_index].value;}
+		VALTYPE const& operator*() const noexcept			{return m_ar[ m_index].value;}
+		VALTYPE const* operator->() const noexcept			{return &m_ar[ m_index].value;}
+
+		const Scope& scope() const noexcept				{return m_ar[ m_index].scope;}
 
 	private:
 		UpValue const* m_ar;
 		int m_index;
 	};
+
+	const_iterator start( int index) const noexcept
+	{
+		return index ? const_iterator( m_ar, index) : const_iterator( m_ar);
+	}
 
 	const_iterator first( int index, const Scope::Step step) const noexcept
 	{
@@ -292,6 +309,91 @@ private:
 	VALTYPE m_nullval;			//> value returned by get if not found
 };
 
+/// \brief Node of a tree displaying the scope hierarchy
+template <typename NODEVAL>
+struct ScopeHierarchyTreeNode
+{
+	Scope scope;
+	NODEVAL value;
+
+	ScopeHierarchyTreeNode( const Scope scope_, const NODEVAL& value_)
+		:scope(scope_),value(value_){}
+	ScopeHierarchyTreeNode( const ScopeHierarchyTreeNode& o)
+		:scope(o.scope),value(o.value){}
+};
+
+/// \class ScopeHierarchyTreeBuilder
+/// \brief Template for a builder of a tree displaying the scope hierarchy from its inverse representation (ScopedUpValueInvTree)
+/// \param NODEVAL type of an item attached to a tree node 
+/// \param ELEMVAL type of an element of NODEVAL, same as NODEVAL if a node has only one item assigned
+/// \param ScopeHierarchyTreeNodeAssign Template parameter implements the following interface to insert/update elements in method insert()
+/*
+* template <typename NODEVAL, typename ELEMVAL>
+* struct ScopeHierarchyTreeNodeAssign
+* {
+*	static NODEVAL create( const ELEMVAL& elemval)=0;
+*	static void add( NODEVAL& ndval, const ELEMVAL& elemval)=0;
+* };
+*/
+template <typename NODEVAL, typename ELEMVAL, class ScopeHierarchyTreeNodeAssignType>
+class ScopeHierarchyTreeBuilder
+{
+public:
+	typedef ScopeHierarchyTreeNode<NODEVAL> Node;
+	typedef ScopedUpValueInvTree<ELEMVAL> InvTree;
+	typedef ScopeHierarchyTreeNodeAssignType AssignType;
+
+	explicit ScopeHierarchyTreeBuilder( const NODEVAL& nullval_)
+		:m_tree(Node( Scope( 0, std::numeric_limits<Scope::Step>::max()), nullval_))
+		,m_scope2nodeidxMap()
+	{
+		m_scope2nodeidxMap.insert( {Scope( 0, std::numeric_limits<Scope::Step>::max()),1/*root node index*/} );
+	}
+
+	void insert( typename InvTree::const_iterator ni, const typename InvTree::const_iterator ne)
+	{
+		int buffer_stk[ 256];
+		mewa::monotonic_buffer_resource memrsc_stk( buffer_stk, sizeof buffer_stk);
+		std::pmr::vector<typename InvTree::const_iterator> stk( &memrsc_stk);
+		stk.reserve( sizeof buffer_stk / sizeof InvTree::const_iterator);
+		std::size_t ndidx = 1;
+
+		for (; ni != ne; ++ni)
+		{
+			auto sni = m_scope2nodeidxMap.find( ni.scope());
+			if (sni == m_scope2nodeidxMap.end())
+			{
+				stk.push_back( ni);
+			}
+			else
+			{
+				ndidx = sni->second;
+				AssignType::add( m_tree[ ndidx].item(), *ni);
+				break;
+			}
+		}
+		for (; !stk.empty(); stk.pop_back())
+		{
+			typename InvTree::const_iterator stk_ni = stk.top();
+			ndidx = m_tree.addChild( ndidx, Node( stk_ni.scope(), AssignType::create( *stk_ni)));
+			m_scope2nodeidxMap.insert( {stk_ni.scope(), ndidx} );
+		}
+	}
+
+	const Tree<Node>& tree() const
+	{
+		return m_tree;
+	}
+	Tree<Node>&& tree()
+	{
+		return std::move( m_tree);
+	}
+
+private:
+	Tree<Node> m_tree;
+	std::map<Scope,std::size_t,ScopeCompare> m_scope2nodeidxMap;
+};
+
 
 template <typename VALTYPE>
 class ScopedSet
@@ -339,6 +441,32 @@ public:
 			rt = m_invtree.getInnerValue( ref->second, step);
 		}
 		return rt;
+	}
+
+	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssign of the ScopeHierarchyTreeBuilder template
+	class TreeNodeAssign
+	{
+		static VALTYPE create( const VALTYPE& elemval)
+		{
+			return elemval;
+		}
+		static void add( VALTYPE& ndval, const VALTYPE& elemval)
+		{
+			ndval = elemval;
+		}
+	};
+
+	typedef ScopeHierarchyTreeNode<VALTYPE> TreeNode;
+
+	Tree<TreeNode> getTree() const
+	{
+		ScopeHierarchyTreeBuilder<VALTYPE,VALTYPE,TreeNodeAssign> treeBuilder( m_invtree.nullval());
+		auto mi = m_map.begin();
+		for (; mi != m_map.end(); ++mi)
+		{
+			treeBuilder.insert( m_invtree.start( mi->second), m_invtree.end());
+		}
+		return treeBuilder.tree();
 	}
 
 private:
