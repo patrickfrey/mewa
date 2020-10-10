@@ -442,20 +442,6 @@ public:
 		return rt;
 	}
 
-	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssignType of the ScopeHierarchyTreeBuilder template
-	struct TreeNodeAssign
-	{
-		TreeNodeAssign(){}
-		VALTYPE create( const VALTYPE& elemval) const
-		{
-			return elemval;
-		}
-		void add( VALTYPE& ndval, const VALTYPE& elemval) const
-		{
-			ndval = elemval;
-		}
-	};
-
 	typedef ScopeHierarchyTreeNode<VALTYPE> TreeNode;
 
 	Tree<TreeNode> getTree() const
@@ -476,6 +462,20 @@ public:
 	}
 
 private:
+	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssignType of the ScopeHierarchyTreeBuilder template
+	struct TreeNodeAssign
+	{
+		TreeNodeAssign(){}
+		VALTYPE create( const VALTYPE& elemval) const
+		{
+			return elemval;
+		}
+		void add( VALTYPE& ndval, const VALTYPE& elemval) const
+		{
+			ndval = elemval;
+		}
+	};
+
 	typedef ScopedUpValue<VALTYPE> UpValue;
 
 private:
@@ -621,6 +621,19 @@ public:
 	typedef std::vector<KeyValue> TreeItem;
 	typedef ScopeHierarchyTreeNode<TreeItem> TreeNode;
 
+	Tree<TreeNode> getTree() const
+	{
+		ScopeHierarchyTreeBuilder<VALTYPE,VALTYPE,TreeNodeAssign> treeBuilder( m_invtree.nullval());
+		auto mi = m_map.begin();
+		for (; mi != m_map.end(); ++mi)
+		{
+			TreeNodeAssign assign( mi->first.key());
+			treeBuilder.insert( assign, m_invtree.start( mi->second), m_invtree.end());
+		}
+		return treeBuilder.tree();
+	}
+
+private:
 	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssignType of the ScopeHierarchyTreeBuilder template
 	struct TreeNodeAssign
 	{
@@ -640,18 +653,6 @@ public:
 			ndval.push_back( KeyValue( key, val));
 		}
 	};	
-
-	Tree<TreeNode> getTree() const
-	{
-		ScopeHierarchyTreeBuilder<VALTYPE,VALTYPE,TreeNodeAssign> treeBuilder( m_invtree.nullval());
-		auto mi = m_map.begin();
-		for (; mi != m_map.end(); ++mi)
-		{
-			TreeNodeAssign assign( mi->first.key());
-			treeBuilder.insert( assign, m_invtree.start( mi->second), m_invtree.end());
-		}
-		return treeBuilder.tree();
-	}
 
 private:
 	Map m_map;
@@ -752,6 +753,18 @@ public:
 	typedef std::vector<TreeNodeElement> TreeItem;
 	typedef ScopeHierarchyTreeNode<TreeItem> TreeNode;
 
+	Tree<TreeNode> getTree() const
+	{
+		ScopeHierarchyTreeBuilder<VALTYPE,VALTYPE,TreeNodeAssign> treeBuilder( m_map.invtree().nullval());
+		auto mi = m_map.begin();
+		for (; mi != m_map.end(); ++mi)
+		{
+			TreeNodeAssign assign( mi->first.key(), m_list.data(), m_list.size());
+			treeBuilder.insert( assign, m_map.invtree().start( mi->second), m_map.invtree().end());
+		}
+		return treeBuilder.tree();
+	}
+
 private:
 	struct ListElement
 	{
@@ -798,20 +811,6 @@ private:
 		}
 	};	
 
-public:
-	Tree<TreeNode> getTree() const
-	{
-		ScopeHierarchyTreeBuilder<VALTYPE,VALTYPE,TreeNodeAssign> treeBuilder( m_map.invtree().nullval());
-		auto mi = m_map.begin();
-		for (; mi != m_map.end(); ++mi)
-		{
-			TreeNodeAssign assign( mi->first.key(), m_list.data(), m_list.size());
-			treeBuilder.insert( assign, m_map.invtree().start( mi->second), m_map.invtree().end());
-		}
-		return treeBuilder.tree();
-	}
-
-private:
 	typedef ScopedMap<RELNODETYPE,int> Map;
 	typedef std::vector<ListElement> List;
 
