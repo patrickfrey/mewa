@@ -1,6 +1,39 @@
 #!/usr/bin/lua
 
 mewa = require("mewa")
+require( 'pl')
+require( 'string')
+lapp = require( 'pl.lapp')
+
+local args = lapp( [[
+Test program for mewa.typedb
+	-h,--help     Print usage
+	-V,--verbose  Verbose output
+]])
+if args.help then
+	print( "Usage: typedb.lua [-h][-V]")
+	exit( 0)
+end
+
+local verbose = args.verbose
+local errorCount = 0
+
+function checkTestResult( testname, result, expected)
+	if result ~= expected then
+		if (verbose) then
+			print( "RUN " .. testname .. "()\n" .. result .. "\nERR")
+		else
+			print( "RUN " .. testname .. "() ERR")
+		end
+		errorCount = errorCount + 1
+	end
+	if (verbose) then
+		print( "RUN " .. testname .. "()\n" .. result .. "\nOK")
+	else
+		print( "RUN " .. testname .. "() OK")
+	end
+end
+
 
 -- Function that tests the typedb getter/setter for objects in a scoped context
 -- The example usage of the concept is a register allocator for LLVM that is a different one for every function scope
@@ -37,15 +70,12 @@ function testRegisterAllocator()
 		typedb:get( "register", 291)(),	-- Get a register in the scope step 291, allocate it with the allocator defined for scope {2,300}
 		typedb:get( "register", 300)()	-- Get a register in the scope step 300, allocate it with the allocator defined for scope {0,1000}
 	}
-	local result = "RESULT";
+	local result = ""
 	for i,register in ipairs( registers) do
 		result = result .. " " .. register
 	end
-	local expected = "RESULT %1 %1 %2 %3 %1 %2 %3 %2 %3 %4 %1"
-	if result ~= expected then
-		error( "testRegisterAllocator() result not as expected!")
-	end
-	print( "Run testRegisterAllocator() => " .. result .. "\nOK")
+	local expected = " %1 %1 %2 %3 %1 %2 %3 %2 %3 %4 %1"
+	checkTestResult( "testRegisterAllocator", result, expected)
 end
 
 -- Function that tests the typedb define/resolve type 
@@ -78,17 +108,43 @@ function testDefineResolveType()
 	typedb:def_reduction( {0,100}, short_type, int_type, typeReduction( "short"), 0.5)
 	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), 1.0)
 
-	local result = "RESULT";
+	local result = ""
 	local types = {short_type, int_type, float_type}
 	for i,type in ipairs( types) do
 		for i,reduction in ipairs( typedb:reductions( 34, type)) do
-			result = result .. "\nREDU " .. typedb:typename( type) .. " -> " .. typedb:typename( reduction[1])
-					.. " : " .. reduction[2]( typedb:typename( type))
+			result = result .. "\nREDU " .. typedb:typename( type) .. " -> " .. typedb:typename( reduction.type)
+					.. " : " .. reduction.constructor( typedb:typename( type))
 		end
 	end
-	print( "Run testDefineResolveType() => " .. result .. "\nOK")
+	local reduction_queries = {
+			{short_type,int_type},{short_type,float_type},{int_type,float_type},
+			{int_type,short_type},{float_type,short_type},{float_type,int_type}}
+	for i,redu in ipairs( reduction_queries) do
+		local constructor = typedb:reduction( 99, redu[1], redu[2])
+		result = result .. "\nSELECT REDU " .. typedb:typename( redu[2]) .. " -> " .. typedb:typename( redu[1])
+					.. " : " .. constructor( typedb:typename( redu[2]))
+	end
+	local expected = [[
+
+REDU short -> float : #float(short)
+REDU short -> int : #int(short)
+REDU int -> float : #float(int)
+REDU int -> short : #short(int)
+REDU float -> int : #int(float)
+REDU float -> short : #short(float)
+SELECT REDU int -> short : #short(int)
+SELECT REDU float -> short : #short(float)
+SELECT REDU float -> int : #int(float)
+SELECT REDU short -> int : #int(short)
+SELECT REDU short -> float : #float(short)
+SELECT REDU int -> float : #float(int)]]
+	checkTestResult( "testDefineResolveType", result, expected)
 end
 
 testRegisterAllocator()
 testDefineResolveType()
+
+if errorCount > 0 then
+	error( "result of " .. errorCount .. " tests not as expected!")
+end
 

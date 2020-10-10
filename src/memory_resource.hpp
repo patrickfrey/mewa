@@ -16,7 +16,7 @@
 #include <cstddef>
 #include <new>
 
-#undef MEWA_LOWLEVEL_DEBUG
+#define MEWA_LOWLEVEL_DEBUG
 //... using bad_alloc_memory_resource as upstream of monotonic buffer resource
 
 namespace mewa {

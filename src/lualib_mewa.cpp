@@ -360,6 +360,25 @@ static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functio
 				}
 			}
 		}
+		else if (lua_type( ls, -2) == LUA_TSTRING)
+		{
+			std::size_t len;
+			char const* str = lua_tolstring( ls, -2, &len);
+			if (len == 4 && 0==std::memcmp( str, "type", len))
+			{
+				type = lua_tointeger( ls, -1);
+			}
+			else if (len == 11 && 0==std::memcmp( str, "constructor", len))
+			{
+				constructor = ++objcnt;
+				lua_pushvalue( ls, -1);			// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
+				lua_rawseti( ls, -5, constructor);	// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+			}
+			else
+			{
+				throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+			}
+		}
 		else
 		{
 			throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
@@ -426,6 +445,19 @@ static void checkStack( const char* functionName, lua_State* ls, int sz)
 	if (!lua_checkstack( ls, sz)) throw mewa::Error( mewa::Error::LuaStackOutOfMemory, functionName);
 }
 
+/// \note Assume STK: [OBJTAB] [REDUTAB]
+static inline void luaPushTypeConstructorPair( lua_State* ls, int type, int constructor)
+{
+	lua_createtable( ls, 0/*narr*/, 2/*nrec*/);	// STK: [OBJTAB] [REDUTAB] [REDU]
+	lua_pushliteral( ls, "type");			// STK: [OBJTAB] [REDUTAB] [REDU] "type"
+	lua_pushinteger( ls, type);			// STK: [OBJTAB] [REDUTAB] [REDU] "type" [TYPE]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB] [REDU]
+
+	lua_pushliteral( ls, "constructor");		// STK: [OBJTAB] [REDUTAB] [REDU] "constructor"
+	lua_rawgeti( ls, -4, constructor);		// STK: [OBJTAB] [REDUTAB] [REDU] "constructor" [CONSTRUCTOR]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB] [REDU]
+}
+
 static void luaPushReductionResults(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions)
@@ -438,16 +470,10 @@ static void luaPushReductionResults(
 	for (auto const& reduction : reductions)
 	{
 		++ridx;
-		lua_createtable( ls, 2/*narr*/, 0/*nrec*/);	// STK: [OBJTAB] [REDUTAB] [REDU] 
-		lua_pushinteger( ls, reduction.type);		// STK: [OBJTAB] [REDUTAB] [REDU] [TYPE]
-		lua_rawseti( ls, -2, 1);			// STK: [OBJTAB] [REDUTAB] [REDU]
-
-		lua_rawgeti( ls, -3, reduction.constructor);	// STK: [OBJTAB] [REDUTAB] [REDU] [CONSTRUCTOR]
-		lua_rawseti( ls, -2, 2);			// STK: [OBJTAB] [REDUTAB] [REDU]
-
-		lua_rawseti( ls, -2, ridx);			// STK: [OBJTAB] [REDUTAB]
+		luaPushTypeConstructorPair( ls, reduction.type, reduction.constructor);	// STK: [OBJTAB] [REDUTAB] [REDU]
+		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] [REDUTAB]
 	}
-	lua_replace( ls, -2);					// STK: [REDUTAB]
+	lua_replace( ls, -2);								// STK: [REDUTAB]
 }
 
 static void luaPushResolveResultItems(
@@ -462,16 +488,10 @@ static void luaPushResolveResultItems(
 	for (auto const& item : items)
 	{
 		++ridx;
-		lua_createtable( ls, 2/*narr*/, 0/*nrec*/);	// STK: [OBJTAB] [ITEMTAB] [ITEM] 
-		lua_pushinteger( ls, item.type);		// STK: [OBJTAB] [ITEMTAB] [ITEM] [TYPE]
-		lua_rawseti( ls, -2, 1);			// STK: [OBJTAB] [ITEMTAB] [ITEM]
-
-		lua_rawgeti( ls, -3, item.constructor);		// STK: [OBJTAB] [ITEMTAB] [ITEM] [CONSTRUCTOR]
-		lua_rawseti( ls, -2, 2);			// STK: [OBJTAB] [ITEMTAB] [ITEM]
-
-		lua_rawseti( ls, -2, ridx);			// STK: [OBJTAB] [ITEMTAB]
+		luaPushTypeConstructorPair( ls, item.type, item.constructor);	// STK: [OBJTAB] [ITEMTAB] [ITEM]
+		lua_rawseti( ls, -2, ridx);					// STK: [OBJTAB] [ITEMTAB]
 	}
-	lua_replace( ls, -2);					// STK: [ITEMTAB]
+	lua_replace( ls, -2);							// STK: [ITEMTAB]
 }
 
 static void luaPushParameters(
@@ -486,17 +506,12 @@ static void luaPushParameters(
 	for (auto const& parameter : parameters)
 	{
 		++ridx;
-		lua_createtable( ls, 2/*narr*/, 0/*nrec*/);	// STK: [OBJTAB] [ITEMTAB] [ITEM] 
-		lua_pushinteger( ls, parameter.type);		// STK: [OBJTAB] [ITEMTAB] [ITEM] [TYPE]
-		lua_rawseti( ls, -2, 1);			// STK: [OBJTAB] [ITEMTAB] [ITEM]
-
-		lua_rawgeti( ls, -3, parameter.constructor);	// STK: [OBJTAB] [ITEMTAB] [ITEM] [CONSTRUCTOR]
-		lua_rawseti( ls, -2, 2);			// STK: [OBJTAB] [ITEMTAB] [ITEM]
-
-		lua_rawseti( ls, -2, ridx);			// STK: [OBJTAB] [ITEMTAB]
+		luaPushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [OBJTAB] PARAMTAB] [PARAM]
+		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] PARAMTAB]
 	}
-	lua_replace( ls, -2);					// STK: [ITEMTAB]
+	lua_replace( ls, -2);								// STK: [PARAMTAB]
 }
+
 
 static int mewa_new_compiler( lua_State* ls)
 {
