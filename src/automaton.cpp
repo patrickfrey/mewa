@@ -12,6 +12,7 @@
 #include "automaton.hpp"
 #include "automaton_structs.hpp"
 #include "automaton_parser.hpp"
+#include "memory_resource.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
 #include "strings.hpp"
@@ -210,7 +211,7 @@ private:
 static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, const ProductionDefList& prodlist)
 {
 	int buffer[ 2048];
-	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 	std::pmr::set<int> nonterminals( &memrsc);
 
 	for (int elem : ts.packedElements())
@@ -245,7 +246,7 @@ static TransitionState getLr1TransitionStateClosure(
 	TransitionState lr0closure = getLr0TransitionStateClosure( ts, prodlist);
 
 	int buffer[ 2048];
-	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 	std::pmr::map<int,int> nonterminal2FollowMap( &memrsc);
 
 	// [1] Initialize inherited FOLLOW set elements of left side nonterminals:
@@ -499,7 +500,7 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 {
 	std::vector<ProductionShiftNode> rt;
 	int buffer[ 2048];
-	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 	std::pmr::multimap<ProductionNode,int> nodemap( &memrsc);
 	std::pmr::map<ProductionNode,Priority> prioritymap;
 
@@ -655,7 +656,7 @@ static std::unordered_map<TransitionState,int> getAutomatonStateAssignments(
 	for (std::size_t stkidx = 0; stkidx < statestk.size(); ++stkidx)
 	{
 		int buffer[ 512];
-		std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+		mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 		std::pmr::set<ProductionNode> gtos( &memrsc);
 
 		std::vector<TransitionState> newstates;

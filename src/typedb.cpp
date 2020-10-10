@@ -12,6 +12,7 @@
 #include "typedb.hpp"
 #include "error.hpp"
 #include "identmap.hpp"
+#include "memory_resource.hpp"
 #include <utility>
 #include <algorithm>
 #include <queue>
@@ -21,30 +22,35 @@
 
 using namespace mewa;
 
-std::string TypeDatabase::typeToString( int type) const
+void TypeDatabase::appendTypeToString( std::pmr::string& res, int type) const
 {
-	std::string rt;
-	if (type == 0) return rt;
+	if (type == 0) return;
 	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
 
-	const TypeDef& td = m_typerecMap[ type-1].inv;
-	if (td.contextType)
-	{
-		rt.append( typeToString( td.contextType));
-		rt.push_back( ' ');
-	}
-	rt.append( m_identMap->inv( td.ident));
 	const TypeRecord& rec = m_typerecMap[ type-1];
+	if (rec.inv.contextType)
+	{
+		appendTypeToString( res, rec.inv.contextType);
+		res.push_back( ' ');
+	}
+	res.append( m_identMap->inv( rec.inv.ident));
 	if (rec.parameterlen)
 	{
-		rt.append( "( ");
+		res.append( "( ");
 		for (int pi = 0; pi < rec.parameterlen; ++pi)
 		{
-			if (pi) rt.append( ", "); 
-			rt.append( typeToString( m_parameterMap[ rec.parameter + pi -1].type));
+			if (pi) res.append( ", "); 
+			appendTypeToString( res, m_parameterMap[ rec.parameter + pi -1].type);
 		}
-		rt.push_back( ')');
+		res.push_back( ')');
 	}
+}
+
+std::pmr::string TypeDatabase::typeToString( int type, ResultBuffer& resbuf) const
+{
+	std::pmr::string rt( &resbuf.memrsc);
+	rt.reserve( resbuf.buffersize()-1);
+	appendTypeToString( rt, type);
 	return rt;
 }
 
@@ -135,7 +141,8 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 				}
 				else if (priority == tr.priority)
 				{
-					throw Error( Error::DuplicateDefinition, typeToString( tri));
+					ResultBuffer resbuf;
+					throw Error( Error::DuplicateDefinition, typeToString( tri, resbuf));
 				}
 				else
 				{
@@ -253,11 +260,13 @@ struct ReduQueueElem
 std::string TypeDatabase::reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const
 {
 	std::string rt;
+
 	int ridx = 0;
 	for (auto const& redu :reductions)
 	{
+		ResultBuffer resbuf;
 		if (ridx++) rt.append( " -> ");
-		rt.append( typeToString( redu.type));
+		rt.append( typeToString( redu.type, resbuf));
 	}
 	return rt;
 }
@@ -271,11 +280,13 @@ std::string TypeDatabase::resolveResultToString( const ResolveResult& res) const
 {
 	std::string rt = reductionsToString( res.reductions);
 	rt.append( " {");
+
 	int iidx = 0;
 	for (auto const& item :res.items)
 	{
+		ResultBuffer resbuf;
 		if (iidx++) rt.append( ", ");
-		rt.append( typeToString( item.type));
+		rt.append( typeToString( item.type, resbuf));
 	}
 	rt.append( "}");
 	return rt;
@@ -298,7 +309,7 @@ public:
 
 private:
 	int m_buffer[ 1024];
-	std::pmr::monotonic_buffer_resource m_memrsc;
+	mewa::monotonic_buffer_resource m_memrsc;
 };
 
 int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType) const
@@ -307,7 +318,7 @@ int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType) c
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
 
 	int redu_buffer[ 512];
-	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+	mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
 
 	for (auto const& redu : redulist)
@@ -324,7 +335,7 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const 
 	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
 
 	int redu_buffer[ 512];
-	std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+	mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
 
 	for (auto const& redu : redulist)
@@ -342,7 +353,7 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
 
 	int buffer[ 1024];
-	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
+	mewa::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
@@ -383,7 +394,7 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 			break;
 		}
 		int redu_buffer[ 512];
-		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 		auto redulist = m_reduTable->get( step, elem.type, &redu_memrsc);
 
 		for (auto const& redu : redulist)
@@ -418,7 +429,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, i
 	if (!nameid) return rt;
 
 	int buffer[ 1024];
-	std::pmr::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
+	mewa::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
@@ -451,7 +462,8 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, i
 
 				if (alt_typerecidx)
 				{
-					ResolveResult alt_rt( resbuf);
+					ResultBuffer resbuf_alt;
+					ResolveResult alt_rt( resbuf_alt);
 					stack.collectResult( alt_rt.reductions, alt_qe.index);
 					collectResultItems( alt_rt.items, alt_typerecidx);
 
@@ -462,7 +474,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, i
 		}
 
 		int redu_buffer[ 512];
-		std::pmr::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
+		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 		auto redulist = m_reduTable->get( step, elem.type, &redu_memrsc);
 
 		for (auto const& redu : redulist)

@@ -17,6 +17,7 @@
 #include "strings.hpp"
 #include "iterator.hpp"
 #include "identmap.hpp"
+#include "memory_resource.hpp"
 #include <string_view>
 #include <vector>
 #include <cstdlib>
@@ -29,7 +30,7 @@ class TypeDatabase
 {
 public:
 	explicit TypeDatabase( std::size_t initmemsize = 1<<26)
-		:m_memblock(std::min((initmemsize/8) *8,(std::size_t)1024)),m_memory()
+		:m_memblock(std::max((initmemsize/8) *8,(std::size_t)1024)),m_memory()
 		,m_objidMap(),m_objSets(),m_typeTable(),m_reduTable(),m_identMap(),m_parameterMap(),m_typerecMap()
 	{
 		m_memory.reset( new Memory( m_memblock.ptr, m_memblock.size));
@@ -90,15 +91,17 @@ public:
 	};
 	struct ResultBuffer
 	{
-		int buffer[ 1024];
-		std::pmr::monotonic_buffer_resource memrsc;
+		enum {NofBufferElements = 1024, BufferSize = NofBufferElements*sizeof(int)};
+		int buffer[ NofBufferElements];
+		mewa::monotonic_buffer_resource memrsc;
 
 		int buffersize() const noexcept
 		{
 			return sizeof buffer;
 		}
 		ResultBuffer() noexcept
-			:memrsc( buffer, sizeof buffer){}
+			:memrsc( buffer, BufferSize){}
+		ResultBuffer( const ResultBuffer&) = delete;
 	};
 	struct ReductionResult
 	{
@@ -207,8 +210,9 @@ public:
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type the handle of the type (return value of defineType)
+	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the complete string assigned to a type
-	std::string typeToString( int type) const;
+	std::pmr::string typeToString( int type, ResultBuffer& resbuf) const;
 
 	/// \brief Get the parameters attached to a type
 	/// \param[in] type the handle of the type (return value of defineType)
@@ -221,6 +225,7 @@ private:
 	std::string reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const;
 	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;
+	void appendTypeToString( std::pmr::string& res, int type) const;
 
 private:
 	struct MemoryBlock
@@ -249,7 +254,7 @@ private:
 			,m_typetab_memrsc(  (char*)buffer+(2*buffersize/4), buffersize/4)
 			,m_redutab_memrsc(  (char*)buffer+(6*buffersize/8), buffersize/8)
 			,m_objtab_memrsc(   (char*)buffer+(7*buffersize/8), buffersize/8)
-			,m_nofInitBuckets( std::min( buffersize / (1<<6), (std::size_t)1024))
+			,m_nofInitBuckets( std::max( buffersize / (1<<6), (std::size_t)1024))
 		{
 			if (buffersize % 8 != 0) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 		}
@@ -262,17 +267,17 @@ private:
 
 		std::size_t nofIdentInitBuckets() const noexcept		{return m_nofInitBuckets;}
 		std::size_t nofScopedMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
-		std::size_t nofReductionMapInitBuckets() const noexcept		{return std::min( m_nofInitBuckets/2, (std::size_t)1024);}
+		std::size_t nofReductionMapInitBuckets() const noexcept		{return std::max( m_nofInitBuckets/2, (std::size_t)1024);}
 		std::size_t nofParameterMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
 		std::size_t nofTypeRecordMapInitBuckets() const noexcept	{return m_nofInitBuckets;}
-		std::size_t nofNamedObjectTableInitBuckets() const noexcept	{return std::min( m_nofInitBuckets/8, (std::size_t)1024);}
+		std::size_t nofNamedObjectTableInitBuckets() const noexcept	{return std::max( m_nofInitBuckets/8, (std::size_t)1024);}
 
 	private:
-		std::pmr::monotonic_buffer_resource m_identmap_memrsc;
-		std::pmr::monotonic_buffer_resource m_identstr_memrsc;
-		std::pmr::monotonic_buffer_resource m_typetab_memrsc;
-		std::pmr::monotonic_buffer_resource m_redutab_memrsc;
-		std::pmr::monotonic_buffer_resource m_objtab_memrsc;
+		mewa::monotonic_buffer_resource m_identmap_memrsc;
+		mewa::monotonic_buffer_resource m_identstr_memrsc;
+		mewa::monotonic_buffer_resource m_typetab_memrsc;
+		mewa::monotonic_buffer_resource m_redutab_memrsc;
+		mewa::monotonic_buffer_resource m_objtab_memrsc;
 		std::size_t m_nofInitBuckets;
 	};
 

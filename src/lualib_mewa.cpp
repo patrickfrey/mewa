@@ -764,7 +764,7 @@ static int mewa_typedb_def_type( lua_State* ls)
 	mewa_typedb_userdata_t* mw = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
 
 	int buffer_parameter[ 1024];
-	std::pmr::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
+	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
 
 	bool success = true;
 	try
@@ -917,7 +917,9 @@ static int mewa_typedb_typename( lua_State* ls)
 		checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
 		checkStack( functionName, ls, 2);
 		int type = getArgumentAsNonNegativeInteger( functionName, ls, 2);
-		auto rt = mw->impl->typeToString( type);
+		mewa::TypeDatabase::ResultBuffer resbuf;
+
+		auto rt = mw->impl->typeToString( type, resbuf);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
 	CATCH_EXCEPTION( success)

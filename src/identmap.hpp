@@ -14,12 +14,12 @@
 #if __cplusplus >= 201703L
 #include "error.hpp"
 #include "strings.hpp"
+#include "memory_resource.hpp"
 #include <utility>
 #include <unordered_map>
 #include <cstring>
 #include <cstdint>
 #include <string_view>
-#include <memory_resource>
 
 namespace mewa {
 
@@ -183,7 +183,7 @@ public:
 	{
 		int rt;
 		int buffer[ 2048];
-		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
+		mewa::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
 		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
 		auto fi = ParentClass::find( env);
 		if (fi == ParentClass::end())
@@ -207,7 +207,7 @@ public:
 	int lookup( const std::string_view& str) const
 	{
 		int buffer[ 2048];
-		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
+		mewa::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
 		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
 		auto fi = ParentClass::find( env);
 		return (fi == ParentClass::end()) ? 0 : fi->second;
@@ -216,7 +216,7 @@ public:
 	std::size_t hash( const std::string_view& str) const noexcept
 	{
 		int buffer[ 2048];
-		std::pmr::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
+		mewa::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
 		IdentKeyEnvelop env( IdentKey::create( &local_memrsc, str));
 		return env.hash();
 	}

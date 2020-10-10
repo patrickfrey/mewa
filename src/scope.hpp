@@ -14,13 +14,13 @@
 #if __cplusplus >= 201703L
 #include "error.hpp"
 #include "strings.hpp"
+#include "memory_resource.hpp"
 #include <utility>
 #include <limits>
 #include <cstdio>
 #include <string>
 #include <map>
 #include <vector>
-#include <memory_resource>
 
 namespace mewa {
 
@@ -545,7 +545,7 @@ public:
 	std::pmr::vector<ResultElement> get( const Scope::Step step, const RELNODETYPE& key, std::pmr::memory_resource* res_memrsc) const noexcept
 	{
 		int local_membuffer[ 2048];
-		std::pmr::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
+		mewa::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
 		std::pmr::map<RELNODETYPE,int> candidatemap( &local_memrsc);
 
 		std::pmr::vector<ResultElement> rt( res_memrsc);

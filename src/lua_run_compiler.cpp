@@ -15,6 +15,7 @@
 #include "lexer.hpp"
 #include "error.hpp"
 #include "strings.hpp"
+#include "memory_resource.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -25,7 +26,6 @@
 #include <typeinfo>
 #include <limits>
 #include <cmath>
-#include <memory_resource>
 #include <algorithm>
 extern "C" {
 #include <lua.h>
@@ -146,6 +146,7 @@ static int getLuaStackReductionSize( const std::pmr::vector<State>& stateStack, 
 	return end-start;
 }
 
+#undef MEWA_LOWLEVEL_DEBUG
 #ifdef MEWA_LOWLEVEL_DEBUG
 static int countLuaStackElements( const std::pmr::vector<State>& stateStack)
 {
@@ -474,7 +475,7 @@ static void printDebugAction( std::ostream& dbgout, CompilerContext& ctx, const 
 void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, std::ostream* dbgout)
 {
 	int buffer[ 2048];
-	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
+	mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
 
 	lua_getglobal( ls, calltable);					// STK: [CALLTABLE]
 

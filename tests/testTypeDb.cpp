@@ -206,6 +206,14 @@ struct TypeDatabaseImpl
 	{
 		return constructorInv[ constructor-1];
 	}
+	std::string typeToString( int type) const
+	{
+		std::string rt;
+		mewa::TypeDatabase::ResultBuffer resbuf;
+		auto typestr = typedb->typeToString( type, resbuf);
+		rt.append( typestr);
+		return rt;
+	}
 };
 
 static std::string typeLabel( char const* const* arg)
@@ -242,14 +250,15 @@ struct FunctionDef
 	}
 	std::string tostring( TypeDatabaseImpl& tdbimpl) const
 	{
-		std::string rt = tdbimpl.typedb->typeToString( contextType);
+		std::string rt;
+		rt.append( tdbimpl.typeToString( contextType));
 		rt.append( " -> ");
 		rt.append( name);
 		rt.append( "( ");
 		for (std::size_t pi = 0; pi < parameter.size(); ++pi)
 		{
 			if (pi) rt.append( ", "); 
-			rt.append( tdbimpl.typedb->typeToString( parameter[ pi].type));
+			rt.append( tdbimpl.typeToString( parameter[ pi].type));
 		}
 		rt.push_back( ')');
 		return rt;
@@ -333,20 +342,20 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 	TestOutput out( &outbuf, verbose ? &std::cerr : nullptr );
 	FunctionDef fdef( tdbimpl, query.ar, query.step);
 	{
-		out << "Reductions of context type " << tdbimpl.typedb->typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
-		TypeDatabase::ResultBuffer resbuf;
-		auto reductions = tdbimpl.typedb->reductions( query.step, fdef.contextType, resbuf);
+		out << "Reductions of context type " << tdbimpl.typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
+		mewa::TypeDatabase::ResultBuffer redu_resbuf;
+		auto reductions = tdbimpl.typedb->reductions( query.step, fdef.contextType, redu_resbuf);
 		out << "Context Type reductions:" << std::endl;
 		for (auto const& redu : reductions)
 		{
-			out << tdbimpl.typedb->typeToString( redu.type) << " ~ " << tdbimpl.getConstructorName( redu.constructor) << std::endl;
+			out << tdbimpl.typeToString( redu.type) << " ~ " << tdbimpl.getConstructorName( redu.constructor) << std::endl;
 		}
 		out << std::endl;
 	}
 	{
 		out << "Resolve type " << fdef.tostring( tdbimpl) << " [" << query.step << "] :" << std::endl;
-		TypeDatabase::ResultBuffer resbuf;
-		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolveType( query.step, fdef.contextType, fdef.name, resbuf);
+		TypeDatabase::ResultBuffer resolve_resbuf;
+		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolveType( query.step, fdef.contextType, fdef.name, resolve_resbuf);
 		out << "Result candidates:" << std::endl;
 		int minDistance = 0;
 		int bestCandidate = -1;
@@ -357,7 +366,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 			bool matched = false;
 			++ii;
 			int distance = 0;
-			out << "Candidate [" << ii << "]: " << tdbimpl.typedb->typeToString( item.type) << std::endl;
+			out << "Candidate [" << ii << "]: " << tdbimpl.typeToString( item.type) << std::endl;
 			TypeDatabase::ParameterList parameters = tdbimpl.typedb->parameters( item.type);
 			int pi = 0;
 			if (fdef.parameter.size() != parameters.size())
@@ -375,14 +384,14 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/);
 					if (reduConstructor < 0)
 					{
-						std::string pto = tdbimpl.typedb->typeToString( parameter.type);
-						std::string pfrom = tdbimpl.typedb->typeToString( fdef.parameter[ pi].type);
+						auto pto = tdbimpl.typeToString( parameter.type);
+						auto pfrom = tdbimpl.typeToString( fdef.parameter[ pi].type);
 						out << string_format( "- parameter [%d] does not match ('%s' <-/- '%s', )", pi, pto.c_str(), pfrom.c_str()) << std::endl;
 					}
 					else
 					{
-						std::string pcstr = tdbimpl.getConstructorName( parameter.constructor);
-						std::string rcstr = tdbimpl.getConstructorName( reduConstructor);
+						auto pcstr = tdbimpl.getConstructorName( parameter.constructor);
+						auto rcstr = tdbimpl.getConstructorName( reduConstructor);
 						out << string_format( "- parameter [%d]: %s %s", pi, pcstr.c_str(), rcstr.c_str()) << std::endl;
 						matched = true;
 					}

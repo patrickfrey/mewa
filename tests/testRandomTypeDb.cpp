@@ -280,8 +280,9 @@ static std::string reductionsToString( TypeDatabase& typedb, const std::pmr::vec
 	int ridx = 0;
 	for (auto const& redu :reductions)
 	{
+		TypeDatabase::ResultBuffer resbuf;
 		if (ridx++) rt.append( " -> ");
-		rt.append( typedb.typeToString( redu.type));
+		rt.append( typedb.typeToString( redu.type, resbuf));
 	}
 	return rt;
 }
@@ -298,8 +299,9 @@ static std::string resolveResultToString( TypeDatabase& typedb, const TypeDataba
 	int iidx = 0;
 	for (auto const& item :res.items)
 	{
+		TypeDatabase::ResultBuffer resbuf;
 		if (iidx++) rt.append( ", ");
-		rt.append( typedb.typeToString( item.type));
+		rt.append( typedb.typeToString( item.type, resbuf));
 	}
 	rt.append( "}");
 	return rt;
@@ -343,7 +345,6 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	{
 		expc_str.append( "{}");
 	}
-	TypeDatabase::ResultBuffer resbuf;
 	auto ti = ctx.typemap.find( typenam);
 	if (ti == ctx.typemap.end())
 	{
@@ -356,7 +357,8 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	}
 	try
 	{
-		TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, resbuf);
+		TypeDatabase::ResultBuffer resbuf_resolve;
+		TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, resbuf_resolve);
 		resc_str = resolveResultToString( typedb, result);
 		if (resc_str != "{}")
 		{
@@ -365,7 +367,8 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			{
 				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			}
-			TypeDatabase::DeriveResult deriveres = typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf);
+			TypeDatabase::ResultBuffer resbuf_derive;
+			TypeDatabase::DeriveResult deriveres = typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf_derive);
 			std::string redu_str = deriveResultToString( typedb, deriveres);
 			if (verbose)
 			{
