@@ -40,8 +40,9 @@ public:
 		ExpectedTableArgument=410,
 		ExpectedArgumentScopeStructure=411,
 		ExpectedArgumentParameterStructure=412,
-		TooFewArguments=413,
-		TooManyArguments=414,
+		ExpectedArgumentNotNil=413,
+		TooFewArguments=414,
+		TooManyArguments=415,
 
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
@@ -164,6 +165,7 @@ public:
 			case ExpectedTableArgument: return "Expected table as argument";
 			case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
 			case ExpectedArgumentParameterStructure:  return "Expected argument to be a type parameter structure (pair type,constructor)";
+			case ExpectedArgumentNotNil: return "Expected argument to be not nil";
 			case TooFewArguments: return "too few arguments";
 			case TooManyArguments: return "too many arguments";
 

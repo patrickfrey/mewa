@@ -31,26 +31,68 @@ struct CArrayForwardIterator
 		typedef std::forward_iterator_tag iterator_concept;
                 typedef std::ptrdiff_t difference_type;
 
-		explicit const_iterator( TYPE const* ptr_) noexcept			:ptr(ptr_){}
-		const_iterator( const const_iterator& o) noexcept			:ptr(o.ptr){}
-		const_iterator() noexcept						:ptr(nullptr){}
-		const_iterator& operator++() noexcept					{++ptr; return *this;}
-		const_iterator operator++(int) noexcept					{const_iterator rt(ptr); ++ptr; return rt;}
+		explicit const_iterator( TYPE const* ptr_) noexcept			:m_ptr(ptr_){}
+		const_iterator( const const_iterator& o) noexcept			:m_ptr(o.m_ptr){}
+		const_iterator() noexcept						:m_ptr(nullptr){}
+		const_iterator& operator++() noexcept					{++m_ptr; return *this;}
+		const_iterator operator++(int) noexcept					{const_iterator rt(m_ptr); ++m_ptr; return rt;}
 
-		bool operator < (const const_iterator& o) const noexcept		{return ptr < o.ptr;}
-		bool operator > (const const_iterator& o) const noexcept		{return ptr > o.ptr;}
-		bool operator <= (const const_iterator& o) const noexcept		{return ptr <= o.ptr;}
-		bool operator >= (const const_iterator& o) const noexcept		{return ptr >= o.ptr;}
-		bool operator == (const const_iterator& o) const noexcept		{return ptr == o.ptr;}
-		bool operator != (const const_iterator& o) const noexcept		{return ptr != o.ptr;}
+		bool operator < (const const_iterator& o) const noexcept		{return m_ptr < o.m_ptr;}
+		bool operator > (const const_iterator& o) const noexcept		{return m_ptr > o.m_ptr;}
+		bool operator <= (const const_iterator& o) const noexcept		{return m_ptr <= o.m_ptr;}
+		bool operator >= (const const_iterator& o) const noexcept		{return m_ptr >= o.m_ptr;}
+		bool operator == (const const_iterator& o) const noexcept		{return m_ptr == o.m_ptr;}
+		bool operator != (const const_iterator& o) const noexcept		{return m_ptr != o.m_ptr;}
 
-		std::ptrdiff_t operator - (const const_iterator& o) const noexcept	{return ptr - o.ptr;}
+		std::ptrdiff_t operator - (const const_iterator& o) const noexcept	{return m_ptr - o.m_ptr;}
 
-		TYPE const& operator*() const noexcept					{return *ptr;}
-		TYPE const* operator->() const noexcept					{return ptr;}
+		TYPE const& operator*() const noexcept					{return *m_ptr;}
+		TYPE const* operator->() const noexcept					{return m_ptr;}
 
 	private:
-		TYPE const* ptr;
+		TYPE const* m_ptr;
+	};
+};
+
+struct CArrayBaseForwardIterator
+{
+	template <class TYPE>
+	class const_iterator
+	{
+	public:
+		typedef const_iterator self_type;
+                typedef TYPE value_type;
+                typedef TYPE& reference;
+                typedef TYPE* pointer;
+                typedef std::forward_iterator_tag iterator_category;
+		typedef std::forward_iterator_tag iterator_concept;
+                typedef std::ptrdiff_t difference_type;
+
+		const_iterator( TYPE const* base_, std::size_t idx_) noexcept		:m_base(base_),m_idx(idx_){}
+		const_iterator( const const_iterator& o) noexcept			:m_base(o.m_base),m_idx(o.m_idx){}
+		const_iterator() noexcept						:m_base(nullptr),m_idx(0){}
+		const_iterator& operator++() noexcept					{++m_idx; return *this;}
+		const_iterator operator++(int) noexcept					{const_iterator rt(*this); ++m_idx; return rt;}
+
+		bool operator < (const const_iterator& o) const noexcept		{return m_idx < o.m_idx;}
+		bool operator > (const const_iterator& o) const noexcept		{return m_idx > o.m_idx;}
+		bool operator <= (const const_iterator& o) const noexcept		{return m_idx <= o.m_idx;}
+		bool operator >= (const const_iterator& o) const noexcept		{return m_idx >= o.m_idx;}
+		bool operator == (const const_iterator& o) const noexcept		{return m_idx == o.m_idx;}
+		bool operator != (const const_iterator& o) const noexcept		{return m_idx != o.m_idx;}
+
+		std::ptrdiff_t operator - (const const_iterator& o) const noexcept	{return m_idx - o.m_idx;}
+
+		TYPE const& operator*() const noexcept					{return m_base[m_idx];}
+		TYPE const* operator->() const noexcept					{return m_base+m_idx;}
+
+		TYPE const* base() const noexcept					{return m_base;}
+		std::size_t position() const noexcept					{return m_idx;}
+		void setPosition( std::size_t idx_) noexcept				{m_idx = idx_;}
+
+	private:
+		TYPE const* m_base;
+		std::size_t m_idx;
 	};
 };
 
