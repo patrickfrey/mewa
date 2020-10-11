@@ -313,9 +313,13 @@ int main( int argc, const char* argv[] )
 			std::string dbgoutput = dbgoutstream.str();
 			writeFile( debugFilename, dbgoutput);
 		}
-		for (auto warning : warnings)
+		if (!warnings.empty())
 		{
-			printWarning( inputFilename, warning);
+			for (auto warning : warnings)
+			{
+				printWarning( inputFilename, warning);
+			}
+			throw mewa::Error( mewa::Error::ConflictsInGrammarDef, mewa::string_format( "%zu", warnings.size()));
 		}
 		if (templat.empty())
 		{
@@ -335,10 +339,6 @@ int main( int argc, const char* argv[] )
 			case GenerateCompilerForLua:
 				printAutomaton( outputFilename, templat, automaton, luabin);
 				break;
-		}
-		if (!warnings.empty())
-		{
-			throw mewa::Error( mewa::Error::ConflictsInGrammarDef, mewa::string_format( "%zu", warnings.size()));
 		}
 		return 0;
 	}

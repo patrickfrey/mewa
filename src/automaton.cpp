@@ -350,19 +350,12 @@ static void mergeTransitionStateFollow( TransitionState& state, FollowMap& follo
 				break;
 			}
 			joinedFollow = followMap.join( item2.follow, joinedFollow);
-			if (prodlist[ item.prodindex].priority != prodlist[ item2.prodindex].priority)
-			{
-				throw Error( Error::PriorityConflictInGrammarDef,
-						prodlist[ item.prodindex].tostring( item.prodpos)
-						+ ", " + prodlist[ item2.prodindex].tostring( item2.prodpos));
-			}
 		}
 		newstate.insert( TransitionItem( item.prodindex, item.prodpos, joinedFollow));
 		oidx = oidx2;
 	}
 	state = std::move( newstate);
 }
-
 
 static TransitionState joinLr1TransitionStates( const TransitionState& s1, const TransitionState& s2, const ProductionDefList& prodlist, FollowMap& followMap)
 {
@@ -496,7 +489,8 @@ struct ProductionShiftNode
 };
 
 static std::vector<ProductionShiftNode> getShiftNodes(
-	const TransitionState& state, const TransitionItemGotoMap& gotoMap, const std::vector<ProductionDef>& prodlist)
+	const TransitionState& state, const TransitionItemGotoMap& gotoMap,
+	const std::vector<ProductionDef>& prodlist, std::vector<Error>& warnings)
 {
 	std::vector<ProductionShiftNode> rt;
 	int buffer[ 2048];
@@ -524,7 +518,7 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 					{
 						std::string nodestr = nd.tostring();
 						std::string prodprefix = prod.prefix_tostring( item.prodpos);
-						throw Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr);
+						warnings.push_back( Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr));
 					}
 				}
 			}
@@ -582,7 +576,10 @@ struct ReductionDef
 		:priority(o.priority),head(o.head),callidx(o.callidx),count(o.count),prodindex(o.prodindex),scope(o.scope),headname(o.headname){}
 };
 
-static ReductionDef getReductionDef( const TransitionState& state, int follow, const std::vector<ProductionDef>& prodlist, const Lexer& lexer, const FollowMap& followMap)
+static ReductionDef
+	getReductionDef(
+		const TransitionState& state, int follow, const std::vector<ProductionDef>& prodlist,
+		const Lexer& lexer, const FollowMap& followMap, std::vector<Error>& warnings)
 {
 	ReductionDef rt;
 	int last_prodidx = -1;
@@ -605,17 +602,18 @@ static ReductionDef getReductionDef( const TransitionState& state, int follow, c
 			}
 			else if (rt.head != prod.left.index() || rt.count != (int)prod.right.size() || rt.callidx != prod.callidx)
 			{
-				throw Error( Error::ReduceReduceConflictInGrammarDef,
+				warnings.push_back(
+					Error( Error::ReduceReduceConflictInGrammarDef,
 						prod.tostring() + ", "
 						+ prodlist[ last_prodidx].tostring() + " <- "
-						+ followMap.follow2String( follow, lexer));
+						+ followMap.follow2String( follow, lexer)));
 			}
 			else if (rt.priority != prod.priority)
 			{
-				throw Error( Error::PriorityConflictInGrammarDef,
+				warnings.push_back( Error( Error::PriorityConflictInGrammarDef,
 						prod.tostring() + ", "
 						+ prodlist[ last_prodidx].tostring() + " <- "
-						+ followMap.follow2String( follow, lexer));
+						+ followMap.follow2String( follow, lexer)));
 			}
 		}
 	}
@@ -843,9 +841,8 @@ static void insertAction(
 	{
 		if (ains.first->second != action)
 		{
-			warnings.push_back(
-				Error( action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef,
-					getStateTransitionString( lr1State, terminal, prodlist, lexer, followMap)));
+			Error::Code ec = action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef;
+			warnings.push_back( Error( ec, getStateTransitionString( lr1State, terminal, prodlist, lexer, followMap)));
 		}
 	}
 	else if (priority.value > pi->second.value)
@@ -1027,7 +1024,8 @@ static void printLalr1States(
 			auto const& prod = prodlist[ 0];
 			dbgout.out() << "\t" << prod.tostring( prod.right.size()) << " -> ACCEPT" << std::endl;
 		}
-		auto shiftNodes = getShiftNodes( state, gotoMap, prodlist);
+		std::vector<Error> warnings;
+		auto shiftNodes = getShiftNodes( state, gotoMap, prodlist, warnings);
 		for (auto const& shft : shiftNodes)
 		{
 			for (auto elem : state.packedElements())
@@ -1054,7 +1052,7 @@ static void printLalr1States(
 		{
 			try
 			{
-				ReductionDef rd = getReductionDef( state, follow, prodlist, lexer, followMap);
+				ReductionDef rd = getReductionDef( state, follow, prodlist, lexer, followMap, warnings);
 				auto const& prod = prodlist[ rd.prodindex];
 				dbgout.out() << "\t" << prod.tostring( prod.right.size()) << ", FOLLOW [" << follow << "]";			
 				dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
@@ -1261,7 +1259,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 				= Action::accept( prod.left.index(), prod.scope, prod.callidx, prod.right.size());
 			++nofAcceptStates;
 		}
-		std::vector<ProductionShiftNode> shiftNodes = getShiftNodes( lalr1State, lalr1TransitionItemGotoMap, langdef.prodlist);
+		std::vector<ProductionShiftNode> shiftNodes = getShiftNodes( lalr1State, lalr1TransitionItemGotoMap, langdef.prodlist, warnings);
 		for (auto const& shft : shiftNodes)
 		{
 			int to_stateidx = shft.goto_stateidx;
@@ -1286,7 +1284,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 		auto reduFollows = getReduceFollow( lalr1State, langdef.prodlist);
 		for (auto follow : reduFollows)
 		{
-			ReductionDef rd = getReductionDef( lalr1State, follow, langdef.prodlist, langdef.lexer, followMap);
+			ReductionDef rd = getReductionDef( lalr1State, follow, langdef.prodlist, langdef.lexer, followMap, warnings);
 			for (int terminal : followMap.content( follow))
 			{
 				ActionKey key( stateidx, terminal);

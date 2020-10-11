@@ -1,39 +1,44 @@
 #!/bin/sh
 
+FIND=find
+GREP=grep
+DIRNAME=dirname
+PKGCONFIG=pkg-config
+
 findLuaInclude() {
-	VERSION=$1
-	PATH=$2
-	FILE=`/usr/bin/find $PATH -name luaconf.h | /usr/bin/grep $VERSION`
+	local VERSION=$1
+	local SEARCHPATH=$2
+	local FILE=`$FIND $SEARCHPATH -name luaconf.h | $GREP $VERSION`
 	if [ x$FILE != 'x' ]; then
-		PATH=`/usr/bin/dirname $FILE`
-		echo $PATH
+		local RESULT=`$DIRNAME $FILE`
+		echo $RESULT
 	fi
 }
 
 findLuaLib() {
-	VERSION=$1
-	PATH=$2
-	FILE=`/usr/bin/find $PATH -name "liblua$VERSION.so"`
+	local VERSION=$1
+	local SEARCHPATH=$2
+	local FILE=`$FIND $SEARCHPATH -name "liblua$VERSION.so"`
 	if [ x$FILE != 'x' ]; then
-		PATH=`/usr/bin/dirname $FILE`
-		echo $PATH
+		local RESULT=`$DIRNAME $FILE`
+		echo $RESULT
 	fi
 }
 
 findLuaBin() {
-	VERSION=$1
-	PATH=$2
-	PATH=`/usr/bin/find $PATH -type f -name "lua$VERSION"`
-	if [ x$PATH != 'x' ]; then
-		echo $PATH
+	local VERSION=$1
+	local SEARCHPATH=$2
+	local RESULT=`$FIND $PATH -type f -name "lua$VERSION"`
+	if [ x$RESULT != 'x' ]; then
+		echo $RESULT
 	fi
 }
 
 writeLuaInclude() {
-	VERSION=$1
-	INCPATH=$2
-	LIBPATH=$3
-	BINPATH=$4
+	local VERSION=$1
+	local INCPATH=$2
+	local LIBPATH=$3
+	local BINPATH=$4
 	echo "LUAVER   := $VERSION" > Lua.inc
 	echo "LUAINC   := $INCPATH" >> Lua.inc
 	echo "LUALIBDIR:= $LIBPATH" >> Lua.inc
@@ -41,45 +46,58 @@ writeLuaInclude() {
 	echo "LUALIBS  := -llua$VERSION -L$LIBPATH" >> Lua.inc
 }
 
-for VERSION in 5.4 5.3 5.2 ; do
-	>&2 echo "Checking for version $VERSION ..."
-	LUAVERSION=`/usr/bin/pkg-config --variable=version lua$VERSION`
-	if [ x$LUAVERSION != 'x' ]; then
-		INCPATH="`/usr/bin/pkg-config --variable=includedir lua$VERSION`/lua$VERSION"
-		LIBPATH=`/usr/bin/pkg-config --variable=libdir lua$VERSION`
-		PREFIX=`/usr/bin/pkg-config --variable=prefix lua$VERSION`
-		if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ] && [ x$PREFIX != 'x' ] ; then
-			BINPATH="$PREFIX/bin/lua$VERSION"
+searchLuaWithPkgConfig() {
+	for VERSION in 5.4 5.3 5.2 ; do
+		>&2 echo "Checking for version $VERSION ..."
+		local LUAVERSION=`$PKGCONFIG --variable=version lua$VERSION`
+		if [ x$LUAVERSION != 'x' ]; then
+			local INCPATH="`$PKGCONFIG --variable=includedir lua$VERSION`/lua$VERSION"
+			local LIBPATH=`$PKGCONFIG --variable=libdir lua$VERSION`
+			local PREFIX=`$PKGCONFIG --variable=prefix lua$VERSION`
+			if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ] && [ x$PREFIX != 'x' ] ; then
+				local BINPATH="$PREFIX/bin/lua$VERSION"
+				writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
+				>&2 echo "$PKGCONFIG --variable=includedir lua$VERSION => $INCPATH"
+				>&2 echo "$PKGCONFIG --variable=libdir lua$VERSION => $LIBPATH"
+				>&2 echo "$PKGCONFIG --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
+				>&2 echo "$PKGCONFIG --variable=version lua$VERSION => $LUAVERSION"
+				>&2 echo "Wrote file Lua.inc:"
+				>&2 cat Lua.inc
+				exit 0
+			fi
+		fi
+	done
+	exit 1
+}
+
+searchLuaWithRawFind() {
+	for VERSION in 5.4 5.3 5.2; do
+		>&2 echo "Checking for version $VERSION ..."
+		local INCPATH=`findLuaInclude $VERSION "/usr/local/include /usr/include"`
+		local LIBPATH=`findLuaLib $VERSION "/usr/local/lib /usr/lib"`
+		local BINPATH=`findLuaBin $VERSION "/usr/bin /usr/local/bin"`
+		if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
 			writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
-			>&2 echo "/usr/bin/pkg-config --variable=includedir lua$VERSION => $INCPATH"
-			>&2 echo "/usr/bin/pkg-config --variable=libdir lua$VERSION => $LIBPATH"
-			>&2 echo "/usr/bin/pkg-config --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
-			>&2 echo "/usr/bin/pkg-config --variable=version lua$VERSION => $LUAVERSION"
+			>&2 echo "Lua include path = $INCPATH"
+			>&2 echo "Lua library path = $LIBPATH"
+			>&2 echo "Lua binary path = $BINPATH"
+			>&2 echo "Lua version = $VERSION"
 			>&2 echo "Wrote file Lua.inc:"
 			>&2 cat Lua.inc
 			exit 0
 		fi
-	fi
-done
+	done
+	exit 1
+}
 
->&2 echo "Failed to determine Lua package info with pkg-config, now searching with raw find ..."
-for VERSION in 5.4 5.3 5.2; do
-	>&2 echo "Checking for version $VERSION ..."
-	INCPATH=`findLuaInclude $VERSION "/usr/local/include /usr/include"`
-	LIBPATH=`findLuaLib $VERSION "/usr/local/lib /usr/lib"`
-	BINPATH=`findLuaBin $VERSION "/usr/bin /usr/local/bin"`
-	if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
-		writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
-		>&2 echo "Lua include path = $INCPATH"
-		>&2 echo "Lua library path = $LIBPATH"
-		>&2 echo "Lua binary path = $BINPATH"
-		>&2 echo "Lua version = $VERSION"
-		>&2 echo "Wrote file Lua.inc:"
-		>&2 cat Lua.inc
-		exit 0
+searchLuaWithPkgConfig
+if [ $? != 0 ]; then 
+	>&2 echo "Failed to determine Lua package info with $PKGCONFIG, now searching with raw find ..."
+	searchLuaWithRawFind
+	if [ $? != 0 ]; then 
+		>&2 echo "Lua installation (version 5.2,5.3 or 5.4) not found!"
+		exit 1
 	fi
-done
+fi
 
->&2 echo "Lua installation (version 5.2,5.3 or 5.4) not found!"
-exit 1
 

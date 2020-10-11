@@ -73,17 +73,17 @@ public:
 	};
 
 	class depthfirst_iterator
-		:public CArrayBaseForwardIterator::const_iterator<ITEM>
+		:public CArrayBaseForwardIterator::const_iterator<Node>
 	{
 	public:
-		typedef CArrayBaseForwardIterator::const_iterator<ITEM> Parent;
+		typedef CArrayBaseForwardIterator::const_iterator<Node> Parent;
 
 		explicit depthfirst_iterator( const depthfirst_iterator& o)
 			:Parent(o),m_stack(o.m_stack){}
-		explicit depthfirst_iterator( const ITEM* ar, std::size_t arpos, std::size_t arsize) noexcept
+		explicit depthfirst_iterator( const Node* ar, std::size_t arpos, std::size_t arsize) noexcept
 			:Parent(ar,arpos),m_stack()
 		{
-			if (arpos != arsize) m_stack.push_back( arpos);
+			if (arpos != arsize) m_stack.push_back( arsize+1);
 		}
 		depthfirst_iterator& operator++()
 		{
@@ -96,9 +96,9 @@ public:
 			skip();
 			return rt;
 		}
-		std::size_t indent() const noexcept
+		std::size_t depth() const noexcept
 		{
-			return m_stack.size();
+			return m_stack.empty() ? 0 : m_stack.size()-1;
 		}
 
 	private:
@@ -106,7 +106,7 @@ public:
 		{
 			if ((*this)->chld())
 			{
-				m_stack.push_back( (*this)->position()+1);
+				m_stack.push_back( Parent::position()+1);
 				Parent::setPosition( (*this)->chld()-1);
 			}
 			else if ((*this)->next())
@@ -138,11 +138,11 @@ public:
 
 	depthfirst_iterator begin() const
 	{
-		return depthfirst_iterator( m_ar, 0, m_ar.size());
+		return depthfirst_iterator( m_ar.data(), 0UL, m_ar.size());
 	}
 	depthfirst_iterator end() const
 	{
-		return depthfirst_iterator( m_ar, m_ar.size(), m_ar.size());
+		return depthfirst_iterator( m_ar.data(), m_ar.size(), m_ar.size());
 	}
 
 	const Node& operator[]( std::size_t idx) const
@@ -171,9 +171,9 @@ public:
 		}
 		else
 		{
-			if (!m_ar[ lastref-1].m_next) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			lastref = m_ar[ lastref-1].m_next = newindex;
 		}
+		return newindex;
 	}
 
 	std::size_t addChild( std::size_t nodeidx, const ITEM& item)

@@ -216,7 +216,7 @@ public:
 			case ShiftReduceConflictInGrammarDef: return "SHIFT/REDUCE conflict in the grammar definition";
 			case ReduceReduceConflictInGrammarDef: return "REDUCE/REDUCE conflict in the grammar definition";
 			case ShiftShiftConflictInGrammarDef: return "SHIFT/SHIFT conflict in the grammar definition";
-			case ConflictsInGrammarDef: return "Conflicts detected in the grammar definition";
+			case ConflictsInGrammarDef: return "Conflicts detected in the grammar definition. No output written.";
 
 			case ComplexityMaxStateInGrammarDef: return "To many states in the resulting tables of the grammar";
 			case ComplexityMaxNofProductionsInGrammarDef: return "Too many productions defined in the grammar";
@@ -251,23 +251,32 @@ public:
 private:
         static std::string map2string( Code code_, const std::string_view& param_, int line_)
 	{
-		char numbuf[ 128];
+		char msgbuf[ 256];
 		if (line_ > 0)
 		{
-			std::snprintf( numbuf, sizeof(numbuf), "[%d] \"%s\" at line %d", (int)code_, code2String((int)code_), line_);
+			std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\" at line %d", (int)code_, code2String((int)code_), line_);
 		}
 		else
 		{
-			std::snprintf( numbuf, sizeof(numbuf), "[%d] \"%s\"", (int)code_, code2String((int)code_));
+			std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\"", (int)code_, code2String((int)code_));
 		}
-                std::string rt(numbuf);
-		if (!rt.empty())
+		try
 		{
-			rt.push_back(':');
-			rt.push_back(' ');
-			rt.append( param_.data(), param_.size());
+			std::string rt( msgbuf);
+			if (!rt.empty())
+			{
+				rt.push_back(':');
+				rt.push_back(' ');
+				rt.append( param_.data(), param_.size());
+			}
+			return rt;
 		}
-                return rt;
+		catch (...)
+		{
+			std::snprintf( msgbuf, sizeof(msgbuf), "#%d", (int)MemoryAllocationError);
+			std::string rt( msgbuf);
+			return rt;
+		}
 	}
 
 private:

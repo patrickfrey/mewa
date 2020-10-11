@@ -129,10 +129,6 @@ public:
 	}
 	int allocObjectHandle() noexcept
 	{
-		/*[-]*/if (objCount+1 == 14)
-		/*[-]*/{
-		/*[-]*/	std::cerr << "HULLY GULLY" << std::endl;
-		/*[-]*/}
 		return ++objCount;
 	}
 };
@@ -471,10 +467,6 @@ static inline void luaPushTypeConstructorPair( lua_State* ls, int type, int cons
 
 	lua_pushliteral( ls, "constructor");		// STK: [OBJTAB] [ELEMTAB] [ELEM] "constructor"
 	lua_rawgeti( ls, -4, constructor);		// STK: [OBJTAB] [ELEMTAB] [ELEM] "constructor" [CONSTRUCTOR]
-	/*[-]*/if (lua_isnil( ls ,-1))
-	/*[-]*/{
-	/*[-]*/	std::cerr << "HALLY GALLY" << std::endl;
-	/*[-]*/}
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
 }
 
@@ -540,8 +532,13 @@ static int mewa_tostring( lua_State* ls)
 	bool success = true;
 	try
 	{
-		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
-		std::string rt = mewa::luaToString( ls, 1);
+		int nn = checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
+		bool formatted = true;
+		if (nn == 2 && lua_isboolean( ls, 2))
+		{
+			formatted = lua_toboolean( ls, 2);
+		}
+		std::string rt = mewa::luaToString( ls, 1, formatted);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
 	CATCH_EXCEPTION( success)

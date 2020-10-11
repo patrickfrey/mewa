@@ -496,6 +496,196 @@ static void randomIdQueries( const IdSet& idset, const NodeDefTree* nd, int nofq
 	}
 }
 
+static std::string idSetTraversalElementToString( int value)
+{
+	return string_format( "%d", value);
+}
+
+static std::string expectIdSetTreeTraversal( NodeDefTree const* nd, int depth=0)
+{
+	std::string rt;
+	while (nd)
+	{
+		std::string elem = std::string( depth, '\t') + nd->item.scope.tostring() + " " + idSetTraversalElementToString( nd->item.id);
+		rt.append( elem);
+		rt.push_back( '\n');
+		if (nd->chld)
+		{
+			rt.append( expectIdSetTreeTraversal( nd->chld, depth+1));
+		}
+		nd = nd->next;
+	}
+	return rt;
+}
+
+static void checkIdSetTreeTraversal( const IdSet& idset, const NodeDefTree* nd, bool verbose)
+{
+	std::string output;
+	auto tree = idset.getTree();
+	if (verbose) std::cerr << "Traversal of IdSet tree:" << std::endl;
+	for (auto ti = tree.begin(), te = tree.end(); ti != te; ++ti)
+	{
+		if (ti.depth() == 0) continue; 
+		// ... do not print root node
+
+		std::string elem = std::string( ti.depth()-1, '\t') + ti->item().scope.tostring()
+				+ " " + idSetTraversalElementToString( ti->item().value);
+		if (verbose) std::cerr << elem << std::endl;
+		output.append( elem);
+		output.push_back( '\n');
+	}
+	std::string expect = expectIdSetTreeTraversal( nd);
+	if (verbose)
+	{
+		std::cerr << "Expect traversal of IdSet tree:" << std::endl;
+		std::cerr << expect << std::endl;
+	}
+	if (output != expect)
+	{
+		writeFile( "build/testRandomScope.out", output);
+		writeFile( "build/testRandomScope.exp", expect);
+		throw std::runtime_error( "IdSet traversal not as expected, diff build/testRandomScope.out build/testRandomScope.exp");
+	}
+}
+
+static std::string varMapTraversalElementToString( const std::string& key, const std::string& value)
+{
+	return string_format( "%s = '%s'", key.c_str(), value.c_str());
+}
+
+static std::string expectVarMapTreeTraversal( NodeDefTree const* nd, int depth=0)
+{
+	std::string rt;
+	while (nd)
+	{
+		if (!nd->item.vars.empty())
+		{
+			std::string elem = std::string( depth, '\t') + nd->item.scope.tostring() + " {";
+			int kidx = 0;
+			for (auto const& var : nd->item.vars)
+			{
+				if (kidx++) elem.append( ", ");
+				elem.append( varMapTraversalElementToString( var, varConstructor( var, nd->item.id)));
+			}
+			elem.append( "}");
+
+			rt.append( elem);
+			rt.push_back( '\n');
+		}
+		if (nd->chld)
+		{
+			rt.append( expectVarMapTreeTraversal( nd->chld, depth+1));
+		}
+		nd = nd->next;
+	}
+	return rt;
+}
+
+static void checkVarMapTreeTraversal( const VarMap& varmap, const NodeDefTree* nd, bool verbose)
+{
+	std::string output;
+	auto tree = varmap.getTree();
+	if (verbose) std::cerr << "Traversal of VarMap tree:" << std::endl;
+	for (auto ti = tree.begin(), te = tree.end(); ti != te; ++ti)
+	{
+		if (ti.depth() == 0) continue; 
+		// ... do not print root node
+
+		std::string elem = std::string( ti.depth()-1, '\t') + ti->item().scope.tostring() + " {";
+		int kidx = 0;
+		for (auto const& kv : ti->item().value)
+		{
+			if (kidx++) elem.append( ", ");
+			elem.append( varMapTraversalElementToString( kv.first, kv.second));
+		}
+		elem.append( "}");
+		if (verbose) std::cerr << elem << std::endl;
+		output.append( elem);
+		output.push_back( '\n');
+	}
+	std::string expect = expectVarMapTreeTraversal( nd);
+	if (verbose)
+	{
+		std::cerr << "Expect traversal of VarMap tree:" << std::endl;
+		std::cerr << expect << std::endl;
+	}
+	if (output != expect)
+	{
+		writeFile( "build/testRandomScope.out", output);
+		writeFile( "build/testRandomScope.exp", expect);
+		throw std::runtime_error( "VarMap traversal not as expected, diff build/testRandomScope.out build/testRandomScope.exp");
+	}
+}
+
+static std::string relMapTraversalElementToString( const std::string& key, const std::string& related, int value, float weight)
+{
+	return string_format( "(%s,%s) = %d %.3f", key.c_str(), related.c_str(), value, weight);
+}
+
+static std::string expectRelMapTreeTraversal( NodeDefTree const* nd, int depth=0)
+{
+	std::string rt;
+	while (nd)
+	{
+		if (!nd->item.relations.empty())
+		{
+			std::string elem = std::string( depth, '\t') + nd->item.scope.tostring() + " {";
+			int kidx = 0;
+			for (auto const& rel : nd->item.relations)
+			{
+				if (kidx++) elem.append( ", ");
+				elem.append( relMapTraversalElementToString( rel.first, rel.second, nd->item.id, 1.0/*weight*/));
+			}
+			elem.append( "}");
+
+			rt.append( elem);
+			rt.push_back( '\n');
+		}
+		if (nd->chld)
+		{
+			rt.append( expectRelMapTreeTraversal( nd->chld, depth+1));
+		}
+		nd = nd->next;
+	}
+	return rt;
+}
+
+static void checkRelMapTreeTraversal( const RelMap& relmap, const NodeDefTree* nd, bool verbose)
+{
+	std::string output;
+	auto tree = relmap.getTree();
+	if (verbose) std::cerr << "Output traversal of RelMap tree:" << std::endl;
+	for (auto ti = tree.begin(), te = tree.end(); ti != te; ++ti)
+	{
+		if (ti.depth() == 0) continue; 
+		// ... do not print root node
+
+		std::string elem = std::string( ti.depth()-1, '\t') + ti->item().scope.tostring() + " {";
+		int kidx = 0;
+		for (auto const& rel : ti->item().value)
+		{
+			if (kidx++) elem.append( ", ");
+			elem.append( relMapTraversalElementToString( rel.relation.first, rel.relation.second, rel.value, rel.weight));
+		}
+		elem.append( "}");
+		if (verbose) std::cerr << elem << std::endl;
+		output.append( elem);
+		output.push_back( '\n');
+	}
+	std::string expect = expectRelMapTreeTraversal( nd);
+	if (verbose)
+	{
+		std::cerr << "Expect traversal of RelMap tree:" << std::endl;
+		std::cerr << expect << std::endl;
+	}
+	if (output != expect)
+	{
+		writeFile( "build/testRandomScope.out", output);
+		writeFile( "build/testRandomScope.exp", expect);
+		throw std::runtime_error( "RelMap traversal not as expected, diff build/testRandomScope.out build/testRandomScope.exp");
+	}
+}
+
 static int countNodes( const NodeDefTree* nd)
 {
 	int rt = 1;
@@ -542,6 +732,10 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 		randomRelQuery( relmap, tree.get(), alphabetsize, verbose);
 	}
 	randomIdQueries( idset, tree.get(), nofqueries, verbose);
+
+	checkIdSetTreeTraversal( idset, tree.get(), verbose);
+	//checkVarMapTreeTraversal( varmap, tree.get(), verbose);
+	//checkRelMapTreeTraversal( relmap, tree.get(), verbose);
 }
 
 int main( int argc, const char* argv[] )

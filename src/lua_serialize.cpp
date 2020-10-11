@@ -207,7 +207,7 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 			out << '"' << lua_tostring( ls, li) << '"';
 			break;
 		case LUA_TTABLE:
-			serializeLuaTable( out, ls, li, indent + "\t");
+			serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "\t"));
 			break;
 		case LUA_TFUNCTION:
 		case LUA_TUSERDATA:
@@ -218,11 +218,11 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 	}
 }
 
-std::string mewa::luaToString( lua_State* ls, int li)
+std::string mewa::luaToString( lua_State* ls, int li, bool formatted)
 {
 	std::string rt;
 	std::ostringstream out;
-	serializeLuaValue( out, ls, li, "\n");
+	serializeLuaValue( out, ls, li, formatted ? "\n" : "");
 	rt.append( out.str());
 	return rt;
 }

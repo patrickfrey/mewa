@@ -332,7 +332,7 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 		else if (ctx.dbgout && !lua_isnil( ls, -1))
 		{
 			*ctx.dbgout << "Lua call result [" << li-ctx.calltable << "]" << std::endl;
-			*ctx.dbgout << mewa::luaToString( ls, -1) << std::endl;
+			*ctx.dbgout << mewa::luaToString( ls, -1, true/*formatted*/) << std::endl;
 		}
 	}
 }
