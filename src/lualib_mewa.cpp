@@ -157,10 +157,9 @@ public:
 		tree.reset();
 		nodeidx = 0;
 	}
-	void create()
+	void create( TreeType&& o)
 	{
-		init();
-		tree.reset( new TreeType());
+		tree.reset( new TreeType( std::move( o)));
 	}
 	void destroy( lua_State* ls) noexcept
 	{
@@ -1085,12 +1084,60 @@ static int mewa_typedb_type_constructor( lua_State* ls)
 	return 1;
 }
 
+namespace {
+template <class UD>
+void create_tree_impl( const char* functionName, lua_State* ls, UD& ud, mewa_typedb_userdata_t* td)
+{throw mewa::Error( mewa::Error::LogicError, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));}
+
+template <>
+void create_tree_impl<mewa_objtree_userdata_t>( const char* functionName, lua_State* ls, mewa_objtree_userdata_t& ud, mewa_typedb_userdata_t* td)
+{
+	checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+	std::string_view name = getArgumentAsString( functionName, ls, 2);
+	ud.create( td->impl->getNamedObjectTree( name));
+}
+
+template <>
+void create_tree_impl<mewa_typetree_userdata_t>( const char* functionName, lua_State* ls, mewa_typetree_userdata_t& ud, mewa_typedb_userdata_t* td)
+{
+	checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+	ud.create( td->impl->getTypeDefinitionTree());
+}
+
+template <>
+void create_tree_impl<mewa_redutree_userdata_t>( const char* functionName, lua_State* ls, mewa_redutree_userdata_t& ud, mewa_typedb_userdata_t* td)
+{
+	checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+	ud.create( td->impl->getReductionDefinitionTree());
+}
+}//anonymous namespace
+
 template <class UD>
 struct LuaTreeMetaMethods
 {
+	static int create( lua_State* ls)
+	{
+		static const char* functionName = "typedb:*_tree";
+		mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+
+		UD* ud = (UD*)lua_newuserdata( ls, sizeof(UD));
+		bool success = true;
+		try
+		{
+			ud->init();
+			create_tree_impl( functionName, ls, *ud, td);
+		}
+		CATCH_EXCEPTION( success)
+
+		luaL_getmetatable( ls, UD::metatableName());
+		lua_setmetatable( ls, -2);
+
+		return 1;
+	}
+
 	static int gc( lua_State* ls)
 	{
-		static const char* functionName = "tree:__gc";
+		static const char* functionName = "*tree:__gc";
 		UD* ud = (UD*)luaL_checkudata( ls, 1, UD::metatableName());
 		bool success = true;
 		try
@@ -1115,11 +1162,18 @@ struct LuaTreeMetaMethods
 		return 0;
 	}
 
-	static int item( lua_State* ls)
+	static int index( lua_State* ls)
 	{
-		static const char* functionName = "tree:item";
+		static const char* functionName = "tree:__index";
 		return 0;
 	}
+
+	static int tostring( lua_State* ls)
+	{
+		static const char* functionName = "tree:__index";
+		return 0;
+	}
+
 };
 
 
@@ -1159,6 +1213,9 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "type_string",	mewa_typedb_type_string },
 	{ "type_parameters",	mewa_typedb_type_parameters },
 	{ "type_constructor",	mewa_typedb_type_constructor },
+	{ "obj_tree",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::create },
+	{ "type_tree",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::create },
+	{ "reduction_tree",	LuaTreeMetaMethods<mewa_redutree_userdata_t>::create },
 	{ nullptr,		nullptr }
 };
 
@@ -1166,7 +1223,8 @@ static const struct luaL_Reg mewa_objtree_methods[] = {
 	{ "__gc",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::gc },
 	{ "chld",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::chld },
 	{ "scope",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::scope },
-	{ "item",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::item },
+	{ "__index",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::index },
+	{ "__tostring",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::tostring },
 	{ nullptr,		nullptr }
 };
 
@@ -1174,7 +1232,8 @@ static const struct luaL_Reg mewa_typetree_methods[] = {
 	{ "__gc",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::gc },
 	{ "chld",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::chld },
 	{ "scope",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::scope },
-	{ "item",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::item },
+	{ "__index",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::index },
+	{ "__tostring",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::tostring },
 	{ nullptr,		nullptr }
 };
 
@@ -1182,7 +1241,8 @@ static const struct luaL_Reg mewa_redutree_methods[] = {
 	{ "__gc",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::gc },
 	{ "chld",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::chld },
 	{ "scope",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::scope },
-	{ "item",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::item },
+	{ "__index",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::index },
+	{ "__tostring",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::tostring },
 	{ nullptr,		nullptr }
 };
 
