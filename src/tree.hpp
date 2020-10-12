@@ -198,6 +198,34 @@ public:
 		return m_ar.size()+1;
 	}
 
+	/// \brief Make a structurally identical copy of a tree with other items as elements
+	/// \param[in] tree tree structure to copy
+	/// \param[in,out] translate callable with ITEM as argument amd OTH as result, translates a source tree item into the corresponding result tree item
+	template <class OTH, class TranslateItem>
+	Tree<OTH> translate( TranslateItem& translate) const
+	{
+		Tree<OTH> rt({});
+
+		std::vector<std::pair<std::size_t,std::size_t> > stack;
+		stack.push_back( {1/*root*/,1/*root*/} );
+
+		while (!stack.empty())
+		{
+			std::size_t tree_ndidx = stack.back().first;
+			std::size_t rt_ndidx = stack.back().second;
+
+			stack.pop_back();
+			std::size_t chld = m_ar[ tree_ndidx-1].chld();
+			while (chld)
+			{
+				std::size_t rt_chld = rt.addChild( rt_ndidx, translate( m_ar[ chld-1].item()));
+				stack.push_back(  {chld, rt_chld} );
+				chld = m_ar[ chld-1].next();
+			}
+		}
+		return rt;
+	}
+
 private:
 	std::vector<Node> m_ar;
 	std::vector<std::size_t> m_lastar;

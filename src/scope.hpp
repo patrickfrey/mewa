@@ -24,7 +24,6 @@
 #include <set>
 #include <vector>
 #include <algorithm>
-/*[-]*/#include <iostream>
 
 namespace mewa {
 
@@ -36,12 +35,12 @@ public:
 public:
 	Scope( Step start_, Step end_) noexcept
 		:m_start(start_ >= 0 ? start_ : 0),m_end(end_ >= 0 ? end_ : std::numeric_limits<Step>::max()){}
-	Scope( const Scope& o) noexcept
+	Scope( Scope const& o) noexcept
 		:m_start(o.m_start),m_end(o.m_end){}
-	Scope& operator=( const Scope& o) noexcept
+	Scope& operator=( Scope const& o) noexcept
 		{m_start=o.m_start; m_end=o.m_end; return *this;}
 
-	bool contains( const Scope& o) const noexcept
+	bool contains( Scope const& o) const noexcept
 	{
 		return o.m_start >= m_start && o.m_end <= m_end;
 	}
@@ -51,11 +50,11 @@ public:
 		return step >= m_start && step < m_end;
 	}
 
-	bool operator == ( const Scope& o) const noexcept
+	bool operator == ( Scope const& o) const noexcept
 	{
 		return o.m_start == m_start && o.m_end == m_end;
 	}
-	bool operator != ( const Scope& o) const noexcept
+	bool operator != ( Scope const& o) const noexcept
 	{
 		return o.m_start != m_start || o.m_end != m_end;
 	}
@@ -85,7 +84,7 @@ public:
 struct ScopeCompare
 {
 	ScopeCompare(){}
-	bool operator()( const Scope& aa, const Scope& bb) const
+	bool operator()( Scope const& aa, Scope const& bb) const
 	{
 		return aa.end() == bb.end() ? aa.start() < bb.start() : aa.end() < bb.end();
 	}
@@ -100,7 +99,7 @@ struct ScopedUpValue
 
 	ScopedUpValue( const Scope scope_, const VALTYPE value_, int prev_) noexcept
 		:scope(scope_),value(value_),prev(prev_){}
-	ScopedUpValue( const ScopedUpValue& o) noexcept
+	ScopedUpValue( ScopedUpValue const& o) noexcept
 		:scope(o.scope),value(o.value),prev(o.prev){}
 };
 
@@ -114,8 +113,8 @@ public:
 public:
 	ScopedUpValueInvTree( const VALTYPE nullval_, std::size_t initsize)
 		:m_ar(),m_nullval(nullval_) {m_ar.reserve(initsize);}
-	ScopedUpValueInvTree( const ScopedUpValueInvTree& o) = default;
-	ScopedUpValueInvTree& operator=( const ScopedUpValueInvTree& o) = default;
+	ScopedUpValueInvTree( ScopedUpValueInvTree const& o) = default;
+	ScopedUpValueInvTree& operator=( ScopedUpValueInvTree const& o) = default;
 	ScopedUpValueInvTree( ScopedUpValueInvTree&& o) noexcept = default;
 	ScopedUpValueInvTree& operator=( ScopedUpValueInvTree&& o) noexcept = default;
 
@@ -133,7 +132,7 @@ public:
 	class const_iterator
 	{
 	public:
-		explicit const_iterator( const std::vector<UpValue>& ar_, int index_=-1) noexcept
+		explicit const_iterator( std::vector<UpValue> const& ar_, int index_=-1) noexcept
 			:m_ar(ar_.data()),m_index(index_){}
 
 		const_iterator& operator++() noexcept				{m_index = m_ar[ m_index].prev; return *this;}
@@ -146,6 +145,7 @@ public:
 		VALTYPE const* operator->() const noexcept			{return &m_ar[ m_index].value;}
 
 		const Scope& scope() const noexcept				{return m_ar[ m_index].scope;}
+		VALTYPE const& value() const noexcept				{return m_ar[ m_index].value;}
 
 	private:
 		UpValue const* m_ar;
@@ -313,46 +313,38 @@ private:
 };
 
 /// \brief Node of a tree displaying the scope hierarchy
-template <typename NODEVAL>
+template <typename VALTYPE>
 struct ScopeHierarchyTreeNode
 {
 	Scope scope;
-	NODEVAL value;
+	VALTYPE value;
 
-	ScopeHierarchyTreeNode( const Scope scope_, const NODEVAL& value_)
+	ScopeHierarchyTreeNode()
+		:scope( 0, std::numeric_limits<Scope::Step>::max()){}
+	ScopeHierarchyTreeNode( const Scope scope_, const VALTYPE& value_)
 		:scope(scope_),value(value_){}
 	ScopeHierarchyTreeNode( const ScopeHierarchyTreeNode& o)
 		:scope(o.scope),value(o.value){}
 };
 
-/// \class CompleteScopeHierarchyTreeBuilder
+/// \class ScopeHierarchyTreeBuilder
 /// \brief Template for a builder of a tree displaying the scope hierarchy from its inverse representation (ScopedUpValueInvTree).
-//		The inverse representation is considered to be complete, meaning that all parent links are real parent links.
-/// \param NODEVAL type of an item attached to a tree node 
-/// \param ScopeHierarchyTreeNodeAssign Template parameter implements the following interface to insert/update elements in method insert()
-/*
-* template <typename NODEVAL, typename INVVAL>
-* struct ScopeHierarchyTreeNodeAssign
-* {
-*	NODEVAL create( const INVVAL& elemval) const=0;
-*	void add( NODEVAL& ndval, const INVVAL& elemval) const=0;
-* };
-*/
-template <typename NODEVAL, class ScopeHierarchyTreeNodeAssign>
-class CompleteScopeHierarchyTreeBuilder
+/// \param VALTYPE type of an item attached to a tree node 
+template <typename VALTYPE>
+class ScopeHierarchyTreeBuilder
 {
 public:
-	typedef ScopeHierarchyTreeNode<NODEVAL> Node;
-	typedef ScopedUpValueInvTree<NODEVAL> InvTree;
+	typedef ScopeHierarchyTreeNode<VALTYPE> Node;
+	typedef ScopedUpValueInvTree<VALTYPE> InvTree;
 
-	explicit CompleteScopeHierarchyTreeBuilder( const NODEVAL& nullval_)
+	explicit ScopeHierarchyTreeBuilder( const VALTYPE& nullval_)
 		:m_tree(Node( Scope( 0, std::numeric_limits<Scope::Step>::max()), nullval_))
 		,m_scope2nodeidxMap()
 	{
 		m_scope2nodeidxMap.insert( {Scope( 0, std::numeric_limits<Scope::Step>::max()),1/*root node index*/} );
 	}
 
-	void insert( const ScopeHierarchyTreeNodeAssign& assign, typename InvTree::const_iterator ni, const typename InvTree::const_iterator ne)
+	void insert( typename InvTree::const_iterator ni, const typename InvTree::const_iterator ne)
 	{
 		std::vector<typename InvTree::const_iterator> stk;
 		std::size_t ndidx = 1;
@@ -367,7 +359,7 @@ public:
 			else
 			{
 				ndidx = sni->second;
-				if (m_tree[ ndidx].item().value != assign.create( *ni))
+				if (m_tree[ ndidx].item().value != *ni)
 				{
 					throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 				}
@@ -377,7 +369,7 @@ public:
 		for (; !stk.empty(); stk.pop_back())
 		{
 			typename InvTree::const_iterator stk_ni = stk.back();
-			ndidx = m_tree.addChild( ndidx, Node( stk_ni.scope(), assign.create( *stk_ni)));
+			ndidx = m_tree.addChild( ndidx, Node( stk_ni.scope(), *stk_ni));
 			m_scope2nodeidxMap.insert( {stk_ni.scope(), ndidx} );
 		}
 	}
@@ -394,180 +386,6 @@ public:
 private:
 	Tree<Node> m_tree;
 	std::map<Scope,std::size_t,ScopeCompare> m_scope2nodeidxMap;
-};
-
-/// \class PartialScopeHierarchyTreeBuilder
-/// \brief Template for a builder of a tree displaying the scope hierarchy from its inverse representation (ScopedUpValueInvTree).
-//		The inverse representation is considered to be partial, meaning that some parent links are links to other ancessors (grand parents, etc..).
-/// \param NODEVAL type of an item attached to a tree node 
-/// \param INVVAL type of an item in the inverse representation
-/// \param ScopeHierarchyTreeNodeAssign Template parameter implements the following interface to insert/update elements in method insert()
-///		Implements same interface as in CompleteScopeHierarchyTreeBuilder template
-template <typename NODEVAL, typename INVVAL, class ScopeHierarchyTreeNodeAssign>
-class PartialScopeHierarchyTreeBuilder
-{
-public:
-	typedef ScopeHierarchyTreeNode<NODEVAL> Node;
-	typedef ScopedUpValueInvTree<INVVAL> InvTree;
-
-	explicit PartialScopeHierarchyTreeBuilder( const NODEVAL& nullval_)
-		:m_tree(Node( Scope( 0, std::numeric_limits<Scope::Step>::max()), nullval_))
-		,m_scope2nodeidxMap()
-	{}
-
-	void insert( const ScopeHierarchyTreeNodeAssign& assign, typename InvTree::const_iterator ni, const typename InvTree::const_iterator ne)
-	{
-		std::vector<std::size_t> stk;
-		for (; ni != ne; ++ni)
-		{
-			std::size_t ndidx = m_nodeAr.size()+1;
-			auto ins = m_scope2nodeidxMap.insert( {ni.scope(), ndidx});
-			if (ins.second == true/*insert took place*/)
-			{
-				m_nodeAr.push_back( NodeData( ni.scope(), assign.create( *ni)));
-			}
-			else
-			{
-				ndidx = ins.first->second;
-				assign.add( m_nodeAr[ ndidx-1].item, *ni);
-			}
-			{
-				std::size_t si = stk.size();
-
-				for (; si != 0 && m_nodeAr[ stk[ si-1]-1].scope.contains( ni.scope()); --si){}
-				if (si == stk.size() || (si < stk.size() && stk[ si] != ndidx))
-				{
-					stk.insert( stk.begin()+si, ndidx);
-				}
-			}
-			if (m_nodeAr[ ndidx-1].parent)
-			{
-				std::size_t si = stk.size();
-				std::size_t parent = m_nodeAr[ ndidx-1].parent;
-
-				for (; si != 0 && m_nodeAr[ stk[ si-1]-1].scope.contains( m_nodeAr[ parent-1].scope); --si){}
-				if (si == stk.size() || (si < stk.size() && stk[ si] != parent))
-				{
-					stk.insert( stk.begin()+si, parent);
-				}
-			}
-		}
-		// Link stack elements together with parent node:
-		std::size_t prev_ndidx = 0;
-		for (auto ndidx : stk)
-		{
-			if (prev_ndidx)
-			{
-				if (ndidx == prev_ndidx || !m_nodeAr[ ndidx-1].scope.contains( m_nodeAr[ prev_ndidx-1].scope))
-				{
-					throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
-				}
-				m_nodeAr[ prev_ndidx-1].parent = ndidx;
-			}
-			prev_ndidx = ndidx;
-		}
-		// Assign parent to top element of the stack:
-		if (!stk.empty() && m_nodeAr[ stk.back()-1].parent == 0)
-		{
-			std::size_t ndidx = 1;
-			for (; ndidx <= m_nodeAr.size(); ++ndidx)
-			{
-				if (ndidx != stk.back() && m_nodeAr[ ndidx-1].scope.contains( m_nodeAr[ stk.back()-1].scope))
-				{
-					if (!m_nodeAr[ stk.back()-1].parent
-					||  m_nodeAr[ m_nodeAr[ stk.back()-1].parent-1].scope.contains( m_nodeAr[ ndidx-1].scope))
-					{
-						m_nodeAr[ stk.back()-1].parent = ndidx;
-					}
-				}
-			}
-		}
-	}
-
-	void complete()
-	{
-		std::map<std::size_t,std::size_t> nodeMap;
-
-		// Evaluate the set of non leafs (branches):
-		std::set<std::size_t> branches;
-		for (auto const& nd : m_nodeAr)
-		{
-			branches.insert( nd.parent);
-		}
-		// Get sorted array of leafs with scope start as first key:
-		std::set<std::pair<std::size_t,std::size_t> > scopeStartLeafRelationSet;
-		for (std::size_t ndidx_leaf = 1; ndidx_leaf <= m_nodeAr.size(); ++ndidx_leaf)
-		{
-			if (branches.find( ndidx_leaf) == branches.end())
-			{
-				//... node is a leaf
-				scopeStartLeafRelationSet.insert( {m_nodeAr[ ndidx_leaf-1].scope.start(), ndidx_leaf} );
-			}
-		}
-		for (auto const& scopeStartLeafRelation : scopeStartLeafRelationSet)
-		{
-			std::size_t ndidx_leaf = scopeStartLeafRelation.second;
-			std::size_t ndidx = 1/*root node*/;
-			std::vector<std::size_t> stk;
-
-			// Push all non inserted nodes on the stack with the top most node at the end:
-			for (std::size_t ni = ndidx_leaf; ni; ni = m_nodeAr[ ni-1].parent)
-			{
-				auto mi = nodeMap.find( ni);
-				if (mi == nodeMap.end())
-				{
-					stk.push_back( ni);
-				}
-				else
-				{
-					ndidx = mi->second;
-					break;
-				}
-			}
-			// Start with the node already inserted or the root and insert all new elements on the stack in reverse order:
-			for (; !stk.empty(); stk.pop_back())
-			{
-				std::size_t ndidx_chld = stk.back();
-				auto ins = nodeMap.insert( {ndidx_chld,m_tree.nextAddIndex()} );
-				if (ins.second == true/*new*/)
-				{
-					const NodeData& nd = m_nodeAr[ ndidx_chld-1];
-					ndidx = m_tree.addChild( ndidx, Node( nd.scope, nd.item));
-				}
-				else
-				{
-					throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
-				}
-			}
-		}
-	}
-
-	const Tree<Node>& tree() const
-	{
-		return m_tree;
-	}
-	Tree<Node>&& tree()
-	{
-		return std::move( m_tree);
-	}
-
-private:
-	struct NodeData
-	{
-		std::size_t parent;
-		Scope scope;
-		NODEVAL item;
-
-		NodeData( Scope scope_, const NODEVAL& item_)
-			:parent(0),scope(scope_),item(item_){}
-		NodeData( const NodeData& o)
-			:parent(o.parent),scope(o.scope),item(o.item){}
-	};
-
-private:
-	Tree<Node> m_tree;
-	std::map<Scope,std::size_t,ScopeCompare> m_scope2nodeidxMap;
-	std::vector<NodeData> m_nodeAr;
 };
 
 
@@ -623,12 +441,11 @@ public:
 
 	Tree<TreeNode> getTree() const
 	{
-		TreeNodeAssign assign;
-		CompleteScopeHierarchyTreeBuilder<VALTYPE,TreeNodeAssign> treeBuilder( m_invtree.nullval());
+		ScopeHierarchyTreeBuilder<VALTYPE> treeBuilder( m_invtree.nullval());
 		auto mi = m_map.begin();
 		for (; mi != m_map.end(); ++mi)
 		{
-			treeBuilder.insert( assign, m_invtree.start( mi->second), m_invtree.end());
+			treeBuilder.insert( m_invtree.start( mi->second), m_invtree.end());
 		}
 		return treeBuilder.tree();
 	}
@@ -639,20 +456,6 @@ public:
 	}
 
 private:
-	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssign of the CompleteScopeHierarchyTreeBuilder template
-	struct TreeNodeAssign
-	{
-		TreeNodeAssign(){}
-		VALTYPE create( const VALTYPE& elemval) const
-		{
-			return elemval;
-		}
-		void add( VALTYPE& ndval, const VALTYPE& elemval) const
-		{
-			ndval = elemval;
-		}
-	};
-
 	typedef ScopedUpValue<VALTYPE> UpValue;
 
 private:
@@ -683,6 +486,63 @@ public:
 private:
 	KEYTYPE m_key;
 	Scope::Step m_end;
+};
+
+template <typename VALTYPE>
+class ScopeListMap
+{
+public:
+	typedef std::vector<VALTYPE> ValueList;
+	typedef std::set<VALTYPE> ValueSet;
+	typedef ScopeHierarchyTreeNode<ValueList> TreeNode;
+
+	ScopeListMap() :m_map(),m_valueAr(),m_valueSets(){}
+
+	void insert( const Scope scope, const VALTYPE& value)
+	{
+		auto ins = m_map.insert( {scope, m_valueAr.size()+1} );
+		if (ins.second/*new*/)
+		{
+			m_valueAr.push_back( ValueList());
+			m_valueSets.push_back( ValueSet());
+		}
+		if (m_valueSets[ ins.first->second-1].insert( value).second == true/*new*/)
+		{
+			m_valueAr[ ins.first->second-1].push_back( value);
+		}
+	}
+
+	Tree<TreeNode> getTree() const
+	{
+		// [1] Build a scoped set from m_map and build a tree out of it:
+		ScopedSet<std::size_t> scopedSet( std::pmr::get_default_resource(), 0/*nullval*/, 1<<16/*initsize*/);
+		for (auto const& kv : m_map)
+		{
+			scopedSet.set( kv.first, kv.second);
+		}
+		Tree< ScopeHierarchyTreeNode<std::size_t> > tree = scopedSet.getTree();
+
+		// [2] Copy the built tree replacing the references to the result VALTYPE lists with the real VALTYPE lists as node items:
+		struct TranslateItem
+		{
+			ValueList const* ar;
+			std::size_t arsize;
+
+			TranslateItem( const std::vector<ValueList>& ar_) :ar(ar_.data()),arsize(ar_.size()){}
+
+			ScopeHierarchyTreeNode<ValueList> operator()( const ScopeHierarchyTreeNode<std::size_t>& node) const
+			{
+				return ScopeHierarchyTreeNode<ValueList>( node.scope, ar[ node.value-1]);
+			}
+		};
+		TranslateItem translateItem( m_valueAr);
+		return tree.translate<TreeNode>( translateItem);
+	}
+
+private:
+	std::map<Scope,std::size_t,ScopeCompare> m_map;		//< map with references to the VALTYPE lists associated with the scope
+	std::vector<ValueList> m_valueAr;			//< collected list of values referenced by m_map (index starting from 1..)
+	std::vector<ValueSet> m_valueSets;			//< sets for duplicate elimination in m_valueAr
 };
 
 
@@ -800,15 +660,18 @@ public:
 
 	Tree<TreeNode> getTree() const
 	{
-		PartialScopeHierarchyTreeBuilder<TreeItem,VALTYPE,TreeNodeAssign> treeBuilder({});
+		ScopeListMap<KeyValue> scopeKeyValueListMap;
+
 		auto mi = m_map.begin();
 		for (; mi != m_map.end(); ++mi)
 		{
-			TreeNodeAssign assign( mi->first.key());
-			treeBuilder.insert( assign, m_invtree.start( mi->second), m_invtree.end());
+			typename ScopedUpValueInvTree<VALTYPE>::const_iterator ii = m_invtree.start( mi->second), ie = m_invtree.end();
+			for (; ii != ie; ++ii)
+			{
+				scopeKeyValueListMap.insert( ii.scope(), {mi->first.key(), ii.value()} );
+			}
 		}
-		treeBuilder.complete();
-		return treeBuilder.tree();
+		return scopeKeyValueListMap.getTree();
 	}
 
 	const ScopedUpValueInvTree<VALTYPE>& invtree() const noexcept
@@ -825,27 +688,6 @@ public:
 	{
 		return m_map.end();
 	}
-
-private:
-	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssign of the PartialScopeHierarchyTreeBuilder template
-	struct TreeNodeAssign
-	{
-		KEYTYPE key;
-
-		TreeNodeAssign( const KEYTYPE& key_)
-			:key(key_){}
-
-		TreeItem create( const VALTYPE& val) const
-		{
-			TreeItem rt;
-			rt.push_back( KeyValue( key, val));
-			return rt;
-		}
-		void add( TreeItem& ndval, const VALTYPE& val) const
-		{
-			ndval.push_back( KeyValue( key, val));
-		}
-	};	
 
 private:
 	Map m_map;
@@ -948,15 +790,32 @@ public:
 
 	Tree<TreeNode> getTree() const
 	{
-		PartialScopeHierarchyTreeBuilder<TreeItem,VALTYPE,TreeNodeAssign> treeBuilder({});
-		auto mi = m_map.begin();
-		for (; mi != m_map.end(); ++mi)
+		struct TranslateItem
 		{
-			TreeNodeAssign assign( mi->first.key(), m_list.data(), m_list.size());
-			treeBuilder.insert( assign, m_map.invtree().start( mi->second), m_map.invtree().end());
-		}
-		treeBuilder.complete();
-		return treeBuilder.tree();
+			ListElement const* list;
+			std::size_t listsize;
+
+			explicit TranslateItem( const std::vector<ListElement>& list_) :list(list_.data()),listsize(list_.size()){}
+
+			ScopeHierarchyTreeNode<TreeItem> operator()( const ScopeHierarchyTreeNode< std::vector<std::pair<RELNODETYPE,int> > >& node) const
+			{
+				ScopeHierarchyTreeNode<TreeItem> rt( node.scope, {});
+				for (auto const& kv : node.value)
+				{
+					int li = kv.second;
+					while (li >= 0)
+					{
+						ListElement const& le = list[ li];
+						rt.value.push_back( {{kv.first, le.related}, le.value, le.weight} );
+						li = le.next;
+					}
+				}
+				return rt;
+			}
+		};
+		Tree<typename Map::TreeNode> listIndexTree = m_map.getTree();
+		TranslateItem translateItem( m_list);
+		return listIndexTree.template translate<TreeNode>( translateItem);
 	}
 
 private:
@@ -967,43 +826,11 @@ private:
 		float weight;
 		int next;
 
-		ListElement( const RELNODETYPE& related_, const VALTYPE& value_, float weight_, int next_)
+		ListElement( RELNODETYPE const& related_, VALTYPE const& value_, float weight_, int next_)
 			:related(related_),value(value_),weight(weight_),next(next_){}
-		ListElement( const ListElement& o)
+		ListElement( ListElement const& o)
 			:related(o.related),value(o.value),weight(o.weight),next(o.next){}
 	};
-
-	/// \brief Implements the interface needed by the parameter ScopeHierarchyTreeNodeAssign of the ScopeHierarchyTreeBuilder template
-	struct TreeNodeAssign
-	{
-		RELNODETYPE key;
-		ListElement const* elemar;
-		std::size_t elemarsize;
-
-		TreeNodeAssign( const RELNODETYPE& key_, ListElement const* elemar_, std::size_t elemarsize_)
-			:key(key_),elemar(elemar_),elemarsize(elemarsize_){}
-
-		TreeItem create( int li) const
-		{
-			TreeItem rt;
-			while (li >= 0)
-			{
-				const ListElement& le = elemar[ li];
-				rt.push_back( TreeNodeElement( {key, le.related}, le.value, le.weight));
-				li = le.next;
-			}
-			return rt;
-		}
-		void add( TreeItem& ndval, int li) const
-		{
-			while (li >= 0)
-			{
-				const ListElement& le = elemar[ li];
-				ndval.push_back( TreeNodeElement( {key, le.related}, le.value, le.weight));
-				li = le.next;
-			}
-		}
-	};	
 
 	typedef ScopedMap<RELNODETYPE,int> Map;
 	typedef std::vector<ListElement> List;
