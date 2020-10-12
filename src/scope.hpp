@@ -112,7 +112,7 @@ public:
 
 public:
 	ScopedUpValueInvTree( const VALTYPE nullval_, std::size_t initsize)
-		:m_ar(),m_nullval(nullval_) {m_ar.reserve(initsize);}
+		:m_ar(),m_nullval(nullval_) {if (initsize) m_ar.reserve(initsize);}
 	ScopedUpValueInvTree( ScopedUpValueInvTree const& o) = default;
 	ScopedUpValueInvTree& operator=( ScopedUpValueInvTree const& o) = default;
 	ScopedUpValueInvTree( ScopedUpValueInvTree&& o) noexcept = default;

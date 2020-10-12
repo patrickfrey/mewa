@@ -367,7 +367,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 			++ii;
 			int distance = 0;
 			out << "Candidate [" << ii << "]: " << tdbimpl.typeToString( item.type) << std::endl;
-			TypeDatabase::ParameterList parameters = tdbimpl.typedb->parameters( item.type);
+			TypeDatabase::ParameterList parameters = tdbimpl.typedb->typeParameters( item.type);
 			int pi = 0;
 			if (fdef.parameter.size() != parameters.size())
 			{

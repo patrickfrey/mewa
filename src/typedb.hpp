@@ -17,6 +17,7 @@
 #include "strings.hpp"
 #include "iterator.hpp"
 #include "identmap.hpp"
+#include "tree.hpp"
 #include "memory_resource.hpp"
 #include <string_view>
 #include <vector>
@@ -36,6 +37,7 @@ public:
 		m_memory.reset( new Memory( m_memblock.ptr, m_memblock.size));
 
 		m_objidMap.reset( new ObjectIdMap( m_memory->resource_objtab()));
+		m_objSets.push_back( ObjectSet( m_memory->resource_objtab(), -1/*nullval*/, 0/*nof init buckets*/));
 		m_typeTable.reset( new TypeTable( m_memory->resource_typetab(), 0/*nullval*/, m_memory->nofScopedMapInitBuckets()));
 		m_reduTable.reset( new ReductionTable( m_memory->resource_redutab(), m_memory->nofReductionMapInitBuckets()));
 		m_identMap.reset( new IdentMap( m_memory->resource_identmap(), m_memory->resource_identstr(), m_memory->nofIdentInitBuckets()));
@@ -146,6 +148,24 @@ public:
 			items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
 		}
 	};
+	struct ReductionDefinition
+	{
+		int toType;
+		int fromType;
+		int constructor;
+		float weight;
+
+		ReductionDefinition( const ReductionDefinition& o) noexcept
+			:toType(o.toType),fromType(o.fromType),constructor(o.constructor),weight(o.weight){}
+		ReductionDefinition( int toType_, int fromType_, int constructor_, float weight_) noexcept
+			:toType(toType_),fromType(fromType_),constructor(constructor_),weight(weight_){}
+	};
+	typedef std::vector<ReductionDefinition> ReductionDefinitionList;
+	typedef std::vector<int> TypeDefinitionList;
+
+	typedef Tree<ScopeHierarchyTreeNode<int> > NamedObjectTree;
+	typedef Tree<ScopeHierarchyTreeNode<ReductionDefinitionList> > ReductionDefinitionTree;
+	typedef Tree<ScopeHierarchyTreeNode<TypeDefinitionList> > TypeDefinitionTree;
 
 public:
 	/// \brief Define an object retrievable by its name within a scope
@@ -160,6 +180,11 @@ public:
 	/// \return handle of the object defined by the caller in the given scope step with the name specified (setObject), or -1 if no object found
 	int getNamedObject( const std::string_view& name, const Scope::Step step) const;
 
+	/// \brief Get the scope dependency tree of all objects with a defined name
+	/// \param[in] name name of the elements to retrieve
+	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
+	NamedObjectTree getNamedObjectTree( const std::string_view& name) const;
+
 	/// \brief Define a new type, throws if already defined in the same scope with same the signature and the same priority
 	/// \param[in] scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
@@ -170,6 +195,10 @@ public:
 	/// \return the handle assigned to the new created type
 	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority);
 
+	/// \brief Get the scope dependency tree of all types defined
+	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
+	TypeDefinitionTree getTypeDefinitionTree() const;
+
 	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
 	/// \param[in] scope the scope of this definition
 	/// \param[in] toType the target type of the reduction
@@ -177,6 +206,10 @@ public:
 	/// \param[in] constructor the handle for the constructor that implements the construction of the target type from the source type
 	/// \param[in] weight the weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
 	void defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight);
+
+	/// \brief Get the scope dependency tree of all reductions defined
+	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
+	ReductionDefinitionTree getReductionDefinitionTree() const;
 
 	/// \brief Get the constructor of a reduction of a type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
@@ -214,10 +247,20 @@ public:
 	/// \return the complete string assigned to a type
 	std::pmr::string typeToString( int type, ResultBuffer& resbuf) const;
 
+	/// \brief Get the name of a type (without context info and parameters)
+	/// \param[in] type the handle of the type (return value of defineType)
+	/// \return the name string of a type (name parameter of define type)
+	std::string_view typeName( int type) const;
+
 	/// \brief Get the parameters attached to a type
 	/// \param[in] type the handle of the type (return value of defineType)
 	/// \return a view on the list of parameters
-	ParameterList parameters( int type) const;
+	ParameterList typeParameters( int type) const;
+
+	/// \brief Get the constructor of a type
+	/// \param[in] type the handle of the type (return value of defineType)
+	/// \return the handle of the constructor of the type
+	int typeConstructor( int type) const;
 
 private:
 	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;

@@ -54,6 +54,15 @@ std::pmr::string TypeDatabase::typeToString( int type, ResultBuffer& resbuf) con
 	return rt;
 }
 
+std::string_view TypeDatabase::typeName( int type) const
+{
+	if (type == 0) return std::string_view("",0);
+	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
+
+	const TypeRecord& rec = m_typerecMap[ type-1];
+	return m_identMap->inv( rec.inv.ident);
+}
+
 void TypeDatabase::setNamedObject( const std::string_view& name, const Scope& scope, int handle)
 {
 	if (handle <= 0) throw Error( Error::InvalidHandle, string_format( "%d", handle));
@@ -74,7 +83,7 @@ int TypeDatabase::getNamedObject( const std::string_view& name, const Scope::Ste
 	return m_objSets[ oi->second].get( step);
 }
 
-TypeDatabase::ParameterList TypeDatabase::parameters( int type) const
+TypeDatabase::ParameterList TypeDatabase::typeParameters( int type) const
 {
 	if (type == 0) return ParameterList( 0, nullptr);
 	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
@@ -82,6 +91,15 @@ TypeDatabase::ParameterList TypeDatabase::parameters( int type) const
 	const TypeRecord& rec = m_typerecMap[ type-1];
 	if (rec.parameter < 0) return ParameterList( 0, nullptr);
 	return ParameterList( rec.parameterlen, m_parameterMap.data() + rec.parameter - 1);
+}
+
+int TypeDatabase::typeConstructor( int type) const
+{
+	if (type == 0) return 0;
+	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
+
+	const TypeRecord& rec = m_typerecMap[ type-1];
+	return rec.constructor;
 }
 
 bool TypeDatabase::compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept
@@ -488,6 +506,53 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, i
 		}
 	}
 	return rt;
+}
+
+TypeDatabase::NamedObjectTree TypeDatabase::getNamedObjectTree( const std::string_view& name) const
+{
+	auto oi = m_objidMap->find( m_identMap->lookup( name));
+	int oidx = (oi == m_objidMap->end()) ? 0 : oi->second;
+	return m_objSets[ oidx].getTree();
+}
+
+TypeDatabase::ReductionDefinitionTree TypeDatabase::getReductionDefinitionTree() const
+{
+	struct TranslateItem
+	{
+		TranslateItem(){}
+		ScopeHierarchyTreeNode<ReductionDefinitionList> operator()( const ReductionTable::TreeNode& node)
+		{
+			ScopeHierarchyTreeNode<ReductionDefinitionList> rt( node.scope, {});
+			for (auto const& elem : node.value)
+			{
+				rt.value.emplace_back( elem.relation.second/*toType*/, elem.relation.first/*fromType*/, elem.value/*constructor*/, elem.weight);
+			}
+			return rt;
+		}
+	};
+	Tree<ReductionTable::TreeNode> tree = m_reduTable->getTree();
+	TranslateItem translateItem;
+	return tree.translate< ScopeHierarchyTreeNode<ReductionDefinitionList> >( translateItem);
+}
+
+TypeDatabase::TypeDefinitionTree TypeDatabase::getTypeDefinitionTree() const
+{
+	struct TranslateItem
+	{
+		TranslateItem(){}
+		ScopeHierarchyTreeNode<TypeDefinitionList> operator()( const TypeTable::TreeNode& node)
+		{
+			ScopeHierarchyTreeNode<TypeDefinitionList> rt( node.scope, {});
+			for (auto const& elem : node.value)
+			{
+				rt.value.push_back( elem.second);
+			}
+			return rt;
+		}
+	};
+	Tree<TypeTable::TreeNode> tree = m_typeTable->getTree();
+	TranslateItem translateItem;
+	return tree.translate< ScopeHierarchyTreeNode<TypeDefinitionList> >( translateItem);
 }
 
 

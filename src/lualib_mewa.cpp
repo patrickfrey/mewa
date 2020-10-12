@@ -470,6 +470,16 @@ static inline void luaPushTypeConstructorPair( lua_State* ls, int type, int cons
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
 }
 
+static void luaPushTypeConstructor(
+		lua_State* ls, const char* functionName, const char* objTableName, int constructor)
+{
+	checkStack( functionName, ls, 6);
+
+	lua_getglobal( ls, objTableName);		// STK: [OBJTAB] 
+	lua_rawgeti( ls, -2, constructor);		// STK: [OBJTAB] [CONSTRUCTOR]
+	lua_replace( ls, -2);				// STK: [CONSTRUCTOR]
+}
+
 static void luaPushReductionResults(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions)
@@ -954,9 +964,28 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 	return 2;
 }
 
-static int mewa_typedb_typename( lua_State* ls)
+static int mewa_typedb_type_name( lua_State* ls)
 {
-	static const char* functionName = "typedb:typename";
+	static const char* functionName = "typedb:type_name";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+
+	bool success = true;
+	try
+	{
+		checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+		checkStack( functionName, ls, 2);
+		int type = getArgumentAsNonNegativeInteger( functionName, ls, 2);
+
+		auto rt = td->impl->typeName( type);
+		lua_pushlstring( ls, rt.data(), rt.size());
+	}
+	CATCH_EXCEPTION( success)
+	return 1;
+}
+
+static int mewa_typedb_type_string( lua_State* ls)
+{
+	static const char* functionName = "typedb:type_string";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
 
 	bool success = true;
@@ -974,9 +1003,9 @@ static int mewa_typedb_typename( lua_State* ls)
 	return 1;
 }
 
-static int mewa_typedb_parameters( lua_State* ls)
+static int mewa_typedb_type_parameters( lua_State* ls)
 {
-	static const char* functionName = "typedb:parameters";
+	static const char* functionName = "typedb:type_parameters";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
 
 	bool success = true;
@@ -985,8 +1014,26 @@ static int mewa_typedb_parameters( lua_State* ls)
 		checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
 		checkStack( functionName, ls, 2);
 		int type = getArgumentAsCardinal( functionName, ls, 2);
-		auto rt = td->impl->parameters( type);
+		auto rt = td->impl->typeParameters( type);
 		luaPushParameters( ls, functionName, td->objTableName.buf, rt);
+	}
+	CATCH_EXCEPTION( success)
+	return 1;
+}
+
+static int mewa_typedb_type_constructor( lua_State* ls)
+{
+	static const char* functionName = "typedb:type_constructor";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+
+	bool success = true;
+	try
+	{
+		checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+		checkStack( functionName, ls, 2);
+		int type = getArgumentAsCardinal( functionName, ls, 2);
+		auto rt = td->impl->typeConstructor( type);
+		luaPushTypeConstructor( ls, functionName, td->objTableName.buf, rt);
 	}
 	CATCH_EXCEPTION( success)
 	return 1;
@@ -1025,8 +1072,10 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "reductions",		mewa_typedb_reductions },
 	{ "derive_type",	mewa_typedb_derive_type },
 	{ "resolve_type",	mewa_typedb_resolve_type },
-	{ "typename",		mewa_typedb_typename },
-	{ "parameters",		mewa_typedb_parameters },
+	{ "type_name",		mewa_typedb_type_name },
+	{ "type_string",	mewa_typedb_type_string },
+	{ "type_parameters",	mewa_typedb_type_parameters },
+	{ "type_constructor",	mewa_typedb_type_constructor },
 	{ nullptr,		nullptr }
 };
 
