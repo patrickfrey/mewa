@@ -20,6 +20,7 @@
 #include "version.hpp"
 #include "fileio.hpp"
 #include "strings.hpp"
+#include <memory>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -46,6 +47,9 @@ extern "C" int luaopen_mewa( lua_State* ls);
 
 #define MEWA_COMPILER_METATABLE_NAME 	"mewa.compiler"
 #define MEWA_TYPEDB_METATABLE_NAME 	"mewa.typedb"
+#define MEWA_OBJTREE_METATABLE_NAME 	"mewa.objtree"
+#define MEWA_TYPETREE_METATABLE_NAME 	"mewa.typetree"
+#define MEWA_REDUTREE_METATABLE_NAME 	"mewa.redutree"
 #define MEWA_CALLTABLE_FMT	 	"mewa.calls.%d"
 #define MEWA_OBJTABLE_FMT		"mewa.obj.%d"
 
@@ -95,11 +99,15 @@ struct mewa_compiler_userdata_t
 		if (outputFileHandle && outputFileHandle != ::stdout && outputFileHandle != ::stderr) std::fclose(outputFileHandle);
 		outputFileHandle = nullptr;
 	}
-	void destroy() noexcept
+	void destroy( lua_State* ls) noexcept
 	{
+		lua_pushnil( ls);
+		lua_setglobal( ls, callTableName.buf);
+
 		closeOutput();
 		automaton.~Automaton();
 	}
+	static const char* metatableName() noexcept {return MEWA_COMPILER_METATABLE_NAME;}
 };
 
 struct mewa_typedb_userdata_t
@@ -119,11 +127,14 @@ public:
 	}
 	void create()
 	{
-		destroy();
+		if (impl) delete impl;
 		impl = new mewa::TypeDatabase();
 	}
-	void destroy() noexcept
+	void destroy( lua_State* ls) noexcept
 	{
+		lua_pushnil( ls);
+		lua_setglobal( ls, objTableName.buf);
+
 		if (impl) delete impl;
 		impl = nullptr;
 	}
@@ -131,7 +142,47 @@ public:
 	{
 		return ++objCount;
 	}
+
+	static const char* metatableName() noexcept {return MEWA_TYPEDB_METATABLE_NAME;}
 };
+
+template <class TreeType>
+struct mewa_treetemplate_userdata_t
+{
+	std::shared_ptr<TreeType> tree;
+	std::size_t nodeidx;
+public:
+	void init() noexcept
+	{
+		tree.reset();
+		nodeidx = 0;
+	}
+	void create()
+	{
+		init();
+		tree.reset( new TreeType());
+	}
+	void destroy( lua_State* ls) noexcept
+	{
+		init();
+	}
+};
+
+struct mewa_objtree_userdata_t	:public mewa_treetemplate_userdata_t<mewa::TypeDatabase::NamedObjectTree>
+{
+	static const char* metatableName() noexcept {return MEWA_OBJTREE_METATABLE_NAME;}
+};
+
+struct mewa_typetree_userdata_t	:public mewa_treetemplate_userdata_t<mewa::TypeDatabase::TypeDefinitionTree>
+{
+	static const char* metatableName() noexcept {return MEWA_TYPETREE_METATABLE_NAME;}
+};
+
+struct mewa_redutree_userdata_t	:public mewa_treetemplate_userdata_t<mewa::TypeDatabase::ReductionDefinitionTree>
+{
+	static const char* metatableName() noexcept {return MEWA_REDUTREE_METATABLE_NAME;}
+};
+
 
 #define CATCH_EXCEPTION( success) \
 	catch (const std::runtime_error& err)\
@@ -154,7 +205,7 @@ public:
 static int destroy_memblock( lua_State* ls)
 {
 	memblock_userdata_t* mb = (memblock_userdata_t*)luaL_checkudata( ls, 1, mewa::MemoryBlock::metatablename());
-	mb->destroy();
+	mb->destroy( ls);
 	return 0;
 }
 
@@ -564,6 +615,7 @@ static int mewa_new_compiler( lua_State* ls)
 	{
 		checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 		checkArgumentAsTable( functionName, ls, 1);
+		checkStack( functionName, ls, 6);
 	}
 	CATCH_EXCEPTION( success)
 
@@ -582,7 +634,7 @@ static int mewa_new_compiler( lua_State* ls)
 		new (&cp->automaton) mewa::Automaton( mewa::luaLoadAutomaton( ls, 1));
 	}
 	CATCH_EXCEPTION( success)
-	luaL_getmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
+	luaL_getmetatable( ls, mewa_compiler_userdata_t::metatableName());
 	lua_setmetatable( ls, -2);
 	return 1;
 }
@@ -590,7 +642,7 @@ static int mewa_new_compiler( lua_State* ls)
 static int mewa_destroy_compiler( lua_State* ls)
 {
 	static const char* functionName = "compiler:__gc";
-	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -599,17 +651,14 @@ static int mewa_destroy_compiler( lua_State* ls)
 	}
 	CATCH_EXCEPTION( success)
 
-	lua_pushnil( ls);
-	lua_setglobal( ls, cp->callTableName.buf);
-
-	cp->destroy();
+	cp->destroy( ls);
 	return 0;
 }
 
 static int mewa_compiler_tostring( lua_State* ls)
 {
 	static const char* functionName = "compiler:__tostring";
-	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -635,7 +684,7 @@ static int mewa_compiler_tostring( lua_State* ls)
 static int mewa_compiler_run( lua_State* ls)
 {
 	static const char* functionName = "compiler:run( inputfile[ , outputfile[ , dbgoutput]])";
-	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, MEWA_COMPILER_METATABLE_NAME);
+	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -731,7 +780,7 @@ static int mewa_new_typedb( lua_State* ls)
 	}
 	CATCH_EXCEPTION( success)
 
-	luaL_getmetatable( ls, MEWA_TYPEDB_METATABLE_NAME);
+	luaL_getmetatable( ls, mewa_typedb_userdata_t::metatableName());
 	lua_setmetatable( ls, -2);
 
 	lua_createtable( ls, 1<<16/*expected array elements*/, 0);
@@ -743,7 +792,7 @@ static int mewa_new_typedb( lua_State* ls)
 static int mewa_destroy_typedb( lua_State* ls)
 {
 	static const char* functionName = "typedb:__gc";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -752,17 +801,14 @@ static int mewa_destroy_typedb( lua_State* ls)
 	}
 	CATCH_EXCEPTION( success)
 
-	lua_pushnil( ls);
-	lua_setglobal( ls, td->objTableName.buf);
-
-	td->destroy();
+	td->destroy( ls);
 	return 0;
 }
 
 static int mewa_typedb_get( lua_State* ls)
 {
 	static const char* functionName = "typedb:get";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	int handle = -1;
 
 	bool success = true;
@@ -787,7 +833,7 @@ static int mewa_typedb_get( lua_State* ls)
 static int mewa_typedb_set( lua_State* ls)
 {
 	static const char* functionName = "typedb:set";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	mewa::Scope scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
 	std::string_view name;
@@ -819,7 +865,7 @@ static int mewa_typedb_set( lua_State* ls)
 static int mewa_typedb_def_type( lua_State* ls)
 {
 	static const char* functionName = "typedb:def_type";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	int buffer_parameter[ 1024];
 	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
@@ -848,7 +894,7 @@ static int mewa_typedb_def_type( lua_State* ls)
 static int mewa_typedb_def_reduction( lua_State* ls)
 {
 	static const char* functionName = "typedb:def_reduction";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -871,7 +917,7 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 static int mewa_typedb_reduction( lua_State* ls)
 {
 	static const char* functionName = "typedb:reduction";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -900,7 +946,7 @@ static int mewa_typedb_reduction( lua_State* ls)
 static int mewa_typedb_reductions( lua_State* ls)
 {
 	static const char* functionName = "typedb:reductions";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -921,7 +967,7 @@ static int mewa_typedb_reductions( lua_State* ls)
 static int mewa_typedb_derive_type( lua_State* ls)
 {
 	static const char* functionName = "typedb:derive_type";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -944,7 +990,7 @@ static int mewa_typedb_derive_type( lua_State* ls)
 static int mewa_typedb_resolve_type( lua_State* ls)
 {
 	static const char* functionName = "typedb:resolve_type";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -967,7 +1013,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 static int mewa_typedb_type_name( lua_State* ls)
 {
 	static const char* functionName = "typedb:type_name";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -986,7 +1032,7 @@ static int mewa_typedb_type_name( lua_State* ls)
 static int mewa_typedb_type_string( lua_State* ls)
 {
 	static const char* functionName = "typedb:type_string";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -1006,7 +1052,7 @@ static int mewa_typedb_type_string( lua_State* ls)
 static int mewa_typedb_type_parameters( lua_State* ls)
 {
 	static const char* functionName = "typedb:type_parameters";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -1024,7 +1070,7 @@ static int mewa_typedb_type_parameters( lua_State* ls)
 static int mewa_typedb_type_constructor( lua_State* ls)
 {
 	static const char* functionName = "typedb:type_constructor";
-	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, MEWA_TYPEDB_METATABLE_NAME);
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	bool success = true;
 	try
@@ -1038,6 +1084,43 @@ static int mewa_typedb_type_constructor( lua_State* ls)
 	CATCH_EXCEPTION( success)
 	return 1;
 }
+
+template <class UD>
+struct LuaTreeMetaMethods
+{
+	static int gc( lua_State* ls)
+	{
+		static const char* functionName = "tree:__gc";
+		UD* ud = (UD*)luaL_checkudata( ls, 1, UD::metatableName());
+		bool success = true;
+		try
+		{
+			checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+		}
+		CATCH_EXCEPTION( success)
+
+		ud->destroy( ls);
+		return 0;
+	}
+
+	static int chld( lua_State* ls)
+	{
+		static const char* functionName = "tree:chld";
+		return 0;
+	}
+
+	static int scope( lua_State* ls)
+	{
+		static const char* functionName = "tree:scope";
+		return 0;
+	}
+
+	static int item( lua_State* ls)
+	{
+		static const char* functionName = "tree:item";
+		return 0;
+	}
+};
 
 
 static const struct luaL_Reg memblock_control_methods[] = {
@@ -1079,6 +1162,30 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ nullptr,		nullptr }
 };
 
+static const struct luaL_Reg mewa_objtree_methods[] = {
+	{ "__gc",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::gc },
+	{ "chld",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::chld },
+	{ "scope",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::scope },
+	{ "item",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::item },
+	{ nullptr,		nullptr }
+};
+
+static const struct luaL_Reg mewa_typetree_methods[] = {
+	{ "__gc",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::gc },
+	{ "chld",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::chld },
+	{ "scope",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::scope },
+	{ "item",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::item },
+	{ nullptr,		nullptr }
+};
+
+static const struct luaL_Reg mewa_redutree_methods[] = {
+	{ "__gc",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::gc },
+	{ "chld",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::chld },
+	{ "scope",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::scope },
+	{ "item",		LuaTreeMetaMethods<mewa_redutree_userdata_t>::item },
+	{ nullptr,		nullptr }
+};
+
 static const struct luaL_Reg mewa_functions[] = {
 	{ "compiler",		mewa_new_compiler },
 	{ "typedb",		mewa_new_typedb },
@@ -1086,19 +1193,23 @@ static const struct luaL_Reg mewa_functions[] = {
 	{ nullptr,  		nullptr }
 };
 
+static void createMetatable( lua_State* ls, const char* metatableName, const struct luaL_Reg* metatableMethods)
+{
+	luaL_newmetatable( ls, metatableName);
+	lua_pushvalue( ls, -1);
+	lua_setfield( ls, -2, "__index");
+	luaL_setfuncs( ls, metatableMethods, 0);
+}
+
 DLL_PUBLIC int luaopen_mewa( lua_State* ls)
 {
 	create_memblock_control_class( ls);
 
-	luaL_newmetatable( ls, MEWA_COMPILER_METATABLE_NAME);
-	lua_pushvalue( ls, -1);
-	lua_setfield( ls, -2, "__index");
-	luaL_setfuncs( ls, mewa_compiler_methods, 0);
-
-	luaL_newmetatable( ls, MEWA_TYPEDB_METATABLE_NAME);
-	lua_pushvalue( ls, -1);
-	lua_setfield( ls, -2, "__index");
-	luaL_setfuncs( ls, mewa_typedb_methods, 0);
+	createMetatable( ls, mewa_compiler_userdata_t::metatableName(), mewa_compiler_methods);
+	createMetatable( ls, mewa_typedb_userdata_t::metatableName(), mewa_typedb_methods);
+	createMetatable( ls, mewa_objtree_userdata_t::metatableName(), mewa_objtree_methods);
+	createMetatable( ls, mewa_typetree_userdata_t::metatableName(), mewa_typetree_methods);
+	createMetatable( ls, mewa_redutree_userdata_t::metatableName(), mewa_redutree_methods);
 
 	luaL_newlib( ls, mewa_functions);
 	return 1;

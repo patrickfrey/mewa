@@ -51,7 +51,7 @@ struct memblock_userdata_t
 {
 	mewa::MemoryBlock* memoryBlock;
 
-	void destroy()
+	void destroy( lua_State* ls)
 	{
 		if (memoryBlock) delete memoryBlock;
 	}
