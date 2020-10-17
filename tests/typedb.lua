@@ -117,18 +117,18 @@ function testDefineResolveType()
 	local result = ""
 	local types = {short_type, int_type, float_type}
 	for i,type in ipairs( types) do
-		for i,reduction in ipairs( typedb:reductions( 34, type)) do
-			result = result .. "\nREDU " .. typedb:typename( type) .. " -> " .. typedb:typename( reduction.type)
-					.. " : " .. reduction.constructor( typedb:typename( type))
+		for i,reduction in ipairs( typedb:type_reductions( 34, type)) do
+			result = result .. "\nREDU " .. typedb:type_string( type) .. " -> " .. typedb:type_string( reduction.type)
+					.. " : " .. reduction.constructor( typedb:type_string( type))
 		end
 	end
 	local reduction_queries = {
 			{short_type,int_type},{short_type,float_type},{int_type,float_type},
 			{int_type,short_type},{float_type,short_type},{float_type,int_type}}
 	for i,redu in ipairs( reduction_queries) do
-		local constructor = typedb:reduction( 99, redu[1], redu[2])
-		result = result .. "\nSELECT REDU " .. typedb:typename( redu[2]) .. " -> " .. typedb:typename( redu[1])
-					.. " : " .. constructor( typedb:typename( redu[2]))
+		local constructor = typedb:type_reduction( 99, redu[1], redu[2])
+		result = result .. "\nSELECT REDU " .. typedb:type_string( redu[2]) .. " -> " .. typedb:type_string( redu[1])
+					.. " : " .. constructor( typedb:type_string( redu[2]))
 	end
 	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"}}
 	for i,qry in ipairs( resolve_queries) do
@@ -137,13 +137,13 @@ function testDefineResolveType()
 		print ("+++ITEMS:" .. mewa.tostring( items) .. "+++")
 		prev_type = any_type
 		for i,reduction in ipairs( reductions) do
-			result = result .. "\nRESOLVE REDU " .. typedb:typename( prev_type) .. "<-" .. typedb:typename( reduction.type)
+			result = result .. "\nRESOLVE REDU " .. typedb:type_string( prev_type) .. "<-" .. typedb:type_string( reduction.type)
 					.. " : " reduction.constructor( prev_type)
 			prev_type = reduction.type
 		end
 		for i,item in ipairs( items) do
 			print ("+++ITEM:" .. mewa.tostring( item) .. "+++")
-			result = result .. "\nRESOLVE ITEM " .. typedb:typename( item.type) .. " : " .. item.constructor
+			result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item.type) .. " : " .. item.constructor
 		end
 	end
 	local expected = [[

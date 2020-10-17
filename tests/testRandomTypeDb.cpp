@@ -379,7 +379,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			{
 				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			}
-			if (!startsWith( resc_str, redu_str) || (callstr-resc_str.c_str()) > redu_str.size()+2)
+			if (!startsWith( resc_str, redu_str) || (callstr-resc_str.c_str()) > (ptrdiff_t)redu_str.size()+2)
 			{
 				throw std::runtime_error( string_format( "derive result not as expected: '%s' prefix of '%s'", redu_str.c_str(), redu_str.c_str()));
 			}
