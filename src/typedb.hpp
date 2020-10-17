@@ -204,8 +204,10 @@ public:
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] constructor the handle for the constructor that implements the construction of the target type from the source type
+	/// \param[in] tag value inbetween 1 and 32 attached to the reduction that classifies it.
+	/// \note	A search involving type reductions selects the reductions considered by their tags with a set of tags (TagMask).
 	/// \param[in] weight the weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
-	void defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight);
+	void defineReduction( const Scope& scope, int toType, int fromType, int constructor, int tag, float weight);
 
 	/// \brief Get the scope dependency tree of all reductions defined
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
@@ -216,14 +218,14 @@ public:
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \return the constructor of the reduction found, -1 if not found
-	int reduction( const Scope::Step step, int toType, int fromType) const;
+	int reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
 
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
-	std::pmr::vector<ReductionResult> reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const;
+	std::pmr::vector<ReductionResult> reductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
@@ -231,7 +233,7 @@ public:
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the path found that has the minimal weight sum, throws Error::AmbiguousTypeReference if two path of same length are found
-	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const;
+	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
@@ -239,7 +241,7 @@ public:
 	/// \param[in] name name of the type searched
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the shortest path found, throws if two path of same length are found	
-	ResolveResult resolveType( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const;
+	ResolveResult resolveType( const Scope::Step step, int contextType, const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type the handle of the type (return value of defineType)

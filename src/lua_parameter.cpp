@@ -65,7 +65,7 @@ std::string_view mewa::lua::getArgumentAsString( const char* functionName, lua_S
 	return std::string_view( str, len);
 }
 
-int mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec)
+long mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec)
 {
 	if (!mewa::lua::isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
 	{
@@ -74,7 +74,7 @@ int mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, in
 	double val = lua_tonumber( ls, li);
 	if (val - std::floor( val) < std::numeric_limits<double>::epsilon()*4)
 	{
-		return (int)val;
+		return (long)val;
 	}
 	else
 	{
@@ -82,16 +82,16 @@ int mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, in
 	}
 }
 
-int mewa::lua::getArgumentAsCardinal( const char* functionName, lua_State* ls, int li)
+long mewa::lua::getArgumentAsCardinal( const char* functionName, lua_State* ls, int li)
 {
-	int rt = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedCardinalArgument);
+	long rt = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedCardinalArgument);
 	if (rt <= 0) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedCardinalArgument);
 	return rt;
 }
 
-int mewa::lua::getArgumentAsNonNegativeInteger( const char* functionName, lua_State* ls, int li)
+long mewa::lua::getArgumentAsNonNegativeInteger( const char* functionName, lua_State* ls, int li)
 {
-	int rt = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedNonNegativeIntegerArgument);
+	long rt = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedNonNegativeIntegerArgument);
 	if (rt < 0) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedNonNegativeIntegerArgument);
 	return rt;
 }
@@ -156,6 +156,12 @@ mewa::Scope mewa::lua::getArgumentAsScope( const char* functionName, lua_State* 
 	}
 	lua_pop( ls, 1);
 	return mewa::Scope( start, end);
+}
+
+mewa::TagMask mewa::lua::getArgumentAsTagMask( const char* functionName, lua_State* ls, int li)
+{
+	mewa::TagMask::BitSet bs = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedNonNegativeIntegerArgument);
+	return mewa::TagMask( bs);
 }
 
 int mewa::lua::getArgumentAsConstructor( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td)

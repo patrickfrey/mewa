@@ -60,11 +60,13 @@ public:
 		PriorityOutOfRange=441,
 		DuplicateDefinition=442,
 		BadRelationWeight=443,
-		InvalidHandle=444,
+		BadRelationTag=444,
+		InvalidHandle=445,
 
 		UnresolvableType=451,
 		AmbiguousTypeReference=452,
-		ScopeHierarchyError=453,
+		AmbiguousReductionDefinition=453,
+		ScopeHierarchyError=454,
 
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,
@@ -185,10 +187,12 @@ public:
 			case PriorityOutOfRange: return "Priority value out of range";
 			case DuplicateDefinition: return "Duplicate definition";
 			case BadRelationWeight: return "Bad weight <= 0.0 given to relation, possibly leading to endless loop in search";
+			case BadRelationTag: return "Bad value tor tag attached to relation, must be a cardinal number in {1..32}";
 			case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
 
 			case UnresolvableType: return "Failed to resolve type";
 			case AmbiguousTypeReference: return "Ambiguous type reference";
+			case AmbiguousReductionDefinition: return "Ambiguous reduction definition";
 			case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";
 
 			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";

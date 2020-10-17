@@ -184,13 +184,13 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 }
 
 
-void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, float weight)
+void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, int tag, float weight)
 {
 	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 
-	m_reduTable->set( scope, fromType, toType, constructor, weight);
+	m_reduTable->set( scope, fromType, toType, constructor, tag, weight);
 }
 
 
@@ -330,23 +330,34 @@ private:
 	mewa::monotonic_buffer_resource m_memrsc;
 };
 
-int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType) const
+int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
 
 	int redu_buffer[ 512];
 	mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
+	auto redulist = m_reduTable->get( step, fromType, selectTags, &redu_memrsc);
 
+	int rt = -1;
 	for (auto const& redu : redulist)
 	{
-		if (toType == redu.type()) return redu.value()/*constructor*/;
+		if (toType == redu.right())
+		{
+			if (rt >= 0)
+			{
+				ResultBuffer resbuf_err;
+				auto toTypeStr = typeToString( toType, resbuf_err);
+				auto fromTypeStr = typeToString( fromType, resbuf_err);
+				throw Error( Error::AmbiguousTypeReference, string_format( "%s <- %s", toTypeStr.c_str(), fromTypeStr.c_str()));
+			}
+			rt = redu.value()/*constructor*/;
+		}
 	}
-	return -1;
+	return rt;
 }
 
-std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const Scope::Step step, int fromType, ResultBuffer& resbuf) const
+std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 
@@ -354,16 +365,16 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const 
 
 	int redu_buffer[ 512];
 	mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-	auto redulist = m_reduTable->get( step, fromType, &redu_memrsc);
+	auto redulist = m_reduTable->get( step, fromType, selectTags, &redu_memrsc);
 
 	for (auto const& redu : redulist)
 	{
-		rt.push_back( {redu.type(), redu.value()/*constructor*/});
+		rt.push_back( {redu.right(), redu.value()/*constructor*/});
 	}
 	return rt;
 }
 
-TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int toType, int fromType, ResultBuffer& resbuf) const
+TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int toType, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	DeriveResult rt( resbuf);
 
@@ -413,11 +424,11 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 		}
 		int redu_buffer[ 512];
 		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-		auto redulist = m_reduTable->get( step, elem.type, &redu_memrsc);
+		auto redulist = m_reduTable->get( step, elem.type, selectTags, &redu_memrsc);
 
 		for (auto const& redu : redulist)
 		{
-			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
+			int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/);
 			if (index >= 0)
 			{
 				priorityQueue.push( ReduQueueElem( qe.weight + redu.weight(), index));
@@ -437,7 +448,8 @@ void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& item
 	}
 }
 
-TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
+TypeDatabase::ResolveResult TypeDatabase::resolveType( 
+		const Scope::Step step, int contextType, const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	ResolveResult rt( resbuf);
 
@@ -493,11 +505,11 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, i
 
 		int redu_buffer[ 512];
 		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
-		auto redulist = m_reduTable->get( step, elem.type, &redu_memrsc);
+		auto redulist = m_reduTable->get( step, elem.type, selectTags, &redu_memrsc);
 
 		for (auto const& redu : redulist)
 		{
-			int index = stack.pushIfNew( redu.type(), redu.value()/*constructor*/, qe.index/*prev*/);
+			int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/);
 			if (index >= 0)
 			{
 				//... type not used yet in a previous search (avoid cycles)

@@ -240,7 +240,6 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 	{
 		type = ti->second;
 	}
-
 	if (nd->chld)
 	{
 		int leftType = defineTypeInfo( typedb, ctx, scope, nd->chld);
@@ -250,25 +249,25 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 		{
 			int constructor = ctx.constructors.size();
 			ctx.constructors.push_back( string_format( "redu %ld <- %ld", nd->chld->item.product, nd->item.product));
-			typedb.defineReduction( scope, leftType, type, constructor, 1.0);
+			typedb.defineReduction( scope, leftType, type, constructor, 1/*tag*/, 1.0);
 		}
 		if (ctx.reduset.insert( {nd->item.product, nd->chld->item.product} ).second/*insert took place*/)
 		{
 			int constructor = ctx.constructors.size();
 			ctx.constructors.push_back( string_format( "inv %ld <- %ld", nd->item.product, nd->chld->item.product));
-			typedb.defineReduction( scope, type, leftType, constructor, 100.0/*bad reduction*/);
+			typedb.defineReduction( scope, type, leftType, constructor, 1/*tag*/, 100.0/*bad reduction*/);
 		}
 		if (ctx.reduset.insert( {nd->chld->next->item.product, nd->item.product} ).second/*insert took place*/)
 		{
 			int constructor = ctx.constructors.size();
 			ctx.constructors.push_back( string_format( "redu %ld <- %ld", nd->chld->next->item.product, nd->item.product));
-			typedb.defineReduction( scope, rightType, type, constructor, 1.0);
+			typedb.defineReduction( scope, rightType, type, constructor, 1/*tag*/, 1.0);
 		}
 		if (ctx.reduset.insert( {nd->item.product, nd->chld->next->item.product} ).second/*insert took place*/)
 		{
 			int constructor = ctx.constructors.size();
 			ctx.constructors.push_back( string_format( "inv %ld <- %ld", nd->item.product, nd->chld->next->item.product));
-			typedb.defineReduction( scope, type, rightType, constructor, 100.0/*bad reduction*/);
+			typedb.defineReduction( scope, type, rightType, constructor, 1/*tag*/, 100.0/*bad reduction*/);
 		}
 	}
 	return type;
@@ -358,7 +357,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	try
 	{
 		TypeDatabase::ResultBuffer resbuf_resolve;
-		TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, resbuf_resolve);
+		TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, TagMask::matchAll(), resbuf_resolve);
 		resc_str = resolveResultToString( typedb, result);
 		if (resc_str != "{}")
 		{
@@ -368,7 +367,9 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 			}
 			TypeDatabase::ResultBuffer resbuf_derive;
-			TypeDatabase::DeriveResult deriveres = typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/, resbuf_derive);
+			TypeDatabase::DeriveResult deriveres =
+				typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/,
+							TagMask::matchAll(), resbuf_derive);
 			std::string redu_str = deriveResultToString( typedb, deriveres);
 			if (verbose)
 			{

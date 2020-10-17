@@ -19,6 +19,7 @@
 #include <utility>
 #include <limits>
 #include <cstdio>
+#include <cstddef>
 #include <string>
 #include <map>
 #include <set>
@@ -695,6 +696,69 @@ private:
 };
 
 
+class TagMask
+{
+public:
+	enum {MinTag=1,MaxTag=32};
+	typedef std::uint32_t BitSet;
+
+public:
+	TagMask( const TagMask& o) :m_mask(o.m_mask){}
+	TagMask() :m_mask(0){}
+
+	explicit constexpr TagMask( BitSet mask_) :m_mask(mask_){}
+
+	BitSet mask() const noexcept
+	{
+		return m_mask;
+	}
+	TagMask& operator |= (int tag_)
+	{
+		add( tag_);
+		return *this;
+	}
+	TagMask operator | (int tag_) const
+	{
+		TagMask rt;
+		rt.add( tag_);
+		return rt;
+	}
+	bool matches( std::uint8_t tagval) const noexcept
+	{
+		return (m_mask & (1U << tagval)) != 0;
+	}
+	std::string tostring() const
+	{
+		std::string rt;
+		BitSet sl = 1;
+		for (int ii=MinTag; ii<=MaxTag; ++ii,sl<<=1)
+		{
+			if ((m_mask & sl) != 0)
+			{
+				char buf[ 32];
+				std::snprintf( buf, sizeof(buf), rt.empty() ? "%d":",%d", ii);
+				rt.append( buf);
+			}
+		}
+		return rt;
+	}
+	static constexpr TagMask matchAll() noexcept
+	{
+		return TagMask( 0xffFFffFFU);
+	}
+
+private:
+	void add( int tag_)
+	{
+		if (tag_ > MaxTag || tag_ < MinTag) throw Error( Error::BadRelationTag, string_format("%d",tag_));
+		m_mask |= (1U << (tag_-1));
+	}
+
+private:
+	BitSet m_mask;
+};
+
+
 template <typename RELNODETYPE, typename VALTYPE>
 class ScopedRelationMap
 {
@@ -702,17 +766,17 @@ public:
 	class ResultElement
 	{
 	public:
-		ResultElement( const RELNODETYPE type_, const VALTYPE value_, float weight_)
-			:m_type(type_),m_value(value_),m_weight(weight_){}
+		ResultElement( const RELNODETYPE right_, const VALTYPE value_, float weight_)
+			:m_right(right_),m_value(value_),m_weight(weight_){}
 		ResultElement( const ResultElement& o)
-			:m_type(o.m_type),m_value(o.m_value),m_weight(o.m_weight){}
+			:m_right(o.m_right),m_value(o.m_value),m_weight(o.m_weight){}
 
-		RELNODETYPE type() const noexcept	{return m_type;}
+		RELNODETYPE right() const noexcept	{return m_right;}
 		VALTYPE value() const noexcept		{return m_value;}
 		float weight() const noexcept		{return m_weight;}
 
 	private:
-		RELNODETYPE m_type;
+		RELNODETYPE m_right;
 		VALTYPE m_value;
 		float m_weight;
 	};
@@ -724,31 +788,33 @@ public:
 	ScopedRelationMap( ScopedRelationMap&& o) noexcept = default;
 	ScopedRelationMap& operator=( ScopedRelationMap&& o) noexcept = default;
 
-	void set( const Scope scope, const RELNODETYPE& left, const RELNODETYPE& right, const VALTYPE& value, float weight)
+ 	void set( const Scope scope, const RELNODETYPE& left, const RELNODETYPE& right, const VALTYPE& value, int tag, float weight)
 	{
+		if (tag > TagMask::MaxTag || tag < TagMask::MinTag) throw Error( Error::BadRelationTag, string_format("%d",tag));
 		if (weight <= std::numeric_limits<float>::epsilon()*10) throw Error( Error::BadRelationWeight, string_format("%.4f",weight));
 
+		std::uint8_t tagval = tag -1;
 		int newlistindex = m_list.size();
 		int li = m_map.getOrSet( scope, left, newlistindex);
 		int prev_li = -1;
 		while (li >= 0)
 		{
 			const ListElement& le = m_list[ li];
-			if (le.related == right)
+			if (le.related == right && tagval == le.tagval)
 			{
 				throw Error( Error::DuplicateDefinition);
 			}
 			prev_li = li;
 			li = le.next;
 		}
-		m_list.push_back( ListElement( right, value, weight, -1/*next*/));
+		m_list.push_back( ListElement( right, value, tagval, weight, -1/*next*/));
 		if (prev_li >= 0)
 		{
 			m_list[ prev_li].next = newlistindex;
 		}
 	}
 
-	std::pmr::vector<ResultElement> get( const Scope::Step step, const RELNODETYPE& key, std::pmr::memory_resource* res_memrsc) const noexcept
+	std::pmr::vector<ResultElement> get( const Scope::Step step, const RELNODETYPE& key, const TagMask& selectTags, std::pmr::memory_resource* res_memrsc) const noexcept
 	{
 		int local_membuffer[ 2048];
 		mewa::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
@@ -763,10 +829,13 @@ public:
 			while (li >= 0)
 			{
 				const ListElement& le = m_list[ li];
-				auto ins = candidatemap.insert( {le.related, rt.size()});
-				if (ins.second /*insert took place*/)
+				if (selectTags.matches( le.tagval))
 				{
-					rt.push_back( ResultElement( le.related/*type*/, le.value, le.weight));
+					auto ins = candidatemap.insert( {le.related, rt.size()});
+					if (ins.second /*insert took place*/)
+					{
+						rt.push_back( ResultElement( le.related/*right*/, le.value, le.weight));
+					}
 				}
 				li = le.next;
 			}
@@ -779,11 +848,12 @@ public:
 		std::pair<RELNODETYPE,RELNODETYPE> relation;
 		VALTYPE value;
 		float weight;
+		int tag;
 
-		TreeNodeElement( const std::pair<RELNODETYPE,RELNODETYPE>& relation_, const VALTYPE& value_, float weight_)
-			:relation(relation_),value(value_),weight(weight_){}
+		TreeNodeElement( const std::pair<RELNODETYPE,RELNODETYPE>& relation_, const VALTYPE& value_, std::uint8_t tagval_, float weight_)
+			:relation(relation_),value(value_),weight(weight_),tag(tagval_+1){}
 		TreeNodeElement( const TreeNodeElement& o)
-			:relation(o.relation),value(o.value),weight(o.weight){}
+			:relation(o.relation),value(o.value),weight(o.weight),tag(o.tag){}
 	};
 	typedef std::vector<TreeNodeElement> TreeItem;
 	typedef ScopeHierarchyTreeNode<TreeItem> TreeNode;
@@ -806,7 +876,7 @@ public:
 					while (li >= 0)
 					{
 						ListElement const& le = list[ li];
-						rt.value.push_back( {{kv.first, le.related}, le.value, le.weight} );
+						rt.value.push_back( {{kv.first, le.related}, le.value, le.tagval, le.weight} );
 						li = le.next;
 					}
 				}
@@ -825,11 +895,12 @@ private:
 		VALTYPE value;
 		float weight;
 		int next;
+		std::uint8_t tagval;
 
-		ListElement( RELNODETYPE const& related_, VALTYPE const& value_, float weight_, int next_)
-			:related(related_),value(value_),weight(weight_),next(next_){}
+		ListElement( RELNODETYPE const& related_, VALTYPE const& value_, std::uint8_t tagval_, float weight_, int next_)
+			:related(related_),value(value_),weight(weight_),next(next_),tagval(tagval_){}
 		ListElement( ListElement const& o)
-			:related(o.related),value(o.value),weight(o.weight),next(o.next){}
+			:related(o.related),value(o.value),weight(o.weight),next(o.next),tagval(o.tagval){}
 	};
 
 	typedef ScopedMap<RELNODETYPE,int> Map;

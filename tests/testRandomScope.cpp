@@ -32,10 +32,28 @@ using namespace mewa;
 static PseudoRandom g_random;
 static int g_idCounter = 0;
 
+struct Relation
+{
+	std::string left;
+	std::string right;
+	int tag;
+
+	Relation( const std::string& left_, const std::string& right_, int tag_)
+		:left(left_),right(right_),tag(tag_){}
+	Relation( const Relation& o)
+		:left(o.left),right(o.right),tag(o.tag){}
+	bool operator < (const Relation& o) const noexcept
+	{
+		return left == o.left
+			? right == o.right
+				? tag < o.tag
+				: right < o.right
+			: left < o.left;
+	}
+};
+
 struct NodeDef
 {
-	typedef std::pair<std::string,std::string> Relation;
-
 	Scope scope;
 	int id;
 	std::vector<std::string> vars;
@@ -62,7 +80,7 @@ namespace std
 		for (auto const& rel : sc.relations)
 		{
 			if (didx++) os << ", ";
-			os << rel.first << "->" << rel.second;
+			os << rel.left << "->" << rel.right << " /" << rel.tag;
 		}
 		os << "}";
 		return os;
@@ -94,22 +112,31 @@ static std::vector<std::string> randomDefs( int nn, int alphabetsize)
 	return std::vector<std::string>( vars.begin(), vars.end());
 }
 
-static std::vector<NodeDef::Relation> randomRelations( int nn, int alphabetsize)
+static std::vector<Relation> randomRelations( int nn, int alphabetsize, int noftags)
 {
-	std::set<NodeDef::Relation> relations;
+	std::set<Relation> relations;
 	int ii = 0, ee = g_random.get( 0, nn);
-	for (; ii < ee; ++ii) relations.insert( NodeDef::Relation( randomVariable( alphabetsize), randomVariable( alphabetsize)));
-	return std::vector<NodeDef::Relation>( relations.begin(), relations.end());
+	for (; ii < ee; ++ii) relations.insert( Relation( randomVariable( alphabetsize), randomVariable( alphabetsize), g_random.get( 1, noftags)));
+	return std::vector<Relation>( relations.begin(), relations.end());
 }
 
-static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidth, int members, int alphabetsize)
+static int countNodes( const NodeDefTree* nd)
+{
+	int rt = 1;
+	if (nd->chld) rt += countNodes( nd->chld);
+	if (nd->next) rt += countNodes( nd->next);
+	return rt;
+}
+
+static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidth, int members, int alphabetsize, int noftags, int maxnodes, int& nodecnt)
 {
 	if (scope.start() == scope.end()) throw mewa::Error( mewa::Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 
-	NodeDefTree* rt = new NodeDefTree( NodeDef( scope, ++g_idCounter, randomDefs( members, alphabetsize), randomRelations( members, alphabetsize)));
+	NodeDefTree* rt = new NodeDefTree( NodeDef( scope, ++g_idCounter, randomDefs( members, alphabetsize), randomRelations( members, alphabetsize, noftags)));
 
-	if (g_random.get( 0, g_random.get( 0, depth)) > 0)
+	if (nodecnt < g_random.get( 0, maxnodes) && g_random.get( 0, depth) > 0)
 	{
+		++nodecnt;
 		int si = 1, se = scope.end() - scope.start();
 		int width = g_random.get( 0, maxwidth);
 		std::vector<Scope> scopear;
@@ -126,7 +153,7 @@ static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidt
 		{
 			try
 			{
-				rt->addChild( createRandomTree( subscope, depth-1, maxwidth, members, alphabetsize));
+				rt->addChild( createRandomTree( subscope, depth-1, maxwidth, members, alphabetsize, noftags, maxnodes, nodecnt));
 			}
 			catch (const std::bad_alloc& err)
 			{
@@ -196,13 +223,14 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 		std::string left;
 		std::string right;
 		int value;
+		int tag;
 
 		Insert()
 			:scope(0,0),left(),right(),value(){}
-		Insert( const Scope scope_, const std::string& left_, const std::string& right_, int value_)
-			:scope(scope_),left(left_),right(right_),value(value_){}
+		Insert( const Scope scope_, const std::string& left_, const std::string& right_, int value_, int tag_)
+			:scope(scope_),left(left_),right(right_),value(value_),tag(tag_){}
 		Insert( const Insert& o)
-			:scope(o.scope),left(o.left),right(o.right),value(o.value){}
+			:scope(o.scope),left(o.left),right(o.right),value(o.value),tag(o.tag){}
 	};
 	std::vector<Insert> inserts;
 	std::vector<NodeDefTree const*> stk;
@@ -219,13 +247,13 @@ static void insertRelations( RelMap& relmap, NodeDefTree const* nd)
 
 		for (auto const& rel : cur.item.relations)
 		{
-			inserts.push_back( {cur.item.scope, rel.first, rel.second, cur.item.id});
+			inserts.push_back( {cur.item.scope, rel.left, rel.right, cur.item.id, rel.tag});
 		}
 	}
 	shuffle( inserts, g_random);
 	for (auto ins : inserts)
 	{
-		relmap.set( ins.scope, ins.left, ins.right, ins.value, 1.0/*weight*/);
+		relmap.set( ins.scope, ins.left, ins.right, ins.value, ins.tag, 1.0/*weight*/);
 	}
 }
 
@@ -271,21 +299,41 @@ static std::pair<std::string,Scope::Step> selectVarQuery( const NodeDefTree* nd)
 	return rt;
 }
 
-static std::pair<std::string,Scope::Step> selectRelQuery( const NodeDefTree* nd)
+struct RelationQuery
 {
-	std::pair<std::string,Scope::Step> rt;
+	Scope::Step step;
+	std::string left;
+	TagMask mask;
+
+	RelationQuery()
+		:step(0),left(),mask(){}
+	RelationQuery( const Scope::Step& step_, const std::string& left_, const TagMask& mask_)
+		:step(step_),left(left_),mask(mask_){}
+	RelationQuery( const RelationQuery& o)
+		:step(o.step),left(o.left),mask(o.mask){}
+	bool empty() const noexcept
+	{
+		return left.empty();
+	}
+};
+
+static RelationQuery selectRelQuery( const NodeDefTree* nd)
+{
+	RelationQuery rt;
 	if (nd->chld && g_random.get( 0,4) > 0)
 	{
 		rt = selectRelQuery( nd->chld);
 	}
-	if (rt.first.empty() && nd->next && g_random.get( 0,3) > 0)
+	if (rt.empty() && nd->next && g_random.get( 0,3) > 0)
 	{
 		rt = selectRelQuery( nd->next);
 	}
-	if (rt.first.empty() && !nd->item.relations.empty())
+	if (rt.empty() && !nd->item.relations.empty())
 	{
-		rt.second = g_random.get( nd->item.scope.start(), nd->item.scope.end());
-		rt.first = nd->item.relations[ g_random.get( 0, nd->item.relations.size())].first;
+		const Relation& rel = nd->item.relations[ g_random.get( 0, nd->item.relations.size())];
+		rt.step = g_random.get( nd->item.scope.start(), nd->item.scope.end());
+		rt.left = rel.left;
+		rt.mask |= rel.tag;
 	}
 	return rt;
 }
@@ -339,32 +387,32 @@ static int findInnerScopeId( const NodeDefTree* nd, Scope::Step step)
 	return rt;
 }
 
-static void collectRelations( std::map<std::string,int>& result, const NodeDefTree* nd, const std::string& first, Scope::Step step)
+static void collectRelations( std::map<std::string,int>& result, const NodeDefTree* nd, const std::string& left, Scope::Step step, const TagMask& mask)
 {
 	if (nd->item.scope.contains( step))
 	{
 		for (auto const& rel : nd->item.relations)
 		{
-			if (rel.first == first)
+			if (mask.matches(rel.tag-1) && rel.left == left)
 			{
-				result[ rel.second] = nd->item.id;
+				result[ rel.right] = nd->item.id;
 			}
 		}
 		if (nd->chld)
 		{
-			collectRelations( result, nd->chld, first, step);
+			collectRelations( result, nd->chld, left, step, mask);
 		}
 	}
 	else if (nd->next)
 	{
-		collectRelations( result, nd->next, first, step);
+		collectRelations( result, nd->next, left, step, mask);
 	}
 }
 
-static std::map<std::string,int> getRelations( const NodeDefTree* nd, const std::string& first, Scope::Step step)
+static std::map<std::string,int> getRelations( const NodeDefTree* nd, const std::string& left, Scope::Step step, const TagMask& mask)
 {
 	std::map<std::string,int> rt;
-	collectRelations( rt, nd, first, step);
+	collectRelations( rt, nd, left, step, mask);
 	return rt;
 }
 
@@ -409,38 +457,44 @@ static std::string relationsToString( const std::string& left, const std::map<st
 	return rt;
 }
 
-static void randomRelQuery( const RelMap& relmap, const NodeDefTree* nd, int alphabetsize, bool verbose)
+static void randomRelQuery( const RelMap& relmap, const NodeDefTree* nd, int alphabetsize, int noftags, bool verbose)
 {
-	std::pair<std::string,Scope::Step> qry = selectRelQuery( nd);
-	if (qry.first.empty())
+	RelationQuery qry = selectRelQuery( nd);
+	if (qry.empty())
 	{
-		qry.first = randomVariable( alphabetsize);
-		qry.second = g_random.get( 0, std::numeric_limits<int>::max());
+		qry.left = randomVariable( alphabetsize);
+		qry.step = g_random.get( 0, std::numeric_limits<Scope::Step>::max());
+		qry.mask |= g_random.get( 1, noftags+1);
 	}
-	std::map<std::string,int> expc = getRelations( nd, qry.first/*first (relation)*/, qry.second/*step*/);
+	while (g_random.get( 1, 10) > 3)
+	{
+		qry.mask |= g_random.get( 1, noftags+1);
+	}
+	std::map<std::string,int> expc = getRelations( nd, qry.left, qry.step, qry.mask);
 
 	int local_membuffer[ 512];
 	std::pmr::monotonic_buffer_resource local_memrsc( local_membuffer, sizeof local_membuffer);
 
 	std::map<std::string,int> resc;
-	auto results = relmap.get( qry.second/*step*/, qry.first/*var*/, &local_memrsc);
+	auto results = relmap.get( qry.step, qry.left, qry.mask, &local_memrsc);
 	for (auto const& result : results)
 	{
-		resc.insert( {result.type(), result.value()});
+		resc.insert( {result.right(), result.value()});
 	}
-	std::string expcstr = relationsToString( qry.first, expc);
-	std::string rescstr = relationsToString( qry.first, resc);
+	std::string expcstr = relationsToString( qry.left, expc);
+	std::string rescstr = relationsToString( qry.left, resc);
+	std::string maskstr = qry.mask.tostring(); 
 	if (verbose)
 	{
-		std::cerr << mewa::string_format( "Query relations of '%s' at step %d: Expected %s, got %s",
-							qry.first.c_str(), qry.second, expcstr.c_str(), rescstr.c_str())
+		std::cerr << mewa::string_format( "Query relations of '%s' at step %d select={%s}: Expected %s, got %s",
+							qry.left.c_str(), qry.step, maskstr.c_str(), expcstr.c_str(), rescstr.c_str())
 				<< std::endl;
 	}
 	if (resc != expc)
 	{
 		throw std::runtime_error(
-				mewa::string_format( "Random query relations of '%s' [%d] result '%s' not as expected '%s'",
-							qry.first.c_str(), qry.second, rescstr.c_str(), expcstr.c_str()));
+			mewa::string_format( "Random query relations of '%s' at step %d select {%s} result '%s' not as expected '%s'",
+						qry.left.c_str(), qry.step, maskstr.c_str(), rescstr.c_str(), expcstr.c_str()));
 	}
 }
 
@@ -623,9 +677,9 @@ static void checkVarMapTreeTraversal( const VarMap& varmap, const NodeDefTree* n
 	}
 }
 
-static std::string relMapTraversalElementToString( const std::string& key, const std::string& related, int value, float weight)
+static std::string relMapTraversalElementToString( const std::string& key, const std::string& related, int value, int tag, float weight)
 {
-	return string_format( "(%s,%s) = %d %.3f", key.c_str(), related.c_str(), value, weight);
+	return string_format( "(%s,%s) = %d /%d %.3f", key.c_str(), related.c_str(), value, tag, weight);
 }
 
 static std::string expectRelMapTreeTraversal( NodeDefTree const* nd, int depth=0)
@@ -644,7 +698,7 @@ static std::string expectRelMapTreeTraversal( NodeDefTree const* nd, int depth=0
 			std::vector<std::string> members;
 			for (auto const& rel : nd->item.relations)
 			{
-				members.push_back( relMapTraversalElementToString( rel.first, rel.second, nd->item.id, 1.0/*weight*/));
+				members.push_back( relMapTraversalElementToString( rel.left, rel.right, nd->item.id, rel.tag, 1.0/*weight*/));
 			}
 			std::string elem = std::string( depth, '\t') + nd->item.scope.tostring() + " {";
 			std::sort( members.begin(), members.end());
@@ -683,7 +737,7 @@ static void checkRelMapTreeTraversal( const RelMap& relmap, const NodeDefTree* n
 		std::vector<std::string> members;
 		for (auto const& rel : ti->item().value)
 		{
-			members.push_back( relMapTraversalElementToString( rel.relation.first, rel.relation.second, rel.value, rel.weight));
+			members.push_back( relMapTraversalElementToString( rel.relation.first, rel.relation.second, rel.value, rel.tag, rel.weight));
 		}
 		std::string elem = std::string( ti.depth()-1, '\t') + ti->item().scope.tostring() + " {";
 		std::sort( members.begin(), members.end());
@@ -713,15 +767,7 @@ static void checkRelMapTreeTraversal( const RelMap& relmap, const NodeDefTree* n
 	}
 }
 
-static int countNodes( const NodeDefTree* nd)
-{
-	int rt = 1;
-	if (nd->chld) rt += countNodes( nd->chld);
-	if (nd->next) rt += countNodes( nd->next);
-	return rt;
-}
-
-static void testRandomScope( int maxdepth, int maxwidth, int members, int alphabetsize, int nofqueries, bool verbose)
+static void testRandomScope( int maxdepth, int maxwidth, int maxnofnodes, int maxnofmembers, int alphabetsize, int noftags, int nofqueries, bool verbose)
 {
 	int buffer[ 4096];
 	std::pmr::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
@@ -731,19 +777,21 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	RelMap relmap( &memrsc, 1024/*initsize*/);
 	IdSet idset( &memrsc, -1/*nullval*/, 1024/*initsize*/);
 
+	int nofTagsUsed = g_random.get( 1, g_random.get( 1, noftags));
 	int depth = g_random.get( 1, maxdepth+1);
+	int members = g_random.get( 1, maxnofmembers+1);
 	Scope scope( 0, g_random.get( 1, std::numeric_limits<int>::max()));
 	std::unique_ptr<NodeDefTree> tree;
-	int minNofNodes = 10;
-	do {
-		tree.reset( createRandomTree( scope, depth, maxwidth, members, g_random.get( 1, alphabetsize)));
-		minNofNodes -= 1;
+	int nodecnt = 0;
+	do
+	{
+		tree.reset( createRandomTree( scope, depth, maxwidth, members, g_random.get( 1, alphabetsize), nofTagsUsed, maxnofnodes, nodecnt));
 	}
-	while (countNodes( tree.get()) <= minNofNodes);
+	while (countNodes(tree.get()) == 1 && g_random.get( 0,10) > 2);
 
 	if (verbose)
 	{
-		std::cerr << "Random Tree:" << std::endl;
+		std::cerr << string_format( "Random Tree (%d nodes):", countNodes( tree.get())) << std::endl;
 		tree->print( std::cerr);
 	}
 	insertDefinitions( varmap, tree.get());
@@ -756,7 +804,7 @@ static void testRandomScope( int maxdepth, int maxwidth, int members, int alphab
 	}
 	for (int qi = 0; qi < nofqueries; ++qi)
 	{
-		randomRelQuery( relmap, tree.get(), alphabetsize, verbose);
+		randomRelQuery( relmap, tree.get(), alphabetsize, nofTagsUsed, verbose);
 	}
 	randomIdQueries( idset, tree.get(), nofqueries, verbose);
 
@@ -773,8 +821,10 @@ int main( int argc, const char* argv[] )
 		int nofTests = 100;
 		int maxDepth = 7;
 		int maxWidth = 15;
+		int maxNofNodes = 50;
 		int maxMembers = 12;
 		int alphabetSize = 26;
+		int nofTags = 10;
 		int nofQueries = 1000;
 		int argi = 1;
 
@@ -786,7 +836,8 @@ int main( int argc, const char* argv[] )
 			}
 			else if (0==std::strcmp( argv[argi], "-h"))
 			{
-				std::cerr << "Usage: testRandomScope [-h][-V] [<nof tests>] [<max depth>] [<max width>] [<max members>] [<alphabet size>] [<queries>]"
+				std::cerr << "Usage: testRandomScope [-h][-V] [<nof tests>] [<max depth>] [<max width>] [<max nodes>] "
+									"[<max members>] [<alphabet size>] [<nof tags>] [<queries>]"
 						<< std::endl;
 				return 0;
 			}
@@ -797,7 +848,8 @@ int main( int argc, const char* argv[] )
 			}
 			else if (argv[argi][0] == '-')
 			{
-				std::cerr << "Usage: testRandomScope [-h][-V] [<nof tests>] [<max depth>] [<max width>] [<max members>] [<alphabet size>] [<queries>]"
+				std::cerr << "Usage: testRandomScope [-h][-V] [<nof tests>] [<max depth>] [<max width>] [<max nodes>] "
+									"[<max members>] [<alphabet size>] [<nof tags>] [<queries>]"
 						<< std::endl;
 				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
 			}
@@ -809,13 +861,16 @@ int main( int argc, const char* argv[] )
 		if (argi < argc) nofTests = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of tests");
 		if (argi < argc) maxDepth = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum tree depth");
 		if (argi < argc) maxWidth = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum tree width");
+		if (argi < argc) maxNofNodes = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum number of nodes");
 		if (argi < argc) maxMembers = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum number of variable definitions per node");
 		if (argi < argc) alphabetSize = ArgParser::getCardinalNumberArgument( argv[ argi++], "alphabet size");
+		if (argi < argc) nofTags = ArgParser::getCardinalNumberArgument( argv[ argi++], "nof tags");
 		if (argi < argc) nofQueries = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of queries per random tree");
 
 		if (argi < argc)
 		{
-			std::cerr << "Usage: testRandomScope [-h][-V] [<nof tests>] [<max depth>] [<max width>] [<max members>] [<alphabet size>] [<queries>]"
+			std::cerr << "Usage: testRandomScope [-h][-V] [<nof tests>] [<max depth>] [<max width>] [<max nodes>] "
+									"[<max members>] [<alphabet size>] [<nof tags>] [<queries>]"
 					<< std::endl;
 			throw std::runtime_error( "no arguments except options expected");
 		}
@@ -823,7 +878,7 @@ int main( int argc, const char* argv[] )
 		for (; ti <= nofTests; ++ti)
 		{
 			if (verbose) std::cerr << "Random scope tree test [" << ti << "]" << std::endl;
-			testRandomScope( maxDepth, maxWidth, maxMembers, alphabetSize, nofQueries, verbose);
+			testRandomScope( maxDepth, maxWidth, maxNofNodes, maxMembers, alphabetSize, nofTags, nofQueries, verbose);
 		}
 		std::cerr << "OK" << std::endl;
 		return 0;

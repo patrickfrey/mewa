@@ -112,9 +112,9 @@ static int mewa_tostring( lua_State* ls)
 	bool success = true;
 	try
 	{
-		int nn = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
 		bool formatted = true;
-		if (nn == 2 && lua_isboolean( ls, 2))
+		if (nargs == 2 && lua_isboolean( ls, 2))
 		{
 			formatted = lua_toboolean( ls, 2);
 		}
@@ -208,14 +208,14 @@ static int mewa_compiler_run( lua_State* ls)
 	bool success = true;
 	try
 	{
-		int nn = mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 4/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 4/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 10);
 		std::string_view filename = mewa::lua::getArgumentAsString( functionName, ls, 2);
 
 		std::string source = mewa::readFile( std::string(filename));
 		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));		// STK: [COMPILER] [INPUTFILE] [SOURCE]
 
-		if (nn >= 3)
+		if (nargs >= 3)
 		{
 			bool hasRedirectedOutput = !lua_isnil( ls, 3);
 			if (hasRedirectedOutput)
@@ -244,7 +244,7 @@ static int mewa_compiler_run( lua_State* ls)
 				luaL_setfuncs( ls, g_printlib, 1/*number of closure elements*/);
 				lua_pop( ls, 1);
 			}
-			if (nn >= 4 && !lua_isnil( ls, 4))
+			if (nargs >= 4 && !lua_isnil( ls, 4))
 			{
 				std::string_view debugFilename = mewa::lua::getArgumentAsString( functionName, ls, 4);
 				if (debugFilename == "stderr")
@@ -381,6 +381,30 @@ static int mewa_typedb_set_instance( lua_State* ls)
 	return 0;
 }
 
+static int mewa_typedb_reduction_tagset( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb.reduction_tagset";
+	bool success = true;
+	try
+	{
+		int firstArg = 1;
+		if (mewa::lua::isArgumentType( functionName, ls, firstArg, (1 << LUA_TUSERDATA)))
+		{
+			luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+			firstArg = 2;
+		}
+		mewa::TagMask tagSet;
+		int nargs = lua_gettop( ls);
+		for (int li=firstArg; li <= nargs; ++li)
+		{
+			tagSet |= mewa::lua::getArgumentAsCardinal( functionName, ls, li);
+		}
+		lua_pushinteger( ls, tagSet.mask());
+	}
+	CATCH_EXCEPTION( success)
+	return 1;
+}
+
 static int mewa_typedb_def_type( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:def_type";
@@ -392,7 +416,7 @@ static int mewa_typedb_def_type( lua_State* ls)
 	bool success = true;
 	try
 	{
-		int nn = mewa::lua::checkNofArguments( functionName, ls, 5/*minNofArgs*/, 7/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 5/*minNofArgs*/, 7/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope scope = mewa::lua::getArgumentAsScope( functionName, ls, 2);
 		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
@@ -400,8 +424,8 @@ static int mewa_typedb_def_type( lua_State* ls)
 		lua_getglobal( ls, td->objTableName.buf);
 		int constructor = mewa::lua::getArgumentAsConstructor( functionName, ls, 5, -1/*objtable*/, td);
 		std::pmr::vector<mewa::TypeDatabase::Parameter> parameter;
-		if (nn >= 6) parameter = mewa::lua::getArgumentAsParameterList( functionName, ls, 6, -1/*objtable*/, td, &memrsc_parameter);
-		int priority = (nn >= 7) ? mewa::lua::getArgumentAsInteger( functionName, ls, 7) : 0;
+		if (nargs >= 6) parameter = mewa::lua::getArgumentAsParameterList( functionName, ls, 6, -1/*objtable*/, td, &memrsc_parameter);
+		int priority = (nargs >= 7) ? mewa::lua::getArgumentAsInteger( functionName, ls, 7) : 0;
 		lua_pop( ls, 1); // ... obj table
 		int rt = td->impl->defineType( scope, contextType, name, constructor, parameter, priority);
 		lua_pushinteger( ls, rt);
@@ -418,16 +442,17 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 	bool success = true;
 	try
 	{
-		int nn = mewa::lua::checkNofArguments( functionName, ls, 5/*minNofArgs*/, 6/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 6/*minNofArgs*/, 7/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope scope = mewa::lua::getArgumentAsScope( functionName, ls, 2);
 		int toType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 4);
 		lua_getglobal( ls, td->objTableName.buf);
 		int constructor = mewa::lua::getArgumentAsConstructor( functionName, ls, 5, -1/*objtable*/, td);
-		float weight = (nn >= 6) ? mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 6) : 1.0;
+		int tag = mewa::lua::getArgumentAsCardinal( functionName, ls, 6);
+		float weight = (nargs >= 7) ? mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 7) : 1.0;
 		lua_pop( ls, 1); // ... obj table
-		td->impl->defineReduction( scope, toType, fromType, constructor, weight);
+		td->impl->defineReduction( scope, toType, fromType, constructor, tag, weight);
 	}
 	CATCH_EXCEPTION( success)
 	return 0;
@@ -441,12 +466,14 @@ static int mewa_typedb_type_reduction( lua_State* ls)
 	bool success = true;
 	try
 	{
-		mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
 		int toType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 4);
-		int constructor = td->impl->reduction( step, toType, fromType);
+		mewa::TagMask selectTags( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchAll());
+
+		int constructor = td->impl->reduction( step, toType, fromType, selectTags);
 		if (constructor <= 0)
 		{
 			lua_pushnil( ls);
@@ -470,13 +497,15 @@ static int mewa_typedb_type_reductions( lua_State* ls)
 	bool success = true;
 	try
 	{
-		mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 3/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 4/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
 		int type = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
+		mewa::TagMask selectTags( nargs >= 4 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
+
 		mewa::TypeDatabase::ResultBuffer resbuf;
 
-		auto reductions = td->impl->reductions( step, type, resbuf);
+		auto reductions = td->impl->reductions( step, type, selectTags, resbuf);
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, reductions);
 	}
 	CATCH_EXCEPTION( success)
@@ -491,14 +520,15 @@ static int mewa_typedb_derive_type( lua_State* ls)
 	bool success = true;
 	try
 	{
-		mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
 		int toType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 4);
-		mewa::TypeDatabase::ResultBuffer resbuf;
+		mewa::TagMask selectTags( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchAll());
 
-		auto deriveres = td->impl->deriveType( step, toType, fromType, resbuf);
+		mewa::TypeDatabase::ResultBuffer resbuf;
+		auto deriveres = td->impl->deriveType( step, toType, fromType, selectTags, resbuf);
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, deriveres.reductions);
 		lua_pushnumber( ls, deriveres.weightsum);
 	}
@@ -514,14 +544,15 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 	bool success = true;
 	try
 	{
-		mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
 		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 4);
-		mewa::TypeDatabase::ResultBuffer resbuf;
+		mewa::TagMask selectTags( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchAll());
 
-		auto resolveres = td->impl->resolveType( step, contextType, name, resbuf);
+		mewa::TypeDatabase::ResultBuffer resbuf;
+		auto resolveres = td->impl->resolveType( step, contextType, name, selectTags, resbuf);
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, resolveres.reductions);
 		mewa::lua::pushResolveResultItems( ls, functionName, td->objTableName.buf, resolveres.items);
 	}
@@ -725,6 +756,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },
 	{ "def_reduction",	mewa_typedb_def_reduction },
+	{ "reduction_tagset",	mewa_typedb_reduction_tagset },
 	{ "derive_type",	mewa_typedb_derive_type },
 	{ "resolve_type",	mewa_typedb_resolve_type },
 	{ "type_name",		mewa_typedb_type_name },

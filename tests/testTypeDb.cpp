@@ -174,7 +174,7 @@ static int getContextType( TypeDatabase const* typedb, const Scope::Step step, c
 	for (auto const& item : split)
 	{
 		TypeDatabase::ResultBuffer resbuf;
-		auto res = typedb->resolveType( step, contextType, item, resbuf);
+		auto res = typedb->resolveType( step, contextType, item, mewa::TagMask::matchAll(), resbuf);
 		if (res.items.empty()) throw Error( Error::UnresolvableType, item);
 		if (res.items.size() > 1) throw Error( Error::AmbiguousTypeReference, item);
 
@@ -274,7 +274,7 @@ static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, con
 	{
 		int resultTypeId = getContextType( tdbimpl.typedb, scope.start(), tpdef.resultType);
 		int resultConstructorId = tdbimpl.getConstructorFromName( std::string("#") + tpdef.resultType);
-		tdbimpl.typedb->defineReduction( scope, resultTypeId, funcTypeId, resultConstructorId, 1.0/*weight*/);
+		tdbimpl.typedb->defineReduction( scope, resultTypeId, funcTypeId, resultConstructorId, 1/*tag*/, 1.0/*weight*/);
 	}
 }
 
@@ -283,7 +283,7 @@ static void defineReduction( TypeDatabaseImpl& tdbimpl, const TestReductionDef& 
 	int fromTypeId = getContextType( tdbimpl.typedb, scope.start(), rddef.fromType);
 	int toTypeId = getContextType( tdbimpl.typedb, scope.start(), rddef.toType);
 	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + rddef.toType + "<-" + rddef.fromType);
-	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId, rddef.weight);
+	tdbimpl.typedb->defineReduction( scope, toTypeId, fromTypeId, constructorId, 1/*tag*/, rddef.weight);
 }
 
 static void defineTest( TypeDatabaseImpl& tdbimpl, const TestDef& def, bool verbose)
@@ -344,7 +344,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 	{
 		out << "Reductions of context type " << tdbimpl.typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
 		mewa::TypeDatabase::ResultBuffer redu_resbuf;
-		auto reductions = tdbimpl.typedb->reductions( query.step, fdef.contextType, redu_resbuf);
+		auto reductions = tdbimpl.typedb->reductions( query.step, fdef.contextType, TagMask::matchAll(), redu_resbuf);
 		out << "Context Type reductions:" << std::endl;
 		for (auto const& redu : reductions)
 		{
@@ -355,7 +355,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 	{
 		out << "Resolve type " << fdef.tostring( tdbimpl) << " [" << query.step << "] :" << std::endl;
 		TypeDatabase::ResultBuffer resolve_resbuf;
-		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolveType( query.step, fdef.contextType, fdef.name, resolve_resbuf);
+		TypeDatabase::ResolveResult result = tdbimpl.typedb->resolveType( query.step, fdef.contextType, fdef.name, TagMask::matchAll(), resolve_resbuf);
 		out << "Result candidates:" << std::endl;
 		int minDistance = 0;
 		int bestCandidate = -1;
@@ -381,7 +381,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 					++distance;
 					int reduConstructor
 						= tdbimpl.typedb->reduction( 
-							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/);
+							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/, TagMask::matchAll());
 					if (reduConstructor < 0)
 					{
 						auto pto = tdbimpl.typeToString( parameter.type);
