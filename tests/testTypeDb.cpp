@@ -496,26 +496,26 @@ int main( int argc, const char* argv[] )
 
 		// Test scope sets:
 		if (verbose) std::cerr << "Do some simple scope set tests ..." << std::endl;
-		tdbimpl.typedb->setNamedObject( "blublu", {0,100}, 1);
-		tdbimpl.typedb->setNamedObject( "blublu", {1,78}, 2);
-		tdbimpl.typedb->setNamedObject( "blublu", {33,45}, 3);
-		tdbimpl.typedb->setNamedObject( "gurke", {0,100}, 1);
-		tdbimpl.typedb->setNamedObject( "gurke", {1,78}, 2);
-		tdbimpl.typedb->setNamedObject( "gurke", {33,45}, 3);
-		tdbimpl.typedb->setNamedObject( "register", {0,100}, 1);
-		tdbimpl.typedb->setNamedObject( "register", {1,78}, 2);
-		tdbimpl.typedb->setNamedObject( "register", {33,45}, 3);
-		tdbimpl.typedb->setNamedObject( "blabla", {0,100}, 1);
-		tdbimpl.typedb->setNamedObject( "blabla", {1,78}, 2);
-		tdbimpl.typedb->setNamedObject( "blabla", {33,45}, 3);
+		tdbimpl.typedb->setObjectInstance( "blublu", {0,100}, 1);
+		tdbimpl.typedb->setObjectInstance( "blublu", {1,78}, 2);
+		tdbimpl.typedb->setObjectInstance( "blublu", {33,45}, 3);
+		tdbimpl.typedb->setObjectInstance( "gurke", {0,100}, 1);
+		tdbimpl.typedb->setObjectInstance( "gurke", {1,78}, 2);
+		tdbimpl.typedb->setObjectInstance( "gurke", {33,45}, 3);
+		tdbimpl.typedb->setObjectInstance( "register", {0,100}, 1);
+		tdbimpl.typedb->setObjectInstance( "register", {1,78}, 2);
+		tdbimpl.typedb->setObjectInstance( "register", {33,45}, 3);
+		tdbimpl.typedb->setObjectInstance( "blabla", {0,100}, 1);
+		tdbimpl.typedb->setObjectInstance( "blabla", {1,78}, 2);
+		tdbimpl.typedb->setObjectInstance( "blabla", {33,45}, 3);
 
-		if (tdbimpl.typedb->getNamedObject( "register", 55) != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
-		if (tdbimpl.typedb->getNamedObject( "register", 45) != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
-		if (tdbimpl.typedb->getNamedObject( "register", 44) != 3) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
-		if (tdbimpl.typedb->getNamedObject( "register", 100) != -1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
-		if (tdbimpl.typedb->getNamedObject( "gurke", 1) != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
-		if (tdbimpl.typedb->getNamedObject( "gurke", 0) != 1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
-		if (tdbimpl.typedb->getNamedObject( "gurke", 99) != 1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "register", 55) != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "register", 45) != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "register", 44) != 3) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "register", 100) != -1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "gurke", 1) != 2) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "gurke", 0) != 1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
+		if (tdbimpl.typedb->getObjectInstance( "gurke", 99) != 1) throw std::runtime_error( string_format("name object loopup error %d", (int)__LINE__));
 
 		// Test type resolving:
 		if (verbose) std::cerr << "Do some simple type definition/resolving tests ..." << std::endl;

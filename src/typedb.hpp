@@ -32,12 +32,12 @@ class TypeDatabase
 public:
 	explicit TypeDatabase( std::size_t initmemsize = 1<<26)
 		:m_memblock(std::max((initmemsize/8) *8,(std::size_t)1024)),m_memory()
-		,m_objidMap(),m_objSets(),m_typeTable(),m_reduTable(),m_identMap(),m_parameterMap(),m_typerecMap()
+		,m_objidMap(),m_objAr(),m_typeTable(),m_reduTable(),m_identMap(),m_parameterMap(),m_typerecMap()
 	{
 		m_memory.reset( new Memory( m_memblock.ptr, m_memblock.size));
 
 		m_objidMap.reset( new ObjectIdMap( m_memory->resource_objtab()));
-		m_objSets.push_back( ObjectSet( m_memory->resource_objtab(), -1/*nullval*/, 0/*nof init buckets*/));
+		m_objAr.push_back( ObjectAccess( m_memory->resource_objtab(), -1/*nullval*/, 0/*nof init buckets*/));
 		m_typeTable.reset( new TypeTable( m_memory->resource_typetab(), 0/*nullval*/, m_memory->nofScopedMapInitBuckets()));
 		m_reduTable.reset( new ReductionTable( m_memory->resource_redutab(), m_memory->nofReductionMapInitBuckets()));
 		m_identMap.reset( new IdentMap( m_memory->resource_identmap(), m_memory->resource_identstr(), m_memory->nofIdentInitBuckets()));
@@ -163,7 +163,7 @@ public:
 	typedef std::vector<ReductionDefinition> ReductionDefinitionList;
 	typedef std::vector<int> TypeDefinitionList;
 
-	typedef Tree<ScopeHierarchyTreeNode<int> > NamedObjectTree;
+	typedef Tree<ScopeHierarchyTreeNode<int> > ObjectInstanceTree;
 	typedef Tree<ScopeHierarchyTreeNode<ReductionDefinitionList> > ReductionDefinitionTree;
 	typedef Tree<ScopeHierarchyTreeNode<TypeDefinitionList> > TypeDefinitionTree;
 
@@ -172,18 +172,18 @@ public:
 	/// \param[in] name the name of the object
 	/// \param[in] scope the scope of this definition
 	/// \param[in] handle the handle (non negative cardinal number, negative value -1 reserved by the getter for not found) for the object given by the caller
-	void setNamedObject( const std::string_view& name, const Scope& scope, int handle);
+	void setObjectInstance( const std::string_view& name, const Scope& scope, int handle);
 
 	/// \brief Retrieve an object by its name in the innermost scope covering the specified scope step
 	/// \param[in] name the name of the object
 	/// \param[in] step the scope step of the search defining what are valid definitions
 	/// \return handle of the object defined by the caller in the given scope step with the name specified (setObject), or -1 if no object found
-	int getNamedObject( const std::string_view& name, const Scope::Step step) const;
+	int getObjectInstance( const std::string_view& name, const Scope::Step step) const;
 
 	/// \brief Get the scope dependency tree of all objects with a defined name
 	/// \param[in] name name of the elements to retrieve
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
-	NamedObjectTree getNamedObjectTree( const std::string_view& name) const;
+	ObjectInstanceTree getObjectInstanceTree( const std::string_view& name) const;
 
 	/// \brief Define a new type, throws if already defined in the same scope with same the signature and the same priority
 	/// \param[in] scope the scope of this definition
@@ -313,7 +313,7 @@ private:
 		std::size_t nofReductionMapInitBuckets() const noexcept		{return std::max( m_nofInitBuckets/2, (std::size_t)1024);}
 		std::size_t nofParameterMapInitBuckets() const noexcept		{return m_nofInitBuckets;}
 		std::size_t nofTypeRecordMapInitBuckets() const noexcept	{return m_nofInitBuckets;}
-		std::size_t nofNamedObjectTableInitBuckets() const noexcept	{return std::max( m_nofInitBuckets/8, (std::size_t)1024);}
+		std::size_t nofObjectInstanceTableInitBuckets() const noexcept	{return std::max( m_nofInitBuckets/8, (std::size_t)1024);}
 
 	private:
 		mewa::monotonic_buffer_resource m_identmap_memrsc;
@@ -345,7 +345,7 @@ private:
 	};
 
 	typedef std::pmr::map<int,int> ObjectIdMap;
-	typedef ScopedSet<int> ObjectSet;
+	typedef ScopedInstance<int> ObjectAccess;
 	typedef ScopedMap<TypeDef,int> TypeTable;
 	typedef ScopedRelationMap<int,int> ReductionTable;
 
@@ -367,7 +367,7 @@ private:
 	MemoryBlock m_memblock;				//< memory block used first by m_memory
 	std::unique_ptr<Memory> m_memory;		//< memory resource used by maps (has to be defined before tables and maps as these depend on it!)
 	std::unique_ptr<ObjectIdMap> m_objidMap;	//< map of object identifiers to index into object sets
-	std::vector<ObjectSet> m_objSets;		//< object sets
+	std::vector<ObjectAccess> m_objAr;		//< object access array
 	std::unique_ptr<TypeTable> m_typeTable;		//< table of types
 	std::unique_ptr<ReductionTable> m_reduTable;	//< table of reductions
 	std::unique_ptr<IdentMap> m_identMap;		//< identifier string to integer map

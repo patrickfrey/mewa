@@ -50,25 +50,25 @@ function testRegisterAllocator()
 	end
 
 	-- Define a register allocator function as an object with name "register" for 4 scopes defined as {start,end}
-	typedb:set( "register", {0,1000}, register_allocator())
-	typedb:set( "register", {2,300}, register_allocator())
-	typedb:set( "register", {6,50}, register_allocator())
-	typedb:set( "register", {23,25}, register_allocator())
+	typedb:set_instance( "register", {0,1000}, register_allocator())
+	typedb:set_instance( "register", {2,300}, register_allocator())
+	typedb:set_instance( "register", {6,50}, register_allocator())
+	typedb:set_instance( "register", {23,25}, register_allocator())
 
-	-- Allocate registers, the second parameter of typedb:get is the scope step, a sort of an instruction counter referring to 
+	-- Allocate registers, the second parameter of typedb:get_instance is the scope step, a sort of an instruction counter referring to 
 	-- a specific scope and thus to a specific register allocator defined:
 	local registers = {
-		typedb:get( "register", 45)(),	-- Get a register in the scope step 45, allocate it with the allocator defined for scope {6,50}
-		typedb:get( "register", 199)(),	-- Get a register in the scope step 199, allocate it with the allocator defined for scope {2,300}
-		typedb:get( "register", 49)(),	-- Get a register in the scope step 49, allocate it with the allocator defined for scope {6,50}
-		typedb:get( "register", 49)(),	-- Get a register in the scope step 49, allocate it with the allocator defined for scope {6,50}
-		typedb:get( "register", 23)(),	-- Get a register in the scope step 23, allocate it with the allocator defined for scope {23,25}
-		typedb:get( "register", 24)(),	-- Get a register in the scope step 24, allocate it with the allocator defined for scope {23,25}
-		typedb:get( "register", 24)(),	-- Get a register in the scope step 24, allocate it with the allocator defined for scope {23,25}
-		typedb:get( "register", 278)(),	-- Get a register in the scope step 278, allocate it with the allocator defined for scope {2,300}
-		typedb:get( "register", 289)(),	-- Get a register in the scope step 289, allocate it with the allocator defined for scope {2,300}
-		typedb:get( "register", 291)(),	-- Get a register in the scope step 291, allocate it with the allocator defined for scope {2,300}
-		typedb:get( "register", 300)()	-- Get a register in the scope step 300, allocate it with the allocator defined for scope {0,1000}
+		typedb:get_instance( "register", 45)(),	-- Get a register in the scope step 45, allocate it with the allocator defined for scope {6,50}
+		typedb:get_instance( "register", 199)(),	-- Get a register in the scope step 199, allocate it with the allocator defined for scope {2,300}
+		typedb:get_instance( "register", 49)(),	-- Get a register in the scope step 49, allocate it with the allocator defined for scope {6,50}
+		typedb:get_instance( "register", 49)(),	-- Get a register in the scope step 49, allocate it with the allocator defined for scope {6,50}
+		typedb:get_instance( "register", 23)(),	-- Get a register in the scope step 23, allocate it with the allocator defined for scope {23,25}
+		typedb:get_instance( "register", 24)(),	-- Get a register in the scope step 24, allocate it with the allocator defined for scope {23,25}
+		typedb:get_instance( "register", 24)(),	-- Get a register in the scope step 24, allocate it with the allocator defined for scope {23,25}
+		typedb:get_instance( "register", 278)(),	-- Get a register in the scope step 278, allocate it with the allocator defined for scope {2,300}
+		typedb:get_instance( "register", 289)(),	-- Get a register in the scope step 289, allocate it with the allocator defined for scope {2,300}
+		typedb:get_instance( "register", 291)(),	-- Get a register in the scope step 291, allocate it with the allocator defined for scope {2,300}
+		typedb:get_instance( "register", 300)()	-- Get a register in the scope step 300, allocate it with the allocator defined for scope {0,1000}
 	}
 	local result = ""
 	for i,register in ipairs( registers) do

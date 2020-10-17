@@ -324,9 +324,9 @@ static int mewa_destroy_typedb( lua_State* ls)
 	return 0;
 }
 
-static int mewa_typedb_get( lua_State* ls)
+static int mewa_typedb_get_instance( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:get";
+	[[maybe_unused]] static const char* functionName = "typedb:get_instance";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	int handle = -1;
 
@@ -337,7 +337,7 @@ static int mewa_typedb_get( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 8);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 2);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
-		handle = td->impl->getNamedObject( name, step);
+		handle = td->impl->getObjectInstance( name, step);
 	}
 	CATCH_EXCEPTION( success)
 
@@ -349,9 +349,9 @@ static int mewa_typedb_get( lua_State* ls)
 	return 1;
 }
 
-static int mewa_typedb_set( lua_State* ls)
+static int mewa_typedb_set_instance( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:set";
+	[[maybe_unused]] static const char* functionName = "typedb:set_instance";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	mewa::Scope scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
@@ -376,7 +376,7 @@ static int mewa_typedb_set( lua_State* ls)
 
 	try
 	{
-		td->impl->setNamedObject( name, scope, handle);
+		td->impl->setObjectInstance( name, scope, handle);
 	} CATCH_EXCEPTION(success)
 	return 0;
 }
@@ -614,7 +614,7 @@ void create_tree_impl<mewa_objtree_userdata_t>( const char* functionName, lua_St
 {
 	mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
 	std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 2);
-	ud.create( td->impl->getNamedObjectTree( name));
+	ud.create( td->impl->getObjectInstanceTree( name));
 }
 
 template <>
@@ -721,8 +721,8 @@ static const struct luaL_Reg mewa_compiler_methods[] = {
 
 static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "__gc",		mewa_destroy_typedb },
-	{ "get",		mewa_typedb_get },
-	{ "set",		mewa_typedb_set },
+	{ "get_instance",	mewa_typedb_get_instance },
+	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },
 	{ "def_reduction",	mewa_typedb_def_reduction },
 	{ "derive_type",	mewa_typedb_derive_type },
@@ -733,7 +733,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "type_constructor",	mewa_typedb_type_constructor },
 	{ "type_reduction",	mewa_typedb_type_reduction },
 	{ "type_reductions",	mewa_typedb_type_reductions },
-	{ "obj_tree",		LuaTreeMetaMethods<mewa_objtree_userdata_t>::create },
+	{ "instance_tree",	LuaTreeMetaMethods<mewa_objtree_userdata_t>::create },
 	{ "type_tree",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::create },
 	{ "reduction_tree",	LuaTreeMetaMethods<mewa_redutree_userdata_t>::create },
 	{ nullptr,		nullptr }

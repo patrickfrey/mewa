@@ -138,7 +138,7 @@ static NodeDefTree* createRandomTree( const Scope& scope, int depth, int maxwidt
 	return rt;
 }
 
-typedef ScopedSet<int> IdSet;
+typedef ScopedInstance<int> IdSet;
 typedef ScopedMap<std::string,std::string> VarMap;
 typedef ScopedRelationMap<std::string,int> RelMap;
 

@@ -390,15 +390,15 @@ private:
 
 
 template <typename VALTYPE>
-class ScopedSet
+class ScopedInstance
 {
 public:
-	ScopedSet( std::pmr::memory_resource* memrsc, const VALTYPE nullval_, std::size_t initsize)
+	ScopedInstance( std::pmr::memory_resource* memrsc, const VALTYPE nullval_, std::size_t initsize)
 		:m_map( memrsc),m_invtree(nullval_,initsize){}
-	ScopedSet( const ScopedSet& o) = default;
-	ScopedSet& operator=( const ScopedSet& o) = default;
-	ScopedSet( ScopedSet&& o) noexcept = default;
-	ScopedSet& operator=( ScopedSet&& o) noexcept = default;
+	ScopedInstance( const ScopedInstance& o) = default;
+	ScopedInstance& operator=( const ScopedInstance& o) = default;
+	ScopedInstance( ScopedInstance&& o) noexcept = default;
+	ScopedInstance& operator=( ScopedInstance&& o) noexcept = default;
 
 	void set( const Scope scope, const VALTYPE value)
 	{
@@ -515,12 +515,12 @@ public:
 	Tree<TreeNode> getTree() const
 	{
 		// [1] Build a scoped set from m_map and build a tree out of it:
-		ScopedSet<std::size_t> scopedSet( std::pmr::get_default_resource(), 0/*nullval*/, 1<<16/*initsize*/);
+		ScopedInstance<std::size_t> scopedInstance( std::pmr::get_default_resource(), 0/*nullval*/, 1<<16/*initsize*/);
 		for (auto const& kv : m_map)
 		{
-			scopedSet.set( kv.first, kv.second);
+			scopedInstance.set( kv.first, kv.second);
 		}
-		Tree< ScopeHierarchyTreeNode<std::size_t> > tree = scopedSet.getTree();
+		Tree< ScopeHierarchyTreeNode<std::size_t> > tree = scopedInstance.getTree();
 
 		// [2] Copy the built tree replacing the references to the result VALTYPE lists with the real VALTYPE lists as node items:
 		struct TranslateItem

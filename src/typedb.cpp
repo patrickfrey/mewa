@@ -63,24 +63,24 @@ std::string_view TypeDatabase::typeName( int type) const
 	return m_identMap->inv( rec.inv.ident);
 }
 
-void TypeDatabase::setNamedObject( const std::string_view& name, const Scope& scope, int handle)
+void TypeDatabase::setObjectInstance( const std::string_view& name, const Scope& scope, int handle)
 {
 	if (handle <= 0) throw Error( Error::InvalidHandle, string_format( "%d", handle));
 
 	int objid = m_identMap->get( name);
-	auto ins = m_objidMap->insert( {objid, m_objSets.size()});
+	auto ins = m_objidMap->insert( {objid, m_objAr.size()});
 	if (ins.second == true/*insert took place*/)
 	{
-		m_objSets.push_back( ObjectSet( m_memory->resource_objtab(), -1/*nullval*/, m_memory->nofNamedObjectTableInitBuckets()));
+		m_objAr.push_back( ObjectAccess( m_memory->resource_objtab(), -1/*nullval*/, m_memory->nofObjectInstanceTableInitBuckets()));
 	}
-	m_objSets[ ins.first->second].set( scope, handle/*value*/);
+	m_objAr[ ins.first->second].set( scope, handle/*value*/);
 }
 
-int TypeDatabase::getNamedObject( const std::string_view& name, const Scope::Step step) const
+int TypeDatabase::getObjectInstance( const std::string_view& name, const Scope::Step step) const
 {
 	auto oi = m_objidMap->find( m_identMap->lookup( name));
 	if (oi == m_objidMap->end()) return -1/*undefined*/;
-	return m_objSets[ oi->second].get( step);
+	return m_objAr[ oi->second].get( step);
 }
 
 TypeDatabase::ParameterList TypeDatabase::typeParameters( int type) const
@@ -508,11 +508,11 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType( const Scope::Step step, i
 	return rt;
 }
 
-TypeDatabase::NamedObjectTree TypeDatabase::getNamedObjectTree( const std::string_view& name) const
+TypeDatabase::ObjectInstanceTree TypeDatabase::getObjectInstanceTree( const std::string_view& name) const
 {
 	auto oi = m_objidMap->find( m_identMap->lookup( name));
 	int oidx = (oi == m_objidMap->end()) ? 0 : oi->second;
-	return m_objSets[ oidx].getTree();
+	return m_objAr[ oidx].getTree();
 }
 
 TypeDatabase::ReductionDefinitionTree TypeDatabase::getReductionDefinitionTree() const

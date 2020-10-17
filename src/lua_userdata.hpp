@@ -150,7 +150,7 @@ public:
 	}
 };
 
-struct mewa_objtree_userdata_t	:public mewa_treetemplate_userdata_t<mewa::TypeDatabase::NamedObjectTree>
+struct mewa_objtree_userdata_t	:public mewa_treetemplate_userdata_t<mewa::TypeDatabase::ObjectInstanceTree>
 {
 	static const char* metatableName() noexcept {return MEWA_OBJTREE_METATABLE_NAME;}
 };
