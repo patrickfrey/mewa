@@ -95,6 +95,9 @@ function testDefineResolveType()
 	function reduceType( constructor)
 		return "param " .. constructor.type
 	end
+	local tag_fcc_conv = 1
+	local mask_resolve = typedb.reduction_tagmask( tag_fcc_conv)
+
 	local any_type = typedb:def_type( {0,100}, 0, "any", {type="any",code="#any"})
 
 	local short_type = typedb:def_type( {0,100}, 0, "short", {type="short",code="#short"})
@@ -105,19 +108,20 @@ function testDefineResolveType()
 	local add_int = typedb:def_type( {0,100}, int_type, "+", {op="add",type="int",code="int+int"}, {{int_type, pushParameter}})
 	local add_float = typedb:def_type( {0,100}, float_type, "+", {op="add",type="float",code="float+float"}, {{float_type, pushParameter}})
 
-	typedb:def_reduction( {0,100}, int_type, float_type, typeReduction( "int"), 0.5)
-	typedb:def_reduction( {0,100}, float_type, int_type, typeReduction( "float"), 1.0)
-	typedb:def_reduction( {0,100}, short_type, float_type, typeReduction( "short"), 0.5)
-	typedb:def_reduction( {0,100}, float_type, short_type, typeReduction( "float"), 1.0)
-	typedb:def_reduction( {0,100}, short_type, int_type, typeReduction( "short"), 0.5)
-	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), 1.0)
+	typedb:def_reduction( {0,100}, int_type, float_type, typeReduction( "int"), tag_fcc_conv, 0.5)
+	typedb:def_reduction( {0,100}, float_type, int_type, typeReduction( "float"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( {0,100}, short_type, float_type, typeReduction( "short"), tag_fcc_conv, 0.5)
+	typedb:def_reduction( {0,100}, float_type, short_type, typeReduction( "float"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( {0,100}, short_type, int_type, typeReduction( "short"), tag_fcc_conv, 0.5)
+	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), tag_fcc_conv, 1.0)
 
-	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "any"), 1.0)
+	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "any"), tag_fcc_conv, 1.0)
 
+	local step = 34
 	local result = ""
 	local types = {short_type, int_type, float_type}
 	for i,type in ipairs( types) do
-		for i,reduction in ipairs( typedb:type_reductions( 34, type)) do
+		for i,reduction in ipairs( typedb:type_reductions( step, type, mask_resolve)) do
 			result = result .. "\nREDU " .. typedb:type_string( type) .. " -> " .. typedb:type_string( reduction.type)
 					.. " : " .. reduction.constructor( typedb:type_string( type))
 		end
@@ -126,13 +130,13 @@ function testDefineResolveType()
 			{short_type,int_type},{short_type,float_type},{int_type,float_type},
 			{int_type,short_type},{float_type,short_type},{float_type,int_type}}
 	for i,redu in ipairs( reduction_queries) do
-		local constructor = typedb:type_reduction( 99, redu[1], redu[2])
+		local constructor = typedb:type_reduction( 99, redu[1], redu[2], mask_resolve)
 		result = result .. "\nSELECT REDU " .. typedb:type_string( redu[2]) .. " -> " .. typedb:type_string( redu[1])
 					.. " : " .. constructor( typedb:type_string( redu[2]))
 	end
 	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"}}
 	for i,qry in ipairs( resolve_queries) do
-		local reductions,items = typedb:resolve_type( 12, any_type, "+")
+		local reductions,items = typedb:resolve_type( 12, any_type, "+", mask_resolve)
 		print ("+++REDUS:" .. mewa.tostring( reductions) .. "+++")
 		print ("+++ITEMS:" .. mewa.tostring( items) .. "+++")
 		prev_type = any_type

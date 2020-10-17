@@ -381,9 +381,9 @@ static int mewa_typedb_set_instance( lua_State* ls)
 	return 0;
 }
 
-static int mewa_typedb_reduction_tagset( lua_State* ls)
+static int mewa_typedb_reduction_tagmask( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb.reduction_tagset";
+	[[maybe_unused]] static const char* functionName = "typedb.reduction_tagmask";
 	bool success = true;
 	try
 	{
@@ -756,7 +756,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },
 	{ "def_reduction",	mewa_typedb_def_reduction },
-	{ "reduction_tagset",	mewa_typedb_reduction_tagset },
+	{ "reduction_tagmask",	mewa_typedb_reduction_tagmask },
 	{ "derive_type",	mewa_typedb_derive_type },
 	{ "resolve_type",	mewa_typedb_resolve_type },
 	{ "type_name",		mewa_typedb_type_name },
