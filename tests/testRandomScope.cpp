@@ -393,7 +393,7 @@ static void collectRelations( std::map<std::string,int>& result, const NodeDefTr
 	{
 		for (auto const& rel : nd->item.relations)
 		{
-			if (mask.matches(rel.tag-1) && rel.left == left)
+			if (mask.matches( TagMask::tagValFromTag(rel.tag)) && rel.left == left)
 			{
 				result[ rel.right] = nd->item.id;
 			}

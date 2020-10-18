@@ -44,6 +44,10 @@ struct TableName
 			throw mewa::Error( mewa::Error::TooManyInstancesCreated, instname);
 		}
 	}
+	void initCopy( const TableName& o)
+	{
+		std::memcpy( buf, o.buf, sizeof(buf));
+	}
 };
 
 struct CallTableName :public TableName
@@ -129,14 +133,19 @@ public:
 	static const char* metatableName() noexcept {return MEWA_TYPEDB_METATABLE_NAME;}
 };
 
-template <class TreeType>
+template <class TT>
 struct mewa_treetemplate_userdata_t
 {
+	typedef TT TreeType;
+
+	mewa::lua::ObjectTableName objTableName;
 	std::shared_ptr<TreeType> tree;
 	std::size_t nodeidx;
+
 public:
-	void init() noexcept
+	void init( const mewa::lua::ObjectTableName& objTableName_) noexcept
 	{
+		objTableName.initCopy( objTableName_);
 		tree.reset();
 		nodeidx = 0;
 	}
@@ -146,9 +155,16 @@ public:
 	}
 	void destroy( lua_State* ls) noexcept
 	{
-		init();
+		tree.reset();
+		nodeidx = 0;
+	}
+	void createCopy( const mewa_treetemplate_userdata_t& o, std::size_t nodeidx_)
+	{
+		tree = o.tree;
+		nodeidx = nodeidx_;
 	}
 };
+
 
 struct mewa_objtree_userdata_t	:public mewa_treetemplate_userdata_t<mewa::TypeDatabase::ObjectInstanceTree>
 {

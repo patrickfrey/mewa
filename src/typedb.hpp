@@ -153,12 +153,13 @@ public:
 		int toType;
 		int fromType;
 		int constructor;
+		int tag;
 		float weight;
 
 		ReductionDefinition( const ReductionDefinition& o) noexcept
-			:toType(o.toType),fromType(o.fromType),constructor(o.constructor),weight(o.weight){}
-		ReductionDefinition( int toType_, int fromType_, int constructor_, float weight_) noexcept
-			:toType(toType_),fromType(fromType_),constructor(constructor_),weight(weight_){}
+			:toType(o.toType),fromType(o.fromType),constructor(o.constructor),tag(o.tag),weight(o.weight){}
+		ReductionDefinition( int toType_, int fromType_, int constructor_, int tag_, float weight_) noexcept
+			:toType(toType_),fromType(fromType_),constructor(constructor_),tag(tag_),weight(weight_){}
 	};
 	typedef std::vector<ReductionDefinition> ReductionDefinitionList;
 	typedef std::vector<int> TypeDefinitionList;

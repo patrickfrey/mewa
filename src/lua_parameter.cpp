@@ -351,7 +351,7 @@ void mewa::lua::pushParameters(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const mewa::TypeDatabase::ParameterList& parameters)
 {
-	checkStack( functionName, ls, parameters.size()+6);
+	checkStack( functionName, ls, 8);
 
 	lua_getglobal( ls, objTableName);
 	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);
@@ -364,4 +364,37 @@ void mewa::lua::pushParameters(
 	}
 	lua_replace( ls, -2);								// STK: [PARAMTAB]
 }
+
+void mewa::lua::pushReductionDefinition(
+		lua_State* ls, const char* functionName, const char* objTableName,
+		const mewa::TypeDatabase::ReductionDefinition& redu)
+{
+	checkStack( functionName, ls, 6);
+
+	lua_getglobal( ls, objTableName);		// STK: [OBJTAB] 
+	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);	// STK: [OBJTAB] [REDUTAB] 
+
+	lua_pushliteral( ls, "to");			// STK: [OBJTAB] [REDUTAB] "to"
+	lua_pushinteger( ls, redu.toType);		// STK: [OBJTAB] [REDUTAB] "to" [TYPE]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+
+	lua_pushliteral( ls, "from");			// STK: [OBJTAB] [REDUTAB] "from"
+	lua_pushinteger( ls, redu.fromType);		// STK: [OBJTAB] [REDUTAB] "from" [TYPE]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+
+	lua_pushliteral( ls, "constructor");		// STK: [OBJTAB] [REDUTAB] "constructor"
+	lua_rawgeti( ls, -4, redu.constructor);		// STK: [OBJTAB] [REDUTAB] "constructor" [CONSTRUCTOR]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+
+	lua_pushliteral( ls, "tag");			// STK: [OBJTAB] [REDUTAB] "tag"
+	lua_pushinteger( ls, redu.tag);			// STK: [OBJTAB] [REDUTAB] "tag" [TAG]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+
+	lua_pushliteral( ls, "weight");			// STK: [OBJTAB] [REDUTAB] "weight"
+	lua_pushnumber( ls, redu.weight);		// STK: [OBJTAB] [REDUTAB] "weight" [WEIGHT]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+
+	lua_replace( ls, -2);				// STK: [OBJTAB]
+}
+
 

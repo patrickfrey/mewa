@@ -78,6 +78,9 @@ void pushResolveResultItems(
 void pushParameters(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const mewa::TypeDatabase::ParameterList& parameters);
+void pushReductionDefinition(
+		lua_State* ls, const char* functionName, const char* objTableName,
+		const mewa::TypeDatabase::ReductionDefinition& redu);
 
 }} //namespace
 #else

@@ -746,6 +746,14 @@ public:
 	{
 		return TagMask( 0xffFFffFFU);
 	}
+	static int tagFromTagVal( std::uint8_t tagval) noexcept
+	{
+		return tagval + 1;
+	}
+	static std::uint8_t tagValFromTag( int tag) noexcept
+	{
+		return tag - 1;
+	}
 
 private:
 	void add( int tag_)
@@ -793,7 +801,7 @@ public:
 		if (tag > TagMask::MaxTag || tag < TagMask::MinTag) throw Error( Error::BadRelationTag, string_format("%d",tag));
 		if (weight <= std::numeric_limits<float>::epsilon()*10) throw Error( Error::BadRelationWeight, string_format("%.4f",weight));
 
-		std::uint8_t tagval = tag -1;
+		std::uint8_t tagval = TagMask::tagValFromTag( tag);
 		int newlistindex = m_list.size();
 		int li = m_map.getOrSet( scope, left, newlistindex);
 		int prev_li = -1;
@@ -851,7 +859,7 @@ public:
 		int tag;
 
 		TreeNodeElement( const std::pair<RELNODETYPE,RELNODETYPE>& relation_, const VALTYPE& value_, std::uint8_t tagval_, float weight_)
-			:relation(relation_),value(value_),weight(weight_),tag(tagval_+1){}
+			:relation(relation_),value(value_),weight(weight_),tag(TagMask::tagFromTagVal(tagval_)){}
 		TreeNodeElement( const TreeNodeElement& o)
 			:relation(o.relation),value(o.value),weight(o.weight),tag(o.tag){}
 	};

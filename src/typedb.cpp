@@ -537,7 +537,7 @@ TypeDatabase::ReductionDefinitionTree TypeDatabase::getReductionDefinitionTree()
 			ScopeHierarchyTreeNode<ReductionDefinitionList> rt( node.scope, {});
 			for (auto const& elem : node.value)
 			{
-				rt.value.emplace_back( elem.relation.second/*toType*/, elem.relation.first/*fromType*/, elem.value/*constructor*/, elem.weight);
+				rt.value.emplace_back( elem.relation.second/*toType*/, elem.relation.first/*fromType*/, elem.value/*constructor*/, elem.tag, elem.weight);
 			}
 			return rt;
 		}
