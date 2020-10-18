@@ -17,6 +17,10 @@ DEBUGFLAGS:=-ggdb -g3 -O0 $(DEBUGFLAGS)
 else
 DEBUGFLAGS=-O3
 endif
+ifneq ($(strip $(VERBOSE)),)
+CXXVBFLAGS 	:=-v
+TSTVBFLAGS 	:=-V
+endif
 
 ifeq ($(strip $(PREFIX)),/usr)
 MANPAGES := `man --path | awk  '1' RS=":" | grep /usr/share | awk 'NR==1{print $1}'`
@@ -42,7 +46,7 @@ MAKEDEP  := Lua.inc GNUmakefile configure
 SRCDIR   := src
 TESTDIR  := tests
 STDFLAGS := -std=c++17
-CXXFLAGS := -c $(STDFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread $(DEBUGFLAGS)
+CXXFLAGS := -c $(STDFLAGS) $(CXXVBFLAGS) $(DEBUGFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread
 INCFLAGS := -I$(SRCDIR) -I$(LUAINC)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
@@ -95,13 +99,13 @@ $(MODULE): $(LIBRARY) $(MODOBJS)
 	$(LNKSO) $(LUALIBS) $(LDLIBS) -o $@ $(MODOBJS) $(LIBRARY)
 
 test : all
-	$(BUILDDIR)/testLexer
-	$(BUILDDIR)/testScope
-	$(BUILDDIR)/testRandomScope
-	$(BUILDDIR)/testRandomIdentMap
-	$(BUILDDIR)/testAutomaton
-	$(BUILDDIR)/testTypeDb
-	$(BUILDDIR)/testRandomTypeDb
+	$(BUILDDIR)/testLexer $(TSTVBFLAGS)
+	$(BUILDDIR)/testScope $(TSTVBFLAGS)
+	$(BUILDDIR)/testRandomScope $(TSTVBFLAGS)
+	$(BUILDDIR)/testRandomIdentMap $(TSTVBFLAGS)
+	$(BUILDDIR)/testAutomaton $(TSTVBFLAGS)
+	$(BUILDDIR)/testTypeDb $(TSTVBFLAGS)
+	$(BUILDDIR)/testRandomTypeDb $(TSTVBFLAGS)
 	tests/luatest.sh "$(LUABIN)"
 check: test
 
