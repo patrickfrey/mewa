@@ -21,16 +21,17 @@ local errorCount = 0
 function checkTestResult( testname, result, expected)
 	if result ~= expected then
 		if (verbose) then
-			print( "RUN " .. testname .. "()\n" .. result .. "\nERR")
+			print( "RUN " .. testname .. "()\n" .. result .. "\nERR\nEXPECTED:" .. expected .. "\n")
 		else
 			print( "RUN " .. testname .. "() ERR")
 		end
 		errorCount = errorCount + 1
-	end
-	if (verbose) then
-		print( "RUN " .. testname .. "()\n" .. result .. "\nOK")
 	else
-		print( "RUN " .. testname .. "() OK")
+		if (verbose) then
+			print( "RUN " .. testname .. "()\n" .. result .. "\nOK")
+		else
+			print( "RUN " .. testname .. "() OK")
+		end
 	end
 end
 
@@ -78,6 +79,7 @@ function testRegisterAllocator()
 	checkTestResult( "testRegisterAllocator", result, expected)
 end
 
+
 -- Function that tests the typedb define/resolve type 
 function testDefineResolveType()
 	typedb = mewa.typedb()
@@ -95,17 +97,19 @@ function testDefineResolveType()
 	function reduceType( constructor)
 		return "param " .. constructor.type
 	end
-	function printTypeTree( node, indent)
+	function typeTreeToString( node, indent)
+		rt = ""
 		for chld in node:chld() do
 			local startscope,endscope = chld:scope()
-			local indentstr = string.rep("  ", indent);
-			print( string.format( "%s[%d,%d]:", indentstr, startscope, endscope))
+			local indentstr = string.rep("  ", indent)
+			rt = rt .. string.format( "%s[%d,%d]:", indentstr, startscope, endscope) .. "\n"
 			for type in chld:list() do
 				local constructor = typedb:type_constructor( type)
-				print( string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor)))
+				rt = rt .. string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor, false)) .. "\n"
 			end
-			printTypeTree( chld, indent+1)
+			rt = rt .. typeTreeToString( chld, indent+1)
 		end
+		return rt
 	end
 
 	local tag_fcc_conv = 1
@@ -130,10 +134,10 @@ function testDefineResolveType()
 
 	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "any"), tag_fcc_conv, 1.0)
 
-	printTypeTree( typedb:type_tree(), 0)
+	local result = ""
+	result = result .. "TYPE TREE\n" .. typeTreeToString( typedb:type_tree(), 0)
 
 	local step = 34
-	local result = ""
 	local types = {short_type, int_type, float_type}
 	for i,type in ipairs( types) do
 		for i,reduction in ipairs( typedb:type_reductions( step, type, mask_resolve)) do
@@ -149,24 +153,29 @@ function testDefineResolveType()
 		result = result .. "\nSELECT REDU " .. typedb:type_string( redu[2]) .. " -> " .. typedb:type_string( redu[1])
 					.. " : " .. constructor( typedb:type_string( redu[2]))
 	end
-	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"}}
+	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"},{any_type, "+"}}
 	for i,qry in ipairs( resolve_queries) do
-		local reductions,items = typedb:resolve_type( 12, any_type, "+", mask_resolve)
-		print ("+++REDUS:" .. mewa.tostring( reductions) .. "+++")
-		print ("+++ITEMS:" .. mewa.tostring( items) .. "+++")
+		local reductions,items = typedb:resolve_type( 12, qry[1], qry[2], mask_resolve)
 		prev_type = any_type
 		for i,reduction in ipairs( reductions) do
-			print ("***** " .. mewa.tostring( typedb:type_string( reduction.type)))
-			result = result .. "\nRESOLVE REDU " .. typedb:type_string( prev_type) .. "<-" .. typedb:type_string( reduction.type)
+			result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
 					.. " : " reduction.constructor( prev_type)
 			prev_type = reduction.type
 		end
 		for i,item in ipairs( items) do
-			print ("+++ITEM:" .. mewa.tostring( item) .. "+++")
-			result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item.type) .. " : " .. item.constructor
+			result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item.type) .. " : " .. mewa.tostring( item.constructor, false)
 		end
 	end
 	local expected = [[
+TYPE TREE
+[0,100]:
+  - any : {code = "#any",type = "any"}
+  - short : {code = "#short",type = "short"}
+  - int : {code = "#int",type = "int"}
+  - float : {code = "#float",type = "float"}
+  - short +( short) : {code = "short+short",op = "add",type = "short"}
+  - int +( int) : {code = "int+int",op = "add",type = "int"}
+  - float +( float) : {code = "float+float",op = "add",type = "float"}
 
 REDU short -> float : #float(short)
 REDU short -> int : #int(short)
@@ -179,7 +188,12 @@ SELECT REDU float -> short : #short(float)
 SELECT REDU float -> int : #int(float)
 SELECT REDU short -> int : #int(short)
 SELECT REDU short -> float : #float(short)
-SELECT REDU int -> float : #float(int)]]
+SELECT REDU int -> float : #float(int)
+RESOLVE ITEM short +( short) : {code = "short+short",op = "add",type = "short"}
+RESOLVE ITEM int +( int) : {code = "int+int",op = "add",type = "int"}
+RESOLVE ITEM float +( float) : {code = "float+float",op = "add",type = "float"}
+RESOLVE REDU float<-any : 
+RESOLVE ITEM float +( float) : {code = "float+float",op = "add",type = "float"}]]
 	checkTestResult( "testDefineResolveType", result, expected)
 end
 
@@ -189,4 +203,5 @@ testDefineResolveType()
 if errorCount > 0 then
 	error( "result of " .. errorCount .. " tests not as expected!")
 end
+
 
