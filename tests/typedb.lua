@@ -95,6 +95,19 @@ function testDefineResolveType()
 	function reduceType( constructor)
 		return "param " .. constructor.type
 	end
+	function printTypeTree( node, indent)
+		for chld in node:chld() do
+			local startscope,endscope = chld:scope()
+			local indentstr = string.rep("  ", indent);
+			print( string.format( "%s[%d,%d]:", indentstr, startscope, endscope))
+			for type in chld:list() do
+				local constructor = typedb:type_constructor( type)
+				print( string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor)))
+			end
+			printTypeTree( chld, indent+1)
+		end
+	end
+
 	local tag_fcc_conv = 1
 	local mask_resolve = typedb.reduction_tagmask( tag_fcc_conv)
 
@@ -116,6 +129,8 @@ function testDefineResolveType()
 	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), tag_fcc_conv, 1.0)
 
 	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "any"), tag_fcc_conv, 1.0)
+
+	printTypeTree( typedb:type_tree(), 0)
 
 	local step = 34
 	local result = ""
@@ -141,6 +156,7 @@ function testDefineResolveType()
 		print ("+++ITEMS:" .. mewa.tostring( items) .. "+++")
 		prev_type = any_type
 		for i,reduction in ipairs( reductions) do
+			print ("***** " .. mewa.tostring( typedb:type_string( reduction.type)))
 			result = result .. "\nRESOLVE REDU " .. typedb:type_string( prev_type) .. "<-" .. typedb:type_string( reduction.type)
 					.. " : " reduction.constructor( prev_type)
 			prev_type = reduction.type

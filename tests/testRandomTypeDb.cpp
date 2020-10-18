@@ -280,7 +280,7 @@ static std::string reductionsToString( TypeDatabase& typedb, const std::pmr::vec
 	for (auto const& redu :reductions)
 	{
 		TypeDatabase::ResultBuffer resbuf;
-		if (ridx++) rt.append( " -> ");
+		rt.append( (ridx++) ? " -> ":"-> ");
 		rt.append( typedb.typeToString( redu.type, resbuf));
 	}
 	return rt;
@@ -333,10 +333,16 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 		int ridx = 0;
 		for (auto resultnode : resultnodes)
 		{
-			if (ridx++) expc_str.append( " -> ");
-			expc_str.append( string_format( "%ld", resultnode->item.product));
+			if (ridx == 0)
+			{}
+			else
+			{
+				expc_str.append( ridx == 1 ? "-> " : " -> ");
+				expc_str.append( string_format( "%ld", resultnode->item.product));
+			}
+			++ridx;
 		}
-		expc_str.append( " {");
+		expc_str.append( expc_str.empty() ? "{" : " {");
 		expc_str.append( string_format("%ld %s", resultnodes.back()->item.product, procnam.c_str()));
 		expc_str.append( "}");
 	}

@@ -307,7 +307,7 @@ void mewa::lua::pushTypeConstructor(
 	checkStack( functionName, ls, 6);
 
 	lua_getglobal( ls, objTableName);		// STK: [OBJTAB] 
-	lua_rawgeti( ls, -2, constructor);		// STK: [OBJTAB] [CONSTRUCTOR]
+	lua_rawgeti( ls, -1, constructor);		// STK: [OBJTAB] [CONSTRUCTOR]
 	lua_replace( ls, -2);				// STK: [CONSTRUCTOR]
 }
 
@@ -383,7 +383,7 @@ void mewa::lua::pushReductionDefinition(
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
 
 	lua_pushliteral( ls, "constructor");		// STK: [OBJTAB] [REDUTAB] "constructor"
-	lua_rawgeti( ls, -4, redu.constructor);		// STK: [OBJTAB] [REDUTAB] "constructor" [CONSTRUCTOR]
+	lua_rawgeti( ls, -3, redu.constructor);		// STK: [OBJTAB] [REDUTAB] "constructor" [CONSTRUCTOR]
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
 
 	lua_pushliteral( ls, "tag");			// STK: [OBJTAB] [REDUTAB] "tag"

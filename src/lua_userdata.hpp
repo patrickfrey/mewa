@@ -133,25 +133,106 @@ public:
 	static const char* metatableName() noexcept {return MEWA_TYPEDB_METATABLE_NAME;}
 };
 
+template <class T>
+class shared_ptr
+{
+public:
+	shared_ptr()
+	{
+		m_refcnt=0;
+	}
+	shared_ptr( const shared_ptr<T>& o) = delete;
+	shared_ptr( shared_ptr<T>&& o) = delete;
+	~shared_ptr()
+	{
+		reset();
+	}
+	void init()
+	{
+		m_refcnt=0;
+	}
+	void reset()
+	{
+		if (m_refcnt)
+		{
+			if (*m_refcnt == 1)
+			{
+				((T*)(m_refcnt+1))->~T();
+				std::free( m_refcnt);
+			}
+			else
+			{
+				*m_refcnt -= 1;
+			}
+		}
+	}
+	void reset( T&& obj)
+	{
+		reset();
+		m_refcnt = (int*)std::malloc( sizeof(int)+sizeof(T));
+		if (m_refcnt == nullptr) throw std::bad_alloc();
+		*m_refcnt = 1;
+		T* ptr = (T*)(m_refcnt+1);
+		new (ptr) T( std::move( obj));
+	}
+	T* get() noexcept
+	{
+		return (T*)(m_refcnt+1);
+	}
+	T const* get() const noexcept
+	{
+		return (T const*)(m_refcnt+1);
+	}
+	T& operator*() noexcept
+	{
+		return *get();
+	}
+	T const& operator*() const noexcept
+	{
+		return *get();
+	}
+	shared_ptr<T>& operator=( const shared_ptr<T>& o)
+	{
+		if (o.m_refcnt)
+		{
+			if (o.m_refcnt != m_refcnt)
+			{
+				reset();
+				m_refcnt = o.m_refcnt;
+				*m_refcnt += 1;
+			}
+		}
+		else
+		{
+			reset();
+		}
+		return *this;
+	}
+
+private:
+	int* m_refcnt;
+};
+
 template <class TT>
 struct mewa_treetemplate_userdata_t
 {
 	typedef TT TreeType;
 
 	mewa::lua::ObjectTableName objTableName;
-	std::shared_ptr<TreeType> tree;
+	shared_ptr<TreeType> tree;
 	std::size_t nodeidx;
 
 public:
 	void init( const mewa::lua::ObjectTableName& objTableName_) noexcept
 	{
 		objTableName.initCopy( objTableName_);
-		tree.reset();
+		tree.init();
 		nodeidx = 0;
 	}
 	void create( TreeType&& o)
 	{
-		tree.reset( new TreeType( std::move( o)));
+		tree.reset( TreeType( std::move( o)));
+		nodeidx = 1;
 	}
 	void destroy( lua_State* ls) noexcept
 	{

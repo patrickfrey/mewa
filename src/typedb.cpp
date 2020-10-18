@@ -243,7 +243,10 @@ public:
 		while (index >= 0)
 		{
 			const ReduStackElem& ee = m_ar[ index];
-			result.push_back( {ee.type, ee.constructor} );
+			if (ee.prev != -1)
+			{
+				result.push_back( {ee.type, ee.constructor} );
+			}
 			index = ee.prev;
 		}
 		std::reverse( result.begin(), result.end());
