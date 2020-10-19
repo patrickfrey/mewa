@@ -53,13 +53,13 @@ LDLIBS   := -lm -lstdc++
 LIBOBJS  := $(BUILDDIR)/lexer.o \
 		$(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/automaton_parser.o \
 		$(BUILDDIR)/typedb.o \
-                $(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o
+                $(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o $(BUILDDIR)/error.o
 MODOBJS  := $(BUILDDIR)/lualib_mewa.o \
 		$(BUILDDIR)/lua_load_automaton.o $(BUILDDIR)/lua_run_compiler.o \
 		$(BUILDDIR)/lua_serialize.o $(BUILDDIR)/lua_parameter.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
-TESTPRG  := $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
+TESTPRG  := $(BUILDDIR)/testError $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
 		$(BUILDDIR)/testRandomIdentMap $(BUILDDIR)/testAutomaton \
 		$(BUILDDIR)/testTypeDb $(BUILDDIR)/testRandomTypeDb
 PROGRAM  := $(BUILDDIR)/mewa
@@ -99,6 +99,7 @@ $(MODULE): $(LIBRARY) $(MODOBJS)
 	$(LNKSO) $(LUALIBS) $(LDLIBS) -o $@ $(MODOBJS) $(LIBRARY)
 
 test : all
+	$(BUILDDIR)/testError $(TSTVBFLAGS)
 	$(BUILDDIR)/testLexer $(TSTVBFLAGS)
 	$(BUILDDIR)/testScope $(TSTVBFLAGS)
 	$(BUILDDIR)/testRandomScope $(TSTVBFLAGS)

@@ -18,6 +18,7 @@
 #include <exception>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 
 namespace mewa {
 
@@ -29,20 +30,21 @@ public:
 		Ok=0,
 		MemoryAllocationError=400,
 		LogicError=401,
-		FileReadError=402,
-		SerializationError=403,
-		InternalSourceExpectedNullTerminated=404,
-		ExpectedStringArgument=405,
-		ExpectedIntegerArgument=406,
-		ExpectedNonNegativeIntegerArgument=407,
-		ExpectedCardinalArgument=408,
-		ExpectedFloatingPointArgument=409,
-		ExpectedTableArgument=410,
-		ExpectedArgumentScopeStructure=411,
-		ExpectedArgumentParameterStructure=412,
-		ExpectedArgumentNotNil=413,
-		TooFewArguments=414,
-		TooManyArguments=415,
+		UnspecifiedError=402,
+		FileReadError=403,
+		SerializationError=404,
+		InternalSourceExpectedNullTerminated=405,
+		ExpectedStringArgument=406,
+		ExpectedIntegerArgument=407,
+		ExpectedNonNegativeIntegerArgument=408,
+		ExpectedCardinalArgument=409,
+		ExpectedFloatingPointArgument=410,
+		ExpectedTableArgument=411,
+		ExpectedArgumentScopeStructure=412,
+		ExpectedArgumentParameterStructure=413,
+		ExpectedArgumentNotNil=414,
+		TooFewArguments=415,
+		TooManyArguments=416,
 
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
@@ -124,7 +126,9 @@ public:
 	};
 
 public:
-	Error( Code code_ = Ok, int line_=0)
+	Error()
+		:std::runtime_error(""),m_code(Ok),m_line(0){}
+	Error( Code code_, int line_=0)
                 :std::runtime_error(map2string(code_,"",line_)),m_code(code_),m_line(line_){}
 	Error( Code code_, const std::string& param_, int line_=0)
                 :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_line(line_){}
@@ -136,7 +140,7 @@ public:
                 :std::runtime_error(o),m_code(o.m_code),m_line(o.m_line){}
 
 	Code code() const noexcept		{return m_code;}
-	const char* arg() const noexcept	{return std::strchr( what(), ':');}
+	const char* arg() const noexcept	{char const* rt = std::strstr( what(), ": "); return rt?(rt+2):rt;}
         int line() const noexcept		{return m_line;}
 
         const char* what() const noexcept override
@@ -144,144 +148,16 @@ public:
 		return std::runtime_error::what();
 	}
 
+	static Error parseError( const char* errstr) noexcept;
+
 public:
-        static const char* code2String( int code_)
-	{
-		if (code_ < 300)
-		{
-			return std::strerror( code_);
-		}
-		else switch ((Code)code_)
-		{
-			case Ok: return "";
-			case MemoryAllocationError: return "memory allocation error";
-			case LogicError: return "Logic error";
-			case FileReadError: return "Unknown error reading file, could not read until end of file";
-			case SerializationError: return "Unspecified error serializing a lua data structure";
-			case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
-			case ExpectedStringArgument: return "Expected string as argument";
-			case ExpectedIntegerArgument: return "Expected integer as argument";
-			case ExpectedNonNegativeIntegerArgument: return "Expected non negative integer as argument";
-			case ExpectedCardinalArgument: return "Expected positive integer as argument";
-			case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
-			case ExpectedTableArgument: return "Expected table as argument";
-			case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
-			case ExpectedArgumentParameterStructure:  return "Expected argument to be a type parameter structure (pair type,constructor)";
-			case ExpectedArgumentNotNil: return "Expected argument to be not nil";
-			case TooFewArguments: return "too few arguments";
-			case TooManyArguments: return "too many arguments";
-
-			case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
-			case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
-			case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";
-			case InvalidRegexInLexer: return "Bad regular expression definition for the lexer";
-			case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
-			case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
-			case CompiledSourceTooComplex: return "Too complex source file (counter overflow)";
-
-			case BadMewaVersion: return "Bad mewa version";
-			case MissingMewaVersion: return "Missing mewa version";
-			case IncompatibleMewaMajorVersion: return "Incompatible mewa major version. You need a higher version of the mewa Lua module";
-
-			case TooManyTypeArguments: return "Too many arguments in type definition";
-			case PriorityOutOfRange: return "Priority value out of range";
-			case DuplicateDefinition: return "Duplicate definition";
-			case BadRelationWeight: return "Bad weight <= 0.0 given to relation, possibly leading to endless loop in search";
-			case BadRelationTag: return "Bad value tor tag attached to relation, must be a cardinal number in {1..32}";
-			case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
-
-			case UnresolvableType: return "Failed to resolve type";
-			case AmbiguousTypeReference: return "Ambiguous type reference";
-			case AmbiguousReductionDefinition: return "Ambiguous reduction definition";
-			case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";
-
-			case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
-			case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";
-			case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
-			case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
-			case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
-
-			case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
-			case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";
-			case EscapeQuoteErrorInString: return "Some internal pattern string mapping error in the grammar definition";
-
-			case CommandNumberOfArgumentsInGrammarDef: return "Wrong number of arguments for command (followed by '%') in the grammar definition";
-			case CommandNameUnknownInGrammarDef: return "Unknown command (followed by '%') in the grammar definition";
-
-			case DefinedAsTerminalAndNonterminalInGrammarDef: return "Identifier defined as nonterminal and as lexem in the grammar definition not allowed";
-			case UnresolvedIdentifierInGrammarDef: return "Unresolved identifier in the grammar definition";
-			case UnreachableNonTerminalInGrammarDef: return "Unreachable nonteminal in the grammar definition";
-			case StartSymbolReferencedInGrammarDef: return "Start symbol referenced on the right side of a rule in the grammar definition";
-			case StartSymbolDefinedTwiceInGrammarDef: return "Start symbol defined on the left side of more than one rule of the grammar definition";
-			case EmptyGrammarDef: return "The grammar definition is empty";
-			case PriorityConflictInGrammarDef: return "Priority definition conflict in the grammar definition";
-			case NoAcceptStatesInGrammarDef: return "No accept states in the grammar definition";
-
-			case ShiftReduceConflictInGrammarDef: return "SHIFT/REDUCE conflict in the grammar definition";
-			case ReduceReduceConflictInGrammarDef: return "REDUCE/REDUCE conflict in the grammar definition";
-			case ShiftShiftConflictInGrammarDef: return "SHIFT/SHIFT conflict in the grammar definition";
-			case ConflictsInGrammarDef: return "Conflicts detected in the grammar definition. No output written.";
-
-			case ComplexityMaxStateInGrammarDef: return "To many states in the resulting tables of the grammar";
-			case ComplexityMaxNofProductionsInGrammarDef: return "Too many productions defined in the grammar";
-			case ComplexityMaxProductionLengthInGrammarDef: return "To many productions in the resulting tables of the grammar";
-			case ComplexityMaxProductionPriorityInGrammarDef: return "Priority value assigned to production exceeds maximum value allowed";
-			case ComplexityMaxNonterminalInGrammarDef: return "To many nonterminals in the resulting tables of the grammar";
-			case ComplexityMaxTerminalInGrammarDef: return "To many terminals (lexems) in the resulting tables of the grammar";
-			case ComplexityLR1FollowSetsInGrammarDef: return "To many distinct FOLLOW sets of terminals (lexems) in the resulting tables of the grammar";
-
-			case BadKeyInGeneratedLuaTable: return "Bad key encountered in table generated by mewa grammar compiler";
-			case BadValueInGeneratedLuaTable: return "Bad value encountered in table generated by mewa grammar compiler";
-			case UnresolvableFunctionInLuaCallTable: return "Function defined in Lua call table is undefined";
-			case UnresolvableFunctionArgInLuaCallTable: return "Function context argument defined in Lua call table is undefined";
-			case BadElementOnCompilerStack: return "Bad token on the Lua stack of the compiler";
-			case NoLuaFunctionDefinedForItem: return "Item found with no Lua function defined for collecting it";
-
-			case LuaCallErrorERRRUN: return "Lua runtime error (ERRRUN)";
-			case LuaCallErrorERRMEM: return "Lua memory allocation error (ERRMEM)";
-			case LuaCallErrorERRERR: return "Lua error handler error (ERRERR)";
-			case LuaCallErrorUNKNOWN: return "Lua error handler error (unknown error)";
-			case LuaStackOutOfMemory: return "Lua stack out of memory";
-			case LuaInvalidUserData: return "Userdata argument of this call is invalid";
-
-			case UnexpectedTokenNotOneOf: return "Syntax error, unexpected token (expected one of {...})";
-			case LanguageAutomatonCorrupted: return "Logic error, the automaton for parsing the language is corrupt";
-			case LanguageAutomatonMissingGoto: return "Logic error, the automaton has no goto defined for a follow symbol";
-			case LanguageAutomatonUnexpectedAccept: return "Logic error, got into an unexpected accept state";
-		}
-		return "Unknown error";
-	}
+	static int parseInteger( char const*& si) noexcept;
+	static void skipSpaces( char const*& si) noexcept;
+	static bool skipUntil( char const*& si, char eb) noexcept;
+        static const char* code2String( int code_) noexcept;
 
 private:
-        static std::string map2string( Code code_, const std::string_view& param_, int line_)
-	{
-		char msgbuf[ 256];
-		if (line_ > 0)
-		{
-			std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\" at line %d", (int)code_, code2String((int)code_), line_);
-		}
-		else
-		{
-			std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\"", (int)code_, code2String((int)code_));
-		}
-		try
-		{
-			std::string rt( msgbuf);
-			if (!rt.empty())
-			{
-				rt.push_back(':');
-				rt.push_back(' ');
-				rt.append( param_.data(), param_.size());
-			}
-			return rt;
-		}
-		catch (...)
-		{
-			std::snprintf( msgbuf, sizeof(msgbuf), "#%d", (int)MemoryAllocationError);
-			std::string rt( msgbuf);
-			return rt;
-		}
-	}
+        static std::string map2string( Code code_, const std::string_view& param_, int line_);
 
 private:
 	Code m_code;
