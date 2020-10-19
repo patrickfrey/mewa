@@ -12,28 +12,25 @@ The variable typedb holds now the type database created.
 ## User defined objects in different scopes:
 ### typedb:set_instance
 #### Parameter
-| Name     | Type              | Description                                           |
-| -------- | ----------------- | ----------------------------------------------------- |
-| name     | string            | Name of the object we declare an instance of          |
-| -------- | ----------------- | ----------------------------------------------------- |
-| scope    | pair of integers  | The scope if the instance                             |
-| -------- | ----------------- | ----------------------------------------------------- |
-| instance | anything not nil  | The instance of the object                            |
-| -------- | ----------------- | ----------------------------------------------------- |
+| #   | Name     | Type              | Description                                           |
+| --- | -------- | ----------------- | ----------------------------------------------------- |
+| 1st | name     | string            | Name of the object we declare an instance of          |
+| 2nd | scope    | pair of integers  | The scope if the instance                             |
+| 3rd | instance | anything not nil  | The instance of the object                            |
 
 #### Description
-Defines the instance for the object with name _name_ to be _object_ for the scope _scope_.
+Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
 
 ### typedb:get_instance
 #### Parameter
-| Name | Type     | Description                                           |
-| ---- | -------- | ----------------------------------------------------- |
-| name | string   | Name of the object we declare an instance of          |
-| ---- | -------- | ----------------------------------------------------- |
-| step | integer  | Scope step to locate the instance we are referring to |
-| ---- | -------- | ----------------------------------------------------- |
+| Name   | Name     | Type     | Description                                                  |
+| ------ | -------- | ---------------------------------------------------------------- |
+| 1st    | name     | string   | Name of the object we declare an instance of          |
+| 2nd    | step     | integer  | Scope step to locate the instance we are referring to |
+| return |          | *        | The instance of the object we addressed               |
+
 #### Description
-Returns the instance for the object with name _name_ for the innermost scope including the scope step _step_.
+Get the instance for the object with name _name_ for the innermost scope including the scope step _step_.
 
 ### Example typedb:set_instance / typedb:get_instance
 Implementation of a register allocator for LLVM IR.
