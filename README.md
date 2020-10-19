@@ -8,4 +8,5 @@ The project development is currently ongoing and only what you find in the tests
 * [Glossary](doc/glossary.md)
 * [Mewa grammar description](doc/grammar.md)
 * [Example grammar](examples/language1.g)
+* [The mewa.typedb API](doc/typedb.md)
 

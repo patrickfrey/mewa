@@ -27,7 +27,7 @@ Set the instance for the object with name _name_ to be _object_ for the scope _s
 | ------ | -------- | -------- | ----------------------------------------------------- |
 | 1st    | name     | string   | Name of the object we declare an instance of          |
 | 2nd    | step     | integer  | Scope step to locate the instance we are referring to |
-| return |          | *        | The instance of the object we addressed               |
+| Return |          | *        | The instance of the object we addressed               |
 
 #### Description
 Get the instance for the object with name _name_ for the innermost scope including the scope step _step_.
