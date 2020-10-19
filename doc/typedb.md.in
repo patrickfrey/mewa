@@ -1,0 +1,32 @@
+# The mewa.typedb API
+
+The type database API referred to as _mewa.typedb_ offers you the functions needed to build up the typesystem of your language. 
+
+## Create a new type database
+```lua
+mewa = require("mewa")
+typedb = mewa.typedb()
+```
+The variable typedb holds now the type database created.
+
+## User defined objects in different scopes:
+### *typedb:set_instance* _name_ _scope_ _object_
+Defines the instance for the object with name _name_ to be _object_ for the scope _scope_.
+
+### `_object_ = *typedb:get_instance* _name_ _step_`
+Retrieves the instance for the object with name _name_ for the innermost scope including the scope step _step_.
+
+#### Example 
+Implementation of a register allocator for LLVM IR.
+
+##### Source
+```lua
+$EXAMPLE:RegisterAlloc
+```
+##### Output
+```lua
+$EXAMOUT:RegisterAlloc
+```
+
+
+
