@@ -24,7 +24,7 @@ Implementation of a register allocator for LLVM IR.
 $EXAMPLE:RegisterAlloc
 ```
 ##### Output
-```lua
+```
 $EXAMOUT:RegisterAlloc
 ```
 

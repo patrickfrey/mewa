@@ -15,6 +15,26 @@ GetOptions ("luabin=s"   => \$luabin,    # string
             "verbose|V"  => \$verbose)   # flag
 or die("Error in command line arguments\n");
 
+sub readFile {
+    my $infile = $_[0];
+    my $rt = "";
+    open( INFILE, "$infile") or die "failed to read from file $infile: $!";
+    while (<INFILE>)
+    {
+        $rt .= $_;
+    }
+    close( INFILE);
+    return $rt;
+}
+
+sub writeFile {
+    my $outfile = $_[0];
+    my $content = $_[1];
+    open( OUT, '>', $outfile) or die "failed to write to file $outfile: $!";
+    print( OUT $content);
+    close( OUT);
+}
+
 my $hppfile='src/error.hpp';
 open( FILE, $hppfile) or die("Could not open file $hppfile for reading: $!");
 while (<FILE>)  {
@@ -51,17 +71,10 @@ while (readdir $dirhnd) {
         my $exampleId = $1;
         my $exampleFile = "$exampledir/$exampleId.lua";
         my $exampleOut = "build/$exampleId.out";
-        my $exampleSrc = "";
+        my $exampleSrc = readFile( "$exampleFile");
         my $output = `$luabin $exampleFile`;
-        open( OUT, '>', $exampleOut) or die "failed to write to file $exampleOut: $!";
-        print( OUT $output);
-        close( OUT);
-        open( LUA, $exampleFile) or die "failed to read from file $exampleFile: $!";
-        while (<LUA>)
-        {
-            $exampleSrc .= $_;
-        }
-        close( LUA);
+        writeFile( $exampleOut, $output);
+
         $EXAMPLE{ $exampleId} = $exampleSrc;
         $EXAMOUT{ $exampleId} = $output;
 
@@ -74,43 +87,41 @@ while (readdir $dirhnd) {
 }
 closedir $dirhnd;
 
-sub substVariables( $ )
+sub substVariables
 {
-    my ($line) = $@;
-    if ($line =~ m/^([^$]*)[$]([A-Z]*)[:]([A-Za-z0-9_]*)(.*)$/)
+    my $line = $_[0];
+    if ($line =~ m/^([^\$]*)[\$]([A-Z]+)[:]([A-Za-z0-9_]+)(.*)$/)
     {
         my $rt = $1;
         my $dom = $2;
         my $var = $3;
         my $rest = $4;
-        if ($dom == "ERRCODE")
+        my $substval = "";
+
+        if ($dom eq "ERRCODE")
         {
-            our $ERRCODE;
-            $rt .= $ERRCODE{ $var} . substVariables( $rest);
-            if ($verbose) {print STDERR "SUBST $ERRCODE:$var => $ERRCODE{ $var}\n";}
+            our $ERRCODE; $substval = $ERRCODE{ $var};
         }
-        elsif ($dom == "ERRTEXT")
+        elsif ($dom eq "ERRTEXT")
         {
-            our $ERRTEXT;
-            $rt .= $ERRTEXT{ $var} . substVariables( $rest);
-            if ($verbose) {print STDERR "SUBST $ERRTEXT:$var => $ERRTEXT{ $var}\n";}
+            our $ERRTEXT; $substval = $ERRTEXT{ $var};
         }
-        elsif ($dom == "EXAMPLE")
+        elsif ($dom eq "EXAMPLE")
         {
-            our $EXAMPLE;
-            $rt .= $EXAMPLE{ $var} . substVariables( $rest);
-            if ($verbose) {print STDERR "SUBST $EXAMPLE:$var => $EXAMPLE{ $var}\n";}
+            our $EXAMPLE; $substval = $EXAMPLE{ $var};
         }
-        elsif ($dom == "EXAMOUT")
+        elsif ($dom eq "EXAMOUT")
         {
-            our $EXAMOUT;
-            $rt .= $EXAMOUT{ $var} . substVariables( $rest);
-            if ($verbose) {print STDERR "SUBST $EXAMOUT:$var => $EXAMOUT{ $var}\n";}
+            our $EXAMOUT; $substval = $EXAMOUT{ $var};
         }
         else
         {
             die "Unknown variable domain '$dom'";
         }
+
+        $rt .= $substval . substVariables( $rest);
+        if ($verbose) {print STDERR "SUBST $dom:$var => $substval\n";}
+
         our $USED;
         if (exists( $USED{ "$dom:$var" }))
         {
@@ -128,6 +139,18 @@ sub substVariables( $ )
     }
 }
 
+sub substVariablesFile
+{
+    my $infile = $_[0];
+    my $rt = "";
+    open( INFILE, $infile) or die("Could not open file $infile for reading: $!");
+    while (<INFILE>)  {
+        $rt .= substVariables( $_);
+    }
+    close( INFILE);
+    return $rt;
+}
+
 my $docdir = "doc";
 opendir( my $dochnd, $docdir) || die "Can't open $docdir: $!";
 while (readdir $dochnd) {
@@ -137,15 +160,8 @@ while (readdir $dochnd) {
         my $mdInFile = "$docdir/$mdId.md.in";
         my $mdOutFile = "$docdir/$mdId.md";
 
-        my $output = "";
-        open( INFILE, $mdInFile) or die("Could not open file $mdInFile for reading: $!");
-        while (<INFILE>)  {
-            $output .= substVariables( $_);
-        }
-        close( INFILE);
-        open( OUTFILE, '>', $mdOutFile) or die("Could not open file $mdInFile for writing: $!");
-        print( OUTFILE $output);
-        close( OUTFILE);
+        my $output = substVariablesFile( $mdInFile);
+        writeFile( $mdOutFile, $output);
     }
 }
 closedir $dochnd;
