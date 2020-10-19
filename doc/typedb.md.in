@@ -23,8 +23,8 @@ Set the instance for the object with name _name_ to be _object_ for the scope _s
 
 ### typedb:get_instance
 #### Parameter
-| Name   | Name     | Type     | Description                                                  |
-| ------ | -------- | ---------------------------------------------------------------- |
+| #      | Name     | Type     | Description                                           |
+| ------ | -------- | -------- | ----------------------------------------------------- |
 | 1st    | name     | string   | Name of the object we declare an instance of          |
 | 2nd    | step     | integer  | Scope step to locate the instance we are referring to |
 | return |          | *        | The instance of the object we addressed               |
