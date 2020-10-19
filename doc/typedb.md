@@ -10,16 +10,35 @@ typedb = mewa.typedb()
 The variable typedb holds now the type database created.
 
 ## User defined objects in different scopes:
-### *typedb:set_instance* _name_ _scope_ _object_
+### typedb:set_instance
+#### Parameter
+| Name     | Type              | Description                                           |
+| -------- | ----------------- | ----------------------------------------------------- |
+| name     | string            | Name of the object we declare an instance of          |
+| -------- | ----------------- | ----------------------------------------------------- |
+| scope    | pair of integers  | The scope if the instance                             |
+| -------- | ----------------- | ----------------------------------------------------- |
+| instance | anything not nil  | The instance of the object                            |
+| -------- | ----------------- | ----------------------------------------------------- |
+
+#### Description
 Defines the instance for the object with name _name_ to be _object_ for the scope _scope_.
 
-### `_object_ = *typedb:get_instance* _name_ _step_`
-Retrieves the instance for the object with name _name_ for the innermost scope including the scope step _step_.
+### typedb:get_instance
+#### Parameter
+| Name | Type     | Description                                           |
+| ---- | -------- | ----------------------------------------------------- |
+| name | string   | Name of the object we declare an instance of          |
+| ---- | -------- | ----------------------------------------------------- |
+| step | integer  | Scope step to locate the instance we are referring to |
+| ---- | -------- | ----------------------------------------------------- |
+#### Description
+Returns the instance for the object with name _name_ for the innermost scope including the scope step _step_.
 
-#### Example 
+### Example typedb:set_instance / typedb:get_instance
 Implementation of a register allocator for LLVM IR.
 
-##### Source
+#### Source
 ```lua
 mewa = require("mewa")
 typedb = mewa.typedb()
@@ -45,7 +64,7 @@ print( typedb:get_instance( "register", 500)());
 -- Allocate a register in the scope step 49, that is the second register in [2..300]:
 print( typedb:get_instance( "register", 49)());
 ```
-##### Output
+#### Output
 ```
 %1
 %1
