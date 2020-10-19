@@ -45,6 +45,7 @@ DESTINATION := $(PREFIX)/bin
 MAKEDEP  := Lua.inc GNUmakefile configure
 SRCDIR   := src
 TESTDIR  := tests
+DOCDIR   := doc
 STDFLAGS := -std=c++17
 CXXFLAGS := -c $(STDFLAGS) $(CXXVBFLAGS) $(DEBUGFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread
 INCFLAGS := -I$(SRCDIR) -I$(LUAINC)
@@ -115,4 +116,10 @@ install: all
 	mkdir -p $(MANPAGES)/man1
 	cp MANPAGE $(MANPAGES)/man1/mewa.1
 	gzip -f $(MANPAGES)/man1/mewa.1
+
+# ONLY FOR DEVELOPPERS (All generated files of make doc are checked in):
+DOCSRC := $(wildcard $(DOCDIR)/*.md.in)
+doc: all $(DOCSRC)
+	echo "Substitute some .in files in $(DOCDIR) with verified examples. Needs perl installed ..."
+	perl doc/gen/map_md_in.pl $(TSTVBFLAGS)
 
