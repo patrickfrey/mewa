@@ -308,26 +308,55 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 	else
 	{
 		int nargs = 1;
-		lua_rawgeti( ls, -1, 1);				// STK: [NODE] [CALL] [FUNCNAME]
-		lua_rawgeti( ls, -2, 2);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
-		lua_rawgeti( ls, -3, 3);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG]
+		lua_rawgeti( ls, -1, 1);					// STK: [NODE] [CALL] [FUNCNAME]
+		lua_rawgeti( ls, -2, 2);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
+		lua_rawgeti( ls, -3, 3);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG]
 		if (lua_isnil( ls, -1))
 		{
-			lua_pop( ls, 1);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
-			lua_pushliteral( ls, "arg");			// STK: [NODE] [CALL] [FUNCNAME] [FUNC] "arg"
-			lua_rawget( ls, -5/*[NODE]*/);			// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [ARG]
+			lua_pop( ls, 1);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
+			lua_pushliteral( ls, "arg");				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] "arg"
+			lua_rawget( ls, -5/*[NODE]*/);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [ARG]
 		}
 		else
 		{
 			nargs += 1;
-			lua_pushliteral( ls, "arg");			// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] "arg"
-			lua_rawget( ls, -6/*[NODE]*/);			// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] [ARG]
+			lua_pushliteral( ls, "arg");				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] "arg"
+			lua_rawget( ls, -6/*[NODE]*/);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] [ARG]
 		}
-		int rc = lua_pcall( ls, nargs, 1/*nresults*/, 0/*errfunc*/);
+		int rc = lua_pcall( ls, nargs, 1/*nresults*/, 0/*errfunc*/);	// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
 		if (rc)
 		{
 			const char* msg = lua_tostring( ls, -1);
-			throw mewa::Error( luaErrorCode2ErrorCode( rc), msg ? msg : "");
+			mewa::Error err = mewa::Error::parseError( msg);
+			if (!err.line())
+			{
+				int line = 0;
+				lua_pushliteral( ls, "line");			// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] "line"
+				lua_gettable( ls, -5);				// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] [LINE]
+				if (lua_isnil( ls, -1))
+				{}
+				else if (lua_type( ls, -1) == LUA_TNUMBER)
+				{
+					line = lua_tointeger( ls, -1);
+				}
+				else
+				{
+					throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
+				}
+				lua_pop( ls, 1);				// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
+				if (line)
+				{
+					err = mewa::Error( err, line);
+				}
+			}
+			if (err.code() == mewa::Error::UnspecifiedError)
+			{
+				throw mewa::Error( luaErrorCode2ErrorCode( rc), msg ? msg : "");
+			}
+			else
+			{
+				throw err;
+			}
 		}
 		else if (ctx.dbgout && !lua_isnil( ls, -1))
 		{

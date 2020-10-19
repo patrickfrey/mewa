@@ -138,6 +138,8 @@ public:
                 :std::runtime_error(map2string(code_,param_?param_:"",line_)),m_code(code_),m_line(line_){}
 	Error( const Error& o)
                 :std::runtime_error(o),m_code(o.m_code),m_line(o.m_line){}
+	Error( const Error& o, int line_)
+                :std::runtime_error(o),m_code(o.m_code),m_line(line_){}
 
 	Code code() const noexcept		{return m_code;}
 	const char* arg() const noexcept	{char const* rt = std::strstr( what(), ": "); return rt?(rt+2):rt;}
