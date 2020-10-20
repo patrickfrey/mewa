@@ -163,8 +163,7 @@ const char* Error::code2String( int code_) noexcept
 		case MemoryAllocationError: return "memory allocation error";
 		case LogicError: return "Logic error";
 		case UnspecifiedError: return "Unspecified error";
-		case FileReadError: return "Unknown error reading file, could not read until end of file";
-		case SerializationError: return "Unspecified error serializing a lua data structure";
+		case SerializationError: return "Error serializing a lua data structure";
 		case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
 		case ExpectedStringArgument: return "Expected string as argument";
 		case ExpectedIntegerArgument: return "Expected integer as argument";
@@ -194,7 +193,7 @@ const char* Error::code2String( int code_) noexcept
 		case TooManyTypeArguments: return "Too many arguments in type definition";
 		case PriorityOutOfRange: return "Priority value out of range";
 		case DuplicateDefinition: return "Duplicate definition";
-		case BadRelationWeight: return "Bad weight <= 0.0 given to relation, possibly leading to endless loop in search";
+		case BadRelationWeight: return "Bad weight <= 0.0 given to relation";
 		case BadRelationTag: return "Bad value tor tag attached to relation, must be a cardinal number in {1..32}";
 		case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
 

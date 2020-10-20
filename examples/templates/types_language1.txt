@@ -1,0 +1,16 @@
+double	double	-
+float	float	-
+ulong	i64	unsigned
+long	i64	signed
+uint	i32	unsigned
+int	i32	signed
+ushort	i16	unsigned
+short	i16	signed
+byte	i8	unsigned
+
+
+
+
+
+
+

@@ -1,6 +1,5 @@
-int main( int argc, const char* argv[] )
+%A2 function( %A1 a )
 {
-    %A1 a = (%A1)argc;
     %A2 b = (%A2)a;
-    return (int)b;
+    return b;
 }

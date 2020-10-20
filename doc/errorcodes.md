@@ -9,8 +9,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#400**   _memory allocation error_
 + **#401**   _Logic error_
 + **#402**   _Unspecified error_
-+ **#403**   _Unknown error reading file, could not read until end of file_
-+ **#404**   _Unspecified error serializing a lua data structure_
++ **#404**   _Error serializing a lua data structure_
 + **#405**   _Logic error: String expected to be null terminated_
 
 ## Lua Function Call Argument Errors
@@ -33,7 +32,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#424**   _Bad regular expression definition for the lexer_
 + **#425**   _Keyword defined twice for the lexer (logic error)_
 
-## Compiler Complexity Check Errors
+## Compiler Complexity Boundaries
 + **#426**   _Too many instances created (internal counter overflow)_
 + **#427**   _Too complex source file (counter overflow)_
 
@@ -46,7 +45,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#440**   _Too many arguments in type definition_
 + **#441**   _Priority value out of range_
 + **#442**   _Duplicate definition_
-+ **#443**   _Bad weight <= 0.0 given to relation, possibly leading to endless loop in search_
++ **#443**   _Bad weight <= 0.0 given to relation_
 + **#444**   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
 + **#445**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
 + **#451**   _Failed to resolve type_
@@ -72,7 +71,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#555**   _Start symbol defined on the left side of more than one rule of the grammar definition_
 + **#556**   _The grammar definition is empty_
 
-## Errors due to Conflicts in Grammar Definition
+## Conflicts in Grammar Definition
 + **#557**   _Priority definition conflict in the grammar definition_
 + **#558**   _No accept states in the grammar definition_
 + **#561**   _SHIFT/REDUCE conflict in the grammar definition_
@@ -80,7 +79,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#563**   _SHIFT/SHIFT conflict in the grammar definition_
 + **#564**   _Conflicts detected in the grammar definition. No output written._
 
-## Automaton Definition Complexity Check Errors
+## Automaton Definition Complexity Boundaries
 + **#571**   _To many states in the resulting tables of the grammar_
 + **#572**   _Too many productions defined in the grammar_
 + **#573**   _To many productions in the resulting tables of the grammar_
@@ -103,7 +102,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#595**   _Lua stack out of memory_
 + **#596**   _Userdata argument of this call is invalid_
 
-## Errors Reported by the Generated Compiler
+## Errors Reported by the Generated Parser
 + **#601**   _Syntax error, unexpected token (expected one of {...})_
 
 ## Language Automaton Errors

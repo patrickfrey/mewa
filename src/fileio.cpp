@@ -10,6 +10,7 @@
 /// \brief Functions for reading and writing files
 /// \file "fileio.cpp"
 #include "fileio.hpp"
+#include "strings.hpp"
 #include "error.hpp"
 #include <cstdio>
 #include <cstring>
@@ -42,22 +43,20 @@ std::string mewa::readFile( const std::string& filename)
 	{
 		rt.append( rbuf, RBufsize);
 	}
+	rt.append( rbuf, nn);
+
 	int eno = std::ferror( ff);
+	bool eof = std::feof( ff);
+	std::fclose( ff);
+
 	if (eno)
 	{
-		std::fclose( ff);
 		throw Error( (Error::Code)eno, filename);
 	}
-	if (feof( ff))
+	else if (!eof)
 	{
-		rt.append( rbuf, nn);
+		throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 	}
-	else
-	{
-		std::fclose( ff);
-		throw Error( Error::FileReadError, filename);
-	}
-	std::fclose( ff);
 	return rt;
 }
 

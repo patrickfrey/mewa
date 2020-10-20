@@ -9,7 +9,6 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:MemoryAllocationError**   _$ERRTEXT:MemoryAllocationError_
 + **#$ERRCODE:LogicError**   _$ERRTEXT:LogicError_
 + **#$ERRCODE:UnspecifiedError**   _$ERRTEXT:UnspecifiedError_
-+ **#$ERRCODE:FileReadError**   _$ERRTEXT:FileReadError_
 + **#$ERRCODE:SerializationError**   _$ERRTEXT:SerializationError_
 + **#$ERRCODE:InternalSourceExpectedNullTerminated**   _$ERRTEXT:InternalSourceExpectedNullTerminated_
 
@@ -33,7 +32,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:InvalidRegexInLexer**   _$ERRTEXT:InvalidRegexInLexer_
 + **#$ERRCODE:KeywordDefinedTwiceInLexer**   _$ERRTEXT:KeywordDefinedTwiceInLexer_
 
-## Compiler Complexity Check Errors
+## Compiler Complexity Boundaries
 + **#$ERRCODE:TooManyInstancesCreated**   _$ERRTEXT:TooManyInstancesCreated_
 + **#$ERRCODE:CompiledSourceTooComplex**   _$ERRTEXT:CompiledSourceTooComplex_
 
@@ -72,7 +71,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:StartSymbolDefinedTwiceInGrammarDef**   _$ERRTEXT:StartSymbolDefinedTwiceInGrammarDef_
 + **#$ERRCODE:EmptyGrammarDef**   _$ERRTEXT:EmptyGrammarDef_
 
-## Errors due to Conflicts in Grammar Definition
+## Conflicts in Grammar Definition
 + **#$ERRCODE:PriorityConflictInGrammarDef**   _$ERRTEXT:PriorityConflictInGrammarDef_
 + **#$ERRCODE:NoAcceptStatesInGrammarDef**   _$ERRTEXT:NoAcceptStatesInGrammarDef_
 + **#$ERRCODE:ShiftReduceConflictInGrammarDef**   _$ERRTEXT:ShiftReduceConflictInGrammarDef_
@@ -80,7 +79,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:ShiftShiftConflictInGrammarDef**   _$ERRTEXT:ShiftShiftConflictInGrammarDef_
 + **#$ERRCODE:ConflictsInGrammarDef**   _$ERRTEXT:ConflictsInGrammarDef_
 
-## Automaton Definition Complexity Check Errors
+## Automaton Definition Complexity Boundaries
 + **#$ERRCODE:ComplexityMaxStateInGrammarDef**   _$ERRTEXT:ComplexityMaxStateInGrammarDef_
 + **#$ERRCODE:ComplexityMaxNofProductionsInGrammarDef**   _$ERRTEXT:ComplexityMaxNofProductionsInGrammarDef_
 + **#$ERRCODE:ComplexityMaxProductionLengthInGrammarDef**   _$ERRTEXT:ComplexityMaxProductionLengthInGrammarDef_
@@ -103,7 +102,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:LuaStackOutOfMemory**   _$ERRTEXT:LuaStackOutOfMemory_
 + **#$ERRCODE:LuaInvalidUserData**   _$ERRTEXT:LuaInvalidUserData_
 
-## Errors Reported by the Generated Compiler
+## Errors Reported by the Generated Parser
 + **#$ERRCODE:UnexpectedTokenNotOneOf**   _$ERRTEXT:UnexpectedTokenNotOneOf_
 
 ## Language Automaton Errors

@@ -1253,8 +1253,11 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 		if (isAcceptState( lalr1State, langdef.prodlist))
 		{
 			auto const& prod = langdef.prodlist[0];
-			if (prod.left.index() != 1) throw Error( Error::LogicError); //... start production is first production
-
+			if (prod.left.index() != 1)
+			{
+				//... start production is first production
+				throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+			}
 			m_actions[ ActionKey( stateidx, 0/*EOF terminal*/)]
 				= Action::accept( prod.left.index(), prod.scope, prod.callidx, prod.right.size());
 			++nofAcceptStates;
