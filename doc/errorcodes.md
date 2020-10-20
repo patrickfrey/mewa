@@ -2,108 +2,108 @@
 Mewa uses error codes. Here is a list of all error codes and their description.
 
 ## System and Logic Errors
-*#400*   _memory allocation error_
-*#401*   _Logic error_
-*#402*   _Unspecified error_
-*#403*   _Unknown error reading file, could not read until end of file_
-*#404*   _Unspecified error serializing a lua data structure_
-*#405*   _Logic error: String expected to be null terminated_
++ **#400**   _memory allocation error_
++ **#401**   _Logic error_
++ **#402**   _Unspecified error_
++ **#403**   _Unknown error reading file, could not read until end of file_
++ **#404**   _Unspecified error serializing a lua data structure_
++ **#405**   _Logic error: String expected to be null terminated_
 
 ## Lua Function Call Argument Errors
-*#406*   _Expected string as argument_
-*#407*   _Expected integer as argument_
-*#408*   _Expected non negative integer as argument_
-*#409*   _Expected positive integer as argument_
-*#410*   _Expected floating point number as argument_
-*#411*   _Expected table as argument_
-*#412*   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
-*#413*   _Expected argument to be a type parameter structure (pair type,constructor)_
-*#414*   _Expected argument to be not nil_
-*#415*   _too few arguments_
-*#416*   _too many arguments_
++ **#406**   _Expected string as argument_
++ **#407**   _Expected integer as argument_
++ **#408**   _Expected non negative integer as argument_
++ **#409**   _Expected positive integer as argument_
++ **#410**   _Expected floating point number as argument_
++ **#411**   _Expected table as argument_
++ **#412**   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
++ **#413**   _Expected argument to be a type parameter structure (pair type,constructor)_
++ **#414**   _Expected argument to be not nil_
++ **#415**   _too few arguments_
++ **#416**   _too many arguments_
 
 ## Errors in Lexer
-*#421*   _Bad character in a regular expression passed to the lexer_
-*#422*   _Syntax error in the lexer definition_
-*#423*   _Logic error (array bound read) in the lexer definition_
-*#424*   _Bad regular expression definition for the lexer_
-*#425*   _Keyword defined twice for the lexer (logic error)_
++ **#421**   _Bad character in a regular expression passed to the lexer_
++ **#422**   _Syntax error in the lexer definition_
++ **#423**   _Logic error (array bound read) in the lexer definition_
++ **#424**   _Bad regular expression definition for the lexer_
++ **#425**   _Keyword defined twice for the lexer (logic error)_
 
 ## Compiler Complexity Check Errors
-*#426*   _Too many instances created (internal counter overflow)_
-*#427*   _Too complex source file (counter overflow)_
++ **#426**   _Too many instances created (internal counter overflow)_
++ **#427**   _Too complex source file (counter overflow)_
 
 ## Mewa Version Mismatch Errors
-*#437*   _Bad mewa version_
-*#438*   _Missing mewa version_
-*#439*   _Incompatible mewa major version. You need a higher version of the mewa Lua module_
++ **#437**   _Bad mewa version_
++ **#438**   _Missing mewa version_
++ **#439**   _Incompatible mewa major version. You need a higher version of the mewa Lua module_
 
 ## Typedb Errors
-*#440*   _Too many arguments in type definition_
-*#441*   _Priority value out of range_
-*#442*   _Duplicate definition_
-*#443*   _Bad weight <= 0.0 given to relation, possibly leading to endless loop in search_
-*#444*   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
-*#445*   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
-*#451*   _Failed to resolve type_
-*#452*   _Ambiguous type reference_
-*#453*   _Ambiguous reduction definition_
-*#454*   _Error in scope hierarchy: Defined overlapping scopes without one including the other_
++ **#440**   _Too many arguments in type definition_
++ **#441**   _Priority value out of range_
++ **#442**   _Duplicate definition_
++ **#443**   _Bad weight <= 0.0 given to relation, possibly leading to endless loop in search_
++ **#444**   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
++ **#445**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
++ **#451**   _Failed to resolve type_
++ **#452**   _Ambiguous type reference_
++ **#453**   _Ambiguous reduction definition_
++ **#454**   _Error in scope hierarchy: Defined overlapping scopes without one including the other_
 
 ## Grammar Definition Errors
-*#501*   _Bad character in the grammar definition_
-*#502*   _Value out of range in the grammar definition_
-*#503*   _Unexpected EOF in the grammar definition_
-*#504*   _Unexpected token in the grammar definition_
-*#505*   _More than one scope marker '{}' of '>>' not allowed in a call definition_
-*#521*   _Priority definition for lexems not implemented_
-*#531*   _Unexpected end of rule in the grammar definition_
-*#532*   _Some internal pattern string mapping error in the grammar definition_
-*#541*   _Wrong number of arguments for command (followed by '%') in the grammar definition_
-*#542*   _Unknown command (followed by '%') in the grammar definition_
-*#551*   _Identifier defined as nonterminal and as lexem in the grammar definition not allowed_
-*#552*   _Unresolved identifier in the grammar definition_
-*#553*   _Unreachable nonteminal in the grammar definition_
-*#554*   _Start symbol referenced on the right side of a rule in the grammar definition_
-*#555*   _Start symbol defined on the left side of more than one rule of the grammar definition_
-*#556*   _The grammar definition is empty_
++ **#501**   _Bad character in the grammar definition_
++ **#502**   _Value out of range in the grammar definition_
++ **#503**   _Unexpected EOF in the grammar definition_
++ **#504**   _Unexpected token in the grammar definition_
++ **#505**   _More than one scope marker '{}' of '>>' not allowed in a call definition_
++ **#521**   _Priority definition for lexems not implemented_
++ **#531**   _Unexpected end of rule in the grammar definition_
++ **#532**   _Some internal pattern string mapping error in the grammar definition_
++ **#541**   _Wrong number of arguments for command (followed by '%') in the grammar definition_
++ **#542**   _Unknown command (followed by '%') in the grammar definition_
++ **#551**   _Identifier defined as nonterminal and as lexem in the grammar definition not allowed_
++ **#552**   _Unresolved identifier in the grammar definition_
++ **#553**   _Unreachable nonteminal in the grammar definition_
++ **#554**   _Start symbol referenced on the right side of a rule in the grammar definition_
++ **#555**   _Start symbol defined on the left side of more than one rule of the grammar definition_
++ **#556**   _The grammar definition is empty_
 
 ## Errors due to Conflicts in Grammar Definition
-*#557*   _Priority definition conflict in the grammar definition_
-*#558*   _No accept states in the grammar definition_
-*#561*   _SHIFT/REDUCE conflict in the grammar definition_
-*#562*   _REDUCE/REDUCE conflict in the grammar definition_
-*#563*   _SHIFT/SHIFT conflict in the grammar definition_
-*#564*   _Conflicts detected in the grammar definition. No output written._
++ **#557**   _Priority definition conflict in the grammar definition_
++ **#558**   _No accept states in the grammar definition_
++ **#561**   _SHIFT/REDUCE conflict in the grammar definition_
++ **#562**   _REDUCE/REDUCE conflict in the grammar definition_
++ **#563**   _SHIFT/SHIFT conflict in the grammar definition_
++ **#564**   _Conflicts detected in the grammar definition. No output written._
 
 ## Automaton Definition Complexity Check Errors
-*#571*   _To many states in the resulting tables of the grammar_
-*#572*   _Too many productions defined in the grammar_
-*#573*   _To many productions in the resulting tables of the grammar_
-*#574*   _Priority value assigned to production exceeds maximum value allowed_
-*#575*   _To many nonterminals in the resulting tables of the grammar_
-*#576*   _To many terminals (lexems) in the resulting tables of the grammar_
-*#577*   _To many distinct FOLLOW sets of terminals (lexems) in the resulting tables of the grammar_
++ **#571**   _To many states in the resulting tables of the grammar_
++ **#572**   _Too many productions defined in the grammar_
++ **#573**   _To many productions in the resulting tables of the grammar_
++ **#574**   _Priority value assigned to production exceeds maximum value allowed_
++ **#575**   _To many nonterminals in the resulting tables of the grammar_
++ **#576**   _To many terminals (lexems) in the resulting tables of the grammar_
++ **#577**   _To many distinct FOLLOW sets of terminals (lexems) in the resulting tables of the grammar_
 
 ## Mewa Lua Library Errors
-*#581*   _Bad key encountered in table generated by mewa grammar compiler_
-*#582*   _Bad value encountered in table generated by mewa grammar compiler_
-*#583*   _Function defined in Lua call table is undefined_
-*#584*   _Function context argument defined in Lua call table is undefined_
-*#585*   _Bad token on the Lua stack of the compiler_
-*#586*   _Item found with no Lua function defined for collecting it_
-*#591*   _Lua runtime error (ERRRUN)_
-*#592*   _Lua memory allocation error (ERRMEM)_
-*#593*   _Lua error handler error (ERRERR)_
-*#594*   _Lua error handler error (unknown error)_
-*#595*   _Lua stack out of memory_
-*#596*   _Userdata argument of this call is invalid_
++ **#581**   _Bad key encountered in table generated by mewa grammar compiler_
++ **#582**   _Bad value encountered in table generated by mewa grammar compiler_
++ **#583**   _Function defined in Lua call table is undefined_
++ **#584**   _Function context argument defined in Lua call table is undefined_
++ **#585**   _Bad token on the Lua stack of the compiler_
++ **#586**   _Item found with no Lua function defined for collecting it_
++ **#591**   _Lua runtime error (ERRRUN)_
++ **#592**   _Lua memory allocation error (ERRMEM)_
++ **#593**   _Lua error handler error (ERRERR)_
++ **#594**   _Lua error handler error (unknown error)_
++ **#595**   _Lua stack out of memory_
++ **#596**   _Userdata argument of this call is invalid_
 
 ## Errors Reported by the Generated Compiler
-*#601*   _Syntax error, unexpected token (expected one of {...})_
++ **#601**   _Syntax error, unexpected token (expected one of {...})_
 
 ## Language Automaton Errors
-*#602*   _Logic error, the automaton for parsing the language is corrupt_
-*#603*   _Logic error, the automaton has no goto defined for a follow symbol_
-*#604*   _Logic error, got into an unexpected accept state_
++ **#602**   _Logic error, the automaton for parsing the language is corrupt_
++ **#603**   _Logic error, the automaton has no goto defined for a follow symbol_
++ **#604**   _Logic error, got into an unexpected accept state_
 
