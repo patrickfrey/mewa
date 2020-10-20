@@ -1,7 +1,11 @@
 # Mewa Error Codes
 Mewa uses error codes. Here is a list of all error codes and their description.
 
-## System and Logic Errors
+## System Errors
++ **#1** .. **#200** _Error codes reserved for system errors (errno)_.
+A list for Linux can be found [here](https://nuetzlich.net/errno.html).
+
+## Memory Allocation, Runtime and Logic Errors
 + **#$ERRCODE:MemoryAllocationError**   _$ERRTEXT:MemoryAllocationError_
 + **#$ERRCODE:LogicError**   _$ERRTEXT:LogicError_
 + **#$ERRCODE:UnspecifiedError**   _$ERRTEXT:UnspecifiedError_
