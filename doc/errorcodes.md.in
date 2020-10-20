@@ -1,0 +1,109 @@
+# Mewa Error Codes
+Mewa uses error codes. Here is a list of all error codes and their description.
+
+## System and Logic Errors
+*#$ERRCODE:MemoryAllocationError*   _$ERRTEXT:MemoryAllocationError_
+*#$ERRCODE:LogicError*   _$ERRTEXT:LogicError_
+*#$ERRCODE:UnspecifiedError*   _$ERRTEXT:UnspecifiedError_
+*#$ERRCODE:FileReadError*   _$ERRTEXT:FileReadError_
+*#$ERRCODE:SerializationError*   _$ERRTEXT:SerializationError_
+*#$ERRCODE:InternalSourceExpectedNullTerminated*   _$ERRTEXT:InternalSourceExpectedNullTerminated_
+
+## Lua Function Call Argument Errors
+*#$ERRCODE:ExpectedStringArgument*   _$ERRTEXT:ExpectedStringArgument_
+*#$ERRCODE:ExpectedIntegerArgument*   _$ERRTEXT:ExpectedIntegerArgument_
+*#$ERRCODE:ExpectedNonNegativeIntegerArgument*   _$ERRTEXT:ExpectedNonNegativeIntegerArgument_
+*#$ERRCODE:ExpectedCardinalArgument*   _$ERRTEXT:ExpectedCardinalArgument_
+*#$ERRCODE:ExpectedFloatingPointArgument*   _$ERRTEXT:ExpectedFloatingPointArgument_
+*#$ERRCODE:ExpectedTableArgument*   _$ERRTEXT:ExpectedTableArgument_
+*#$ERRCODE:ExpectedArgumentScopeStructure*   _$ERRTEXT:ExpectedArgumentScopeStructure_
+*#$ERRCODE:ExpectedArgumentParameterStructure*   _$ERRTEXT:ExpectedArgumentParameterStructure_
+*#$ERRCODE:ExpectedArgumentNotNil*   _$ERRTEXT:ExpectedArgumentNotNil_
+*#$ERRCODE:TooFewArguments*   _$ERRTEXT:TooFewArguments_
+*#$ERRCODE:TooManyArguments*   _$ERRTEXT:TooManyArguments_
+
+## Errors in Lexer
+*#$ERRCODE:IllegalFirstCharacterInLexer*   _$ERRTEXT:IllegalFirstCharacterInLexer_
+*#$ERRCODE:SyntaxErrorInLexer*   _$ERRTEXT:SyntaxErrorInLexer_
+*#$ERRCODE:ArrayBoundReadInLexer*   _$ERRTEXT:ArrayBoundReadInLexer_
+*#$ERRCODE:InvalidRegexInLexer*   _$ERRTEXT:InvalidRegexInLexer_
+*#$ERRCODE:KeywordDefinedTwiceInLexer*   _$ERRTEXT:KeywordDefinedTwiceInLexer_
+
+## Compiler Complexity Check Errors
+*#$ERRCODE:TooManyInstancesCreated*   _$ERRTEXT:TooManyInstancesCreated_
+*#$ERRCODE:CompiledSourceTooComplex*   _$ERRTEXT:CompiledSourceTooComplex_
+
+## Mewa Version Mismatch Errors
+*#$ERRCODE:BadMewaVersion*   _$ERRTEXT:BadMewaVersion_
+*#$ERRCODE:MissingMewaVersion*   _$ERRTEXT:MissingMewaVersion_
+*#$ERRCODE:IncompatibleMewaMajorVersion*   _$ERRTEXT:IncompatibleMewaMajorVersion_
+
+## Typedb Errors
+*#$ERRCODE:TooManyTypeArguments*   _$ERRTEXT:TooManyTypeArguments_
+*#$ERRCODE:PriorityOutOfRange*   _$ERRTEXT:PriorityOutOfRange_
+*#$ERRCODE:DuplicateDefinition*   _$ERRTEXT:DuplicateDefinition_
+*#$ERRCODE:BadRelationWeight*   _$ERRTEXT:BadRelationWeight_
+*#$ERRCODE:BadRelationTag*   _$ERRTEXT:BadRelationTag_
+*#$ERRCODE:InvalidHandle*   _$ERRTEXT:InvalidHandle_
+*#$ERRCODE:UnresolvableType*   _$ERRTEXT:UnresolvableType_
+*#$ERRCODE:AmbiguousTypeReference*   _$ERRTEXT:AmbiguousTypeReference_
+*#$ERRCODE:AmbiguousReductionDefinition*   _$ERRTEXT:AmbiguousReductionDefinition_
+*#$ERRCODE:ScopeHierarchyError*   _$ERRTEXT:ScopeHierarchyError_
+
+## Grammar Definition Errors
+*#$ERRCODE:BadCharacterInGrammarDef*   _$ERRTEXT:BadCharacterInGrammarDef_
+*#$ERRCODE:ValueOutOfRangeInGrammarDef*   _$ERRTEXT:ValueOutOfRangeInGrammarDef_
+*#$ERRCODE:UnexpectedEofInGrammarDef*   _$ERRTEXT:UnexpectedEofInGrammarDef_
+*#$ERRCODE:UnexpectedTokenInGrammarDef*   _$ERRTEXT:UnexpectedTokenInGrammarDef_
+*#$ERRCODE:DuplicateScopeInGrammarDef*   _$ERRTEXT:DuplicateScopeInGrammarDef_
+*#$ERRCODE:PriorityDefNotForLexemsInGrammarDef*   _$ERRTEXT:PriorityDefNotForLexemsInGrammarDef_
+*#$ERRCODE:UnexpectedEndOfRuleInGrammarDef*   _$ERRTEXT:UnexpectedEndOfRuleInGrammarDef_
+*#$ERRCODE:EscapeQuoteErrorInString*   _$ERRTEXT:EscapeQuoteErrorInString_
+*#$ERRCODE:CommandNumberOfArgumentsInGrammarDef*   _$ERRTEXT:CommandNumberOfArgumentsInGrammarDef_
+*#$ERRCODE:CommandNameUnknownInGrammarDef*   _$ERRTEXT:CommandNameUnknownInGrammarDef_
+*#$ERRCODE:DefinedAsTerminalAndNonterminalInGrammarDef*   _$ERRTEXT:DefinedAsTerminalAndNonterminalInGrammarDef_
+*#$ERRCODE:UnresolvedIdentifierInGrammarDef*   _$ERRTEXT:UnresolvedIdentifierInGrammarDef_
+*#$ERRCODE:UnreachableNonTerminalInGrammarDef*   _$ERRTEXT:UnreachableNonTerminalInGrammarDef_
+*#$ERRCODE:StartSymbolReferencedInGrammarDef*   _$ERRTEXT:StartSymbolReferencedInGrammarDef_
+*#$ERRCODE:StartSymbolDefinedTwiceInGrammarDef*   _$ERRTEXT:StartSymbolDefinedTwiceInGrammarDef_
+*#$ERRCODE:EmptyGrammarDef*   _$ERRTEXT:EmptyGrammarDef_
+
+## Errors due to Conflicts in Grammar Definition
+*#$ERRCODE:PriorityConflictInGrammarDef*   _$ERRTEXT:PriorityConflictInGrammarDef_
+*#$ERRCODE:NoAcceptStatesInGrammarDef*   _$ERRTEXT:NoAcceptStatesInGrammarDef_
+*#$ERRCODE:ShiftReduceConflictInGrammarDef*   _$ERRTEXT:ShiftReduceConflictInGrammarDef_
+*#$ERRCODE:ReduceReduceConflictInGrammarDef*   _$ERRTEXT:ReduceReduceConflictInGrammarDef_
+*#$ERRCODE:ShiftShiftConflictInGrammarDef*   _$ERRTEXT:ShiftShiftConflictInGrammarDef_
+*#$ERRCODE:ConflictsInGrammarDef*   _$ERRTEXT:ConflictsInGrammarDef_
+
+## Automaton Definition Complexity Check Errors
+*#$ERRCODE:ComplexityMaxStateInGrammarDef*   _$ERRTEXT:ComplexityMaxStateInGrammarDef_
+*#$ERRCODE:ComplexityMaxNofProductionsInGrammarDef*   _$ERRTEXT:ComplexityMaxNofProductionsInGrammarDef_
+*#$ERRCODE:ComplexityMaxProductionLengthInGrammarDef*   _$ERRTEXT:ComplexityMaxProductionLengthInGrammarDef_
+*#$ERRCODE:ComplexityMaxProductionPriorityInGrammarDef*   _$ERRTEXT:ComplexityMaxProductionPriorityInGrammarDef_
+*#$ERRCODE:ComplexityMaxNonterminalInGrammarDef*   _$ERRTEXT:ComplexityMaxNonterminalInGrammarDef_
+*#$ERRCODE:ComplexityMaxTerminalInGrammarDef*   _$ERRTEXT:ComplexityMaxTerminalInGrammarDef_
+*#$ERRCODE:ComplexityLR1FollowSetsInGrammarDef*   _$ERRTEXT:ComplexityLR1FollowSetsInGrammarDef_
+
+## Mewa Lua Library Errors
+*#$ERRCODE:BadKeyInGeneratedLuaTable*   _$ERRTEXT:BadKeyInGeneratedLuaTable_
+*#$ERRCODE:BadValueInGeneratedLuaTable*   _$ERRTEXT:BadValueInGeneratedLuaTable_
+*#$ERRCODE:UnresolvableFunctionInLuaCallTable*   _$ERRTEXT:UnresolvableFunctionInLuaCallTable_
+*#$ERRCODE:UnresolvableFunctionArgInLuaCallTable*   _$ERRTEXT:UnresolvableFunctionArgInLuaCallTable_
+*#$ERRCODE:BadElementOnCompilerStack*   _$ERRTEXT:BadElementOnCompilerStack_
+*#$ERRCODE:NoLuaFunctionDefinedForItem*   _$ERRTEXT:NoLuaFunctionDefinedForItem_
+*#$ERRCODE:LuaCallErrorERRRUN*   _$ERRTEXT:LuaCallErrorERRRUN_
+*#$ERRCODE:LuaCallErrorERRMEM*   _$ERRTEXT:LuaCallErrorERRMEM_
+*#$ERRCODE:LuaCallErrorERRERR*   _$ERRTEXT:LuaCallErrorERRERR_
+*#$ERRCODE:LuaCallErrorUNKNOWN*   _$ERRTEXT:LuaCallErrorUNKNOWN_
+*#$ERRCODE:LuaStackOutOfMemory*   _$ERRTEXT:LuaStackOutOfMemory_
+*#$ERRCODE:LuaInvalidUserData*   _$ERRTEXT:LuaInvalidUserData_
+
+## Errors Reported by the Generated Compiler
+*#$ERRCODE:UnexpectedTokenNotOneOf*   _$ERRTEXT:UnexpectedTokenNotOneOf_
+
+## Language Automaton Errors
+*#$ERRCODE:LanguageAutomatonCorrupted*   _$ERRTEXT:LanguageAutomatonCorrupted_
+*#$ERRCODE:LanguageAutomatonMissingGoto*   _$ERRTEXT:LanguageAutomatonMissingGoto_
+*#$ERRCODE:LanguageAutomatonUnexpectedAccept*   _$ERRTEXT:LanguageAutomatonUnexpectedAccept_
+

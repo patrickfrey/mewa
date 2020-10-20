@@ -98,6 +98,11 @@ sub substVariables
         my $rest = $4;
         my $substval = "";
 
+        if ($var =~ m/^(.*)_$/)
+        {
+            $var = $1;
+            $rest = '_' . $rest;
+        }
         if ($dom eq "ERRCODE")
         {
             our $ERRCODE; $substval = $ERRCODE{ $var};
@@ -119,7 +124,7 @@ sub substVariables
             die "Unknown variable domain '$dom'";
         }
 
-        $rt .= $substval . substVariables( $rest);
+        $rt .= $substval . substVariables( $rest . "\n");
         if ($verbose) {print STDERR "SUBST $dom:$var => $substval\n";}
 
         our $USED;

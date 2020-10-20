@@ -183,6 +183,7 @@ const char* Error::code2String( int code_) noexcept
 		case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";
 		case InvalidRegexInLexer: return "Bad regular expression definition for the lexer";
 		case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
+
 		case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
 		case CompiledSourceTooComplex: return "Too complex source file (counter overflow)";
 

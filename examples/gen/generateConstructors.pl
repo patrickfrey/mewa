@@ -135,6 +135,7 @@ if ($verbose)
 
 my @cc_input = ();
 my @llvm_output = ();
+
 foreach my $elem (@elemar)
 {
     my $content = substVariablesFile( $template, $elem);
@@ -143,9 +144,11 @@ foreach my $elem (@elemar)
         print STDERR "C INPUT:\n" . $content . "\n\n";
     }
     push( @cc_input, "$content");
-    writeFile( "build/tmp.c", $content);
-    `$callEmitLlvm build/tmp.c -o build/tmp.ll`;
-    my $llvm = readFile( "build/tmp.ll");
+    my $tag = $elem;
+    $tag =~ s/,/-/g;
+    writeFile( "build/tmp.$tag.c", $content);
+    `$callEmitLlvm build/tmp.$tag.c -o build/tmp.$tag.ll`;
+    my $llvm = readFile( "build/tmp.$tag.ll");
     push( @llvm_output, $llvm);
     if ($verbose)
     {
