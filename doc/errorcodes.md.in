@@ -8,6 +8,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 ## Memory Allocation, Runtime and Logic Errors
 + **#$ERRCODE:MemoryAllocationError**   _$ERRTEXT:MemoryAllocationError_
 + **#$ERRCODE:LogicError**   _$ERRTEXT:LogicError_
++ **#$ERRCODE:UnexpectedException**   _$ERRTEXT:UnexpectedException_
 + **#$ERRCODE:UnspecifiedError**   _$ERRTEXT:UnspecifiedError_
 + **#$ERRCODE:SerializationError**   _$ERRTEXT:SerializationError_
 + **#$ERRCODE:InternalSourceExpectedNullTerminated**   _$ERRTEXT:InternalSourceExpectedNullTerminated_

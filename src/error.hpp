@@ -31,6 +31,7 @@ public:
 		MemoryAllocationError=400,
 		LogicError=401,
 		UnspecifiedError=402,
+		UnexpectedException=403,
 		SerializationError=404,
 		InternalSourceExpectedNullTerminated=405,
 		ExpectedStringArgument=406,

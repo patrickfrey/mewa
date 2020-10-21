@@ -47,23 +47,32 @@ extern "C" {
 
 extern "C" int luaopen_mewa( lua_State* ls);
 
-#define CATCH_EXCEPTION( success) \
-	catch (const std::runtime_error& err)\
-	{\
-		lua_pushstring( ls, err.what());\
-		success = false;\
-	}\
-	catch (const std::bad_alloc& )\
-	{\
-		lua_pushliteral( ls, "out of memory");\
-		success = false;\
-	}\
-	catch ( ... )\
-	{\
-		lua_pushliteral( ls, "unknown error");\
-		success = false;\
-	}\
-	if (!success) lua_error( ls);
+/// \note Got this idea from Jason Turner C++ Weekly Ep. 91 "Using Lippincott Functions" 
+///		See also The C++ Standard Library2ndEd. by Nicolai M. Josuttis page 50
+static void lippincottFunction( lua_State* ls)
+{
+	try
+	{
+		throw;
+	}
+	catch (const std::runtime_error& err)
+	{
+		lua_pushstring( ls, err.what());
+		lua_error( ls);
+	}
+	catch (const std::bad_alloc&)
+	{
+		mewa::Error err( mewa::Error::MemoryAllocationError);
+		lua_pushstring( ls, err.what());
+		lua_error( ls);
+	}
+	catch (...)
+	{
+		mewa::Error err( mewa::Error::UnexpectedException);
+		lua_pushstring( ls, err.what());
+		lua_error( ls);
+	}
+}
 
 static int destroy_memblock( lua_State* ls)
 {
@@ -108,8 +117,6 @@ static const struct luaL_Reg g_printlib [] = {
 static int mewa_tostring( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "mewa.tostring";
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -121,38 +128,37 @@ static int mewa_tostring( lua_State* ls)
 		std::string rt = mewa::luaToString( ls, 1, formatted);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
 static int mewa_new_compiler( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "mewa.compiler";
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 		mewa::lua::checkArgumentAsTable( functionName, ls, 1);
 		mewa::lua::checkStack( functionName, ls, 6);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)lua_newuserdata( ls, sizeof(mewa_compiler_userdata_t));
 	try
 	{
 		cp->init();
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
+
 	lua_pushliteral( ls, "call");
 	lua_gettable( ls, 1);
 	lua_setglobal( ls, cp->callTableName.buf);
-
 	try
 	{
 		new (&cp->automaton) mewa::Automaton( mewa::luaLoadAutomaton( ls, 1));
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
+
 	luaL_getmetatable( ls, mewa_compiler_userdata_t::metatableName());
 	lua_setmetatable( ls, -2);
 	return 1;
@@ -163,12 +169,11 @@ static int mewa_destroy_compiler( lua_State* ls)
 	[[maybe_unused]] static const char* functionName = "compiler:__gc";
 	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
 
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	cp->destroy( ls);
 	return 0;
@@ -178,14 +183,12 @@ static int mewa_compiler_tostring( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "compiler:__tostring";
 	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 4);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	std::string_view resultptr;
 	try
@@ -193,7 +196,7 @@ static int mewa_compiler_tostring( lua_State* ls)
 		std::string result = cp->automaton.tostring();
 		resultptr = move_string_on_lua_stack( ls, std::move( result));
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	lua_pushlstring( ls, resultptr.data(), resultptr.size());
 	lua_replace( ls, -2); // ... dispose the element created with move_string_on_lua_stack
@@ -204,8 +207,6 @@ static int mewa_compiler_run( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "compiler:run( inputfile[ , outputfile[ , dbgoutput]])";
 	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 4/*maxNofArgs*/);
@@ -276,20 +277,18 @@ static int mewa_compiler_run( lua_State* ls)
 		}
 		lua_pop( ls, 1); // ... destroy string on lua stack created with move_string_on_lua_stack
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 0;
 }
 
 static int mewa_new_typedb( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "mewa.typedb";
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 0/*minNofArgs*/, 0/*maxNofArgs*/);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)lua_newuserdata( ls, sizeof(mewa_typedb_userdata_t));
 	td->init();
@@ -297,7 +296,7 @@ static int mewa_new_typedb( lua_State* ls)
 	{
 		td->create();
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	luaL_getmetatable( ls, mewa_typedb_userdata_t::metatableName());
 	lua_setmetatable( ls, -2);
@@ -312,13 +311,11 @@ static int mewa_destroy_typedb( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:__gc";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	td->destroy( ls);
 	return 0;
@@ -329,8 +326,6 @@ static int mewa_typedb_get_instance( lua_State* ls)
 	[[maybe_unused]] static const char* functionName = "typedb:get_instance";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	int handle = -1;
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 3/*maxNofArgs*/);
@@ -339,7 +334,7 @@ static int mewa_typedb_get_instance( lua_State* ls)
 		mewa::Scope::Step step = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
 		handle = td->impl->getObjectInstance( name, step);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	// Get the item addressed with handle from the object table on the top of the stack and return it:
 	lua_getglobal( ls, td->objTableName.buf);
@@ -356,8 +351,6 @@ static int mewa_typedb_set_instance( lua_State* ls)
 
 	mewa::Scope scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
 	std::string_view name;
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
@@ -366,25 +359,24 @@ static int mewa_typedb_set_instance( lua_State* ls)
 		scope = mewa::lua::getArgumentAsScope( functionName, ls, 3);
 		if (lua_isnil( ls, 4)) mewa::lua::throwArgumentError( functionName, 4, mewa::Error::ExpectedArgumentNotNil);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 
 	// Put the 4th argument into the object table of this typedb with an index stored as handle in the typedb:
 	int handle = td->allocObjectHandle();
 	lua_getglobal( ls, td->objTableName.buf);
 	lua_pushvalue( ls, 4);
 	lua_rawseti( ls, -2, handle);
-
 	try
 	{
 		td->impl->setObjectInstance( name, scope, handle);
-	} CATCH_EXCEPTION(success)
+	}
+	catch (...) { lippincottFunction( ls); }
 	return 0;
 }
 
 static int mewa_typedb_reduction_tagmask( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb.reduction_tagmask";
-	bool success = true;
 	try
 	{
 		int firstArg = 1;
@@ -401,7 +393,7 @@ static int mewa_typedb_reduction_tagmask( lua_State* ls)
 		}
 		lua_pushinteger( ls, tagSet.mask());
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -412,8 +404,6 @@ static int mewa_typedb_def_type( lua_State* ls)
 
 	int buffer_parameter[ 1024];
 	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 5/*minNofArgs*/, 7/*maxNofArgs*/);
@@ -430,7 +420,7 @@ static int mewa_typedb_def_type( lua_State* ls)
 		int rt = td->impl->defineType( scope, contextType, name, constructor, parameter, priority);
 		lua_pushinteger( ls, rt);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -438,8 +428,6 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:def_reduction";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 6/*minNofArgs*/, 7/*maxNofArgs*/);
@@ -454,7 +442,7 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 		lua_pop( ls, 1); // ... obj table
 		td->impl->defineReduction( scope, toType, fromType, constructor, tag, weight);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 0;
 }
 
@@ -462,8 +450,6 @@ static int mewa_typedb_type_reduction( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_reduction";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
@@ -485,7 +471,7 @@ static int mewa_typedb_type_reduction( lua_State* ls)
 			lua_replace( ls, -2);
 		}
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -493,8 +479,6 @@ static int mewa_typedb_type_reductions( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_reductions";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 4/*maxNofArgs*/);
@@ -508,7 +492,7 @@ static int mewa_typedb_type_reductions( lua_State* ls)
 		auto reductions = td->impl->reductions( step, type, selectTags, resbuf);
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, reductions);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -516,8 +500,6 @@ static int mewa_typedb_derive_type( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:derive_type";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
@@ -532,7 +514,7 @@ static int mewa_typedb_derive_type( lua_State* ls)
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, deriveres.reductions);
 		lua_pushnumber( ls, deriveres.weightsum);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 2;
 }
 
@@ -540,8 +522,6 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:resolve_type";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
@@ -556,7 +536,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, resolveres.reductions);
 		mewa::lua::pushResolveResultItems( ls, functionName, td->objTableName.buf, resolveres.items);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 2;
 }
 
@@ -564,8 +544,6 @@ static int mewa_typedb_type_name( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_name";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -575,7 +553,7 @@ static int mewa_typedb_type_name( lua_State* ls)
 		auto rt = td->impl->typeName( type);
 		lua_pushlstring( ls, rt.data(), rt.size());
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -583,8 +561,6 @@ static int mewa_typedb_type_string( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_string";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -595,7 +571,7 @@ static int mewa_typedb_type_string( lua_State* ls)
 		auto rt = td->impl->typeToString( type, resbuf);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -603,8 +579,6 @@ static int mewa_typedb_type_parameters( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_parameters";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -613,7 +587,7 @@ static int mewa_typedb_type_parameters( lua_State* ls)
 		auto rt = td->impl->typeParameters( type);
 		mewa::lua::pushParameters( ls, functionName, td->objTableName.buf, rt);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -621,8 +595,6 @@ static int mewa_typedb_type_constructor( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_constructor";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -631,7 +603,7 @@ static int mewa_typedb_type_constructor( lua_State* ls)
 		auto rt = td->impl->typeConstructor( type);
 		mewa::lua::pushTypeConstructor( ls, functionName, td->objTableName.buf, rt);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 
@@ -676,7 +648,6 @@ template <>
 int tree_iter<mewa::TypeDatabase::TypeDefinitionTree>( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "type_tree:list iterator";
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -688,14 +659,13 @@ int tree_iter<mewa::TypeDatabase::TypeDefinitionTree>( lua_State* ls)
 		lua_pushinteger( ls, iter);
 		lua_replace( ls, lua_upvalueindex(2));
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 template <>
 int tree_iter<mewa::TypeDatabase::ReductionDefinitionTree>( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "reduction_tree:list iterator";
-	bool success = true;
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -708,7 +678,7 @@ int tree_iter<mewa::TypeDatabase::ReductionDefinitionTree>( lua_State* ls)
 		lua_pushinteger( ls, iter);
 		lua_replace( ls, lua_upvalueindex(2));
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 }//anonymous namespace
@@ -721,8 +691,6 @@ struct LuaTreeMetaMethods
 	{
 		[[maybe_unused]] static const char* functionName = "typedb:*_tree";
 		mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
-
-		bool success = true;
 		try
 		{
 			constexpr int nargs = tree_nof_args<UD>();
@@ -732,11 +700,10 @@ struct LuaTreeMetaMethods
 			ud->init( ud->objTableName);
 			create_tree_impl( functionName, ls, *ud, td);
 		}
-		CATCH_EXCEPTION( success)
+		catch (...) { lippincottFunction( ls); }
 
 		luaL_getmetatable( ls, UD::metatableName());
 		lua_setmetatable( ls, -2);
-
 		return 1;
 	}
 
@@ -744,12 +711,11 @@ struct LuaTreeMetaMethods
 	{
 		[[maybe_unused]] static const char* functionName = "*tree:__gc";
 		UD* ud = (UD*)luaL_checkudata( ls, 1, UD::metatableName());
-		bool success = true;
 		try
 		{
 			mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 		}
-		CATCH_EXCEPTION( success)
+		catch (...) { lippincottFunction( ls); }
 
 		ud->destroy( ls);
 		return 0;
@@ -758,7 +724,6 @@ struct LuaTreeMetaMethods
 	static int chld_iter( lua_State* ls)
 	{
 		[[maybe_unused]] static const char* functionName = "*tree:chld iterator";
-		bool success = true;
 		try
 		{
 			mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
@@ -776,7 +741,7 @@ struct LuaTreeMetaMethods
 			lua_pushinteger( ls, iter);
 			lua_replace( ls, lua_upvalueindex(2));
 		}
-		CATCH_EXCEPTION( success)
+		catch (...) { lippincottFunction( ls); }
 		return 1;
 	}
 
@@ -784,7 +749,6 @@ struct LuaTreeMetaMethods
 	{
 		[[maybe_unused]] static const char* functionName = "*tree:chld";
 		UD* ud = (UD*)luaL_checkudata( ls, 1, UD::metatableName());
-		bool success = true;
 		try
 		{
 			mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
@@ -809,7 +773,7 @@ struct LuaTreeMetaMethods
 				lua_pushcclosure( ls, &chld_iter, 2);
 			}
 		}
-		CATCH_EXCEPTION( success)
+		catch (...) { lippincottFunction( ls); }
 		return 1;
 	}
 
@@ -817,7 +781,6 @@ struct LuaTreeMetaMethods
 	{
 		[[maybe_unused]] static const char* functionName = "*tree:scope";
 		UD* ud = (UD*)luaL_checkudata( ls, 1, UD::metatableName());
-		bool success = true;
 		try
 		{
 			mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
@@ -826,7 +789,7 @@ struct LuaTreeMetaMethods
 			lua_pushinteger( ls, (*ud->tree)[ ud->nodeidx].item().scope.start());
 			lua_pushinteger( ls, (*ud->tree)[ ud->nodeidx].item().scope.end());
 		}
-		CATCH_EXCEPTION( success)
+		catch (...) { lippincottFunction( ls); }
 		return 2;
 	}
 
@@ -834,8 +797,6 @@ struct LuaTreeMetaMethods
 	{
 		[[maybe_unused]] static const char* functionName = "*tree:list";
 		luaL_checkudata( ls, 1, UD::metatableName());
-
-		bool success = true;
 		try
 		{
 			mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
@@ -845,7 +806,7 @@ struct LuaTreeMetaMethods
 			lua_pushnumber( ls, 0);		//... list iterator index on first element of array
 			lua_pushcclosure( ls, &tree_iter<typename UD::TreeType>, 2);
 		}
-		CATCH_EXCEPTION( success)
+		catch (...) { lippincottFunction( ls); }
 		return 1;
 	}
 };
@@ -853,14 +814,13 @@ struct LuaTreeMetaMethods
 static int mewa_objtree_instance( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "*tree:instance";
-	bool success = true;
 	try
 	{
 		mewa_objtree_userdata_t* ud = (mewa_objtree_userdata_t*)luaL_checkudata( ls, 1, mewa_objtree_userdata_t::metatableName());
 		if (!ud->tree.get() || ud->nodeidx == 0) return 0;
 		mewa::lua::pushTypeConstructor( ls, functionName, ud->objTableName.buf, (*ud->tree)[ ud->nodeidx].item().value);
 	}
-	CATCH_EXCEPTION( success)
+	catch (...) { lippincottFunction( ls); }
 	return 1;
 }
 

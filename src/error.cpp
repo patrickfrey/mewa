@@ -163,6 +163,7 @@ const char* Error::code2String( int code_) noexcept
 		case MemoryAllocationError: return "memory allocation error";
 		case LogicError: return "Logic error";
 		case UnspecifiedError: return "Unspecified error";
+		case UnexpectedException: return "Unexpected exception";
 		case SerializationError: return "Error serializing a lua data structure";
 		case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
 		case ExpectedStringArgument: return "Expected string as argument";
