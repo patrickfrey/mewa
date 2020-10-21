@@ -174,13 +174,27 @@ foreach my $elem (@elemar)
 	$tag =~ s/,/-/g;
 	$tag =~ s/ /_/g;
 	writeFile( "$tmpfile.$tag.cpp", $content);
-	`$callEmitLlvm $tmpfile.$tag.cpp -o $tmpfile.$tag.ll`;
-	my $llvm = readLlvmFile( "$tmpfile.$tag.ll");
-	writeFile( "$tmpfile.$tag.llr", $llvm);
-	push( @llvm_output, $llvm);
-	if ($verbose)
+	`rm $tmpfile.$tag.err 2> /dev/null`;
+	`$callEmitLlvm $tmpfile.$tag.cpp -o $tmpfile.$tag.ll > $tmpfile.$tag.err 2>&1`;
+	my $errcnt = `cat $tmpfile.$tag.err | wc -l`;
+	$errcnt =~ s/\s//;
+	if (int($errcnt) != 0)
 	{
-		print STDERR "LLVM OUTPUT:\n" . $llvm . "\n\n";
+		if ($verbose)
+		{
+			print STDERR "LLVM ERRORS $errcnt: $tag\n";
+		}
+	}
+	else
+	{
+		`rm $tmpfile.$tag.err 2> /dev/null`;
+		my $llvm = readLlvmFile( "$tmpfile.$tag.ll");
+		writeFile( "$tmpfile.$tag.llr", $llvm);
+		push( @llvm_output, $llvm);
+		if ($verbose)
+		{
+			print STDERR "LLVM OUTPUT:\n" . $llvm . "\n\n";
+		}
 	}
 }
 
