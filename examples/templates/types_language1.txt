@@ -1,5 +1,5 @@
-double	double	-
-float	float	-
+double	double	fp
+float	float	fp
 ulong	i64	unsigned
 long	i64	signed
 uint	i32	unsigned

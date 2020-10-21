@@ -25,7 +25,7 @@ Set the instance for the object with name _name_ to be _object_ for the scope _s
 #### Parameter
 | #      | Name     | Type     | Description                                           |
 | ------ | -------- | -------- | ----------------------------------------------------- |
-| 1st    | name     | string   | Name of the object we declare an instance of          |
+| 1st    | name     | string   | Name of the object we are addressing                  |
 | 2nd    | step     | integer  | Scope step to locate the instance we are referring to |
 | Return |          | *        | The instance of the object we addressed               |
 
