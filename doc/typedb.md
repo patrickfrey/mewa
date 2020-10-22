@@ -2,14 +2,14 @@
 
 The type database API referred to as _mewa.typedb_ offers you the functions needed to build up the typesystem of your language. 
 
-## Create a new type database
+## Create a New Type Database
 ```lua
 mewa = require("mewa")
 typedb = mewa.typedb()
 ```
 The variable typedb holds now the type database created.
 
-## User defined objects in different scopes:
+## User Defined Objects in Different Scopes
 ### typedb:set_instance
 #### Parameter
 | #   | Name     | Type              | Description                                           |
@@ -90,7 +90,7 @@ It is thought as help during development.
 | scope    | function  | Function returning a pair of integers describing the scope of this node.                |
 | instance | function  | Function returning the instance defined for this node.                                  |
 
-## Define Types:
+## Define Types
 ### typedb:def_type
 #### Parameter
 | #      | Name         | Type             | Description                                                                                        |
@@ -106,7 +106,7 @@ It is thought as help during development.
 #### Description
 Define a type. 
 
-## Define Reductions:
+## Define Reductions
 ### typedb:def_reduction
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                    |
@@ -121,7 +121,7 @@ Define a type.
 #### Description
 Define a reduction from a type resulting in another type with a tag to classify it.
 
-## Type Searches or Derivations:
+## Type Searches or Derivations
 
 ### typedb:reduction_tagmask
 #### Parameter
@@ -160,14 +160,14 @@ Finds the shortest path (sum of reduction weights) of reductions of the classes 
 Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the the reduction path of the context-type is ambiguous.
 The returned list of candidates (2nd return value) has to be inspected by the client to find the best match.
 
-## Inspect Type Attributes:
+## Inspect Type Attributes
 ### typedb:type_name
 #### Parameter
 | #          | Name | Type              | Description             |
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description:
+#### Description
 Get the name of the type as it was specified as argument of 'typedb:def_type'.
 
 ### typedb:type_string
@@ -176,7 +176,7 @@ Get the name of the type as it was specified as argument of 'typedb:def_type'.
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description:
+#### Description
 Get the full signature of the type as string. This is the full name of the context type, the name and the full name of all parameters defined.
 
 ### typedb:type_constructor
@@ -185,7 +185,7 @@ Get the full signature of the type as string. This is the full name of the conte
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description:
+#### Description
 Get the constructor of a type.
 
 ### typedb:type_reduction
@@ -194,28 +194,32 @@ Get the constructor of a type.
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description:
+#### Description
 Get the constructor of a type.
 
 ### typedb:type_reduction
 #### Parameter
+| #      | Name         | Type              | Description                                                                                                        |
+| ------ | ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
 | 1st    | step         | integer           | Scope step covered by the scopes of the reductions considered as result.                                           |
 | 2nd    | dest-type    | integer           | Resulting type to of the reduction.                                                                                |
 | 3rd    | src-type     | integer           | Start type of the reduction.                                                                                       |
 | 4th    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.                  |
 | Return |              | any type          | Constructor of the reduction if it exists or nil if it is not defined by a scope covering the argument scope step. |
 
-#### Description:
+#### Description
 Get the constructor of a reduction from a type to another if it exists.
 
 ### typedb:type_reductions
 #### Parameter
+| #      | Name         | Type              | Description                                                                                        |
+| ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------------- |
 | 1st    | step         | integer           | Scope step covered by the scopes of the reductions considered as result.                           |
 | 2nd    | type         | integer           | Start type of the reductions to inspect.                                                           |
 | 3rd    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.  |
 | Return |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.               | 
 
-#### Description:
+#### Description
 Get the list of reductions defined for a type.
 
 
