@@ -29,6 +29,7 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 
 
 <a name="createTypeDb"/>
+
 ## Create a New Type Database
 ```lua
 mewa = require("mewa")
