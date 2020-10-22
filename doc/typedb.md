@@ -10,6 +10,8 @@ typedb = mewa.typedb()
 The variable typedb holds now the type database created.
 
 ## User Defined Objects in Different Scopes
+Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
+
 ### typedb:set_instance
 #### Parameter
 | #   | Name     | Type              | Description                                           |
@@ -18,19 +20,16 @@ The variable typedb holds now the type database created.
 | 2nd | scope    | pair of integers  | The scope if the instance                             |
 | 3rd | instance | any type not nil  | The instance of the object                            |
 
-#### Description
-Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
 
 ### typedb:get_instance
+Get the instance for the object with name _name_ for the innermost scope including the scope step _step_.
+
 #### Parameter
 | #      | Name     | Type     | Description                                           |
 | ------ | -------- | -------- | ----------------------------------------------------- |
 | 1st    | name     | string   | Name of the object we are addressing                  |
 | 2nd    | step     | integer  | Scope step to locate the instance we are referring to |
 | Return |          | *        | The instance of the object we addressed               |
-
-#### Description
-Get the instance for the object with name _name_ for the innermost scope including the scope step _step_.
 
 ### Example typedb:set_instance / typedb:get_instance
 Implementation of a register allocator for LLVM IR.
@@ -70,14 +69,13 @@ print( typedb:get_instance( "register", 49)());
 
 ```
 ### typedb:instance_tree
+Get the tree of scopes with the instances defined. 
+
 #### Parameter
 | #      | Name     | Type      | Description                                           |
 | ------ | -------- | --------- | ----------------------------------------------------- |
 | 1st    | name     | string    | Name of the object we are addressing                  |
 | Return |          | structure | Tree structure with a node for each definition scope  |
-
-#### Description
-Get the tree of scopes with the instances defined. 
 
 #### Remark
 This is a costly operation and not intended to be used as data structure for the compiler itself. 
@@ -92,6 +90,8 @@ It is thought as help during development.
 
 ## Define Types
 ### typedb:def_type
+Define a type. 
+
 #### Parameter
 | #      | Name         | Type             | Description                                                                                        |
 | ------ | ------------ | ---------------- | -------------------------------------------------------------------------------------------------- |
@@ -103,11 +103,10 @@ It is thought as help during development.
 | 6nd    | priority     | integer          | Priority of the definition, Higher priority overwrites lower priority definition.                  |
 | Return |              | integer          | Handle assigned as identifier of the type                                                          |
 
-#### Description
-Define a type. 
-
 ## Define Reductions
 ### typedb:def_reduction
+Define a reduction from a type resulting in another type with a tag to classify it.
+
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                    |
 | ------ | ------------ | ---------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -118,21 +117,20 @@ Define a type.
 | 5th    | tag          | integer 1..32    | Tag assigned to the reduction, used to restrict a type search or derivation to selected classes of reductions. |
 | 6nd    | weight       | number           | Weight assigned to the reduction, used to calculate the shortest path of reductions for resolving types.       |
 
-#### Description
-Define a reduction from a type resulting in another type with a tag to classify it.
-
 ## Type Searches or Derivations
 
 ### typedb:reduction_tagmask
+Create a set of tags for type searches (typedb:resolve_type) or derivations (typedb:derive_type).
+
 #### Parameter
 | #      | Name         | Type    | Description                                 |
 | ------ | ------------ | ------- | ------------------------------------------- |
 | ....   | tag          | integer | Element of a list of tags to add to the set |
 
-#### Description
-Create a set of tags for type searches (typedb:resolve_type) or derivations (typedb:derive_type).
 
 ### typedb:derive_type
+Finds the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
+
 #### Parameter
 | #      | Name         | Type              | Description                                                                                  |
 | ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------- |
@@ -142,10 +140,10 @@ Create a set of tags for type searches (typedb:resolve_type) or derivations (typ
 | 4th    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use. |
 | Return |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.         |
 
-#### Description
-Finds the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
-
 ### typedb:resolve_type
+Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the the reduction path of the context-type is ambiguous.
+The returned list of candidates (2nd return value) has to be inspected by the client to find the best match.
+
 #### Parameter
 | #          | Name         | Type              | Description                                                                                                       |
 | ---------- | ------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -156,48 +154,47 @@ Finds the shortest path (sum of reduction weights) of reductions of the classes 
 | Return 1st |              | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
 | Return 2nd |              | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
 
-#### Description
-Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the the reduction path of the context-type is ambiguous.
-The returned list of candidates (2nd return value) has to be inspected by the client to find the best match.
 
 ## Inspect Type Attributes
 ### typedb:type_name
-#### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
-
-#### Description
 Get the name of the type as it was specified as argument of 'typedb:def_type'.
 
-### typedb:type_string
 #### Parameter
 | #          | Name | Type              | Description             |
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description
+
+### typedb:type_string
 Get the full signature of the type as string. This is the full name of the context type, the name and the full name of all parameters defined.
 
+#### Parameter
+| #          | Name | Type              | Description             |
+| ---------- | ---- | ----------------- | ----------------------- |
+| 1st        | type | integer           | Type identifier         |
+
+
 ### typedb:type_constructor
+Get the constructor of a type.
+
 #### Parameter
 | #          | Name | Type              | Description             |
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description
-Get the constructor of a type.
 
 ### typedb:type_reduction
+Get the constructor of a type.
+
 #### Parameter
 | #          | Name | Type              | Description             |
 | ---------- | ---- | ----------------- | ----------------------- |
 | 1st        | type | integer           | Type identifier         |
 
-#### Description
-Get the constructor of a type.
 
 ### typedb:type_reduction
+Get the constructor of a reduction from a type to another if it exists.
+
 #### Parameter
 | #      | Name         | Type              | Description                                                                                                        |
 | ------ | ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -207,10 +204,10 @@ Get the constructor of a type.
 | 4th    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.                  |
 | Return |              | any type          | Constructor of the reduction if it exists or nil if it is not defined by a scope covering the argument scope step. |
 
-#### Description
-Get the constructor of a reduction from a type to another if it exists.
 
 ### typedb:type_reductions
+Get the list of reductions defined for a type.
+
 #### Parameter
 | #      | Name         | Type              | Description                                                                                        |
 | ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------------- |
@@ -219,13 +216,12 @@ Get the constructor of a reduction from a type to another if it exists.
 | 3rd    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.  |
 | Return |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.               | 
 
-#### Description
-Get the list of reductions defined for a type.
 
 
 ## Type and Reduction Instrospection for Debugging:
 
 ### typedb:type_tree
+Get the tree of scopes with the list of types defined there. 
 
 #### Parameter
 | #      | Name     | Type      | Description                                           |
@@ -239,15 +235,13 @@ Get the list of reductions defined for a type.
 | scope    | function  | Function returning a pair of integers describing the scope of this node                 |
 | list     | function  | Function returning the list of types (integers) defined in the scope of this node       |
 
-#### Description
-Get the tree of scopes with the list of types defined there. 
-
 #### Remark
 This is a costly operation and not intended to be used as data structure for the compiler itself. 
 It is thought as help during development.
 
 
 ### typedb:reduction_tree
+Get the tree of scopes with the list of reductions defined there. 
 
 #### Parameter
 | #      | Name     | Type      | Description                                           |
@@ -269,9 +263,6 @@ It is thought as help during development.
 | constructor   | any type not nil | Constructor describing how the type reduction is implemented.   |
 | tag           | integer 1..32    | Tag assigned to the reduction.                                  |
 | weight        | number           | Weight assigned to the reduction.                               |
-
-#### Description
-Get the tree of scopes with the list of reductions defined there. 
 
 #### Remark
 This is a costly operation and not intended to be used as data structure for the compiler itself. 
