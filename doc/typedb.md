@@ -10,7 +10,7 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 1. [Types](#types)
     * [typedb:def_type](#def_type)
 1. [Reductions](#reductions)
-    * [typedb:def_type](#def_reduction)
+    * [typedb:def_reduction](#def_reduction)
 1. [Derive and Resolve Types](#deriveAndResolveTypes)
     * [typedb:reduction_tagmask](#reduction_tagmask)
     * [typedb:derive_type](#derive_type)
