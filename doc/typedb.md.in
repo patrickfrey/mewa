@@ -10,9 +10,10 @@ typedb = mewa.typedb()
 The variable typedb holds now the type database created.
 
 ## User Defined Objects in Different Scopes
-Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
 
 ### typedb:set_instance
+Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
+
 #### Parameter
 | #   | Name     | Type              | Description                                           |
 | --- | -------- | ----------------- | ----------------------------------------------------- |
