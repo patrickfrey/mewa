@@ -10,3 +10,5 @@ The project development is currently ongoing and only what you find in the tests
 * [Example Grammar](examples/language1.g)
 * [The mewa.typedb API](doc/typedb.md)
 * [Mewa Error Codes](doc/errorcodes.md)
+* [Some Links](doc/links.md)
+

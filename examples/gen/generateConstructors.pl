@@ -8,11 +8,14 @@ my $template = undef;
 my $tmpfile = "build/tmp";
 my $verbose = 0;
 my $permute = 0;
+my $assignments = "";
+
 
 GetOptions (
 	"clang=s"       => \$clangbin,    # string, clang compiler binary
 	"template|t=s"  => \$template,    # string, template file to use
 	"tmpfile|T=s"   => \$tmpfile,     # string, file name (without extension) for temporary outputs
+	"assign|A=s"    => \$assignments, # string, list of comma separated assignents used in templates
 	"verbose|V"     => \$verbose,     # flag, verbose output
 	"permute|P"     => \$permute)     # flag, permute arguments
 or die("Error in command line arguments\n");
@@ -70,13 +73,13 @@ sub substVariables
 	my $varstr = $_[1];
 	my @varlist = split(/,/, $varstr);
 
-	if ($line =~ m/^([^\%]*)[\%]([A-Z]+)([0-9]+)(.*)$/)
+	if ($line =~ m/^([^\%]*)[\%]([A-Z]+)([0-9]*)(.*)$/)
 	{
 		my $rt = $1;
 		my $dom = $2;
 		my $var = $3;
 		my $rest = $4;
-		my $substval = "";
+		my $substval = undef;
 
 		if ($dom eq "A")
 		{
@@ -84,9 +87,21 @@ sub substVariables
 		}
 		else
 		{
+			my @assignlist = split /,/, $assignments;
+			foreach my $aa( @assignlist)
+			{
+				my ($kk,$vv) = split /=/, $aa;
+				if ("$dom$var" eq $kk)
+				{
+					$substval = $vv;
+					last;
+				}
+			}
+		}
+		unless ($substval)
+		{
 			die "Unknown variable domain '$dom'";
 		}
-
 		$rt .= $substval . substVariables( $rest . "\n", $varstr);
 		if ($verbose) {print STDERR "SUBST $dom:$var => $substval\n";}
 		return $rt;

@@ -8,6 +8,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 ## Memory Allocation, Runtime and Logic Errors
 + **#400**   _memory allocation error_
 + **#401**   _Logic error_
++ **#403**   _Unexpected exception_
 + **#402**   _Unspecified error_
 + **#404**   _Error serializing a lua data structure_
 + **#405**   _Logic error: String expected to be null terminated_

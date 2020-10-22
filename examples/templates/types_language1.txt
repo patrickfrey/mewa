@@ -7,6 +7,7 @@ int	i32	signed
 ushort	i16	unsigned
 short	i16	signed
 byte	i8	unsigned
+bool	i1	unsigned
 
 
 
