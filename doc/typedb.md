@@ -38,9 +38,11 @@ typedb = mewa.typedb()
 The variable typedb holds now the type database created.
 
 <a name="instance"/>
+
 ## User Defined Object Instances in Different Scopes
 
 <a name="set_instance"/>
+
 ### typedb:set_instance
 Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
 
@@ -53,6 +55,7 @@ Set the instance for the object with name _name_ to be _object_ for the scope _s
 
 
 <a name="get_instance"/>
+
 ### typedb:get_instance
 Get the instance for the object with name _name_ for the innermost scope including the scope step _step_.
 
@@ -102,9 +105,11 @@ print( typedb:get_instance( "register", 49)());
 ```
 
 <a name="types"/>
+
 ## Define Types
 
 <a name="def_type"/>
+
 ### typedb:def_type
 Define a type. 
 
@@ -120,9 +125,11 @@ Define a type.
 | Return |              | integer          | Handle assigned as identifier of the type                                                          |
 
 <a name="reductions"/>
+
 ## Define Reductions
 
 <a name="def_reduction"/>
+
 ### typedb:def_reduction
 Define a reduction from a type resulting in another type with a tag to classify it.
 
@@ -138,9 +145,11 @@ Define a reduction from a type resulting in another type with a tag to classify 
 
 
 <a name="deriveAndResolveTypes"/>
+
 ## Derive and Resolve Types
 
 <a name="reduction_tagmask"/>
+
 ### typedb:reduction_tagmask
 Create a set of tags for type searches (typedb:resolve_type) or derivations (typedb:derive_type).
 
@@ -151,6 +160,7 @@ Create a set of tags for type searches (typedb:resolve_type) or derivations (typ
 
 
 <a name="derive_type"/>
+
 ### typedb:derive_type
 Finds the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
 
@@ -164,6 +174,7 @@ Finds the shortest path (sum of reduction weights) of reductions of the classes 
 | Return |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.         |
 
 <a name="resolve_type"/>
+
 ### typedb:resolve_type
 Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the the reduction path of the context-type is ambiguous.
 The returned list of candidates (2nd return value) has to be inspected by the client to find the best match.
@@ -180,9 +191,11 @@ The returned list of candidates (2nd return value) has to be inspected by the cl
 
 
 <a name="typeAttributes"/>
+
 ## Inspect Type Attributes
 
 <a name="type_name"/>
+
 ### typedb:type_name
 Get the name of the type as it was specified as argument of 'typedb:def_type'.
 
@@ -193,6 +206,7 @@ Get the name of the type as it was specified as argument of 'typedb:def_type'.
 
 
 <a name="type_string"/>
+
 ### typedb:type_string
 Get the full signature of the type as string. This is the full name of the context type, the name and the full name of all parameters defined.
 
@@ -203,6 +217,7 @@ Get the full signature of the type as string. This is the full name of the conte
 
 
 <a name="type_constructor"/>
+
 ### typedb:type_constructor
 Get the constructor of a type.
 
@@ -213,6 +228,7 @@ Get the constructor of a type.
 
 
 <a name="type_reduction"/>
+
 ### typedb:type_reduction
 Get the constructor of a reduction from a type to another if it exists.
 
@@ -227,6 +243,7 @@ Get the constructor of a reduction from a type to another if it exists.
 
 
 <a name="type_reductions"/>
+
 ### typedb:type_reductions
 Get the list of reductions defined for a type.
 
@@ -241,9 +258,11 @@ Get the list of reductions defined for a type.
 
 
 <a name="introspection"/>
+
 ## Instrospection for Debugging:
 
 <a name="instance_tree"/>
+
 ### typedb:instance_tree
 Get the tree of scopes with the instances defined. 
 
@@ -266,6 +285,7 @@ It is thought as help during development.
 
 
 <a name="type_tree"/>
+
 ### typedb:type_tree
 Get the tree of scopes with the list of types defined there. 
 
@@ -287,6 +307,7 @@ It is thought as help during development.
 
 
 <a name="reduction_tree"/>
+
 ### typedb:reduction_tree
 Get the tree of scopes with the list of reductions defined there. 
 
