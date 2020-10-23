@@ -18,6 +18,11 @@
 
 #define MEWA_LOWLEVEL_DEBUG
 //... using bad_alloc_memory_resource as upstream of monotonic buffer resource
+#ifdef NDEBUG
+#ifdef MEWA_LOWLEVEL_DEBUG
+#error Switched on MEWA_LOWLEVEL_DEBUG in release build
+#endif
+#endif
 
 namespace mewa {
 

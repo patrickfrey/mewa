@@ -17,7 +17,8 @@ my %alignmap = (
 	i64 => 8,
 	i32 => 4,
 	i16 => 2,
-	i8 => 1
+	i8 => 1,
+	i1 => 1
 );
 
 my %extmap = (
@@ -46,7 +47,34 @@ sub load_constructor {
 	my $llvmtype = $_[0];
 	my $out = $_[1];
 	my $in = $_[2];
-	return "{\"$out\", \" = load $llvmtype, $llvmtype* \", \"$in\", \", align $alignmap{$llvmtype}\"}";
+	if ($llvmtype eq "i1")
+	{
+		my $rt = "";
+		$rt .= "{\"/R1\", \" = load i8, i8* \", \"$in\", \", align 1\"}, ";
+		$rt .= "{\"$out\", \" = trunc i8 \", \"/R1\", \" to i1\"}";
+		return $rt;
+	}
+	else
+	{
+		return "{\"$out\", \" = load $llvmtype, $llvmtype* \", \"$in\", \", align $alignmap{$llvmtype}\"}";
+	}
+}
+
+sub store_constructor {
+	my $llvmtype = $_[0];
+	my $adr = $_[1];
+	my $in = $_[2];
+	if ($llvmtype eq "i1")
+	{
+		my $rt = "";
+		$rt .= "{\"/R1\", \" = zext i1 \", \"$in\", \" to i8\"}, ";
+		$rt .= "{\"store i8 \", \"/R1\", \", i8* \", \"$adr\", \", align align 1\" }";
+		return $rt;
+	}
+	else
+	{
+		return "{\"store $llvmtype \", \"$in\", \", $llvmtype* \", \"$adr\", \", align align $alignmap{$llvmtype}\" }";
+	}
 }
 
 sub load_conv_constructor {
@@ -59,12 +87,19 @@ sub load_conv_constructor {
 	my $convop = undef;
 	if ($llvmtype_out eq $llvmtype_in)
 	{
-		return load_constructor( $llvmtype_in, "\$R1", $in);
+		return load_constructor( $llvmtype_in, "/R1", $in);
 	}
 	else
 	{
 		if ($sgn_out eq "fp")
 		{
+			if ($llvmtype_in eq "i1")
+			{
+				my $rt = load_constructor( "i1", "/R1", $in) . ", ";
+				$rt .= "{\"/R2\", \" = zext i1 \", \"/R1\", \" to i32\"},";
+				$rt .= "{\"$out\", \" = sitofp i32 \", \"/R2\", \" to $llvmtype_out\"},";
+				return $rt;
+			}
 			if ($sgn_in eq "fp" && typeSize( $llvmtype_out) > typeSize( $llvmtype_in))  {$convop = "fpext";}
 			elsif ($sgn_in eq "fp" && typeSize( $llvmtype_out) < typeSize( $llvmtype_in))  {$convop = "fptrunc";}
 			elsif ($sgn_in eq "signed") {$convop = "sitofp";}
@@ -72,6 +107,12 @@ sub load_conv_constructor {
 		}
 		elsif ($sgn_in eq "fp")
 		{
+			if ($llvmtype_out eq "i1")
+			{
+				my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
+				$rt .= "{\"$out\", \" = fcmp une $llvmtype_in \", \"/R1\", \" 0.000000e+00\"},";
+				return $rt;
+			}
 			if ($sgn_out eq "signed") {$convop = "fptosi";}
 			elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
 		}
@@ -81,8 +122,8 @@ sub load_conv_constructor {
 			elsif ($sgn_in eq "unsigned") {$convop = "zext";}
 			elsif ($sgn_in eq "signed") {$convop = "sext";}
 		}
-		my $rt = load_constructor( $llvmtype_in, "\$R1", $in) . ", ";
-		$rt .= "{\"$out\", \" = $convop $llvmtype_in \", \"\$R1\", \" to $llvmtype_out\"}";
+		my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
+		$rt .= "{\"$out\", \" = $convop $llvmtype_in \", \"/R1\", \" to $llvmtype_out\"}";
 		return $rt;
 	}
 }
@@ -94,26 +135,28 @@ sub typeSize {
 
 print "return {\n";
 print "constructor = {\n";
-print "\t-- \$IN variable address (\@name) or register (\%id)\n";
-print "\t-- \$OUT output register (\%id)\n";
-print "\t-- \$ADR variable address (\@name) or register (\%id)\n";
-print "\t-- \$VAL constant value of a matching LLVM type\n";
+print "\t-- /IN variable address (\@name) or register (\%id)\n";
+print "\t-- /OUT output register (\%id)\n";
+print "\t-- /ADR variable address (\@name) or register (\%id)\n";
+print "\t-- /VAL constant value of a matching LLVM type\n";
 my @content = readNonEmptyLinesFromFile( $typelist);
 foreach my $line (@content)
 {
 	my ($typename, $llvmtype, $sgn) = split( /\t/, $line);
 	print "\t$typename = {\n";
-	print "\t\tdef_local  = { { \"\$OUT\", \" = alloca $llvmtype, align $alignmap{$llvmtype}\" }},\n";
-	print "\t\tdef_global = { { \"\$ADR\", \" = internal global $llvmtype \", \"\$VAL\", \", align $alignmap{$llvmtype}\" }},\n";
-	print "\t\tstore = { { \"store $llvmtype \", \"\$IN\", \", $llvmtype* \", \"\$ADR\", \", align align $alignmap{$llvmtype}\" }},\n";
-	print "\t\tload = { " . load_constructor( $llvmtype, "\$OUT", "\$IN") . "}\n";
+	print "\t\tdef_local  = { { \"/OUT\", \" = alloca $llvmtype, align $alignmap{$llvmtype}\" }},\n";
+	print "\t\tdef_global = { { \"/ADR\", \" = internal global $llvmtype \", \"/VAL\", \", align $alignmap{$llvmtype}\" }},\n";
+	print "\t\tstore = { " . store_constructor( $llvmtype, "/ADR", "/IN") . "},\n";
+	print "\t\tload = { " . load_constructor( $llvmtype, "/OUT", "/IN") . "},\n";
 	print "\t\tconv = {\n";
 	foreach my $operand (@content)
 	{
 		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
-		my $cnv = load_conv_constructor( $llvmtype, "\$OUT", $sgn, $op_llvmtype, "\$IN", $op_sgn);
+		my $cnv = load_conv_constructor( $llvmtype, "/OUT", $sgn, $op_llvmtype, "/IN", $op_sgn);
 		print "\t\t\t$op_typename = { " . $cnv . "}\n";
 	}
+	print "\t\t}\n";
+	print "\t\toperator = {\n";
 	print "\t\t}\n";
 	print "\t}\n";
 }

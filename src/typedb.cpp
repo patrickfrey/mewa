@@ -380,6 +380,7 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const 
 TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int toType, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	DeriveResult rt( resbuf);
+	bool alt_searchstate = false;
 
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
@@ -397,34 +398,35 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 	{
 		auto qe = priorityQueue.top();
 		priorityQueue.pop();
+
+		if (alt_searchstate && qe.weight > rt.weightsum + std::numeric_limits<float>::epsilon()) break;
+		// ... weight bigger than best match, according Dijkstra we are done
+
 		auto const& elem = stack[ qe.index];
 
 		if (elem.type == toType)
 		{
-			//... we found a match and because of Dikstra we are finished
-			rt.weightsum = qe.weight;
-			stack.collectResult( rt.reductions, qe.index);
-
-			// Search for an alternative solution to report an ambiguous reference error:
-			while (!priorityQueue.empty())
+			// ... we found a result
+			if (!alt_searchstate)
 			{
-				auto alt_qe = priorityQueue.top();
-				if (alt_qe.weight > qe.weight + std::numeric_limits<float>::epsilon()) break;
-				priorityQueue.pop();
-
-				auto const& alt_elem = stack[ alt_qe.index];
-
-				if (alt_elem.type == toType)
-				{
-					DeriveResult alt_rt( resbuf);
-					alt_rt.weightsum = alt_qe.weight;
-					stack.collectResult( alt_rt.reductions, alt_qe.index);
-
-					throw Error( Error::AmbiguousTypeReference, deriveResultToString( rt) + ", " + deriveResultToString( alt_rt));
-				}
+				rt.weightsum = qe.weight;
+				stack.collectResult( rt.reductions, qe.index);
+				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
+				alt_searchstate = true;
 			}
-			break;
+			else
+			{
+				// We have foud an alternative match with the same weight, report an ambiguous reference error:
+				ResultBuffer alt_resbuf;
+				DeriveResult alt_rt( alt_resbuf);
+
+				alt_rt.weightsum = qe.weight;
+				stack.collectResult( alt_rt.reductions, qe.index);
+
+				throw Error( Error::AmbiguousTypeReference, deriveResultToString( rt) + ", " + deriveResultToString( alt_rt));
+			}
 		}
+		// Put follow elements into pririty queue:
 		int redu_buffer[ 512];
 		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 		auto redulist = m_reduTable->get( step, elem.type, selectTags, &redu_memrsc);
@@ -455,6 +457,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType(
 		const Scope::Step step, int contextType, const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	ResolveResult rt( resbuf);
+	bool alt_searchstate = false;
 
 	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
 
@@ -474,36 +477,35 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType(
 	{
 		auto qe = priorityQueue.top();
 		priorityQueue.pop();
+
+		if (alt_searchstate && qe.weight > rt.weightsum + std::numeric_limits<float>::epsilon()) break;
+		// ... weight bigger than best match, according Dijkstra we are done
+
 		auto const& elem = stack[ qe.index];
 
 		int typerecidx = m_typeTable->get( step, TypeDef( elem.type, nameid));
 		if (typerecidx)
 		{
-			//... we found a match and because of Dikstra we are finished
-			stack.collectResult( rt.reductions, qe.index);
-			collectResultItems( rt.items, typerecidx);
-
-			// Search for an alternative solution to report an ambiguous reference error:
-			while (!priorityQueue.empty())
+			//... we found a match
+			if (!alt_searchstate)
 			{
-				auto alt_qe = priorityQueue.top();
-				if (alt_qe.weight > qe.weight + std::numeric_limits<float>::epsilon()) break;
-				priorityQueue.pop();
-
-				auto const& alt_elem = stack[ alt_qe.index];
-				int alt_typerecidx = m_typeTable->get( step, TypeDef( alt_elem.type, nameid));
-
-				if (alt_typerecidx)
-				{
-					ResultBuffer resbuf_alt;
-					ResolveResult alt_rt( resbuf_alt);
-					stack.collectResult( alt_rt.reductions, alt_qe.index);
-					collectResultItems( alt_rt.items, alt_typerecidx);
-
-					throw Error( Error::AmbiguousTypeReference, resolveResultToString( rt) + ", " + resolveResultToString( alt_rt));
-				}
+				rt.weightsum = qe.weight;
+				stack.collectResult( rt.reductions, qe.index);
+				collectResultItems( rt.items, typerecidx);
+				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
+				alt_searchstate = true;
 			}
-			break;
+			else
+			{
+				// We have foud an alternative match with the same weight, report an ambiguous reference error:
+				ResultBuffer resbuf_alt;
+				ResolveResult alt_rt( resbuf_alt);
+
+				stack.collectResult( alt_rt.reductions, qe.index);
+				collectResultItems( alt_rt.items, typerecidx);
+
+				throw Error( Error::AmbiguousTypeReference, resolveResultToString( rt) + ", " + resolveResultToString( alt_rt));
+			}
 		}
 
 		int redu_buffer[ 512];

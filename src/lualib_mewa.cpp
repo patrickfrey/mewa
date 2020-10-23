@@ -438,7 +438,7 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 		lua_getglobal( ls, td->objTableName.buf);
 		int constructor = mewa::lua::getArgumentAsConstructor( functionName, ls, 5, -1/*objtable*/, td);
 		int tag = mewa::lua::getArgumentAsCardinal( functionName, ls, 6);
-		float weight = (nargs >= 7) ? mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 7) : 1.0;
+		float weight = (nargs >= 7) ? mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 7) : 0.0;
 		lua_pop( ls, 1); // ... obj table
 		td->impl->defineReduction( scope, toType, fromType, constructor, tag, weight);
 	}

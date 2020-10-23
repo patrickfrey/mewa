@@ -23,6 +23,7 @@
 #include <vector>
 #include <cstdlib>
 #include <memory>
+#include <utility>
 #include <algorithm>
 
 namespace mewa {
@@ -45,6 +46,7 @@ public:
 		m_parameterMap.reserve( m_memory->nofParameterMapInitBuckets());
 		m_typerecMap.reserve( m_memory->nofTypeRecordMapInitBuckets());
 	}
+	TypeDatabase( const TypeDatabase& ) = delete;
 
 public:
 	struct Parameter
@@ -135,18 +137,25 @@ public:
 		{
 			reductions.reserve( resbuf.buffersize() / sizeof(ReductionResult));
 		}
+		DeriveResult( const DeriveResult&) = delete;
+		DeriveResult( DeriveResult&& o)
+			:reductions(std::move(o.reductions)),weightsum(o.weightsum){}
 	};
 	struct ResolveResult
 	{
 		std::pmr::vector<ReductionResult> reductions;
 		std::pmr::vector<ResolveResultItem> items;
+		float weightsum;
 
 		ResolveResult( ResultBuffer& resbuf) noexcept
-			:reductions(&resbuf.memrsc),items(&resbuf.memrsc)
+			:reductions(&resbuf.memrsc),items(&resbuf.memrsc),weightsum(0.0)
 		{
 			reductions.reserve( resbuf.buffersize() / 2 / sizeof(ReductionResult));
 			items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
 		}
+		ResolveResult( const ResolveResult&) = delete;
+		ResolveResult( ResolveResult&& o)
+			:reductions(std::move(o.reductions)),items(std::move(o.items)),weightsum(o.weightsum){}
 	};
 	struct ReductionDefinition
 	{
@@ -289,6 +298,7 @@ private:
 		{
 			std::free(ptr);
 		}
+		MemoryBlock( const MemoryBlock&) = delete;
 	};
 
 	class Memory
