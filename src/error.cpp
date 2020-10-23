@@ -175,8 +175,8 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
 		case ExpectedArgumentParameterStructure:  return "Expected argument to be a type parameter structure (pair type,constructor)";
 		case ExpectedArgumentNotNil: return "Expected argument to be not nil";
-		case TooFewArguments: return "too few arguments";
-		case TooManyArguments: return "too many arguments";
+		case TooFewArguments: return "Too few arguments";
+		case TooManyArguments: return "Too many arguments";
 
 		case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
 		case SyntaxErrorInLexer: return "Syntax error in the lexer definition";

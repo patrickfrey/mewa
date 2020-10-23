@@ -10,7 +10,7 @@ The following commands are known:
 
 * **%** **LANGUAGE** _name_ **;** Defines the name of the language of this grammar as _name_
 * **%** **TYPESYSTEM** _name_ **;** Defines the name of the _Lua_ module without extension _.lua_ implementing the typesystem as _name_. that is implicitely added. The generated lua module of the compiler will include the type system module with this name. The typesystem module will contain all Lua callback definitions referred to in the grammar.
-* **%** **CMDLINE** _name_ **;** Defines the name of the Lua module without extension _.lua_ implementing command line parser of the compiler as _name_. If not specified _mewa_ generates code that calls the compiler with the first command line argument. A module defined for the command line can implement some argument checking and initialize some compiler behaviour specified by command line options. The module defined by CMDLINE has to export a method _parse_ with 3 arguments: the name of the language, the typesystem structure and the array of command line arguments. It is expected to return 3 values: the input file name, the output file name, the debug output file name. Only the first return value is mandatory. And example of a command line parser can be found [here](../examples/cmdlinearg.lua). 
+* **%** **CMDLINE** _name_ **;** Defines the name of the Lua module without extension _.lua_ implementing command line parser of the compiler as _name_. If not specified _Mewa_ generates code that calls the compiler with the first command line argument. A module defined for the command line can implement some argument checking and initialize some compiler behaviour specified by command line options. The module defined by CMDLINE has to export a method _parse_ with 3 arguments: the name of the language, the typesystem structure and the array of command line arguments. It is expected to return 3 values: the input file name, the output file name, the debug output file name. Only the first return value is mandatory. And example of a command line parser can be found [here](../examples/cmdlinearg.lua). 
 * **%** **COMMENT** _start_ _end_ **;** Defines the content between the patterns _start_ and _end_ defined as regular expression quoted in single or double quotes as comment. Comments are ignored by the lexer and thus by the compiler.
 * **%** **COMMENT** _start_ **;** Defines the content starting with the pattern _start_ defined as regular expression quoted in single or double quotes until the next end of line as comment. Comments are ignored by the lexer and thus by the compiler.
 * **%** **IGNORE** _pattern_ **;** Defines a token matching this pattern defined as regular expression quoted in single or double quotes as invisible. It is ignored by the lexer and thus by the compiler. Hence it does not need a name.
@@ -30,13 +30,13 @@ If multiple patterns match at the same source position then the longest match is
 Keywords and operators of the the grammar do not have to be declared in the lexer section but can be directly referred to as strings in the rule section of the grammar.
 
 ### Meaning of Whitespaces
-Whitespaces have no meaning in languages describable by _mewa_.
+Whitespaces have no meaning in languages describable by _Mewa_.
 The lexems of the languages cannot start with whitespaces as the parser skips whitespaces after every lexem matched and starts matching the next lexem with the first non whitespace character after the last match.
 
 ## Rule Delarations
 Rule declarations start with an identifier followed by an assignment '**=**' and the right side of the production.
 At the end of each production we can declare one optional call to the typesystem module written in Lua.
-Additionally _mewa_ provides the operators '**>>**' and '**{}**' to assign **scope** info to the nodes of the AST initially built.
+Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **scope** info to the nodes of the AST initially built.
 
 1. _name_ **=** _itemlist_ **;**
     * Simple grammar rule definition with _name_ as left hand _nonterminal_ and _itemlist_ as space separated list of identifiers (nonterminals or lexem names) and strings (keywords and operators as implicitely defiend lexems).

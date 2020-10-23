@@ -120,6 +120,8 @@ install: all
 # ONLY FOR DEVELOPPERS (All generated files of make doc are checked in):
 DOCSRC := $(wildcard $(DOCDIR)/*.md.in)
 doc: all $(DOCSRC)
+	@echo "Create documentation of program mewa from its man page ..."
+	groff -mandoc -T html MANPAGE > $(DOCDIR)/program_mewa.html
 	@echo "Substitute some .in files in $(DOCDIR) with verified examples. Needs perl installed ..."
 	perl doc/gen/map_md_in.pl $(TSTVBFLAGS)
 
