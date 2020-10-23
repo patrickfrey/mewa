@@ -21,12 +21,6 @@ my %alignmap = (
 	i1 => 1
 );
 
-my %extmap = (
-	signed => "signext",
-	unsigned => "zeroext",
-	fp => ""
-);
-
 sub readNonEmptyLinesFromFile {
 	my $infile = $_[0];
 	my @rt = ();
@@ -110,7 +104,7 @@ sub load_conv_constructor {
 			if ($llvmtype_out eq "i1")
 			{
 				my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
-				$rt .= "{\"$out\", \" = fcmp une $llvmtype_in \", \"/R1\", \" 0.000000e+00\"},";
+				$rt .= "{\"$out\", \" = fcmp une $llvmtype_in \", \"/R1\", \" 0.000000e+00\"}";
 				return $rt;
 			}
 			if ($sgn_out eq "signed") {$convop = "fptosi";}
@@ -118,6 +112,12 @@ sub load_conv_constructor {
 		}
 		else
 		{
+			if ($llvmtype_out eq "i1")
+			{
+				my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
+				$rt .= "{\"$out\", \" = icmp ne $llvmtype_in \", \"/R1\", \" 0\"}";
+				return $rt;
+			}
 			if (typeSize( $llvmtype_out) < typeSize( $llvmtype_in)) {$convop = "trunc";}
 			elsif ($sgn_in eq "unsigned") {$convop = "zext";}
 			elsif ($sgn_in eq "signed") {$convop = "sext";}
@@ -156,12 +156,56 @@ foreach my $line (@content)
 		print "\t\t\t$op_typename = { " . $cnv . "}\n";
 	}
 	print "\t\t}\n";
-	print "\t\toperator = {\n";
+	print "\t\tunop = {\n";
+	if ($llvmtype eq "i1")
+	{
+		print "\t\t\t{ \"/OUT\", \" = xor $llvmtype \"/IN\", true }\n";
+	}
+	elsif ($sgn eq "unsigned")
+	{
+		print "\t\t\t{ \"/OUT\", \" = xor $llvmtype \"/IN\", -1 }\n";
+	}
+	elsif ($sgn eq "signed")
+	{
+		print "\t\t\t{ \"/OUT\", \" = sub $llvmtype 0, \", \"/IN\" }\n";
+	}
+	elsif ($sgn eq "fp")
+	{
+		print "\t\t\t{ \"/OUT\", \" = fneg $llvmtype 0, \", \"/IN\" }\n";
+	}
+	else
+	{
+		die "Unknown sgn '$sgn' (3rd column in typelist)";
+	}
+	print "\t\t}\n";
+	print "\t\tbinop = {\n";
+	my @ops = ();
+	if ($llvmtype eq "i1")
+	{
+		@ops = ("and=and", "or=or", "xor=xor");
+	}
+	elsif ($sgn eq "unsigned")
+	{
+		@ops = ("add=add nuw", "sub=add nsw", "mul=mul nsw", "div=udiv", "mod=urem", "shl=shl", "shr=lshr", "and=and", "or=or", "xor=xor");
+	}
+	elsif ($sgn eq "signed")
+	{
+		@ops = ("add=add nsw", "sub=sub nsw", "mul=mul nsw", "div=sdiv", "mod=srem", "shl=shl nsw", "shr=ashr");
+	}
+	elsif ($sgn eq "fp")
+	{
+		@ops = ("add=fadd", "sub=fsub", "mul=fmul", "div=fdiv", "mod=frem");
+	}
+	else
+	{
+		die "Unknown sgn '$sgn' (3rd column in typelist)";
+	}
+	foreach my $op( @ops)
+	{
+
+	}
 	print "\t\t}\n";
 	print "\t}\n";
 }
 print "}}\n";
-
-
-
 
