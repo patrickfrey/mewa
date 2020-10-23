@@ -26,7 +26,5 @@ compiler:run( inputfile, outputfile, dbgout)
 
 ## The Type Database API
 The type database API provides some functions to build the type system of your compiler. 
-A documentation can be found [here](doc/typedb.md).
-
-
+A documentation can be found [here](typedb.md).
 

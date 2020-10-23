@@ -23,8 +23,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#412**   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
 + **#413**   _Expected argument to be a type parameter structure (pair type,constructor)_
 + **#414**   _Expected argument to be not nil_
-+ **#415**   _too few arguments_
-+ **#416**   _too many arguments_
++ **#415**   _Too few arguments_
++ **#416**   _Too many arguments_
 
 ## Errors in Lexer
 + **#421**   _Bad character in a regular expression passed to the lexer_
