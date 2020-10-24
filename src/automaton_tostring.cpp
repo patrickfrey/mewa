@@ -124,22 +124,25 @@ static void printCallTable( std::ostream& outstream, const char* tablename, cons
 		switch (call.argtype())
 		{
 			case Automaton::Call::NoArg:
+				outstream << "name=";
 				printString( outstream, call.function());
-				outstream << ", " << g_typeSystemModulePrefix << call.function();
+				outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
 				break;
 			case Automaton::Call::StringArg:
+				outstream << "name=";
 				printString( outstream, call.function() + " " + call.arg());
-				outstream << ", " << g_typeSystemModulePrefix << call.function() << ", \"" << call.arg() << "\"}";
+				outstream << ", proc=" << g_typeSystemModulePrefix << call.function() << ", obj=\"" << call.arg() << "\"}";
 				break;
 			case Automaton::Call::ReferenceArg:
+				outstream << "name=";
 				printString( outstream, call.function() + " " + call.arg());
 				if (isConstantArgument( call.arg()))
 				{
-					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << call.arg();
+					outstream << ", proc=" << g_typeSystemModulePrefix << call.function() << ", obj=" << call.arg();
 				}
 				else
 				{
-					outstream << ", " << g_typeSystemModulePrefix << call.function() << ", " << g_typeSystemModulePrefix << call.arg();
+					outstream << ", proc=" << g_typeSystemModulePrefix << call.function() << ", obj=" << g_typeSystemModulePrefix << call.arg();
 				}
 				break;
 		}

@@ -55,7 +55,7 @@ function typesystem.vardef( node) end
 function typesystem.vardef_assign( node) end
 function typesystem.vardef_array( node) end
 function typesystem.vardef_array_assign( node) end
-function typesystem.operator( opdescr, node) end
+function typesystem.operator( node, opdescr) end
 function typesystem.stm_expression( node) end
 function typesystem.stm_return( node) end
 function typesystem.conditional_if( node) end
@@ -63,7 +63,7 @@ function typesystem.conditional_while( node) end
 
 function typesystem.namespaceref( node) end
 function typesystem.typedef( node) end
-function typesystem.typespec( typedescr, node) end
+function typesystem.typespec( node, typedescr) end
 function typesystem.funcdef( node) end
 function typesystem.procdef( node) end
 function typesystem.paramdef( node) end

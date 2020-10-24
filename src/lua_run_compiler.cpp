@@ -277,7 +277,7 @@ static mewa::Error::Code luaErrorCode2ErrorCode( int rc)
 	return rc ? mewa::Error::LuaCallErrorUNKNOWN : mewa::Error::Ok;
 }
 
-static void callLuaNodeFunction( lua_State* ls, int li, int calltable, std::ostream* dbgout)
+static void luaCallNodeFunction( lua_State* ls, int li, int calltable, std::ostream* dbgout)
 {
 	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 	lua_pushvalue( ls, li);						// STK: [NODE]
@@ -288,7 +288,7 @@ static void callLuaNodeFunction( lua_State* ls, int li, int calltable, std::ostr
 	{
 		lua_pop( ls, 1);					// STK: [NODE]
 		lua_pushliteral( ls, "name");				// STK: [NODE] "name"
-		lua_gettable( ls, -2);					// STK: [NODE] [NAME]
+		lua_rawget( ls, -2);					// STK: [NODE] [NAME]
 		if (lua_type( ls, -1) != LUA_TSTRING)
 		{
 			throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
@@ -296,7 +296,7 @@ static void callLuaNodeFunction( lua_State* ls, int li, int calltable, std::ostr
 		std::string namestr( lua_tostring( ls, -1));
 		lua_pop( ls, 1);					// STK: [NODE]
 		lua_pushliteral( ls, "value");				// STK: [NODE] "value"
-		lua_gettable( ls, -2);					// STK: [NODE] [VALUE]
+		lua_rawget( ls, -2);					// STK: [NODE] [VALUE]
 		if (lua_type( ls, -1) != LUA_TSTRING)
 		{
 			throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
@@ -308,18 +308,18 @@ static void callLuaNodeFunction( lua_State* ls, int li, int calltable, std::ostr
 	else
 	{
 		int nargs = 1;
-		lua_rawgeti( ls, -1, 1);					// STK: [NODE] [CALL] [FUNCNAME]
-		lua_rawgeti( ls, -2, 2);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
-		lua_rawgeti( ls, -3, 3);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG]
+		lua_pushliteral( ls, "proc");					// STK: [NODE] [CALL] "proc"
+		lua_rawget( ls, -2);						// STK: [NODE] [CALL] [FUNC]
+		lua_pushvalue( ls, -3);						// STK: [NODE] [CALL] [FUNC] [NODE]
+		lua_pushliteral( ls, "obj");					// STK: [NODE] [CALL] [FUNC] [NODE] "obj"
+		lua_rawget( ls, -4);						// STK: [NODE] [CALL] [FUNC] [NODE] [OBJ]
 		if (lua_isnil( ls, -1))
 		{
 			lua_pop( ls, 1);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
-			lua_pushvalue( ls, -4);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [NODE]
 		}
 		else
 		{
 			nargs += 1;
-			lua_pushvalue( ls, -5);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] [NODE]
 		}
 		int rc = lua_pcall( ls, nargs, 1/*nresults*/, 0/*errfunc*/);	// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
 		if (rc)
@@ -330,7 +330,7 @@ static void callLuaNodeFunction( lua_State* ls, int li, int calltable, std::ostr
 			{
 				int line = 0;
 				lua_pushliteral( ls, "line");			// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] "line"
-				lua_gettable( ls, -5);				// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] [LINE]
+				lua_rawget( ls, -5);				// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] [LINE]
 				if (lua_isnil( ls, -1))
 				{}
 				else if (lua_type( ls, -1) == LUA_TNUMBER)
@@ -544,7 +544,7 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 		int lastElementOnStack = lua_gettop( ls);
 		for (int li=calltableref+1; li<=lastElementOnStack; ++li)
 		{
-			callLuaNodeFunction( ls, li, ctx.calltable, ctx.dbgout);
+			luaCallNodeFunction( ls, li, ctx.calltable, ctx.dbgout);
 		}
 	}
 	lua_pop( ls, 1 + lua_gettop( ls) - nofLuaStackElements);

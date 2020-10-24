@@ -159,7 +159,7 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 		for (auto const& key : keyvec)
 		{
 			key.push_luastack( ls);					// STK: [TABLE] [KEY]
-			lua_gettable( ls, -2);					// STK: [TABLE] [VALUE]
+			lua_rawget( ls, -2);					// STK: [TABLE] [VALUE]
 
 			if (kidx++) out << ",";
 			out << indent;
@@ -176,7 +176,7 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 		for (auto const& key : keyvec)
 		{
 			key.push_luastack( ls);					// STK: [TABLE] [KEY]
-			lua_gettable( ls, -2);					// STK: [TABLE] [VALUE]
+			lua_rawget( ls, -2);					// STK: [TABLE] [VALUE]
 
 			if (kidx++) out << ",";
 			out << indent;

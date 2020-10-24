@@ -27,10 +27,6 @@ namespace mewa {
 // \param[in] dbgout optional debug output, null if not defined
 void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, std::ostream* dbgout);
 
-// \param[in] ls Lua state
-// \param[in] li element on Lua stack with array of nodes to traverse
-void luaTraverse( lua_State* ls, int li, const char* calltable);
-
 } //namespace
 #else
 #error Building mewa requires C++17

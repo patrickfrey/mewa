@@ -239,61 +239,66 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 	std::string function;
 	std::string arg;
 	mewa::Automaton::Call::ArgumentType argtype = mewa::Automaton::Call::NoArg;
-	int rowcnt = 0;
+	bool defined[ 3] = {false, false, false};
 
 	lua_pushvalue( ls, li);
 	lua_pushnil( ls);
 
 	while (lua_next( ls, -2))
 	{
-		++rowcnt;
-		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
+		if (lua_type( ls, -2) != LUA_TSTRING)
+		{
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s'", tableName.c_str()));
+		}
+		const char* key = lua_tostring( ls, -2); 
+
+		if (key[0] == 'n' && 0==std::strcmp( key, "name"))
+		{
+			defined[ 0] = true;
+			if (lua_type( ls, -1) != LUA_TSTRING)
+			{
+				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+							mewa::string_format( "table '%s', key '%s'", tableName.c_str(), key));
+			}
+			std::size_t vallen;
+			const char* valstr = lua_tolstring( ls, -1, &vallen);
+			const char* argstr = std::strchr( valstr, ' ');
+			if (argstr)
+			{
+
+				function.append( valstr, argstr-valstr);
+				arg.append( argstr+1);
+			}
+			else
+			{
+				function.append( valstr, vallen);
+			}
+		}
+		else if (key[0] == 'p' && 0==std::strcmp( key, "proc"))
+		{
+			defined[ 1] = true;
+			if (lua_type( ls, -1) != LUA_TFUNCTION)
+			{
+				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', key '%s'", tableName.c_str(), key));
+			}
+		}
+		else if (key[0] == 'o' && 0==std::strcmp( key, "obj"))
+		{
+			defined[ 2] = true;
+			argtype = (lua_type( ls, -1) == LUA_TSTRING) ? mewa::Automaton::Call::StringArg : mewa::Automaton::Call::ReferenceArg;
+		}
+		else
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable,
-						mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
-		}
-		std::size_t vallen;
-		const char* valstr;
-		const char* argstr;
-
-		switch (rowcnt)
-		{
-			case 1: 
-				if (lua_type( ls, -1) != LUA_TSTRING)
-				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
-								mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
-				}
-				valstr = lua_tolstring( ls, -1, &vallen);
-				argstr = std::strchr( valstr, ' ');
-				if (argstr)
-				{
-
-					function.append( valstr, argstr-valstr);
-					arg.append( argstr+1);
-				}
-				else
-				{
-					function.append( valstr);
-				}
-				break;
-			case 2: 
-				if (lua_type( ls, -1) != LUA_TFUNCTION)
-				{
-					throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
-				}
-				break;
-			case 3:
-				argtype = (lua_type( ls, -1) == LUA_TSTRING) ? mewa::Automaton::Call::StringArg : mewa::Automaton::Call::ReferenceArg;
-				break;
+						mewa::string_format( "table '%s', key '%s'", tableName.c_str(), key));
 		}
 		lua_pop( ls, 1);
 	}
-	if (rowcnt < 2)
+	if (!defined[0] || !defined[1])
 	{
 		throw mewa::Error( mewa::Error::UnresolvableFunctionInLuaCallTable, function);
 	}
-	else if (!arg.empty() && rowcnt < 3)
+	else if (!arg.empty() && !defined[2])
 	{
 		throw mewa::Error( mewa::Error::UnresolvableFunctionArgInLuaCallTable, arg);
 	}

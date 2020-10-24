@@ -163,16 +163,16 @@ Lua call result [1]
 								name = "IDENT",
 								value = "int"}},
 						call = {
-							"typespec reftype",
-							<function>,
-							{}}},
+							name = "typespec reftype",
+							obj = {},
+							proc = <function>}},
 					{
 						line = 1,
 						name = "IDENT",
 						value = "a"}},
 				call = {
-					"paramdef",
-					<function>}},
+					name = "paramdef",
+					proc = <function>}},
 			{
 				arg = {
 					{
@@ -182,16 +182,16 @@ Lua call result [1]
 								name = "IDENT",
 								value = "int"}},
 						call = {
-							"typespec reftype",
-							<function>,
-							{}}},
+							name = "typespec reftype",
+							obj = {},
+							proc = <function>}},
 					{
 						line = 1,
 						name = "IDENT",
 						value = "b"}},
 				call = {
-					"paramdef",
-					<function>}},
+					name = "paramdef",
+					proc = <function>}},
 			{
 				arg = {
 					{
@@ -201,9 +201,9 @@ Lua call result [1]
 								name = "IDENT",
 								value = "int"}},
 						call = {
-							"typespec puretype",
-							<function>,
-							{}}},
+							name = "typespec puretype",
+							obj = {},
+							proc = <function>}},
 					{
 						line = 3,
 						name = "IDENT",
@@ -213,8 +213,8 @@ Lua call result [1]
 						name = "IDENT",
 						value = "a"}},
 				call = {
-					"vardef_assign",
-					<function>},
+					name = "vardef_assign",
+					proc = <function>},
 				step = 1},
 			{
 				arg = {
@@ -229,12 +229,12 @@ Lua call result [1]
 								name = "IDENT",
 								value = "b"}},
 						call = {
-							"operator assign",
-							<function>,
-							{}}}},
+							name = "operator assign",
+							obj = {},
+							proc = <function>}}},
 				call = {
-					"stm_expression",
-					<function>},
+					name = "stm_expression",
+					proc = <function>},
 				step = 2},
 			{
 				arg = {
@@ -249,16 +249,16 @@ Lua call result [1]
 								name = "IDENT",
 								value = "tmp"}},
 						call = {
-							"operator assign",
-							<function>,
-							{}}}},
+							name = "operator assign",
+							obj = {},
+							proc = <function>}}},
 				call = {
-					"stm_expression",
-					<function>},
+					name = "stm_expression",
+					proc = <function>},
 				step = 3}},
 		call = {
-			"procdef",
-			<function>},
+			name = "procdef",
+			proc = <function>},
 		scope = {
 			0,
 			4}},
@@ -271,9 +271,9 @@ Lua call result [1]
 						name = "IDENT",
 						value = "int"}},
 				call = {
-					"typespec puretype",
-					<function>,
-					{}}},
+					name = "typespec puretype",
+					obj = {},
+					proc = <function>}},
 			{
 				line = 8,
 				name = "IDENT",
@@ -287,16 +287,16 @@ Lua call result [1]
 								name = "IDENT",
 								value = "int"}},
 						call = {
-							"typespec puretype",
-							<function>,
-							{}}},
+							name = "typespec puretype",
+							obj = {},
+							proc = <function>}},
 					{
 						line = 8,
 						name = "IDENT",
 						value = "n"}},
 				call = {
-					"paramdef",
-					<function>}},
+					name = "paramdef",
+					proc = <function>}},
 			{
 				arg = {
 					{
@@ -306,9 +306,9 @@ Lua call result [1]
 								name = "IDENT",
 								value = "int"}},
 						call = {
-							"typespec puretype",
-							<function>,
-							{}}},
+							name = "typespec puretype",
+							obj = {},
+							proc = <function>}},
 					{
 						line = 10,
 						name = "IDENT",
@@ -318,8 +318,8 @@ Lua call result [1]
 						name = "CARDINAL",
 						value = "0"}},
 				call = {
-					"vardef_assign",
-					<function>},
+					name = "vardef_assign",
+					proc = <function>},
 				step = 5},
 			{
 				arg = {
@@ -330,9 +330,9 @@ Lua call result [1]
 								name = "IDENT",
 								value = "int"}},
 						call = {
-							"typespec puretype",
-							<function>,
-							{}}},
+							name = "typespec puretype",
+							obj = {},
+							proc = <function>}},
 					{
 						line = 11,
 						name = "IDENT",
@@ -342,8 +342,8 @@ Lua call result [1]
 						name = "CARDINAL",
 						value = "1"}},
 				call = {
-					"vardef_assign",
-					<function>},
+					name = "vardef_assign",
+					proc = <function>},
 				step = 6},
 			{
 				arg = {
@@ -358,9 +358,9 @@ Lua call result [1]
 								name = "IDENT",
 								value = "n"}},
 						call = {
-							"operator cmplt",
-							<function>,
-							{}}},
+							name = "operator cmplt",
+							obj = {},
+							proc = <function>}},
 					{
 						arg = {
 							{
@@ -380,16 +380,16 @@ Lua call result [1]
 												name = "IDENT",
 												value = "i1"}},
 										call = {
-											"operator add",
-											<function>,
-											{}}}},
+											name = "operator add",
+											obj = {},
+											proc = <function>}}},
 								call = {
-									"operator assign",
-									<function>,
-									{}}}},
+									name = "operator assign",
+									obj = {},
+									proc = <function>}}},
 						call = {
-							"stm_expression",
-							<function>},
+							name = "stm_expression",
+							proc = <function>},
 						step = 7},
 					{
 						arg = {
@@ -408,16 +408,16 @@ Lua call result [1]
 										name = "IDENT",
 										value = "i2"}},
 								call = {
-									"operator call",
-									<function>,
-									{}}}},
+									name = "operator call",
+									obj = {},
+									proc = <function>}}},
 						call = {
-							"stm_expression",
-							<function>},
+							name = "stm_expression",
+							proc = <function>},
 						step = 8}},
 				call = {
-					"conditional_while",
-					<function>},
+					name = "conditional_while",
+					proc = <function>},
 				scope = {
 					6,
 					9}},
@@ -428,12 +428,12 @@ Lua call result [1]
 						name = "IDENT",
 						value = "i2"}},
 				call = {
-					"stm_return",
-					<function>},
+					name = "stm_return",
+					proc = <function>},
 				step = 10}},
 		call = {
-			"funcdef",
-			<function>},
+			name = "funcdef",
+			proc = <function>},
 		scope = {
 			4,
 			11}}}
