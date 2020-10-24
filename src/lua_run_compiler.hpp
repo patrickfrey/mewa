@@ -29,7 +29,7 @@ void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std:
 
 // \param[in] ls Lua state
 // \param[in] li element on Lua stack with array of nodes to traverse
-void luaTraverse( lua_State* ls, int li);
+void luaTraverse( lua_State* ls, int li, const char* calltable);
 
 } //namespace
 #else

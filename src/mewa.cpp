@@ -79,9 +79,10 @@ typesystem = require( "%typesystem%")
 mewa = require("mewa")
 
 compilerdef = %automaton%
-compiler = mewa.compiler( compilerdef)
+
 if #arg == 0 then error( "arguments missing") end
 if #arg > 1 then error( "too many arguments") end
+compiler = mewa.compiler( compilerdef)
 compiler:run( arg[0])
 )"};
 
@@ -92,9 +93,10 @@ cmdline = require( "%cmdline%")
 mewa = require("mewa")
 
 compilerdef = %automaton%
-compiler = mewa.compiler( compilerdef)
 
 inputfile,outputfile,dbgout = cmdline:parse( "%language%", typesystem, arg)
+
+compiler = mewa.compiler( compilerdef)
 compiler:run( inputfile, outputfile, dbgout)
 )"};
 
