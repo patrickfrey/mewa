@@ -277,7 +277,7 @@ static mewa::Error::Code luaErrorCode2ErrorCode( int rc)
 	return rc ? mewa::Error::LuaCallErrorUNKNOWN : mewa::Error::Ok;
 }
 
-static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
+static void callLuaNodeFunction( lua_State* ls, int li, int calltable, std::ostream* dbgout)
 {
 	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 	lua_pushvalue( ls, li);						// STK: [NODE]
@@ -314,14 +314,12 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 		if (lua_isnil( ls, -1))
 		{
 			lua_pop( ls, 1);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
-			lua_pushliteral( ls, "arg");				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] "arg"
-			lua_rawget( ls, -5/*[NODE]*/);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [ARG]
+			lua_pushvalue( ls, -4);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [NODE]
 		}
 		else
 		{
 			nargs += 1;
-			lua_pushliteral( ls, "arg");				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] "arg"
-			lua_rawget( ls, -6/*[NODE]*/);				// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] [ARG]
+			lua_pushvalue( ls, -5);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC] [CTXARG] [NODE]
 		}
 		int rc = lua_pcall( ls, nargs, 1/*nresults*/, 0/*errfunc*/);	// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
 		if (rc)
@@ -358,10 +356,10 @@ static void callLuaNodeFunction( lua_State* ls, CompilerContext& ctx, int li)
 				throw err;
 			}
 		}
-		else if (ctx.dbgout && !lua_isnil( ls, -1))
+		else if (dbgout && !lua_isnil( ls, -1))
 		{
-			*ctx.dbgout << "Lua call result [" << li-ctx.calltable << "]" << std::endl;
-			*ctx.dbgout << mewa::luaToString( ls, -1, true/*formatted*/) << std::endl;
+			*dbgout << "Lua call result [" << li-calltable << "]" << std::endl;
+			*dbgout << mewa::luaToString( ls, -1, true/*formatted*/) << std::endl;
 		}
 	}
 }
@@ -546,7 +544,7 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 		int lastElementOnStack = lua_gettop( ls);
 		for (int li=calltableref+1; li<=lastElementOnStack; ++li)
 		{
-			callLuaNodeFunction( ls, ctx, li);
+			callLuaNodeFunction( ls, li, ctx.calltable, ctx.dbgout);
 		}
 	}
 	lua_pop( ls, 1 + lua_gettop( ls) - nofLuaStackElements);

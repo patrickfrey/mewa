@@ -153,45 +153,49 @@ print "\t-- /OUT output register (\%id)\n";
 print "\t-- /ADR variable address (\@name) or register (\%id)\n";
 print "\t-- /VAL constant value of a matching LLVM type\n";
 my @content = readNonEmptyLinesFromFile( $typelist);
+my $linecnt = 0;
 foreach my $line (@content)
 {
+	if ($linecnt++ > 0) {print ",\n";} else {print "\n";}
 	my ($typename, $llvmtype, $sgn) = split( /\t/, $line);
 	print "\t$typename = {\n";
 	print "\t\tdef_local  = { { " . LLVM( "/OUT", " = alloca $llvmtype, align $alignmap{$llvmtype}" ) . " }},\n";
 	print "\t\tdef_global = { { " . LLVM( "/ADR", " = internal global $llvmtype ", "/VAL", ", align $alignmap{$llvmtype}" ) . " }},\n";
 	print "\t\tstore = { " . store_constructor( $llvmtype, "/ADR", "/IN") . "},\n";
 	print "\t\tload = { " . load_constructor( $llvmtype, "/OUT", "/IN") . "},\n";
-	print "\t\tconv = {\n";
+	print "\t\tconv = {";
+	my $oi = 0;
 	foreach my $operand (@content)
 	{
+		if ($oi++ > 0) {print ",\n";} else {print "\n";}
 		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
 		my $cnv = load_conv_constructor( $llvmtype, "/OUT", $sgn, $op_llvmtype, "/IN", $op_sgn);
-		print "\t\t\t$op_typename = { " . $cnv . "}\n";
+		print "\t\t\t_$op_typename = { " . $cnv . "}";
 	}
-	print "\t\t}\n";
+	print "\n\t\t},\n";
 	print "\t\tunop = {\n";
 	if ($llvmtype eq "i1")
 	{
-		print "\t\t\t{ " . LLVM( "/OUT", " = xor $llvmtype ", "/IN", ", true") . " }\n";
+		print "\t\t\t_not = { " . LLVM( "/OUT", " = xor $llvmtype ", "/IN", ", true") . " }\n";
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		print "\t\t\t{ " . LLVM( "/OUT", " = xor $llvmtype ", "/IN", ", -1") . " }\n";
+		print "\t\t\t_not = { " . LLVM( "/OUT", " = xor $llvmtype ", "/IN", ", -1") . " }\n";
 	}
 	elsif ($sgn eq "signed")
 	{
-		print "\t\t\t{ " . LLVM( "/OUT", " = sub $llvmtype 0, ", "/IN") . " }\n";
+		print "\t\t\t_neg = { " . LLVM( "/OUT", " = sub $llvmtype 0, ", "/IN") . " }\n";
 	}
 	elsif ($sgn eq "fp")
 	{
-		print "\t\t\t{ " . LLVM( "/OUT", " = fneg $llvmtype 0, ", "/IN") . " }\n";
+		print "\t\t\t_neg = { " . LLVM( "/OUT", " = fneg $llvmtype 0, ", "/IN") . " }\n";
 	}
 	else
 	{
 		die "Unknown sgn '$sgn' (3rd column in typelist)";
 	}
-	print "\t\t}\n";
-	print "\t\tbinop = {\n";
+	print "\t\t},\n";
+	print "\t\tbinop = {";
 	my @ops = ();
 	if ($llvmtype eq "i1")
 	{
@@ -213,13 +217,15 @@ foreach my $line (@content)
 	{
 		die "Unknown sgn '$sgn' (3rd column in typelist)";
 	}
+	$oi = 0;
 	foreach my $op( @ops)
 	{
+		if ($oi++ > 0) {print ",\n";} else {print "\n";}
 		my ($name,$llvm_name) = split /=/, $op;
-		print "\t\t\t$name = { " . LLVM( "/OUT", " = $llvm_name $llvmtype, ", "/IN" ) . " }\n";
+		print "\t\t\t_$name = { " . LLVM( "/OUT", " = $llvm_name $llvmtype, ", "/IN" ) . " }";
 	}
-	print "\t\t}\n";
-	print "\t}\n";
+	print "\n\t\t}\n";
+	print "\t}";
 }
 print "}}\n";
 

@@ -137,6 +137,10 @@ mewa::Scope mewa::lua::getArgumentAsScope( const char* functionName, lua_State* 
 				else if ((int)kk == 2)
 				{
 					end = lua_tointeger( ls, -1);
+					if (end < 0)
+					{
+						end = std::numeric_limits<Scope::Step>::max() + end + 1;
+					}
 				}
 				else
 				{
