@@ -1,7 +1,7 @@
 {
 	mewa = "0.1.0",
 	language = "test",
-	typesystem = "typesystem1",
+	typesystem = "typesystem_language1",
 	cmdline = "cmdlinearg",
 	lexer = {
 		comment = {{ "/*", "*/" },"//" },

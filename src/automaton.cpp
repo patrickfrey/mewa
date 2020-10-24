@@ -963,8 +963,8 @@ static void printNonterminals( const std::vector<std::string>& nonterminals, Aut
 
 static void printLanguageHeader( const std::string& language, const std::string& typesystem, Automaton::DebugOutput dbgout)
 {
-	dbgout.out() << "== " << language;
-	if (!typesystem.empty()) dbgout.out() << " (" << typesystem << ")";
+	dbgout.out() << "== Language '" << language;
+	if (!typesystem.empty()) dbgout.out() << "', type system '" << typesystem << "'";
 	dbgout.out() << " ==" << std::endl;
 }
 

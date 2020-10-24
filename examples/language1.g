@@ -1,5 +1,5 @@
 % LANGUAGE test ;
-% TYPESYSTEM typesystem1 ;
+% TYPESYSTEM typesystem_language1 ;
 % CMDLINE cmdlinearg ;
 % COMMENT "/*" "*/" ;
 % COMMENT "//" ;
