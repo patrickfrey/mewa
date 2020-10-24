@@ -51,27 +51,43 @@ function initFirstClassCitizens()
 	end
 end
 
-function typesystem.vardef( node) end
-function typesystem.vardef_assign( node) end
-function typesystem.vardef_array( node) end
-function typesystem.vardef_array_assign( node) end
-function typesystem.operator( node, opdescr) end
-function typesystem.stm_expression( node) end
-function typesystem.stm_return( node) end
-function typesystem.conditional_if( node) end
-function typesystem.conditional_while( node) end
+function traverse( node, context)
+	local rt = {}
+	for ii, vv in ipairs( node.arg) do
+		local subnode = node.arg[ ii]
+		if subnode.call then
+			if subnode.call.obj then
+				rt[ ii] = subnode.call.proc( subnode, subnode.call.obj, context)
+			else
+				rt[ ii] = subnode.call.proc( subnode, context)
+			end
+		else
+			rt[ ii] = subnode.arg[ ii]
+		end
+	end
+	return rt
+end
 
-function typesystem.namespaceref( node) end
-function typesystem.typedef( node) end
-function typesystem.typespec( node, typedescr) end
-function typesystem.funcdef( node) end
-function typesystem.procdef( node) end
-function typesystem.paramdef( node) end
+function typesystem.vardef( node) return node.call.name end
+function typesystem.vardef_assign( node) return node.call.name end
+function typesystem.vardef_array( node) return node.call.name end
+function typesystem.vardef_array_assign( node) return node.call.name end
+function typesystem.operator( node, opdescr) return node.call.name end
+function typesystem.stm_expression( node) return node.call.name end
+function typesystem.stm_return( node) return node.call.name end
+function typesystem.conditional_if( node) return node.call.name end
+function typesystem.conditional_while( node) return node.call.name end
+
+function typesystem.namespaceref( node) return node.call.name end
+function typesystem.typedef( node) return node.call.name end
+function typesystem.typespec( node, typedescr) return node.call.name end
+function typesystem.funcdef( node) return node.call.name end
+function typesystem.procdef( node) return node.call.name end
+function typesystem.paramdef( node) return node.call.name end
 
 function typesystem.program( node)
 	initFirstClassCitizens()
-	-- return mewa.traverse( arg)
-	return node.arg
+	return traverse( node)
 end
 
 return typesystem
