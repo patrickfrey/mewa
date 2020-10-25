@@ -8,20 +8,16 @@
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 /// \brief Exception free shared library interface for the Mewa TypeDatabase (typedb)
+/// \note This interface is intended for users that want to use the type database library in a C++ context without using the mewa parser generator or the Lua module.
 /// \file "mewa/typedb.hpp"
 #ifndef _MEWA_LIBMEWA_TYPEDB_HPP_INCLUDED
 #define _MEWA_LIBMEWA_TYPEDB_HPP_INCLUDED
-#if __cplusplus < 201703L
-#error Building mewa requires C++17
-#endif
-
 #include <string_view>
 #include <string>
 #include <vector>
 #include <cstdlib>
 #include <cstdint>
 #include <memory>
-#include <memory_resource>
 #include <utility>
 #include <limits>
 
@@ -33,8 +29,7 @@ public:
 	Error() noexcept :m_code(0),m_arg(){}
 	Error( const Error& o) = default;
 	Error( Error&& o) noexcept = default;
-	Error( int code_, std::string arg_) noexcept
-		:m_code(code_),m_arg(std::move(arg_)){}
+	Error( int code_, std::string arg_) noexcept :m_code(code_),m_arg(std::move(arg_)){}
 
 	int code() const noexcept 			{return m_code;}
 	const std::string& arg() const noexcept 	{return m_arg;}
@@ -47,8 +42,7 @@ private:
 class Scope
 {
 public:
-	Scope( int start_,  int end_)
-		:m_start(start_),m_end(end_){}
+	Scope( int start_,  int end_) :m_start(start_),m_end(end_){}
 	Scope() noexcept :m_start(0),m_end(std::numeric_limits<int>::max()){}
 	Scope( const Scope& o) = default;
 	Scope( Scope&& o) noexcept = default;
@@ -72,18 +66,9 @@ public:
 	TagMask( TagMask&& o) = default;
 	TagMask() :m_mask(0){}
 
-	TagMask& operator |= (int tag_)
-	{
-		add( tag_); return *this;
-	}
-	TagMask operator | (int tag_) const
-	{
-		TagMask rt; rt.add( tag_); return rt;
-	}
-	static constexpr TagMask matchAll() noexcept
-	{
-		return TagMask( 0xffFFffFFU);
-	}
+	TagMask& operator |= (int tag_)		{add( tag_); return *this;}
+	TagMask operator | (int tag_) const	{TagMask rt; rt.add( tag_); return rt;}
+	static TagMask matchAll() noexcept	{TagMask rt; rt.m_mask = 0xffFFffFFU; return rt;}
 
 private:
 	void add( int tag_)
@@ -99,55 +84,61 @@ private:
 class ObjectInstanceTree
 {
 public:
-	ObjectInstanceTree() :m_impl(nullptr);
+	typedef std::size_t NodeIndex;
+
+	ObjectInstanceTree() :m_impl(nullptr){}
 	ObjectInstanceTree( const ObjectInstanceTree& o);
 	ObjectInstanceTree( ObjectInstanceTree&& o);
 	~ObjectInstanceTree();
 
-	ObjectInstanceTree chld() const noexcept;
-	ObjectInstanceTree next() const noexcept;
+	bool defined() const noexcept			{return m_impl;}
+	NodeIndex root() const noexcept			{return m_impl ? 1:0;}
+	NodeIndex chld( NodeIndex ni) const noexcept;
+	NodeIndex next( NodeIndex ni) const noexcept;
 
-	bool empty() const noexcept;
-	Scope scope() const noexcept;
-	int instance() const noexcept;
+	Scope scope( NodeIndex ni) const noexcept;
+	int instance( NodeIndex ni) const noexcept;
 
 private:
 	friend class TypeDatabase;
-	struct Pimpl;
-	Pimpl* m_impl;
+	void* m_impl;
 };
 
 class TypeDefinitionTree
 {
 public:
-	TypeDefinitionTree() :m_impl(nullptr);
+	typedef std::size_t NodeIndex;
+
+	TypeDefinitionTree() :m_impl(nullptr){}
 	TypeDefinitionTree( const TypeDefinitionTree& o);
 	TypeDefinitionTree( TypeDefinitionTree&& o);
 	~TypeDefinitionTree();
 
-	TypeDefinitionTree chld() const noexcept;
-	TypeDefinitionTree next() const noexcept;
+	bool defined() const noexcept			{return m_impl;}
+	NodeIndex root() const noexcept			{return m_impl ? 1:0;}
+	NodeIndex chld( NodeIndex ni) const noexcept;
+	NodeIndex next( NodeIndex ni) const noexcept;
 
-	bool empty() const noexcept;
-	Scope scope() const noexcept;
-	std::vector<int> list() const noexcept;
+	Scope scope( NodeIndex ni) const noexcept;
+	std::vector<int> list( NodeIndex ni) const noexcept;
+
 private:
 	friend class TypeDatabase;
-	struct Pimpl;
-	Pimpl* m_impl;
+	void* m_impl;
 };
 
 class ReductionDefinitionTree
 {
 public:
-	ReductionDefinitionTree() :m_impl(nullptr);
+	typedef std::size_t NodeIndex;
+
+	ReductionDefinitionTree() :m_impl(nullptr){}
 	ReductionDefinitionTree( const ReductionDefinitionTree& o);
 	ReductionDefinitionTree( ReductionDefinitionTree&& o);
 	~ReductionDefinitionTree();
 
 	struct Data
 	{
-		Scope scope;
 		int toType;
 		int fromType;
 		int constructor;
@@ -155,17 +146,17 @@ public:
 		float weight;
 	};
 
-	ReductionDefinitionTree chld() const noexcept;
-	ReductionDefinitionTree next() const noexcept;
+	bool defined() const noexcept			{return m_impl;}
+	NodeIndex root() const noexcept			{return m_impl ? 1:0;}
+	NodeIndex chld( NodeIndex ni) const noexcept;
+	NodeIndex next( NodeIndex ni) const noexcept;
 
-	bool empty() const noexcept;
-	Scope scope() const noexcept;
-	std::vector<Data> list() const noexcept;
+	Scope scope( NodeIndex ni) const noexcept;
+	std::vector<Data> list( NodeIndex ni) const noexcept;
 
 private:
 	friend class TypeDatabase;
-	struct Pimpl;
-	Pimpl* m_impl;
+	void* m_impl;
 };
 
 struct Parameter
@@ -173,12 +164,9 @@ struct Parameter
 	int type;
 	int constructor;
 
-	Parameter() noexcept
-		:type(0),constructor(0){}
-	Parameter( const Parameter& o) noexcept
-		:type(o.type),constructor(o.constructor){}
-	Parameter( int type_, int constructor_) noexcept
-		:type(type_),constructor(constructor_){}
+	Parameter() noexcept :type(0),constructor(0){}
+	Parameter( const Parameter& o) noexcept :type(o.type),constructor(o.constructor){}
+	Parameter( int type_, int constructor_) noexcept :type(type_),constructor(constructor_){}
 };
 
 struct ParameterList
@@ -186,25 +174,13 @@ struct ParameterList
 	int arsize;
 	Parameter const* ar;
 
-	ParameterList( const std::vector<Parameter>& ar_) noexcept
-		:arsize(ar_.size()),ar(ar_.data()){}
-	ParameterList( int arsize_, const Parameter* ar_) noexcept
-		:arsize(arsize_),ar(ar_){}
-	ParameterList( const ParameterList& o) noexcept
-		:arsize(o.arsize),ar(o.ar){}
+	ParameterList( const std::vector<Parameter>& ar_) noexcept :arsize(ar_.size()),ar(ar_.data()){}
+	ParameterList( int arsize_, const Parameter* ar_) noexcept :arsize(arsize_),ar(ar_){}
+	ParameterList( const ParameterList& o) noexcept :arsize(o.arsize),ar(o.ar){}
 
-	bool empty() const noexcept
-	{
-		return !arsize;
-	}
-	std::size_t size() const noexcept
-	{
-		return arsize;
-	}
-	const Parameter& operator[]( int idx) const noexcept
-	{
-		return ar[ idx];
-	}
+	bool empty() const noexcept				{return !arsize;}
+	std::size_t size() const noexcept			{return arsize;}
+	const Parameter& operator[]( int idx) const noexcept 	{return ar[ idx];}
 };
 
 struct ReductionResult
@@ -212,10 +188,8 @@ struct ReductionResult
 	int type;
 	int constructor;
 
-	ReductionResult( const ReductionResult& o) noexcept
-		:type(o.type),constructor(o.constructor){}
-	ReductionResult( int type_, int constructor_) noexcept
-		:type(type_),constructor(constructor_){}
+	ReductionResult( const ReductionResult& o) noexcept :type(o.type),constructor(o.constructor){}
+	ReductionResult( int type_, int constructor_) noexcept :type(type_),constructor(constructor_){}
 };
 
 struct ResolveResultItem
@@ -223,57 +197,29 @@ struct ResolveResultItem
 	int type;
 	int constructor;
 
-	ResolveResultItem( const ResolveResultItem& o) noexcept
-		:type(o.type),constructor(o.constructor){}
-	ResolveResultItem( int type_, int constructor_) noexcept
-		:type(type_),constructor(constructor_){}
+	ResolveResultItem( const ResolveResultItem& o) noexcept :type(o.type),constructor(o.constructor){}
+	ResolveResultItem( int type_, int constructor_) noexcept :type(type_),constructor(constructor_){}
 };
 
 struct DeriveResult
 {
-	std::pmr::vector<ReductionResult> reductions;
+	std::vector<ReductionResult> reductions;
 	float weightsum;
 
-	DeriveResult( ResultBuffer& resbuf) noexcept
-		:reductions(&resbuf.memrsc),weightsum(0.0)
-	{
-		reductions.reserve( resbuf.buffersize() / sizeof(ReductionResult));
-	}
+	DeriveResult() noexcept :reductions(),weightsum(0.0){}
 	DeriveResult( const DeriveResult&) = delete;
-	DeriveResult( DeriveResult&& o)
-		:reductions(std::move(o.reductions)),weightsum(o.weightsum){}
+	DeriveResult( DeriveResult&& o) :reductions(std::move(o.reductions)),weightsum(o.weightsum){}
 };
 
 struct ResolveResult
 {
-	std::pmr::vector<ReductionResult> reductions;
-	std::pmr::vector<ResolveResultItem> items;
+	std::vector<ReductionResult> reductions;
+	std::vector<ResolveResultItem> items;
 	float weightsum;
 
-	ResolveResult( ResultBuffer& resbuf) noexcept
-		:reductions(&resbuf.memrsc),items(&resbuf.memrsc),weightsum(0.0)
-	{
-		reductions.reserve( resbuf.buffersize() / 2 / sizeof(ReductionResult));
-		items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
-	}
+	ResolveResult() noexcept :reductions(),items(),weightsum(0.0){}
 	ResolveResult( const ResolveResult&) = delete;
-	ResolveResult( ResolveResult&& o)
-		:reductions(std::move(o.reductions)),items(std::move(o.items)),weightsum(o.weightsum){}
-};
-
-struct ResultBuffer
-{
-	enum {NofBufferElements = 1024, BufferSize = NofBufferElements*sizeof(int)};
-	int buffer[ NofBufferElements];
-	std::pmr::monotonic_buffer_resource memrsc;
-
-	int buffersize() const noexcept
-	{
-		return sizeof buffer;
-	}
-	ResultBuffer() noexcept
-		:memrsc( buffer, BufferSize){}
-	ResultBuffer( const ResultBuffer&) = delete;
+	ResolveResult( ResolveResult&& o) :reductions(std::move(o.reductions)),items(std::move(o.items)),weightsum(o.weightsum){}
 };
 
 class TypeDatabase
@@ -297,7 +243,7 @@ class TypeDatabase
 	/// \param[in] step the scope step of the search defining what are valid definitions
 	/// \param[out] error error description in case of -1 returned
 	/// \return handle of the object defined by the caller in the given scope step with the name specified (setObject), or -1 if no object found or in case of error
-	int getObjectInstance( const std::string_view& name, const Scope::Step step, Error& error) const noexcept;
+	int getObjectInstance( const std::string_view& name, int step, Error& error) const noexcept;
 
 	/// \brief Get the scope dependency tree of all objects with a defined name
 	/// \param[in] name name of the elements to retrieve
@@ -311,7 +257,7 @@ class TypeDatabase
 	/// \param[in] scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
-	/// \parstd::pmr::vector<ReductionResult>am[in] constructor handle for the constructor of the type
+	/// \param[in] constructor handle for the constructor of the type
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \param[out] error error description in case of -1 returned
@@ -356,38 +302,31 @@ class TypeDatabase
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] fromType the source type of the reduction
-	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \param[out] error error description in case of empty list returned
 	/// \return the list of reductions found
-	std::pmr::vector<ReductionResult> reductions( int step, int fromType,
-							const TagMask& selectTags, ResultBuffer& resbuf, Error& error) const noexcept;
+	std::vector<ReductionResult> reductions( int step, int fromType, const TagMask& selectTags, Error& error) const noexcept;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
-	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \param[out] error error description in case of empty result returned
 	/// \return the path found that has the minimal weight sum, returns an error if two path of same length are found
-	DeriveResult deriveType( int step, int toType, int fromType,
-				 const TagMask& selectTags, ResultBuffer& resbuf, Error& error) const noexcept;
+	DeriveResult deriveType( int step, int toType, int fromType, const TagMask& selectTags, Error& error) const noexcept;
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] contextType the context (realm,namespace) of the query type. The searched item has a context type that is reachable via a path of type reductions.
 	/// \param[in] name name of the type searched
-	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \param[out] error error description in case of empty result returned
 	/// \return the shortest path found, returns an error if two path of same length are found
-	ResolveResult resolveType( int step, int contextType, const std::string_view& name,
-				   const TagMask& selectTags, ResultBuffer& resbuf, Error& error) const noexcept;
+	ResolveResult resolveType( int step, int contextType, const std::string_view& name, const TagMask& selectTags, Error& error) const noexcept;
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type the handle of the type (return value of defineType)
-	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \param[out] error error description in case of empty result returned
 	/// \return the complete string assigned to a type or an empty string in case of an error
-	std::pmr::string typeToString( int type, ResultBuffer& resbuf, Error& error) const noexcept;
+	std::string typeToString( int type, Error& error) const noexcept;
 
 	/// \brief Get the name of a type (without context info and parameters)
 	/// \param[in] type the handle of the type (return value of defineType)

@@ -200,7 +200,7 @@ public:
 	/// \param[in] scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
-	/// \parstd::pmr::vector<ReductionResult>am[in] constructor handle for the constructor of the type
+	/// \param[in] constructor handle for the constructor of the type
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type

@@ -44,11 +44,12 @@ BUILDDIR := build
 DESTINATION := $(PREFIX)/bin
 MAKEDEP  := Lua.inc GNUmakefile configure
 SRCDIR   := src
+INCDIR   := include
 TESTDIR  := tests
 DOCDIR   := doc
 STDFLAGS := -std=c++17
 CXXFLAGS := -c $(STDFLAGS) $(CXXVBFLAGS) $(DEBUGFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread
-INCFLAGS := -I$(SRCDIR) -I$(LUAINC)
+INCFLAGS := -I$(SRCDIR) -I$(LUAINC) -I$(INCDIR)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
 LIBOBJS  := $(BUILDDIR)/lexer.o \
@@ -60,13 +61,15 @@ MODOBJS  := $(BUILDDIR)/lualib_mewa.o \
 		$(BUILDDIR)/lua_serialize.o $(BUILDDIR)/lua_parameter.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
+SHLIBRARY:= $(BUILDDIR)/libmewa.so
+SHLIBOBJ := $(BUILDDIR)/libmewa.o
 TESTPRG  := $(BUILDDIR)/testError $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
 		$(BUILDDIR)/testRandomIdentMap $(BUILDDIR)/testAutomaton \
 		$(BUILDDIR)/testTypeDb $(BUILDDIR)/testRandomTypeDb
 PROGRAM  := $(BUILDDIR)/mewa
 
 # Build targets:
-all : build $(LIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
+all : build $(LIBRARY) $(SHLIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
 
 clean: build
 	rm $(BUILDDIR)/* .depend
@@ -98,6 +101,9 @@ $(BUILDDIR)/%: $(BUILDDIR)/%.o
 
 $(MODULE): $(LIBRARY) $(MODOBJS)
 	$(LNKSO) $(LUALIBS) $(LDLIBS) -o $@ $(MODOBJS) $(LIBRARY)
+
+$(SHLIBRARY): $(LIBRARY) $(SHLIBOBJ)
+	$(LNKSO) $(LDLIBS) -o $@ $(SHLIBOBJ) $(LIBRARY)
 
 test : all
 	$(BUILDDIR)/testError $(TSTVBFLAGS)
