@@ -29,7 +29,10 @@ public:
 	Error() noexcept :m_code(0),m_arg(){}
 	Error( const Error& o) = default;
 	Error( Error&& o) noexcept = default;
-	Error( int code_, std::string arg_) noexcept :m_code(code_),m_arg(std::move(arg_)){}
+	Error& operator=( const Error& o) = default;
+	Error& operator=( Error&& o) = default;
+
+	explicit Error( int code_, std::string arg_="") noexcept :m_code(code_),m_arg(std::move(arg_)){}
 
 	int code() const noexcept 			{return m_code;}
 	const std::string& arg() const noexcept 	{return m_arg;}
@@ -77,6 +80,7 @@ private:
 	}
 
 private:
+	friend class TypeDatabase;
 	BitSet m_mask;
 };
 
@@ -144,6 +148,9 @@ public:
 		int constructor;
 		int tag;
 		float weight;
+
+		Data( int toType_, int fromType_, int constructor_, int tag_, float weight_)
+			:toType(toType_),fromType(fromType_),constructor(constructor_),tag(tag_),weight(weight_){}
 	};
 
 	bool defined() const noexcept			{return m_impl;}
@@ -174,6 +181,7 @@ struct ParameterList
 	int arsize;
 	Parameter const* ar;
 
+	ParameterList() noexcept :arsize(0),ar(nullptr){}
 	ParameterList( const std::vector<Parameter>& ar_) noexcept :arsize(ar_.size()),ar(ar_.data()){}
 	ParameterList( int arsize_, const Parameter* ar_) noexcept :arsize(arsize_),ar(ar_){}
 	ParameterList( const ParameterList& o) noexcept :arsize(o.arsize),ar(o.ar){}
@@ -224,10 +232,16 @@ struct ResolveResult
 
 class TypeDatabase
 {
-	TypeDatabase( std::size_t initmemsize = 1<<26);
+	/// \brief Constructor
+	TypeDatabase( std::size_t initmemsize = 1<<26)
+	{
+		if (!init( initmemsize)) throw std::bad_alloc();
+	}
 
 	TypeDatabase( const TypeDatabase&) = delete;
 	TypeDatabase( TypeDatabase&&) = delete;
+
+	/// \brief Destructor
 	~TypeDatabase();
 
 	/// \brief Define an object retrievable by its name within a scope
@@ -347,8 +361,9 @@ class TypeDatabase
 	int typeConstructor( int type, Error& error) const noexcept;
 
 private:
-	struct Pimpl;
-	Pimpl* m_impl;
+	bool init( std::size_t initmemsize) noexcept;
+
+	void* m_impl;
 };
 
 }//namespace
