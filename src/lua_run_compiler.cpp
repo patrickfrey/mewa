@@ -184,15 +184,36 @@ struct CompilerContext
 	int calltable;					//< Lua stack address of call table
 	int calltablesize;				//< Number of elements in the call table
 	int scopestep;					//< Counter for step and scope structure
-	std::ostream* dbgout;				//< Debug output or NULL if undefined
+	FILE* dbgout;					//< Debug output or NULL if undefined
 
-	CompilerContext( std::pmr::memory_resource* memrsc, std::size_t buffersize, int calltable_, int calltablesize_, std::ostream* dbgout_)
+	CompilerContext( std::pmr::memory_resource* memrsc, std::size_t buffersize, int calltable_, int calltablesize_, FILE* dbgout_)
 		:stateStack(memrsc),calltable(calltable_),calltablesize(calltablesize_),scopestep(0),dbgout(dbgout_)
 	{
 		stateStack.reserve( (buffersize - sizeof stateStack) / sizeof(State));
 		stateStack.push_back( State( 1/*index*/, 0/*luastki*/, 0/*luastkn*/, 0/*scopecnt*/) );
 	}
 };
+
+
+#ifdef __GNUC__
+static void printDebugLine( FILE* dbgout, const char* fmt, ...) __attribute__ ((format (printf, 2, 3)));
+#else
+static void printDebugLine( FILE* dbgout, const char* fmt, ...);
+#endif
+
+static void printDebugLine( FILE* dbgout, const char* fmt, ...)
+{
+	va_list ap;
+	va_start( ap, fmt);
+	std::string content = mewa::string_format_va( fmt, ap);
+	va_end( ap);
+
+	if (!std::fwrite( content.data(), content.size(), 1, dbgout) || !std::fwrite( "\n", 1, 1, dbgout))
+	{
+		throw mewa::Error( (mewa::Error::Code) std::ferror( dbgout), "debug output");
+	}
+	std::fflush( dbgout);
+}
 
 static void luaReduceStruct( 
 		lua_State* ls, CompilerContext& ctx, int reductionSize,
@@ -277,7 +298,7 @@ static mewa::Error::Code luaErrorCode2ErrorCode( int rc)
 	return rc ? mewa::Error::LuaCallErrorUNKNOWN : mewa::Error::Ok;
 }
 
-static void luaCallNodeFunction( lua_State* ls, int li, int calltable, std::ostream* dbgout)
+static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbgout)
 {
 	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 	lua_pushvalue( ls, li);						// STK: [NODE]
@@ -358,8 +379,9 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, std::ostr
 		}
 		else if (dbgout && !lua_isnil( ls, -1))
 		{
-			*dbgout << "Lua call result [" << li-calltable << "]" << std::endl;
-			*dbgout << mewa::luaToString( ls, -1, true/*formatted*/) << std::endl;
+			printDebugLine( dbgout, "Lua call result [%d]", li-calltable);
+			std::string resstr( mewa::luaToString( ls, -1, true/*formatted*/));
+			printDebugLine( dbgout, "%s", resstr.c_str());
 		}
 	}
 }
@@ -451,55 +473,86 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 	return false;
 }
 
-static void printDebugAction( std::ostream& dbgout, CompilerContext& ctx, const mewa::Automaton& automaton, const mewa::Lexem& lexem)
+static void printDebugAction( FILE* dbgout, CompilerContext& ctx, const mewa::Automaton& automaton, const mewa::Lexem& lexem)
 {
+	std::string nm  = getLexemName( automaton.lexer(), lexem.id());
+	std::string val( lexem.value().data(), lexem.value().size());
+
 	auto nexti = automaton.actions().find( {ctx.stateStack.back().index,lexem.id()/*terminal*/});
 	if (nexti == automaton.actions().end())
-	{
-		dbgout << "Error token " << getLexemName( automaton.lexer(), lexem.id());
-		if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
-		dbgout << " at line " << lexem.line() << " in state " << ctx.stateStack.back().index << std::endl;
+	{		
+		if (automaton.lexer().isKeyword( lexem.id()))
+		{
+			printDebugLine( dbgout, "Error token %s at line %d in state %d",
+					nm.c_str(), lexem.line(), ctx.stateStack.back().index);
+		}
+		else
+		{
+			printDebugLine( dbgout, "Error token %s = \"%s\" at line %d in state %d",
+					nm.c_str(), val.c_str(), lexem.line(), ctx.stateStack.back().index);
+		}
 	}
 	else
 	{
 		switch (nexti->second.type())
 		{
 			case mewa::Automaton::Action::Shift:
-				dbgout << "Shift token " << getLexemName( automaton.lexer(), lexem.id());
-				if (!automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
-				dbgout << " at line " << lexem.line() << " in state " << ctx.stateStack.back().index << ", goto " << nexti->second.state() << std::endl;
+				if (automaton.lexer().isKeyword( lexem.id()))
+				{
+					printDebugLine( dbgout, "Shift token %s at line %d in state %d, goto %d",
+							nm.c_str(), lexem.line(), ctx.stateStack.back().index, nexti->second.state());
+				}
+				else
+				{
+					printDebugLine( dbgout, "Shift token %s = \"%s\" at line %d in state %d, goto %d",
+							nm.c_str(), val.c_str(), lexem.line(), ctx.stateStack.back().index, nexti->second.state());
+				}
 				break;
 			case mewa::Automaton::Action::Reduce:
 			{
-				dbgout << "Reduce #" << nexti->second.count() << " to " << automaton.nonterminal( nexti->second.nonterminal())
-					<< " by token " << getLexemName( automaton.lexer(), lexem.id());
-				if (lexem.id() && !automaton.lexer().isKeyword( lexem.id())) dbgout << " = \"" << lexem.value() << "\"";
-				dbgout << " at line " << lexem.line() << " in state " << ctx.stateStack.back().index;
-				if (nexti->second.call())
-				{
-					dbgout << ", call " << automaton.call( nexti->second.call()).tostring();
-				}
 				if ((int)ctx.stateStack.size() <= nexti->second.count() || nexti->second.count() < 0)
 				{
 					throw mewa::Error( mewa::Error::LanguageAutomatonCorrupted, lexem.line());
 				}
+				std::string callstr;
+				if (nexti->second.call())
+				{
+					callstr.append( ", call ");
+					callstr.append( automaton.call( nexti->second.call()).tostring());
+				}
+				int gtostate = 0;
 				int newstateidx = ctx.stateStack[ ctx.stateStack.size() - nexti->second.count() -1].index;
 				auto gtoi = automaton.gotos().find( {newstateidx, nexti->second.nonterminal()});
-				if (gtoi != automaton.gotos().end())
+				if (gtoi == automaton.gotos().end())
 				{
-					dbgout << ", goto " << gtoi->second.state();
+					throw mewa::Error( mewa::Error::LanguageAutomatonCorrupted, lexem.line());
 				}
-				dbgout << std::endl;
+				gtostate = gtoi->second.state();
+
+				if (!lexem.id() || automaton.lexer().isKeyword( lexem.id()))
+				{
+					printDebugLine( dbgout, "Reduce #%d to %s by token %s at line %d in state %d%s, goto %d",
+							nexti->second.count(), automaton.nonterminal( nexti->second.nonterminal()).c_str(),
+							nm.c_str(), lexem.line(), ctx.stateStack.back().index,
+							callstr.c_str(), gtostate);
+				}
+				else
+				{
+					printDebugLine( dbgout, "Reduce #%d to %s by token %s = \"%s\" at line %d in state %d%s, goto %d",
+							nexti->second.count(), automaton.nonterminal( nexti->second.nonterminal()).c_str(),
+							nm.c_str(), val.c_str(), lexem.line(), ctx.stateStack.back().index,
+							callstr.c_str(), gtostate);
+				}
 				break;
 			}
 			case mewa::Automaton::Action::Accept:
-				dbgout << "Accept" << std::endl;
+				printDebugLine( dbgout, "Accept");
 				break;
 		}
 	}
 }
 
-void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, std::ostream* dbgout)
+void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, FILE* dbgout)
 {
 	int buffer[ 2048];
 	mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
@@ -522,7 +575,7 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 		if (lexem.id() <= 0) throw Error( Error::BadCharacterInGrammarDef, lexem.value());
 		do
 		{
-			if (dbgout) printDebugAction( *dbgout, ctx, automaton, lexem);
+			if (dbgout) printDebugAction( dbgout, ctx, automaton, lexem);
 		}
 		while (!feedLexem( ls, ctx, automaton, lexem));
 
@@ -536,7 +589,7 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 	// Feed EOF:
 	while (!feedLexem( ls, ctx, automaton, lexem/* empty ~ end of input*/))
 	{
-		if (dbgout) printDebugAction( *dbgout, ctx, automaton, lexem);
+		if (dbgout) printDebugAction( dbgout, ctx, automaton, lexem);
 	}
 	// Call Lua with built tree structures:
 	if (ctx.calltablesize)

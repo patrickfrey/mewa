@@ -74,17 +74,19 @@ struct mewa_compiler_userdata_t
 	mewa::Automaton automaton;
 	mewa::lua::CallTableName callTableName;
 	FILE* outputFileHandle;
+	FILE* debugFileHandle;
 
 	void init()
 	{
 		outputFileHandle = nullptr;
+		debugFileHandle = nullptr;
 		new (&automaton) mewa::Automaton();
 		callTableName.init();
 	}
 	void closeOutput() noexcept
 	{
-		if (outputFileHandle && outputFileHandle != ::stdout && outputFileHandle != ::stderr) std::fclose(outputFileHandle);
-		outputFileHandle = nullptr;
+		closeFile( outputFileHandle);
+		closeFile( debugFileHandle);
 	}
 	void destroy( lua_State* ls) noexcept
 	{
@@ -95,6 +97,29 @@ struct mewa_compiler_userdata_t
 		automaton.~Automaton();
 	}
 	static const char* metatableName() noexcept {return MEWA_COMPILER_METATABLE_NAME;}
+
+	static FILE* openFile( const char* path)
+	{
+		if (0==std::strcmp( path, "stderr"))
+		{
+			return ::stderr;
+		}
+		else if (0==std::strcmp( path, "stdout"))
+		{
+			return ::stdout;
+		}
+		else
+		{
+			return std::fopen( path, "w");
+		}
+	}
+
+private:
+	void closeFile( FILE*& fileHandle)
+	{
+		if (fileHandle && fileHandle != ::stdout && fileHandle != ::stderr) std::fclose( fileHandle);
+		fileHandle = nullptr;
+	}
 };
 
 struct mewa_typedb_userdata_t

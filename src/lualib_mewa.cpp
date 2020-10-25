@@ -55,6 +55,11 @@ static void lippincottFunction( lua_State* ls)
 	{
 		throw;
 	}
+	catch (const mewa::Error& err)
+	{
+		lua_pushstring( ls, err.what());
+		lua_error( ls);
+	}
 	catch (const std::runtime_error& err)
 	{
 		lua_pushstring( ls, err.what());
@@ -89,28 +94,49 @@ static std::string_view move_string_on_lua_stack( lua_State* ls, std::string&& s
 	return obj->obj();
 }
 
-static int lua_print_redirected( lua_State* ls) {
-	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
+static int lua_print_redirected_impl( lua_State* ls, FILE* fh) {
 	[[maybe_unused]] static const char* functionName = "mewa print redirected";
-	if (!cp || !cp->outputFileHandle)
-	{
-		luaL_error( ls, "%s: %s", functionName, mewa::Error::code2String( mewa::Error::LuaInvalidUserData));
-	}
 	int nargs = lua_gettop( ls);
 	for (int li=1; li <= nargs; ++li)
 	{
 		std::size_t len;
 		const char* str = lua_tolstring( ls, li, &len);
-		std::fwrite( str, 1, len, cp->outputFileHandle);
-		int ec = std::ferror( cp->outputFileHandle);
-		luaL_error( ls, "%s: %s", functionName, std::strerror( ec));
-		std::fflush( cp->outputFileHandle);
+		if (len < std::fwrite( str, 1, len, fh))
+		{
+			int ec = std::ferror( fh);
+			mewa::Error err( (mewa::Error::Code)ec, functionName);
+			luaL_error( ls, "%s", err.what());
+		}
+		std::fflush( fh);
 	}
 	return 0;
 }
 
+static int lua_print_redirected( lua_State* ls) {
+	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
+	[[maybe_unused]] static const char* functionName = "mewa print redirected";
+	if (!cp)
+	{
+		mewa::Error err( mewa::Error::LuaInvalidUserData, functionName);
+		luaL_error( ls, "%s", err.what());
+	}
+	return lua_print_redirected_impl( ls, cp->outputFileHandle ? cp->outputFileHandle : ::stdout);
+}
+
+static int lua_debug_redirected( lua_State* ls) {
+	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
+	[[maybe_unused]] static const char* functionName = "mewa print redirected";
+	if (!cp)
+	{
+		mewa::Error err( mewa::Error::LuaInvalidUserData, functionName);
+		luaL_error( ls, "%s", err.what());
+	}
+	return lua_print_redirected_impl( ls, cp->debugFileHandle ? cp->debugFileHandle : ::stderr);
+}
+
 static const struct luaL_Reg g_printlib [] = {
 	{"print", lua_print_redirected},
+	{"debug", lua_debug_redirected},
 	{nullptr, nullptr} /* end of array */
 };
 
@@ -214,68 +240,46 @@ static int mewa_compiler_run( lua_State* ls)
 		std::string_view filename = mewa::lua::getArgumentAsString( functionName, ls, 2);
 
 		std::string source = mewa::readFile( std::string(filename));
-		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));		// STK: [COMPILER] [INPUTFILE] [SOURCE]
+		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));	// STK: [COMPILER] [INPUTFILE] [SOURCE]
 
 		if (nargs >= 3)
 		{
-			bool hasRedirectedOutput = !lua_isnil( ls, 3);
-			if (hasRedirectedOutput)
+			if (!lua_isnil( ls, 3))
 			{
 				std::string_view outputFileName = mewa::lua::getArgumentAsString( functionName, ls, 3);
 				cp->closeOutput();
-				if (outputFileName == "stderr")
-				{
-					cp->outputFileHandle = ::stderr;
-				}
-				else if (outputFileName == "stdout")
-				{
-					cp->outputFileHandle = ::stdout;
-				}
-				else
-				{
-					cp->outputFileHandle = std::fopen( outputFileName.data(), "w");
-				}
-				lua_getglobal( ls, "_G");		// STK: table=_G
-				lua_pushliteral( ls, "print");		// STK: table=_G, key=print
-				lua_pushliteral( ls, "print");		// STK: table=_G, key=print, key=print
-				lua_gettable( ls, -3);			// STK: table=_G, key=print, value=function
-
-				lua_getglobal( ls, "_G");
-				lua_pushlightuserdata( ls, cp);
-				luaL_setfuncs( ls, g_printlib, 1/*number of closure elements*/);
-				lua_pop( ls, 1);
+				cp->outputFileHandle = mewa_compiler_userdata_t::openFile( outputFileName.data());
+				if (!cp->outputFileHandle) throw mewa::Error( (mewa::Error::Code) errno, outputFileName);
 			}
 			if (nargs >= 4 && !lua_isnil( ls, 4))
 			{
-				std::string_view debugFilename = mewa::lua::getArgumentAsString( functionName, ls, 4);
-				if (debugFilename == "stderr")
-				{
-					mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, &std::cerr);
-				}
-				else if (debugFilename == "stdout")
-				{
-					mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, &std::cout);
-				}
-				else
-				{
-					std::ofstream debugStream( debugFilename.data(), std::ios_base::out | std::ios_base::trunc);
-					mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, &debugStream);
-				}
-			}
-			else
-			{
-				mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, nullptr/*no debug output*/);
-			}
-			if (hasRedirectedOutput)
-			{
-				// Restore old print function that has been left on the stack:
-							//STK: table=_G, key=print, value=function
-				lua_settable( ls, -3);	//STK: table=_G
-				lua_pop( ls, 1);	//STK:
-				cp->closeOutput();
+				std::string_view debugFileName = mewa::lua::getArgumentAsString( functionName, ls, 4);
+				cp->debugFileHandle = mewa_compiler_userdata_t::openFile( debugFileName.data());
+				if (!cp->debugFileHandle) throw mewa::Error( (mewa::Error::Code) errno, debugFileName);
 			}
 		}
-		lua_pop( ls, 1); // ... destroy string on lua stack created with move_string_on_lua_stack
+		lua_getglobal( ls, "_G");		// STK: table=_G
+		lua_pushliteral( ls, "print");		// STK: table=_G, key=print
+		lua_pushliteral( ls, "print");		// STK: table=_G, key=print, key=print
+		lua_gettable( ls, -3);			// STK: table=_G, key=print, value=function
+		lua_pushliteral( ls, "debug");		// STK: table=_G, key=print, value=function key=debug
+		lua_pushliteral( ls, "debug");		// STK: table=_G, key=print, value=function key=debug key=debug
+		lua_gettable( ls, -5);			// STK: table=_G, key=print, value=function key=debug value=function
+
+		lua_getglobal( ls, "_G");
+		lua_pushlightuserdata( ls, cp);
+		luaL_setfuncs( ls, g_printlib, 1/*number of closure elements*/);
+		lua_pop( ls, 1);
+
+		mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, cp->debugFileHandle);
+
+		// Restore old print function that has been left on the stack:
+					//STK: table=_G, key=print, value=function key=debug, value=function
+		lua_settable( ls, -5);	//STK: table=_G key=print, value=function 
+		lua_settable( ls, -3);	//STK: table=_G
+		lua_pop( ls, 1);	//STK:
+		cp->closeOutput();
+		lua_pop( ls, 1);	// ... destroy string on lua stack created with move_string_on_lua_stack
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 0;
