@@ -63,8 +63,8 @@ MODOBJS  := $(BUILDDIR)/lualib_mewa.o \
 		$(BUILDDIR)/lua_serialize.o $(BUILDDIR)/lua_parameter.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
-SHLIBSHRT:= $(BUILDDIR)/libmewa.so.0
-SHLIBFULL:= $(SHLIBSHRT).1.0
+SONAME	 := libmewa.so.0
+SHLIBRARY:= $(BUILDDIR)/libmewa.so.0.1.0
 SHLIBOBJ := $(BUILDDIR)/libmewa.o
 TESTPRG  := $(BUILDDIR)/testError $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
 		$(BUILDDIR)/testRandomIdentMap $(BUILDDIR)/testAutomaton \
@@ -72,7 +72,7 @@ TESTPRG  := $(BUILDDIR)/testError $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(
 PROGRAM  := $(BUILDDIR)/mewa
 
 # Build targets:
-all : build $(LIBRARY) $(SHLIBFULL) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
+all : build $(LIBRARY) $(SHLIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
 
 clean: build
 	rm $(BUILDDIR)/* .depend
@@ -105,8 +105,8 @@ $(BUILDDIR)/%: $(BUILDDIR)/%.o
 $(MODULE): $(LIBRARY) $(MODOBJS)
 	$(LNKSO) $(LUALIBS) $(LDLIBS) -o $@ $(MODOBJS) $(LIBRARY)
 
-$(SHLIBFULL): $(LIBRARY) $(SHLIBOBJ)
-	$(LNKSO) -Wl,-soname,$(SHLIBSHRT) $(LDLIBS) -o $@ $(SHLIBOBJ) $(LIBRARY)
+$(SHLIBRARY): $(LIBRARY) $(SHLIBOBJ)
+	$(LNKSO) -Wl,-soname,$(SONAME) $(LDLIBS) -o $(SHLIBRARY) $(SHLIBOBJ) $(LIBRARY)
 
 test : all
 	$(BUILDDIR)/testError $(TSTVBFLAGS)
@@ -122,7 +122,7 @@ check: test
 
 install: all
 	cp $(PROGRAM) $(DESTINATION)
-	cp $(SHLIBFULL) $(LIBDEST)
+	cp $(SHLIBRARY) $(LIBDEST)
 	mkdir -p $(INCDEST)/mewa
 	cp include/mewa/*.hpp $(INCDEST)/mewa/
 	mkdir -p $(MANPAGES)/man1
