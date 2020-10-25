@@ -193,6 +193,7 @@ public:
 	/// \brief Get the scope dependency tree of all objects with a defined name
 	/// \param[in] name name of the elements to retrieve
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
+	/// \return the tree built
 	ObjectInstanceTree getObjectInstanceTree( const std::string_view& name) const;
 
 	/// \brief Define a new type, throws if already defined in the same scope with same the signature and the same priority
@@ -207,6 +208,7 @@ public:
 
 	/// \brief Get the scope dependency tree of all types defined
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
+	/// \return the tree built
 	TypeDefinitionTree getTypeDefinitionTree() const;
 
 	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
@@ -221,6 +223,7 @@ public:
 
 	/// \brief Get the scope dependency tree of all reductions defined
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
+	/// \return the tree built
 	ReductionDefinitionTree getReductionDefinitionTree() const;
 
 	/// \brief Get the constructor of a reduction of a type to another type
