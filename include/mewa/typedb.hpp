@@ -16,6 +16,7 @@
 #endif
 
 #include <string_view>
+#include <string>
 #include <vector>
 #include <cstdlib>
 #include <cstdint>
@@ -98,28 +99,52 @@ private:
 class ObjectInstanceTree
 {
 public:
+	ObjectInstanceTree() :m_impl(nullptr);
+	ObjectInstanceTree( const ObjectInstanceTree& o);
+	ObjectInstanceTree( ObjectInstanceTree&& o);
+	~ObjectInstanceTree();
+
 	ObjectInstanceTree chld() const noexcept;
 	ObjectInstanceTree next() const noexcept;
 
 	bool empty() const noexcept;
 	Scope scope() const noexcept;
 	int instance() const noexcept;
+
+private:
+	friend class TypeDatabase;
+	struct Pimpl;
+	Pimpl* m_impl;
 };
 
 class TypeDefinitionTree
 {
 public:
+	TypeDefinitionTree() :m_impl(nullptr);
+	TypeDefinitionTree( const TypeDefinitionTree& o);
+	TypeDefinitionTree( TypeDefinitionTree&& o);
+	~TypeDefinitionTree();
+
 	TypeDefinitionTree chld() const noexcept;
 	TypeDefinitionTree next() const noexcept;
 
 	bool empty() const noexcept;
 	Scope scope() const noexcept;
 	std::vector<int> list() const noexcept;
+private:
+	friend class TypeDatabase;
+	struct Pimpl;
+	Pimpl* m_impl;
 };
 
 class ReductionDefinitionTree
 {
 public:
+	ReductionDefinitionTree() :m_impl(nullptr);
+	ReductionDefinitionTree( const ReductionDefinitionTree& o);
+	ReductionDefinitionTree( ReductionDefinitionTree&& o);
+	~ReductionDefinitionTree();
+
 	struct Data
 	{
 		Scope scope;
@@ -136,6 +161,11 @@ public:
 	bool empty() const noexcept;
 	Scope scope() const noexcept;
 	std::vector<Data> list() const noexcept;
+
+private:
+	friend class TypeDatabase;
+	struct Pimpl;
+	Pimpl* m_impl;
 };
 
 struct Parameter
@@ -252,6 +282,7 @@ class TypeDatabase
 
 	TypeDatabase( const TypeDatabase&) = delete;
 	TypeDatabase( TypeDatabase&&) = delete;
+	~TypeDatabase();
 
 	/// \brief Define an object retrievable by its name within a scope
 	/// \param[in] name the name of the object
@@ -273,6 +304,7 @@ class TypeDatabase
 	/// \param[out] error error description in case of empty tree returned
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
 	/// \return the tree built
+	/// \remark the tree structure life time must be in the scope of this type database interface
 	ObjectInstanceTree getObjectInstanceTree( const std::string_view& name, Error& error) const noexcept;
 
 	/// \brief Define a new type, returns an error if already defined in the same scope with same the signature and the same priority
@@ -291,6 +323,7 @@ class TypeDatabase
 	/// \param[out] error error description in case of empty tree returned
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
 	/// \return the tree built
+	/// \remark the tree structure life time must be in the scope of this type database interface
 	TypeDefinitionTree getTypeDefinitionTree( Error& error) const noexcept;
 
 	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
@@ -309,6 +342,7 @@ class TypeDatabase
 	/// \param[out] error error description in case of empty tree returned
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
 	/// \return the tree built
+	/// \remark the tree structure life time must be in the scope of this type database interface
 	ReductionDefinitionTree getReductionDefinitionTree( Error& error) const noexcept;
 
 	/// \brief Get the constructor of a reduction of a type to another type
@@ -372,6 +406,10 @@ class TypeDatabase
 	/// \param[out] error error description in case of -1 returned
 	/// \return the handle of the constructor of the type or -1 in case of an error
 	int typeConstructor( int type, Error& error) const noexcept;
+
+private:
+	struct Pimpl;
+	Pimpl* m_impl;
 };
 
 }//namespace
