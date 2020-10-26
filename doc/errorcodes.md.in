@@ -49,9 +49,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:BadRelationWeight**   _$ERRTEXT:BadRelationWeight_
 + **#$ERRCODE:BadRelationTag**   _$ERRTEXT:BadRelationTag_
 + **#$ERRCODE:InvalidHandle**   _$ERRTEXT:InvalidHandle_
-+ **#$ERRCODE:UnresolvableType**   _$ERRTEXT:UnresolvableType_
-+ **#$ERRCODE:AmbiguousTypeReference**   _$ERRTEXT:AmbiguousTypeReference_
-+ **#$ERRCODE:AmbiguousReductionDefinition**   _$ERRTEXT:AmbiguousReductionDefinition_
++ **#$ERRCODE:AmbiguousReductionDefinitions**   _$ERRTEXT:AmbiguousReductionDefinitions_
 + **#$ERRCODE:ScopeHierarchyError**   _$ERRTEXT:ScopeHierarchyError_
 
 ## Grammar Definition Errors

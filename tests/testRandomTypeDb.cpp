@@ -226,15 +226,22 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 		int constructor = ctx.constructors.size();
 		ctx.constructors.push_back( string_format( "type %ld", nd->item.product));
 		type = typedb.defineType( scope, 0/*contextType*/, name, constructor, std::vector<TypeDatabase::Parameter>(), 0/*priority*/);
-		ctx.typemap[ name] = type;
-		ctx.typeinv[ type] = name;
-
+		if (type < 0) throw Error( Error::DuplicateDefinition, ctx.constructors.back());
+		if (type > 0)
+		{
+			ctx.typemap[ name] = type;
+			ctx.typeinv[ type] = name;
+		}
 		std::string proc = string_format( "!%ld", nd->item.product);
 		constructor = ctx.constructors.size();
 		ctx.constructors.push_back( string_format( "call %ld", nd->item.product));
 		int proctype = typedb.defineType( scope, type, proc, constructor, std::vector<TypeDatabase::Parameter>(), 0/*priority*/);
-		ctx.typemap[ proc] = proctype;
-		ctx.typeinv[ proctype] = proc;
+		if (proctype < 0) throw Error( Error::DuplicateDefinition, proc);
+		if (proctype > 0)
+		{
+			ctx.typemap[ proc] = proctype;
+			ctx.typeinv[ proctype] = proc;
+		}
 	}
 	else
 	{
@@ -360,10 +367,19 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	{
 		std::cerr << "Query: " << typenam << " " << procnam << std::endl;
 	}
-	try
+	TypeDatabase::ResultBuffer resbuf_resolve;
+	TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, TagMask::matchAll(), resbuf_resolve);
+	if (result.conflictType >= 0)
 	{
-		TypeDatabase::ResultBuffer resbuf_resolve;
-		TypeDatabase::ResolveResult result = typedb.resolveType( step, ti->second, procnam, TagMask::matchAll(), resbuf_resolve);
+		resc_str = "ambiguous";
+		if (verbose)
+		{
+			TypeDatabase::ResultBuffer resbuf_typestr;
+			std::cerr << "Conflicting type: " << typedb.typeToString( result.conflictType, resbuf_typestr) << std::endl;
+		}
+	}
+	else
+	{
 		resc_str = resolveResultToString( typedb, result);
 		if (resc_str != "{}")
 		{
@@ -390,23 +406,6 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			{
 				throw std::runtime_error( string_format( "derive result not as expected: '%s' prefix of '%s'", redu_str.c_str(), redu_str.c_str()));
 			}
-		}
-	}
-	catch (const Error& err)
-	{
-		if (err.code() == Error::AmbiguousTypeReference)
-		{
-			resc_str = "ambiguous";
-			if (verbose)
-			{
-				const char* errarg = std::strchr( err.what(), ':');
-				if (!errarg) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
-				std::cerr << "Found: " << (errarg+1) << std::endl;
-			}
-		}
-		else
-		{
-			throw Error( err);
 		}
 	}
 	if (verbose)

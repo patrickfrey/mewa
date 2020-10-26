@@ -49,6 +49,33 @@ public:
 	TypeDatabase( const TypeDatabase& ) = delete;
 
 public:
+	struct TypeList
+	{
+		int arsize;
+		int const* ar;
+
+		TypeList( const std::vector<int>& ar_) noexcept
+			:arsize(ar_.size()),ar(ar_.data()){}
+		TypeList( const std::pmr::vector<int>& ar_) noexcept
+			:arsize(ar_.size()),ar(ar_.data()){}
+		TypeList( int arsize_, int const* ar_) noexcept
+			:arsize(arsize_),ar(ar_){}
+		TypeList( const TypeList& o) noexcept
+			:arsize(o.arsize),ar(o.ar){}
+
+		bool empty() const noexcept
+		{
+			return !arsize;
+		}
+		std::size_t size() const noexcept
+		{
+			return arsize;
+		}
+		int operator[]( int idx) const noexcept
+		{
+			return ar[ idx];
+		}
+	};
 	struct Parameter
 	{
 		int type;
@@ -130,32 +157,37 @@ public:
 	struct DeriveResult
 	{
 		std::pmr::vector<ReductionResult> reductions;
+		std::pmr::vector<int> conflictPath;
 		float weightsum;
 
 		DeriveResult( ResultBuffer& resbuf) noexcept
-			:reductions(&resbuf.memrsc),weightsum(0.0)
+			:reductions(&resbuf.memrsc),conflictPath(&resbuf.memrsc),weightsum(0.0)
 		{
-			reductions.reserve( resbuf.buffersize() / sizeof(ReductionResult));
+			reductions.reserve(   ((resbuf.buffersize() / 4) * 3) / sizeof(ReductionResult));
+			conflictPath.reserve( ((resbuf.buffersize() / 4) * 1) / sizeof(int));
 		}
 		DeriveResult( const DeriveResult&) = delete;
 		DeriveResult( DeriveResult&& o)
-			:reductions(std::move(o.reductions)),weightsum(o.weightsum){}
+			:reductions(std::move(o.reductions)),conflictPath(std::move(o.conflictPath)),weightsum(o.weightsum){}
 	};
 	struct ResolveResult
 	{
 		std::pmr::vector<ReductionResult> reductions;
 		std::pmr::vector<ResolveResultItem> items;
+		int contextType;
+		int conflictType;
 		float weightsum;
 
 		ResolveResult( ResultBuffer& resbuf) noexcept
-			:reductions(&resbuf.memrsc),items(&resbuf.memrsc),weightsum(0.0)
+			:reductions(&resbuf.memrsc),items(&resbuf.memrsc),contextType(-1),conflictType(-1),weightsum(0.0)
 		{
 			reductions.reserve( resbuf.buffersize() / 2 / sizeof(ReductionResult));
 			items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
 		}
 		ResolveResult( const ResolveResult&) = delete;
 		ResolveResult( ResolveResult&& o)
-			:reductions(std::move(o.reductions)),items(std::move(o.items)),weightsum(o.weightsum){}
+			:reductions(std::move(o.reductions)),items(std::move(o.items))
+			,contextType(o.contextType),conflictType(o.conflictType),weightsum(o.weightsum){}
 	};
 	struct ReductionDefinition
 	{
@@ -196,7 +228,7 @@ public:
 	/// \return the tree built
 	ObjectInstanceTree getObjectInstanceTree( const std::string_view& name) const;
 
-	/// \brief Define a new type, throws if already defined in the same scope with same the signature and the same priority
+	/// \brief Define a new type and get its handle
 	/// \param[in] scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
@@ -204,7 +236,16 @@ public:
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
+	///		or -1 if the type is already defined in the same scope with the same signature (duplicate definition)
+	///		or 0 if the type is already defined in the same scope with the same signature but with a highjer priority (second definition siletly discarded)
 	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority);
+
+	/// \brief Get a type with exact signature defined in a specified scope (does not search other valid definitions in enclosing scopes)
+	/// \param[in] scope the scope of this definition
+	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
+	/// \param[in] name name of the type
+	/// \param[in] parameter list of parameter types as part of the function signature
+	int getType( const Scope& scope, int contextType, const std::string_view& name, const TypeList& parameter) const;
 
 	/// \brief Get the scope dependency tree of all types defined
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
@@ -231,6 +272,7 @@ public:
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \return the constructor of the reduction found, -1 if not found
+	/// \note throws Error::AmbiguousTypeReference if more than one reduction is found
 	int reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
 
 	/// \brief Get the list of reductions defined for a type
@@ -245,7 +287,7 @@ public:
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
-	/// \return the path found that has the minimal weight sum, throws Error::AmbiguousTypeReference if two path of same length are found
+	/// \return the path found and its weight sum that is minimal and a conflict path if the solution is not unique
 	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context of a context reducible from the context passed
@@ -253,7 +295,7 @@ public:
 	/// \param[in] contextType the context (realm,namespace) of the query type. The searched item has a context type that is reachable via a path of type reductions.
 	/// \param[in] name name of the type searched
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
-	/// \return the shortest path found, throws if two path of same length are found	
+	/// \return the context type found and the shortest path to it, a list of all candidate items and a conflicting context type if there is one
 	ResolveResult resolveType( const Scope::Step step, int contextType, const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Get the string representation of a type
@@ -278,7 +320,10 @@ public:
 	int typeConstructor( int type) const;
 
 private:
-	bool compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept;
+	bool compareParameterSignature( const ParameterList& parameter, int param2, int paramlen2) const noexcept;
+	int findTypeWithSignature( int typerecidx, const ParameterList& parameter, int& lastIndex) const noexcept;
+	bool compareParameterSignature( const TypeList& parameter, int param2, int paramlen2) const noexcept;
+	int findTypeWithSignature( int typerecidx, const TypeList& parameter) const noexcept;
 	void collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const;
 	std::string reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const;
 	std::string deriveResultToString( const DeriveResult& res) const;

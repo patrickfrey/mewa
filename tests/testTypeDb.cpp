@@ -175,8 +175,8 @@ static int getContextType( TypeDatabase const* typedb, const Scope::Step step, c
 	{
 		TypeDatabase::ResultBuffer resbuf;
 		auto res = typedb->resolveType( step, contextType, item, mewa::TagMask::matchAll(), resbuf);
-		if (res.items.empty()) throw Error( Error::UnresolvableType, item);
-		if (res.items.size() > 1) throw Error( Error::AmbiguousTypeReference, item);
+		if (res.items.empty()) throw std::runtime_error( string_format( "Unresolvable type %s", item.data()));
+		if (res.items.size() > 1) throw std::runtime_error( string_format( "Ambiguous type %s", item.data()));
 
 		contextType = res.items[0].type;
 	}
@@ -270,7 +270,8 @@ static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, con
 	FunctionDef fdef( tdbimpl, tpdef.ar, scope.start());
 	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + fdef.label);
 	int funcTypeId = tdbimpl.typedb->defineType( scope, fdef.contextType, fdef.name, constructorId, fdef.parameter, tpdef.priority);
-	if (tpdef.resultType[0])
+	if (funcTypeId < 0) throw Error( Error::DuplicateDefinition, fdef.name);
+	if (funcTypeId > 0 && tpdef.resultType[0])
 	{
 		int resultTypeId = getContextType( tdbimpl.typedb, scope.start(), tpdef.resultType);
 		int resultConstructorId = tdbimpl.getConstructorFromName( std::string("#") + tpdef.resultType);

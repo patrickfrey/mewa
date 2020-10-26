@@ -298,8 +298,24 @@ DLL_PUBLIC int libmewa::TypeDatabase::defineType( const Scope& scope, int contex
 		if (!m_impl) throw mewa::Error( mewa::Error::MemoryAllocationError);
 		mewa::TypeDatabase& typedb = *(mewa::TypeDatabase*)m_impl;
 		return typedb.defineType( mewa::Scope( scope.start(), scope.end()), contextType, name, constructor, 
-						mewa::TypeDatabase::ParameterList( parameter.arsize, (mewa::TypeDatabase::Parameter*)parameter.ar),
+						mewa::TypeDatabase::ParameterList( parameter.arsize, (mewa::TypeDatabase::Parameter const*)parameter.ar),
 						priority);
+	}
+	catch (...)
+	{
+		error = lippincottFunction();
+		return -1;
+	}
+}
+
+DLL_PUBLIC int libmewa::TypeDatabase::getType( const Scope& scope, int contextType, const std::string_view& name, const TypeList& parameter, Error& error) const noexcept
+{
+	try
+	{
+		if (!m_impl) throw mewa::Error( mewa::Error::MemoryAllocationError);
+		mewa::TypeDatabase& typedb = *(mewa::TypeDatabase*)m_impl;
+		return typedb.getType( mewa::Scope( scope.start(), scope.end()), contextType, name, 
+						mewa::TypeDatabase::TypeList( parameter.arsize, (int const*)parameter.ar));
 	}
 	catch (...)
 	{
@@ -406,6 +422,7 @@ DLL_PUBLIC libmewa::DeriveResult libmewa::TypeDatabase::deriveType( int step, in
 		auto deriveres = typedb.deriveType( step, toType, fromType, mewa::TagMask( selectTags.m_mask), resbuf);
 		libmewa::DeriveResult rt;
 		rt.weightsum = deriveres.weightsum;
+		rt.conflictPath.insert( rt.conflictPath.end(), deriveres.conflictPath.begin(), deriveres.conflictPath.end());
 		for (auto const& redu : deriveres.reductions)
 		{
 			rt.reductions.emplace_back( redu.type, redu.constructor);
@@ -430,6 +447,8 @@ DLL_PUBLIC libmewa::ResolveResult libmewa::TypeDatabase::resolveType(
 		auto resolveres = typedb.resolveType( step, contextType, name, mewa::TagMask( selectTags.m_mask), resbuf);
 		libmewa::ResolveResult rt;
 		rt.weightsum = resolveres.weightsum;
+		rt.contextType = resolveres.contextType;
+		rt.conflictType = resolveres.conflictType;
 		for (auto const& redu : resolveres.reductions)
 		{
 			rt.reductions.emplace_back( redu.type, redu.constructor);

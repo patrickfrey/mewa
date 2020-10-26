@@ -4,14 +4,14 @@ Shift token '(' at line 1 in state 19, goto 28
 Shift token IDENT = "int" at line 1 in state 28, goto 15
 Reduce #1 to typename by token '&' at line 1 in state 15, goto 16
 Shift token '&' at line 1 in state 16, goto 23
-Reduce #2 to typespec by token IDENT = "a" at line 1 in state 23, call typespec reftype, goto 35
+Reduce #2 to typespec by token IDENT = "a" at line 1 in state 23, call typespec ref_type, goto 35
 Shift token IDENT = "a" at line 1 in state 35, goto 42
 Reduce #2 to paramdecl by token ',' at line 1 in state 42, call paramdef, goto 37
 Shift token ',' at line 1 in state 37, goto 44
 Shift token IDENT = "int" at line 1 in state 44, goto 15
 Reduce #1 to typename by token '&' at line 1 in state 15, goto 16
 Shift token '&' at line 1 in state 16, goto 23
-Reduce #2 to typespec by token IDENT = "b" at line 1 in state 23, call typespec reftype, goto 35
+Reduce #2 to typespec by token IDENT = "b" at line 1 in state 23, call typespec ref_type, goto 35
 Shift token IDENT = "b" at line 1 in state 35, goto 42
 Reduce #2 to paramdecl by token ')' at line 1 in state 42, call paramdef, goto 37
 Reduce #1 to parameters by token ')' at line 1 in state 37, goto 60
@@ -21,7 +21,7 @@ Shift token '{' at line 2 in state 43, goto 59
 Shift token "var" at line 3 in state 59, goto 10
 Shift token IDENT = "int" at line 3 in state 10, goto 15
 Reduce #1 to typename by token IDENT = "tmp" at line 3 in state 15, goto 16
-Reduce #1 to typespec by token IDENT = "tmp" at line 3 in state 16, call typespec puretype, goto 20
+Reduce #1 to typespec by token IDENT = "tmp" at line 3 in state 16, call typespec pure_type, goto 20
 Shift token IDENT = "tmp" at line 3 in state 20, goto 29
 Shift token '=' at line 3 in state 29, goto 38
 Shift token IDENT = "a" at line 3 in state 38, goto 46
@@ -55,12 +55,12 @@ Reduce #1 to definition by token "function" at line 8 in state 5, goto 3
 Shift token "function" at line 8 in state 3, goto 8
 Shift token IDENT = "int" at line 8 in state 8, goto 15
 Reduce #1 to typename by token IDENT = "fibonacci" at line 8 in state 15, goto 16
-Reduce #1 to typespec by token IDENT = "fibonacci" at line 8 in state 16, call typespec puretype, goto 17
+Reduce #1 to typespec by token IDENT = "fibonacci" at line 8 in state 16, call typespec pure_type, goto 17
 Shift token IDENT = "fibonacci" at line 8 in state 17, goto 26
 Shift token '(' at line 8 in state 26, goto 32
 Shift token IDENT = "int" at line 8 in state 32, goto 15
 Reduce #1 to typename by token IDENT = "n" at line 8 in state 15, goto 16
-Reduce #1 to typespec by token IDENT = "n" at line 8 in state 16, call typespec puretype, goto 35
+Reduce #1 to typespec by token IDENT = "n" at line 8 in state 16, call typespec pure_type, goto 35
 Shift token IDENT = "n" at line 8 in state 35, goto 42
 Reduce #2 to paramdecl by token ')' at line 8 in state 42, call paramdef, goto 37
 Reduce #1 to parameters by token ')' at line 8 in state 37, goto 40
@@ -69,7 +69,7 @@ Shift token '{' at line 9 in state 58, goto 94
 Shift token "var" at line 10 in state 94, goto 10
 Shift token IDENT = "int" at line 10 in state 10, goto 15
 Reduce #1 to typename by token IDENT = "i1" at line 10 in state 15, goto 16
-Reduce #1 to typespec by token IDENT = "i1" at line 10 in state 16, call typespec puretype, goto 20
+Reduce #1 to typespec by token IDENT = "i1" at line 10 in state 16, call typespec pure_type, goto 20
 Shift token IDENT = "i1" at line 10 in state 20, goto 29
 Shift token '=' at line 10 in state 29, goto 38
 Shift token CARDINAL = "0" at line 10 in state 38, goto 49
@@ -80,7 +80,7 @@ Reduce #2 to statement by token "var" at line 11 in state 140, goto 98
 Shift token "var" at line 11 in state 98, goto 10
 Shift token IDENT = "int" at line 11 in state 10, goto 15
 Reduce #1 to typename by token IDENT = "i2" at line 11 in state 15, goto 16
-Reduce #1 to typespec by token IDENT = "i2" at line 11 in state 16, call typespec puretype, goto 20
+Reduce #1 to typespec by token IDENT = "i2" at line 11 in state 16, call typespec pure_type, goto 20
 Shift token IDENT = "i2" at line 11 in state 20, goto 29
 Shift token '=' at line 11 in state 29, goto 38
 Shift token CARDINAL = "1" at line 11 in state 38, goto 49
@@ -162,7 +162,8 @@ Lua call result [1]
 								line = 1,
 								name = "IDENT",
 								value = "int"}},
-						name = "typespec reftype"},
+						name = "typespec ref_type",
+						type = "& int"},
 					{
 						line = 1,
 						name = "IDENT",
@@ -176,7 +177,8 @@ Lua call result [1]
 								line = 1,
 								name = "IDENT",
 								value = "int"}},
-						name = "typespec reftype"},
+						name = "typespec ref_type",
+						type = "& int"},
 					{
 						line = 1,
 						name = "IDENT",
@@ -190,7 +192,8 @@ Lua call result [1]
 								line = 3,
 								name = "IDENT",
 								value = "int"}},
-						name = "typespec puretype"},
+						name = "typespec pure_type",
+						type = "@ int"},
 					{
 						line = 3,
 						name = "IDENT",
@@ -237,7 +240,8 @@ Lua call result [1]
 						line = 8,
 						name = "IDENT",
 						value = "int"}},
-				name = "typespec puretype"},
+				name = "typespec pure_type",
+				type = "@ int"},
 			{
 				line = 8,
 				name = "IDENT",
@@ -250,7 +254,8 @@ Lua call result [1]
 								line = 8,
 								name = "IDENT",
 								value = "int"}},
-						name = "typespec puretype"},
+						name = "typespec pure_type",
+						type = "@ int"},
 					{
 						line = 8,
 						name = "IDENT",
@@ -264,7 +269,8 @@ Lua call result [1]
 								line = 10,
 								name = "IDENT",
 								value = "int"}},
-						name = "typespec puretype"},
+						name = "typespec pure_type",
+						type = "@ int"},
 					{
 						line = 10,
 						name = "IDENT",
@@ -282,7 +288,8 @@ Lua call result [1]
 								line = 11,
 								name = "IDENT",
 								value = "int"}},
-						name = "typespec puretype"},
+						name = "typespec pure_type",
+						type = "@ int"},
 					{
 						line = 11,
 						name = "IDENT",

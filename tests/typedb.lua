@@ -155,15 +155,21 @@ function testDefineResolveType()
 	end
 	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"},{any_type, "+"}}
 	for i,qry in ipairs( resolve_queries) do
-		local reductions,items = typedb:resolve_type( 12, qry[1], qry[2], mask_resolve)
-		prev_type = any_type
-		for i,reduction in ipairs( reductions) do
-			result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
-					.. " : " reduction.constructor( prev_type)
-			prev_type = reduction.type
-		end
-		for i,item in ipairs( items) do
-			result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item.type) .. " : " .. mewa.tostring( item.constructor, false)
+		local ctx,reductions,items = typedb:resolve_type( 12, qry[1], qry[2], mask_resolve)
+		if ctx then
+			if type(ctx) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( qry[1]) .. qry[2]) end
+
+			prev_type = any_type
+			for i,reduction in ipairs( reductions) do
+				result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
+						.. " : " reduction.constructor( prev_type)
+				prev_type = reduction.type
+			end
+			for i,item in ipairs( items) do
+				result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item.type) .. " : " .. mewa.tostring( item.constructor, false)
+			end
+		else
+			error( "Failed to resolve type " .. typedb:type_string( qry[1]) .. qry[2])
 		end
 	end
 	local expected = [[

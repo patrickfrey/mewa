@@ -98,9 +98,9 @@ int main( int argc, const char* argv[] )
 Test Error(): Code=0, Line=0, Arg=[], What=[]
 Test Error( errno): Code=12, Line=0, Arg=[], What=[#12 "Cannot allocate memory"]
 Test Error( code): Code=421, Line=0, Arg=[], What=[#421 "Bad character in a regular expression passed to the lexer"]
-Test Error( code, line): Code=451, Line=345, Arg=[], What=[#451 "Failed to resolve type" at line 345]
+Test Error( code, line): Code=439, Line=345, Arg=[], What=[#439 "Incompatible mewa major version. You need a higher version of the mewa Lua module" at line 345]
 Test Error( code, param): Code=437, Line=0, Arg=[13.45], What=[#437 "Bad mewa version": 13.45]
-Test Error( code, param, line): Code=452, Line=123, Arg=[int, float], What=[#452 "Ambiguous type reference" at line 123: int, float]
+Test Error( code, param, line): Code=421, Line=123, Arg=[int, float], What=[#421 "Bad character in a regular expression passed to the lexer" at line 123: int, float]
 Test Error( UnspecifiedError): Code=402, Line=0, Arg=[], What=[#402 "Unspecified error"]
 Test Error( UnspecifiedError, param): Code=402, Line=0, Arg=[an unspecified error with msg], What=[#402 "Unspecified error": an unspecified error with msg]
 Test Error( UnspecifiedError, param, line): Code=402, Line=234, Arg=[an unspecified error with msg and line info], What=[#402 "Unspecified error" at line 234: an unspecified error with msg and line info]
@@ -114,9 +114,9 @@ Test unspecified error with line info: Code=402, Line=91, Arg=[Error from outer 
 		testError( outputbuf, "Error()", Error(), verbose);
 		testError( outputbuf, "Error( errno)", Error( (Error::Code)12/*ENOMEM*/), verbose);
 		testError( outputbuf, "Error( code)", Error( Error::IllegalFirstCharacterInLexer), verbose);
-		testError( outputbuf, "Error( code, line)", Error( Error::UnresolvableType, 345), verbose);
+		testError( outputbuf, "Error( code, line)", Error( Error::IncompatibleMewaMajorVersion, 345), verbose);
 		testError( outputbuf, "Error( code, param)", Error( Error::BadMewaVersion, "13.45"), verbose);
-		testError( outputbuf, "Error( code, param, line)", Error( Error::AmbiguousTypeReference, "int, float", 123), verbose);
+		testError( outputbuf, "Error( code, param, line)", Error( Error::IllegalFirstCharacterInLexer, "int, float", 123), verbose);
 
 		testError( outputbuf, "Error( UnspecifiedError)", Error( Error::UnspecifiedError), verbose);
 		testError( outputbuf, "Error( UnspecifiedError, param)", Error( Error::UnspecifiedError, "an unspecified error with msg"), verbose);

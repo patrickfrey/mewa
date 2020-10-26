@@ -176,6 +176,21 @@ struct Parameter
 	Parameter( int type_, int constructor_) noexcept :type(type_),constructor(constructor_){}
 };
 
+struct TypeList
+{
+	int arsize;
+	int const* ar;
+
+	TypeList() noexcept :arsize(0),ar(nullptr){}
+	TypeList( const std::vector<int>& ar_) noexcept :arsize(ar_.size()),ar(ar_.data()){}
+	TypeList( int arsize_, int const* ar_) noexcept :arsize(arsize_),ar(ar_){}
+	TypeList( const TypeList& o) noexcept :arsize(o.arsize),ar(o.ar){}
+
+	bool empty() const noexcept				{return !arsize;}
+	std::size_t size() const noexcept			{return arsize;}
+	int operator[]( int idx) const noexcept 		{return ar[ idx];}
+};
+
 struct ParameterList
 {
 	int arsize;
@@ -212,22 +227,27 @@ struct ResolveResultItem
 struct DeriveResult
 {
 	std::vector<ReductionResult> reductions;
+	std::vector<int> conflictPath;
 	float weightsum;
 
-	DeriveResult() noexcept :reductions(),weightsum(0.0){}
+	DeriveResult() noexcept :reductions(),conflictPath(),weightsum(0.0){}
 	DeriveResult( const DeriveResult&) = delete;
-	DeriveResult( DeriveResult&& o) :reductions(std::move(o.reductions)),weightsum(o.weightsum){}
+	DeriveResult( DeriveResult&& o) :reductions(std::move(o.reductions)),conflictPath(o.conflictPath),weightsum(o.weightsum){}
 };
 
 struct ResolveResult
 {
 	std::vector<ReductionResult> reductions;
 	std::vector<ResolveResultItem> items;
+	int contextType;
+	int conflictType;
 	float weightsum;
 
-	ResolveResult() noexcept :reductions(),items(),weightsum(0.0){}
+	ResolveResult() noexcept :reductions(),items(),contextType(-1),conflictType(-1),weightsum(0.0){}
 	ResolveResult( const ResolveResult&) = delete;
-	ResolveResult( ResolveResult&& o) :reductions(std::move(o.reductions)),items(std::move(o.items)),weightsum(o.weightsum){}
+	ResolveResult( ResolveResult&& o)
+		:reductions(std::move(o.reductions)),items(std::move(o.items))
+		,contextType(o.contextType),conflictType(o.conflictType),weightsum(o.weightsum){}
 };
 
 class TypeDatabase
@@ -275,9 +295,19 @@ class TypeDatabase
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \param[out] error error description in case of -1 returned
-	/// \return the handle assigned to the new created type, or -1 in case of an error
+	/// \return the handle assigned to the new created type
+	///		or -1 if the type is already defined in the same scope with the same signature (duplicate definition) or an exception occurred (returned in error)
+	///		or 0 if the type is already defined in the same scope with the same signature but with a highjer priority (second definition siletly discarded)
 	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, 
 			const ParameterList& parameter, int priority, Error& error) noexcept;
+
+	/// \brief Get a type with exact signature defined in a specified scope (does not search other valid definitions in enclosing scopes)
+	/// \param[in] scope the scope of this definition
+	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
+	/// \param[in] name name of the type
+	/// \param[in] parameter list of parameter types as part of the function signature
+	/// \return the handle assigned to the type or 0 if not found
+	int getType( const Scope& scope, int contextType, const std::string_view& name, const TypeList& parameter, Error& error) const noexcept;
 
 	/// \brief Get the scope dependency tree of all types defined
 	/// \param[out] error error description in case of empty tree returned

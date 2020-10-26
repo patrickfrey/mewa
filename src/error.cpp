@@ -198,9 +198,7 @@ const char* Error::code2String( int code_) noexcept
 		case BadRelationTag: return "Bad value tor tag attached to relation, must be a cardinal number in {1..32}";
 		case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
 
-		case UnresolvableType: return "Failed to resolve type";
-		case AmbiguousTypeReference: return "Ambiguous type reference";
-		case AmbiguousReductionDefinition: return "Ambiguous reduction definition";
+		case AmbiguousReductionDefinitions: return "Ambiguous definitions of reductions";
 		case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";
 
 		case BadCharacterInGrammarDef: return "Bad character in the grammar definition";

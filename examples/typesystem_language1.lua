@@ -2,15 +2,15 @@ local mewa = require "mewa"
 local fcc = require "fcc_language1"
 local typedb = mewa.typedb()
 local typesystem = {
-	puretype = {},
-	consttype = {},
-	reftype = {},
-	constreftype = {},
-	ptrtype = {},
-	constptrtype = {},
-	ptrreftype = {},
-	constptrreftype = {},
-	movereftype = {},
+	pure_type = function( nm) return "@ " .. nm end,
+	const_type = function( nm) return "const " .. nm end,
+	ref_type = function( nm) return "& " .. nm end,
+	const_ref_type = function( nm) return "const& " .. nm end,
+	ptr_type = function( nm) return "^ " .. nm end,
+	const_ptr_type = function( nm) return "const^ " .. nm end,
+	ref_ptr_type = function( nm) return "^& " .. nm end,
+	const_ref_ptr_type = function( nm) return "const^& " .. nm end,
+	move_ref_type = function( nm) return "&& " .. nm end,
 
 	assign = {},
 	assign_add = {},
@@ -45,9 +45,18 @@ local typesystem = {
 	cmpgt = {}
 }
 
+local tag_typeDeduction = 1
+local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction)
+
+function ident( arg)
+	return arg
+end
+
 function initFirstClassCitizens()
 	for kk, vv in pairs( fcc.constructor) do
-		typedb:def_type( {0,-1}, 0, kk, vv)
+		local lvalue = typedb:def_type( {0,-1}, 0, typesystem.pure_type(kk), vv)
+		local const_lvalue = typedb:def_type( {0,-1}, 0, typesystem.const_type(kk), vv)
+		typedb:def_reduction( {0,-1}, const_lvalue, lvalue, ident, tag_typeDeduction)
 	end
 end
 
@@ -72,22 +81,41 @@ function traverse( node, context)
 	end
 end
 
-function typesystem.vardef( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.vardef_assign( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.vardef_array( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.vardef_array_assign( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.operator( node, opdescr) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.stm_expression( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.stm_return( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.conditional_if( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.conditional_while( node) return {name=node.call.name, arg=traverse( node)} end
+function visit( node)
+	if (node.scope) then
+		return {name=node.call.name, scope=node.scope, arg=traverse( node)}
+	else
+		return {name=node.call.name, step=node.step, arg=traverse( node)}
+	end
+end
 
-function typesystem.namespaceref( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.typedef( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.typespec( node, typedescr) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.funcdef( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.procdef( node) return {name=node.call.name, arg=traverse( node)} end
-function typesystem.paramdef( node) return {name=node.call.name, arg=traverse( node)} end
+function typesystem.vardef( node)
+	-- local tp_name = typedescr(node.arg[1].value)
+	-- local var_name = node.arg[2].value
+	-- local tp = typedb:def_type( {0,-1}, 0, tp_name, vv)
+
+	return visit( node)
+end
+function typesystem.vardef_assign( node) return visit( node) end
+function typesystem.vardef_array( node) return visit( node) end
+function typesystem.vardef_array_assign( node) return visit( node) end
+function typesystem.operator( node, opdescr) return visit( node) end
+function typesystem.stm_expression( node) return visit( node) end
+function typesystem.stm_return( node) return visit( node) end
+function typesystem.conditional_if( node) return visit( node) end
+function typesystem.conditional_while( node) return visit( node) end
+
+function typesystem.namespaceref( node) return visit( node) end
+function typesystem.typedef( node) return visit( node) end
+function typesystem.typespec( node, typedescr)
+	local type = typedb:resolve_type( node.step, 0, typedescr(node.arg[1].value), tagmask_resolveType)
+	-- return typedescr(node.arg[1].value)
+	-- return visit( node)
+	return {name=node.call.name, step=node.step, arg=traverse( node), type=type}
+end
+function typesystem.funcdef( node) return visit( node) end
+function typesystem.procdef( node) return visit( node) end
+function typesystem.paramdef( node) return visit( node) end
 
 function typesystem.program( node)
 	initFirstClassCitizens()

@@ -4757,7 +4757,7 @@ expressionlist =
 	typespec/L1 = typename . "^", FOLLOW [7] -> SHIFT '^' GOTO 24
 	typespec/L1 = typename . "^" "&", FOLLOW [7] -> SHIFT '^' GOTO 24
 	typespec/L1 = typename . "&&", FOLLOW [7] -> SHIFT "&&" GOTO 25
-	typespec/L1 = typename . (3), FOLLOW [7] -> REDUCE typespec #1 CALL typespec puretype
+	typespec/L1 = typename . (3), FOLLOW [7] -> REDUCE typespec #1 CALL typespec pure_type
 [17]
 	functiondefinition = "function" typespec . IDENT "(" parameters ")" "{" statementlist "}", FOLLOW [93] -> SHIFT IDENT GOTO 26
 [18]
@@ -4781,19 +4781,19 @@ expressionlist =
 	typename/L1 = . IDENT, FOLLOW [38] -> SHIFT IDENT GOTO 15
 	typename/L1 = . IDENT "::" typename, FOLLOW [38] -> SHIFT IDENT GOTO 15
 [23]
-	typespec/L1 = typename "&" . (5), FOLLOW [7] -> REDUCE typespec #2 CALL typespec reftype
+	typespec/L1 = typename "&" . (5), FOLLOW [7] -> REDUCE typespec #2 CALL typespec ref_type
 [24]
 	typespec/L1 = typename "^" . "&", FOLLOW [7] -> SHIFT '&' GOTO 31
-	typespec/L1 = typename "^" . (7), FOLLOW [7] -> REDUCE typespec #2 CALL typespec ptrtype
+	typespec/L1 = typename "^" . (7), FOLLOW [7] -> REDUCE typespec #2 CALL typespec ptr_type
 [25]
-	typespec/L1 = typename "&&" . (11), FOLLOW [7] -> REDUCE typespec #2 CALL typespec movereftype
+	typespec/L1 = typename "&&" . (11), FOLLOW [7] -> REDUCE typespec #2 CALL typespec move_ref_type
 [26]
 	functiondefinition = "function" typespec IDENT . "(" parameters ")" "{" statementlist "}", FOLLOW [93] -> SHIFT '(' GOTO 32
 [27]
 	typespec/L1 = "const" typename . "&", FOLLOW [7] -> SHIFT '&' GOTO 33
 	typespec/L1 = "const" typename . "^", FOLLOW [7] -> SHIFT '^' GOTO 34
 	typespec/L1 = "const" typename . "^" "&", FOLLOW [7] -> SHIFT '^' GOTO 34
-	typespec/L1 = "const" typename . (4), FOLLOW [7] -> REDUCE typespec #2 CALL typespec consttype
+	typespec/L1 = "const" typename . (4), FOLLOW [7] -> REDUCE typespec #2 CALL typespec const_type
 [28]
 	typespec/L1 = . typename, FOLLOW [7] -> GOTO 16
 	typespec/L1 = . typename "&", FOLLOW [7] -> GOTO 16
@@ -4819,7 +4819,7 @@ expressionlist =
 [30]
 	typename/L1 = IDENT "::" typename . (2), FOLLOW [38] -> REDUCE typename #3 CALL namespaceref
 [31]
-	typespec/L1 = typename "^" "&" . (9), FOLLOW [7] -> REDUCE typespec #3 CALL typespec ptrreftype
+	typespec/L1 = typename "^" "&" . (9), FOLLOW [7] -> REDUCE typespec #3 CALL typespec ref_ptr_type
 [32]
 	typespec/L1 = . typename, FOLLOW [7] -> GOTO 16
 	typespec/L1 = . typename "&", FOLLOW [7] -> GOTO 16
@@ -4838,10 +4838,10 @@ expressionlist =
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [7] -> SHIFT "const" GOTO 18
 	parameters/L0 = ., FOLLOW [8] -> REDUCE parameters #0
 [33]
-	typespec/L1 = "const" typename "&" . (6), FOLLOW [7] -> REDUCE typespec #3 CALL typespec constreftype
+	typespec/L1 = "const" typename "&" . (6), FOLLOW [7] -> REDUCE typespec #3 CALL typespec const_ref_type
 [34]
 	typespec/L1 = "const" typename "^" . "&", FOLLOW [7] -> SHIFT '&' GOTO 41
-	typespec/L1 = "const" typename "^" . (8), FOLLOW [7] -> REDUCE typespec #3 CALL typespec constptrtype
+	typespec/L1 = "const" typename "^" . (8), FOLLOW [7] -> REDUCE typespec #3 CALL typespec const_ptr_type
 [35]
 	paramdecl = typespec . IDENT, FOLLOW [40] -> SHIFT IDENT GOTO 42
 [36]
@@ -4895,7 +4895,7 @@ expressionlist =
 [40]
 	functiondefinition = "function" typespec IDENT "(" parameters . ")" "{" statementlist "}", FOLLOW [93] -> SHIFT ')' GOTO 58
 [41]
-	typespec/L1 = "const" typename "^" "&" . (10), FOLLOW [7] -> REDUCE typespec #4 CALL typespec constptrreftype
+	typespec/L1 = "const" typename "^" "&" . (10), FOLLOW [7] -> REDUCE typespec #4 CALL typespec const_ref_ptr_type
 [42]
 	paramdecl = typespec IDENT . (15), FOLLOW [40] -> REDUCE paramdecl #2 CALL paramdef
 [43]
@@ -7858,15 +7858,15 @@ expressionlist =
 -- Function calls:
 (1) program
 (2) namespaceref
-(3) typespec, puretype
-(4) typespec, consttype
-(5) typespec, reftype
-(6) typespec, constreftype
-(7) typespec, ptrtype
-(8) typespec, constptrtype
-(9) typespec, ptrreftype
-(10) typespec, constptrreftype
-(11) typespec, movereftype
+(3) typespec, pure_type
+(4) typespec, const_type
+(5) typespec, ref_type
+(6) typespec, const_ref_type
+(7) typespec, ptr_type
+(8) typespec, const_ptr_type
+(9) typespec, ref_ptr_type
+(10) typespec, const_ref_ptr_type
+(11) typespec, move_ref_type
 (12) typedef
 (13) funcdef
 (14) procdef
@@ -7967,7 +7967,7 @@ expressionlist =
 	'^' => Reduce #1 typename
 	"&&" => Reduce #1 typename
 [16]
-	IDENT => Reduce #1 typespec call typespec puretype
+	IDENT => Reduce #1 typespec call typespec pure_type
 	'&' => Shift goto 23
 	'^' => Shift goto 24
 	"&&" => Shift goto 25
@@ -7984,16 +7984,16 @@ expressionlist =
 [22]
 	IDENT => Shift goto 15
 [23]
-	IDENT => Reduce #2 typespec call typespec reftype
+	IDENT => Reduce #2 typespec call typespec ref_type
 [24]
-	IDENT => Reduce #2 typespec call typespec ptrtype
+	IDENT => Reduce #2 typespec call typespec ptr_type
 	'&' => Shift goto 31
 [25]
-	IDENT => Reduce #2 typespec call typespec movereftype
+	IDENT => Reduce #2 typespec call typespec move_ref_type
 [26]
 	'(' => Shift goto 32
 [27]
-	IDENT => Reduce #2 typespec call typespec consttype
+	IDENT => Reduce #2 typespec call typespec const_type
 	'&' => Shift goto 33
 	'^' => Shift goto 34
 [28]
@@ -8010,15 +8010,15 @@ expressionlist =
 	'^' => Reduce #3 typename call namespaceref
 	"&&" => Reduce #3 typename call namespaceref
 [31]
-	IDENT => Reduce #3 typespec call typespec ptrreftype
+	IDENT => Reduce #3 typespec call typespec ref_ptr_type
 [32]
 	IDENT => Shift goto 15
 	"const" => Shift goto 18
 	')' => Reduce #0 parameters
 [33]
-	IDENT => Reduce #3 typespec call typespec constreftype
+	IDENT => Reduce #3 typespec call typespec const_ref_type
 [34]
-	IDENT => Reduce #3 typespec call typespec constptrtype
+	IDENT => Reduce #3 typespec call typespec const_ptr_type
 	'&' => Shift goto 41
 [35]
 	IDENT => Shift goto 42
@@ -8044,7 +8044,7 @@ expressionlist =
 [40]
 	')' => Shift goto 58
 [41]
-	IDENT => Reduce #4 typespec call typespec constptrreftype
+	IDENT => Reduce #4 typespec call typespec const_ref_ptr_type
 [42]
 	')' => Reduce #2 paramdecl call paramdef
 	',' => Reduce #2 paramdecl call paramdef

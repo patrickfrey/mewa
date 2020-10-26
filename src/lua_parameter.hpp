@@ -55,12 +55,15 @@ mewa::TagMask getArgumentAsTagMask( const char* functionName, lua_State* ls, int
 
 int getArgumentAsConstructor( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td);
 
-mewa::TypeDatabase::Parameter
-	getArgumentAsParameter( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td);
-std::pmr::vector<mewa::TypeDatabase::Parameter>
-	getArgumentAsParameterList( 
-			const char* functionName, lua_State* ls, int li, int objtable,
-			mewa_typedb_userdata_t* td, std::pmr::memory_resource* memrsc);
+mewa::TypeDatabase::Parameter getArgumentAsParameter( 
+	const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td);
+
+std::pmr::vector<mewa::TypeDatabase::Parameter> getArgumentAsParameterList( 
+	const char* functionName, lua_State* ls, int li, int objtable,
+	mewa_typedb_userdata_t* td, std::pmr::memory_resource* memrsc);
+
+std::pmr::vector<int> getArgumentAsTypeList( 
+	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc);
 
 inline void checkStack( const char* functionName, lua_State* ls, int sz)
 {
@@ -72,6 +75,8 @@ void pushTypeConstructor(
 void pushReductionResults(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions);
+void pushTypePath(
+		lua_State* ls, const char* functionName, const std::pmr::vector<int>& typepath);
 void pushResolveResultItems(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ResolveResultItem>& items);

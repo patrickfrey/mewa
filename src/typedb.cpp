@@ -102,15 +102,61 @@ int TypeDatabase::typeConstructor( int type) const
 	return rec.constructor;
 }
 
-bool TypeDatabase::compareParameterSignature( int param1, short paramlen1, int param2, short paramlen2) const noexcept
+bool TypeDatabase::compareParameterSignature( const TypeDatabase::ParameterList& parameter, int param2, int paramlen2) const noexcept
 {
-	if (paramlen1 != paramlen2) return false;
-	if (param1 == 0 || param2 == 0) return true/*param length is equal and one param length is 0*/;
-	for (int pi = 0; pi < paramlen1; ++pi)
+	if (parameter.arsize != paramlen2) return false;
+	for (int pi = 0; pi < paramlen2; ++pi)
 	{
-		if (m_parameterMap[ param1+pi-1].type != m_parameterMap[ param2+pi-1].type) return false;
+		if (parameter[ pi].type != m_parameterMap[ param2+pi-1].type) return false;
 	}
 	return true;
+}
+
+int TypeDatabase::findTypeWithSignature( int typerec, const TypeDatabase::ParameterList& parameter, int& lastListIndex) const noexcept
+{
+	lastListIndex = 0;
+	int tri = typerec;
+	while (tri)
+	{
+		auto const& tr = m_typerecMap[ tri-1];
+		if (compareParameterSignature( parameter, tr.parameter, tr.parameterlen)) break;
+
+		lastListIndex = tri;
+		tri = tr.next;
+	}
+	return tri;
+}
+
+bool TypeDatabase::compareParameterSignature( const TypeDatabase::TypeList& parameter, int param2, int paramlen2) const noexcept
+{
+	if (parameter.arsize != paramlen2) return false;
+	for (int pi = 0; pi < paramlen2; ++pi)
+	{
+		if (parameter[ pi] != m_parameterMap[ param2+pi-1].type) return false;
+	}
+	return true;
+}
+
+int TypeDatabase::findTypeWithSignature( int typerec, const TypeDatabase::TypeList& parameter) const noexcept
+{
+	int tri = typerec;
+	while (tri)
+	{
+		auto const& tr = m_typerecMap[ tri-1];
+		if (compareParameterSignature( parameter, tr.parameter, tr.parameterlen)) break;
+
+		tri = tr.next;
+	}
+	return tri;
+}
+
+int TypeDatabase::getType( const Scope& scope, int contextType, const std::string_view& name, const TypeList& parameter) const
+{
+	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
+	TypeDef typeDef( contextType, m_identMap->get( name));
+
+	int typerec = m_typeTable->getDef( scope, typeDef);
+	return typerec ? findTypeWithSignature( typerec, parameter) : 0;
 }
 
 int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority)
@@ -138,51 +184,46 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	TypeDef typeDef( contextType, m_identMap->get( name));
 	m_typerecMap.push_back( TypeRecord( constructor, parameteridx, parameterlen, priority, typeDef));
 
-	int lastIndex = 0;
 	int prev_typerec = m_typeTable->getOrSet( scope, typeDef, typerec);
 	if (prev_typerec/*already exists*/)
 	{
-		// Check if there is a conflict:
-		int tri = prev_typerec;
-		while (tri)
+		// Check if there is a conflict, and find the end of the single linked list (-> lastListIndex):
+		int lastListIndex = 0;
+		int tri = findTypeWithSignature( prev_typerec, parameter, lastListIndex);
+		if (tri)
 		{
 			auto& tr = m_typerecMap[ tri-1];
-			if (compareParameterSignature( tr.parameter, tr.parameterlen, m_typerecMap.back().parameter, m_typerecMap.back().parameterlen))
+			if (priority > tr.priority)
 			{
-				if (priority > tr.priority)
-				{
-					tr.priority = priority;
-					tr.constructor = constructor;
-					m_typerecMap.pop_back();
-					m_parameterMap.resize( m_parameterMap.size()-parameter.size());
-					typerec = tri;
-				}
-				else if (priority == tr.priority)
-				{
-					ResultBuffer resbuf;
-					throw Error( Error::DuplicateDefinition, typeToString( tri, resbuf));
-				}
-				else
-				{
-					// .... ignore 2nd definition with lower priority
-					m_typerecMap.pop_back();
-					m_parameterMap.resize( m_parameterMap.size()-parameter.size());
-					typerec = tri;
-				}
-				break;
+				// ... priority higher, overwrite old definition
+				tr.priority = priority;
+				tr.constructor = constructor;
+				m_typerecMap.pop_back();
+				m_parameterMap.resize( m_parameterMap.size()-parameter.size());
+				typerec = tri;
 			}
-			lastIndex = tri;
-			tri = tr.next;
+			else if (priority == tr.priority)
+			{
+				// ... duplicate definition, indicate error
+				typerec = -1;
+			}
+			else
+			{
+				// .... ignore 2nd definition with lower priority, return nullval as no definition
+				m_typerecMap.pop_back();
+				m_parameterMap.resize( m_parameterMap.size()-parameter.size());
+				typerec = 0;
+			}
 		}
-		if (!tri) //... loop passed completely, no break called because of compareParameterSignature
+		else
 		{
-			if (!lastIndex) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
-			m_typerecMap[ lastIndex-1].next = typerec;
+			// ... the definition is new and we got the tail of the list in 'lastListIndex', we add the new created record:
+			if (!lastListIndex) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+			m_typerecMap[ lastListIndex-1].next = typerec;
 		}
 	}
 	return typerec;
 }
-
 
 void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, int tag, float weight)
 {
@@ -246,6 +287,20 @@ public:
 			if (ee.prev != -1)
 			{
 				result.push_back( {ee.type, ee.constructor} );
+			}
+			index = ee.prev;
+		}
+		std::reverse( result.begin(), result.end());
+	}
+
+	void collectConflictPath( std::pmr::vector<int>& result, int index)
+	{
+		while (index >= 0)
+		{
+			const ReduStackElem& ee = m_ar[ index];
+			if (ee.prev != -1)
+			{
+				result.push_back( ee.type );
 			}
 			index = ee.prev;
 		}
@@ -352,7 +407,7 @@ int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType, c
 				ResultBuffer resbuf_err;
 				auto toTypeStr = typeToString( toType, resbuf_err);
 				auto fromTypeStr = typeToString( fromType, resbuf_err);
-				throw Error( Error::AmbiguousTypeReference, string_format( "%s <- %s", toTypeStr.c_str(), fromTypeStr.c_str()));
+				throw Error( Error::AmbiguousReductionDefinitions, string_format( "%s <- %s", toTypeStr.c_str(), fromTypeStr.c_str()));
 			}
 			rt = redu.value()/*constructor*/;
 		}
@@ -417,16 +472,11 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 			else
 			{
 				// We have foud an alternative match with the same weight, report an ambiguous reference error:
-				ResultBuffer alt_resbuf;
-				DeriveResult alt_rt( alt_resbuf);
-
-				alt_rt.weightsum = qe.weight;
-				stack.collectResult( alt_rt.reductions, qe.index);
-
-				throw Error( Error::AmbiguousTypeReference, deriveResultToString( rt) + ", " + deriveResultToString( alt_rt));
+				stack.collectConflictPath( rt.conflictPath, qe.index);
+				break;
 			}
 		}
-		// Put follow elements into pririty queue:
+		// Put follow elements into priority queue:
 		int redu_buffer[ 512];
 		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 		auto redulist = m_reduTable->get( step, elem.type, selectTags, &redu_memrsc);
@@ -489,7 +539,9 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType(
 			//... we found a match
 			if (!alt_searchstate)
 			{
+				//... we found the first match
 				rt.weightsum = qe.weight;
+				rt.contextType = elem.type;
 				stack.collectResult( rt.reductions, qe.index);
 				collectResultItems( rt.items, typerecidx);
 				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
@@ -498,13 +550,8 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType(
 			else
 			{
 				// We have foud an alternative match with the same weight, report an ambiguous reference error:
-				ResultBuffer resbuf_alt;
-				ResolveResult alt_rt( resbuf_alt);
-
-				stack.collectResult( alt_rt.reductions, qe.index);
-				collectResultItems( alt_rt.items, typerecidx);
-
-				throw Error( Error::AmbiguousTypeReference, resolveResultToString( rt) + ", " + resolveResultToString( alt_rt));
+				rt.conflictType = elem.type;
+				break;
 			}
 		}
 

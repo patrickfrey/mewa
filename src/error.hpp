@@ -65,9 +65,7 @@ public:
 		BadRelationTag=444,
 		InvalidHandle=445,
 
-		UnresolvableType=451,
-		AmbiguousTypeReference=452,
-		AmbiguousReductionDefinition=453,
+		AmbiguousReductionDefinitions=452,
 		ScopeHierarchyError=454,
 
 		BadCharacterInGrammarDef=501,

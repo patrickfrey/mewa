@@ -196,19 +196,19 @@ struct CompilerContext
 
 
 #ifdef __GNUC__
-static void printDebugLine( FILE* dbgout, const char* fmt, ...) __attribute__ ((format (printf, 2, 3)));
+static void printDebug( FILE* dbgout, const char* fmt, ...) __attribute__ ((format (printf, 2, 3)));
 #else
-static void printDebugLine( FILE* dbgout, const char* fmt, ...);
+static void printDebug( FILE* dbgout, const char* fmt, ...);
 #endif
 
-static void printDebugLine( FILE* dbgout, const char* fmt, ...)
+static void printDebug( FILE* dbgout, const char* fmt, ...)
 {
 	va_list ap;
 	va_start( ap, fmt);
 	std::string content = mewa::string_format_va( fmt, ap);
 	va_end( ap);
 
-	if (!std::fwrite( content.data(), content.size(), 1, dbgout) || !std::fwrite( "\n", 1, 1, dbgout))
+	if (!std::fwrite( content.data(), content.size(), 1, dbgout))
 	{
 		throw mewa::Error( (mewa::Error::Code) std::ferror( dbgout), "debug output");
 	}
@@ -251,16 +251,15 @@ static void luaReduceStruct(
 
 		switch (scopeflag)
 		{
-			case mewa::Automaton::Action::NoScope:
-				break;
 			case mewa::Automaton::Action::Step:
 				ctx.scopestep += 1;
+				/*no break here!*/
+			case mewa::Automaton::Action::NoScope:
 				lua_pushliteral( ls, "step");					// STK [ARG1]...[ARGN] [TABLE] "step"
 				lua_pushinteger( ls, ctx.scopestep);				// STK [ARG1]...[ARGN] [TABLE] [COUNTER]
 				lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
 				break;
 			case mewa::Automaton::Action::Scope:
-			{
 				ctx.scopestep += 1;
 				lua_pushliteral( ls, "scope");					// STK [ARG1]...[ARGN] [TABLE] "scope"
 				lua_createtable( ls, 0/*size array*/, structsize);	 	// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
@@ -270,7 +269,6 @@ static void luaReduceStruct(
 				lua_rawseti( ls, -2, 2);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
 				lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
 				break;
-			}
 		}
 		int nofLuaStackElements = stk_end-stk_start;
 		lua_pushliteral( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
@@ -379,9 +377,9 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 		}
 		else if (dbgout && !lua_isnil( ls, -1))
 		{
-			printDebugLine( dbgout, "Lua call result [%d]", li-calltable);
+			printDebug( dbgout, "Lua call result [%d]\n", li-calltable);
 			std::string resstr( mewa::luaToString( ls, -1, true/*formatted*/));
-			printDebugLine( dbgout, "%s", resstr.c_str());
+			printDebug( dbgout, "%s\n", resstr.c_str());
 		}
 	}
 }
@@ -483,12 +481,12 @@ static void printDebugAction( FILE* dbgout, CompilerContext& ctx, const mewa::Au
 	{		
 		if (automaton.lexer().isKeyword( lexem.id()))
 		{
-			printDebugLine( dbgout, "Error token %s at line %d in state %d",
+			printDebug( dbgout, "Error token %s at line %d in state %d\n",
 					nm.c_str(), lexem.line(), ctx.stateStack.back().index);
 		}
 		else
 		{
-			printDebugLine( dbgout, "Error token %s = \"%s\" at line %d in state %d",
+			printDebug( dbgout, "Error token %s = \"%s\" at line %d in state %d\n",
 					nm.c_str(), val.c_str(), lexem.line(), ctx.stateStack.back().index);
 		}
 	}
@@ -499,12 +497,12 @@ static void printDebugAction( FILE* dbgout, CompilerContext& ctx, const mewa::Au
 			case mewa::Automaton::Action::Shift:
 				if (automaton.lexer().isKeyword( lexem.id()))
 				{
-					printDebugLine( dbgout, "Shift token %s at line %d in state %d, goto %d",
+					printDebug( dbgout, "Shift token %s at line %d in state %d, goto %d\n",
 							nm.c_str(), lexem.line(), ctx.stateStack.back().index, nexti->second.state());
 				}
 				else
 				{
-					printDebugLine( dbgout, "Shift token %s = \"%s\" at line %d in state %d, goto %d",
+					printDebug( dbgout, "Shift token %s = \"%s\" at line %d in state %d, goto %d\n",
 							nm.c_str(), val.c_str(), lexem.line(), ctx.stateStack.back().index, nexti->second.state());
 				}
 				break;
@@ -531,14 +529,14 @@ static void printDebugAction( FILE* dbgout, CompilerContext& ctx, const mewa::Au
 
 				if (!lexem.id() || automaton.lexer().isKeyword( lexem.id()))
 				{
-					printDebugLine( dbgout, "Reduce #%d to %s by token %s at line %d in state %d%s, goto %d",
+					printDebug( dbgout, "Reduce #%d to %s by token %s at line %d in state %d%s, goto %d\n",
 							nexti->second.count(), automaton.nonterminal( nexti->second.nonterminal()).c_str(),
 							nm.c_str(), lexem.line(), ctx.stateStack.back().index,
 							callstr.c_str(), gtostate);
 				}
 				else
 				{
-					printDebugLine( dbgout, "Reduce #%d to %s by token %s = \"%s\" at line %d in state %d%s, goto %d",
+					printDebug( dbgout, "Reduce #%d to %s by token %s = \"%s\" at line %d in state %d%s, goto %d\n",
 							nexti->second.count(), automaton.nonterminal( nexti->second.nonterminal()).c_str(),
 							nm.c_str(), val.c_str(), lexem.line(), ctx.stateStack.back().index,
 							callstr.c_str(), gtostate);
@@ -546,7 +544,7 @@ static void printDebugAction( FILE* dbgout, CompilerContext& ctx, const mewa::Au
 				break;
 			}
 			case mewa::Automaton::Action::Accept:
-				printDebugLine( dbgout, "Accept");
+				printDebug( dbgout, "Accept\n");
 				break;
 		}
 	}

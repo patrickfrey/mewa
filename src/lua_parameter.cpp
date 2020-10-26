@@ -262,11 +262,12 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 			double kk = lua_tonumber( ls, -2);
 			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
 			{
-				if ((int)kk < 1)
+				int kidx = (int)(kk+std::numeric_limits<double>::epsilon()*4);
+				if (kidx < 1)
 				{
 					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
 				}
-				std::size_t index = (int)kk-1;
+				std::size_t index = kidx-1;
 				if (index == rt.size())
 				{
 					rt.emplace_back( getArgumentAsParameter( functionName, ls, -1, -4, td));	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
@@ -280,6 +281,10 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 					rt[ index] = mewa::lua::getArgumentAsParameter( functionName, ls, -1, -4, td);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 				}
 			}
+			else
+			{
+				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+			}
 		}
 		else
 		{
@@ -289,6 +294,51 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 	}
 	lua_pop( ls, 2);												//STK:
 
+	return rt;
+}
+
+std::pmr::vector<int> mewa::lua::getArgumentAsTypeList( 
+	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc)
+{
+	std::pmr::vector<int> rt( memrsc);
+	if (lua_isnil( ls, li)) return rt;
+
+	lua_pushvalue( ls, li);
+	lua_pushnil( ls);		//STK: [PARAMTAB] NIL
+	while (lua_next( ls, -2))	//STK: [PARAMTAB] [KEY] [VAL]
+	{
+		if (lua_type( ls, -2) == LUA_TNUMBER)
+		{
+			double kk = lua_tonumber( ls, -2);
+			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			{
+				int kidx = (int)(kk+std::numeric_limits<double>::epsilon()*4)-1;
+				if (kidx < 1)
+				{
+					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+				}
+				std::size_t index = kidx-1;
+				if (index == rt.size())
+				{
+					rt.push_back( lua_tonumber( ls, -1));
+				}
+				else
+				{
+					if (index > rt.size())
+					{
+						rt.resize( index+1, 0);
+					}
+					rt[ index] = lua_tonumber( ls, -1);
+				}
+			}
+			else
+			{
+				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+			}
+		}
+		lua_pop( ls, 1);	//STK: [PARAMTAB] [KEY]
+	}
+	lua_pop( ls, 1);		//STK:
 	return rt;
 }
 
@@ -319,7 +369,7 @@ void mewa::lua::pushReductionResults(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions)
 {
-	checkStack( functionName, ls, reductions.size()+6);
+	checkStack( functionName, ls, 6);
 
 	lua_getglobal( ls, objTableName);
 	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);
@@ -331,6 +381,22 @@ void mewa::lua::pushReductionResults(
 		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] [REDUTAB]
 	}
 	lua_replace( ls, -2);								// STK: [REDUTAB]
+}
+
+void mewa::lua::pushTypePath(
+		lua_State* ls, const char* functionName, const std::pmr::vector<int>& typepath)
+{
+	checkStack( functionName, ls, 6);
+
+	lua_createtable( ls, typepath.size()/*narr*/, 0/*nrec*/);
+	int tidx = 0;
+	for (int tp : typepath)
+	{
+		++tidx;
+		lua_pushinteger( ls, tp);						// STK: [TYPETAB] [TYPE]
+		lua_rawseti( ls, -2, tidx);						// STK: [TYPETAB]
+	}
+	lua_replace( ls, -2);								// STK: [TYPETAB]
 }
 
 void mewa::lua::pushResolveResultItems(

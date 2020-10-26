@@ -641,6 +641,19 @@ public:
 		return rt;
 	}
 
+	VALTYPE getDef( const Scope& scope, const KEYTYPE& key) const noexcept
+	{
+		VALTYPE rt = m_invtree.nullval();
+		ScopedKey<KEYTYPE> sk( key, scope.end());
+
+		auto mi = m_map.find( sk);
+		if (mi != m_map.end())
+		{
+			rt = m_invtree.findUpValue( mi->second, scope);
+		}
+		return rt;
+	}
+
 	typedef typename ScopedUpValueInvTree<VALTYPE>::const_iterator invtree_iterator;
 
 	std::pair<invtree_iterator,invtree_iterator> match_range( const Scope::Step step, const KEYTYPE& key) const noexcept
@@ -799,7 +812,7 @@ public:
  	void set( const Scope scope, const RELNODETYPE& left, const RELNODETYPE& right, const VALTYPE& value, int tag, float weight)
 	{
 		if (tag > TagMask::MaxTag || tag < TagMask::MinTag) throw Error( Error::BadRelationTag, string_format("%d",tag));
-		if (weight <= std::numeric_limits<float>::epsilon()*10) throw Error( Error::BadRelationWeight, string_format("%.4f",weight));
+		if (weight < 0.0) throw Error( Error::BadRelationWeight, string_format("%.4f",weight));
 
 		std::uint8_t tagval = TagMask::tagValFromTag( tag);
 		int newlistindex = m_list.size();

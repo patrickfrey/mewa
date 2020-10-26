@@ -7,8 +7,9 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 1. [User Defined Objects in Different Scopes](#instance)
     * [typedb:set_instance](#set_instance)
     * [typedb:get_instance](#get_instance)
-1. [Types](#types)
+1. [Definition and Lookup of Types](#types)
     * [typedb:def_type](#def_type)
+    * [typedb:get_type](#get_type)
 1. [Reductions](#reductions)
     * [typedb:def_reduction](#def_reduction)
 1. [Derive and Resolve Types](#deriveAndResolveTypes)
@@ -106,23 +107,42 @@ print( typedb:get_instance( "register", 49)());
 
 <a name="types"/>
 
-## Define Types
+## Definition and Lookup of Types
 
 <a name="def_type"/>
 
 ### typedb:def_type
-Define a type. 
+Define a type and describe how the type is built by assigning a constructor to it. 
 
 #### Parameter
-| #      | Name         | Type             | Description                                                                                        |
-| ------ | ------------ | ---------------- | -------------------------------------------------------------------------------------------------- |
-| 1st    | scope        | pair of integers | Scope of the type defined                                                                          |
-| 2nd    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure |
-| 3rd    | name         | string           | Name of the type defined                                                                           |
-| 4th    | constructor  | any type not nil | Constructor describing how the type is built                                                       |
-| 5th    | parameter    | array of types   | Array of type/constructor pairs                                                                    |
-| 6nd    | priority     | integer          | Priority of the definition, Higher priority overwrites lower priority definition.                  |
-| Return |              | integer          | Handle assigned as identifier of the type                                                          |
+| #      | Name         | Type             | Description                                                                                                 |
+| ------ | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1st    | scope        | pair of integers | Scope of the type defined                                                                                   |
+| 2nd    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
+| 3rd    | name         | string           | Name of the type defined                                                                                    |
+| 4th    | constructor  | any type not nil | Constructor describing how the type is built                                                                |
+| 5th    | parameter    | array of types   | Array of type/constructor pairs                                                                             |
+| 6nd    | priority     | integer          | Priority of the definition, Higher priority overwrites lower priority definition.                           |
+| Return |              | integer          | identifier assigned to the type or -1 if the definition is a duplicate or 0 if it is silently discarded (*) |
+
+##### Remark (*)
+A definition is siletly discarded it is a duplicate but with lower priority than the previous definition.
+
+
+<a name="get_type"/>
+
+### typedb:get_type
+Get a type definition if it exists in the specified scope (Does not search a valid definition in enclosing scopes).
+
+#### Parameter
+| #      | Name         | Type             | Description                                                                                                 |
+| ------ | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1st    | scope        | pair of integers | Scope of the type defined                                                                                   |
+| 2nd    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
+| 3rd    | name         | string           | Name of the type defined                                                                                    |
+| 4th    | parameter    | array of integers| Array of type handles                                                                                       |
+| Return |              | integer          | identifier assigned to the type or 0 if not found                                                           |
+
 
 <a name="reductions"/>
 
@@ -165,18 +185,20 @@ Create a set of tags for type searches (typedb:resolve_type) or derivations (typ
 Finds the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
 
 #### Parameter
-| #      | Name         | Type              | Description                                                                                  |
-| ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------- |
-| 1st    | step         | integer           | Scope step covered by the scopes of the result candidates.                                   |
-| 2nd    | dest-type    | integer           | Resulting type to derive.                                                                    |
-| 3rd    | src-type     | integer           | Start type of the reduction path leading to the result type.                                 |
-| 4th    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use. |
-| Return |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.         |
+| #          | Name         | Type              | Description                                                                                       |
+| ---------- | ------------ | ----------------- | ------------------------------------------------------------------------------------------------- |
+| 1st        | step         | integer           | Scope step covered by the scopes of the result candidates.                                        |
+| 2nd        | dest-type    | integer           | Resulting type to derive.                                                                         |
+| 3rd        | src-type     | integer           | Start type of the reduction path leading to the result type.                                      |
+| 4th        | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.      |
+| Return 1st |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.              |
+| Return 2nd |              | number            | Weight sum of best path found                                                                     |
+| Return 3rd |              | array             | Alternative path with same weight found. There is an ambiguus reference if this value is not nil. |
 
 <a name="resolve_type"/>
 
 ### typedb:resolve_type
-Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the the reduction path of the context-type is ambiguous.
+Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. 
 The returned list of candidates (2nd return value) has to be inspected by the client to find the best match.
 
 #### Parameter
@@ -186,9 +208,14 @@ The returned list of candidates (2nd return value) has to be inspected by the cl
 | 2nd        | context-type | integer           | Type referring to the context of the type or 0 if the type is not a member of some other structure                |
 | 3rd        | name         | string            | Name of the type searched                                                                                         |
 | 4th        | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.                      |
-| Return 1st |              | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
-| Return 2nd |              | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
+| Return 1st |              | integer           | Derived context-type of the result, nil if not found, array with two types in case of an ambiguous result.        | 
+| Return 2nd |              | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
+| Return 3rd |              | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
 
+#### Note
+To inspect the result you first have to look if the 1st return value is nil (=> the type could not be resolved).
+Then you have to check if the first return value is an array (=> ambiguous reference). The array contains two conflicting context types.
+Otherwise the first return value is the context-type of the resolved type and the 2nd and 3rd return value specify how the resolved type is built.
 
 <a name="typeAttributes"/>
 
