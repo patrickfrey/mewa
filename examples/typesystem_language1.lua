@@ -54,9 +54,9 @@ end
 
 function initFirstClassCitizens()
 	for kk, vv in pairs( fcc.constructor) do
-		local lvalue = typedb:def_type( {0,-1}, 0, typesystem.pure_type(kk), vv)
-		local const_lvalue = typedb:def_type( {0,-1}, 0, typesystem.const_type(kk), vv)
-		typedb:def_reduction( {0,-1}, const_lvalue, lvalue, ident, tag_typeDeduction)
+		local lvalue = typedb:def_type( 0, typesystem.pure_type(kk), vv)
+		local const_lvalue = typedb:def_type( 0, typesystem.const_type(kk), vv)
+		typedb:def_reduction( const_lvalue, lvalue, ident, tag_typeDeduction)
 	end
 end
 
@@ -82,17 +82,25 @@ function traverse( node, context)
 end
 
 function visit( node)
+	local rt = nil
 	if (node.scope) then
-		return {name=node.call.name, scope=node.scope, arg=traverse( node)}
+		local parent_scope = typedb:scope( node.scope)
+		rt = {name=node.call.name, scope=node.scope, arg=traverse( node)}
+		typedb:scope( parent_scope)
+	elseif (node.step) then
+		local prev_step = typedb:step( node.step)
+		rt = {name=node.call.name, step=node.step, arg=traverse( node)}
+		typedb:step( prev_step)
 	else
-		return {name=node.call.name, step=node.step, arg=traverse( node)}
+		rt = {name=node.call.name, step=node.step, arg=traverse( node)}
 	end
+	return rt
 end
 
 function typesystem.vardef( node)
 	-- local tp_name = typedescr(node.arg[1].value)
 	-- local var_name = node.arg[2].value
-	-- local tp = typedb:def_type( {0,-1}, 0, tp_name, vv)
+	-- local tp = typedb:def_type( 0, tp_name, vv)
 
 	return visit( node)
 end
@@ -108,7 +116,7 @@ function typesystem.conditional_while( node) return visit( node) end
 function typesystem.namespaceref( node) return visit( node) end
 function typesystem.typedef( node) return visit( node) end
 function typesystem.typespec( node, typedescr)
-	local type = typedb:resolve_type( node.step, 0, typedescr(node.arg[1].value), tagmask_resolveType)
+	local type = typedb:resolve_type( 0, typedescr(node.arg[1].value), tagmask_resolveType)
 	-- return typedescr(node.arg[1].value)
 	-- return visit( node)
 	return {name=node.call.name, step=node.step, arg=traverse( node), type=type}

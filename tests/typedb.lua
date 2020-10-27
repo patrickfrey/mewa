@@ -51,26 +51,18 @@ function testRegisterAllocator()
 	end
 
 	-- Define a register allocator function as an object with name "register" for 4 scopes defined as {start,end}
-	typedb:set_instance( "register", {0,1000}, register_allocator())
-	typedb:set_instance( "register", {2,300}, register_allocator())
-	typedb:set_instance( "register", {6,50}, register_allocator())
-	typedb:set_instance( "register", {23,25}, register_allocator())
+	typedb:scope( {0,1000}); typedb:set_instance( "register", register_allocator())
+	typedb:scope( {2,300}); typedb:set_instance( "register", register_allocator())
+	typedb:scope( {6,50}); typedb:set_instance( "register", register_allocator())
+	typedb:scope( {23,25}); typedb:set_instance( "register", register_allocator())
 
-	-- Allocate registers, the second parameter of typedb:get_instance is the scope step, a sort of an instruction counter referring to 
-	-- a specific scope and thus to a specific register allocator defined:
-	local registers = {
-		typedb:get_instance( "register", 45)(),	-- Get a register in the scope step 45, allocate it with the allocator defined for scope {6,50}
-		typedb:get_instance( "register", 199)(),	-- Get a register in the scope step 199, allocate it with the allocator defined for scope {2,300}
-		typedb:get_instance( "register", 49)(),	-- Get a register in the scope step 49, allocate it with the allocator defined for scope {6,50}
-		typedb:get_instance( "register", 49)(),	-- Get a register in the scope step 49, allocate it with the allocator defined for scope {6,50}
-		typedb:get_instance( "register", 23)(),	-- Get a register in the scope step 23, allocate it with the allocator defined for scope {23,25}
-		typedb:get_instance( "register", 24)(),	-- Get a register in the scope step 24, allocate it with the allocator defined for scope {23,25}
-		typedb:get_instance( "register", 24)(),	-- Get a register in the scope step 24, allocate it with the allocator defined for scope {23,25}
-		typedb:get_instance( "register", 278)(),	-- Get a register in the scope step 278, allocate it with the allocator defined for scope {2,300}
-		typedb:get_instance( "register", 289)(),	-- Get a register in the scope step 289, allocate it with the allocator defined for scope {2,300}
-		typedb:get_instance( "register", 291)(),	-- Get a register in the scope step 291, allocate it with the allocator defined for scope {2,300}
-		typedb:get_instance( "register", 300)()	-- Get a register in the scope step 300, allocate it with the allocator defined for scope {0,1000}
-	}
+	-- Allocate registers:
+	local steps = {45, 199, 49, 49, 23, 24, 24,278,289, 291, 300}
+	local registers = {}
+	for ii,step in ipairs( steps) do
+		typedb:step( step);
+		table.insert( registers, typedb:get_instance( "register")())
+	end
 	local result = ""
 	for i,register in ipairs( registers) do
 		result = result .. " " .. register
@@ -115,47 +107,50 @@ function testDefineResolveType()
 	local tag_fcc_conv = 1
 	local mask_resolve = typedb.reduction_tagmask( tag_fcc_conv)
 
-	local any_type = typedb:def_type( {0,100}, 0, "any", {type="any",code="#any"})
+	local scope_bk = typedb:scope( {0,100} )
+	local any_type = typedb:def_type( 0, "any", {type="any",code="#any"})
 
-	local short_type = typedb:def_type( {0,100}, 0, "short", {type="short",code="#short"})
-	local int_type = typedb:def_type( {0,100}, 0, "int", {type="int",code="#int"})
-	local float_type = typedb:def_type( {0,100}, 0, "float", {type="float",code="#float"})
+	local short_type = typedb:def_type( 0, "short", {type="short",code="#short"})
+	local int_type = typedb:def_type( 0, "int", {type="int",code="#int"})
+	local float_type = typedb:def_type( 0, "float", {type="float",code="#float"})
 
-	local add_short = typedb:def_type( {0,100}, short_type, "+", {op="add",type="short",code="short+short"}, {{short_type, pushParameter}})
-	local add_int = typedb:def_type( {0,100}, int_type, "+", {op="add",type="int",code="int+int"}, {{int_type, pushParameter}})
-	local add_float = typedb:def_type( {0,100}, float_type, "+", {op="add",type="float",code="float+float"}, {{float_type, pushParameter}})
+	local add_short = typedb:def_type( short_type, "+", {op="add",type="short",code="short+short"}, {{short_type, pushParameter}})
+	local add_int = typedb:def_type( int_type, "+", {op="add",type="int",code="int+int"}, {{int_type, pushParameter}})
+	local add_float = typedb:def_type( float_type, "+", {op="add",type="float",code="float+float"}, {{float_type, pushParameter}})
 
-	typedb:def_reduction( {0,100}, int_type, float_type, typeReduction( "int"), tag_fcc_conv, 0.5)
-	typedb:def_reduction( {0,100}, float_type, int_type, typeReduction( "float"), tag_fcc_conv, 1.0)
-	typedb:def_reduction( {0,100}, short_type, float_type, typeReduction( "short"), tag_fcc_conv, 0.5)
-	typedb:def_reduction( {0,100}, float_type, short_type, typeReduction( "float"), tag_fcc_conv, 1.0)
-	typedb:def_reduction( {0,100}, short_type, int_type, typeReduction( "short"), tag_fcc_conv, 0.5)
-	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( int_type, float_type, typeReduction( "int"), tag_fcc_conv, 0.5)
+	typedb:def_reduction( float_type, int_type, typeReduction( "float"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( short_type, float_type, typeReduction( "short"), tag_fcc_conv, 0.5)
+	typedb:def_reduction( float_type, short_type, typeReduction( "float"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( short_type, int_type, typeReduction( "short"), tag_fcc_conv, 0.5)
+	typedb:def_reduction( int_type, short_type, typeReduction( "int"), tag_fcc_conv, 1.0)
 
-	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "float"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( float_type, any_type, typeReduction( "float"), tag_fcc_conv, 1.0)
 
 	local result = ""
 	result = result .. "TYPE TREE\n" .. typeTreeToString( typedb:type_tree(), 0)
 
-	local step = 34
+	typedb:scope( scope_bk)
+	typedb:step( 34)
 	local types = {short_type, int_type, float_type}
 	for i,type in ipairs( types) do
-		for i,reduction in ipairs( typedb:type_reductions( step, type, mask_resolve)) do
+		for i,reduction in ipairs( typedb:type_reductions( type, mask_resolve)) do
 			result = result .. "\nREDU " .. typedb:type_string( type) .. " -> " .. typedb:type_string( reduction.type)
 					.. " : " .. reduction.constructor( typedb:type_string( type))
 		end
 	end
+	typedb:step( 99)
 	local reduction_queries = {
 			{short_type,int_type},{short_type,float_type},{int_type,float_type},
 			{int_type,short_type},{float_type,short_type},{float_type,int_type}}
 	for i,redu in ipairs( reduction_queries) do
-		local constructor = typedb:type_reduction( 99, redu[1], redu[2], mask_resolve)
+		local constructor = typedb:type_reduction( redu[1], redu[2], mask_resolve)
 		result = result .. "\nSELECT REDU " .. typedb:type_string( redu[2]) .. " -> " .. typedb:type_string( redu[1])
 					.. " : " .. constructor( typedb:type_string( redu[2]))
 	end
 	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"},{any_type, "+"}}
 	for i,qry in ipairs( resolve_queries) do
-		local ctx,reductions,items = typedb:resolve_type( 12, qry[1], qry[2], mask_resolve)
+		local ctx,reductions,items = typedb:resolve_type( qry[1], qry[2], mask_resolve)
 		if ctx then
 			if type(ctx) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( qry[1]) .. qry[2]) end
 
