@@ -106,10 +106,10 @@ Set the instance for the object with name _name_ to be _object_ for the current 
 Get the instance for the object with name _name_ for the innermost scope including the current scope step (set with [typedb::scope](#scope) or [typedb::step](#step)).
 
 #### Parameter
-| #      | Name     | Type     | Description                                           |
-| ------ | -------- | -------- | ----------------------------------------------------- |
-| 1st    | name     | string   | Name of the object we are addressing                  |
-| Return |          | *        | The instance of the object we addressed               |
+| #      | Name     | Type     | Description                                                                                                      |
+| ------ | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1st    | name     | string   | Name of the object we are addressing                                                                             |
+| Return |          | *        | The instance of the object we addressed or *nil* if not defined in an enclosing scope of the current scope step. |
 
 ### Example typedb:set_instance / typedb:get_instance
 Implementation of a register allocator for LLVM IR.
@@ -205,14 +205,14 @@ Finds the shortest path (sum of reduction weights) of reductions of the classes 
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #          | Name         | Type              | Description                                                                                       |
-| ---------- | ------------ | ----------------- | ------------------------------------------------------------------------------------------------- |
-| 1st        | dest-type    | integer           | Resulting type to derive.                                                                         |
-| 2nd        | src-type     | integer           | Start type of the reduction path leading to the result type.                                      |
-| 3rd        | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.      |
-| Return 1st |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.              |
-| Return 2nd |              | number            | Weight sum of best path found                                                                     |
-| Return 3rd |              | array             | Alternative path with same weight found. There is an ambiguus reference if this value is not nil. |
+| #          | Name         | Type              | Description                                                                                         |
+| ---------- | ------------ | ----------------- | --------------------------------------------------------------------------------------------------- |
+| 1st        | dest-type    | integer           | Resulting type to derive.                                                                           |
+| 2nd        | src-type     | integer           | Start type of the reduction path leading to the result type.                                        |
+| 3rd        | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.        |
+| Return 1st |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.                |
+| Return 2nd |              | number            | Weight sum of best path found                                                                       |
+| Return 3rd |              | array             | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*. |
 
 <a name="resolve_type"/>
 
@@ -222,19 +222,23 @@ The returned list of candidates (2nd return value) has to be inspected by the cl
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #          | Name         | Type              | Description                                                                                                       |
-| ---------- | ------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 1st        | context-type | integer           | Type referring to the context of the type or 0 if the type is not a member of some other structure                |
-| 2nd        | name         | string            | Name of the type searched                                                                                         |
-| 3rd        | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.                      |
-| Return 1st |              | integer           | Derived context-type of the result, nil if not found, array with two types in case of an ambiguous result.        | 
-| Return 2nd |              | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
-| Return 3rd |              | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
+| #          | Name            | Type              | Description                                                                                                       |
+| ---------- | --------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1st        | context-type(s) | integer/array     | Single type or array of types referring to the context of the type (*)                                            |
+| 2nd        | name            | string            | Name of the type searched                                                                                         |
+| 3rd        | tagmask         | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.                      |
+| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of an ambiguous result.      | 
+| Return 2nd |                 | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
+| Return 3rd |                 | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
+
+#### Remark (*)
+The context-type 0 is reserved for types that are not a member of some other structure.
 
 #### Note
-To inspect the result you first have to look if the 1st return value is nil (=> the type could not be resolved).
+To inspect the result you first have to look if the 1st return value is *nil* (=> the type could not be resolved).
 Then you have to check if the first return value is an array (=> ambiguous reference). The array contains two conflicting context types.
 Otherwise the first return value is the context-type of the resolved type and the 2nd and 3rd return value specify how the resolved type is built.
+
 
 <a name="typeAttributes"/>
 
@@ -280,12 +284,12 @@ Get the constructor of a reduction from a type to another if it exists.
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #      | Name         | Type              | Description                                                                                                        |
-| ------ | ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1st    | dest-type    | integer           | Resulting type to of the reduction.                                                                                |
-| 2nd    | src-type     | integer           | Start type of the reduction.                                                                                       |
-| 3rd    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.                  |
-| Return |              | any type          | Constructor of the reduction if it exists or nil if it is not defined by a scope covering the argument scope step. |
+| #      | Name         | Type              | Description                                                                                                          |
+| ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1st    | dest-type    | integer           | Resulting type to of the reduction.                                                                                  |
+| 2nd    | src-type     | integer           | Start type of the reduction.                                                                                         |
+| 3rd    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.                    |
+| Return |              | any type          | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the argument scope step. |
 
 
 <a name="type_reductions"/>

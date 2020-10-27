@@ -8,6 +8,7 @@ constructor = {
 	double = {
 		def_local  = { { "/OUT", " = alloca double, align 8" }},
 		def_global = { { "/ADR", " = internal global double ", "/VAL", ", align 8" }},
+		default = "0.00000",
 		store = { {"store double ", "/IN", ", double* ", "/ADR", ", align 8"}},
 		load = { {"/OUT", " = load double, double* ", "/IN", ", align 8"}},
 		conv = {
@@ -36,6 +37,7 @@ constructor = {
 	float = {
 		def_local  = { { "/OUT", " = alloca float, align 4" }},
 		def_global = { { "/ADR", " = internal global float ", "/VAL", ", align 4" }},
+		default = "0.00000",
 		store = { {"store float ", "/IN", ", float* ", "/ADR", ", align 4"}},
 		load = { {"/OUT", " = load float, float* ", "/IN", ", align 4"}},
 		conv = {
@@ -64,6 +66,7 @@ constructor = {
 	ulong = {
 		def_local  = { { "/OUT", " = alloca i64, align 8" }},
 		def_global = { { "/ADR", " = internal global i64 ", "/VAL", ", align 8" }},
+		default = "0",
 		store = { {"store i64 ", "/IN", ", i64* ", "/ADR", ", align 8"}},
 		load = { {"/OUT", " = load i64, i64* ", "/IN", ", align 8"}},
 		conv = {
@@ -97,6 +100,7 @@ constructor = {
 	long = {
 		def_local  = { { "/OUT", " = alloca i64, align 8" }},
 		def_global = { { "/ADR", " = internal global i64 ", "/VAL", ", align 8" }},
+		default = "0",
 		store = { {"store i64 ", "/IN", ", i64* ", "/ADR", ", align 8"}},
 		load = { {"/OUT", " = load i64, i64* ", "/IN", ", align 8"}},
 		conv = {
@@ -127,6 +131,7 @@ constructor = {
 	uint = {
 		def_local  = { { "/OUT", " = alloca i32, align 4" }},
 		def_global = { { "/ADR", " = internal global i32 ", "/VAL", ", align 4" }},
+		default = "0",
 		store = { {"store i32 ", "/IN", ", i32* ", "/ADR", ", align 4"}},
 		load = { {"/OUT", " = load i32, i32* ", "/IN", ", align 4"}},
 		conv = {
@@ -160,6 +165,7 @@ constructor = {
 	int = {
 		def_local  = { { "/OUT", " = alloca i32, align 4" }},
 		def_global = { { "/ADR", " = internal global i32 ", "/VAL", ", align 4" }},
+		default = "0",
 		store = { {"store i32 ", "/IN", ", i32* ", "/ADR", ", align 4"}},
 		load = { {"/OUT", " = load i32, i32* ", "/IN", ", align 4"}},
 		conv = {
@@ -190,6 +196,7 @@ constructor = {
 	ushort = {
 		def_local  = { { "/OUT", " = alloca i16, align 2" }},
 		def_global = { { "/ADR", " = internal global i16 ", "/VAL", ", align 2" }},
+		default = "0",
 		store = { {"store i16 ", "/IN", ", i16* ", "/ADR", ", align 2"}},
 		load = { {"/OUT", " = load i16, i16* ", "/IN", ", align 2"}},
 		conv = {
@@ -223,6 +230,7 @@ constructor = {
 	short = {
 		def_local  = { { "/OUT", " = alloca i16, align 2" }},
 		def_global = { { "/ADR", " = internal global i16 ", "/VAL", ", align 2" }},
+		default = "0",
 		store = { {"store i16 ", "/IN", ", i16* ", "/ADR", ", align 2"}},
 		load = { {"/OUT", " = load i16, i16* ", "/IN", ", align 2"}},
 		conv = {
@@ -253,6 +261,7 @@ constructor = {
 	byte = {
 		def_local  = { { "/OUT", " = alloca i8, align 1" }},
 		def_global = { { "/ADR", " = internal global i8 ", "/VAL", ", align 1" }},
+		default = "0",
 		store = { {"store i8 ", "/IN", ", i8* ", "/ADR", ", align 1"}},
 		load = { {"/OUT", " = load i8, i8* ", "/IN", ", align 1"}},
 		conv = {
@@ -286,6 +295,7 @@ constructor = {
 	bool = {
 		def_local  = { { "/OUT", " = alloca i1, align 1" }},
 		def_global = { { "/ADR", " = internal global i1 ", "/VAL", ", align 1" }},
+		default = "false",
 		store = { {"/R1", " = zext i1 ", "/IN", " to i8"}, {"store i8 ", "/R1", ", i8* ", "/ADR", ", align 1"}},
 		load = { {"/R1", " = load i8, i8* ", "/IN", ", align 1"}, {"/OUT", " = trunc i8 ", "/R1", " to i1"}},
 		conv = {

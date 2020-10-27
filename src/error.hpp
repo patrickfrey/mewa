@@ -42,9 +42,10 @@ public:
 		ExpectedTableArgument=411,
 		ExpectedArgumentScopeStructure=412,
 		ExpectedArgumentParameterStructure=413,
-		ExpectedArgumentNotNil=414,
-		TooFewArguments=415,
-		TooManyArguments=416,
+		ExpectedArgumentTypeList=414,
+		ExpectedArgumentNotNil=415,
+		TooFewArguments=416,
+		TooManyArguments=417,
 
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,

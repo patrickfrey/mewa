@@ -315,7 +315,7 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 				int kidx = (int)(kk+std::numeric_limits<double>::epsilon()*4)-1;
 				if (kidx < 1)
 				{
-					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeList);
 				}
 				std::size_t index = kidx-1;
 				if (index == rt.size())
@@ -333,7 +333,7 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 			}
 			else
 			{
-				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeList);
 			}
 		}
 		lua_pop( ls, 1);	//STK: [PARAMTAB] [KEY]

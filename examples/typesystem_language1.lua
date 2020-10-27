@@ -1,5 +1,7 @@
 local mewa = require "mewa"
 local fcc = require "fcc_language1"
+local nameMangling = require "nameMangling"
+
 local typedb = mewa.typedb()
 local typesystem = {
 	pure_type = function( nm) return "@ " .. nm end,
@@ -60,6 +62,10 @@ function initFirstClassCitizens()
 	end
 end
 
+function compileError( line, msg)
+	error( "Error on line " .. line .. ": " .. msg)
+end
+
 function traverse( node, context)
 	if node.arg then
 		local rt = {}
@@ -77,7 +83,7 @@ function traverse( node, context)
 		end
 		return rt
 	else
-		return node
+		return node.value
 	end
 end
 
@@ -97,14 +103,61 @@ function visit( node)
 	return rt
 end
 
-function typesystem.vardef( node)
-	-- local tp_name = typedescr(node.arg[1].value)
-	-- local var_name = node.arg[2].value
-	-- local tp = typedb:def_type( 0, tp_name, vv)
+local globals = {}
 
-	return visit( node)
+function mapConstructorTemplate( template, struct)
+	local rt
+	for elem in ipairs(template) do
+		rt = rt .. (struct[ elem] or elem)
+	end
+	return rt;
 end
-function typesystem.vardef_assign( node) return visit( node) end
+
+function mangledName( name)
+end
+
+function getDefContextType()
+	local rt = typedb:get_instance( "defcontext")
+	if rt then return rt else return 0 end
+end
+
+function getContextTypes()
+	local rt = typedb:get_instance( "context")
+	if rt then return rt else return {0} end
+end
+
+function isGlobalContext()
+	return typedb:get_instance( "context") == nil
+end
+
+function defineVariable( type_name, var_name, initval)
+	local typeid,reductions,itemlist = typedb:resolve_type( getContextTypes(), var_name, tagmask_resolveType)
+	if not typeid then
+		compileError( node.line, "Failed to resolve type " .. type_name .. ", declaring variable " .. var_name)
+	elseif type(typeid) == "table" then
+		compileError( node.line, "Ambiguous reference to type " .. type_name .. ", found candidate match "
+					.. typedb:type_string(typeid[1]) .. " and " .. typedb:type_string(typeid[2]))
+	else
+		local constructor = nil
+		if isGlobalContext() then
+			adr = "@" .. nameMangling.mangleName( "=" .. var_name)
+			defaultval = typedb:type_constructor( typeid)[ "default"]
+			constructor = mapConstructorTemplate( typedb:type_constructor( typeid)[ "def_global"], { ["/ADR"] = adr, ["/VAL"] = initval or defaultval })
+		end
+	end
+	local tp = typedb:def_type( getDefContextType(), type_name, vv)
+end
+
+function typesystem.vardef( node)
+	local type_name = visit( node.arg[1])
+	defineVariable( traverse( node.arg[1]), node.arg[2].value)
+end
+
+function typesystem.vardef_assign( node)
+	local type_name = visit( node.arg[1])
+	defineVariable( traverse( node.arg[1]), node.arg[2].value, traverse(node.arg[2]))
+end
+
 function typesystem.vardef_array( node) return visit( node) end
 function typesystem.vardef_array_assign( node) return visit( node) end
 function typesystem.operator( node, opdescr) return visit( node) end
@@ -116,10 +169,7 @@ function typesystem.conditional_while( node) return visit( node) end
 function typesystem.namespaceref( node) return visit( node) end
 function typesystem.typedef( node) return visit( node) end
 function typesystem.typespec( node, typedescr)
-	local type = typedb:resolve_type( 0, typedescr(node.arg[1].value), tagmask_resolveType)
-	-- return typedescr(node.arg[1].value)
-	-- return visit( node)
-	return {name=node.call.name, step=node.step, arg=traverse( node), type=type}
+	return typedescr( node.arg[1].value)
 end
 function typesystem.funcdef( node) return visit( node) end
 function typesystem.procdef( node) return visit( node) end

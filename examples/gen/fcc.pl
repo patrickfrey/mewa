@@ -21,6 +21,16 @@ my %alignmap = (
 	i1 => 1
 );
 
+my %defaultmap = (
+	double => "0.00000",
+	float => "0.00000",
+	i64 => "0",
+	i32 => "0",
+	i16 => "0",
+	i8 => "0",
+	i1 => "false"
+);
+
 sub LLVM
 {
 	my $rt = "";
@@ -161,6 +171,7 @@ foreach my $line (@content)
 	print "\t$typename = {\n";
 	print "\t\tdef_local  = { { " . LLVM( "/OUT", " = alloca $llvmtype, align $alignmap{$llvmtype}" ) . " }},\n";
 	print "\t\tdef_global = { { " . LLVM( "/ADR", " = internal global $llvmtype ", "/VAL", ", align $alignmap{$llvmtype}" ) . " }},\n";
+	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
 	print "\t\tstore = { " . store_constructor( $llvmtype, "/ADR", "/IN") . "},\n";
 	print "\t\tload = { " . load_constructor( $llvmtype, "/OUT", "/IN") . "},\n";
 	print "\t\tconv = {";

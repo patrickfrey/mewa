@@ -405,12 +405,18 @@ static int mewa_typedb_get_instance( lua_State* ls)
 	}
 	catch (...) { lippincottFunction( ls); }
 
-	// Get the item addressed with handle from the object table on the top of the stack and return it:
-	lua_getglobal( ls, td->objTableName.buf);
-	lua_rawgeti( ls, -1, handle);
-	lua_replace( ls, -2);
-
-	return 1;
+	if (handle > 0)
+	{
+		// Get the item addressed with handle from the object table on the top of the stack and return it:
+		lua_getglobal( ls, td->objTableName.buf);
+		lua_rawgeti( ls, -1, handle);
+		lua_replace( ls, -2);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 static int mewa_typedb_set_instance( lua_State* ls)

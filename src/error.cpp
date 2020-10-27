@@ -174,6 +174,7 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedTableArgument: return "Expected table as argument";
 		case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
 		case ExpectedArgumentParameterStructure:  return "Expected argument to be a type parameter structure (pair type,constructor)";
+		case ExpectedArgumentTypeList: return "Expected argument to be a list of types (integers)";
 		case ExpectedArgumentNotNil: return "Expected argument to be not nil";
 		case TooFewArguments: return "Too few arguments";
 		case TooManyArguments: return "Too many arguments";

@@ -22,6 +22,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:ExpectedTableArgument**   _$ERRTEXT:ExpectedTableArgument_
 + **#$ERRCODE:ExpectedArgumentScopeStructure**   _$ERRTEXT:ExpectedArgumentScopeStructure_
 + **#$ERRCODE:ExpectedArgumentParameterStructure**   _$ERRTEXT:ExpectedArgumentParameterStructure_
++ **#$ERRCODE:ExpectedArgumentTypeList**   _$ERRTEXT:ExpectedArgumentTypeList_
 + **#$ERRCODE:ExpectedArgumentNotNil**   _$ERRTEXT:ExpectedArgumentNotNil_
 + **#$ERRCODE:TooFewArguments**   _$ERRTEXT:TooFewArguments_
 + **#$ERRCODE:TooManyArguments**   _$ERRTEXT:TooManyArguments_
