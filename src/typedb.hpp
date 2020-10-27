@@ -271,6 +271,7 @@ public:
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
+	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \return the constructor of the reduction found, -1 if not found
 	/// \note throws Error::AmbiguousTypeReference if more than one reduction is found
 	int reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
@@ -278,6 +279,7 @@ public:
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] fromType the source type of the reduction
+	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
 	std::pmr::vector<ReductionResult> reductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
@@ -288,15 +290,30 @@ public:
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the path found and its weight sum that is minimal and a conflict path if the solution is not unique
-	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
+	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, 
+				 const TagMask& selectTags, ResultBuffer& resbuf) const;
 
-	/// \brief Resolve a type name in a context of a context reducible from the context passed
+	/// \brief Resolve a type name in a context reducible from one of the contexts passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
-	/// \param[in] contextType the context (realm,namespace) of the query type. The searched item has a context type that is reachable via a path of type reductions.
+	/// \param[in] contextTypes the context (realm,namespace) of the candidate query types.
+	/// 		The searched item has a context type that is reachable via a path of type reductions from an element of this list.
 	/// \param[in] name name of the type searched
+	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the context type found and the shortest path to it, a list of all candidate items and a conflicting context type if there is one
-	ResolveResult resolveType( const Scope::Step step, int contextType, const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
+	ResolveResult resolveType( const Scope::Step step, const std::vector<int>& contextTypes,
+				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
+
+	/// \brief Resolve a type name in a context reducible from the context passed
+	/// \param[in] step the scope step of the search defining what are valid reductions
+	/// \param[in] contextType the context (realm,namespace) of the candidate query type.
+	/// 		The searched item has a context type that is reachable via a path of type reductions from this context type.
+	/// \param[in] name name of the type searched
+	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
+	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
+	/// \return the context type found and the shortest path to it, a list of all candidate items and a conflicting context type if there is one
+	ResolveResult resolveType( const Scope::Step step, int contextType,
+				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type the handle of the type (return value of defineType)
@@ -329,6 +346,8 @@ private:
 	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;
 	void appendTypeToString( std::pmr::string& res, int type) const;
+	ResolveResult resolveType_( const Scope::Step step, int const* contextTypeAr, std::size_t contextTypeSize,
+				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 private:
 	struct MemoryBlock

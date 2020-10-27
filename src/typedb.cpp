@@ -293,6 +293,20 @@ public:
 		std::reverse( result.begin(), result.end());
 	}
 
+	void collectResultWithStart( std::pmr::vector<TypeDatabase::ReductionResult>& result, int index)
+	{
+		while (index >= 0)
+		{
+			const ReduStackElem& ee = m_ar[ index];
+			if (ee.prev != -1 || (ee.type && ee.constructor))
+			{
+				result.push_back( {ee.type, ee.constructor} );
+			}
+			index = ee.prev;
+		}
+		std::reverse( result.begin(), result.end());
+	}
+
 	void collectConflictPath( std::pmr::vector<int>& result, int index)
 	{
 		while (index >= 0)
@@ -503,13 +517,26 @@ void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& item
 	}
 }
 
-TypeDatabase::ResolveResult TypeDatabase::resolveType( 
-		const Scope::Step step, int contextType, const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
+TypeDatabase::ResolveResult TypeDatabase::resolveType(
+		const Scope::Step step, const std::vector<int>& contextTypes,
+		const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
+{
+	return resolveType_( step, contextTypes.data(), contextTypes.size(), name, selectTags, resbuf);
+}
+
+TypeDatabase::ResolveResult TypeDatabase::resolveType(
+		const Scope::Step step, int contextType,
+		const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
+{
+	return resolveType_( step, &contextType, 1, name, selectTags, resbuf);
+}
+
+TypeDatabase::ResolveResult TypeDatabase::resolveType_(
+		const Scope::Step step, int const* contextTypeAr, std::size_t contextTypeSize,
+		const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	ResolveResult rt( resbuf);
 	bool alt_searchstate = false;
-
-	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
 
 	int nameid = m_identMap->lookup( name);
 	if (!nameid) return rt;
@@ -520,9 +547,17 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType(
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
 
-	stack.pushIfNew( contextType, 0/*constructor*/, -1/*prev*/);
-	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
-
+	std::size_t ci = 0;
+	for (; ci < contextTypeSize; ++ci)
+	{
+		if (contextTypeAr[ci] < 0 || contextTypeAr[ci] > (int)m_typerecMap.size())
+		{
+			throw Error( Error::InvalidHandle, string_format( "%d", contextTypeAr[ci]));
+		}
+		int constructor = contextTypeAr[ci] ? m_typerecMap[ contextTypeAr[ci]-1].constructor : 0;
+		stack.pushIfNew( contextTypeAr[ci], constructor, -1/*prev*/);
+		priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
+	}
 	while (!priorityQueue.empty())
 	{
 		auto qe = priorityQueue.top();
@@ -542,7 +577,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType(
 				//... we found the first match
 				rt.weightsum = qe.weight;
 				rt.contextType = elem.type;
-				stack.collectResult( rt.reductions, qe.index);
+				stack.collectResultWithStart( rt.reductions, qe.index);
 				collectResultItems( rt.items, typerecidx);
 				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
 				alt_searchstate = true;

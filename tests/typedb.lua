@@ -132,7 +132,7 @@ function testDefineResolveType()
 	typedb:def_reduction( {0,100}, short_type, int_type, typeReduction( "short"), tag_fcc_conv, 0.5)
 	typedb:def_reduction( {0,100}, int_type, short_type, typeReduction( "int"), tag_fcc_conv, 1.0)
 
-	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "any"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( {0,100}, float_type, any_type, typeReduction( "float"), tag_fcc_conv, 1.0)
 
 	local result = ""
 	result = result .. "TYPE TREE\n" .. typeTreeToString( typedb:type_tree(), 0)
@@ -160,9 +160,15 @@ function testDefineResolveType()
 			if type(ctx) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( qry[1]) .. qry[2]) end
 
 			prev_type = any_type
-			for i,reduction in ipairs( reductions) do
-				result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
-						.. " : " reduction.constructor( prev_type)
+			for ri,reduction in ipairs( reductions) do
+				if ri == 1 then
+					constructor = mewa.tostring( reduction.constructor, false)
+					result = result .. "\nRESOLVE START " .. typedb:type_string( reduction.type) .. " : " .. constructor
+				else
+					constructor = reduction.constructor( typedb:type_string( prev_type))
+					result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
+							.. " : " .. constructor
+				end
 				prev_type = reduction.type
 			end
 			for i,item in ipairs( items) do
@@ -195,10 +201,14 @@ SELECT REDU float -> int : #int(float)
 SELECT REDU short -> int : #int(short)
 SELECT REDU short -> float : #float(short)
 SELECT REDU int -> float : #float(int)
+RESOLVE START short : {code = "#short",type = "short"}
 RESOLVE ITEM short +( short) : {code = "short+short",op = "add",type = "short"}
+RESOLVE START int : {code = "#int",type = "int"}
 RESOLVE ITEM int +( int) : {code = "int+int",op = "add",type = "int"}
+RESOLVE START float : {code = "#float",type = "float"}
 RESOLVE ITEM float +( float) : {code = "float+float",op = "add",type = "float"}
-RESOLVE REDU float<-any : 
+RESOLVE START any : {code = "#any",type = "any"}
+RESOLVE REDU float<-any : #float(any)
 RESOLVE ITEM float +( float) : {code = "float+float",op = "add",type = "float"}]]
 	checkTestResult( "testDefineResolveType", result, expected)
 end
