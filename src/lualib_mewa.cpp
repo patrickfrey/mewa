@@ -355,6 +355,42 @@ static int mewa_destroy_typedb( lua_State* ls)
 	return 0;
 }
 
+static int mewa_typedb_scope( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:scope";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+	try
+	{
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 4);
+		mewa::Scope rt = td->curScope;
+		if (nargs >= 2)
+		{
+			td->curScope = mewa::lua::getArgumentAsScope( functionName, ls, 2);
+			td->curStep = td->curScope.start();
+		}
+		mewa::lua::pushScope( ls, functionName, rt);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
+static int mewa_typedb_step( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:step";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+	try
+	{
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 2);
+		mewa::Scope::Step rt = td->curStep;
+		if (nargs >= 2) td->curStep = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+		lua_pushinteger( ls, rt);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
 static int mewa_typedb_get_instance( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:get_instance";
@@ -363,7 +399,7 @@ static int mewa_typedb_get_instance( lua_State* ls)
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 3/*maxNofArgs*/);
-		mewa::lua::checkStack( functionName, ls, 8);
+		mewa::lua::checkStack( functionName, ls, 4);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 2);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		handle = td->impl->getObjectInstance( name, step);
@@ -388,7 +424,7 @@ static int mewa_typedb_set_instance( lua_State* ls)
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
-		mewa::lua::checkStack( functionName, ls, 8);
+		mewa::lua::checkStack( functionName, ls, 4);
 		name = mewa::lua::getArgumentAsString( functionName, ls, 2);
 		scope = mewa::lua::getArgumentAsScope( functionName, ls, 3);
 		if (lua_isnil( ls, 4)) mewa::lua::throwArgumentError( functionName, 4, mewa::Error::ExpectedArgumentNotNil);
@@ -870,11 +906,10 @@ struct LuaTreeMetaMethods
 			mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 			if (!ud->tree.get() || ud->nodeidx == 0) return 0;
 
-			lua_pushinteger( ls, (*ud->tree)[ ud->nodeidx].item().scope.start());
-			lua_pushinteger( ls, (*ud->tree)[ ud->nodeidx].item().scope.end());
+			mewa::lua::pushScope( ls, functionName, (*ud->tree)[ ud->nodeidx].item().scope);
 		}
 		catch (...) { lippincottFunction( ls); }
-		return 2;
+		return 1;
 	}
 
 	static int list( lua_State* ls)
@@ -933,6 +968,8 @@ static const struct luaL_Reg mewa_compiler_methods[] = {
 
 static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "__gc",		mewa_destroy_typedb },
+	{ "scope",		mewa_typedb_scope },
+	{ "step",		mewa_typedb_step },
 	{ "get_instance",	mewa_typedb_get_instance },
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },

@@ -100,9 +100,9 @@ function testDefineResolveType()
 	function typeTreeToString( node, indent)
 		rt = ""
 		for chld in node:chld() do
-			local startscope,endscope = chld:scope()
+			local scope = chld:scope()
 			local indentstr = string.rep("  ", indent)
-			rt = rt .. string.format( "%s[%d,%d]:", indentstr, startscope, endscope) .. "\n"
+			rt = rt .. string.format( "%s[%d,%d]:", indentstr, scope[1], scope[2]) .. "\n"
 			for type in chld:list() do
 				local constructor = typedb:type_constructor( type)
 				rt = rt .. string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor, false)) .. "\n"

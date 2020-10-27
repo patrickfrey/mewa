@@ -4,6 +4,9 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 
 ## Table of Contents
 1. [Create a New Type Database](#createTypeDb)
+1. [Implementing the Concept of Scope](#scopeImpl)
+    * [typedb:scope](#scope)
+    * [typedb:step](#step)
 1. [User Defined Objects in Different Scopes](#instance)
     * [typedb:set_instance](#set_instance)
     * [typedb:get_instance](#get_instance)
@@ -28,7 +31,6 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
     * [typedb:reduction_tree](#reduction_tree)
 
 
-
 <a name="createTypeDb"/>
 
 ## Create a New Type Database
@@ -37,6 +39,50 @@ mewa = require("mewa")
 typedb = mewa.typedb()
 ```
 The variable typedb holds now the type database created.
+
+
+<a name="#scopeImpl"/>
+
+## Implementing the Concept of Scope
+
+<a name="scope"/>
+
+### typedb:scope
+Get or/and set the current scope. All methods defining objects dependent on a scope (and as exception the getter get_type) like
+    * [typedb:set_instance](#set_instance)
+    * [typedb:def_type](#def_type)
+    * [typedb:get_type](#get_type)
+    * [typedb:def_reduction](#def_reduction)
+are referring to the current scope. Without parameter the function just returns the current scope.
+With a parameter the function sets the current scope to the parameter value and returns the previously defined value for the current scope.
+
+#### Parameter
+| #      | Name     | Type              | Description                                                                   |
+| ------ | -------- | ----------------- | ----------------------------------------------------------------------------- |
+| 1st    | scope    | array             | (optional) pair of integers describing the scope to set as current scope      |
+| Return |          | array             | pair of integers describing the (previously defined) current scope            |
+
+
+<a name="step"/>
+
+### typedb:step
+Get or/and set the current scope step. All methods retrieving objects dependent on a scope like
+    * [typedb:get_instance](#get_instance)
+    * [typedb:derive_type](#derive_type)
+    * [typedb:resolve_type](#resolve_type)
+are referring to the current scope step. Without parameter the function just returns the current scope step.
+With a parameter the function sets the current scope step to the parameter value and returns the previously defined value for the current scope step.
+
+#### Parameter
+| #      | Name     | Type              | Description                                                    |
+| ------ | -------- | ----------------- | -------------------------------------------------------------- |
+| 1st    | step     | integer           | (optional) integer describing the scope step                   |
+| Return |          | integer           | integer describing the (previously defined) current scope step |
+
+#### Remark
+The call of [typedb:scope](#scope) with parameter sets the scope step implicitely to the start of the scope.
+_If you are not relying on a scope step different from that, you don't have to call scope step for every scope step value provided by the grammar description_.
+
 
 <a name="instance"/>
 
@@ -48,11 +94,11 @@ The variable typedb holds now the type database created.
 Set the instance for the object with name _name_ to be _object_ for the scope _scope_.
 
 #### Parameter
-| #   | Name     | Type              | Description                                           |
-| --- | -------- | ----------------- | ----------------------------------------------------- |
-| 1st | name     | string            | Name of the object we declare an instance of          |
-| 2nd | scope    | pair of integers  | The scope if the instance                             |
-| 3rd | instance | any type not nil  | The instance of the object                            |
+| #   | Name     | Type              | Description                                            |
+| --- | -------- | ----------------- | ------------------------------------------------------ |
+| 1st | name     | string            | Name of the object we declare an instance of           |
+| 2nd | scope    | array             | pair of integers describing the scope of this instance |
+| 3rd | instance | any type not nil  | The instance of the object                             |
 
 
 <a name="get_instance"/>
@@ -91,7 +137,7 @@ Define a type and describe how the type is built by assigning a constructor to i
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                 |
 | ------ | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| 1st    | scope        | pair of integers | Scope of the type defined                                                                                   |
+| 1st    | scope        | array            | Scope as array (pair of integers) of the type defined                                                     |
 | 2nd    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
 | 3rd    | name         | string           | Name of the type defined                                                                                    |
 | 4th    | constructor  | any type not nil | Constructor describing how the type is built                                                                |
@@ -111,7 +157,7 @@ Get a type definition if it exists in the specified scope (Does not search a val
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                 |
 | ------ | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| 1st    | scope        | pair of integers | Scope of the type defined                                                                                   |
+| 1st    | scope        | array            | Scope as array (pair of integers) of the lookup type                                                        |
 | 2nd    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
 | 3rd    | name         | string           | Name of the type defined                                                                                    |
 | 4th    | parameter    | array of integers| Array of type handles                                                                                       |
@@ -130,7 +176,7 @@ Define a reduction from a type resulting in another type with a tag to classify 
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                    |
 | ------ | ------------ | ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| 1st    | scope        | pair of integers | Scope of the reduction defined                                                                                 |
+| 1st    | scope        | array            | Scope as array (pair of integers) of the type defined                                                          |
 | 2nd    | dest-type    | integer          | Resulting type of the reduction                                                                                |
 | 3rd    | src-type     | integer          | Origin type of the reduction                                                                                   |
 | 4th    | constructor  | any type not nil | Constructor describing how the type reduction is implemented.                                                  |
@@ -281,7 +327,7 @@ It is thought as help during development.
 | Name     | Type      | Description                                                                             |
 | -------- | --------- | --------------------------------------------------------------------------------------- |
 | chld     | function  | Iterator function to iterate on the child nodes (also tree structures like this node).  |
-| scope    | function  | Function returning a pair of integers describing the scope of this node.                |
+| scope    | function  | Function returning an array (pair of integers) describing the scope of this node.       |
 | instance | function  | Function returning the instance defined for this node.                                  |
 
 
@@ -299,7 +345,7 @@ Get the tree of scopes with the list of types defined there.
 | Name     | Type      | Description                                                                             |
 | -------- | --------- | --------------------------------------------------------------------------------------- |
 | chld     | function  | Iterator function to iterate on the child nodes (also tree structures like this node)   |
-| scope    | function  | Function returning a pair of integers describing the scope of this node                 |
+| scope    | function  | Function returning an array (pair of integers) describing the scope of this node.       |
 | list     | function  | Function returning the list of types (integers) defined in the scope of this node       |
 
 #### Remark
@@ -321,7 +367,7 @@ Get the tree of scopes with the list of reductions defined there.
 | Name     | Type      | Description                                                                               |
 | -------- | --------- | ----------------------------------------------------------------------------------------- |
 | chld     | function  | Iterator function to iterate on the child nodes (also tree structures like this node)     |
-| scope    | function  | Function returning a pair of integers describing the scope of this node                   |
+| scope    | function  | Function returning an array (pair of integers) describing the scope of this node          |
 | list     | function  | Function returning the list of reductions (structures) defined in the scope of this node  |
 
 #### Members of the Tree Structure List Elements

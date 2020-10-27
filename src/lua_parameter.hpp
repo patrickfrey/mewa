@@ -86,6 +86,7 @@ void pushParameters(
 void pushReductionDefinition(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const mewa::TypeDatabase::ReductionDefinition& redu);
+void pushScope( lua_State* ls, const char* functionName, const mewa::Scope& scope);
 
 }} //namespace
 #else

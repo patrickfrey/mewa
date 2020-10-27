@@ -20,6 +20,8 @@ The Query for 'ABC' in an instruction with scope step 56 assigned, returns the 3
 ## Scope Step
 Counter that is incremented for every production in the grammar marked with the operators '>>' or '{}'. The scope step defines the start and the end of the scope assigned to productions by the scope operator '{}'. A scope starts with the scope step counter value when first entering a state with a production marked as '{}' and ends with one step after the value of the scope step when replacing the right side of the production with the left side on the parser stack (reduction).
 
+## Constructor
+A constructor implements the constructon of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor result of the derived type.
 
 ## Glossary of Formal Languages
 ### Terminal

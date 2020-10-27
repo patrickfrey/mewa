@@ -467,4 +467,12 @@ void mewa::lua::pushReductionDefinition(
 	lua_replace( ls, -2);				// STK: [OBJTAB]
 }
 
+void mewa::lua::pushScope( lua_State* ls, const char* functionName, const mewa::Scope& scope)
+{
+	lua_createtable( ls, 2/*narr*/, 0/*nrec*/);
+	lua_pushinteger( ls, scope.start());
+	lua_rawseti( ls, -2, 1);
+	lua_pushinteger( ls, scope.end());
+	lua_rawseti( ls, -2, 2);
+}
 

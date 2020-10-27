@@ -14,6 +14,9 @@
 #if __cplusplus >= 201703L
 #include "typedb.hpp"
 #include "automaton.hpp"
+#include "scope.hpp"
+#include "error.hpp"
+#include "strings.hpp"
 #include <string>
 #include <string_view>
 #include <cstdio>
@@ -127,6 +130,9 @@ struct mewa_typedb_userdata_t
 public:
 	mewa::TypeDatabase* impl;
 	mewa::lua::ObjectTableName objTableName;
+	mewa::Scope curScope;
+	mewa::Scope::Step curStep;
+
 private:
 	int objCount;
 
@@ -136,6 +142,8 @@ public:
 		impl = nullptr;
 		objTableName.init();
 		objCount = 0;
+		curScope = mewa::Scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
+		curStep = 0;
 	}
 	void create()
 	{
@@ -154,7 +162,6 @@ public:
 	{
 		return ++objCount;
 	}
-
 	static const char* metatableName() noexcept {return MEWA_TYPEDB_METATABLE_NAME;}
 };
 

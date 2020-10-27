@@ -49,6 +49,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#443**   _Bad weight <= 0.0 given to relation_
 + **#444**   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
 + **#445**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
+
 + **#452**   _Ambiguous definitions of reductions_
 + **#454**   _Error in scope hierarchy: Defined overlapping scopes without one including the other_
 
