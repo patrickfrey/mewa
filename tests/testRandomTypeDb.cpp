@@ -223,7 +223,7 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 	auto ti = ctx.typemap.find( name);
 	if (ti == ctx.typemap.end())
 	{
-		int constructor = ctx.constructors.size();
+		int constructor = ctx.constructors.size()+1;
 		ctx.constructors.push_back( string_format( "type %ld", nd->item.product));
 		type = typedb.defineType( scope, 0/*contextType*/, name, constructor, std::vector<TypeDatabase::Parameter>(), 0/*priority*/);
 		if (type < 0) throw Error( Error::DuplicateDefinition, ctx.constructors.back());
@@ -233,7 +233,7 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 			ctx.typeinv[ type] = name;
 		}
 		std::string proc = string_format( "!%ld", nd->item.product);
-		constructor = ctx.constructors.size();
+		constructor = ctx.constructors.size()+1;
 		ctx.constructors.push_back( string_format( "call %ld", nd->item.product));
 		int proctype = typedb.defineType( scope, type, proc, constructor, std::vector<TypeDatabase::Parameter>(), 0/*priority*/);
 		if (proctype < 0) throw Error( Error::DuplicateDefinition, proc);
@@ -254,25 +254,25 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 
 		if (ctx.reduset.insert( {nd->chld->item.product, nd->item.product} ).second/*insert took place*/)
 		{
-			int constructor = ctx.constructors.size();
-			ctx.constructors.push_back( string_format( "redu %ld <- %ld", nd->chld->item.product, nd->item.product));
+			int constructor = ctx.constructors.size()+1;
+			ctx.constructors.push_back( string_format( " -> %ld", nd->chld->item.product));
 			typedb.defineReduction( scope, leftType, type, constructor, 1/*tag*/, 1.0);
 		}
 		if (ctx.reduset.insert( {nd->item.product, nd->chld->item.product} ).second/*insert took place*/)
 		{
-			int constructor = ctx.constructors.size();
+			int constructor = ctx.constructors.size()+1;
 			ctx.constructors.push_back( string_format( "inv %ld <- %ld", nd->item.product, nd->chld->item.product));
 			typedb.defineReduction( scope, type, leftType, constructor, 1/*tag*/, 100.0/*bad reduction*/);
 		}
 		if (ctx.reduset.insert( {nd->chld->next->item.product, nd->item.product} ).second/*insert took place*/)
 		{
-			int constructor = ctx.constructors.size();
-			ctx.constructors.push_back( string_format( "redu %ld <- %ld", nd->chld->next->item.product, nd->item.product));
+			int constructor = ctx.constructors.size()+1;
+			ctx.constructors.push_back( string_format( " -> %ld", nd->chld->next->item.product));
 			typedb.defineReduction( scope, rightType, type, constructor, 1/*tag*/, 1.0);
 		}
 		if (ctx.reduset.insert( {nd->item.product, nd->chld->next->item.product} ).second/*insert took place*/)
 		{
-			int constructor = ctx.constructors.size();
+			int constructor = ctx.constructors.size()+1;
 			ctx.constructors.push_back( string_format( "inv %ld <- %ld", nd->item.product, nd->chld->next->item.product));
 			typedb.defineReduction( scope, type, rightType, constructor, 1/*tag*/, 100.0/*bad reduction*/);
 		}
@@ -280,27 +280,32 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 	return type;
 }
 
-static std::string reductionsToString( TypeDatabase& typedb, const std::pmr::vector<TypeDatabase::ReductionResult>& reductions)
+static std::string reductionsToString( TypeDatabase& typedb, TypeDatabaseContext& ctx, const std::pmr::vector<TypeDatabase::ReductionResult>& reductions)
 {
 	std::string rt;
-	int ridx = 0;
 	for (auto const& redu :reductions)
 	{
 		TypeDatabase::ResultBuffer resbuf;
-		rt.append( (ridx++) ? " -> ":"-> ");
-		rt.append( typedb.typeToString( redu.type, resbuf));
+		auto tn = typedb.typeToString( redu.type, resbuf);
+		if (string_format( " -> %s", tn.c_str()) != ctx.constructors[ redu.constructor-1]
+		&&  string_format( "type %s", tn.c_str()) != ctx.constructors[ redu.constructor-1])
+		{
+			throw std::runtime_error( string_format( "expect 'type %s' or ' -> %s' instead of '%s'",
+									tn.c_str(), tn.c_str(), ctx.constructors[ redu.constructor-1].c_str()));
+		}
+		rt.append( ctx.constructors[ redu.constructor-1]);
 	}
 	return rt;
 }
 
-static std::string deriveResultToString( TypeDatabase& typedb, const TypeDatabase::DeriveResult& res)
+static std::string deriveResultToString( TypeDatabase& typedb, TypeDatabaseContext& ctx, const TypeDatabase::DeriveResult& res)
 {
-	return reductionsToString( typedb, res.reductions);
+	return reductionsToString( typedb, ctx, res.reductions);
 }
 
-static std::string resolveResultToString( TypeDatabase& typedb, const TypeDatabase::ResolveResult& res)
+static std::string resolveResultToString( TypeDatabase& typedb, TypeDatabaseContext& ctx, const TypeDatabase::ResolveResult& res)
 {
-	std::string rt = reductionsToString( typedb, res.reductions);
+	std::string rt = reductionsToString( typedb, ctx, res.reductions);
 	rt.append( rt.empty() ? "{":" {");
 	int iidx = 0;
 	for (auto const& item :res.items)
@@ -340,13 +345,8 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 		int ridx = 0;
 		for (auto resultnode : resultnodes)
 		{
-			if (ridx == 0)
-			{}
-			else
-			{
-				expc_str.append( ridx == 1 ? "-> " : " -> ");
-				expc_str.append( string_format( "%ld", resultnode->item.product));
-			}
+			expc_str.append( ridx == 0 ? "type " : " -> ");
+			expc_str.append( string_format( "%ld", resultnode->item.product));
 			++ridx;
 		}
 		expc_str.append( expc_str.empty() ? "{" : " {");
@@ -380,7 +380,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	}
 	else
 	{
-		resc_str = resolveResultToString( typedb, result);
+		resc_str = resolveResultToString( typedb, ctx, result);
 		if (resc_str != "{}")
 		{
 			auto searchi = ctx.typemap.find( string_format( "%d", randomSearch));
@@ -392,7 +392,10 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			TypeDatabase::DeriveResult deriveres =
 				typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/,
 							TagMask::matchAll(), resbuf_derive);
-			std::string redu_str = deriveResultToString( typedb, deriveres);
+			TypeDatabase::ResultBuffer resbuf_tostring;
+			std::string redu_str( "type ");
+			redu_str.append( typedb.typeToString( ti->second, resbuf_tostring));
+			redu_str.append( deriveResultToString( typedb, ctx, deriveres));
 			if (verbose)
 			{
 				std::cerr << "Derive result: " << redu_str << std::endl;
@@ -404,7 +407,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			}
 			if (!startsWith( resc_str, redu_str) || (callstr-resc_str.c_str()) > (ptrdiff_t)redu_str.size()+2)
 			{
-				throw std::runtime_error( string_format( "derive result not as expected: '%s' prefix of '%s'", redu_str.c_str(), redu_str.c_str()));
+				throw std::runtime_error( string_format( "derive result not as expected: '%s' prefix of '%s'", redu_str.c_str(), resc_str.c_str()));
 			}
 		}
 	}
