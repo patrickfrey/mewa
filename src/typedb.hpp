@@ -301,7 +301,7 @@ public:
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the context type found and the shortest path to it, a list of all candidate items and a conflicting context type if there is one
-	ResolveResult resolveType( const Scope::Step step, const std::vector<int>& contextTypes,
+	ResolveResult resolveType( const Scope::Step step, const std::pmr::vector<int>& contextTypes,
 				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context reducible from the context passed

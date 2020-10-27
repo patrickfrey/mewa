@@ -518,7 +518,7 @@ void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& item
 }
 
 TypeDatabase::ResolveResult TypeDatabase::resolveType(
-		const Scope::Step step, const std::vector<int>& contextTypes,
+		const Scope::Step step, const std::pmr::vector<int>& contextTypes,
 		const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	return resolveType_( step, contextTypes.data(), contextTypes.size(), name, selectTags, resbuf);

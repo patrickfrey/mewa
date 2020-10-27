@@ -629,31 +629,25 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 5/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		mewa::Scope::Step step = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
-		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 4);
 		mewa::TagMask selectTags( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchAll());
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto resolveres = td->impl->resolveType( step, contextType, name, selectTags, resbuf);
-		if (resolveres.contextType >= 0)
+
+		if (lua_type( ls, 3) == LUA_TNUMBER)
 		{
-			if (resolveres.conflictType >= 0)
-			{
-				// Conflict, push alternatives as array:
-				lua_createtable( ls, 2/*narr*/, 0/*nrec*/);
-				lua_pushinteger( ls, resolveres.contextType);
-				lua_rawseti( ls, -2, 1);
-				lua_pushinteger( ls, resolveres.conflictType);
-				lua_rawseti( ls, -2, 2);
-				return 1;
-			}
-			else
-			{
-				lua_pushinteger( ls, resolveres.contextType);
-				mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, resolveres.reductions);
-				mewa::lua::pushResolveResultItems( ls, functionName, td->objTableName.buf, resolveres.items);
-				return 3;
-			}
+			int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3);
+			auto resolveres = td->impl->resolveType( step, contextType, name, selectTags, resbuf);
+			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
+		}
+		else
+		{
+			int buffer_parameter[ 256];
+			mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
+
+			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 3, &memrsc_parameter);
+			auto resolveres = td->impl->resolveType( step, contextTypes, name, selectTags, resbuf);
+			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
 		}
 	}
 	catch (...) { lippincottFunction( ls); }

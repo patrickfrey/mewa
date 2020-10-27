@@ -476,3 +476,31 @@ void mewa::lua::pushScope( lua_State* ls, const char* functionName, const mewa::
 	lua_rawseti( ls, -2, 2);
 }
 
+int mewa::lua::pushResolveResult(
+		lua_State* ls, const char* functionName, const char* objTableName,
+		const mewa::TypeDatabase::ResolveResult& resolveres)
+{
+	if (resolveres.contextType >= 0)
+	{
+		if (resolveres.conflictType >= 0)
+		{
+			// Conflict, push alternatives as array:
+			lua_createtable( ls, 2/*narr*/, 0/*nrec*/);
+			lua_pushinteger( ls, resolveres.contextType);
+			lua_rawseti( ls, -2, 1);
+			lua_pushinteger( ls, resolveres.conflictType);
+			lua_rawseti( ls, -2, 2);
+			return 1;
+		}
+		else
+		{
+			lua_pushinteger( ls, resolveres.contextType);
+			mewa::lua::pushReductionResults( ls, functionName, objTableName, resolveres.reductions);
+			mewa::lua::pushResolveResultItems( ls, functionName, objTableName, resolveres.items);
+			return 3;
+		}
+	}
+	return 0;
+}
+
+
