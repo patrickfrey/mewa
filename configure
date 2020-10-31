@@ -1,5 +1,19 @@
 #!/bin/sh
 
+while getopts "hv:" arg; do
+  case $arg in
+    h)
+      echo "Usage: configure [-h] [-v <Lua version>]"
+      echo "<Lua version> : \"5.4\", \"5.3\" or \"5.2\""
+      exit 0
+      ;;
+    v)
+      OPTLUAVERSION=$OPTARG
+      echo "Selected Lua version: $OPTLUAVERSION"
+      ;;
+  esac
+done
+
 FIND=find
 GREP=grep
 DIRNAME=dirname
@@ -7,7 +21,7 @@ PKGCONFIG=pkg-config
 
 findLuaInclude() {
 	local VERSION=$1
-	local SEARCHPATH=$2
+	local SEARCHPATH="$2"
 	local FILE=`$FIND $SEARCHPATH -name luaconf.h | $GREP $VERSION`
 	if [ x$FILE != 'x' ]; then
 		local RESULT=`$DIRNAME $FILE`
@@ -17,7 +31,7 @@ findLuaInclude() {
 
 findLuaLib() {
 	local VERSION=$1
-	local SEARCHPATH=$2
+	local SEARCHPATH="$2"
 	local FILE=`$FIND $SEARCHPATH -name "liblua$VERSION.so"`
 	if [ x$FILE != 'x' ]; then
 		local RESULT=`$DIRNAME $FILE`
@@ -27,8 +41,8 @@ findLuaLib() {
 
 findLuaBin() {
 	local VERSION=$1
-	local SEARCHPATH=$2
-	local RESULT=`$FIND $PATH -type f -name "lua$VERSION"`
+	local SEARCHPATH="$2"
+	local RESULT=`$FIND $SEARCHPATH -type f -name "lua$VERSION"`
 	if [ x$RESULT != 'x' ]; then
 		echo $RESULT
 	fi
@@ -46,10 +60,15 @@ writeLuaInclude() {
 	echo "LUALIBS  := -llua$VERSION -L$LIBPATH" >> Lua.inc
 }
 
-searchLuaWithPkgConfig() {
-	for VERSION in 5.4 5.3 5.2 ; do
-		>&2 echo "Checking for version $VERSION ..."
-		local LUAVERSION=`$PKGCONFIG --variable=version lua$VERSION`
+searchLuaVersionWithPkgConfig() {
+	local VERSION=$1
+	>&2 echo "Checking with pkg-config for version $VERSION ..."
+	$PKGCONFIG --exists lua$VERSION
+	if [ $? = 0 ]; then
+		local LUAVERSION=`$PKGCONFIG --variable=V lua$VERSION`
+		if [ x$LUAVERSION = 'x' ]; then
+			LUAVERSION=`$PKGCONFIG --variable=version lua$VERSION`
+		fi
 		if [ x$LUAVERSION != 'x' ]; then
 			local INCPATH="`$PKGCONFIG --variable=includedir lua$VERSION`/lua$VERSION"
 			local LIBPATH=`$PKGCONFIG --variable=libdir lua$VERSION`
@@ -66,38 +85,55 @@ searchLuaWithPkgConfig() {
 				exit 0
 			fi
 		fi
-	done
-	exit 1
+	fi
+}
+
+searchLuaWithPkgConfig() {
+	if [ "x$OPTLUAVERSION" != "x" ]; then
+		searchLuaVersionWithPkgConfig $OPTLUAVERSION
+	else
+		for VERSION in 5.4 5.3 5.2 ; do
+			searchLuaVersionWithPkgConfig $VERSION
+		done
+	fi
+}
+
+searchLuaVersionWithRawFind() {
+	local VERSION=$1
+	>&2 echo "Raw search for version $VERSION ..."
+	local INCPATH=`findLuaInclude $VERSION "/usr/local/include /usr/include"`
+	local LIBPATH=`findLuaLib $VERSION "/usr/local/lib /usr/lib"`
+	local BINPATH=`findLuaBin $VERSION "/usr/bin /usr/local/bin"`
+	if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
+		writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
+		>&2 echo "Lua include path = $INCPATH"
+		>&2 echo "Lua library path = $LIBPATH"
+		>&2 echo "Lua binary path = $BINPATH"
+		>&2 echo "Lua version = $VERSION"
+		>&2 echo "Wrote file Lua.inc:"
+		>&2 cat Lua.inc
+		exit 0
+	fi
 }
 
 searchLuaWithRawFind() {
-	for VERSION in 5.4 5.3 5.2; do
-		>&2 echo "Checking for version $VERSION ..."
-		local INCPATH=`findLuaInclude $VERSION "/usr/local/include /usr/include"`
-		local LIBPATH=`findLuaLib $VERSION "/usr/local/lib /usr/lib"`
-		local BINPATH=`findLuaBin $VERSION "/usr/bin /usr/local/bin"`
-		if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
-			writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
-			>&2 echo "Lua include path = $INCPATH"
-			>&2 echo "Lua library path = $LIBPATH"
-			>&2 echo "Lua binary path = $BINPATH"
-			>&2 echo "Lua version = $VERSION"
-			>&2 echo "Wrote file Lua.inc:"
-			>&2 cat Lua.inc
-			exit 0
-		fi
-	done
-	exit 1
+	if [ "x$OPTLUAVERSION" != "x" ]; then
+		searchLuaVersionWithRawFind $OPTLUAVERSION
+	else
+		for VERSION in 5.4 5.3 5.2 ; do
+			searchLuaVersionWithRawFind $VERSION
+		done
+	fi
 }
 
 searchLuaWithPkgConfig
-if [ $? != 0 ]; then 
-	>&2 echo "Failed to determine Lua package info with $PKGCONFIG, now searching with raw find ..."
-	searchLuaWithRawFind
-	if [ $? != 0 ]; then 
-		>&2 echo "Lua installation (version 5.2,5.3 or 5.4) not found!"
-		exit 1
-	fi
+>&2 echo "Failed to determine Lua package info with $PKGCONFIG, now searching with raw find ..."
+searchLuaWithRawFind
+if [ "x$OPTLUAVERSION" != "x" ]; then
+	>&2 echo "Lua installation (version $OPTLUAVERSION) not found!"
+else
+	>&2 echo "Lua installation (version 5.2,5.3 or 5.4) not found!"
 fi
+
 
 

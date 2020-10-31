@@ -45,16 +45,16 @@ Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **sco
 3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
     * Rule definition as in (1. or 2.) but with _luafunction_ as a single identifier or an pair of identifiers referring to a function and an optional context argument defined in the typesystem Lua module. A rule defined with a function form a node in the resulting AST (abstract syntax tree). The result node has all non keyword/operator lexems or other nodes defined inside its right hand part of the rule that are not bound by other nodes as subnodes.
 4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
-    * Rule definition as in (1. or 2.) but an with increment defined for the **scope** counter.
+    * Rule definition as in (1. or 2.) but an with increment defined for the **scope step**.
 5. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
     * Rule definition as in (1. or 2.) but with a **scope** structure (start and end of the scope) defined for the result node
 
 ## Scope of AST Nodes and Definitions
-The scope of a node in the resulting AST is defined as a pair of cardinal numbers **[** _start_ , _end_ **]**.
-The definitions of types in the typesystem will include the scope info to select the valid definition amongst definitions with the same name.
-A definition is valid if its scope counter is inside the scope checked:
-* _counter_ **>=** _start_
-* _counter_ **<** _end_.
+The **scope** of a node in the resulting AST is defined as a pair of cardinal numbers **[** _start_ , _end_ **]**.
+The definitions of types in the typesystem will include the scope structure to select the valid definition amongst definitions with the same name.
+A definition is valid if its **scope step** is inside the scope checked:
+* _step_ **>=** _start_
+* _step_ **<** _end_.
 
 ## Example
 1. [Simple Procedural Language 1](../examples/language1.g)
