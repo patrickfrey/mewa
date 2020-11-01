@@ -62,60 +62,46 @@ sub readNonEmptyLinesFromFile {
 
 sub load_constructor {
 	my $llvmtype = $_[0];
-	my $out = $_[1];
-	my $in = $_[2];
 	if ($llvmtype eq "i1")
 	{
-		my $rt = "";
-		$rt .= "{" . LLVM( "/R1", " = load i8, i8* ", $in, ", align 1" ) . "}, ";
-		$rt .= "{" . LLVM( $out, " = trunc i8 ", "/R1", " to i1" ) . "}";
-		return $rt;
+		return "{3} = load i8, i8* {1}, align 1\\n{2} = trunc i8 {3} to i1";
 	}
 	else
 	{
-		return "{" . LLVM( $out, " = load $llvmtype, $llvmtype* ", $in, ", align $alignmap{$llvmtype}" ) . "}";
+		return "{2} = load $llvmtype, $llvmtype* {1} align $alignmap{$llvmtype}";
 	}
 }
 
 sub store_constructor {
 	my $llvmtype = $_[0];
-	my $adr = $_[1];
-	my $in = $_[2];
 	if ($llvmtype eq "i1")
 	{
-		my $rt = "";
-		$rt .= "{" . LLVM( "/R1", " = zext i1 ", $in, " to i8" ) . "}, ";
-		$rt .= "{" . LLVM( "store i8 ", "/R1", ", i8* ", $adr, ", align 1" ) . "}";
-		return $rt;
+		return "{3} = zext i1 {2} to i8\\nstore i8 {3}, i8* {1}, align 1";
 	}
 	else
 	{
-		return "{" . LLVM( "store $llvmtype ", $in, ", $llvmtype* ", $adr, ", align $alignmap{$llvmtype}" ) . "}";
+		return "store $llvmtype {2}, $llvmtype* {1}, align $alignmap{$llvmtype}";
 	}
 }
 
 sub load_conv_constructor {
 	my $llvmtype_out = $_[0];
-	my $out = $_[1];
-	my $sgn_out = $_[2];
-	my $llvmtype_in = $_[3];
-	my $in = $_[4];
-	my $sgn_in = $_[5];
+	my $sgn_out = $_[1];
+	my $llvmtype_in = $_[2];
+	my $sgn_in = $_[3];
 	my $convop = undef;
 	if ($llvmtype_out eq $llvmtype_in)
 	{
-		return load_constructor( $llvmtype_in, "/R1", $in);
+		return load_constructor( $llvmtype_in);
 	}
 	else
 	{
 		if ($sgn_out eq "fp")
 		{
+			my $rt = "";
 			if ($llvmtype_in eq "i1")
 			{
-				my $rt = load_constructor( "i1", "/R1", $in) . ", ";
-				$rt .= "{" . LLVM( "/R2", " = zext i1 ", "/R1", " to i32" ) . "},";
-				$rt .= "{" . LLVM( $out, " = sitofp i32 ", "/R2", " to $llvmtype_out" ) . "}";
-				return $rt;
+				return "{3} = load i8, i8* {1}, align 1\\n{4} = trunc i8 {3} to i1\\n{5} = zext i1 {4} to i32\\n{2} = sitofp i32 {5} to $llvmtype_out";
 			}
 			if ($sgn_in eq "fp" && typeSize( $llvmtype_out) > typeSize( $llvmtype_in))  {$convop = "fpext";}
 			elsif ($sgn_in eq "fp" && typeSize( $llvmtype_out) < typeSize( $llvmtype_in))  {$convop = "fptrunc";}
@@ -126,9 +112,7 @@ sub load_conv_constructor {
 		{
 			if ($llvmtype_out eq "i1")
 			{
-				my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
-				$rt .= "{" . LLVM( $out, " = fcmp une $llvmtype_in ", "/R1", ", 0.000000e+00" ) . "}";
-				return $rt;
+				return "{3} = load $llvmtype_in, $llvmtype_in* {1}, align $alignmap{ $llvmtype_in}\\n{2} = fcmp une $llvmtype_in {3}, 0.000000e+00";
 			}
 			if ($sgn_out eq "signed") {$convop = "fptosi";}
 			elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
@@ -137,17 +121,13 @@ sub load_conv_constructor {
 		{
 			if ($llvmtype_out eq "i1")
 			{
-				my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
-				$rt .= "{" . LLVM( $out, " = icmp ne $llvmtype_in ", "/R1", ", 0" ) . "}";
-				return $rt;
+				return "{3} = load $llvmtype_in, $llvmtype_in* {1}, align $alignmap{ $llvmtype_in}\\n{2} = cmp ne $llvmtype_in {3}, 0";
 			}
 			if (typeSize( $llvmtype_out) < typeSize( $llvmtype_in)) {$convop = "trunc";}
 			elsif ($sgn_in eq "unsigned") {$convop = "zext";}
 			elsif ($sgn_in eq "signed") {$convop = "sext";}
 		}
-		my $rt = load_constructor( $llvmtype_in, "/R1", $in) . ", ";
-		$rt .= "{" . LLVM( $out, " = $convop $llvmtype_in ", "/R1", " to $llvmtype_out" ) . "}";
-		return $rt;
+		return "{3} = load $llvmtype_in, $llvmtype_in* {1}, align $alignmap{ $llvmtype_in}\\n{2} = $convop $llvmtype_in {3} to $llvmtype_out";
 	}
 }
 
@@ -157,55 +137,56 @@ sub typeSize {
 }
 
 print "return {\n";
-print "constructor = {\n";
-print "\t-- /IN variable address (\@name) or register (\%id)\n";
-print "\t-- /OUT output register (\%id)\n";
-print "\t-- /ADR variable address (\@name) or register (\%id)\n";
-print "\t-- /VAL constant value of a matching LLVM type\n";
 my @content = readNonEmptyLinesFromFile( $typelist);
 my $linecnt = 0;
 foreach my $line (@content)
 {
-	if ($linecnt++ > 0) {print ",\n";} else {print "\n";}
+	if ($linecnt++ > 0) {print ",\n";}
 	my ($typename, $llvmtype, $sgn) = split( /\t/, $line);
 	print "\t$typename = {\n";
-	print "\t\tdef_local  = { { " . LLVM( "/OUT", " = alloca $llvmtype, align $alignmap{$llvmtype}" ) . " }},\n";
-	print "\t\tdef_global = { { " . LLVM( "/ADR", " = internal global $llvmtype ", "/VAL", ", align $alignmap{$llvmtype}" ) . " }},\n";
+	my $llvmtype_storage = $llvmtype;
+	if ($llvmtype eq "i1") {
+		$llvmtype_storage = "i8";
+	}
+	print "\t\tdef_local = \"{1} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\",\n";
+	print "\t\tdef_local_val = \"{1} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n" . store_constructor($llvmtype) . "\",\n";
+	print "\t\tdef_global = \"{1} = internal global $llvmtype_storage $defaultmap{ $llvmtype}, align $alignmap{$llvmtype}\",\n";
+	print "\t\tdef_global_val = \"{1} = internal global $llvmtype_storage {2}, align $alignmap{$llvmtype}\",\n";
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
-	print "\t\tstore = { " . store_constructor( $llvmtype, "/ADR", "/IN") . "},\n";
-	print "\t\tload = { " . load_constructor( $llvmtype, "/OUT", "/IN") . "},\n";
+	print "\t\tstore = \"" . store_constructor( $llvmtype) . "\",\n";
+	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
 	print "\t\tconv = {";
 	my $oi = 0;
 	foreach my $operand (@content)
 	{
 		if ($oi++ > 0) {print ",\n";} else {print "\n";}
 		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
-		my $cnv = load_conv_constructor( $llvmtype, "/OUT", $sgn, $op_llvmtype, "/IN", $op_sgn);
-		print "\t\t\t_$op_typename = { " . $cnv . "}";
+		my $cnv = load_conv_constructor( $llvmtype, $sgn, $op_llvmtype, $op_sgn);
+		print "\t\t\t_$op_typename = \"" . $cnv . "\"";
 	}
-	print "\n\t\t},\n";
+	print "},\n";
 	print "\t\tunop = {\n";
 	if ($llvmtype eq "i1")
 	{
-		print "\t\t\t_not = { " . LLVM( "/OUT", " = xor $llvmtype ", "/IN", ", true") . " }\n";
+		print "\t\t\t_not = \"{2} = xor $llvmtype {1}, true\"";
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		print "\t\t\t_not = { " . LLVM( "/OUT", " = xor $llvmtype ", "/IN", ", -1") . " }\n";
+		print "\t\t\t_not = \"{2} = xor $llvmtype {1}, -1\"";
 	}
 	elsif ($sgn eq "signed")
 	{
-		print "\t\t\t_neg = { " . LLVM( "/OUT", " = sub $llvmtype 0, ", "/IN") . " }\n";
+		print "\t\t\t_neg = \"{2} = sub $llvmtype 0, {1}\"";
 	}
 	elsif ($sgn eq "fp")
 	{
-		print "\t\t\t_neg = { " . LLVM( "/OUT", " = fneg $llvmtype 0, ", "/IN") . " }\n";
+		print "\t\t\t_neg = \"{2} = fneg $llvmtype {1}\"";
 	}
 	else
 	{
 		die "Unknown sgn '$sgn' (3rd column in typelist)";
 	}
-	print "\t\t},\n";
+	print "},\n";
 	print "\t\tbinop = {";
 	my @ops = ();
 	if ($llvmtype eq "i1")
@@ -233,10 +214,10 @@ foreach my $line (@content)
 	{
 		if ($oi++ > 0) {print ",\n";} else {print "\n";}
 		my ($name,$llvm_name) = split /=/, $op;
-		print "\t\t\t_$name = { " . LLVM( "/OUT", " = $llvm_name $llvmtype, ", "/IN" ) . " }";
+		print "\t\t\t_$name = \"{3} = $llvm_name $llvmtype {1}, {2}\"";
 	}
-	print "\n\t\t}\n";
+	print "}\n";
 	print "\t}";
 }
-print "}}\n";
+print "\n}\n";
 

@@ -1,19 +1,9 @@
 local mewa = require "mewa"
 local fcc = require "fcc_language1"
-local nameMangling = require "nameMangling"
+local utils = require "typesystem_utils"
 
 local typedb = mewa.typedb()
 local typesystem = {
-	pure_type = function( nm) return "@ " .. nm end,
-	const_type = function( nm) return "const " .. nm end,
-	ref_type = function( nm) return "& " .. nm end,
-	const_ref_type = function( nm) return "const& " .. nm end,
-	ptr_type = function( nm) return "^ " .. nm end,
-	const_ptr_type = function( nm) return "const^ " .. nm end,
-	ref_ptr_type = function( nm) return "^& " .. nm end,
-	const_ref_ptr_type = function( nm) return "const^& " .. nm end,
-	move_ref_type = function( nm) return "&& " .. nm end,
-
 	assign = {},
 	assign_add = {},
 	assign_sub = {},
@@ -49,58 +39,51 @@ local typesystem = {
 
 local tag_typeDeduction = 1
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction)
+local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeDeduction)
 
 function ident( arg)
 	return arg
 end
 
+local variableConstructors = {}
+
 function initFirstClassCitizens()
-	for kk, vv in pairs( fcc.constructor) do
-		local lvalue = typedb:def_type( 0, typesystem.pure_type(kk), vv)
-		local const_lvalue = typedb:def_type( 0, typesystem.const_type(kk), vv)
+	function getVariableConstructors( type)
+		return {
+			def_local = function( name)
+				local constructor,result = utils.positional_format( vv.def_local, {}, reg, 1)
+				local var = typedb:def_type( 0, name, result)
+				typedb:def_reduction( var, type, ident, tag_typeDeduction)
+				return constructor,result
+			end,
+			def_local_val = function( name, initval)
+				local constructor,result = utils.positional_format( vv.def_local_val, {[2] = initval}, reg, 1)
+				local var = typedb:def_type( 0, name, result)
+				typedb:def_reduction( var, type, ident, tag_typeDeduction)
+				return constructor,result
+			end
+			def_global = function( name)
+				local constructor,result = utils.positional_format( vv.def_global, {[1] = utils.mangleVariableName(name)}, reg, 1)
+				local var = typedb:def_type( 0, name, result)
+				typedb:def_reduction( var, type, ident, tag_typeDeduction)
+				return constructor,result
+			end,
+			def_global_val = function( name, initval)
+				local constructor,result = utils.positional_format( vv.def_global_val, {[1] = utils.mangleVariableName(name), [2] = initval}, reg, 1)
+				local var = typedb:def_type( 0, name, result)
+				typedb:def_reduction( var, type, ident, tag_typeDeduction)
+				return constructor,result
+			end
+		}
+	end
+	for kk, vv in pairs( fcc) do
+		local lvalue = typedb:def_type( 0, kk, vv)
+		local const_lvalue = typedb:def_type( 0, "const " .. kk, vv)
+		local reg = typedb:get_instance( "register")
+		variableConstructors[ lvalue] = vc
+		variableConstructors[ const_lvalue] = vc
 		typedb:def_reduction( const_lvalue, lvalue, ident, tag_typeDeduction)
 	end
-end
-
-function compileError( line, msg)
-	error( "Error on line " .. line .. ": " .. msg)
-end
-
-function traverse( node, context)
-	if node.arg then
-		local rt = {}
-		for ii, vv in ipairs( node.arg) do
-			local subnode = node.arg[ ii]
-			if subnode.call then
-				if subnode.call.obj then
-					rt[ ii] = subnode.call.proc( subnode, subnode.call.obj, context)
-				else
-					rt[ ii] = subnode.call.proc( subnode, context)
-				end
-			else
-				rt[ ii] = subnode
-			end
-		end
-		return rt
-	else
-		return node.value
-	end
-end
-
-function visit( node)
-	local rt = nil
-	if (node.scope) then
-		local parent_scope = typedb:scope( node.scope)
-		rt = {name=node.call.name, scope=node.scope, arg=traverse( node)}
-		typedb:scope( parent_scope)
-	elseif (node.step) then
-		local prev_step = typedb:step( node.step)
-		rt = {name=node.call.name, step=node.step, arg=traverse( node)}
-		typedb:step( prev_step)
-	else
-		rt = {name=node.call.name, step=node.step, arg=traverse( node)}
-	end
-	return rt
 end
 
 local globals = {}
@@ -111,9 +94,6 @@ function mapConstructorTemplate( template, struct)
 		rt = rt .. (struct[ elem] or elem)
 	end
 	return rt;
-end
-
-function mangledName( name)
 end
 
 function getDefContextType()
@@ -130,54 +110,67 @@ function isGlobalContext()
 	return typedb:get_instance( "context") == nil
 end
 
-function defineVariable( type_name, var_name, initval)
-	local typeid,reductions,itemlist = typedb:resolve_type( getContextTypes(), var_name, tagmask_resolveType)
-	if not typeid then
-		compileError( node.line, "Failed to resolve type " .. type_name .. ", declaring variable " .. var_name)
-	elseif type(typeid) == "table" then
-		compileError( node.line, "Ambiguous reference to type " .. type_name .. ", found candidate match "
-					.. typedb:type_string(typeid[1]) .. " and " .. typedb:type_string(typeid[2]))
+function defineVariable( line, typeId, varName, initval)
+	local register = typedb:get_instance( "register")
+	local defcontext = typedb:get_instance( "defcontext")
+	if register then
+	elseif defcontext then
+		error( "Error on line " .. line .. ": Substructures not implemented yet")
 	else
-		local constructor = nil
-		if isGlobalContext() then
-			adr = "@" .. nameMangling.mangleName( "=" .. var_name)
+		adr = "@" .. utils.mangleVariableName( varName)
 			defaultval = typedb:type_constructor( typeid)[ "default"]
 			constructor = mapConstructorTemplate( typedb:type_constructor( typeid)[ "def_global"], { ["/ADR"] = adr, ["/VAL"] = initval or defaultval })
-		end
 	end
 	local tp = typedb:def_type( getDefContextType(), type_name, vv)
 end
 
 function typesystem.vardef( node)
-	local type_name = visit( node.arg[1])
-	defineVariable( traverse( node.arg[1]), node.arg[2].value)
+	local typeId = utils.traverse( node.arg[1])
+	defineVariable( utils.traverse( node.arg[1]), node.arg[2].value)
 end
 
 function typesystem.vardef_assign( node)
-	local type_name = visit( node.arg[1])
-	defineVariable( traverse( node.arg[1]), node.arg[2].value, traverse(node.arg[2]))
+	local typeId = utils.traverse( node.arg[1])
+	defineVariable( type_name, node.arg[2].value, utils.traverse(node.arg[2]))
 end
 
-function typesystem.vardef_array( node) return visit( node) end
-function typesystem.vardef_array_assign( node) return visit( node) end
-function typesystem.operator( node, opdescr) return visit( node) end
-function typesystem.stm_expression( node) return visit( node) end
-function typesystem.stm_return( node) return visit( node) end
-function typesystem.conditional_if( node) return visit( node) end
-function typesystem.conditional_while( node) return visit( node) end
+function typesystem.vardef_array( node) return utils.visit( node) end
+function typesystem.vardef_array_assign( node) return utils.visit( node) end
+function typesystem.operator( node, opdescr) return utils.visit( node) end
+function typesystem.stm_expression( node) return utils.visit( node) end
+function typesystem.stm_return( node) return utils.visit( node) end
+function typesystem.conditional_if( node) return utils.visit( node) end
+function typesystem.conditional_while( node) return utils.visit( node) end
 
-function typesystem.namespaceref( node) return visit( node) end
-function typesystem.typedef( node) return visit( node) end
-function typesystem.typespec( node, typedescr)
-	return typedescr( node.arg[1].value)
+function typesystem.typedef( node) return utils.visit( node) end
+function typesystem.typespec( node, qualifier)
+	typeName = qualifier .. node.arg[ #node.arg].value;
+	local typeId
+	if #node.arg == 1 then
+		typeId = typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace)
+		if not typeId or type(typeId) == "table" then errorResolveType( node.line, typeId, getContextTypes(), typeName)
+	else
+		contextTypeId = typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace)
+		if not contextTypeId or type(contextTypeId) == "table" then errorResolveType( node.line, contextTypeId, getContextTypes(), typeName)
+		if #node.arg > 2 then
+			for ii = 2, #node.arg-1, +1 do
+				typeId = typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace)
+				if not typeId or type(typeId) == "table" then errorResolveType( node.line, typeId, contextTypeId, typeName)
+				contextTypeId = typeId
+			end
+		end
+		typeId = typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace)
+		if not typeId or type(typeId) == "table" then errorResolveType( node.line, typeId, contextTypeId, typeName)
+	end
+	return typeId
 end
-function typesystem.funcdef( node) return visit( node) end
-function typesystem.procdef( node) return visit( node) end
-function typesystem.paramdef( node) return visit( node) end
+function typesystem.funcdef( node) return utils.visit( node) end
+function typesystem.procdef( node) return utils.visit( node) end
+function typesystem.paramdef( node) return utils.visit( node) end
 
 function typesystem.program( node)
 	initFirstClassCitizens()
-	return traverse( node)
+	return utils.traverse( node)
 end
 
 return typesystem

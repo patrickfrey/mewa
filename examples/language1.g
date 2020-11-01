@@ -22,17 +22,18 @@ definition		= functiondefinition
 			| variabledefinition ";"
 			;
 typename/L1		= IDENT
-			| IDENT "::" typename								(namespaceref)
+			| IDENT "::" typename
 			;
-typespec/L1		= typename									(typespec pure_type)
-			| "const" typename								(typespec const_type)
-			| typename "&"									(typespec ref_type)
-			| "const" typename "&"								(typespec const_ref_type)
-			| typename "^"									(typespec ptr_type)
-			| "const" typename "^"								(typespec const_ptr_type)
-			| typename "^" "&"								(typespec ref_ptr_type)
-			| "const" typename "^" "&"							(typespec const_ref_ptr_type)
-			| typename "&&"									(typespec move_ref_type)
+typespec/L1		= typename									(typespec "")
+			| "const" typename								(typespec "const ")
+			| typename "&"									(typespec "&")
+			| "const" typename "&"								(typespec "const&")
+			| typename "^"									(typespec "^")
+			| "const" typename "^"								(typespec "const^")
+			| typename "^" "&"								(typespec "^&")
+			| "const" typename "^" "&"							(typespec "const^&")
+			| typename "&&"									(typespec "&&")
+			| "const" typename "&&"								(typespec "const&&")
 			;
 typedefinition		= "typedef" typename IDENT							(>>typedef)
 			;
