@@ -157,12 +157,14 @@ public:
                 :std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
 	Error( Code code_, const char* param_, const Location& location_ = Location())
                 :std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
-	Error( const Error& o, const Location& location_ = Location())
+	Error( const Error& o)
+                :std::runtime_error(map2string(o.code(),o.arg(),o.location())),m_code(o.m_code),m_location(o.location()){}
+	Error( const Error& o, const Location& location_)
                 :std::runtime_error(map2string(o.code(),o.arg(),location_)),m_code(o.m_code),m_location(location_){}
 
 	Code code() const noexcept			{return m_code;}
 	const char* arg() const noexcept		{char const* rt = std::strstr( what(), ": "); return rt?(rt+2):rt;}
-        const Location location() const noexcept	{return m_location;}
+        const Location& location() const noexcept	{return m_location;}
 
         const char* what() const noexcept override
         {

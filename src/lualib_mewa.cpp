@@ -51,8 +51,8 @@ static mewa::Error::Location getLuaScriptErrorLocation( lua_State* ls)
 {
 	lua_Debug ar;
 	lua_getstack( ls, 1, &ar);
-	lua_getinfo( ls, "nSl", &ar);
-	return mewa::Error::Location( ar.short_src, ar.currentline);
+	lua_getinfo( ls, "S", &ar);
+	return mewa::Error::Location( ar.short_src, ar.linedefined);
 }
 
 /// \note Got this idea from Jason Turner C++ Weekly Ep. 91 "Using Lippincott Functions" 
@@ -65,8 +65,15 @@ static void lippincottFunction( lua_State* ls)
 	}
 	catch (const mewa::Error& err)
 	{
-		mewa::Error errWithLocation( err, getLuaScriptErrorLocation( ls));
-		lua_pushstring( ls, errWithLocation.what());
+		if (err.location().line())
+		{
+			lua_pushstring( ls, err.what());
+		}
+		else
+		{
+			mewa::Error errWithLocation( err, getLuaScriptErrorLocation( ls));
+			lua_pushstring( ls, errWithLocation.what());
+		}
 		lua_error( ls);
 	}
 	catch (const std::runtime_error& err)
