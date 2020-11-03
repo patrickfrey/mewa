@@ -74,7 +74,7 @@ long mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, i
 	double val = lua_tonumber( ls, li);
 	if (val - std::floor( val) < std::numeric_limits<double>::epsilon()*4)
 	{
-		return (long)val;
+		return (long)(val + std::numeric_limits<double>::epsilon()*4);
 	}
 	else
 	{
@@ -113,6 +113,19 @@ void mewa::lua::checkArgumentAsTable( const char* functionName, lua_State* ls, i
 	}
 }
 
+static int getTableIndex( lua_State* ls, int li)
+{
+	double kk = lua_tonumber( ls, li);
+	if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+	{
+		return (int)(kk + std::numeric_limits<double>::epsilon()*4);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 mewa::Scope mewa::lua::getArgumentAsScope( const char* functionName, lua_State* ls, int li)
 {
 	checkArgumentAsTable( functionName, ls, li);
@@ -127,25 +140,22 @@ mewa::Scope mewa::lua::getArgumentAsScope( const char* functionName, lua_State* 
 		++rowcnt;
 		if (lua_type( ls, -2) == LUA_TNUMBER && lua_type( ls, -1) == LUA_TNUMBER)
 		{
-			double kk = lua_tonumber( ls, -2);
-			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			int kidx = getTableIndex( ls, -2);
+			if (kidx == 1)
 			{
-				if ((int)kk == 1)
+				start = lua_tointeger( ls, -1);
+			}
+			else if (kidx == 2)
+			{
+				end = lua_tointeger( ls, -1);
+				if (end < 0)
 				{
-					start = lua_tointeger( ls, -1);
+					end = std::numeric_limits<Scope::Step>::max() + end + 1;
 				}
-				else if ((int)kk == 2)
-				{
-					end = lua_tointeger( ls, -1);
-					if (end < 0)
-					{
-						end = std::numeric_limits<Scope::Step>::max() + end + 1;
-					}
-				}
-				else
-				{
-					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
-				}
+			}
+			else
+			{
+				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
 			}
 		}
 		else
@@ -191,23 +201,20 @@ mewa::TypeDatabase::Parameter mewa::lua::getArgumentAsParameter( const char* fun
 		++rowcnt;
 		if (lua_type( ls, -2) == LUA_TNUMBER)
 		{
-			double kk = lua_tonumber( ls, -2);
-			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			int kidx = getTableIndex( ls, -2);
+			if (kidx == 1)
 			{
-				if ((int)kk == 1)
-				{
-					type = lua_tointeger( ls, -1);
-				}
-				else if ((int)kk == 2)
-				{
-					constructor = td->allocObjectHandle();
-					lua_pushvalue( ls, -1);			// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
-					lua_rawseti( ls, -5, constructor);	// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
-				}
-				else
-				{
-					throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
-				}
+				type = lua_tointeger( ls, -1);
+			}
+			else if (kidx == 2)
+			{
+				constructor = td->allocObjectHandle();
+				lua_pushvalue( ls, -1);			// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
+				lua_rawseti( ls, -5, constructor);	// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+			}
+			else
+			{
+				throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
 			}
 		}
 		else if (lua_type( ls, -2) == LUA_TSTRING)
@@ -259,31 +266,21 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 	{
 		if (lua_type( ls, -2) == LUA_TNUMBER)
 		{
-			double kk = lua_tonumber( ls, -2);
-			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			int kidx = getTableIndex( ls, -2);
+			if (!kidx) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+
+			std::size_t index = kidx-1;
+			if (index == rt.size())
 			{
-				int kidx = (int)(kk+std::numeric_limits<double>::epsilon()*4);
-				if (kidx < 1)
-				{
-					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
-				}
-				std::size_t index = kidx-1;
-				if (index == rt.size())
-				{
-					rt.emplace_back( getArgumentAsParameter( functionName, ls, -1, -4, td));	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
-				}
-				else
-				{
-					if (index > rt.size())
-					{
-						rt.resize( index+1, mewa::TypeDatabase::Parameter( -1, -1));
-					}
-					rt[ index] = mewa::lua::getArgumentAsParameter( functionName, ls, -1, -4, td);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
-				}
+				rt.emplace_back( getArgumentAsParameter( functionName, ls, -1, -4, td));	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 			}
 			else
 			{
-				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+				if (index > rt.size())
+				{
+					rt.resize( index+1, mewa::TypeDatabase::Parameter( -1, -1));
+				}
+				rt[ index] = mewa::lua::getArgumentAsParameter( functionName, ls, -1, -4, td);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 			}
 		}
 		else
@@ -302,6 +299,7 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 {
 	std::pmr::vector<int> rt( memrsc);
 	if (lua_isnil( ls, li)) return rt;
+	checkArgumentAsTable( functionName, ls, li);
 
 	lua_pushvalue( ls, li);
 	lua_pushnil( ls);		//STK: [PARAMTAB] NIL
@@ -309,31 +307,21 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 	{
 		if (lua_type( ls, -2) == LUA_TNUMBER)
 		{
-			double kk = lua_tonumber( ls, -2);
-			if (kk - std::floor( kk) < std::numeric_limits<double>::epsilon()*4)
+			int kidx = getTableIndex( ls, -2);
+			if (!kidx) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeList);
+
+			std::size_t index = kidx-1;
+			if (index == rt.size())
 			{
-				int kidx = (int)(kk+std::numeric_limits<double>::epsilon()*4)-1;
-				if (kidx < 1)
-				{
-					mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeList);
-				}
-				std::size_t index = kidx-1;
-				if (index == rt.size())
-				{
-					rt.push_back( lua_tonumber( ls, -1));
-				}
-				else
-				{
-					if (index > rt.size())
-					{
-						rt.resize( index+1, 0);
-					}
-					rt[ index] = lua_tonumber( ls, -1);
-				}
+				rt.push_back( lua_tonumber( ls, -1));
 			}
 			else
 			{
-				mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeList);
+				if (index > rt.size())
+				{
+					rt.resize( index+1, 0);
+				}
+				rt[ index] = lua_tonumber( ls, -1);
 			}
 		}
 		lua_pop( ls, 1);	//STK: [PARAMTAB] [KEY]

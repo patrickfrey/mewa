@@ -230,7 +230,7 @@ static libmewa::Error lippincottFunction()
 	}
 	catch (const std::runtime_error& err)
 	{
-		return libmewa::Error( mewa::Error::UnspecifiedError, err.what());
+		return libmewa::Error( mewa::Error::UnexpectedException, err.what());
 	}
 	catch (const std::bad_alloc&)
 	{

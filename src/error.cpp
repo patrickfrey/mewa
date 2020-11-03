@@ -28,10 +28,11 @@ Error Error::parseError( const char* errstr) noexcept
 {
 	Code code_ = Ok;
 	int line_ = 0;
+	std::string_view filename_ = "";
 	char const* ei = errstr;
 	char const* param_ = 0;
 	char const* msgstart = 0;
-	enum State {StateInit, StateParseMessage, StateParseEndOfMessage, StateParseLineNo, StateParseArgument, StateEnd};
+	enum State {StateInit, StateParseMessage, StateParseEndOfMessage, StateParseLineNo, StateParseFileName, StateParseArgument, StateEnd};
 	State state = StateInit;
 
 	if (*errstr) while (state != StateEnd) switch (state)
@@ -45,7 +46,7 @@ Error Error::parseError( const char* errstr) noexcept
 
 				if (cd < 0 || cd > std::numeric_limits<short>::max())
 				{
-					code_ = UnspecifiedError;
+					code_ = RuntimeException;
 					param_ = errstr;
 					state = StateEnd;
 				}
@@ -57,8 +58,16 @@ Error Error::parseError( const char* errstr) noexcept
 			}
 			else
 			{
-				param_ = errstr;
-				code_ = UnspecifiedError;
+				if (0==std::memcmp( ei, "Error at line ", 14))
+				{
+					code_ = CompileError;
+					ei += 6;
+				}
+				else
+				{
+					param_ = errstr;
+					code_ = RuntimeException;
+				}
 				state = StateParseLineNo;
 			}
 			break;
@@ -71,7 +80,7 @@ Error Error::parseError( const char* errstr) noexcept
 			}
 			else
 			{
-				code_ = UnspecifiedError;
+				code_ = RuntimeException;
 				param_ = errstr;
 				state = StateEnd;
 			}
@@ -79,7 +88,7 @@ Error Error::parseError( const char* errstr) noexcept
 		case StateParseEndOfMessage:
 			if (!skipUntil( ei, '\"'))
 			{
-				code_ = UnspecifiedError;
+				code_ = RuntimeException;
 				param_ = errstr;
 				state = StateEnd;
 			}
@@ -99,12 +108,31 @@ Error Error::parseError( const char* errstr) noexcept
 			{
 				ei += 8;
 				line_ = parseInteger( ei);
-				state = StateParseArgument;
+				if (*ei == ' ')
+				{
+					++ei;
+					state = StateParseFileName;
+				}
+				else
+				{
+					state = StateParseArgument;
+				}
 			}
 			else
 			{
 				state = StateParseArgument;
 			}
+			break;
+		case StateParseFileName:
+			if (0==std::memcmp( ei, "in file ", 8))
+			{
+				ei += 8;
+				if (*ei == '"' || *ei == '\'')
+				{
+					filename_ = parseString( ei);
+				}
+			}
+			state = StateParseArgument;
 			break;
 		case StateParseArgument:
 			if (ei[0] == ':' && ei[1] == ' ')
@@ -126,9 +154,15 @@ Error Error::parseError( const char* errstr) noexcept
 			break;
 			
 	}//... end for switch
-	return Error( code_, param_, line_);
+	if (filename_[0])
+	{
+		return Error( code_, param_, Location( filename_, line_));
+	}
+	else
+	{
+		return Error( code_, param_, Location( line_));
+	}
 }
-
 
 int Error::parseInteger( char const*& si) noexcept
 {
@@ -137,6 +171,16 @@ int Error::parseInteger( char const*& si) noexcept
 	{
 		rt = (rt * 10) + (*si - '0');
 	}
+	return rt;
+}
+
+std::string_view Error::parseString( char const*& si) noexcept
+{
+	char eb = *si++;
+	char const* start = si;
+	for (;*si && *si != eb; ++si){}
+	std::string_view rt( start, si-start);
+	if (*si) ++si;
 	return rt;
 }
 
@@ -162,7 +206,7 @@ const char* Error::code2String( int code_) noexcept
 		case Ok: return "";
 		case MemoryAllocationError: return "memory allocation error";
 		case LogicError: return "Logic error";
-		case UnspecifiedError: return "Unspecified error";
+		case RuntimeException: return "Runtime error exception";
 		case UnexpectedException: return "Unexpected exception";
 		case SerializationError: return "Error serializing a lua data structure";
 		case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
@@ -178,6 +222,7 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedArgumentNotNil: return "Expected argument to be not nil";
 		case TooFewArguments: return "Too few arguments";
 		case TooManyArguments: return "Too many arguments";
+		case CompileError: return "Compile error";
 
 		case IllegalFirstCharacterInLexer: return "Bad character in a regular expression passed to the lexer";
 		case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
@@ -259,21 +304,45 @@ const char* Error::code2String( int code_) noexcept
 	return "Unknown error";
 }
 
+std::string Error::map2string( Code code_, const std::string_view& param_, const Location& location_)
+{
+	char parambuf[ 512];
+	std::size_t len = param_.size() >= sizeof(parambuf) ? (sizeof(parambuf)-1):param_.size();
+	std::memcpy( parambuf, param_.data(), len);
+	parambuf[ len] = 0;
+	return map2string( code_, parambuf, location_);
+}
 
-std::string Error::map2string( Code code_, const std::string_view& param_, int line_)
+std::string Error::map2string( Code code_, const char* param_, const Location& location_)
 {
 	char msgbuf[ 256];
-	if (code_ == UnspecifiedError)
+	if (code_ == CompileError)
 	{
-		std::snprintf( msgbuf, sizeof(msgbuf), "at line %d", line_);
+		if (location_.filename()[0])
+		{
+			std::snprintf( msgbuf, sizeof(msgbuf), "Error at line %d in file \"%s\"", location_.line(), location_.filename());
+		}
+		else
+		{
+			std::snprintf( msgbuf, sizeof(msgbuf), "Error at line %d", location_.line());
+		}
 	}
-	if (code_ == Ok)
+	else if (code_ == Ok)
 	{
 		msgbuf[0] = 0;
 	}
-	else if (line_ > 0)
+	else if (location_.line())
 	{
-		std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\" at line %d", (int)code_, code2String((int)code_), line_);
+		if (location_.filename()[0])
+		{
+			std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\" at line %d in file \"%s\"",
+					(int)code_, code2String((int)code_), location_.line(), location_.filename());
+		}
+		else
+		{
+			std::snprintf( msgbuf, sizeof(msgbuf), "#%d \"%s\" at line %d",
+					(int)code_, code2String((int)code_), location_.line());
+		}
 	}
 	else
 	{
@@ -282,11 +351,11 @@ std::string Error::map2string( Code code_, const std::string_view& param_, int l
 	try
 	{
 		std::string rt( msgbuf);
-		if (param_.size() > 0)
+		if (param_ && param_[0])
 		{
 			rt.push_back(':');
 			rt.push_back(' ');
-			rt.append( param_.data(), param_.size());
+			rt.append( param_);
 		}
 		return rt;
 	}

@@ -47,6 +47,14 @@ extern "C" {
 
 extern "C" int luaopen_mewa( lua_State* ls);
 
+static mewa::Error::Location getLuaScriptErrorLocation( lua_State* ls)
+{
+	lua_Debug ar;
+	lua_getstack( ls, 1, &ar);
+	lua_getinfo( ls, "nSl", &ar);
+	return mewa::Error::Location( ar.short_src, ar.currentline);
+}
+
 /// \note Got this idea from Jason Turner C++ Weekly Ep. 91 "Using Lippincott Functions" 
 ///		See also The C++ Standard Library2ndEd. by Nicolai M. Josuttis page 50
 static void lippincottFunction( lua_State* ls)
@@ -57,24 +65,26 @@ static void lippincottFunction( lua_State* ls)
 	}
 	catch (const mewa::Error& err)
 	{
-		lua_pushstring( ls, err.what());
+		mewa::Error errWithLocation( err, getLuaScriptErrorLocation( ls));
+		lua_pushstring( ls, errWithLocation.what());
 		lua_error( ls);
 	}
 	catch (const std::runtime_error& err)
 	{
-		lua_pushstring( ls, err.what());
+		mewa::Error errWithLocation( mewa::Error::RuntimeException, err.what(), getLuaScriptErrorLocation( ls));
+		lua_pushstring( ls, errWithLocation.what());
 		lua_error( ls);
 	}
 	catch (const std::bad_alloc&)
 	{
-		mewa::Error err( mewa::Error::MemoryAllocationError);
-		lua_pushstring( ls, err.what());
+		mewa::Error errWithLocation( mewa::Error::MemoryAllocationError, getLuaScriptErrorLocation( ls));
+		lua_pushstring( ls, errWithLocation.what());
 		lua_error( ls);
 	}
 	catch (...)
 	{
-		mewa::Error err( mewa::Error::UnexpectedException);
-		lua_pushstring( ls, err.what());
+		mewa::Error errWithLocation( mewa::Error::UnexpectedException, getLuaScriptErrorLocation( ls));
+		lua_pushstring( ls, errWithLocation.what());
 		lua_error( ls);
 	}
 }
@@ -635,7 +645,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 			auto resolveres = td->impl->resolveType( td->curStep, contextType, name, selectTags, resbuf);
 			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
 		}
-		else
+		else if (lua_type( ls, 2) == LUA_TTABLE)
 		{
 			int buffer_parameter[ 256];
 			mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
@@ -643,6 +653,10 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter);
 			auto resolveres = td->impl->resolveType( td->curStep, contextTypes, name, selectTags, resbuf);
 			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
+		}
+		else
+		{
+			mewa::lua::throwArgumentError( functionName, 2, mewa::Error::ExpectedArgumentTypeList);
 		}
 	}
 	catch (...) { lippincottFunction( ls); }

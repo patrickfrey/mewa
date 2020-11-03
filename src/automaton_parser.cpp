@@ -581,7 +581,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 	}
 	catch (const Error& err)
 	{
-		throw Error( err.code(), err.arg(), err.line() ? err.line() : lexem.line());
+		throw Error( err.code(), err.arg(), err.location().line() ? err.location().line() : lexem.line());
 	}
 	return rt;
 }

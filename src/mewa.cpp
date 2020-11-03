@@ -62,9 +62,9 @@ static void printUsage()
 
 static void printWarning( const std::string& filename, const Error& error)
 {
-	if (error.line())
+	if (error.location().line())
 	{
-		std::cerr << "Warning on line " << error.line() << " of " << filename << ": ";
+		std::cerr << "Warning on line " << error.location().line() << " of " << filename << ": ";
 	}
 	else
 	{

@@ -9,7 +9,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:MemoryAllocationError**   _$ERRTEXT:MemoryAllocationError_
 + **#$ERRCODE:LogicError**   _$ERRTEXT:LogicError_
 + **#$ERRCODE:UnexpectedException**   _$ERRTEXT:UnexpectedException_
-+ **#$ERRCODE:UnspecifiedError**   _$ERRTEXT:UnspecifiedError_
++ **#$ERRCODE:RuntimeException**   _$ERRTEXT:RuntimeException_
 + **#$ERRCODE:SerializationError**   _$ERRTEXT:SerializationError_
 + **#$ERRCODE:InternalSourceExpectedNullTerminated**   _$ERRTEXT:InternalSourceExpectedNullTerminated_
 
@@ -26,6 +26,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:ExpectedArgumentNotNil**   _$ERRTEXT:ExpectedArgumentNotNil_
 + **#$ERRCODE:TooFewArguments**   _$ERRTEXT:TooFewArguments_
 + **#$ERRCODE:TooManyArguments**   _$ERRTEXT:TooManyArguments_
++ **#$ERRCODE:CompileError**	_$ERRTEXT:CompileError_
 
 ## Errors in Lexer
 + **#$ERRCODE:IllegalFirstCharacterInLexer**   _$ERRTEXT:IllegalFirstCharacterInLexer_

@@ -9,7 +9,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#400**   _memory allocation error_
 + **#401**   _Logic error_
 + **#403**   _Unexpected exception_
-+ **#402**   _Unspecified error_
++ **#402**   _Runtime error exception_
 + **#404**   _Error serializing a lua data structure_
 + **#405**   _Logic error: String expected to be null terminated_
 
@@ -26,6 +26,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#415**   _Expected argument to be not nil_
 + **#416**   _Too few arguments_
 + **#417**   _Too many arguments_
++ **#418**	_Compile error_
 
 ## Errors in Lexer
 + **#421**   _Bad character in a regular expression passed to the lexer_

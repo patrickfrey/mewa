@@ -14,6 +14,7 @@
 #if __cplusplus >= 201103L
 #include <utility>
 #include <string>
+#include <string_view>
 #include <stdexcept>
 #include <exception>
 #include <cstdio>
@@ -30,7 +31,7 @@ public:
 		Ok=0,
 		MemoryAllocationError=400,
 		LogicError=401,
-		UnspecifiedError=402,
+		RuntimeException=402,
 		UnexpectedException=403,
 		SerializationError=404,
 		InternalSourceExpectedNullTerminated=405,
@@ -46,6 +47,7 @@ public:
 		ExpectedArgumentNotNil=415,
 		TooFewArguments=416,
 		TooManyArguments=417,
+		CompileError=418,
 
 		IllegalFirstCharacterInLexer=421,
 		SyntaxErrorInLexer=422,
@@ -124,25 +126,43 @@ public:
 		LanguageAutomatonUnexpectedAccept=604,
 	};
 
+	class Location
+	{
+	public:
+		Location( int line_=0) noexcept :m_line(line_) {m_filename[0]=0;}
+		Location( const Location& o) noexcept :m_line(o.m_line) {std::memcpy( m_filename, o.m_filename, sizeof(o.m_filename));}
+		Location( const std::string_view& filename_, int line_) noexcept :m_line(line_)
+		{
+			std::size_t len = (filename_.size() >= sizeof( m_filename)) ? (sizeof( m_filename)-1) : filename_.size();
+			std::memcpy( m_filename, filename_.data(), len);
+			m_filename[ len] = 0;
+		}
+
+		int line() const noexcept		{return m_line;}
+		const char* filename() const noexcept	{return m_filename;}
+
+	private:
+		int m_line;
+		char m_filename[ 80];
+	};
+
 public:
 	Error()
-		:std::runtime_error(""),m_code(Ok),m_line(0){}
-	Error( Code code_, int line_=0)
-                :std::runtime_error(map2string(code_,"",line_)),m_code(code_),m_line(line_){}
-	Error( Code code_, const std::string& param_, int line_=0)
-                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_line(line_){}
-	Error( Code code_, const std::string_view& param_, int line_=0)
-                :std::runtime_error(map2string(code_,param_,line_)),m_code(code_),m_line(line_){}
-	Error( Code code_, const char* param_, int line_=0)
-                :std::runtime_error(map2string(code_,param_?param_:"",line_)),m_code(code_),m_line(line_){}
-	Error( const Error& o)
-                :std::runtime_error(o),m_code(o.m_code),m_line(o.m_line){}
-	Error( const Error& o, int line_)
-                :std::runtime_error(o),m_code(o.m_code),m_line(line_){}
+		:std::runtime_error(""),m_code(Ok),m_location(){}
+	Error( Code code_, const Location& location_ = Location())
+                :std::runtime_error(map2string(code_,"",location_)),m_code(code_),m_location(location_){}
+	Error( Code code_, const std::string& param_, const Location& location_ = Location())
+                :std::runtime_error(map2string(code_,param_.c_str(),location_)),m_code(code_),m_location(location_){}
+	Error( Code code_, const std::string_view& param_, const Location& location_ = Location())
+                :std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
+	Error( Code code_, const char* param_, const Location& location_ = Location())
+                :std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
+	Error( const Error& o, const Location& location_ = Location())
+                :std::runtime_error(map2string(o.code(),o.arg(),location_)),m_code(o.m_code),m_location(location_){}
 
-	Code code() const noexcept		{return m_code;}
-	const char* arg() const noexcept	{char const* rt = std::strstr( what(), ": "); return rt?(rt+2):rt;}
-        int line() const noexcept		{return m_line;}
+	Code code() const noexcept			{return m_code;}
+	const char* arg() const noexcept		{char const* rt = std::strstr( what(), ": "); return rt?(rt+2):rt;}
+        const Location location() const noexcept	{return m_location;}
 
         const char* what() const noexcept override
         {
@@ -153,16 +173,18 @@ public:
 
 public:
 	static int parseInteger( char const*& si) noexcept;
+	static std::string_view parseString( char const*& si) noexcept;
 	static void skipSpaces( char const*& si) noexcept;
 	static bool skipUntil( char const*& si, char eb) noexcept;
         static const char* code2String( int code_) noexcept;
 
 private:
-        static std::string map2string( Code code_, const std::string_view& param_, int line_);
+        static std::string map2string( Code code_, const char* param_, const Location& location_);
+        static std::string map2string( Code code_, const std::string_view& param_, const Location& location_);
 
 private:
 	Code m_code;
-	int m_line;
+	Location m_location;
 };
 
 }//namespace

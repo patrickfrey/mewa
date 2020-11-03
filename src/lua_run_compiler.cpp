@@ -345,28 +345,7 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 		{
 			const char* msg = lua_tostring( ls, -1);
 			mewa::Error err = mewa::Error::parseError( msg);
-			if (!err.line())
-			{
-				int line = 0;
-				lua_pushliteral( ls, "line");			// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] "line"
-				lua_rawget( ls, -5);				// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT] [LINE]
-				if (lua_isnil( ls, -1))
-				{}
-				else if (lua_type( ls, -1) == LUA_TNUMBER)
-				{
-					line = lua_tointeger( ls, -1);
-				}
-				else
-				{
-					throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
-				}
-				lua_pop( ls, 1);				// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
-				if (line)
-				{
-					err = mewa::Error( err, line);
-				}
-			}
-			if (err.code() == mewa::Error::UnspecifiedError)
+			if (err.code() == mewa::Error::RuntimeException)
 			{
 				throw mewa::Error( luaErrorCode2ErrorCode( rc), msg ? msg : "");
 			}

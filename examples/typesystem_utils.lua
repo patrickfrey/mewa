@@ -33,13 +33,15 @@ function M.positional_format( fmt, argtable, register, outindex)
 		local index = tonumber( match)
 		if index <= #argtable then
 			return argtable[ index]
-		elseif valtable[ index]
+		elseif valtable[ index] then
 			return valtable[ index]
 		else
-			return valtable[ index] = register()
+			local rr = register()
+			valtable[ index] = rr
+			return rr
 		end
 	end
-	local result = fmt:gsub("[\{]([%d]*)[\}]", subst)
+	local result = fmt:gsub("[{]([%d]*)[}]", subst)
 	local outsubst = nil
 	if outindex <= #argtable then
 		outsubst = argtable[ index]
@@ -73,47 +75,60 @@ function M.traverseCall( node, context)
 end
 
 -- [2] Tree traversal implementation, define scope/step and do the traversal call 
-function M.traverse( node, context)
+function M.traverse( typedb, node, context)
 	local rt = nil
 	if (node.scope) then
 		local parent_scope = typedb:scope( node.scope)
-		rt = traverseCall( node)
+		rt = M.traverseCall( node)
 		typedb:scope( parent_scope)
 	elseif (node.step) then
 		local prev_step = typedb:step( node.step)
-		rt = traverseCall( node)
+		rt = M.traverseCall( node)
 		typedb:step( prev_step)
 	else
-		rt = traverseCall( node)
+		rt = M.traverseCall( node)
 	end
 	return rt
 end
 
 -- [3] Default node visitor doing a traversal and returning the tree structure with the name and scope of the node
-function M.visit( node)
-	return {name=node.call.name, scope=node.scope, arg=traverse( node)}
+function M.visit( typedb, node)
+	return {name=node.call.name, scope=node.scope, arg=M.traverse( typedb, node)}
 end
 
 
 -- Error reporting:
--- [1] Exit with error for no result or an ambiguous result returned by typedb:resolve_type
-function M.errorResolveType( line, typeId, contextType, typeName)
-	local resolveTypeString = typeName
+-- [1] General error
+function M.errorMessage( line, fmt, ...)
+	error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
+end
+
+function typeString( typedb, typeId)
+	if typeId == 0 then
+		return "<unbound>"
+	else
+		return typedb:type_string( typeId)
+	end
+end
+
+-- [2] Exit with error for no result or an ambiguous result returned by typedb:resolve_type
+function M.errorResolveType( typedb, line, typeId, contextType, typeName)
+	local resolveTypeString
 	if type(contextType) == "table" then
-		resolveTypeString = "{ " .. typedb:type_string( contextType[1])
-		for ii = 2,#contextType,+1 do
-			resolveTypeString = ", " .. typedb:type_string( contextType[ ii])
+		resolveTypeString = "{ " .. typeString( typedb, contextType[1])
+		for ii = 2,#contextType,1 do
+			resolveTypeString = ", " .. typeString( typedb, contextType[1])
 		end
 		resolveTypeString = resolveTypeString .. " } => " .. typeName
-	elseif contextType ~= 0 then
-		resolveTypeString = typedb:type_string( contextType) .. " => " .. typeName
+	else
+		resolveTypeString = typeString( typedb, contextType) .. " => " .. typeName
 	end
 	if not typeId then
-		error( string.format("Error on line %d: Failed to resolve type %s", line, resolveTypeString))
+		errorMessage( line, "Failed to resolve type %s", resolveTypeString)
 	elseif type(typeId) == "table" then
 		local t1 = typedb:type_string( typeId[1])
 		local t2 = typedb:type_string( typeId[2])
-		error( string.format("Error on line %d: Ambiguous reference resolving type %s: %s, %s", line, resolveTypeString, t1, t2))
+		errorMessage( line, "Ambiguous reference resolving type %s: %s, %s", resolveTypeString, t1, t2)
 	end
 end
 

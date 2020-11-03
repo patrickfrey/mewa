@@ -31,7 +31,11 @@ static std::string errorToString( const Error& error)
 	std::ostringstream buf;
 	char const* arg = error.arg();
 	if (!arg) arg = "";
-	buf << "Code=" << (int)error.code() << ", Line=" << error.line() << ", Arg=[" << arg << "], What=[" << error.what() << "]";
+	buf << "Code=" << (int)error.code() 
+			<< ", Line=" << error.location().line()
+			<< ", File=\"" << error.location().filename() << "\""
+			<< ", Arg=[" << arg << "]"
+			<< ", What=[" << error.what() << "]";
 	return buf.str();
 }
 
@@ -42,19 +46,34 @@ static void testError( std::ostream& out, const char* title, const Error& error,
 	out << "Test " << title << ": " << errorToString( parsedError) << std::endl;
 }
 
-static void testUnspecifiedError( std::ostream& out, bool verbose)
+static void testRuntimeException( std::ostream& out, bool verbose)
 {
-	Error parsedError = Error::parseError( "Error from outer space!");
-	if (verbose) std::cerr << "Test unspecified error:\n\tOUT " << errorToString( parsedError) << std::endl;
-	out << "Test unspecified error: " << errorToString( parsedError) << std::endl;
+	Error parsedError = Error::parseError( "Message from outer space!");
+	if (verbose) std::cerr << "Test runtime error:\n\tOUT " << errorToString( parsedError) << std::endl;
+	out << "Test runtime error: " << errorToString( parsedError) << std::endl;
 }
 
-static void testUnspecifiedErrorWithLineInfo( std::ostream& out, bool verbose)
+static void testRuntimeExceptionWithLineInfo( std::ostream& out, bool verbose)
 {
-	Error parsedError = Error::parseError( "at line 91: Error from outer space with line info!");
-	if (verbose) std::cerr << "Test unspecified error with line info:\n\tOUT " << errorToString( parsedError) << std::endl;
-	out << "Test unspecified error with line info: " << errorToString( parsedError) << std::endl;
+	Error parsedError = Error::parseError( "at line 91: Message from outer space with line info!");
+	if (verbose) std::cerr << "Test runtime error with line info:\n\tOUT " << errorToString( parsedError) << std::endl;
+	out << "Test runtime error with line info: " << errorToString( parsedError) << std::endl;
 }
+
+static void testRuntimeExceptionWithLocationInfo( std::ostream& out, bool verbose)
+{
+	Error parsedError = Error::parseError( "at line 91 in file \"program.txt\": Message from outer space with location info!");
+	if (verbose) std::cerr << "Test runtime error with location info:\n\tOUT " << errorToString( parsedError) << std::endl;
+	out << "Test runtime error with location info: " << errorToString( parsedError) << std::endl;
+}
+
+static void testCompileErrorWithLineInfo( std::ostream& out, bool verbose)
+{
+	Error parsedError = Error::parseError( "Error at line 612: This is a compilation error!");
+	if (verbose) std::cerr << "Test compile error with line info:\n\tOUT " << errorToString( parsedError) << std::endl;
+	out << "Test compile error with line info: " << errorToString( parsedError) << std::endl;
+}
+
 
 int main( int argc, const char* argv[] )
 {
@@ -95,34 +114,57 @@ int main( int argc, const char* argv[] )
 		}
 
 		std::string expected{R"(
-Test Error(): Code=0, Line=0, Arg=[], What=[]
-Test Error( errno): Code=12, Line=0, Arg=[], What=[#12 "Cannot allocate memory"]
-Test Error( code): Code=421, Line=0, Arg=[], What=[#421 "Bad character in a regular expression passed to the lexer"]
-Test Error( code, line): Code=439, Line=345, Arg=[], What=[#439 "Incompatible mewa major version. You need a higher version of the mewa Lua module" at line 345]
-Test Error( code, param): Code=437, Line=0, Arg=[13.45], What=[#437 "Bad mewa version": 13.45]
-Test Error( code, param, line): Code=421, Line=123, Arg=[int, float], What=[#421 "Bad character in a regular expression passed to the lexer" at line 123: int, float]
-Test Error( UnspecifiedError): Code=402, Line=0, Arg=[], What=[#402 "Unspecified error"]
-Test Error( UnspecifiedError, param): Code=402, Line=0, Arg=[an unspecified error with msg], What=[#402 "Unspecified error": an unspecified error with msg]
-Test Error( UnspecifiedError, param, line): Code=402, Line=234, Arg=[an unspecified error with msg and line info], What=[#402 "Unspecified error" at line 234: an unspecified error with msg and line info]
-Test unspecified error: Code=402, Line=0, Arg=[Error from outer space!], What=[#402 "Unspecified error": Error from outer space!]
-Test unspecified error with line info: Code=402, Line=91, Arg=[Error from outer space with line info!], What=[#402 "Unspecified error" at line 91: Error from outer space with line info!]
+Test Error(): Code=0, Line=0, File="", Arg=[], What=[]
+Test Error( errno): Code=12, Line=0, File="", Arg=[], What=[#12 "Cannot allocate memory"]
+Test Error( code): Code=421, Line=0, File="", Arg=[], What=[#421 "Bad character in a regular expression passed to the lexer"]
+Test Error( code, line): Code=439, Line=345, File="", Arg=[], What=[#439 "Incompatible mewa major version. You need a higher version of the mewa Lua module" at line 345]
+Test Error( code, Location( filename, line)): Code=411, Line=345, File="file.txt", Arg=[], What=[#411 "Expected table as argument" at line 345 in file "file.txt"]
+Test Error( code, param): Code=437, Line=0, File="", Arg=[13.45], What=[#437 "Bad mewa version": 13.45]
+Test Error( code, param, line): Code=421, Line=123, File="", Arg=[int, float], What=[#421 "Bad character in a regular expression passed to the lexer" at line 123: int, float]
+Test Error( code, param, Location( filename, line)): Code=416, Line=123, File="source.txt", Arg=[int, float], What=[#416 "Too few arguments" at line 123 in file "source.txt": int, float]
+Test Error( RuntimeException): Code=402, Line=0, File="", Arg=[], What=[#402 "Runtime error exception"]
+Test Error( RuntimeException, param): Code=402, Line=0, File="", Arg=[a runtime error with msg], What=[#402 "Runtime error exception": a runtime error with msg]
+Test Error( RuntimeException, param, line): Code=402, Line=234, File="", Arg=[a runtime error with msg and line info], What=[#402 "Runtime error exception" at line 234: a runtime error with msg and line info]
+Test Error( RuntimeException, param, line): Code=402, Line=234, File="input.txt", Arg=[a runtime error with msg and location info], What=[#402 "Runtime error exception" at line 234 in file "input.txt": a runtime error with msg and location info]
+Test runtime error: Code=402, Line=0, File="", Arg=[Message from outer space!], What=[#402 "Runtime error exception": Message from outer space!]
+Test runtime error with line info: Code=402, Line=91, File="", Arg=[Message from outer space with line info!], What=[#402 "Runtime error exception" at line 91: Message from outer space with line info!]
+Test runtime error with location info: Code=402, Line=91, File="program.txt", Arg=[Message from outer space with location info!], What=[#402 "Runtime error exception" at line 91 in file "program.txt": Message from outer space with location info!]
+Test compile error with line info: Code=418, Line=612, File="", Arg=[This is a compilation error!], What=[Error at line 612: This is a compilation error!]
 
 )"};
 		std::ostringstream outputbuf;
 		outputbuf << std::endl;
 
-		testError( outputbuf, "Error()", Error(), verbose);
-		testError( outputbuf, "Error( errno)", Error( (Error::Code)12/*ENOMEM*/), verbose);
-		testError( outputbuf, "Error( code)", Error( Error::IllegalFirstCharacterInLexer), verbose);
-		testError( outputbuf, "Error( code, line)", Error( Error::IncompatibleMewaMajorVersion, 345), verbose);
-		testError( outputbuf, "Error( code, param)", Error( Error::BadMewaVersion, "13.45"), verbose);
-		testError( outputbuf, "Error( code, param, line)", Error( Error::IllegalFirstCharacterInLexer, "int, float", 123), verbose);
+		testError( outputbuf, "Error()",
+					Error(), verbose);
+		testError( outputbuf, "Error( errno)",
+					Error( (Error::Code)12/*ENOMEM*/), verbose);
+		testError( outputbuf, "Error( code)",
+					Error( Error::IllegalFirstCharacterInLexer), verbose);
+		testError( outputbuf, "Error( code, line)",
+					Error( Error::IncompatibleMewaMajorVersion, 345), verbose);
+		testError( outputbuf, "Error( code, Location( filename, line))",
+					Error( Error::ExpectedTableArgument, Error::Location( "file.txt", 345)), verbose);
+		testError( outputbuf, "Error( code, param)",
+					Error( Error::BadMewaVersion, "13.45"), verbose);
+		testError( outputbuf, "Error( code, param, line)",
+					Error( Error::IllegalFirstCharacterInLexer, "int, float", 123), verbose);
+		testError( outputbuf, "Error( code, param, Location( filename, line))",
+					Error( Error::TooFewArguments, "int, float", Error::Location( "source.txt", 123)), verbose);
 
-		testError( outputbuf, "Error( UnspecifiedError)", Error( Error::UnspecifiedError), verbose);
-		testError( outputbuf, "Error( UnspecifiedError, param)", Error( Error::UnspecifiedError, "an unspecified error with msg"), verbose);
-		testError( outputbuf, "Error( UnspecifiedError, param, line)", Error( Error::UnspecifiedError, "an unspecified error with msg and line info", 234), verbose);
-		testUnspecifiedError( outputbuf, verbose);
-		testUnspecifiedErrorWithLineInfo( outputbuf, verbose);
+		testError( outputbuf, "Error( RuntimeException)",
+					Error( Error::RuntimeException), verbose);
+		testError( outputbuf, "Error( RuntimeException, param)",
+					Error( Error::RuntimeException, "a runtime error with msg"), verbose);
+		testError( outputbuf, "Error( RuntimeException, param, line)",
+					Error( Error::RuntimeException, "a runtime error with msg and line info", 234), verbose);
+		testError( outputbuf, "Error( RuntimeException, param, line)",
+					Error( Error::RuntimeException, "a runtime error with msg and location info", Error::Location( "input.txt", 234)), verbose);
+
+		testRuntimeException( outputbuf, verbose);
+		testRuntimeExceptionWithLineInfo( outputbuf, verbose);
+		testRuntimeExceptionWithLocationInfo( outputbuf, verbose);
+		testCompileErrorWithLineInfo( outputbuf, verbose);
 
 		outputbuf << "\n";
 
@@ -131,7 +173,7 @@ Test unspecified error with line info: Code=402, Line=91, Arg=[Error from outer 
 		{
 			writeFile( "build/testError.out", output);
 			writeFile( "build/testError.exp", expected);
-			std::cerr << "ERR test output (build/testError.out) differs expected build/testError.exp" << std::endl;
+			std::cerr << "ERR test output differs expected (diff build/testError.out build/testError.exp)" << std::endl;
 			return 3;
 		}
 		else
