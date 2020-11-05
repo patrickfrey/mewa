@@ -1,5 +1,10 @@
 --- Utility functions for the typesystem module
 
+-- Module object with all functions exported
+local M = {}
+
+-- Name mangling/demangling:
+-- Helpers for encoding/decoding:
 function char_to_hex( c)
 	return string.format("_%02X", string.byte(c))
 end
@@ -8,10 +13,6 @@ function hex_to_char( x)
 	return string.char( tonumber( x, 16))
 end
 
--- Module object with all functions exported
-local M = {}
-
--- Name mangling/demangling:
 -- [1] Mangle a name
 function M.mangleName( name)
 	return name:gsub("([^%w _])", char_to_hex)
@@ -27,6 +28,7 @@ function M.mangleVariableName( name)
 	return M.mangleName( "=" .. name)
 end
 
+-- Template for LLVM Code synthesis with substitution of positional arguments in curly brackets {1},{2},{3}, ...
 function M.positional_format( fmt, argtable, register, outindex)
 	local valtable = {}
 	local subst = function( match)
@@ -35,18 +37,20 @@ function M.positional_format( fmt, argtable, register, outindex)
 			return argtable[ index]
 		elseif valtable[ index] then
 			return valtable[ index]
-		else
+		elseif register then
 			local rr = register()
 			valtable[ index] = rr
 			return rr
+		else
+			M.errorMessage( 0, "Can't build constructor for %s, having unbound variables and no register allocator defined", fmt)
 		end
 	end
 	local result = fmt:gsub("[{]([%d]*)[}]", subst)
 	local outsubst = nil
 	if outindex <= #argtable then
-		outsubst = argtable[ index]
+		outsubst = argtable[ outindex]
 	else
-		outsubst = valtable[ index]
+		outsubst = valtable[ outindex]
 	end
 	return result,outsubst
 end
@@ -65,7 +69,7 @@ function M.traverseCall( node, context)
 					rt[ ii] = subnode.call.proc( subnode, context)
 				end
 			else
-				rt[ ii] = subnode
+				rt[ ii] = subnode.value
 			end
 		end
 		return rt
@@ -112,7 +116,7 @@ function typeString( typedb, typeId)
 end
 
 -- [2] Exit with error for no result or an ambiguous result returned by typedb:resolve_type
-function M.errorResolveType( typedb, line, typeId, contextType, typeName)
+function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
 	local resolveTypeString
 	if type(contextType) == "table" then
 		resolveTypeString = "{ " .. typeString( typedb, contextType[1])
@@ -123,11 +127,11 @@ function M.errorResolveType( typedb, line, typeId, contextType, typeName)
 	else
 		resolveTypeString = typeString( typedb, contextType) .. " => " .. typeName
 	end
-	if not typeId then
+	if not resultContextTypeId then
 		errorMessage( line, "Failed to resolve type %s", resolveTypeString)
 	elseif type(typeId) == "table" then
-		local t1 = typedb:type_string( typeId[1])
-		local t2 = typedb:type_string( typeId[2])
+		local t1 = typedb:type_string( resultContextTypeId[1])
+		local t2 = typedb:type_string( resultContextTypeId[2])
 		errorMessage( line, "Ambiguous reference resolving type %s: %s, %s", resolveTypeString, t1, t2)
 	end
 end

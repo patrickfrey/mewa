@@ -712,10 +712,26 @@ static int mewa_typedb_type_parameters( lua_State* ls)
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
-		mewa::lua::checkStack( functionName, ls, 2);
+		mewa::lua::checkStack( functionName, ls, 6);
 		int type = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
 		auto rt = td->impl->typeParameters( type);
 		mewa::lua::pushParameters( ls, functionName, td->objTableName.buf, rt);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
+static int mewa_typedb_type_nof_parameters( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:type_nof_parameters";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 2);
+		int type = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
+		auto rt = td->impl->typeParameters( type);
+		lua_pushinteger( ls, rt.size());
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;
@@ -991,6 +1007,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "type_name",		mewa_typedb_type_name },
 	{ "type_string",	mewa_typedb_type_string },
 	{ "type_parameters",	mewa_typedb_type_parameters },
+	{ "type_nof_parameters",mewa_typedb_type_nof_parameters },
 	{ "type_constructor",	mewa_typedb_type_constructor },
 	{ "type_reduction",	mewa_typedb_type_reduction },
 	{ "type_reductions",	mewa_typedb_type_reductions },

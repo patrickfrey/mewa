@@ -11,7 +11,7 @@
 /// \file "error.hpp"
 #ifndef _MEWA_ERROR_HPP_INCLUDED
 #define _MEWA_ERROR_HPP_INCLUDED
-#if __cplusplus >= 201103L
+#if __cplusplus >= 201703L
 #include <utility>
 #include <string>
 #include <string_view>

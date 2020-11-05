@@ -53,11 +53,13 @@ writeLuaInclude() {
 	local INCPATH=$2
 	local LIBPATH=$3
 	local BINPATH=$4
+	local CMODPATH=$5
 	echo "LUAVER   := $VERSION" > Lua.inc
 	echo "LUAINC   := $INCPATH" >> Lua.inc
 	echo "LUALIBDIR:= $LIBPATH" >> Lua.inc
 	echo "LUABIN   := $BINPATH" >> Lua.inc
 	echo "LUALIBS  := -llua$VERSION -L$LIBPATH" >> Lua.inc
+	echo "CMODPATH := $CMODPATH" >> Lua.inc
 }
 
 searchLuaVersionWithPkgConfig() {
@@ -73,9 +75,15 @@ searchLuaVersionWithPkgConfig() {
 			local INCPATH="`$PKGCONFIG --variable=includedir lua$VERSION`/lua$VERSION"
 			local LIBPATH=`$PKGCONFIG --variable=libdir lua$VERSION`
 			local PREFIX=`$PKGCONFIG --variable=prefix lua$VERSION`
+			local CMODPATH=`$PKGCONFIG --variable=INSTALL_CMOD lua$VERSION`
+			if [ x$CMODPATH != 'x' ]; then
+				>&2 echo "$PKGCONFIG --variable=INSTALL_CMOD lua$VERSION => $CMODPATH"
+			else
+				CMODPATH="$LIBPATH/lua/$VERSION"
+			fi
 			if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ] && [ x$PREFIX != 'x' ] ; then
 				local BINPATH="$PREFIX/bin/lua$VERSION"
-				writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
+				writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH $CMODPATH
 				>&2 echo "$PKGCONFIG --variable=includedir lua$VERSION => $INCPATH"
 				>&2 echo "$PKGCONFIG --variable=libdir lua$VERSION => $LIBPATH"
 				>&2 echo "$PKGCONFIG --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
@@ -104,12 +112,14 @@ searchLuaVersionWithRawFind() {
 	local INCPATH=`findLuaInclude $VERSION "/usr/local/include /usr/include"`
 	local LIBPATH=`findLuaLib $VERSION "/usr/local/lib /usr/lib"`
 	local BINPATH=`findLuaBin $VERSION "/usr/bin /usr/local/bin"`
+	local CMODPATH="$LIBPATH/lua/$VERSION"
 	if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
-		writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH
+		writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH $CMODPATH
 		>&2 echo "Lua include path = $INCPATH"
 		>&2 echo "Lua library path = $LIBPATH"
 		>&2 echo "Lua binary path = $BINPATH"
 		>&2 echo "Lua version = $VERSION"
+		>&2 echo "Lua cmod install path = $CMODPATH"
 		>&2 echo "Wrote file Lua.inc:"
 		>&2 cat Lua.inc
 		exit 0

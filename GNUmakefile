@@ -128,6 +128,7 @@ install: all
 	mkdir -p $(MANPAGES)/man1
 	cp MANPAGE $(MANPAGES)/man1/mewa.1
 	gzip -f $(MANPAGES)/man1/mewa.1
+	cp $(MODULE) $(CMODPATH)
 
 # ONLY FOR DEVELOPPERS (All generated files of make doc are checked in):
 DOCSRC := $(wildcard $(DOCDIR)/*.md.in)

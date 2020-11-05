@@ -18,7 +18,7 @@
 #include <cstring>
 #include <limits>
 
-#if __cplusplus < 201103L
+#if __cplusplus < 201703L
 #error Building mewa requires C++17
 #endif
 

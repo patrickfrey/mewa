@@ -22,6 +22,8 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 1. [Type Attributes](#typeAttributes)
     * [typedb:type_name](#type_name)
     * [typedb:type_string](#type_string)
+    * [typedb:type_parameters](#type_parameters)
+    * [typedb:type_nof_parameters](#type_nof_parameters)
     * [typedb:type_constructor](#type_constructor)
     * [typedb:type_reduction](#type_reduction)
     * [typedb:type_reductions](#type_reductions)
@@ -250,9 +252,10 @@ Otherwise the first return value is the context-type of the resolved type and th
 Get the name of the type as it was specified as argument of 'typedb:def_type'.
 
 #### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
+| #          | Name   | Type              | Description                      |
+| ---------- | ------ | ----------------- | -------------------------------- |
+| 1st        | type   | integer           | Type identifier                  |
+| Return     |        | string            | Name of the type without context |
 
 
 <a name="type_string"/>
@@ -261,9 +264,34 @@ Get the name of the type as it was specified as argument of 'typedb:def_type'.
 Get the full signature of the type as string. This is the full name of the context type, the name and the full name of all parameters defined.
 
 #### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
+| #          | Name | Type              | Description                                                                                    |
+| ---------- | ---- | ----------------- | ---------------------------------------------------------------------------------------------- |
+| 1st        | type | integer           | Type identifier                                                                                |
+| Return     |      | string            | Full name of the type with context separated by spaces and parameters in oval brackets '(' ')' |
+
+
+<a name="type_parameters"/>
+
+### typedb:type_parameters
+Get the list of parameters defined for a type.
+
+#### Parameter
+| #          | Name | Type     | Description                                                                          |
+| ---------- | ---- | -------- | ------------------------------------------------------------------------------------ |
+| 1st        | type | integer  | Type identifier                                                                      |
+| Return     |      | array    | List of type/constructor pairs as structures with "type","constructor" member names. |
+
+
+<a name="type_nof_parameters"/>
+
+### typedb:type_nof_parameters
+Get the number of parameters defined for a type.
+
+#### Parameter
+| #          | Name | Type     | Description                                     |
+| ---------- | ---- | -------- | ----------------------------------------------- |
+| 1st        | type | integer  | Type identifier                                 |
+| Return     |      | integer  | Number of parameters defined for this function. |
 
 
 <a name="type_constructor"/>
@@ -272,9 +300,13 @@ Get the full signature of the type as string. This is the full name of the conte
 Get the constructor of a type.
 
 #### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
+| #          | Name | Type              | Description              |
+| ---------- | ---- | ----------------- | ------------------------ |
+| 1st        | type | integer           | Type identifier          |
+| Return     |      | any type          | Constructor of the type. |
+
+#### Remark
+Exits with error if the type passed is not valid. Returns *nil* if type is 0.
 
 
 <a name="type_reduction"/>
