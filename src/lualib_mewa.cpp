@@ -496,12 +496,12 @@ static int mewa_typedb_def_type( lua_State* ls)
 	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 6/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 6/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
 		lua_getglobal( ls, td->objTableName.buf);
-		int constructor = mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td);
+		int constructor = (nargs >= 4) ? mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td) : 0;
 		std::pmr::vector<mewa::TypeDatabase::Parameter> parameter;
 		if (nargs >= 5) parameter = mewa::lua::getArgumentAsParameterList( functionName, ls, 5, -1/*objtable*/, td, &memrsc_parameter);
 		int priority = (nargs >= 6) ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 0;

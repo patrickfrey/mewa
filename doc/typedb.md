@@ -22,6 +22,8 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 1. [Type Attributes](#typeAttributes)
     * [typedb:type_name](#type_name)
     * [typedb:type_string](#type_string)
+    * [typedb:type_parameters](#type_parameters)
+    * [typedb:type_nof_parameters](#type_nof_parameters)
     * [typedb:type_constructor](#type_constructor)
     * [typedb:type_reduction](#type_reduction)
     * [typedb:type_reductions](#type_reductions)
@@ -164,9 +166,9 @@ The scope of the newly defined type has been set with the last call of the sette
 | ------ | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
 | 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
 | 2nd    | name         | string           | Name of the type defined                                                                                    |
-| 3rd    | constructor  | any type not nil | Constructor describing how the type is built                                                                |
-| 4th    | parameter    | array of types   | Array of type/constructor pairs                                                                             |
-| 5th    | priority     | integer          | Priority of the definition, Higher priority overwrites lower priority definition.                           |
+| 3rd    | constructor  | any type         | (optional) Constructor describing how the type is built (*nil* if undefined)                                |
+| 4th    | parameter    | array            | (optional) Array of type/constructor pair or type handles without constructor (parameters).                 |
+| 5th    | priority     | integer          | (optional) Priority of the definition, Higher priority overwrites lower priority definition.                |
 | Return |              | integer          | identifier assigned to the type or -1 if the definition is a duplicate or 0 if it is silently discarded (*) |
 
 ##### Remark (*)
@@ -182,10 +184,9 @@ The scope of the lookup type has been set with the last call of the setter [type
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                 |
 | ------ | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| 1st    | scope        | array            | Scope as array (pair of integers) of the lookup type                                                        |
-| 2nd    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
-| 3rd    | name         | string           | Name of the type defined                                                                                    |
-| 4th    | parameter    | array of integers| Array of type handles                                                                                       |
+| 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
+| 2nd    | name         | string           | Name of the type defined                                                                                    |
+| 3rd    | parameter    | array            | Array of type handles (integers)                                                                            |
 | Return |              | integer          | identifier assigned to the type or 0 if not found                                                           |
 
 
@@ -204,7 +205,7 @@ The scope of the newly defined reduction has been set with the last call of the 
 | ------ | ------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
 | 1st    | dest-type    | integer          | Resulting type of the reduction                                                                                     |
 | 2nd    | src-type     | integer          | Origin type of the reduction                                                                                        |
-| 3rd    | constructor  | any type not nil | Constructor describing how the type reduction is implemented.                                                       |
+| 3rd    | constructor  | any type         | Constructor describing how the type reduction is implemented (*nil* if undefined ~ identity).                       |
 | 4th    | tag          | integer 1..32    | Tag assigned to the reduction, used to restrict a type search or derivation to selected classes of reductions.      |
 | 5th    | weight       | number           | (optional) Weight assigned to the reduction, used to calculate the shortest path of reductions for resolving types. |
 
@@ -216,7 +217,7 @@ The scope of the newly defined reduction has been set with the last call of the 
 <a name="reduction_tagmask"/>
 
 ### typedb:reduction_tagmask
-Create a set of tags for type searches (typedb:resolve_type) or derivations (typedb:derive_type).
+Create a set of tags for type search (typedb:resolve_type) or derivations (typedb:derive_type).
 
 #### Parameter
 | #      | Name         | Type    | Description                                 |
@@ -231,14 +232,17 @@ Finds the shortest path (sum of reduction weights) of reductions of the classes 
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #          | Name         | Type              | Description                                                                                         |
-| ---------- | ------------ | ----------------- | --------------------------------------------------------------------------------------------------- |
-| 1st        | dest-type    | integer           | Resulting type to derive.                                                                           |
-| 2nd        | src-type     | integer           | Start type of the reduction path leading to the result type.                                        |
-| 3rd        | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.        |
-| Return 1st |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.                |
-| Return 2nd |              | number            | Weight sum of best path found                                                                       |
-| Return 3rd |              | array             | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*. |
+| #          | Name         | Type              | Description                                                                                           |
+| ---------- | ------------ | ----------------- | ----------------------------------------------------------------------------------------------------- |
+| 1st        | dest-type    | integer           | Resulting type to derive.                                                                             |
+| 2nd        | src-type     | integer           | Start type of the reduction path leading to the result type.                                          |
+| 3rd        | tagmask      | bit set (integer) | (optional) Set of tags (*) that selects the reductions to use (select all if undefined).              |
+| Return 1st |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.                  |
+| Return 2nd |              | number            | Weight sum of best path found                                                                         |
+| Return 3rd |              | array             | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*.   |
+
+#### Remark (*)
+Built with [typedb:reduction_tagmask](#reduction_tagmask).
 
 <a name="resolve_type"/>
 
@@ -252,13 +256,15 @@ The scope step of the search that defines the valid reduction candidates has bee
 | ---------- | --------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
 | 1st        | context-type(s) | integer/array     | Single type or array of types referring to the context of the type (*)                                            |
 | 2nd        | name            | string            | Name of the type searched                                                                                         |
-| 3rd        | tagmask         | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to use.                      |
+| 3rd        | tagmask         | bit set (integer) | (optional) Set of tags (**) that selects the reduction classes to use.                                            |
 | Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of an ambiguous result.      | 
 | Return 2nd |                 | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
 | Return 3rd |                 | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
 
 #### Remark (*)
 The context-type 0 is reserved for types that are not a member of some other structure.
+#### Remark (**)
+Built with [typedb:reduction_tagmask](#reduction_tagmask).
 
 #### Note
 To inspect the result you first have to look if the 1st return value is *nil* (=> the type could not be resolved).
@@ -276,9 +282,10 @@ Otherwise the first return value is the context-type of the resolved type and th
 Get the name of the type as it was specified as argument of 'typedb:def_type'.
 
 #### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
+| #          | Name   | Type              | Description                      |
+| ---------- | ------ | ----------------- | -------------------------------- |
+| 1st        | type   | integer           | Type identifier                  |
+| Return     |        | string            | Name of the type without context |
 
 
 <a name="type_string"/>
@@ -287,9 +294,34 @@ Get the name of the type as it was specified as argument of 'typedb:def_type'.
 Get the full signature of the type as string. This is the full name of the context type, the name and the full name of all parameters defined.
 
 #### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
+| #          | Name | Type              | Description                                                                                    |
+| ---------- | ---- | ----------------- | ---------------------------------------------------------------------------------------------- |
+| 1st        | type | integer           | Type identifier                                                                                |
+| Return     |      | string            | Full name of the type with context separated by spaces and parameters in oval brackets '(' ')' |
+
+
+<a name="type_parameters"/>
+
+### typedb:type_parameters
+Get the list of parameters defined for a type.
+
+#### Parameter
+| #          | Name | Type     | Description                                                                          |
+| ---------- | ---- | -------- | ------------------------------------------------------------------------------------ |
+| 1st        | type | integer  | Type identifier                                                                      |
+| Return     |      | array    | List of type/constructor pairs as structures with "type","constructor" member names. |
+
+
+<a name="type_nof_parameters"/>
+
+### typedb:type_nof_parameters
+Get the number of parameters defined for a type.
+
+#### Parameter
+| #          | Name | Type     | Description                                     |
+| ---------- | ---- | -------- | ----------------------------------------------- |
+| 1st        | type | integer  | Type identifier                                 |
+| Return     |      | integer  | Number of parameters defined for this function. |
 
 
 <a name="type_constructor"/>
@@ -298,9 +330,13 @@ Get the full signature of the type as string. This is the full name of the conte
 Get the constructor of a type.
 
 #### Parameter
-| #          | Name | Type              | Description             |
-| ---------- | ---- | ----------------- | ----------------------- |
-| 1st        | type | integer           | Type identifier         |
+| #          | Name | Type              | Description                                    |
+| ---------- | ---- | ----------------- | ---------------------------------------------- |
+| 1st        | type | integer           | Type identifier                                |
+| Return     |      | any type          | Constructor of the type or *nil* if undefined. |
+
+#### Remark
+Exits with error if the type passed is not valid. Returns *nil* if type is 0 or if not constructor is defined for that type.
 
 
 <a name="type_reduction"/>
@@ -314,9 +350,11 @@ The scope step of the search that defines the valid reduction candidates has bee
 | ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | 1st    | dest-type    | integer           | Resulting type to of the reduction.                                                                                  |
 | 2nd    | src-type     | integer           | Start type of the reduction.                                                                                         |
-| 3rd    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.                    |
+| 3rd    | tagmask      | bit set (integer) | Set of tags (*) that selects the reduction classes to consider.                                                      |
 | Return |              | any type          | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the argument scope step. |
 
+#### Remark (*)
+Built with [typedb:reduction_tagmask](#reduction_tagmask).
 
 <a name="type_reductions"/>
 
@@ -328,9 +366,11 @@ The scope step of the search that defines the valid reduction candidates has bee
 | #      | Name         | Type              | Description                                                                                        |
 | ------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------------- |
 | 1st    | type         | integer           | Start type of the reductions to inspect.                                                           |
-| 2nd    | tagmask      | bit set (integer) | Set of tags (built with typedb:reduction_tagmask) that selects the reduction classes to consider.  |
+| 2nd    | tagmask      | bit set (integer) | Set of tags (*) that selects the reduction classes to consider.                                    |
 | Return |              | array             | List of type/constructor pairs as structures with "type","constructor" member names.               | 
 
+#### Remark (*)
+Built with [typedb:reduction_tagmask](#reduction_tagmask).
 
 
 <a name="introspection"/>

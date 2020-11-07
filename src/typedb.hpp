@@ -232,7 +232,7 @@ public:
 	/// \param[in] scope the scope of this definition
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
-	/// \param[in] constructor handle for the constructor of the type
+	/// \param[in] constructor handle for the constructor of the type or 0 if not defined
 	/// \param[in] parameter list of parameters as part of the function signature
 	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
@@ -252,11 +252,12 @@ public:
 	/// \return the tree built
 	TypeDefinitionTree getTypeDefinitionTree() const;
 
-	/// \brief Define a reduction of a type to another type with a constructor that implements the construction of the target type from the source type
+	/// \brief Define a reduction of a type to another type
 	/// \param[in] scope the scope of this definition
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] constructor the handle for the constructor that implements the construction of the target type from the source type
+	///				or 0 for the identity (no constructor needed)
 	/// \param[in] tag value inbetween 1 and 32 attached to the reduction that classifies it.
 	/// \note	A search involving type reductions selects the reductions considered by their tags with a set of tags (TagMask).
 	/// \param[in] weight the weight given to the reduction in the search, the reduction path with the lowest sum of weights wins
@@ -267,12 +268,12 @@ public:
 	/// \return the tree built
 	ReductionDefinitionTree getReductionDefinitionTree() const;
 
-	/// \brief Get the constructor of a reduction of a type to another type
+	/// \brief Get the constructor of a reduction of a type to another type or 0 if undefined
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
-	/// \return the constructor of the reduction found, -1 if not found
+	/// \return the constructor of the reduction found, -1 if not found, 0 if undefined
 	/// \note throws Error::AmbiguousTypeReference if more than one reduction is found
 	int reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
 
@@ -331,7 +332,7 @@ public:
 	/// \return a view on the list of parameters
 	ParameterList typeParameters( int type) const;
 
-	/// \brief Get the constructor of a type
+	/// \brief Get the constructor of a type or 0 if undefined
 	/// \param[in] type the handle of the type (return value of defineType)
 	/// \return the handle of the constructor of the type
 	int typeConstructor( int type) const;

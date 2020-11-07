@@ -130,6 +130,13 @@ install: all
 	gzip -f $(MANPAGES)/man1/mewa.1
 	cp $(MODULE) $(CMODPATH)
 
+uninstall:
+	rm $(CMODPATH)/mewa.so
+	rm $(MANPAGES)/man1/mewa.1.gz
+	rm $(INCDEST)/mewa/*.hpp
+	rm $(LIBDEST)/libmewa.so*
+	rm $(DESTINATION)/mewa
+
 # ONLY FOR DEVELOPPERS (All generated files of make doc are checked in):
 DOCSRC := $(wildcard $(DOCDIR)/*.md.in)
 doc: all $(DOCSRC)

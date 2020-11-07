@@ -8,7 +8,7 @@ Cmake with gcc or clang with C++17 support.
 Install packages with 'apt-get'/aptitude.
 
 ## Required packages
-        lua5.2 liblua5.2-dev luarocks llvm bigint
+        lua5.2 liblua5.2-dev luarocks llvm LuaBcd
 
 ## Required luarocks packages
 	penlight filesystem
