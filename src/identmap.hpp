@@ -74,7 +74,7 @@ struct IdentKeyEnvelop
 		return ki == length;
 	}
 
-	std::size_t hash() const noexcept
+	std::uint64_t hash() const noexcept
 	{
 		return hashword2( key);
 	}
@@ -117,7 +117,7 @@ private:
 			c ^= b; c -= rot(b,24);
 		}
 	};
-	static std::size_t hashword2( const IdentKey* key) noexcept
+	static std::uint64_t hashword2( const IdentKey* key) noexcept
 	{
 		Bank bank;
 		int length = key->alignedsize();
@@ -139,7 +139,7 @@ private:
 			case 1 : bank.a += kk[0];
 				bank.final();
 		}
-		return ((std::size_t)bank.c << 32) + (std::size_t)(bank.b + bank.a);
+		return ((std::uint64_t)bank.c << 32) + (std::uint64_t)(bank.b + bank.a);
 	}
 };
 
@@ -151,7 +151,7 @@ namespace std
 	{
 	public:
 		hash<mewa::IdentKeyEnvelop>(){}
-		std::size_t operator()( mewa::IdentKeyEnvelop const& key) const noexcept
+		std::uint64_t operator()( mewa::IdentKeyEnvelop const& key) const noexcept
 		{
 			return key.hash();
 		}
@@ -213,7 +213,7 @@ public:
 		return (fi == ParentClass::end()) ? 0 : fi->second;
 	}
 
-	std::size_t hash( const std::string_view& str) const noexcept
+	std::uint64_t hash( const std::string_view& str) const noexcept
 	{
 		int buffer[ 2048];
 		mewa::monotonic_buffer_resource local_memrsc( buffer, sizeof buffer);
