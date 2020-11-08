@@ -275,7 +275,7 @@ public:
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \return the constructor of the reduction found, -1 if not found, 0 if undefined
 	/// \note throws Error::AmbiguousTypeReference if more than one reduction is found
-	int reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
+	int getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
 
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
@@ -283,7 +283,7 @@ public:
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
-	std::pmr::vector<ReductionResult> reductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
+	std::pmr::vector<ReductionResult> getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions

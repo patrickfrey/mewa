@@ -5,37 +5,11 @@ local bcd = require "bcd"
 
 local typedb = mewa.typedb()
 local typesystem = {
-	assign = {},
-	assign_add = {},
-	assign_sub = {},
-	assign_mul = {},
-	assign_div = {},
-	assign_mod = {},
-	logical_or = {},
-	logical_and = {},
-	bitwise_or = {},
-	bitwise_and = {},
-	bitwise_xor = {},
-	add = {},
-	sub = {},
-	minus = {},
-	plus = {},
-	mul = {},
-	div = {},
-	mod = {},
-
 	arrow = {},
 	member = {},
 	ptrderef = {},
 	call = {},
 	arrayaccess = {},
-
-	cmpeq = {},
-	cmpne = {},
-	cmple = {},
-	cmplt = {},
-	cmpge = {},
-	cmpgt = {}
 }
 
 local tag_typeDeduction = 1
@@ -174,10 +148,22 @@ end
 function defineConstExprValueOperator( constExprType, valueType, fcc_descr, opr)
 	typedb:def_reduction( valueType,
 		typedb:def_type( constExprType, opr,
-			function( arg) return typedb:type_constructor( typedb:get_type( valueType, opr, {intType}))( { loadConstructor(fcc_descr.load)(arg[1]), arg[2] } ) end,
+			function( arg)
+	                       return typedb:type_constructor( typedb:get_type( valueType, opr, {valueType}))( { loadConstructor(fcc_descr.load)(arg[1]), arg[2] } )
+			end,
 			{ valueType } ), 
 		nil, tag_typeDeduction)
 end
+function defineLValueAdvanceBinaryOperator( valueType, operandType, opr, fmt_conv)
+	typedb:def_reduction( operandType,
+		typedb:def_type( valueType, opr,
+			function( arg)
+	                       return typedb:type_constructor( typedb:get_type( operandType, opr, {operandType}))( { convConstructor(fmt_conv)(arg[1]), arg[2] } )
+			end,
+			{operandType} ),
+		nil, tag_typeDeduction)
+end
+
 function defineConstExprValueOperatorsInt( intType, fcc_descr)
 	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "+")
 	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "-")
@@ -268,12 +254,15 @@ function initFirstClassCitizens()
 	end
 	for typnam, fcc_descr in pairs( fcc) do
 		local const_lvalue = typedb:get_type( 0, "const " .. typnam)
-		for from_typenam,conv_fmt in pairs( fcc_descr.conv) do
+		for from_typenam,conv in pairs( fcc_descr.conv) do
 			from_type = typedb:get_type( 0, "const " .. from_typenam)
-			if from_type == 0 then
-				error( "Type undefined: 'const " .. from_typenam .. "'")
+			typedb:def_reduction( const_lvalue, from_type, convConstructor( conv.fmt), tag_typeDeduction, conv.weight)
+		end
+		for operator,operator_fmt in pairs( fcc_descr.binop) do
+			for ii,advance_typenam in ipairs( fcc_descr.advance) do
+				local advance_const_lvalue = typedb:get_type( 0, "const " .. advance_typenam)
+				defineLValueAdvanceBinaryOperator( const_lvalue, advance_const_lvalue, operator, fcc_descr.conv[ advance_typenam].fmt)
 			end
-			typedb:def_reduction( const_lvalue, from_type, convConstructor( conv_fmt), tag_typeDeduction)
 		end
 	end
 end
@@ -316,13 +305,49 @@ function defineVariable( line, typeId, varName, initVal)
 end
 
 function selectVariableType( node, typeName, resultContextTypeId, reductions, items)
-	if not resultContextTypeId or type(resultContextTypeId) == "table" then errorResolveType( typedb, node.line, resultContextTypeId, getContextTypes(), typeName) end
+	if not resultContextTypeId or type(resultContextTypeId) == "table" then
+		utils.errorResolveType( typedb, node.line, resultContextTypeId, getContextTypes(), typeName)
+	end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == 0 then return item.type end
 	end
-	errorResolveType( typedb, node.line, resultContextTypeId, getContextTypes(), typeName)
+	utils.errorMessage( node.line, "failed to resolve variable %s",
+	                    utils.resolveTypeString( typedb, getContextTypes(), typeName))
 end
 
+function applyOperator( node, operator, arg)
+	io.stderr:write( string.format( "CALL applyOperator TYPE %s\n", mewa.tostring( arg))) 
+	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
+	if not resultContextType or type(resultContextType) == "table" then errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
+	for ii,item in ipairs(items) do
+		if typedb:type_nof_parameters( item.type) == #arg-1 then
+			local constructor = arg[1].constructor
+			for ri,redu in ipairs(reductions) do
+				if redu.constructor then
+					constructor = redu.constructor( constructor)
+				end
+			end
+			local constructor_ar = {constructor}
+			local parameters = typedb:type_parameters( item.type)
+			for ii=2,#arg do
+				local param_type,param_constructor = typedb:get_reduction( parameters[ii-1].type, arg[ii].type, tagmask_resolveType)
+				if param_type then
+					table.insert( constructor_ar, arg[ii] )
+				else
+					break
+				end
+			end
+			if #constructor_ar == #arg then
+				local operator_constructor = item.constructor( constructor_ar)
+				return {type=item.type, constructor=operator_constructor}
+			end
+		end
+	end
+	utils.errorMessage( node.line, "failed to resolve %s",
+	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg) .. ")")
+end
+
+-- AST Callbacks:
 function typesystem.vardef( node)
 	local subnode = utils.traverse( typedb, node)
 	defineVariable( node.line, subnode[1], subnode[2], nil)
@@ -335,7 +360,24 @@ end
 
 function typesystem.vardef_array( node) return utils.visit( typedb, node) end
 function typesystem.vardef_array_assign( node) return utils.visit( typedb, node) end
-function typesystem.operator( node, opdescr) return utils.visit( typedb, node) end
+
+function typesystem.assign_operator( node, operator, context)
+	local arg = utils.traverse( typedb, node, context)
+	return applyOperator( node, "=", {arg[1], applyOperator( node, operator, arg)})
+end
+function typesystem.nary_operator( node, operator)
+	local arg = utils.traverse( typedb, node, context)
+	return applyOperator( node, operator, arg)
+end
+function typesystem.binary_operator( node, operator)
+	local arg = utils.traverse( typedb, node, context)
+	return applyOperator( node, operator, arg)
+end
+function typesystem.unary_operator( node, operator)
+	local arg = utils.traverse( typedb, node, context)
+	return applyOperator( node, operator, arg)
+end
+
 function typesystem.stm_expression( node) return utils.visit( typedb, node) end
 function typesystem.stm_return( node) return utils.visit( typedb, node) end
 function typesystem.conditional_if( node) return utils.visit( typedb, node) end

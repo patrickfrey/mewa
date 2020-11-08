@@ -402,7 +402,7 @@ private:
 	mewa::monotonic_buffer_resource m_memrsc;
 };
 
-int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const
+int TypeDatabase::getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
@@ -429,7 +429,7 @@ int TypeDatabase::reduction( const Scope::Step step, int toType, int fromType, c
 	return rt;
 }
 
-std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::reductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
+std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 

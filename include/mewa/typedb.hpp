@@ -341,14 +341,14 @@ class TypeDatabase
 	/// \param[in] fromType the source type of the reduction
 	/// \param[out] error error description in case of -1 returned
 	/// \return the constructor of the reduction found, -1 if not found or in case of error
-	int reduction( int step, int toType, int fromType, const TagMask& selectTags, Error& error) const noexcept;
+	int getReduction( int step, int toType, int fromType, const TagMask& selectTags, Error& error) const noexcept;
 
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] fromType the source type of the reduction
 	/// \param[out] error error description in case of empty list returned
 	/// \return the list of reductions found
-	std::vector<ReductionResult> reductions( int step, int fromType, const TagMask& selectTags, Error& error) const noexcept;
+	std::vector<ReductionResult> getReductions( int step, int fromType, const TagMask& selectTags, Error& error) const noexcept;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions

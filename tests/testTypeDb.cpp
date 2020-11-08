@@ -345,7 +345,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 	{
 		out << "Reductions of context type " << tdbimpl.typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
 		mewa::TypeDatabase::ResultBuffer redu_resbuf;
-		auto reductions = tdbimpl.typedb->reductions( query.step, fdef.contextType, TagMask::matchAll(), redu_resbuf);
+		auto reductions = tdbimpl.typedb->getReductions( query.step, fdef.contextType, TagMask::matchAll(), redu_resbuf);
 		out << "Context Type reductions:" << std::endl;
 		for (auto const& redu : reductions)
 		{
@@ -381,7 +381,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 				{
 					++distance;
 					int reduConstructor
-						= tdbimpl.typedb->reduction( 
+						= tdbimpl.typedb->getReduction( 
 							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/, TagMask::matchAll());
 					if (reduConstructor < 0)
 					{

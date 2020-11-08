@@ -100,6 +100,42 @@ function M.visit( typedb, node)
 	return {name=node.call.name, scope=node.scope, arg=M.traverse( typedb, node)}
 end
 
+-- Types in readable form for messages
+-- [1] Type as string
+function typeString( typedb, typeId)
+	if typeId == 0 then
+		return "<>"
+	elseif type(typeId) == "table" then
+		return typedb:type_string( typeId.type)
+	else
+		return typedb:type_string( typeId)
+	end
+end
+
+-- [2] Type list as string
+function typeListString( typedb, typeList)
+	if not typeList or #typeList == 0 then return "" end
+	local rt = typeString( typedb, typeList[ 1])
+	for ii=2,#typeList do
+		rt = rt .. ", " .. typeString( typedb, typeList[ ii])
+	end
+	return rt
+end
+
+-- [2] Type to resolve as string
+function M.resolveTypeString( typedb, contextType, typeName)
+	local rt
+	if type(contextType) == "table" then
+		rt = "{ " .. typeString( typedb, contextType[1])
+		for ii = 2,#contextType,1 do
+			rt = ", " .. typeString( typedb, contextType[1])
+		end
+		rt = rt .. " } => " .. typeName
+	else
+		rt = typeString( typedb, contextType) .. " => " .. typeName
+	end
+	return rt;
+end
 
 -- Error reporting:
 -- [1] General error
@@ -107,26 +143,9 @@ function M.errorMessage( line, fmt, ...)
 	error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
 end
 
-function typeString( typedb, typeId)
-	if typeId == 0 then
-		return "<unbound>"
-	else
-		return typedb:type_string( typeId)
-	end
-end
-
 -- [2] Exit with error for no result or an ambiguous result returned by typedb:resolve_type
 function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
-	local resolveTypeString
-	if type(contextType) == "table" then
-		resolveTypeString = "{ " .. typeString( typedb, contextType[1])
-		for ii = 2,#contextType,1 do
-			resolveTypeString = ", " .. typeString( typedb, contextType[1])
-		end
-		resolveTypeString = resolveTypeString .. " } => " .. typeName
-	else
-		resolveTypeString = typeString( typedb, contextType) .. " => " .. typeName
-	end
+	local resolveTypeString = M.resolveTypeString( typedb, contextType, typeName)
 	if not resultContextTypeId then
 		errorMessage( line, "Failed to resolve type %s", resolveTypeString)
 	elseif type(typeId) == "table" then

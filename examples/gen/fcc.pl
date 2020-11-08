@@ -172,6 +172,24 @@ foreach my $line (@content)
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tstore = \"" . store_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
+	print "\t\tadvance = {";
+	if ($sgn eq "fp" || $sgn eq "signed" || $sgn eq "unsigned")
+	{
+		my $oi = 0;
+		foreach my $operand (@content)
+		{
+			my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
+			if ($typename ne $op_typename && $alignmap{$op_llvmtype} >= $alignmap{$llvmtype})
+			{
+				if (($sgn ne "signed" && $sgn ne "unsigned") || $sgn ne $op_sgn)
+				{
+					if ($oi++ > 0) {print ", ";}
+					print "\"$op_typename\"";
+				}
+			}
+		}
+	}
+	print "},\n";
 	print "\t\tconv = {";
 	my $oi = 0;
 	foreach my $operand (@content)
@@ -181,7 +199,16 @@ foreach my $line (@content)
 		{
 			if ($oi++ > 0) {print ",\n";} else {print "\n";}
 			my $cnv = load_conv_constructor( $llvmtype, $sgn, $op_llvmtype, $op_sgn);
-			print "\t\t\t[\"$op_typename\"] = \"" . $cnv . "\"";
+			my $weight = 0.0;
+			if ($alignmap{$llvmtype} < $alignmap{$op_llvmtype})
+			{
+				$weight += 0.1;
+			}
+			if (($sgn eq "signed" && $op_sgn eq "unsigned") || ($sgn eq "unsigned" && $op_sgn eq "signed"))
+			{
+				$weight += 0.1;
+			}
+			print "\t\t\t[\"$op_typename\"] = {fmt=\"" . $cnv . "\", weight=$weight}";
 		}
 	}
 	print "},\n";

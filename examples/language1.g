@@ -77,47 +77,56 @@ expression/L1		= IDENT
 			| SQSTRING
 			| "(" expression ")"
 			;
-expression/L2		= expression  "="  expression							(operator assign)
-			| expression  "+="  expression							(operator assign_add)
-			| expression  "-="  expression							(operator assign_sub)
-			| expression  "*="  expression							(operator assign_mul)
-			| expression  "/="  expression							(operator assign_div)
-			| expression  "%="  expression							(operator assign_mod)
+expression/L2		= expression  "="  expression							(binary_operator "=")
+			| expression  "+="  expression							(assign_operator "+")
+			| expression  "-="  expression							(assign_operator "-")
+			| expression  "*="  expression							(assign_operator "*")
+			| expression  "/="  expression							(assign_operator "/")
+			| expression  "%="  expression							(assign_operator "%")
+			| expression  "&&="  expression							(assign_operator "&&")
+			| expression  "||="  expression							(assign_operator "||")
+			| expression  "&="  expression							(assign_operator "&")
+			| expression  "|="  expression							(assign_operator "|")
+			| expression  "<<="  expression							(assign_operator "<<")
+			| expression  ">>="  expression							(assign_operator ">>")
 			;
-expression/L3		= expression  "||"  expression							(operator logical_or)
+expression/L3		= expression  "||"  expression							(binary_operator "||")
 			;
-expression/L4		= expression  "&&"  expression							(operator logical_and)
+expression/L4		= expression  "&&"  expression							(binary_operator "&&")
 			;
-expression/L5		= expression  "|"  expression							(operator bitwise_or)
+expression/L5		= expression  "|"  expression							(binary_operator "|")
 			;			
-expression/L6		= expression  "^"  expression							(operator bitwise_xor)
-			| expression  "&"  expression							(operator bitwise_and)
+expression/L6		= expression  "^"  expression							(binary_operator "^")
+			| expression  "&"  expression							(binary_operator "&")
 			;			
-expression/L7		= expression  "=="  expression							(operator cmpeq)
-			| expression  "!="  expression							(operator cmpne)
-			| expression  "<="  expression							(operator cmple)
-			| expression  "<"  expression							(operator cmplt)
-			| expression  ">="  expression							(operator cmpge)
-			| expression  ">"  expression							(operator cmpgt)
+expression/L7		= expression  "=="  expression							(binary_operator "==")
+			| expression  "!="  expression							(binary_operator "!=")
+			| expression  "<="  expression							(binary_operator "<=")
+			| expression  "<"  expression							(binary_operator "<")
+			| expression  ">="  expression							(binary_operator ">=")
+			| expression  ">"  expression							(binary_operator ">")
 			;
-expression/L8		= expression  "+"  expression							(operator add)
-			| expression  "-"  expression							(operator sub) 
-			| "-"  expression								(operator minus)
-			| "+"  expression								(operator plus) 
-			| "~"  expression								(operator minus)
-			| "!"  expression								(operator plus) 
+expression/L8		= expression  "+"  expression							(binary_operator "+")
+			| expression  "-"  expression							(binary_operator "-") 
+			| "-"  expression								(unary_operator "-")
+			| "+"  expression								(unary_operator "+") 
+			| "~"  expression								(unary_operator "~")
+			| "!"  expression								(unary_operator "!") 
 			;
-expression/L9		= expression  "*"  expression							(operator mul)
-			| expression  "/"  expression							(operator div)
-			| expression  "%"  expression							(operator mod)
+expression/L9		= expression  "*"  expression							(binary_operator "*")
+			| expression  "/"  expression							(binary_operator "/")
+			| expression  "%"  expression							(binary_operator "%")
 			;
-expression/L10		= expression "->" IDENT								(operator arrow)
-			| expression "." IDENT								(operator member)
-			| "*" expression								(operator ptrderef)
+expression/L10		= expression  "<<"  expression							(binary_operator "<<")
+			| expression  ">>"  expression							(binary_operator ">>")
 			;
-expression/L11		= expression  "(" expressionlist ")"						(operator call)
-			| expression  "(" ")"								(operator call)
-			| expression  "[" expressionlist "]"						(operator arrayaccess)
+expression/L11		= expression "->" IDENT								(binary_operator arrow)
+			| expression "." IDENT								(binary_operator member)
+			| "*" expression								(unary_operator ptrderef)
+			;
+expression/L12		= expression  "(" expressionlist ")"						(nary_operator "(")
+			| expression  "(" ")"								(nary_operator "(")
+			| expression  "[" expressionlist "]"						(nary_operator "[")
 			;
 expressionlist		= expression "," expressionlist
 			| expression

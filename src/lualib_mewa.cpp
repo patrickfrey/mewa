@@ -556,9 +556,9 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 	return 0;
 }
 
-static int mewa_typedb_type_reduction( lua_State* ls)
+static int mewa_typedb_get_reduction( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:type_reduction";
+	[[maybe_unused]] static const char* functionName = "typedb:get_reduction";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
@@ -568,25 +568,28 @@ static int mewa_typedb_type_reduction( lua_State* ls)
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
 		mewa::TagMask selectTags( nargs >= 4 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
 
-		int constructor = td->impl->reduction( td->curStep, toType, fromType, selectTags);
+		int constructor = td->impl->getReduction( td->curStep, toType, fromType, selectTags);
 		if (constructor <= 0)
 		{
-			lua_pushnil( ls);
+			if (constructor < 0) return 0;
+			lua_pushinteger( ls, toType);
+			return 1;
 		}
 		else
 		{
+			lua_pushinteger( ls, toType);
 			lua_getglobal( ls, td->objTableName.buf);
 			lua_rawgeti( ls, -1, constructor);
 			lua_replace( ls, -2);
 		}
 	}
 	catch (...) { lippincottFunction( ls); }
-	return 1;
+	return 2;
 }
 
-static int mewa_typedb_type_reductions( lua_State* ls)
+static int mewa_typedb_get_reductions( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:type_reductions";
+	[[maybe_unused]] static const char* functionName = "typedb:get_reductions";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
@@ -596,7 +599,7 @@ static int mewa_typedb_type_reductions( lua_State* ls)
 		mewa::TagMask selectTags( nargs >= 3 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 3) : mewa::TagMask::matchAll());
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto reductions = td->impl->reductions( td->curStep, type, selectTags, resbuf);
+		auto reductions = td->impl->getReductions( td->curStep, type, selectTags, resbuf);
 		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, reductions);
 	}
 	catch (...) { lippincottFunction( ls); }
@@ -1009,8 +1012,8 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "type_parameters",	mewa_typedb_type_parameters },
 	{ "type_nof_parameters",mewa_typedb_type_nof_parameters },
 	{ "type_constructor",	mewa_typedb_type_constructor },
-	{ "type_reduction",	mewa_typedb_type_reduction },
-	{ "type_reductions",	mewa_typedb_type_reductions },
+	{ "get_reduction",	mewa_typedb_get_reduction },
+	{ "get_reductions",	mewa_typedb_get_reductions },
 	{ "instance_tree",	LuaTreeMetaMethods<mewa_objtree_userdata_t>::create },
 	{ "type_tree",		LuaTreeMetaMethods<mewa_typetree_userdata_t>::create },
 	{ "reduction_tree",	LuaTreeMetaMethods<mewa_redutree_userdata_t>::create },

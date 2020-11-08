@@ -375,13 +375,13 @@ DLL_PUBLIC libmewa::ReductionDefinitionTree libmewa::TypeDatabase::getReductionD
 	}
 }
 
-DLL_PUBLIC int libmewa::TypeDatabase::reduction( int step, int toType, int fromType, const TagMask& selectTags, Error& error) const noexcept
+DLL_PUBLIC int libmewa::TypeDatabase::getReduction( int step, int toType, int fromType, const TagMask& selectTags, Error& error) const noexcept
 {
 	try
 	{
 		if (!m_impl) throw mewa::Error( mewa::Error::MemoryAllocationError);
 		mewa::TypeDatabase& typedb = *(mewa::TypeDatabase*)m_impl;
-		return typedb.reduction( step, toType, fromType, mewa::TagMask( selectTags.m_mask));
+		return typedb.getReduction( step, toType, fromType, mewa::TagMask( selectTags.m_mask));
 	}
 	catch (...)
 	{
@@ -390,14 +390,14 @@ DLL_PUBLIC int libmewa::TypeDatabase::reduction( int step, int toType, int fromT
 	}
 }
 
-DLL_PUBLIC std::vector<libmewa::ReductionResult> libmewa::TypeDatabase::reductions( int step, int fromType, const TagMask& selectTags, Error& error) const noexcept
+DLL_PUBLIC std::vector<libmewa::ReductionResult> libmewa::TypeDatabase::getReductions( int step, int fromType, const TagMask& selectTags, Error& error) const noexcept
 {
 	try
 	{
 		if (!m_impl) throw mewa::Error( mewa::Error::MemoryAllocationError);
 		mewa::TypeDatabase& typedb = *(mewa::TypeDatabase*)m_impl;
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto redulist = typedb.reductions( step, fromType, mewa::TagMask( selectTags.m_mask), resbuf);
+		auto redulist = typedb.getReductions( step, fromType, mewa::TagMask( selectTags.m_mask), resbuf);
 		std::vector<libmewa::ReductionResult> rt;
 		for (auto const& redu : redulist)
 		{
