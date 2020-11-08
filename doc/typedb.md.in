@@ -56,6 +56,7 @@ Get or/and set the current scope. All methods defining objects dependent on a sc
  - [typedb:def_type](#def_type)
  - [typedb:get_type](#get_type)
  - [typedb:def_reduction](#def_reduction)
+
 are referring to the current scope. Without parameter the function just returns the current scope.
 With a parameter the function sets the current scope to the parameter value and returns the previously defined value for the current scope.
 
