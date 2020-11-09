@@ -76,6 +76,7 @@ public:
 		UnexpectedEofInGrammarDef=503,
 		UnexpectedTokenInGrammarDef=504,
 		DuplicateScopeInGrammarDef=505,
+		NestedCallArgumentStructureInGrammarDef=506,
 
 		PriorityDefNotForLexemsInGrammarDef=521,
 		UnexpectedEndOfRuleInGrammarDef=531,

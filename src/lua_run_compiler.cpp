@@ -222,72 +222,70 @@ static void luaReduceStruct(
 {
 	int stk_start = 0;
 	int stk_end = 0;
-	if (reductionSize > 0)
+
+	std::size_t si = ctx.stateStack.size(), se = ctx.stateStack.size() - reductionSize;
+	for (; si > se; --si)
 	{
-		std::size_t si = ctx.stateStack.size(), se = ctx.stateStack.size() - reductionSize;
-		for (; si > se; --si)
+		const State& st = ctx.stateStack[ si-1];
+		if (st.luastki)
 		{
-			const State& st = ctx.stateStack[ si-1];
-			if (st.luastki)
-			{
-				stk_end = st.luastki + st.luastkn;
-				break;
-			}
+			stk_end = st.luastki + st.luastkn;
+			break;
 		}
-		for (; si > se; --si)
-		{
-			const State& st = ctx.stateStack[ si-1];
-			if (st.luastki)
-			{
-				stk_start = st.luastki;
-			}
-		}
-		int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 3:4;
-												// STK [ARG1]...[ARGN]
-		lua_createtable( ls, 0/*size array*/, structsize);	 			// STK [ARG1]...[ARGN] [TABLE]
-
-		lua_pushliteral( ls, "call");							// STK [ARG1]...[ARGN] [TABLE] "call"
- 		lua_rawgeti( ls, ctx.calltable, callidx);					// STK [ARG1]...[ARGN] [TABLE] [CALLSTRUCT]
-		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
-
-		lua_pushliteral( ls, "line");							// STK [ARG1]...[ARGN] [TABLE] "line"
-		lua_pushinteger( ls, ctx.line);							// STK [ARG1]...[ARGN] [TABLE] "line" [LINE]
-		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
-
-		switch (scopeflag)
-		{
-			case mewa::Automaton::Action::Step:
-				ctx.scopestep += 1;
-				/*no break here!*/
-			case mewa::Automaton::Action::NoScope:
-				lua_pushliteral( ls, "step");					// STK [ARG1]...[ARGN] [TABLE] "step"
-				lua_pushinteger( ls, ctx.scopestep);				// STK [ARG1]...[ARGN] [TABLE] [COUNTER]
-				lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
-				break;
-			case mewa::Automaton::Action::Scope:
-				ctx.scopestep += 1;
-				lua_pushliteral( ls, "scope");					// STK [ARG1]...[ARGN] [TABLE] "scope"
-				lua_createtable( ls, 0/*size array*/, structsize);	 	// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
-				lua_pushinteger( ls, scopeStart);				// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE] [SCOPESTART]
-				lua_rawseti( ls, -2, 1);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
-				lua_pushinteger( ls, ctx.scopestep /*scope end*/);		// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE] [SCOPEEND]
-				lua_rawseti( ls, -2, 2);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
-				lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
-				break;
-		}
-		int nofLuaStackElements = stk_end-stk_start;
-		lua_pushliteral( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
-		lua_createtable( ls, nofLuaStackElements/*size array*/, 0/*size struct*/);	// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
-		int li = -nofLuaStackElements-3, le = -3;
-		for (int tidx=1; li != le; ++li,++tidx)
-		{
-			lua_pushvalue( ls, li);							// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB] [ARGi]
-			lua_rawseti( ls, -2, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
-		}
-		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
-		lua_replace( ls, -1-nofLuaStackElements);					// STK [TABLE] [ARG2]...[ARGN]
-		if (nofLuaStackElements > 1) lua_pop( ls, nofLuaStackElements-1);		// STK [TABLE]
 	}
+	for (; si > se; --si)
+	{
+		const State& st = ctx.stateStack[ si-1];
+		if (st.luastki)
+		{
+			stk_start = st.luastki;
+		}
+	}
+	int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 3:4;
+											// STK [ARG1]...[ARGN]
+	lua_createtable( ls, 0/*size array*/, structsize);	 			// STK [ARG1]...[ARGN] [TABLE]
+
+	lua_pushliteral( ls, "call");							// STK [ARG1]...[ARGN] [TABLE] "call"
+	lua_rawgeti( ls, ctx.calltable, callidx);					// STK [ARG1]...[ARGN] [TABLE] [CALLSTRUCT]
+	lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
+
+	lua_pushliteral( ls, "line");							// STK [ARG1]...[ARGN] [TABLE] "line"
+	lua_pushinteger( ls, ctx.line);							// STK [ARG1]...[ARGN] [TABLE] "line" [LINE]
+	lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
+
+	switch (scopeflag)
+	{
+		case mewa::Automaton::Action::Step:
+			ctx.scopestep += 1;
+			/*no break here!*/
+		case mewa::Automaton::Action::NoScope:
+			lua_pushliteral( ls, "step");					// STK [ARG1]...[ARGN] [TABLE] "step"
+			lua_pushinteger( ls, ctx.scopestep);				// STK [ARG1]...[ARGN] [TABLE] [COUNTER]
+			lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
+			break;
+		case mewa::Automaton::Action::Scope:
+			ctx.scopestep += 1;
+			lua_pushliteral( ls, "scope");					// STK [ARG1]...[ARGN] [TABLE] "scope"
+			lua_createtable( ls, 0/*size array*/, structsize);	 	// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
+			lua_pushinteger( ls, scopeStart);				// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE] [SCOPESTART]
+			lua_rawseti( ls, -2, 1);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
+			lua_pushinteger( ls, ctx.scopestep /*scope end*/);		// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE] [SCOPEEND]
+			lua_rawseti( ls, -2, 2);					// STK [ARG1]...[ARGN] [TABLE] "scope" [TABLE]
+			lua_rawset( ls, -3);						// STK [ARG1]...[ARGN] [TABLE]
+			break;
+	}
+	int nofLuaStackElements = stk_end-stk_start;
+	lua_pushliteral( ls, "arg");							// STK [ARG1]...[ARGN] [TABLE] "arg"
+	lua_createtable( ls, nofLuaStackElements/*size array*/, 0/*size struct*/);	// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
+	int li = -nofLuaStackElements-3, le = -3;
+	for (int tidx=1; li != le; ++li,++tidx)
+	{
+		lua_pushvalue( ls, li);							// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB] [ARGi]
+		lua_rawseti( ls, -2, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
+	}
+	lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
+	lua_replace( ls, -1-nofLuaStackElements);					// STK [TABLE] [ARG2]...[ARGN]
+	if (nofLuaStackElements > 1) lua_pop( ls, nofLuaStackElements-1);		// STK [TABLE]
 }
 
 static mewa::Error::Code luaErrorCode2ErrorCode( int rc)
@@ -331,6 +329,14 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 	}
 	else
 	{
+		if (dbgout)
+		{
+			lua_pushliteral( ls, "name");				// STK: [NODE] [CALL] "name"
+			lua_rawget( ls, -2);					// STK: [NODE] [CALL] [NAME]
+			const char* procname = lua_tostring( ls, -1);
+			printDebug( dbgout, "Calling Lua function: %s\n", procname);
+			lua_pop( ls, 1);
+		}
 		int nargs = 1;
 		lua_pushliteral( ls, "proc");					// STK: [NODE] [CALL] "proc"
 		lua_rawget( ls, -2);						// STK: [NODE] [CALL] [FUNC]
@@ -563,9 +569,18 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 		while (!feedLexem( ls, ctx, automaton, lexem));
 
 		// Runtime check of stack indices:
+		int top = lua_gettop( ls);
 		if (!ctx.stateStack.empty() && ctx.stateStack.back().luastkn
-			&& (lua_gettop( ls) - nofLuaStackElements + 1) != ctx.stateStack.back().luastki + ctx.stateStack.back().luastkn)
+			&& (top - nofLuaStackElements) != (ctx.stateStack.back().luastki + ctx.stateStack.back().luastkn - 1))
 		{
+			if (dbgout)
+			{
+				fprintf( dbgout, "Stack top=%d, nof elements=%d\n", top, nofLuaStackElements);
+				for (auto stke : ctx.stateStack)
+				{
+					fprintf( dbgout, "Stack element: i=%d, n=%d\n", stke.luastki, stke.luastkn);
+				}
+			}
 			throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 		}
 	}

@@ -37,10 +37,14 @@ typespec/L1		= typename									(typespec "")
 			;
 typedefinition		= "typedef" typename IDENT							(>>typedef)
 			;
-functiondefinition	= "function" typespec IDENT
+linkage			= "static"									(linkage {linkage="internal",visibility="default"})
+			| "extern"									(linkage {linkage="external",visibility="default"})
+			|										(linkage "internal")
+			;
+functiondefinition	= linkage "function" typespec IDENT
 				"(" parameters ")"
 				"{" statementlist "}"							({}funcdef)
-			| "procedure" IDENT
+			| linkage "procedure" IDENT
 				"(" parameters ")"
 				"{" statementlist "}"							({}procdef)
 			;

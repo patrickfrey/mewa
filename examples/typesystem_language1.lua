@@ -319,7 +319,7 @@ end
 
 function applyOperator( node, operator, arg)
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
-	if not resultContextType or type(resultContextType) == "table" then errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
+	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == #arg-1 then
 			local constructor = arg[1].constructor
@@ -408,6 +408,7 @@ function typesystem.constant( node, typeName)
 	return {type=typeId, constructor=node.arg[1].value}
 end
 
+function typesystem.linkage( node, llvm_linkage) return llvm_linkage end
 function typesystem.funcdef( node) local cd = openCode(); local rt = utils.visit( typedb, node); printCodeLine( closeCode( cd)); return rt; end
 function typesystem.procdef( node) local cd = openCode(); local rt = utils.visit( typedb, node); printCodeLine( closeCode( cd)); return rt; end
 function typesystem.paramdef( node) return utils.visit( typedb, node) end

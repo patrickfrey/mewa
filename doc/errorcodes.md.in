@@ -61,6 +61,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:UnexpectedEofInGrammarDef**   _$ERRTEXT:UnexpectedEofInGrammarDef_
 + **#$ERRCODE:UnexpectedTokenInGrammarDef**   _$ERRTEXT:UnexpectedTokenInGrammarDef_
 + **#$ERRCODE:DuplicateScopeInGrammarDef**   _$ERRTEXT:DuplicateScopeInGrammarDef_
++ **#$ERRCODE:NestedCallArgumentStructureInGrammarDef**   _$ERRTEXT:NestedCallArgumentStructureInGrammarDef_
 + **#$ERRCODE:PriorityDefNotForLexemsInGrammarDef**   _$ERRTEXT:PriorityDefNotForLexemsInGrammarDef_
 + **#$ERRCODE:UnexpectedEndOfRuleInGrammarDef**   _$ERRTEXT:UnexpectedEndOfRuleInGrammarDef_
 + **#$ERRCODE:EscapeQuoteErrorInString**   _$ERRTEXT:EscapeQuoteErrorInString_

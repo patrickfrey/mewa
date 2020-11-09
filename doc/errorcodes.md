@@ -33,7 +33,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#422**   _Syntax error in the lexer definition_
 + **#423**   _Logic error (array bound read) in the lexer definition_
 + **#424**   _Bad regular expression definition for the lexer_
-+ **#425**   _Keyword defined twice for the lexer (logic error)_
++ **#425**   _Keyword defined twice for the lexer_
 
 ## Compiler Complexity Boundaries
 + **#426**   _Too many instances created (internal counter overflow)_
@@ -61,6 +61,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#503**   _Unexpected EOF in the grammar definition_
 + **#504**   _Unexpected token in the grammar definition_
 + **#505**   _More than one scope marker '{}' of '>>' not allowed in a call definition_
++ **#506**   _Nested structures as callback function arguments are not allowed_
 + **#521**   _Priority definition for lexems not implemented_
 + **#531**   _Unexpected end of rule in the grammar definition_
 + **#532**   _Some internal pattern string mapping error in the grammar definition_

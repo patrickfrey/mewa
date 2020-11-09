@@ -12,6 +12,12 @@ endif
 AR=ar rcs
 LNKSO=$(CC) -shared
 
+ifeq ($(strip $(TESTTIME)),Y)
+TIME=/usr/bin/time -f "%C running %e seconds"
+else
+TIME=
+endif
+
 ifeq ($(strip $(RELEASE)),)
 DEBUGFLAGS:=-ggdb -g3 -O0 $(DEBUGFLAGS)
 else
@@ -109,14 +115,14 @@ $(SHLIBRARY): $(LIBRARY) $(SHLIBOBJ)
 	$(LNKSO) -Wl,-soname,$(SONAME) $(LDLIBS) -o $(SHLIBRARY) $(SHLIBOBJ) $(LIBRARY)
 
 test : all
-	$(BUILDDIR)/testError $(TSTVBFLAGS)
-	$(BUILDDIR)/testLexer $(TSTVBFLAGS)
-	$(BUILDDIR)/testScope $(TSTVBFLAGS)
-	$(BUILDDIR)/testRandomScope $(TSTVBFLAGS)
-	$(BUILDDIR)/testRandomIdentMap $(TSTVBFLAGS)
-	$(BUILDDIR)/testAutomaton $(TSTVBFLAGS)
-	$(BUILDDIR)/testTypeDb $(TSTVBFLAGS)
-	$(BUILDDIR)/testRandomTypeDb $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testError $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testLexer $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testScope $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testRandomScope $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testRandomIdentMap $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testAutomaton $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testTypeDb $(TSTVBFLAGS)
+	$(TIME) $(BUILDDIR)/testRandomTypeDb $(TSTVBFLAGS)
 	tests/luatest.sh "$(LUABIN)"
 check: test
 

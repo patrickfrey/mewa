@@ -39,6 +39,9 @@ public:
 		SEMICOLON,
 		EPSILON,
 		CALL,
+		OPENCURLYBRK,
+		CLOSECURLYBRK,
+		COMMA,
 		OPENBRK,
 		CLOSEBRK,
 		OR,
@@ -63,6 +66,9 @@ public:
 		defineLexem( ";");
 		defineLexem( "ε");
 		defineLexem( "CALL", "[-]{0,1}[a-zA-Z_][:.a-zA-Z_0-9]*");
+		defineLexem( "{");
+		defineLexem( "}");
+		defineLexem( ",");
 		defineLexem( "(");
 		defineLexem( ")");
 		defineLexem( "|");
@@ -145,6 +151,10 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 		ParseCall,
 		ParseCallName,
 		ParseCallArg,
+		ParseCallArgMemberName,
+		ParseCallArgMemberEquals,
+		ParseCallArgMemberValue,
+		ParseCallArgMemberDelim,
 		ParseCallClose,
 		ParseEndOfProduction,
 		ParsePattern,
@@ -160,7 +170,9 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 			static const char* ar[] = {
 					"Init","ParseProductionAttributes","ParsePriority",
 					"ParseAssign","ParseProductionElement",
-					"ParseCall", "ParseCallName","ParseCallArg","ParseCallClose",
+					"ParseCall", "ParseCallName","ParseCallArg",
+					"ParseCallArgMemberName","ParseCallArgMemberEquals","ParseCallArgMemberValue","ParseCallArgMemberDelim",
+					"ParseCallClose",
 					"ParseEndOfProduction",
 					"ParsePattern","ParsePatternSelect","ParseEndOfLexemDef",
 					"ParseLexerCommand","ParseLexerCommandArg"};
@@ -225,6 +237,16 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 						call_arg = std::string( lexem.value());
 						call_argtype = Automaton::Call::ReferenceArg;
 						state = ParseCallClose;
+					}
+					else if (state == ParseCallArgMemberValue)
+					{
+						call_arg.append( lexem.value());
+						state = ParseCallArgMemberDelim;
+					}
+					else if (state == ParseCallArgMemberName)
+					{
+						call_arg.append( lexem.value());
+						state = ParseCallArgMemberEquals;
 					}
 					else if (state == ParseLexerCommand)
 					{
@@ -335,6 +357,49 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 						call_argtype = Automaton::Call::ReferenceArg;
 						state = ParseCallClose;
 					}
+					else if (state == ParseCallArgMemberValue)
+					{
+						call_arg.append( lexem.value());
+						state = ParseCallArgMemberDelim;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::OPENCURLYBRK:
+					if (state == ParseCallArg)
+					{
+						call_argtype = Automaton::Call::ReferenceArg;
+						call_arg = "{";
+						state = ParseCallArgMemberName;
+					}
+					else if (state == ParseCallArgMemberValue)
+					{
+						throw Error( Error::NestedCallArgumentStructureInGrammarDef);
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::CLOSECURLYBRK:
+					if (state == ParseCallArgMemberDelim)
+					{
+						call_arg.push_back( '}');
+						state = ParseCallClose;
+					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}
+					break;
+				case GrammarLexer::COMMA:
+					if (state == ParseCallArgMemberDelim)
+					{
+						call_arg.push_back( ',');
+						state = ParseCallArgMemberName;
+					}
 					else
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
@@ -361,6 +426,22 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 						call_arg = std::string( lexem.value());
 						call_argtype = Automaton::Call::StringArg;
 						state = ParseCallClose;
+					}
+					else if (state == ParseCallArgMemberValue)
+					{
+						if (lexemtype == GrammarLexer::DQSTRING)
+						{
+							call_arg.push_back( '\"');
+							call_arg.append( lexem.value());
+							call_arg.push_back( '\"');
+						}
+						else
+						{
+							call_arg.push_back( '\'');
+							call_arg.append( lexem.value());
+							call_arg.push_back( '\'');
+						}
+						state = ParseCallArgMemberDelim;
 					}
 					else
 					{
@@ -401,7 +482,12 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					break;
 				case GrammarLexer::EQUAL:
 				case GrammarLexer::ARROW:
-					if (state == ParseProductionAttributes || state == ParseAssign)
+					if (state == ParseCallArgMemberEquals && lexemtype == GrammarLexer::EQUAL)
+					{
+						call_arg.append( lexem.value());
+						state = ParseCallArgMemberValue;
+					}
+					else if (state == ParseProductionAttributes || state == ParseAssign)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
 						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));

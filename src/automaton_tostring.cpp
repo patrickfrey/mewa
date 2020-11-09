@@ -55,7 +55,7 @@ static bool isConstantArgument( const std::string& val)
 	if (val.empty()) return false;
 	char ch = val[0];
 	if (ch >= '0' && ch <= '9') return true;
-	if (ch == '-') return true;
+	if (ch == '{' || ch == '-') return true;
 	return false;
 }
 

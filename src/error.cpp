@@ -228,7 +228,7 @@ const char* Error::code2String( int code_) noexcept
 		case SyntaxErrorInLexer: return "Syntax error in the lexer definition";
 		case ArrayBoundReadInLexer: return "Logic error (array bound read) in the lexer definition";
 		case InvalidRegexInLexer: return "Bad regular expression definition for the lexer";
-		case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer (logic error)";
+		case KeywordDefinedTwiceInLexer: return "Keyword defined twice for the lexer";
 
 		case TooManyInstancesCreated: return "Too many instances created (internal counter overflow)";
 		case CompiledSourceTooComplex: return "Too complex source file (counter overflow)";
@@ -252,6 +252,7 @@ const char* Error::code2String( int code_) noexcept
 		case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
 		case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
 		case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
+		case NestedCallArgumentStructureInGrammarDef: return "Nested structures as callback function arguments are not allowed";
 
 		case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 		case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";
