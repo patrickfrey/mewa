@@ -1,8 +1,10 @@
 # Mewa
 Compiler compiler for rapid prototyping of compilers. You write the grammar in a custom language, a sort of _Bison/Yacc_-style BNF with callbacks to a module written in Lua.
 The [parser generator program mewa](doc/program_mewa.pdf) generates a Lua module implementing the parser you described in the grammar.
-A Lua module written in C++ provides you some assistance to define your own type system and to generate code. You write a _Lua_ script implementing the callbacks called from the generated parser.
-The examples in the documentation use the [intermediate representation (IR) of LLVM](https://llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) for code generation.
+A Lua module written in C++ (see [typedb API](doc/typedb.md)) provides you some assistance to define your own type system and to generate code.
+
+# LLVM
+The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) for code generation.
 
 # Status
 The project development is currently ongoing and only what you find in the tests really works.

@@ -36,7 +36,7 @@ Keyword lexems (lexems defined as string constants in the rules of the grammar) 
 
 ### Lua Callback Description
 The Lua callback function descriptions are passed as an array that is part of the compiler definition (member "call") to the compiler.
-They are referenced by index in the action table of the language.
+They are referenced by index in the LALR(1) action table.
 
 #### Structure
 
