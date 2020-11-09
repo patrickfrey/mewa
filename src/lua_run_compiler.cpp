@@ -284,8 +284,11 @@ static void luaReduceStruct(
 		lua_rawseti( ls, -2, tidx);						// STK [ARG1]...[ARGN] [TABLE] "arg" [ARGTAB]
 	}
 	lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
-	lua_replace( ls, -1-nofLuaStackElements);					// STK [TABLE] [ARG2]...[ARGN]
-	if (nofLuaStackElements > 1) lua_pop( ls, nofLuaStackElements-1);		// STK [TABLE]
+	if (nofLuaStackElements)
+	{
+		lua_replace( ls, -1-nofLuaStackElements);				// STK [TABLE] [ARG2]...[ARGN]
+		if (nofLuaStackElements > 1) lua_pop( ls, nofLuaStackElements-1);	// STK [TABLE]
+	}
 }
 
 static mewa::Error::Code luaErrorCode2ErrorCode( int rc)

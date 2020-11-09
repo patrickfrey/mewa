@@ -33,7 +33,7 @@ function M.positional_format( fmt, argtable, register, outindex)
 	local valtable = {}
 	local subst = function( match)
 		local index = tonumber( match)
-		if index <= #argtable then
+		if index >= 1 and index <= #argtable then
 			return argtable[ index]
 		elseif valtable[ index] then
 			return valtable[ index]
@@ -53,6 +53,29 @@ function M.positional_format( fmt, argtable, register, outindex)
 		outsubst = valtable[ outindex]
 	end
 	return result,outsubst
+end
+
+-- Template for LLVM Code synthesis of control structures
+function M.template_format( fmt, ... )
+	local arg = {...}
+	local subst = function( match)
+		local index = tonumber( match)
+		if arg[ index] then
+			return arg[ index]
+		else
+			return ""
+		end
+	end
+	return fmt:gsub("[{]([%d]*)[}]", subst)
+end
+
+-- Register allocator for LLVM
+function M.register_allocator()
+        local i = 0
+        return function ()
+                i = i + 1
+                return "%" .. i
+        end
 end
 
 -- Tree traversal:

@@ -348,6 +348,34 @@ function applyOperator( node, operator, arg)
 	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg) .. ")")
 end
 
+function getArgumentListString( node)
+	return ""
+end
+function getInstructionList( node)
+	return ""
+end
+function getLlvmTypeName( node)
+	return ""
+end
+
+function defineFunction( node, arg)
+	local linkage = node.arg[1].linkage
+	local returnTypeName = getLlvmTypeName( arg[2])
+	local functionName = arg[3]
+	local args = getArgumentListString( node.arg[4])
+	local body = getInstructionList( node.arg[5])
+	printCodeLine( utils.template_format( "define {1} {2} @{3}( {4} ) {\n{5}}", linkage, returnTypeName, functionName, args, body))
+end
+
+function defineProcedure( node, arg)
+	local linkage = node.arg[1].linkage
+	local functionName = arg[2]
+	local args = getArgumentListString( node.arg[3])
+	local body = getInstructionList( node.arg[4])
+	printCodeLine( utils.template_format( "define {1} void @{2}( {3} ) {\n{4}}", linkage, functionName, args, body))
+end
+
+
 -- AST Callbacks:
 function typesystem.vardef( node)
 	local subnode = utils.traverse( typedb, node)
@@ -408,10 +436,28 @@ function typesystem.constant( node, typeName)
 	return {type=typeId, constructor=node.arg[1].value}
 end
 
-function typesystem.linkage( node, llvm_linkage) return llvm_linkage end
-function typesystem.funcdef( node) local cd = openCode(); local rt = utils.visit( typedb, node); printCodeLine( closeCode( cd)); return rt; end
-function typesystem.procdef( node) local cd = openCode(); local rt = utils.visit( typedb, node); printCodeLine( closeCode( cd)); return rt; end
+function typesystem.linkage( node, llvm_linkage)
+	return llvm_linkage
+end
+
+function typesystem.funcdef( node)
+	typedb:set_instance( "register", utils.register_allocator())
+	local cd = openCode(); 
+	defineFunction( node, utils.traverse( typedb, node))
+	printCodeLine( closeCode( cd)); 
+	return rt
+end
+
+function typesystem.procdef( node) 
+	typedb:set_instance( "register", utils.register_allocator())
+	local cd = openCode(); 
+	defineProcedure( node, utils.traverse( typedb, node))
+	printCodeLine( closeCode( cd)); 
+	return rt
+end
+
 function typesystem.paramdef( node) return utils.visit( typedb, node) end
+function typesystem.paramdeflist( node) return utils.visit( typedb, node) end
 
 function typesystem.program( node)
 	initFirstClassCitizens()
