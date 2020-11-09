@@ -147,11 +147,11 @@ end
 function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
 	local resolveTypeString = M.resolveTypeString( typedb, contextType, typeName)
 	if not resultContextTypeId then
-		errorMessage( line, "Failed to resolve type %s", resolveTypeString)
+		M.errorMessage( line, "Failed to resolve type %s", resolveTypeString)
 	elseif type(typeId) == "table" then
 		local t1 = typedb:type_string( resultContextTypeId[1])
 		local t2 = typedb:type_string( resultContextTypeId[2])
-		errorMessage( line, "Ambiguous reference resolving type %s: %s, %s", resolveTypeString, t1, t2)
+		M.errorMessage( line, "Ambiguous reference resolving type %s: %s, %s", resolveTypeString, t1, t2)
 	end
 end
 

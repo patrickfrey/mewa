@@ -4,7 +4,7 @@
 Polish name for seagull. It's difficult to find short memorizable names. I stick to names of birds in the polish language without non ascii characters.
 
 ## Type System
-A set of term rewrite rules to reduce structures of types to types and in this process construct a program that represents the structure. 
+A set of term rewrite rules to reduce structures of types to types and in this process construct a program that represents this structure. 
 
 ## Scope
 Pair of cardinal numbers (represented as integers) that define an area the first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope step of the instruction that queries the definition.
@@ -38,5 +38,8 @@ The class of language covered by grammars that can be implemented with _Mewa_. F
 
 ### Lexer
 Component that scans the input and produces a stream of items called lexems that are the atoms the grammar of the language is based on. It provides a sequence of items like identifiers, cardinal or floating point numbers, strings or operators instead of characters. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non whitespace character in the input. Contradicting _lexem_ definitions are resoved in _Mewa_ by selecting the longest match or the first definition for matches of the same length.
+
+### AST (Abstract Syntax Tree)
+Intermediate representation of the program. Output of the program parser. The AST in _Mewa_ is described [here](ast.md).
 
 

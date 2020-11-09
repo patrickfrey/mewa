@@ -318,7 +318,6 @@ function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, 
 end
 
 function applyOperator( node, operator, arg)
-	io.stderr:write( string.format( "CALL applyOperator TYPE %s\n", mewa.tostring( arg))) 
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
 	if not resultContextType or type(resultContextType) == "table" then errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
 	for ii,item in ipairs(items) do

@@ -184,10 +184,11 @@ struct CompilerContext
 	int calltable;					//< Lua stack address of call table
 	int calltablesize;				//< Number of elements in the call table
 	int scopestep;					//< Counter for step and scope structure
+	int line;					//< Line number of last lexem pushed
 	FILE* dbgout;					//< Debug output or NULL if undefined
 
 	CompilerContext( std::pmr::memory_resource* memrsc, std::size_t buffersize, int calltable_, int calltablesize_, FILE* dbgout_)
-		:stateStack(memrsc),calltable(calltable_),calltablesize(calltablesize_),scopestep(0),dbgout(dbgout_)
+		:stateStack(memrsc),calltable(calltable_),calltablesize(calltablesize_),scopestep(0),line(0),dbgout(dbgout_)
 	{
 		stateStack.reserve( (buffersize - sizeof stateStack) / sizeof(State));
 		stateStack.push_back( State( 1/*index*/, 0/*luastki*/, 0/*luastkn*/, 0/*scopecnt*/) );
@@ -241,12 +242,16 @@ static void luaReduceStruct(
 				stk_start = st.luastki;
 			}
 		}
-		int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 2:3;
+		int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 3:4;
 												// STK [ARG1]...[ARGN]
 		lua_createtable( ls, 0/*size array*/, structsize);	 			// STK [ARG1]...[ARGN] [TABLE]
 
 		lua_pushliteral( ls, "call");							// STK [ARG1]...[ARGN] [TABLE] "call"
  		lua_rawgeti( ls, ctx.calltable, callidx);					// STK [ARG1]...[ARGN] [TABLE] [CALLSTRUCT]
+		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
+
+		lua_pushliteral( ls, "line");							// STK [ARG1]...[ARGN] [TABLE] "line"
+		lua_pushinteger( ls, ctx.line);							// STK [ARG1]...[ARGN] [TABLE] "line" [LINE]
 		lua_rawset( ls, -3);								// STK [ARG1]...[ARGN] [TABLE]
 
 		switch (scopeflag)
@@ -382,6 +387,7 @@ static bool feedLexem( lua_State* ls, CompilerContext& ctx, const mewa::Automato
 				int next_luastki = getNextLuaStackIndex( ctx.stateStack);
 				ctx.stateStack.push_back( State( nexti->second.state(), next_luastki, 1, ctx.scopestep));
 				luaPushLexem( ls, lexem);
+				ctx.line = lexem.line();
 			}
 			else
 			{
