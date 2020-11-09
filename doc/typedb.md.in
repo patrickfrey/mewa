@@ -281,14 +281,14 @@ The returned list of candidates (2nd return value) has to be inspected by the cl
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #          | Name            | Type              | Description                                                                                                       |
-| :--------- | :-------------- | :---------------- | :---------------------------------------------------------------------------------------------------------------- |
-| 1st        | context-type(s) | integer/array     | Single type or array of types referring to the context of the type (*)                                            |
-| 2nd        | name            | string            | Name of the type searched                                                                                         |
-| 3rd        | tagmask         | bit set (integer) | (optional) Set of tags (**) that selects the reduction classes to use.                                            |
-| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of an ambiguous result.      | 
-| Return 2nd |                 | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.     |
-| Return 3rd |                 | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters. |
+| #          | Name            | Type              | Description                                                                                                        |
+| :--------- | :-------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------- |
+| 1st        | context-type(s) | integer/array     | Single type or array of types referring to the context of the type (*)                                             |
+| 2nd        | name            | string            | Name of the type searched                                                                                          |
+| 3rd        | tagmask         | bit set (integer) | (optional) Set of tags (**) that selects the reduction classes to use. Lookup without reductions if not specified. |
+| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of an ambiguous result.       | 
+| Return 2nd |                 | array             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.      |
+| Return 3rd |                 | array             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters.  |
 
 #### Remark (*)
 The context-type 0 is reserved for types that are not a member of some other structure.

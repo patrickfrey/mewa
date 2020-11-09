@@ -103,7 +103,7 @@ static bool skipBrackets( char const*& si, char eb)
 	int cnt = 1;
 
 	bool empty = true;
-	for (; *si && cnt > 0; ++si,empty=false)
+	for (; *si && cnt > 0; ++si)
 	{
 		if (*si == eb)
 		{
@@ -113,8 +113,12 @@ static bool skipBrackets( char const*& si, char eb)
 		{
 			++cnt;
 		}
+		else
+		{
+			empty = false;
+		}
 	}
-	if (!*si) throw Error( Error::SyntaxErrorInLexer);
+	if (!*si && cnt != 0) throw Error( Error::SyntaxErrorInLexer);
 	return !empty;
 }
 

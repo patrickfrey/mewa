@@ -85,6 +85,8 @@ end
 local constexpr_integer_type = typedb:def_type( 0, "constexpr int")
 local constexpr_float_type = typedb:def_type( 0, "constexpr float")
 local constexpr_bool_type = typedb:def_type( 0, "constexpr bool")
+local constexpr_dqstring_type = typedb:def_type( 0, "constexpr dqstring")
+local constexpr_sqstring_type = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
 
 function defineConstExprOperators()
@@ -304,14 +306,14 @@ function defineVariable( line, typeId, varName, initVal)
 	end
 end
 
-function selectVariableType( node, typeName, resultContextTypeId, reductions, items)
+function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, items)
 	if not resultContextTypeId or type(resultContextTypeId) == "table" then
 		utils.errorResolveType( typedb, node.line, resultContextTypeId, getContextTypes(), typeName)
 	end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == 0 then return item.type end
 	end
-	utils.errorMessage( node.line, "failed to resolve variable %s",
+	utils.errorMessage( node.line, "failed to resolve %s",
 	                    utils.resolveTypeString( typedb, getContextTypes(), typeName))
 end
 
@@ -388,19 +390,25 @@ function typesystem.typespec( node, qualifier)
 	typeName = qualifier .. node.arg[ #node.arg].value;
 	local typeId
 	if #node.arg == 1 then
-		typeId = selectVariableType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
+		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
 	else
-		typeId = selectVariableType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
+		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
 		if #node.arg > 2 then
 			for ii = 2, #node.arg-1, 1 do
-				typeId = selectVariableType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
+				typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
 				contextTypeId = typeId
 			end
 		end
-		typeId = selectVariableType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
+		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
 	end
 	return typeId
 end
+
+function typesystem.constant( node, typeName)
+	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
+	return {type=typeId, constructor=node.arg[1].value}
+end
+
 function typesystem.funcdef( node) local cd = openCode(); local rt = utils.visit( typedb, node); printCodeLine( closeCode( cd)); return rt; end
 function typesystem.procdef( node) local cd = openCode(); local rt = utils.visit( typedb, node); printCodeLine( closeCode( cd)); return rt; end
 function typesystem.paramdef( node) return utils.visit( typedb, node) end

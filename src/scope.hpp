@@ -717,8 +717,8 @@ public:
 
 public:
 	TagMask( const TagMask& o) :m_mask(o.m_mask){}
-	TagMask() :m_mask(0){}
 
+	constexpr TagMask() :m_mask(0){}
 	explicit constexpr TagMask( BitSet mask_) :m_mask(mask_){}
 
 	BitSet mask() const noexcept
@@ -758,6 +758,10 @@ public:
 	static constexpr TagMask matchAll() noexcept
 	{
 		return TagMask( 0xffFFffFFU);
+	}
+	static constexpr TagMask matchNothing() noexcept
+	{
+		return TagMask();
 	}
 	static int tagFromTagVal( std::uint8_t tagval) noexcept
 	{

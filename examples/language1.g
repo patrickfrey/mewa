@@ -10,7 +10,7 @@ SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1 ;
 CARDINAL: '[0123456789]+' ;
 FLOAT	: '[0123456789]+[.][0123456789]+' ;
 FLOAT	: '[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+' ;
-
+BOOLEAN : '((true)|(false))' ;
 
 program		   	= definitionlist								(program)
 			;
@@ -70,11 +70,12 @@ variabledefinition	= "var" typespec IDENT "=" expression						(>>vardef_assign)
 			;  
 returnstatement	   	= "return" expression								(>>stm_return)
 			;
-expression/L1		= IDENT
-			| CARDINAL
-			| FLOAT
-			| DQSTRING	
-			| SQSTRING
+expression/L1		= typename									(typespec "")
+			| BOOLEAN									(constant "constexpr bool")
+			| CARDINAL									(constant "constexpr int")
+			| FLOAT										(constant "constexpr float")
+			| DQSTRING									(constant "constexpr dqstring")
+			| SQSTRING									(constant "constexpr qstring")
 			| "(" expression ")"
 			;
 expression/L2		= expression  "="  expression							(binary_operator "=")
@@ -120,9 +121,10 @@ expression/L9		= expression  "*"  expression							(binary_operator "*")
 expression/L10		= expression  "<<"  expression							(binary_operator "<<")
 			| expression  ">>"  expression							(binary_operator ">>")
 			;
-expression/L11		= expression "->" IDENT								(binary_operator arrow)
-			| expression "." IDENT								(binary_operator member)
-			| "*" expression								(unary_operator ptrderef)
+expression/L11		= expression "->" IDENT								(binary_operator "->")
+			| expression "." IDENT								(binary_operator ".")
+			| expression "::" IDENT								(binary_operator "::")
+			| "*" expression								(unary_operator "*")
 			;
 expression/L12		= expression  "(" expressionlist ")"						(nary_operator "(")
 			| expression  "(" ")"								(nary_operator "(")
