@@ -74,7 +74,7 @@ function M.register_allocator()
         local i = 0
         return function ()
                 i = i + 1
-                return "%" .. i
+                return "%R" .. i
         end
 end
 

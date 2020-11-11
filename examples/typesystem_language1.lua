@@ -49,7 +49,7 @@ function binaryOpConstructor( fmt)
 	end
 end
 
-local variableConstructors = {}
+local typeAttributes = {}
 local codeMap = {}
 local codeKey = nil
 local codeKeyCnt = 0
@@ -237,8 +237,10 @@ function initFirstClassCitizens()
 		typedb:def_reduction( const_lvalue, constexprType, loadConstructor( fcc_descr.load), tag_typeDeduction)
 		typedb:def_reduction( const_lvalue, lvalue, nil, tag_typeDeduction)
 
-		variableConstructors[ lvalue] = getVariableConstructors( lvalue, rvalue, fcc_descr)
-		variableConstructors[ const_lvalue] = getVariableConstructors( const_lvalue, const_rvalue, fcc_descr)
+		typeAttributes[ lvalue] = getVariableConstructors( lvalue, rvalue, fcc_descr)
+		typeAttributes[ lvalue].llvmtype = fcc_descr.llvmType
+		typeAttributes[ const_lvalue] = getVariableConstructors( const_lvalue, const_rvalue, fcc_descr)
+		typeAttributes[ const_lvalue].llvmtype = fcc_descr.llvmType
 
 		typedb:def_reduction( lvalue, const_lvalue, loadConstructor( fcc_descr.load), tag_typeDeduction)
 		defineAssignmentOperator( rvalue, const_lvalue, "=", fcc_descr.store)
@@ -348,21 +350,23 @@ function applyOperator( node, operator, arg)
 	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg) .. ")")
 end
 
-function getArgumentListString( node)
+function getArgumentListString( node, arg)
 	return ""
 end
-function getInstructionList( node)
+function getInstructionList( node, arg)
 	return ""
 end
-function getLlvmTypeName( node)
+function getLlvmTypeName( node, typeId)
 	return ""
 end
 
 function defineFunction( node, arg)
 	local linkage = node.arg[1].linkage
-	local returnTypeName = getLlvmTypeName( arg[2])
+	local returnTypeName = llvmTypes[ arg[2]]
+	if not returnTypeName then
+	end
 	local functionName = arg[3]
-	local args = getArgumentListString( node.arg[4])
+	local args = getArgumentListString( node.arg[4], arg[4])
 	local body = getInstructionList( node.arg[5])
 	printCodeLine( utils.template_format( "define {1} {2} @{3}( {4} ) {\n{5}}", linkage, returnTypeName, functionName, args, body))
 end

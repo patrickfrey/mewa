@@ -168,6 +168,7 @@ foreach my $line (@content)
 	print "\t\tdef_global = \"{1} = internal global $llvmtype_storage $defaultmap{ $llvmtype}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdef_global_val = \"{1} = internal global $llvmtype_storage {2}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
+	print "\t\tllvmtype = \"$llvmtype\",\n";
 	print "\t\tclass = \"$sgn\",\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tstore = \"" . store_constructor( $llvmtype) . "\",\n";
