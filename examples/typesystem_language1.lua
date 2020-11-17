@@ -1,5 +1,5 @@
 local mewa = require "mewa"
-local fcc = require "fcc_language1"
+local llvmir_fmt = require "llvmir_fmt_language1"
 local utils = require "typesystem_utils"
 local bcd = require "bcd"
 
@@ -20,32 +20,41 @@ local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
 
 function convConstructor( fmt)
 	return function( constructor)
-		local code,result = utils.positional_format( fmt, {[1] = constructor.out}, typedb:get_instance( "register"), 2)
-		return {code = constructor.code .. code, out = result}
+		local register = typedb:get_instance( "register")
+		local out = register()
+		local code = utils.constructor_format( fmt, {inp = constructor.out, out = out}, register)
+		return {code = constructor.code .. code, out = out}
 	end
 end
 function loadConstructor( fmt)
 	return function( value)
-		local code,result = utils.positional_format( fmt, {[1] = value}, typedb:get_instance( "register"), 2)
-		return {code = code, out = result}
+		local register = typedb:get_instance( "register")
+		local out = register()
+		local code = utils.constructor_format( fmt, {adr = value, out = out}, register)
+		return {code = code, out = out}
 	end
 end
 function storeConstructor( fmt, adr)
 	return function( constructor)
-		local code,result = utils.positional_format( fmt, {[1] = adr, [2] = constructor.out}, typedb:get_instance( "register"), 2)
-		return {code = constructor.code .. code_load, out = result}
+		local register = typedb:get_instance( "register")
+		local code = utils.constructor_format( fmt, {inp = constructor.out, adr = adr}, register)
+		return {code = constructor.code .. code_load, out = constructor.out}
 	end
 end
 function unaryOpConstructor( fmt)
 	return function( arg)
-		local code,result = utils.positional_format( fmt, {[1] = arg[1].out}, typedb:get_instance( "register"), 2)
-		return {code = arg[1].code .. code, out = result}
+		local register = typedb:get_instance( "register")
+		local out = register()
+		local code = utils.constructor_format( fmt, {inp = arg[1].out, out = out}, register)
+		return {code = arg[1].code .. code, out = out}
 	end
 end
 function binaryOpConstructor( fmt)
 	return function( arg)
-		local code,result = utils.positional_format( fmt, {[1] = arg[1].out, [2] = arg[2].out}, typedb:get_instance( "register"), 3)
-		return {code = arg[1].code .. arg[2].code .. code, out = result}
+		local register = typedb:get_instance( "register")
+		local out = register()
+		local code = utils.constructor_format( fmt, {arg1 = arg[1].out, arg2 = arg[2].out, out = out}, register)
+		return {code = arg[1].code .. arg[2].code .. code, out = out}
 	end
 end
 
@@ -200,7 +209,9 @@ function initFirstClassCitizens()
 		return {
 			def_local = function( name, initval, register)
 				local fmt; if initval then fmt = descr.def_local_val else fmt = descr.def_local end
-				local code,result = utils.positional_format( fmt, {[2] = initval}, register, 1)
+				local register = typedb:get_instance( "register")
+				local out = register()
+				local code = utils.constructor_format( fmt, {val = initval, out = out}, register)
 				local var = typedb:def_type( 0, name, result)
 				typedb:def_reduction( type, var, function( adr) return {code = "", out = adr} end, tag_typeDeclaration)
 				typedb:def_reduction( reftype, var, nil, tag_typeDeduction)
@@ -209,7 +220,7 @@ function initFirstClassCitizens()
 			def_global = function( name, initval)
 				local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
 				local adr = "@" .. utils.mangleVariableName(name)
-				local code,result = utils.positional_format( fmt, {[1] = adr, [2] = initval}, nil, 1)
+				local code = utils.constructor_format( fmt, {val = initval, out = adr}, nil)
 				local var = typedb:def_type( 0, name, result)
 				typedb:def_reduction( type, var, loadConstructor( descr.load), tag_typeDeclaration)
 				typedb:def_reduction( reftype, var, nil, tag_typeDeduction)
@@ -217,7 +228,7 @@ function initFirstClassCitizens()
 			end
 		}
 	end
-	for typnam, fcc_descr in pairs( fcc) do
+	for typnam, fcc_descr in pairs( llvmir_fmt.fcc) do
 		local lvalue = typedb:def_type( 0, typnam)
 		local const_lvalue = typedb:def_type( 0, "const " .. typnam)
 		local rvalue = typedb:def_type( 0, "&" .. typnam)
@@ -256,7 +267,7 @@ function initFirstClassCitizens()
 				nil, tag_typeDeduction)
 		end
 	end
-	for typnam, fcc_descr in pairs( fcc) do
+	for typnam, fcc_descr in pairs( llvmir_fmt.fcc) do
 		local const_lvalue = typedb:get_type( 0, "const " .. typnam)
 		for from_typenam,conv in pairs( fcc_descr.conv) do
 			from_type = typedb:get_type( 0, "const " .. from_typenam)
@@ -368,7 +379,7 @@ function defineFunction( node, arg)
 	local functionName = arg[3]
 	local args = getArgumentListString( node.arg[4], arg[4])
 	local body = getInstructionList( node.arg[5])
-	printCodeLine( utils.template_format( "define {1} {2} @{3}( {4} ) {\n{5}}", linkage, returnTypeName, functionName, args, body))
+	printCodeLine( utils.code_format_varg( "define {1} {2} @{3}( {4} ) {\n{5}}", linkage, returnTypeName, functionName, args, body))
 end
 
 function defineProcedure( node, arg)
@@ -376,7 +387,7 @@ function defineProcedure( node, arg)
 	local functionName = arg[2]
 	local args = getArgumentListString( node.arg[3])
 	local body = getInstructionList( node.arg[4])
-	printCodeLine( utils.template_format( "define {1} void @{2}( {3} ) {\n{4}}", linkage, functionName, args, body))
+	printCodeLine( utils.code_format_varg( "define {1} void @{2}( {3} ) {\n{4}}", linkage, functionName, args, body))
 end
 
 

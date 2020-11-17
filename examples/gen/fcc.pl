@@ -78,11 +78,11 @@ sub load_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{3} = load i8, i8* {1}, align 1\\n{2} = trunc i8 {3} to i1\\n";
+		return "{1} = load i8, i8* {adr}, align 1\\n{out} = trunc i8 {1} to i1\\n";
 	}
 	else
 	{
-		return "{2} = load $llvmtype, $llvmtype* {1} align $alignmap{$llvmtype}\\n";
+		return "{out} = load $llvmtype, $llvmtype* {adr}, align $alignmap{$llvmtype}\\n";
 	}
 }
 
@@ -90,15 +90,15 @@ sub store_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{3} = zext i1 {2} to i8\\nstore i8 {3}, i8* {1}, align 1\\n";
+		return "{1} = zext i1 {inp} to i8\\nstore i8 {1}, i8* {out}, align 1\\n";
 	}
 	else
 	{
-		return "store $llvmtype {2}, $llvmtype* {1}, align $alignmap{$llvmtype}";
+		return "store $llvmtype {inp}, $llvmtype* {out}, align $alignmap{$llvmtype}";
 	}
 }
 
-sub load_conv_constructor {
+sub conv_constructor {
 	my $llvmtype_out = $_[0];
 	my $sgn_out = $_[1];
 	my $llvmtype_in = $_[2];
@@ -115,7 +115,9 @@ sub load_conv_constructor {
 			my $rt = "";
 			if ($sgn_in eq "bool")
 			{
-				return "{3} = load i8, i8* {1}, align 1\\n{4} = trunc i8 {3} to i1\\n{5} = zext i1 {4} to i32\\n{2} = sitofp i32 {5} to $llvmtype_out\\n";
+				return    "{1} = trunc i8 {inp} to i1\\n"
+					. "{2} = zext i1 {1} to i32\\n"
+					. "{out} = sitofp i32 {2} to $llvmtype_out\\n";
 			}
 			if ($sgn_in eq "fp" && typeSize( $llvmtype_out) > typeSize( $llvmtype_in))  {$convop = "fpext";}
 			elsif ($sgn_in eq "fp" && typeSize( $llvmtype_out) < typeSize( $llvmtype_in))  {$convop = "fptrunc";}
@@ -126,7 +128,7 @@ sub load_conv_constructor {
 		{
 			if ($sgn_out eq "bool")
 			{
-				return "{3} = load $llvmtype_in, $llvmtype_in* {1}, align $alignmap{ $llvmtype_in}\\n{2} = fcmp une $llvmtype_in {3}, 0.000000e+00\\n";
+				return "{out} = fcmp une $llvmtype_in {inp}, 0.000000e+00\\n";
 			}
 			if ($sgn_out eq "signed") {$convop = "fptosi";}
 			elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
@@ -135,14 +137,14 @@ sub load_conv_constructor {
 		{
 			if ($sgn_out eq "bool")
 			{
-				return "{3} = load $llvmtype_in, $llvmtype_in* {1}, align $alignmap{ $llvmtype_in}\\n{2} = cmp ne $llvmtype_in {3}, 0\\n";
+				return "{out} = cmp ne $llvmtype_in {inp}, 0\\n";
 			}
 			if (typeSize( $llvmtype_out) < typeSize( $llvmtype_in)) {$convop = "trunc";}
 			elsif ($sgn_in eq "bool") {$convop = "zext";}
 			elsif ($sgn_in eq "unsigned") {$convop = "zext";}
 			elsif ($sgn_in eq "signed") {$convop = "sext";}
 		}
-		return "{3} = load $llvmtype_in, $llvmtype_in* {1}, align $alignmap{ $llvmtype_in}\\n{2} = $convop $llvmtype_in {3} to $llvmtype_out\\n";
+		return "{out} = $convop $llvmtype_in {inp} to $llvmtype_out\\n";
 	}
 }
 
@@ -163,10 +165,10 @@ foreach my $line (@content)
 	if ($sgn eq "bool") {
 		$llvmtype_storage = "i8";
 	}
-	print "\t\tdef_local = \"{1} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n\",\n";
-	print "\t\tdef_local_val = \"{1} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n" . store_constructor($llvmtype) . "\",\n";
-	print "\t\tdef_global = \"{1} = internal global $llvmtype_storage $defaultmap{ $llvmtype}, align $alignmap{$llvmtype}\\n\",\n";
-	print "\t\tdef_global_val = \"{1} = internal global $llvmtype_storage {2}, align $alignmap{$llvmtype}\\n\",\n";
+	print "\t\tdef_local = \"{out} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n\",\n";
+	print "\t\tdef_local_val = \"{out} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n" . store_constructor($llvmtype) . "\",\n";
+	print "\t\tdef_global = \"{out} = internal global $llvmtype_storage $defaultmap{ $llvmtype}, align $alignmap{$llvmtype}\\n\",\n";
+	print "\t\tdef_global_val = \"{out} = internal global $llvmtype_storage {inp}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
 	print "\t\tllvmtype = \"$llvmtype\",\n";
 	print "\t\tclass = \"$sgn\",\n";
@@ -199,7 +201,7 @@ foreach my $line (@content)
 		if ($op_typename ne $typename)
 		{
 			if ($oi++ > 0) {print ",\n";} else {print "\n";}
-			my $cnv = load_conv_constructor( $llvmtype, $sgn, $op_llvmtype, $op_sgn);
+			my $cnv = conv_constructor( $llvmtype, $sgn, $op_llvmtype, $op_sgn);
 			my $weight = 0.0;
 			if ($alignmap{$llvmtype} < $alignmap{$op_llvmtype})
 			{
@@ -216,19 +218,19 @@ foreach my $line (@content)
 	print "\t\tunop = {\n";
 	if ($sgn eq "bool")
 	{
-		print "\t\t\t[\"\!\"] = \"{2} = xor $llvmtype {1}, true\\n\"";
+		print "\t\t\t[\"\!\"] = \"{out} = xor $llvmtype {inp}, true\\n\"";
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		print "\t\t\t[\"\!\"] = \"{2} = xor $llvmtype {1}, -1\\n\"";
+		print "\t\t\t[\"\!\"] = \"{out} = xor $llvmtype {inp}, -1\\n\"";
 	}
 	elsif ($sgn eq "signed")
 	{
-		print "\t\t\t[\"-\"] = \"{2} = sub $llvmtype 0, {1}\\n\"";
+		print "\t\t\t[\"-\"] = \"{out} = sub $llvmtype 0, {inp}\\n\"";
 	}
 	elsif ($sgn eq "fp")
 	{
-		print "\t\t\t[\"-\"] = \"{2} = fneg $llvmtype {1}\\n\"";
+		print "\t\t\t[\"-\"] = \"{out} = fneg $llvmtype {inp}\\n\"";
 	}
 	else
 	{
@@ -239,22 +241,22 @@ foreach my $line (@content)
 	my @ops = ();
 	if ($sgn eq "bool")
 	{
-		@ops = ("[\"&&\"]=and", "[\"||\"]=or");
+		@ops = ("[\"&&\"] and", "[\"||\"] or");
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		@ops = ("[\"+\"]=add nuw", "[\"-\"]=add nsw", "[\"*\"]=mul nsw", "[\"/\"]=udiv", "[\"%\"]=urem",
-			"[\"<<\"]=shl", "[\">>\"]=lshr",
-			"[\"&\"]=and", "[\"|\"]=or", "[\"^\"]=xor");
+		@ops = ("[\"+\"] add nuw", "[\"-\"] add nsw", "[\"*\"] mul nsw", "[\"/\"] udiv", "[\"%\"] urem",
+			"[\"<<\"] shl", "[\">>\"] lshr",
+			"[\"&\"] and", "[\"|\"] or", "[\"^\"] xor");
 	}
 	elsif ($sgn eq "signed")
 	{
-		@ops = ("[\"+\"]=add nsw", "[\"-\"]=sub nsw", "[\"*\"]=mul nsw", "[\"/\"]=sdiv", "[\"%\"]=srem",
-			"[\"<<\"]=shl nsw", "[\">>\"]=ashr");
+		@ops = ("[\"+\"] add nsw", "[\"-\"] sub nsw", "[\"*\"] mul nsw", "[\"/\"] sdiv", "[\"%\"] srem",
+			"[\"<<\"] shl nsw", "[\">>\"] ashr");
 	}
 	elsif ($sgn eq "fp")
 	{
-		@ops = ("[\"+\"]=fadd", "[\"-\"]=fsub", "[\"*\"]=fmul", "[\"/\"]=fdiv", "[\"%\"]=frem");
+		@ops = ("[\"+\"] fadd", "[\"-\"] fsub", "[\"*\"] fmul", "[\"/\"] fdiv", "[\"%\"] frem");
 	}
 	else
 	{
@@ -264,8 +266,34 @@ foreach my $line (@content)
 	foreach my $op( @ops)
 	{
 		if ($oi++ > 0) {print ",\n";} else {print "\n";}
-		my ($name,$llvm_name) = split /=/, $op;
-		print "\t\t\t$name = \"{3} = $llvm_name $llvmtype {1}, {2}\\n\"";
+		my ($name,$llvm_name) = split / /, $op, 2;
+		print "\t\t\t$name = \"{out} = $llvm_name $llvmtype {arg1}, {arg2}\\n\"";
+	}
+	print "},\n";
+	print "\t\tcmpop = {";
+	my @cmps = ();
+	if ($sgn eq "bool" || $sgn eq "unsigned")
+	{
+		@cmps = ("[\"==\"] icmp eq", "[\"!=\"] icmp ne", "[\"<=\"] icmp ule", "[\"<\"] icmp ult", "[\">=\"] icmp uge", "[\">\"] icmp ugt");
+	}
+	elsif ($sgn eq "signed")
+	{
+		@cmps = ("[\"==\"] icmp eq", "[\"!=\"] icmp ne", "[\"<=\"] icmp sle", "[\"<\"] icmp slt", "[\">=\"] icmp sge", "[\">\"] icmp sgt");
+	}
+	elsif ($sgn eq "fp")
+	{
+		@cmps = ("[\"==\"] fcmp oeq", "[\"!=\"] fcmp one", "[\"<=\"] fcmp ole", "[\"<\"] fcmp olt", "[\">=\"] fcmp oge", "[\">\"] fcmp ogt");
+	}
+	else
+	{
+		die "Unknown sgn '$sgn' (3rd column in typelist)";
+	}
+	$oi = 0;
+	foreach my $op( @cmps)
+	{
+		if ($oi++ > 0) {print ",\n";} else {print "\n";}
+		my ($name,$llvm_name) = split / /, $op, 2;
+		print "\t\t\t$name = \"{out} = $llvm_name $llvmtype {arg1}, {arg2}\\n\"";
 	}
 	print "}\n";
 	print "\t}";

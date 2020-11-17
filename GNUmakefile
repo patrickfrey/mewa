@@ -12,18 +12,19 @@ endif
 AR=ar rcs
 LNKSO=$(CC) -shared
 
-ifeq ($(strip $(TESTTIME)),Y)
-TIME=/usr/bin/time -f "%C running %e seconds"
+ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(TIME)))),Y)
+TIMECMD=/usr/bin/time -f "%C running %e seconds"
 else
-TIME=
+TIMECMD=
 endif
 
-ifeq ($(strip $(RELEASE)),)
-DEBUGFLAGS:=-ggdb -g3 -O0 $(DEBUGFLAGS)
-else
+ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(RELEASE)))),Y)
 DEBUGFLAGS=-O3
+else
+DEBUGFLAGS:=-ggdb -g3 -O0 $(DEBUGFLAGS)
 endif
-ifneq ($(strip $(VERBOSE)),)
+
+ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(VERBOSE)))),Y)
 CXXVBFLAGS 	:=-v
 TSTVBFLAGS 	:=-V
 endif
@@ -50,7 +51,7 @@ BUILDDIR := build
 DESTINATION := $(PREFIX)/bin
 LIBDEST  := $(PREFIX)/lib
 INCDEST  := $(PREFIX)/include
-MAKEDEP  := Lua.inc GNUmakefile configure
+MAKEDEP  := Lua.inc configure
 SRCDIR   := src
 INCDIR   := include
 TESTDIR  := tests
@@ -115,14 +116,14 @@ $(SHLIBRARY): $(LIBRARY) $(SHLIBOBJ)
 	$(LNKSO) -Wl,-soname,$(SONAME) $(LDLIBS) -o $(SHLIBRARY) $(SHLIBOBJ) $(LIBRARY)
 
 test : all
-	$(TIME) $(BUILDDIR)/testError $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testLexer $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testScope $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testRandomScope $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testRandomIdentMap $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testAutomaton $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testTypeDb $(TSTVBFLAGS)
-	$(TIME) $(BUILDDIR)/testRandomTypeDb $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testError $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testLexer $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testScope $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testRandomScope $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testRandomIdentMap $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testAutomaton $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testTypeDb $(TSTVBFLAGS)
+	$(TIMECMD) $(BUILDDIR)/testRandomTypeDb $(TSTVBFLAGS)
 	tests/luatest.sh "$(LUABIN)"
 check: test
 

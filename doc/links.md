@@ -8,6 +8,7 @@
 
 ### Manuals
 * [LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)
+* [LLVM GetElementPtr](https://llvm.org/docs/GetElementPtr.html)
 
 ### Documentation with Examples
 * [Mapping High Level Constructs to LLVM IR Documentation](https://readthedocs.org/projects/mapping-high-level-constructs-to-llvm-ir/downloads/pdf/latest)

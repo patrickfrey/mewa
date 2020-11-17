@@ -138,7 +138,7 @@ function register_allocator()
         local i = 0
         return function ()
                 i = i + 1
-                return "%" .. i
+                return "%R" .. i
         end
 end
 
@@ -157,9 +157,9 @@ typedb:step( 49);  print( typedb:get_instance( "register")());
 ```
 #### Output
 ```
-%1
-%1
-%2
+%R1
+%R1
+%R2
 
 ```
 

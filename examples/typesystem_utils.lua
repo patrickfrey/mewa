@@ -3,7 +3,7 @@
 -- Module object with all functions exported
 local M = {}
 
--- Name mangling/demangling:
+-- Name mangling/demangling and unique name:
 -- Helpers for encoding/decoding:
 function char_to_hex( c)
 	return string.format("_%02X", string.byte(c))
@@ -29,34 +29,31 @@ function M.mangleVariableName( name)
 end
 
 -- Template for LLVM Code synthesis with substitution of positional arguments in curly brackets {1},{2},{3}, ...
-function M.positional_format( fmt, argtable, register, outindex)
+function M.constructor_format( fmt, argtable, register)
 	local valtable = {}
 	local subst = function( match)
 		local index = tonumber( match)
-		if index >= 1 and index <= #argtable then
-			return argtable[ index]
-		elseif valtable[ index] then
-			return valtable[ index]
-		elseif register then
-			local rr = register()
-			valtable[ index] = rr
-			return rr
+		if index then
+			if valtable[ index] then
+				return valtable[ index]
+			elseif register then
+				local rr = register()
+				valtable[ index] = rr
+				return rr
+			else
+				M.errorMessage( 0, "Can't build constructor for %s, having unbound register variables and no register allocator defined", fmt)
+			end
+		elseif argtable[ match] then
+			return argtable[ match]
 		else
-			M.errorMessage( 0, "Can't build constructor for %s, having unbound variables and no register allocator defined", fmt)
+			M.errorMessage( 0, "Can't build constructor for %s, having unbound variables", fmt)
 		end
 	end
-	local result = fmt:gsub("[{]([%d]*)[}]", subst)
-	local outsubst = nil
-	if outindex <= #argtable then
-		outsubst = argtable[ outindex]
-	else
-		outsubst = valtable[ outindex]
-	end
-	return result,outsubst
+	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
 end
 
 -- Template for LLVM Code synthesis of control structures
-function M.template_format( fmt, ... )
+function M.code_format_varg( fmt, ... )
 	local arg = {...}
 	local subst = function( match)
 		local index = tonumber( match)
@@ -67,6 +64,25 @@ function M.template_format( fmt, ... )
 		end
 	end
 	return fmt:gsub("[{]([%d]*)[}]", subst)
+end
+
+function M.template_format( fmt, arg )
+	if type( fmt) == "table" then
+		rt = {}
+		for kk,vv in pairs( tmt) do
+			rt[ kk] = M.template_format( vv, arg)
+		end
+		return rt;
+	else
+		local subst = function( match)
+			if arg[ match] then
+				return arg[ match]
+			else
+				return "{" .. match .. "}"
+			end
+		end
+		return fmt:gsub("[{]([_%w%d]*)[}]", subst)
+	end
 end
 
 -- Register allocator for LLVM
