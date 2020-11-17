@@ -15,7 +15,7 @@ end
 
 -- [1] Mangle a name
 function M.mangleName( name)
-	return name:gsub("([^%w _])", char_to_hex)
+	return name:gsub("([^_%w%d])", char_to_hex)
 end
 
 -- [2] Demangle a name
@@ -25,7 +25,7 @@ end
 
 -- [3] Mangle a variable name
 function M.mangleVariableName( name)
-	return M.mangleName( "=" .. name)
+	return M.mangleName( "$" .. name)
 end
 
 -- Template for LLVM Code synthesis with substitution of positional arguments in curly brackets {1},{2},{3}, ...

@@ -229,6 +229,7 @@ function initFirstClassCitizens()
 		}
 	end
 	for typnam, fcc_descr in pairs( llvmir_fmt.fcc) do
+		local avalue = typedb:def_type( 0, "$" .. typnam)
 		local lvalue = typedb:def_type( 0, typnam)
 		local const_lvalue = typedb:def_type( 0, "const " .. typnam)
 		local rvalue = typedb:def_type( 0, "&" .. typnam)
@@ -245,6 +246,8 @@ function initFirstClassCitizens()
 			defineConstExprValueOperatorsInt( lvalue, fcc_descr)
 			constexprType = constexpr_integer_type
 		end
+		typedb:def_reduction( lvalue, avalue, nil, tag_typeDeduction)
+
 		typedb:def_reduction( const_lvalue, constexprType, loadConstructor( fcc_descr.load), tag_typeDeduction)
 		typedb:def_reduction( const_lvalue, lvalue, nil, tag_typeDeduction)
 

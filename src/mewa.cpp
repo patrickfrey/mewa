@@ -94,10 +94,11 @@ mewa = require("mewa")
 
 compilerdef = %automaton%
 
-inputfile,outputfile,dbgout = cmdline:parse( "%language%", typesystem, arg)
+ccmd = cmdline:parse( "%language%", typesystem, arg)
+typesystem.target = ccmd.target
 
 compiler = mewa.compiler( compilerdef)
-compiler:run( inputfile, outputfile, dbgout)
+compiler:run( ccmd.input, ccmd.output, ccmd.debug)
 )"};
 
 
