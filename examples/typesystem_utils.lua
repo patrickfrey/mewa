@@ -28,7 +28,13 @@ function M.mangleVariableName( name)
 	return M.mangleName( "$" .. name)
 end
 
--- Template for LLVM Code synthesis with substitution of positional arguments in curly brackets {1},{2},{3}, ...
+local uniqueNameIndex = 0
+function M.generateUniqueName( prefix)
+	uniqueNameIndex = uniqueNameIndex + 1
+	return prefix .. uniqueNameIndex
+end
+
+-- Map template for LLVM Code synthesis 
 function M.constructor_format( fmt, argtable, register)
 	local valtable = {}
 	local subst = function( match)
@@ -68,8 +74,8 @@ end
 
 function M.template_format( fmt, arg )
 	if type( fmt) == "table" then
-		rt = {}
-		for kk,vv in pairs( tmt) do
+		local rt = {}
+		for kk,vv in pairs( fmt) do
 			rt[ kk] = M.template_format( vv, arg)
 		end
 		return rt;
@@ -96,16 +102,16 @@ end
 
 -- Tree traversal:
 -- [1] Tree traversal subnode call implementation
-function M.traverseCall( node, context)
+function M.traverseCall( node)
 	if node.arg then
 		local rt = {}
 		for ii, vv in ipairs( node.arg) do
 			local subnode = node.arg[ ii]
 			if subnode.call then
 				if subnode.call.obj then
-					rt[ ii] = subnode.call.proc( subnode, subnode.call.obj, context)
+					rt[ ii] = subnode.call.proc( subnode, subnode.call.obj)
 				else
-					rt[ ii] = subnode.call.proc( subnode, context)
+					rt[ ii] = subnode.call.proc( subnode)
 				end
 			else
 				rt[ ii] = subnode.value
@@ -118,7 +124,7 @@ function M.traverseCall( node, context)
 end
 
 -- [2] Tree traversal implementation, define scope/step and do the traversal call 
-function M.traverse( typedb, node, context)
+function M.traverse( typedb, node)
 	local rt = nil
 	if (node.scope) then
 		local parent_scope = typedb:scope( node.scope)

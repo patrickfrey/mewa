@@ -1,5 +1,5 @@
 local mewa = require "mewa"
-local llvmir_fmt = require "llvmir_fmt_language1"
+local llvmir = require "llvmir_language1"
 local utils = require "typesystem_utils"
 local bcd = require "bcd"
 
@@ -18,47 +18,40 @@ local tag_typeNamespace = 3
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
 local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
 
+function constructorParts( constructor)
+	if type(constructor) == "table" then return constructor.code,constructor.out else return "",tostring(constructor) end
+end
 function convConstructor( fmt)
 	return function( constructor)
 		local register = typedb:get_instance( "register")
 		local out = register()
-		local code = utils.constructor_format( fmt, {inp = constructor.out, out = out}, register)
-		return {code = constructor.code .. code, out = out}
+		local code,inp = constructorParts( constructor)
+		return {code = code .. utils.constructor_format( fmt, {inp = inp, out = out}, register), out = out}
 	end
 end
-function loadConstructor( fmt)
-	return function( value)
+function callConstructor( fmt)
+	return function( this, arg)
 		local register = typedb:get_instance( "register")
 		local out = register()
-		local code = utils.constructor_format( fmt, {adr = value, out = out}, register)
-		return {code = code, out = out}
-	end
-end
-function storeConstructor( fmt, adr)
-	return function( constructor)
-		local register = typedb:get_instance( "register")
-		local code = utils.constructor_format( fmt, {inp = constructor.out, adr = adr}, register)
-		return {code = constructor.code .. code_load, out = constructor.out}
-	end
-end
-function unaryOpConstructor( fmt)
-	return function( arg)
-		local register = typedb:get_instance( "register")
-		local out = register()
-		local code = utils.constructor_format( fmt, {inp = arg[1].out, out = out}, register)
-		return {code = arg[1].code .. code, out = out}
-	end
-end
-function binaryOpConstructor( fmt)
-	return function( arg)
-		local register = typedb:get_instance( "register")
-		local out = register()
-		local code = utils.constructor_format( fmt, {arg1 = arg[1].out, arg2 = arg[2].out, out = out}, register)
-		return {code = arg[1].code .. arg[2].code .. code, out = out}
+		local code = ""
+		local this_code,this_inp = constructorParts( this)
+		local subst = {out = out, this = this_inp}
+		code = code .. this_code
+		for ii=1,#arg,1 do
+			local arg_code,arg_inp = constructorParts( arg[ ii])
+			code = code .. arg_code
+			subst[ arg .. ii] = arg_inp
+		end
+		return {code = code .. utils.constructor_format( fmt, subst, register), out = out}
 	end
 end
 
-local typeAttributes = {}
+local fccQualiTypeMap = {}	-- maps fcc type names without qualifiers to the table of type ids for all qualifiers possible
+local fccIndexTypeMap = {}	-- maps fcc type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
+local fccBooleanType = 0	-- type id of the boolean type, result of cmpop binary operators
+local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
+local referenceTypeMap = {}	-- maps any defined type id to its reference type
+local typeDescriptionMap = {}	-- maps any defined type id without qualifier to its llvmir template structure
 local codeMap = {}
 local codeKey = nil
 local codeKeyCnt = 0
@@ -81,7 +74,7 @@ function closeCode( oldKey)
 	return rt
 end
 
-function printCodeLine( codeln)
+function printSectionCodeLine( section, codeln)
 	if codeln then
 		if codeMap[ codeKey] then
 			codeMap[ codeKey] = codeMap[ codeKey] .. codeln .. "\n"
@@ -91,6 +84,21 @@ function printCodeLine( codeln)
 	end
 end
 
+function printCodeLine( codeln)
+	printSectionCodeLine( codeKey, codeln)
+end
+
+function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
+	local constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
+	local constructor_promoted_this = function( this, arg) return constructor( promote_constructor(this), arg[1]) end
+	local callType = typedb:def_type( thisType, opr, constructor_promoted_this, argTypes)
+	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeduction) end
+end
+function defineCall( returnType, thisType, opr, argTypes, constructor)
+	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
+	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeduction) end
+end
+
 local constexpr_integer_type = typedb:def_type( 0, "constexpr int")
 local constexpr_float_type = typedb:def_type( 0, "constexpr float")
 local constexpr_bool_type = typedb:def_type( 0, "constexpr bool")
@@ -98,201 +106,154 @@ local constexpr_dqstring_type = typedb:def_type( 0, "constexpr dqstring")
 local constexpr_sqstring_type = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
 
+function defineConstExprBasicArithmetics( constexpr_type)
+	defineCall( constexpr_type, constexpr_type, "+", {constexpr_type}, function( this, arg) return this + arg[1] end)
+	defineCall( constexpr_type, constexpr_type, "-", {constexpr_type}, function( this, arg) return this - arg[1] end)
+	defineCall( constexpr_type, constexpr_type, "/", {constexpr_type}, function( this, arg) return this / arg[1] end)
+	defineCall( constexpr_type, constexpr_type, "%", {constexpr_type}, function( this, arg) return this % arg[1] end)
+end
+
+function defineConstExprBasicArithmeticsPromoted( constexpr_type, arg_type, promote_this)
+	defineCall( constexpr_type, constexpr_type, "+", {arg_type}, function( this, arg) return promote_this( this) + arg[1] end)
+	defineCall( constexpr_type, constexpr_type, "-", {arg_type}, function( this, arg) return promote_this( this) - arg[1] end)
+	defineCall( constexpr_type, constexpr_type, "/", {arg_type}, function( this, arg) return promote_this( this) / arg[1] end)
+	defineCall( constexpr_type, constexpr_type, "%", {arg_type}, function( this, arg) return promote_this( this) % arg[1] end)
+end
+
+function defineConstExprBitArithmetics( constexpr_type)
+	defineCall( constexpr_type, constexpr_type, "&", {constexpr_type}, function( this, arg) return this.bit_and( arg[1], bits64) end)
+	defineCall( constexpr_type, constexpr_type, "|", {constexpr_type}, function( this, arg) return this.bit_or( arg[1], bits64) end)
+	defineCall( constexpr_type, constexpr_type, "^", {constexpr_type}, function( this, arg) return this.bit_xor( arg[1], bits64) end)
+	defineCall( constexpr_type, constexpr_type, "~", {constexpr_type}, function( this, arg) return this.bit_not( bits64) end)
+end
+
+function defineConstExprBooleanArithmetics( constexpr_type)
+	defineCall( constexpr_type, constexpr_type, "&&", {constexpr_type}, function( this, arg) return this == true and arg[1] == true end)
+	defineCall( constexpr_type, constexpr_type, "||", {constexpr_type}, function( this, arg) return this == true or arg[1] == true end)
+	defineCall( constexpr_type, constexpr_type, "~", {}, function( this, arg) return this ~= true end)
+end
+
 function defineConstExprOperators()
-	typedb:def_reduction( constexpr_float_type,
-		typedb:def_type( constexpr_float_type, "+", function( arg) return arg[1] + arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_float_type,
-		typedb:def_type( constexpr_float_type, "-", function( arg) return arg[1] - arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_float_type,
-		typedb:def_type( constexpr_float_type, "/", function( arg) return arg[1] / arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_float_type,
-		typedb:def_type( constexpr_float_type, "%", function( arg) return arg[1] % arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
+	defineConstExprBasicArithmetics( constexpr_float_type)
+	defineConstExprBasicArithmetics( constexpr_integer_type)
+	defineConstExprBasicArithmeticsPromoted( constexpr_integer_type, constexpr_float_type, function(this) return this:tonumber() end)
+	defineConstExprBitArithmetics( constexpr_integer_type)
+	defineConstExprBooleanArithmetics( constexpr_bool_type)
 
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "+", function( arg) return arg[1] + arg[2] end, {constexpr_integer_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "-", function( arg) return arg[1] - arg[2] end, {constexpr_integer_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "/", function( arg) return arg[1] / arg[2] end, {constexpr_integer_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "%", function( arg) return arg[1] % arg[2] end, {constexpr_integer_type} ), nil, tag_typeDeduction)
+	typedb:def_reduction( constexpr_bool_type, constexpr_integer_type, function( value) return value ~= "0" end, tag_typeDeduction)
+	typedb:def_reduction( constexpr_bool_type, constexpr_float_type, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeDeduction)
+	typedb:def_reduction( constexpr_float_type, constexpr_integer_type, function( value) return value:tonumber() end, tag_typeDeduction)
+	typedb:def_reduction( constexpr_integer_type, constexpr_float_type, function( value) return bcd:int( value) end, tag_typeDeduction)
 
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "+", function( arg) return arg[1]:tonumber() + arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "-", function( arg) return arg[1]:tonumber() - arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "/", function( arg) return arg[1]:tonumber() / arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "%", function( arg) return arg[1]:tonumber() % arg[2] end, {constexpr_float_type} ), nil, tag_typeDeduction)
+	function bool2bcd( value) if value then return bcd:int("1") else return bcd:int("0") end end
+	typedb:def_reduction( constexpr_integer_type, constexpr_bool_type, bool2bcd, tag_typeDeduction)
 
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "&", function( arg) return arg[1].bit_and( arg[2], bits64) end, {constexpr_integer_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "|", function( arg) return arg[1].bit_or( arg[2], bits64) end, {constexpr_integer_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "^", function( arg) return arg[1].bit_xor( arg[2], bits64) end, {constexpr_integer_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		typedb:def_type( constexpr_integer_type, "~", function( arg) return arg[1].bit_not( bits64) end, {} ), nil, tag_typeDeduction)
+	local int_arg_typenam = "long"
+	local int_arg_type = typedb:get_type( 0, "const " .. int_arg_typenam)
+	definePromoteCall( int_arg_type, constexpr_integer_type, "+", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexpr_integer_type, "-", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexpr_integer_type, "/", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexpr_integer_type, "%", {int_arg_type}, nil)
+	local uint_arg_typenam = "ulong"
+	local uint_arg_type = typedb:get_type( 0, "const " .. uint_arg_typenam)
+	definePromoteCall( uint_arg_type, constexpr_integer_type, "&", {uint_arg_type}, nil)
+	definePromoteCall( uint_arg_type, constexpr_integer_type, "|", {uint_arg_type}, nil)
+	definePromoteCall( uint_arg_type, constexpr_integer_type, "^", {uint_arg_type}, nil)
+	definePromoteCall( uint_arg_type, constexpr_integer_type, "~", {}, nil)
 
-	typedb:def_reduction( constexpr_bool_type,
-		typedb:def_type( constexpr_bool_type, "&&", function( arg) return arg[1] and arg[2] end, {constexpr_bool_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_bool_type,
-		typedb:def_type( constexpr_bool_type, "||", function( arg) return arg[1] or arg[2] end, {constexpr_bool_type} ), nil, tag_typeDeduction)
-	typedb:def_reduction( constexpr_bool_type,
-		typedb:def_type( constexpr_bool_type, "!", function( arg) return not arg[1] end, {} ), nil, tag_typeDeduction)
+	local float_arg_typenam = "double"
+	local float_arg_type = typedb:get_type( 0, "const " .. float_arg_typenam)
+	definePromoteCall( float_arg_type, constexpr_float_type, "+", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexpr_float_type, "-", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexpr_float_type, "/", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexpr_float_type, "%", {float_arg_type}, nil)
 
-	typedb:def_reduction( constexpr_bool_type,
-		constexpr_integer_type, function( value) return value ~= "0" end, tag_typeDeduction)
-	typedb:def_reduction( constexpr_bool_type,
-		constexpr_float_type, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeDeduction)
-
-	typedb:def_reduction( constexpr_float_type,
-		constexpr_integer_type, function( value) return value:tonumber() end, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type,
-		constexpr_float_type, function( value) return bcd:int( value) end, tag_typeDeduction)
-
-	typedb:def_reduction( constexpr_integer_type,
-		constexpr_bool_type, function( value) if value then return bcd:int("1") else return bcd:int("0") end end, tag_typeDeduction)
+	local bool_arg_typenam = "bool"
+	local bool_arg_type = typedb:get_type( 0, "const " .. bool_arg_typenam)
+	definePromoteCall( bool_arg_type, constexpr_bool_type, "&&", {bool_arg_type}, nil)
+	definePromoteCall( bool_arg_type, constexpr_bool_type, "||", {bool_arg_type}, nil)
+	definePromoteCall( bool_arg_type, constexpr_bool_type, "~", {}, nil)	
 end
 
-function defineConstExprValueOperator( constExprType, valueType, fcc_descr, opr)
-	typedb:def_reduction( valueType,
-		typedb:def_type( constExprType, opr,
-			function( arg)
-	                       return typedb:type_constructor( typedb:get_type( valueType, opr, {valueType}))( { loadConstructor(fcc_descr.load)(arg[1]), arg[2] } )
-			end,
-			{ valueType } ), 
-		nil, tag_typeDeduction)
-end
-function defineLValueAdvanceBinaryOperator( valueType, operandType, opr, fmt_conv)
-	typedb:def_reduction( operandType,
-		typedb:def_type( valueType, opr,
-			function( arg)
-	                       return typedb:type_constructor( typedb:get_type( operandType, opr, {operandType}))( { convConstructor(fmt_conv)(arg[1]), arg[2] } )
-			end,
-			{operandType} ),
-		nil, tag_typeDeduction)
-end
-
-function defineConstExprValueOperatorsInt( intType, fcc_descr)
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "+")
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "-")
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "/")
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "%")
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "&")
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "|")
-	defineConstExprValueOperator( constexpr_integer_type, intType, fcc_descr, "^")
-end
-function defineConstExprValueOperatorsFloat( floatType, fcc_descr)
-	defineConstExprValueOperator( constexpr_float_type, floatType, fcc_descr, "+")
-	defineConstExprValueOperator( constexpr_float_type, floatType, fcc_descr, "-")
-	defineConstExprValueOperator( constexpr_float_type, floatType, fcc_descr, "/")
-	defineConstExprValueOperator( constexpr_float_type, floatType, fcc_descr, "%")
-end
-function defineConstExprValueOperatorsBool( boolType, fcc_descr)
-	defineConstExprValueOperator( constexpr_bool_type, boolType, fcc_descr, "&&")
-	defineConstExprValueOperator( constexpr_bool_type, boolType, fcc_descr, "||")
-end
-function defineAssignmentOperator( rvalue, const_lvalue, operator, fmt)
-	typedb:def_reduction( rvalue,
-		typedb:def_type( rvalue, operator,
-				function( arg) local rt = storeConstructor( fmt, arg[1])( arg[2]); rt.adr = arg[1]; return rt end,
-				{const_lvalue} ),
-			function( constructor) return constructor.adr end, tag_typeDeduction)
-end
-
-function initFirstClassCitizens()
-	defineConstExprOperators()
-
-	function getVariableConstructors( type, reftype, descr)
-		return {
-			def_local = function( name, initval, register)
-				local fmt; if initval then fmt = descr.def_local_val else fmt = descr.def_local end
-				local register = typedb:get_instance( "register")
-				local out = register()
-				local code = utils.constructor_format( fmt, {val = initval, out = out}, register)
-				local var = typedb:def_type( 0, name, result)
-				typedb:def_reduction( type, var, function( adr) return {code = "", out = adr} end, tag_typeDeclaration)
-				typedb:def_reduction( reftype, var, nil, tag_typeDeduction)
-				return code
-			end,
-			def_global = function( name, initval)
-				local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
-				local adr = "@" .. utils.mangleVariableName(name)
-				local code = utils.constructor_format( fmt, {val = initval, out = adr}, nil)
-				local var = typedb:def_type( 0, name, result)
-				typedb:def_reduction( type, var, loadConstructor( descr.load), tag_typeDeclaration)
-				typedb:def_reduction( reftype, var, nil, tag_typeDeduction)
-				return code
-			end
-		}
-	end
-	for typnam, fcc_descr in pairs( llvmir_fmt.fcc) do
-		local avalue = typedb:def_type( 0, "$" .. typnam)
-		local lvalue = typedb:def_type( 0, typnam)
-		local const_lvalue = typedb:def_type( 0, "const " .. typnam)
-		local rvalue = typedb:def_type( 0, "&" .. typnam)
-		local const_rvalue = typedb:def_type( 0, "const&" .. typnam)
-
-		local constexprType
-		if fcc_descr.class == "fp" then
-			defineConstExprValueOperatorsFloat( lvalue, fcc_descr)
-			constexprType = constexpr_float_type
-		elseif fcc_descr.class == "bool" then
-			defineConstExprValueOperatorsBool( lvalue, fcc_descr)
-			constexprType = constexpr_bool_type
-		else
-			defineConstExprValueOperatorsInt( lvalue, fcc_descr)
-			constexprType = constexpr_integer_type
-		end
-		typedb:def_reduction( lvalue, avalue, nil, tag_typeDeduction)
-
-		typedb:def_reduction( const_lvalue, constexprType, loadConstructor( fcc_descr.load), tag_typeDeduction)
-		typedb:def_reduction( const_lvalue, lvalue, nil, tag_typeDeduction)
-
-		typeAttributes[ lvalue] = getVariableConstructors( lvalue, rvalue, fcc_descr)
-		typeAttributes[ lvalue].llvmtype = fcc_descr.llvmType
-		typeAttributes[ const_lvalue] = getVariableConstructors( const_lvalue, const_rvalue, fcc_descr)
-		typeAttributes[ const_lvalue].llvmtype = fcc_descr.llvmType
-
-		typedb:def_reduction( lvalue, const_lvalue, loadConstructor( fcc_descr.load), tag_typeDeduction)
-		defineAssignmentOperator( rvalue, const_lvalue, "=", fcc_descr.store)
-
-		for operator,operator_fmt in pairs( fcc_descr.unop) do
-			typedb:def_reduction(
-				const_lvalue, typedb:def_type( const_lvalue, operator, unaryOpConstructor( operator_fmt)),
-				nil, tag_typeDeduction)
-		end
-		for operator,operator_fmt in pairs( fcc_descr.binop) do
-			typedb:def_reduction(
-				const_lvalue, typedb:def_type( const_lvalue, operator, binaryOpConstructor( operator_fmt), {const_lvalue}),
-				nil, tag_typeDeduction)
+function defineOperators( lval, c_lval, typeDescription)
+	if typeDescription.unop then
+		for operator,operator_fmt in pairs( typeDescription.unop) do
+			defineCall( lval, c_lval, operator, {}, callConstructor( operator_fmt))
 		end
 	end
-	for typnam, fcc_descr in pairs( llvmir_fmt.fcc) do
-		local const_lvalue = typedb:get_type( 0, "const " .. typnam)
-		for from_typenam,conv in pairs( fcc_descr.conv) do
-			from_type = typedb:get_type( 0, "const " .. from_typenam)
-			typedb:def_reduction( const_lvalue, from_type, convConstructor( conv.fmt), tag_typeDeduction, conv.weight)
+	if typeDescription.binop then
+		for operator,operator_fmt in pairs( typeDescription.binop) do
+			defineCall( lval, c_lval, operator, {c_lval}, callConstructor( operator_fmt))
 		end
-		for operator,operator_fmt in pairs( fcc_descr.binop) do
-			for ii,advance_typenam in ipairs( fcc_descr.advance) do
-				local advance_const_lvalue = typedb:get_type( 0, "const " .. advance_typenam)
-				defineLValueAdvanceBinaryOperator( const_lvalue, advance_const_lvalue, operator, fcc_descr.conv[ advance_typenam].fmt)
-			end
+	end
+	if typeDescription.cmpop then
+		for operator,operator_fmt in pairs( typeDescription.cmpop) do
+			defineCall( fccBooleanType, c_lval, operator, {c_lval}, callConstructor( operator_fmt))
 		end
 	end
 end
 
-local globals = {}
+function defineQualifiedTypes( typnam, typeDescription)
+	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
+	local pointerPointerTypeDescription = llvmir.pointerType( pointerTypeDescription.llvmtype)
 
-function mapConstructorTemplate( template, struct)
-	local rt
-	for elem in ipairs(template) do
-		rt = rt .. (struct[ elem] or elem)
+	local lval = typedb:def_type( 0, typnam)
+	local c_lval = typedb:def_type( 0, "const " .. typnam)
+	local rval = typedb:def_type( 0, "&" .. typnam)
+	local c_rval = typedb:def_type( 0, "const&" .. typnam)
+	local pval = typedb:def_type( 0, "^" .. typnam)
+	local c_pval = typedb:def_type( 0, "const^" .. typnam)
+	local rpval = typedb:def_type( 0, "^&" .. typnam)
+	local c_rpval = typedb:def_type( 0, "const^&" .. typnam)
+
+	typeDescriptionMap[ lval] = typeDescription
+	typeDescriptionMap[ c_lval] = typeDescription
+	typeDescriptionMap[ rval] = pointerTypeDescription
+	typeDescriptionMap[ c_rval] = pointerTypeDescription
+	typeDescriptionMap[ pval] = pointerTypeDescription
+	typeDescriptionMap[ c_pval] = pointerTypeDescription
+	typeDescriptionMap[ rpval] = pointerPointerTypeDescription
+	typeDescriptionMap[ c_rpval] = pointerPointerTypeDescription
+
+	referenceTypeMap[ lval] = rval
+	referenceTypeMap[ c_lval] = c_rval
+	referenceTypeMap[ rval] = rval
+	referenceTypeMap[ c_rval] = c_rval
+	referenceTypeMap[ pval] = rpval
+	referenceTypeMap[ c_pval] = c_rpval
+	referenceTypeMap[ rpval] = rpval
+	referenceTypeMap[ c_rpval] = c_rpval
+
+	typedb:def_reduction( lval, rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
+	typedb:def_reduction( c_lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
+
+	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
+	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
+
+	typedb:def_reduction( c_lval, lval, nil, tag_typeDeduction)
+	typedb:def_reduction( c_rval, rval, nil, tag_typeDeduction)
+	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction)
+	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction)
+
+	defineCall( rval, pval, "->", {}, nil)
+	defineCall( c_rval, c_pval, "->", {}, nil)
+
+	defineCall( rval, rval, "=", {c_lval}, callConstructor( typeDescription.assign))
+	defineCall( rpval, rpval, "=", {c_pval}, callConstructor( pointerTypeDescription.assign))
+
+	defineOperators( lval, c_lval, typeDescription)
+	defineOperators( pval, c_pval, pointerTypeDescription)
+
+	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
+	return lval
+end
+
+function defineIndexOperators( typnam, qualitype, typeDescription)
+	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
+	for index_typenam, index_type in pairs(fccIndexTypeMap) do
+		defineCall( qualitype.rval, qualitype.pval, "[]", {index_type}, convConstructor( pointerTypeDescription.index[ index_typnam]))
+		defineCall( qualitype.c_rval, qualitype.c_pval, "[]", {index_type}, convConstructor( pointerTypeDescription.index[ index_typnam]))
 	end
-	return rt;
 end
 
 function getDefContextType()
@@ -305,21 +266,70 @@ function getContextTypes()
 	if rt then return rt else return {0} end
 end
 
-function defineVariable( line, typeId, varName, initVal)
-	vc = variableConstructors[ typeId]
-	if not vc then utils.errorMessage( line, "Can't define variable of type '%s'", typedb:type_string(typeId)) end
+function defineLocalVariable( node, type, name, initval, register)
+	local descr = typeDescriptionMap[ type]
+	local fmt = descr.def_local
+	local out = register()
+	printCodeLine( utils.constructor_format( fmt, {out = out}, register))
+	local var = typedb:def_type( 0, name, out)
+	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
+	if initval then applyOperator( node, "=", {initval}) end
+end
 
+function defineGlobalVariable( node, type, name, initval)
+	local descr = typeDescriptionMap[ type]
+	local fmt
+	if initval then
+		fmt = descr.def_global_val
+		if type(initval) == "table" then utils.errorMessage( node.line, "only constexpr allowed to assign in global variable initialization") end
+	else
+		fmt = descr.def_global
+	end
+	local out = register()
+	printCodeLine( utils.constructor_format( fmt, {out = out, inp = initval}))
+	local var = typedb:def_type( 0, name, out)
+	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
+end
+
+function defineVariable( node, typeId, varName, initVal)
 	local register = typedb:get_instance( "register")
 	local defcontext = typedb:get_instance( "defcontext")
 	if register then
-		if not vc.def_local then utils.errorMessage( line, "Can't define variable of type '%s'", typedb:type_string(typeId)) end
-		printCodeLine( vc.def_local( varName, initVal, register))
+		defineLocalVariable( node, typeId, varName, initval, register)
 	elseif defcontext then
-		utils.errorMessage( line, "Substructures not implemented yet")
+		utils.errorMessage( line, "Member variables not implemented yet")
 	else
-		if not vc.def_global then utils.errorMessage( line, "Can't define variable of type '%s'", typedb:type_string(typeId)) end
-		printCodeLine( vc.def_global( varName, initVal))
+		defineGlobalVariable( node, typeId, varName, initval)
 	end
+end
+
+function defineParameter( node, type, varName, register)
+	local descr = typeDescriptionMap[ type]
+	local paramreg = register()
+	local var = typedb:def_type( 0, name, paramreg)
+	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
+	return desc.llvmtype .. " " .. paramreg
+end
+
+function defineType( node, typeName, typeDescription)
+	local lval = defineQualifiedTypes( typnam, fcc_descr)
+	defineIndexOperators( typnam, qualiTypeMap[ lval], typeDescription)
+end
+
+function initFirstClassCitizens()
+	for typnam, fcc_descr in pairs( llvmir.fcc) do
+		local lval = defineQualifiedTypes( typnam, fcc_descr)
+		fccQualiTypeMap[ typnam] = qualiTypeMap[ lval]
+		if fcc_descr.class == "bool" then
+			fccBooleanType = qualiTypeMap[ lval].c_lval
+		elseif fcc_descr.class == "unsigned" or fcc_descr.class == "signed" then
+			fccIndexTypeMap[ typnam] = qualiTypeMap[ lval].c_lval
+		end
+	end
+	for typnam, fcc_descr in pairs( llvmir.fcc) do
+		defineIndexOperators( typnam, fccQualiTypeMap[ typnam], fcc_descr)
+	end
+	defineConstExprOperators()
 end
 
 function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, items)
@@ -338,24 +348,31 @@ function applyOperator( node, operator, arg)
 	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == #arg-1 then
-			local constructor = arg[1].constructor
+			local this_constructor = arg[1].constructor
 			for ri,redu in ipairs(reductions) do
 				if redu.constructor then
-					constructor = redu.constructor( constructor)
+					this_constructor = redu.constructor( this_constructor)
 				end
 			end
-			local constructor_ar = {constructor}
+			local param_constructor_ar = {}
 			local parameters = typedb:type_parameters( item.type)
 			for ii=2,#arg do
-				local param_type,param_constructor = typedb:get_reduction( parameters[ii-1].type, arg[ii].type, tagmask_resolveType)
-				if param_type then
-					table.insert( constructor_ar, arg[ii] )
+				if parameters[ii-1].type == arg[ii].type then
 				else
-					break
+					local param_type,param_constructor_func = typedb:get_reduction( parameters[ii-1].type, arg[ii].type, tagmask_resolveType)
+					local param_constructor = arg[ii].constructor
+					if param_type then
+						if param_constructor_func then
+							param_constructor = param_constructor_func( param_constructor)
+						end
+						table.insert( param_constructor_ar, param_constructor)
+					else
+						break
+					end
 				end
 			end
-			if #constructor_ar == #arg then
-				local operator_constructor = item.constructor( constructor_ar)
+			if #param_constructor_ar+1 == #arg then
+				local operator_constructor = item.constructor( this_constructor, param_constructor_ar)
 				return {type=item.type, constructor=operator_constructor}
 			end
 		end
@@ -364,64 +381,69 @@ function applyOperator( node, operator, arg)
 	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg) .. ")")
 end
 
-function getArgumentListString( node, arg)
-	return ""
-end
 function getInstructionList( node, arg)
-	return ""
-end
-function getLlvmTypeName( node, typeId)
 	return ""
 end
 
 function defineFunction( node, arg)
 	local linkage = node.arg[1].linkage
+	local attributes = node.arg[1].attributes
 	local returnTypeName = llvmTypes[ arg[2]]
 	if not returnTypeName then
 	end
 	local functionName = arg[3]
-	local args = getArgumentListString( node.arg[4], arg[4])
+	local args = table.concat( arg[4], ", ")
 	local body = getInstructionList( node.arg[5])
-	printCodeLine( utils.code_format_varg( "define {1} {2} @{3}( {4} ) {\n{5}}", linkage, returnTypeName, functionName, args, body))
+	printCodeLine( utils.code_format_varg( "define {1} {2} @{3}( {4} ) {5} {\n{6}}", linkage, returnTypeName, functionName, args, attributes, body))
 end
 
 function defineProcedure( node, arg)
 	local linkage = node.arg[1].linkage
+	local attributes = node.arg[1].attributes
 	local functionName = arg[2]
-	local args = getArgumentListString( node.arg[3])
+	local args = table.concat( arg[3], ", ")
 	local body = getInstructionList( node.arg[4])
-	printCodeLine( utils.code_format_varg( "define {1} void @{2}( {3} ) {\n{4}}", linkage, functionName, args, body))
+	printCodeLine( utils.code_format_varg( "define {1} void @{2}( {3} ) {4} {\n{5}}", linkage, functionName, args, attributes, body))
 end
 
 
 -- AST Callbacks:
+function typesystem.paramdef( node) 
+	local subnode = utils.traverse( typedb, node)
+	return defineParameter( node, subnode[1], subnode[2], typedb:get_instance( "register"))
+end
+
+function typesystem.paramdeflist( node)
+	return utils.traverse( typedb, node)
+end
+
 function typesystem.vardef( node)
 	local subnode = utils.traverse( typedb, node)
-	defineVariable( node.line, subnode[1], subnode[2], nil)
+	defineVariable( node, subnode[1], subnode[2], nil)
 end
 
 function typesystem.vardef_assign( node)
 	local subnode = utils.traverse( typedb, node)
-	defineVariable( node.line, subnode[1], subnode[2], subnode[3])
+	defineVariable( node, subnode[1], subnode[2], subnode[3])
 end
 
 function typesystem.vardef_array( node) return utils.visit( typedb, node) end
 function typesystem.vardef_array_assign( node) return utils.visit( typedb, node) end
 
-function typesystem.assign_operator( node, operator, context)
-	local arg = utils.traverse( typedb, node, context)
+function typesystem.assign_operator( node, operator)
+	local arg = utils.traverse( typedb, node)
 	return applyOperator( node, "=", {arg[1], applyOperator( node, operator, arg)})
 end
 function typesystem.nary_operator( node, operator)
-	local arg = utils.traverse( typedb, node, context)
+	local arg = utils.traverse( typedb, node)
 	return applyOperator( node, operator, arg)
 end
 function typesystem.binary_operator( node, operator)
-	local arg = utils.traverse( typedb, node, context)
+	local arg = utils.traverse( typedb, node)
 	return applyOperator( node, operator, arg)
 end
 function typesystem.unary_operator( node, operator)
-	local arg = utils.traverse( typedb, node, context)
+	local arg = utils.traverse( typedb, node)
 	return applyOperator( node, operator, arg)
 end
 
@@ -474,15 +496,30 @@ function typesystem.procdef( node)
 	return rt
 end
 
-function typesystem.paramdef( node) return utils.visit( typedb, node) end
-function typesystem.paramdeflist( node) return utils.visit( typedb, node) end
-
 function typesystem.program( node)
 	initFirstClassCitizens()
 	openCode( "program")
 	local rt = utils.visit( typedb, node)
 	print( closeCode( cd))
 	return rt;
+end
+
+function typesystem.count( node)
+	if #node.arg == 0 then
+		return 1
+	else
+		return utils.traverseCall( node)[ 1] + 1
+	end
+end
+
+function typesystem.rep_unary_operator( node)
+	local arg = utils.traverse( typedb, node)
+	local icount = arg[2]
+	local expr = arg[1]
+	for ii=1,icount,1 do
+		expr = applyOperator( node, "->", {expr})
+	end
+	return applyOperator( node, node.arg[2].value, {expr})
 end
 
 return typesystem

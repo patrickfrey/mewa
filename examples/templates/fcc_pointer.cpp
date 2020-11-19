@@ -1,13 +1,19 @@
 int globalvar = 3;
 int& globalvar2 = globalvar;
 
-static int localf( int a)
+static int localf1( int a)
 {
-	return a;
+	int b = a;
+	return b + a;
 }
 
-int function()
+static int localf2( int a)
 {
-	return localf( globalvar2);
+	return a+1;
+}
+
+int function( int a)
+{
+	return (3294672 + a) ? localf1( globalvar2) : localf2( globalvar2);
 }
 

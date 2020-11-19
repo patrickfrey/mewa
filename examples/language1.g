@@ -32,14 +32,12 @@ typespec/L1		= typename									(typespec "")
 			| "const" typename "^"								(typespec "const^")
 			| typename "^" "&"								(typespec "^&")
 			| "const" typename "^" "&"							(typespec "const^&")
-			| typename "&&"									(typespec "&&")
-			| "const" typename "&&"								(typespec "const&&")
 			;
 typedefinition		= "typedef" typename IDENT							(>>typedef)
 			;
-linkage			= "static"									(linkage {linkage="internal"})
-			| "extern"									(linkage {linkage="external"})
-			|										(linkage "internal")
+linkage			= "static"									(linkage {linkage="internal", attributes="#0 nounwind"})
+			| "extern"									(linkage {linkage="external", attributes="#0 noinline nounwind"})
+			|										(linkage {linkage="internal", attributes="#0 nounwind"})
 			;
 functiondefinition	= linkage "function" typespec IDENT
 				"(" parameterlist ")"
@@ -127,14 +125,19 @@ expression/L9		= expression  "*"  expression							(binary_operator "*")
 expression/L10		= expression  "<<"  expression							(binary_operator "<<")
 			| expression  ">>"  expression							(binary_operator ">>")
 			;
-expression/L11		= expression "->" IDENT								(binary_operator "->")
+expression/L11		= iexpression
 			| expression "." IDENT								(binary_operator ".")
 			| expression "::" IDENT								(binary_operator "::")
-			| "*" expression								(unary_operator "*")
+			| "*" expression								(unary_operator "->")
 			;
-expression/L12		= expression  "(" expressionlist ")"						(nary_operator "(")
-			| expression  "(" ")"								(nary_operator "(")
-			| expression  "[" expressionlist "]"						(nary_operator "[")
+expression/L12		= expression  "(" expressionlist ")"						(nary_operator "()")
+			| expression  "(" ")"								(nary_operator "()")
+			| expression  "[" expressionlist "]"						(nary_operator "[]")
+			;
+iexpression		= expression indirection IDENT							(rep_unary_operator "->")
+			;
+indirection		= "->" indirection								(count)
+			| "->"										(count)
 			;
 expressionlist		= expression "," expressionlist
 			| expression

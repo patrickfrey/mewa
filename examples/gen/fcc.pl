@@ -78,23 +78,23 @@ sub load_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{1} = load i8, i8* {adr}, align 1\\n{out} = trunc i8 {1} to i1\\n";
+		return "{1} = load i8, i8* {inp}, align 1\\n{out} = trunc i8 {1} to i1\\n";
 	}
 	else
 	{
-		return "{out} = load $llvmtype, $llvmtype* {adr}, align $alignmap{$llvmtype}\\n";
+		return "{out} = load $llvmtype, $llvmtype* {inp}, align $alignmap{$llvmtype}\\n";
 	}
 }
 
-sub store_constructor {
+sub assign_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{1} = zext i1 {inp} to i8\\nstore i8 {1}, i8* {out}, align 1\\n";
+		return "{1} = zext i1 {arg1} to i8\\nstore i8 {1}, i8* {this}, align 1\\n";
 	}
 	else
 	{
-		return "store $llvmtype {inp}, $llvmtype* {out}, align $alignmap{$llvmtype}";
+		return "store $llvmtype {arg1}, $llvmtype* {this}, align $alignmap{$llvmtype}";
 	}
 }
 
@@ -104,48 +104,42 @@ sub conv_constructor {
 	my $llvmtype_in = $_[2];
 	my $sgn_in = $_[3];
 	my $convop = undef;
-	if ($llvmtype_out eq $llvmtype_in)
+
+	if ($sgn_out eq "fp")
 	{
-		return load_constructor( $llvmtype_in);
+		my $rt = "";
+		if ($sgn_in eq "bool")
+		{
+			return    "{1} = trunc i8 {inp} to i1\\n"
+				. "{2} = zext i1 {1} to i32\\n"
+				. "{out} = sitofp i32 {2} to $llvmtype_out\\n";
+		}
+		if ($sgn_in eq "fp" && typeSize( $llvmtype_out) > typeSize( $llvmtype_in))  {$convop = "fpext";}
+		elsif ($sgn_in eq "fp" && typeSize( $llvmtype_out) < typeSize( $llvmtype_in))  {$convop = "fptrunc";}
+		elsif ($sgn_in eq "signed") {$convop = "sitofp";}
+		elsif ($sgn_in eq "unsigned") {$convop = "uitofp";}
+	}
+	elsif ($sgn_in eq "fp")
+	{
+		if ($sgn_out eq "bool")
+		{
+			return "{out} = fcmp une $llvmtype_in {inp}, 0.000000e+00\\n";
+		}
+		if ($sgn_out eq "signed") {$convop = "fptosi";}
+		elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
 	}
 	else
 	{
-		if ($sgn_out eq "fp")
+		if ($sgn_out eq "bool")
 		{
-			my $rt = "";
-			if ($sgn_in eq "bool")
-			{
-				return    "{1} = trunc i8 {inp} to i1\\n"
-					. "{2} = zext i1 {1} to i32\\n"
-					. "{out} = sitofp i32 {2} to $llvmtype_out\\n";
-			}
-			if ($sgn_in eq "fp" && typeSize( $llvmtype_out) > typeSize( $llvmtype_in))  {$convop = "fpext";}
-			elsif ($sgn_in eq "fp" && typeSize( $llvmtype_out) < typeSize( $llvmtype_in))  {$convop = "fptrunc";}
-			elsif ($sgn_in eq "signed") {$convop = "sitofp";}
-			elsif ($sgn_in eq "unsigned") {$convop = "uitofp";}
+			return "{out} = cmp ne $llvmtype_in {inp}, 0\\n";
 		}
-		elsif ($sgn_in eq "fp")
-		{
-			if ($sgn_out eq "bool")
-			{
-				return "{out} = fcmp une $llvmtype_in {inp}, 0.000000e+00\\n";
-			}
-			if ($sgn_out eq "signed") {$convop = "fptosi";}
-			elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
-		}
-		else
-		{
-			if ($sgn_out eq "bool")
-			{
-				return "{out} = cmp ne $llvmtype_in {inp}, 0\\n";
-			}
-			if (typeSize( $llvmtype_out) < typeSize( $llvmtype_in)) {$convop = "trunc";}
-			elsif ($sgn_in eq "bool") {$convop = "zext";}
-			elsif ($sgn_in eq "unsigned") {$convop = "zext";}
-			elsif ($sgn_in eq "signed") {$convop = "sext";}
-		}
-		return "{out} = $convop $llvmtype_in {inp} to $llvmtype_out\\n";
+		if (typeSize( $llvmtype_out) < typeSize( $llvmtype_in)) {$convop = "trunc";}
+		elsif ($sgn_in eq "bool") {$convop = "zext";}
+		elsif ($sgn_in eq "unsigned") {$convop = "zext";}
+		elsif ($sgn_in eq "signed") {$convop = "sext";}
 	}
+	return "{out} = $convop $llvmtype_in {inp} to $llvmtype_out\\n";
 }
 
 sub typeSize {
@@ -166,14 +160,13 @@ foreach my $line (@content)
 		$llvmtype_storage = "i8";
 	}
 	print "\t\tdef_local = \"{out} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n\",\n";
-	print "\t\tdef_local_val = \"{out} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n" . store_constructor($llvmtype) . "\",\n";
 	print "\t\tdef_global = \"{out} = internal global $llvmtype_storage $defaultmap{ $llvmtype}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdef_global_val = \"{out} = internal global $llvmtype_storage {inp}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
 	print "\t\tllvmtype = \"$llvmtype\",\n";
 	print "\t\tclass = \"$sgn\",\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
-	print "\t\tstore = \"" . store_constructor( $llvmtype) . "\",\n";
+	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
 	print "\t\tadvance = {";
 	if ($sgn eq "fp" || $sgn eq "signed" || $sgn eq "unsigned")
@@ -267,7 +260,7 @@ foreach my $line (@content)
 	{
 		if ($oi++ > 0) {print ",\n";} else {print "\n";}
 		my ($name,$llvm_name) = split / /, $op, 2;
-		print "\t\t\t$name = \"{out} = $llvm_name $llvmtype {arg1}, {arg2}\\n\"";
+		print "\t\t\t$name = \"{out} = $llvm_name $llvmtype {this}, {arg1}\\n\"";
 	}
 	print "},\n";
 	print "\t\tcmpop = {";
@@ -293,7 +286,7 @@ foreach my $line (@content)
 	{
 		if ($oi++ > 0) {print ",\n";} else {print "\n";}
 		my ($name,$llvm_name) = split / /, $op, 2;
-		print "\t\t\t$name = \"{out} = $llvm_name $llvmtype {arg1}, {arg2}\\n\"";
+		print "\t\t\t$name = \"{out} = $llvm_name $llvmtype {this}, {arg1}\\n\"";
 	}
 	print "}\n";
 	print "\t}";
