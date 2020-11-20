@@ -4,7 +4,8 @@ The [parser generator program mewa](doc/program_mewa.pdf) generates a Lua module
 A Lua module written in C++ (see [typedb API](doc/typedb.md)) provides you some assistance to define your own type system and to generate code.
 
 # LLVM
-The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) for code generation.
+The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/docs/LangRef.html) for code generation. 
+For reading more see the [collected links](doc/links.md).
 
 # Status
 The project development is currently ongoing and only what you find in the tests really works.
