@@ -12,7 +12,7 @@
 
 ### Documentation with Examples
 * [Mapping High Level Constructs to LLVM IR Documentation](https://readthedocs.org/projects/mapping-high-level-constructs-to-llvm-ir/downloads/pdf/latest)
-* [Mapping High Level Constructs to LLVM IR] (https://github.com/f0rki/mapping-high-level-constructs-to-llvm-ir)
+* [Mapping High Level Constructs to LLVM IR](https://github.com/f0rki/mapping-high-level-constructs-to-llvm-ir)
 
 ### Some Deeper Digging
 * [LLVMdev: The nsw story](https://lists.llvm.org/pipermail/llvm-dev/2011-November/045735.html)
