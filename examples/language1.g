@@ -54,13 +54,13 @@ parameters/L		= paramdecl "," parameters
 			;
 paramdecl		= typespec IDENT								(paramdef)
 			;
-statementlist/L		= statement statementlist
+statementlist/L		= statement statementlist							(>>statement)
 			| ε
 			;
 statement		= functiondefinition
 			| typedefinition ";"
 			| variabledefinition ";"
-			| expression ";"								(>>stm_expression)
+			| expression ";"
 			| returnstatement ";"
 			| "if" "(" expression ")" "{" statementlist "}"					({}conditional_if)
 			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	({}conditional_if)
@@ -72,7 +72,7 @@ variabledefinition	= "var" typespec IDENT "=" expression						(>>vardef_assign)
 			| "var" typespec IDENT "[" "]" "=" expression					(>>vardef_array_assign)
 			| "var" typespec IDENT "[" "]"							(>>vardef_array)
 			;  
-returnstatement	   	= "return" expression								(>>stm_return)
+returnstatement	   	= "return" expression								(>>return_value)
 			;
 expression/L1		= typename									(typespec "")
 			| BOOLEAN									(constant "constexpr bool")
@@ -95,9 +95,9 @@ expression/L2		= expression  "="  expression							(binary_operator "=")
 			| expression  "<<="  expression							(assign_operator "<<")
 			| expression  ">>="  expression							(assign_operator ">>")
 			;
-expression/L3		= expression  "||"  expression							(binary_operator "||")
+expression/L3		= expression  "||"  expression							(logic_operator_or)
 			;
-expression/L4		= expression  "&&"  expression							(binary_operator "&&")
+expression/L4		= expression  "&&"  expression							(logic_operator_and)
 			;
 expression/L5		= expression  "|"  expression							(binary_operator "|")
 			;			
@@ -116,7 +116,7 @@ expression/L8		= expression  "+"  expression							(binary_operator "+")
 			| "-"  expression								(unary_operator "-")
 			| "+"  expression								(unary_operator "+") 
 			| "~"  expression								(unary_operator "~")
-			| "!"  expression								(unary_operator "!") 
+			| "!"  expression								(logic_operator_not) 
 			;
 expression/L9		= expression  "*"  expression							(binary_operator "*")
 			| expression  "/"  expression							(binary_operator "/")

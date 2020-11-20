@@ -23,31 +23,26 @@ function M.demangleName( name)
 	return name:gsub("_(%x%x)", hex_to_char)
 end
 
--- [3] Mangle a variable name
-function M.mangleVariableName( name)
-	return M.mangleName( "$" .. name)
-end
-
-local uniqueNameIndex = 0
-function M.generateUniqueName( prefix)
-	uniqueNameIndex = uniqueNameIndex + 1
-	return prefix .. uniqueNameIndex
+local uniqueNameIdxMap = {}
+function M.uniqueName( prefix)
+	if uniqueNameIdxMap[ prefix] then uniqueNameIdxMap[ prefix] = uniqueNameIdxMap[ prefix] + 1 else uniqueNameIdxMap[ prefix] = 1 end
+	return prefix .. uniqueNameIdxMap[ prefix]
 end
 
 -- Map template for LLVM Code synthesis 
-function M.constructor_format( fmt, argtable, register)
+function M.constructor_format( fmt, argtable, allocator)
 	local valtable = {}
 	local subst = function( match)
 		local index = tonumber( match)
 		if index then
 			if valtable[ index] then
 				return valtable[ index]
-			elseif register then
-				local rr = register()
+			elseif allocator then
+				local rr = allocator()
 				valtable[ index] = rr
 				return rr
 			else
-				M.errorMessage( 0, "Can't build constructor for %s, having unbound register variables and no register allocator defined", fmt)
+				M.errorMessage( 0, "Can't build constructor for %s, having unbound variables and no allocator defined", fmt)
 			end
 		elseif argtable[ match] then
 			return argtable[ match]
@@ -92,12 +87,24 @@ function M.template_format( fmt, arg )
 end
 
 -- Register allocator for LLVM
-function M.register_allocator()
+function M.name_allocator( prefix)
         local i = 0
         return function ()
                 i = i + 1
-                return "%R" .. i
+                return prefix .. i
         end
+end
+
+function M.label_allocator()
+        local i = 0
+        return function ()
+                i = i + 1
+                return "L" .. i
+        end
+end
+
+function M.register_allocator()
+	return M.label_allocator( "%R")
 end
 
 -- Tree traversal:

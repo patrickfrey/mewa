@@ -32,6 +32,14 @@ local pointerTemplate = {
 		[">"] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp sgt {size_t} {1}, {2}\n"}
 }
 
+M.control = {
+	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
+	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
+	booleanToFalseExit = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
+	booleanToTrueExit = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
+	invertedControlType = "br %{out}\n{inp}:\n"
+}
+
 local pointerTypeMap = {}
 function M.pointerType( llvmPointeeType)
 	local pointerType = pointerTypeMap[ llvmPointeeType]

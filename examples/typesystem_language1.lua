@@ -37,7 +37,7 @@ function callConstructor( fmt)
 		local this_code,this_inp = constructorParts( this)
 		local subst = {out = out, this = this_inp}
 		code = code .. this_code
-		for ii=1,#arg,1 do
+		for ii=1,#arg do
 			local arg_code,arg_inp = constructorParts( arg[ ii])
 			code = code .. arg_code
 			subst[ arg .. ii] = arg_inp
@@ -49,44 +49,12 @@ end
 local fccQualiTypeMap = {}	-- maps fcc type names without qualifiers to the table of type ids for all qualifiers possible
 local fccIndexTypeMap = {}	-- maps fcc type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
 local fccBooleanType = 0	-- type id of the boolean type, result of cmpop binary operators
+local controlTrueType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
+local controlFalseType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
-local typeDescriptionMap = {}	-- maps any defined type id without qualifier to its llvmir template structure
-local codeMap = {}
-local codeKey = nil
-local codeKeyCnt = 0
+local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
 
-function allocCodeKey()
-	codeKeyCnt = codeKeyCnt + 1
-	return codeKeyCnt
-end
-
-function openCode( key)
-	local rt = codeKey
-	codeKey = key or allocCodeKey()
-	return rt
-end
-
-function closeCode( oldKey)
-	local rt = codeMap[ codeKey]
-	codeMap[ codeKey] = nil
-	codeKey = oldKey
-	return rt
-end
-
-function printSectionCodeLine( section, codeln)
-	if codeln then
-		if codeMap[ codeKey] then
-			codeMap[ codeKey] = codeMap[ codeKey] .. codeln .. "\n"
-		else
-			codeMap[ codeKey] = codeln .. "\n"
-		end
-	end
-end
-
-function printCodeLine( codeln)
-	printSectionCodeLine( codeKey, codeln)
-end
 
 function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
 	local constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
@@ -99,11 +67,11 @@ function defineCall( returnType, thisType, opr, argTypes, constructor)
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeduction) end
 end
 
-local constexpr_integer_type = typedb:def_type( 0, "constexpr int")
-local constexpr_float_type = typedb:def_type( 0, "constexpr float")
-local constexpr_bool_type = typedb:def_type( 0, "constexpr bool")
-local constexpr_dqstring_type = typedb:def_type( 0, "constexpr dqstring")
-local constexpr_sqstring_type = typedb:def_type( 0, "constexpr sqstring")
+local constexprIntegerType = typedb:def_type( 0, "constexpr int")
+local constexprFloatType = typedb:def_type( 0, "constexpr float")
+local constexprBooleanType = typedb:def_type( 0, "constexpr bool")
+local constexprDqStringType = typedb:def_type( 0, "constexpr dqstring")
+local constexprSqStringType = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
 
 function defineConstExprBasicArithmetics( constexpr_type)
@@ -130,49 +98,49 @@ end
 function defineConstExprBooleanArithmetics( constexpr_type)
 	defineCall( constexpr_type, constexpr_type, "&&", {constexpr_type}, function( this, arg) return this == true and arg[1] == true end)
 	defineCall( constexpr_type, constexpr_type, "||", {constexpr_type}, function( this, arg) return this == true or arg[1] == true end)
-	defineCall( constexpr_type, constexpr_type, "~", {}, function( this, arg) return this ~= true end)
+	defineCall( constexpr_type, constexpr_type, "!", {}, function( this, arg) return this ~= true end)
 end
 
 function defineConstExprOperators()
-	defineConstExprBasicArithmetics( constexpr_float_type)
-	defineConstExprBasicArithmetics( constexpr_integer_type)
-	defineConstExprBasicArithmeticsPromoted( constexpr_integer_type, constexpr_float_type, function(this) return this:tonumber() end)
-	defineConstExprBitArithmetics( constexpr_integer_type)
-	defineConstExprBooleanArithmetics( constexpr_bool_type)
+	defineConstExprBasicArithmetics( constexprFloatType)
+	defineConstExprBasicArithmetics( constexprIntegerType)
+	defineConstExprBasicArithmeticsPromoted( constexprIntegerType, constexprFloatType, function(this) return this:tonumber() end)
+	defineConstExprBitArithmetics( constexprIntegerType)
+	defineConstExprBooleanArithmetics( constexprBooleanType)
 
-	typedb:def_reduction( constexpr_bool_type, constexpr_integer_type, function( value) return value ~= "0" end, tag_typeDeduction)
-	typedb:def_reduction( constexpr_bool_type, constexpr_float_type, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeDeduction)
-	typedb:def_reduction( constexpr_float_type, constexpr_integer_type, function( value) return value:tonumber() end, tag_typeDeduction)
-	typedb:def_reduction( constexpr_integer_type, constexpr_float_type, function( value) return bcd:int( value) end, tag_typeDeduction)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeDeduction)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeDeduction)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeDeduction)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd:int( value) end, tag_typeDeduction)
 
 	function bool2bcd( value) if value then return bcd:int("1") else return bcd:int("0") end end
-	typedb:def_reduction( constexpr_integer_type, constexpr_bool_type, bool2bcd, tag_typeDeduction)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeDeduction)
 
 	local int_arg_typenam = "long"
 	local int_arg_type = typedb:get_type( 0, "const " .. int_arg_typenam)
-	definePromoteCall( int_arg_type, constexpr_integer_type, "+", {int_arg_type}, nil)
-	definePromoteCall( int_arg_type, constexpr_integer_type, "-", {int_arg_type}, nil)
-	definePromoteCall( int_arg_type, constexpr_integer_type, "/", {int_arg_type}, nil)
-	definePromoteCall( int_arg_type, constexpr_integer_type, "%", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexprIntegerType, "+", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexprIntegerType, "-", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexprIntegerType, "/", {int_arg_type}, nil)
+	definePromoteCall( int_arg_type, constexprIntegerType, "%", {int_arg_type}, nil)
 	local uint_arg_typenam = "ulong"
 	local uint_arg_type = typedb:get_type( 0, "const " .. uint_arg_typenam)
-	definePromoteCall( uint_arg_type, constexpr_integer_type, "&", {uint_arg_type}, nil)
-	definePromoteCall( uint_arg_type, constexpr_integer_type, "|", {uint_arg_type}, nil)
-	definePromoteCall( uint_arg_type, constexpr_integer_type, "^", {uint_arg_type}, nil)
-	definePromoteCall( uint_arg_type, constexpr_integer_type, "~", {}, nil)
+	definePromoteCall( uint_arg_type, constexprIntegerType, "&", {uint_arg_type}, nil)
+	definePromoteCall( uint_arg_type, constexprIntegerType, "|", {uint_arg_type}, nil)
+	definePromoteCall( uint_arg_type, constexprIntegerType, "^", {uint_arg_type}, nil)
+	definePromoteCall( uint_arg_type, constexprIntegerType, "~", {}, nil)
 
 	local float_arg_typenam = "double"
 	local float_arg_type = typedb:get_type( 0, "const " .. float_arg_typenam)
-	definePromoteCall( float_arg_type, constexpr_float_type, "+", {float_arg_type}, nil)
-	definePromoteCall( float_arg_type, constexpr_float_type, "-", {float_arg_type}, nil)
-	definePromoteCall( float_arg_type, constexpr_float_type, "/", {float_arg_type}, nil)
-	definePromoteCall( float_arg_type, constexpr_float_type, "%", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexprFloatType, "+", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexprFloatType, "-", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexprFloatType, "/", {float_arg_type}, nil)
+	definePromoteCall( float_arg_type, constexprFloatType, "%", {float_arg_type}, nil)
 
 	local bool_arg_typenam = "bool"
 	local bool_arg_type = typedb:get_type( 0, "const " .. bool_arg_typenam)
-	definePromoteCall( bool_arg_type, constexpr_bool_type, "&&", {bool_arg_type}, nil)
-	definePromoteCall( bool_arg_type, constexpr_bool_type, "||", {bool_arg_type}, nil)
-	definePromoteCall( bool_arg_type, constexpr_bool_type, "~", {}, nil)	
+	definePromoteCall( bool_arg_type, constexprBooleanType, "&&", {bool_arg_type}, nil)
+	definePromoteCall( bool_arg_type, constexprBooleanType, "||", {bool_arg_type}, nil)
+	definePromoteCall( bool_arg_type, constexprBooleanType, "!", {}, nil)	
 end
 
 function defineOperators( lval, c_lval, typeDescription)
@@ -270,10 +238,11 @@ function defineLocalVariable( node, type, name, initval, register)
 	local descr = typeDescriptionMap[ type]
 	local fmt = descr.def_local
 	local out = register()
-	printCodeLine( utils.constructor_format( fmt, {out = out}, register))
+	local code = utils.constructor_format( fmt, {out = out}, register)
 	local var = typedb:def_type( 0, name, out)
 	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
 	if initval then applyOperator( node, "=", {initval}) end
+	return {code=code}
 end
 
 function defineGlobalVariable( node, type, name, initval)
@@ -285,8 +254,8 @@ function defineGlobalVariable( node, type, name, initval)
 	else
 		fmt = descr.def_global
 	end
-	local out = register()
-	printCodeLine( utils.constructor_format( fmt, {out = out, inp = initval}))
+	local out = "@" .. mangleName( name)
+	print( utils.constructor_format( fmt, {out = out, inp = initval}))
 	local var = typedb:def_type( 0, name, out)
 	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
 end
@@ -295,11 +264,11 @@ function defineVariable( node, typeId, varName, initVal)
 	local register = typedb:get_instance( "register")
 	local defcontext = typedb:get_instance( "defcontext")
 	if register then
-		defineLocalVariable( node, typeId, varName, initval, register)
+		return defineLocalVariable( node, typeId, varName, initval, register)
 	elseif defcontext then
 		utils.errorMessage( line, "Member variables not implemented yet")
 	else
-		defineGlobalVariable( node, typeId, varName, initval)
+		return defineGlobalVariable( node, typeId, varName, initval)
 	end
 end
 
@@ -316,6 +285,38 @@ function defineType( node, typeName, typeDescription)
 	defineIndexOperators( typnam, qualiTypeMap[ lval], typeDescription)
 end
 
+function initControlTypes()
+	controlTrueType = typedb:def_type( 0, " controlTrueType")
+	controlFalseType = typedb:def_type( 0, " controlFalseType")
+
+	function falseExitToBoolean( constructor)
+		local register,label = typedb:get_instance( "register"),typedb:get_instance( "label")
+		out = register()
+		return {code=utils.constructor_format( llvmir.control.falseExitToBoolean, {falseExit=constructor.out, out=out}, label),out=out}
+	end
+	function trueExitToBoolean( constructor)
+		local register,label = typedb:get_instance( "register"),typedb:get_instance( "label")
+		out = register()
+		return {code=utils.constructor_format( llvmir.control.trueExitToBoolean, {trueExit=constructor.out, out=out}, label),out=out}
+	end
+	typedb:def_reduction( fccBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
+	typedb:def_reduction( fccBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction)
+
+	function BooleanToFalseExit( constructor)
+		local label = typedb:get_instance( "label")
+		out = label()
+		return {code=utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, label),out=out}
+	end
+	function BooleanToTrueExit( constructor)
+		local label = typedb:get_instance( "label")
+		out = label()
+		return {code=utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
+	end
+
+	typedb:def_reduction( controlTrueType, fccBooleanType, BooleanToFalseExit, tag_typeDeduction)
+	typedb:def_reduction( controlFalseType, fccBooleanType, BooleanToTrueExit, tag_typeDeduction)
+end
+
 function initFirstClassCitizens()
 	for typnam, fcc_descr in pairs( llvmir.fcc) do
 		local lval = defineQualifiedTypes( typnam, fcc_descr)
@@ -330,6 +331,7 @@ function initFirstClassCitizens()
 		defineIndexOperators( typnam, fccQualiTypeMap[ typnam], fcc_descr)
 	end
 	defineConstExprOperators()
+	if fccBooleanType then initControlTypes() end
 end
 
 function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, items)
@@ -341,6 +343,18 @@ function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, 
 	end
 	utils.errorMessage( node.line, "failed to resolve %s",
 	                    utils.resolveTypeString( typedb, getContextTypes(), typeName))
+end
+
+function getReductionConstructor( node, redu_type, operand)
+	local redu_constructor = operand.constructor
+	if redu_type ~= operand.type then
+		local param_type,param_constructor_func = typedb:get_reduction( redu_type, operand.type, tagmask_resolveType)
+		if not param_type then return nil end
+		if param_constructor_func then
+			redu_constructor = param_constructor_func( redu_constructor)
+		end
+	end
+	return redu_constructor
 end
 
 function applyOperator( node, operator, arg)
@@ -357,19 +371,9 @@ function applyOperator( node, operator, arg)
 			local param_constructor_ar = {}
 			local parameters = typedb:type_parameters( item.type)
 			for ii=2,#arg do
-				if parameters[ii-1].type == arg[ii].type then
-				else
-					local param_type,param_constructor_func = typedb:get_reduction( parameters[ii-1].type, arg[ii].type, tagmask_resolveType)
-					local param_constructor = arg[ii].constructor
-					if param_type then
-						if param_constructor_func then
-							param_constructor = param_constructor_func( param_constructor)
-						end
-						table.insert( param_constructor_ar, param_constructor)
-					else
-						break
-					end
-				end
+				local param_constructor = getReductionConstructor( node, parameters[ii-1].type, arg[ii])
+				if not param_constructor then break end
+				table.insert( param_constructor_ar, param_constructor)
 			end
 			if #param_constructor_ar+1 == #arg then
 				local operator_constructor = item.constructor( this_constructor, param_constructor_ar)
@@ -381,31 +385,96 @@ function applyOperator( node, operator, arg)
 	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg) .. ")")
 end
 
+function convertToBooleanType( node, operand)
+	if type(operand.constructor) == "table" then
+		local bool_constructor = getReductionConstructor( node, fccBooleanType, operand)
+		if not bool_constructor then utils.errorMessage( node.line, "Argument is not reducible to boolean") end
+		return {type=fccBooleanType, constructor=bool_constructor}
+	else
+		local bool_constructor = getReductionConstructor( node, constexprBooleanType, operand)
+		if not bool_constructor then utils.errorMessage( node.line, "Argument is not reducible to boolean const expression") end
+		return {type=constexprBooleanType, constructor=bool_constructor}
+	end
+end
+
+function convertToControlBooleanType( node, controlBooleanType, operand)
+	if operand.type == controlFalseType or operand.type == controlTrueType then
+		if operand.type ~= controlBooleanType then
+			local out = typedb:get_instance( "label")()
+			return {type = controlBooleanType,
+				constructor = operand.constructor .. utils.constructor_format( llvmir.invertedControlType, {inp=constructor.out, out=out}) }
+		else
+			return operand
+		end
+	else
+		local boolOperand = convertToBooleanType( node, operand)
+		if not typedb:get_instance( "label") then return boolOperand end
+		local control_constructor = getReductionConstructor( node, controlBooleanType, {type=fccBooleanType,constructor=boolOperand.constructor})
+		return {type=controlBooleanType, constructor=control_constructor}
+	end
+end
+function negateControlBooleanType( node, operand)
+	if operand.type == fccBooleanType or operand.type == constexprBooleanType then
+		return applyOperator( node, "!", arg)
+	else
+		if operand.type == controlFalseType then
+			return {type=controlTrueType, constructor=operand.constructor}
+		else
+			return {type=controlFalseType, constructor=operand.constructor}
+		end
+	end
+end
+function applyControlBooleanJoin( node, arg, controlBooleanType)
+	local operand1 = convertToControlBooleanType( node, controlBooleanType, arg[1])
+	local operand2 = convertToBooleanType( node, arg[2])
+	if operand1.operand.type == constexprBooleanType then
+		if operand1.operand.constructor then return operand2 else return {type=constexprBooleanType,constructor=false} end
+	elseif operand2.operand.type == constexprBooleanType then 
+		if operand2.operand.constructor then return operand1 else return {type=constexprBooleanType,constructor=false} end
+	elseif operand1.operand.type == fccBooleanType and operand2.operand.type == fccBooleanType then
+		return applyOperator( node, "&&", arg)
+	elseif operand1.operand.type == controlFalseType and operand2.operand.type == fccBooleanType then
+		local out = operand1.constructor.out
+		local fmt; if controlBooleanType == controlTrueType then fmt = llvmir.control.booleanToFalseExit else fmt = llvmir.control.booleanToTrueExit end
+		local code2 = utils.constructor_format( fmt, {inp=operand2.constructor.out, out=out}, typedb:get_instance( "label"))
+		return {code=operand1.constructor.code .. code2, out=out}
+	else
+		utils.errorMessage( node.line, "Boolean expression cannot be evaluated")
+	end
+end
+
 function getInstructionList( node, arg)
 	return ""
 end
 
-function defineFunction( node, arg)
+function getSignatureString( name, args, is_global_def)
+	if not is_global_def then
+		return utils.uniqueName( name .. "__")
+	else
+		local pstr = ""
+		for aa in args do for pp in aa:gmatch("%S+") do if pstr ~= "" then pstr = pstr .. "_" .. pp else pstr = "__" .. pp end break end end
+		return name .. pstr
+	end
+end
+
+function defineFunction( node, arg, is_global_def)
 	local linkage = node.arg[1].linkage
 	local attributes = node.arg[1].attributes
-	local returnTypeName = llvmTypes[ arg[2]]
-	if not returnTypeName then
-	end
-	local functionName = arg[3]
+	local returnTypeName = typeDescriptionMap[ arg[2]].llvmtype
+	local functionName = getSignatureString( arg[3], arg[4], is_global_def)
 	local args = table.concat( arg[4], ", ")
 	local body = getInstructionList( node.arg[5])
-	printCodeLine( utils.code_format_varg( "define {1} {2} @{3}( {4} ) {5} {\n{6}}", linkage, returnTypeName, functionName, args, attributes, body))
+	print( utils.code_format_varg( "\ndefine {1} {2} @{3}( {4} ) {5} {\n{6}}", linkage, returnTypeName, functionName, args, attributes, body))
 end
 
-function defineProcedure( node, arg)
+function defineProcedure( node, arg, is_global_def)
 	local linkage = node.arg[1].linkage
 	local attributes = node.arg[1].attributes
-	local functionName = arg[2]
-	local args = table.concat( arg[3], ", ")
+	local functionName = getSignatureString( arg[2], arg[3], is_global_def)
+	local argstr = table.concat( arg[3], ", ")
 	local body = getInstructionList( node.arg[4])
-	printCodeLine( utils.code_format_varg( "define {1} void @{2}( {3} ) {4} {\n{5}}", linkage, functionName, args, attributes, body))
+	print( utils.code_format_varg( "\ndefine {1} void @{2}( {3} ) {4} {\n{5}}", linkage, functionName, argstr, attributes, body))
 end
-
 
 -- AST Callbacks:
 function typesystem.paramdef( node) 
@@ -419,12 +488,12 @@ end
 
 function typesystem.vardef( node)
 	local subnode = utils.traverse( typedb, node)
-	defineVariable( node, subnode[1], subnode[2], nil)
+	return defineVariable( node, subnode[1], subnode[2], nil)
 end
 
 function typesystem.vardef_assign( node)
 	local subnode = utils.traverse( typedb, node)
-	defineVariable( node, subnode[1], subnode[2], subnode[3])
+	return defineVariable( node, subnode[1], subnode[2], subnode[3])
 end
 
 function typesystem.vardef_array( node) return utils.visit( typedb, node) end
@@ -447,9 +516,35 @@ function typesystem.unary_operator( node, operator)
 	return applyOperator( node, operator, arg)
 end
 
-function typesystem.stm_expression( node) return utils.visit( typedb, node) end
-function typesystem.stm_return( node) return utils.visit( typedb, node) end
-function typesystem.conditional_if( node) return utils.visit( typedb, node) end
+function typesystem.logic_operator_not( node, operator)
+	local arg = utils.traverse( typedb, node)
+	return negateControlBooleanType( node, convertToControlBooleanType( node, controlFalseType, arg[1]))
+end
+function typesystem.logic_operator_and( node, operator)
+	local arg = utils.traverse( typedb, node)
+	return applyControlBooleanJoin( node, arg, controlTrueType)
+end
+function typesystem.logic_operator_or( node, operator)
+	local arg = utils.traverse( typedb, node)
+	return applyControlBooleanJoin( node, arg, controlFalseType)
+end
+
+function typesystem.statement( node)
+	local code = nil
+	local arg = utils.traverse( typedb, node)
+	for ai=1,#arg do
+		if type(arg[ai]) == "table" then
+			if code then code = code .. arg[ ai].code else code = arg[ ai].code end
+		end
+	end
+	return {code=code}
+end
+
+function typesystem.return_value( node) return utils.visit( typedb, node) end
+function typesystem.conditional_if( node)
+	local arg = utils.traverse( typedb, node)
+	convertToControlBooleanType( node, controlBooleanType, operand)
+end
 function typesystem.conditional_while( node) return utils.visit( typedb, node) end
 function typesystem.typedef( node) return utils.visit( typedb, node) end
 
@@ -461,7 +556,7 @@ function typesystem.typespec( node, qualifier)
 	else
 		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
 		if #node.arg > 2 then
-			for ii = 2, #node.arg-1, 1 do
+			for ii = 2, #node.arg-1 do
 				typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
 				contextTypeId = typeId
 			end
@@ -481,26 +576,24 @@ function typesystem.linkage( node, llvm_linkage)
 end
 
 function typesystem.funcdef( node)
+	local is_global_def = typedb:get_instance( "register") == nil
 	typedb:set_instance( "register", utils.register_allocator())
-	local cd = openCode(); 
-	defineFunction( node, utils.traverse( typedb, node))
-	printCodeLine( closeCode( cd)); 
+	typedb:set_instance( "label", utils.label_allocator())
+	defineFunction( node, utils.traverse( typedb, node), is_global_def)
 	return rt
 end
 
 function typesystem.procdef( node) 
+	local is_global_def = typedb:get_instance( "register") == nil
 	typedb:set_instance( "register", utils.register_allocator())
-	local cd = openCode(); 
-	defineProcedure( node, utils.traverse( typedb, node))
-	printCodeLine( closeCode( cd)); 
+	typedb:set_instance( "label", utils.label_allocator())
+	defineProcedure( node, utils.traverse( typedb, node, is_global_def))
 	return rt
 end
 
 function typesystem.program( node)
 	initFirstClassCitizens()
-	openCode( "program")
 	local rt = utils.visit( typedb, node)
-	print( closeCode( cd))
 	return rt;
 end
 
@@ -516,7 +609,7 @@ function typesystem.rep_unary_operator( node)
 	local arg = utils.traverse( typedb, node)
 	local icount = arg[2]
 	local expr = arg[1]
-	for ii=1,icount,1 do
+	for ii=1,icount do
 		expr = applyOperator( node, "->", {expr})
 	end
 	return applyOperator( node, node.arg[2].value, {expr})
