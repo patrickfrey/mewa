@@ -402,7 +402,7 @@ private:
 	mewa::monotonic_buffer_resource m_memrsc;
 };
 
-int TypeDatabase::getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const
+TypeDatabase::GetReductionResult TypeDatabase::getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
@@ -411,19 +411,25 @@ int TypeDatabase::getReduction( const Scope::Step step, int toType, int fromType
 	mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 	auto redulist = m_reduTable->get( step, fromType, selectTags, &redu_memrsc);
 
-	int rt = -1;
+	TypeDatabase::GetReductionResult rt;
 	for (auto const& redu : redulist)
 	{
 		if (toType == redu.right())
 		{
-			if (rt >= 0)
+			if (rt.defined())
 			{
-				ResultBuffer resbuf_err;
-				auto toTypeStr = typeToString( toType, resbuf_err);
-				auto fromTypeStr = typeToString( fromType, resbuf_err);
-				throw Error( Error::AmbiguousReductionDefinitions, string_format( "%s <- %s", toTypeStr.c_str(), fromTypeStr.c_str()));
+				if (rt.weight < redu.weight() - std::numeric_limits<float>::epsilon()) continue;
+				if (rt.weight <= redu.weight() + std::numeric_limits<float>::epsilon())
+				{
+					//... weights are equal
+					ResultBuffer resbuf_err;
+					auto toTypeStr = typeToString( toType, resbuf_err);
+					auto fromTypeStr = typeToString( fromType, resbuf_err);
+					throw Error( Error::AmbiguousReductionDefinitions, string_format( "%s <- %s", toTypeStr.c_str(), fromTypeStr.c_str()));
+				}
 			}
-			rt = redu.value()/*constructor*/;
+			rt.constructor = redu.value()/*constructor*/;
+			rt.weight = redu.weight()/*constructor*/;
 		}
 	}
 	return rt;

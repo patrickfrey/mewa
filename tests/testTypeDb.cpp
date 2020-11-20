@@ -380,10 +380,9 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 				if (fdef.parameter[ pi].type != parameter.type)
 				{
 					++distance;
-					int reduConstructor
-						= tdbimpl.typedb->getReduction( 
-							query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/, TagMask::matchAll());
-					if (reduConstructor < 0)
+					auto redu = tdbimpl.typedb->getReduction( 
+						query.step, parameter.type/*toType*/, fdef.parameter[ pi].type/*fromType*/, TagMask::matchAll());
+					if (!redu.defined())
 					{
 						auto pto = tdbimpl.typeToString( parameter.type);
 						auto pfrom = tdbimpl.typeToString( fdef.parameter[ pi].type);
@@ -392,11 +391,11 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 					else
 					{
 						auto pcstr = tdbimpl.getConstructorName( parameter.constructor);
-						auto rcstr = tdbimpl.getConstructorName( reduConstructor);
+						auto rcstr = tdbimpl.getConstructorName( redu.constructor);
 						out << string_format( "- parameter [%d]: %s %s", pi, pcstr.c_str(), rcstr.c_str()) << std::endl;
 						matched = true;
 					}
-					popar.back().push_back( {parameter.constructor, reduConstructor});
+					popar.back().push_back( {parameter.constructor, redu.constructor});
 				}
 				else
 				{

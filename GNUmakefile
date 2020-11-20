@@ -49,7 +49,6 @@ include Lua.inc
 # Project settings:
 BUILDDIR := build
 DESTINATION := $(PREFIX)/bin
-LIBDEST  := $(PREFIX)/lib
 INCDEST  := $(PREFIX)/include
 MAKEDEP  := Lua.inc configure
 SRCDIR   := src
@@ -70,16 +69,13 @@ MODOBJS  := $(BUILDDIR)/lualib_mewa.o \
 		$(BUILDDIR)/lua_serialize.o $(BUILDDIR)/lua_parameter.o
 LIBRARY  := $(BUILDDIR)/libmewa.a
 MODULE   := $(BUILDDIR)/mewa.so
-SONAME	 := libmewa.so.0
-SHLIBRARY:= $(BUILDDIR)/libmewa.so.0.1.0
-SHLIBOBJ := $(BUILDDIR)/libmewa.o
 TESTPRG  := $(BUILDDIR)/testError $(BUILDDIR)/testLexer $(BUILDDIR)/testScope $(BUILDDIR)/testRandomScope \
 		$(BUILDDIR)/testRandomIdentMap $(BUILDDIR)/testAutomaton \
 		$(BUILDDIR)/testTypeDb $(BUILDDIR)/testRandomTypeDb
 PROGRAM  := $(BUILDDIR)/mewa
 
 # Build targets:
-all : build $(LIBRARY) $(SHLIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
+all : build $(LIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
 
 clean: build
 	rm $(BUILDDIR)/* .depend
@@ -112,9 +108,6 @@ $(BUILDDIR)/%: $(BUILDDIR)/%.o
 $(MODULE): $(LIBRARY) $(MODOBJS)
 	$(LNKSO) $(LUALIBS) $(LDLIBS) -o $@ $(MODOBJS) $(LIBRARY)
 
-$(SHLIBRARY): $(LIBRARY) $(SHLIBOBJ)
-	$(LNKSO) -Wl,-soname,$(SONAME) $(LDLIBS) -o $(SHLIBRARY) $(SHLIBOBJ) $(LIBRARY)
-
 test : all
 	$(TIMECMD) $(BUILDDIR)/testError $(TSTVBFLAGS)
 	$(TIMECMD) $(BUILDDIR)/testLexer $(TSTVBFLAGS)
@@ -129,7 +122,6 @@ check: test
 
 install: all
 	cp $(PROGRAM) $(DESTINATION)
-	cp $(SHLIBRARY) $(LIBDEST)
 	mkdir -p $(INCDEST)/mewa
 	cp include/mewa/*.hpp $(INCDEST)/mewa/
 	mkdir -p $(MANPAGES)/man1
@@ -141,7 +133,6 @@ uninstall:
 	rm $(CMODPATH)/mewa.so
 	rm $(MANPAGES)/man1/mewa.1.gz
 	rm $(INCDEST)/mewa/*.hpp
-	rm $(LIBDEST)/libmewa.so*
 	rm $(DESTINATION)/mewa
 
 # ONLY FOR DEVELOPPERS (All generated files of make doc are checked in):

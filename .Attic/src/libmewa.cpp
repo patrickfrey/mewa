@@ -381,7 +381,7 @@ DLL_PUBLIC int libmewa::TypeDatabase::getReduction( int step, int toType, int fr
 	{
 		if (!m_impl) throw mewa::Error( mewa::Error::MemoryAllocationError);
 		mewa::TypeDatabase& typedb = *(mewa::TypeDatabase*)m_impl;
-		return typedb.getReduction( step, toType, fromType, mewa::TagMask( selectTags.m_mask));
+		return typedb.getReduction( step, toType, fromType, mewa::TagMask( selectTags.m_mask)).constructor;
 	}
 	catch (...)
 	{

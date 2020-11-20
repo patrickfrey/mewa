@@ -1,0 +1,19 @@
+51a52
+> LIBDEST  := $(PREFIX)/lib
+71a73,75
+> SONAME         := libmewa.so.0
+> SHLIBRARY:= $(BUILDDIR)/libmewa.so.0.1.0
+> SHLIBOBJ := $(BUILDDIR)/libmewa.o
+78c82
+< all : build $(LIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
+---
+> all : build $(LIBRARY) $(SHLIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
+110a115,117
+> $(SHLIBRARY): $(LIBRARY) $(SHLIBOBJ)
+>       $(LNKSO) -Wl,-soname,$(SONAME) $(LDLIBS) -o $(SHLIBRARY) $(SHLIBOBJ) $(LIBRARY)
+> 
+124a132
+>       cp $(SHLIBRARY) $(LIBDEST)
+135a144
+>       rm $(LIBDEST)/libmewa.so*
+

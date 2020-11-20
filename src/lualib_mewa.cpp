@@ -568,20 +568,14 @@ static int mewa_typedb_get_reduction( lua_State* ls)
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
 		mewa::TagMask selectTags( nargs >= 4 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
 
-		int constructor = td->impl->getReduction( td->curStep, toType, fromType, selectTags);
-		if (constructor <= 0)
-		{
-			if (constructor < 0) return 0;
-			lua_pushinteger( ls, toType);
-			return 1;
-		}
-		else
-		{
-			lua_pushinteger( ls, toType);
-			lua_getglobal( ls, td->objTableName.buf);
-			lua_rawgeti( ls, -1, constructor);
-			lua_replace( ls, -2);
-		}
+		auto redu = td->impl->getReduction( td->curStep, toType, fromType, selectTags);
+		if (!redu.defined()) return 0;
+		lua_pushnumber( ls, redu.weight);
+		if (redu.constructor == 0) return 1;
+
+		lua_getglobal( ls, td->objTableName.buf);
+		lua_rawgeti( ls, -1, redu.constructor);
+		lua_replace( ls, -2);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 2;

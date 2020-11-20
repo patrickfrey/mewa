@@ -144,6 +144,20 @@ public:
 		ReductionResult( int type_, int constructor_) noexcept
 			:type(type_),constructor(constructor_){}
 	};
+	struct GetReductionResult
+	{
+		float weight;
+		int constructor;
+
+		bool defined() const noexcept	{return constructor >= 0;}
+
+		GetReductionResult() noexcept
+			:weight(0.0),constructor(-1){}
+		GetReductionResult( const GetReductionResult& o) noexcept
+			:weight(o.weight),constructor(o.constructor){}
+		GetReductionResult( float weight_, int constructor_) noexcept
+			:weight(weight_),constructor(constructor_){}
+	};
 	struct ResolveResultItem
 	{
 		int type;
@@ -268,14 +282,14 @@ public:
 	/// \return the tree built
 	ReductionDefinitionTree getReductionDefinitionTree() const;
 
-	/// \brief Get the constructor of a reduction of a type to another type or 0 if undefined
+	/// \brief Get the weight and the constructor of a reduction of a type to another type or {0.0,0} if undefined
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \return the constructor of the reduction found, -1 if not found, 0 if undefined
 	/// \note throws Error::AmbiguousTypeReference if more than one reduction is found
-	int getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
+	GetReductionResult getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
 
 	/// \brief Get the list of reductions defined for a type
 	/// \param[in] step the scope step of the search defining what are valid reductions
