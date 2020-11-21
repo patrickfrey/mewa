@@ -391,11 +391,19 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			TypeDatabase::ResultBuffer resbuf_derive;
 			TypeDatabase::DeriveResult deriveres =
 				typedb.deriveType( step, searchi->second/*toType*/, ti->second/*fromType*/,
-							TagMask::matchAll(), resbuf_derive);
-			TypeDatabase::ResultBuffer resbuf_tostring;
-			std::string redu_str( "type ");
-			redu_str.append( typedb.typeToString( ti->second, resbuf_tostring));
-			redu_str.append( deriveResultToString( typedb, ctx, deriveres));
+							TagMask::matchAll(), TagMask::matchNothing(), -1/*maxPathLengthCount undefined*/, resbuf_derive);
+			std::string redu_str;
+			if (deriveres.defined)
+			{
+				TypeDatabase::ResultBuffer resbuf_tostring;
+				redu_str.append( "type ");
+				redu_str.append( typedb.typeToString( ti->second, resbuf_tostring));
+				redu_str.append( deriveResultToString( typedb, ctx, deriveres));
+			}
+			else
+			{
+				redu_str.append( "undefined");
+			}
 			if (verbose)
 			{
 				std::cerr << "Derive result: " << redu_str << std::endl;

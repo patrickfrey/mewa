@@ -606,24 +606,32 @@ static int mewa_typedb_derive_type( lua_State* ls)
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 4/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 6/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		int toType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
 		mewa::TagMask selectTags( nargs >= 4 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
-
+		mewa::TagMask selectTagsPathLen( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchNothing());
+		int maxPathLen = nargs >= 6 ? mewa::lua::getArgumentAsInteger( functionName, ls, 2) : -1;
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, resbuf);
-		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, deriveres.reductions);
-		lua_pushnumber( ls, deriveres.weightsum);
-		if (deriveres.conflictPath.empty())
+		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsPathLen, maxPathLen, resbuf);
+		if (deriveres.defined)
 		{
-			return 2;
+			mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, deriveres.reductions);
+			lua_pushnumber( ls, deriveres.weightsum);
+			if (deriveres.conflictPath.empty())
+			{
+				return 2;
+			}
+			else
+			{
+				mewa::lua::pushTypePath( ls, functionName, deriveres.conflictPath);
+				return 3;
+			}
 		}
 		else
 		{
-			mewa::lua::pushTypePath( ls, functionName, deriveres.conflictPath);
-			return 3;
+			return 0;
 		}
 	}
 	catch (...) { lippincottFunction( ls); }

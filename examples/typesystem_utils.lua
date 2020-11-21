@@ -165,11 +165,11 @@ function typeString( typedb, typeId)
 end
 
 -- [2] Type list as string
-function typeListString( typedb, typeList)
+function typeListString( typedb, typeList, separator)
 	if not typeList or #typeList == 0 then return "" end
 	local rt = typeString( typedb, typeList[ 1])
 	for ii=2,#typeList do
-		rt = rt .. ", " .. typeString( typedb, typeList[ ii])
+		rt = rt .. separator .. typeString( typedb, typeList[ ii])
 	end
 	return rt
 end

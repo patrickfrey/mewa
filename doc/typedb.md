@@ -245,13 +245,13 @@ Get the constructor of a reduction from a type to another if it exists.
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #          | Name         | Type          | Description                                                                                                         |
-| :--------- | :----------- | :------------ | :------------------------------------------------------------------------------------------------------------------ |
-| 1st        | dest-type    | integer       | Resulting type to of the reduction.                                                                                 |
-| 2nd        | src-type     | integer       | Start type of the reduction.                                                                                        |
-| 3rd        | tagmask      | integer       | Set (bit-set) of tags (*) that selects the reduction classes to consider.                                           |
-| Return 1st |              | number or nil | Weight of the reduction if it exists in a scope and the result is valid or *nil* if it does not exist.              |
-| Return 2nd |              | any type      | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the current scope step. |
+| #          | Name         | Type     | Description                                                                                                         |
+| :--------- | :----------- | :------- | :------------------------------------------------------------------------------------------------------------------ |
+| 1st        | dest-type    | integer  | Resulting type to of the reduction.                                                                                 |
+| 2nd        | src-type     | integer  | Start type of the reduction.                                                                                        |
+| 3rd        | tagmask      | integer  | Set (bit-set) of tags (*) that selects the reduction classes to consider.                                           |
+| Return 1st |              | number   | Weight of the reduction if it exists in a scope and the result is valid or *nil* if it does not exist.              |
+| Return 2nd |              | any type | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the current scope step. |
 
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
@@ -281,21 +281,25 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 <a name="derive_type"/>
 
 ### typedb:derive_type
-Finds the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
+Finds the minimum cost path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #          | Name         | Type              | Description                                                                                  |
-| :--------- | :----------- | :------- | :---------------------------------------------------------------------------------------------------- |
-| 1st        | dest-type    | integer  | Resulting type to derive.                                                                             |
-| 2nd        | src-type     | integer  | Start type of the reduction path leading to the result type.                                          |
-| 3rd        | tagmask      | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions to use (select all if undefined).    |
-| Return 1st |              | table    | List of type/constructor pairs as structures with "type","constructor" member names.                  |
-| Return 2nd |              | number   | Weight sum of best path found                                                                         |
-| Return 3rd |              | table    | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*.   |
+| #          | Name            | Type              | Description                                                                                                      |
+| :--------- | :-------------- | :------- | :------------------------------------------------------------------------------------------------------------------------ |
+| 1st        | dest-type       | integer  | Resulting type to derive.                                                                                                 |
+| 2nd        | src-type        | integer  | Start type of the reduction path leading to the result type.                                                              |
+| 3rd        | tagmask         | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions to use (select all if undefined).                        |
+| 3rd        | tagmask_pathlen | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions contributing to the path length count of a result. (**)  |
+| 4th        | maxpathlen      | integer  | (optional) maximum length count (number of reductions selected by tagmask_pathlen) of a path accepted as a result.        |
+| Return 1st |                 | table    | List of type/constructor pairs as structures with "type","constructor" member names or *nil* if no result path found.     |
+| Return 2nd |                 | number   | Weight sum of best path found                                                                                             |
+| Return 3rd |                 | table    | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*.                       |
 
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
+#### Remark (**)
+Select none if undefined
 
 <a name="resolve_type"/>
 

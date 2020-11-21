@@ -14,8 +14,11 @@ local typesystem = {
 
 local tag_typeDeduction = 1
 local tag_typeDeclaration = 2
-local tag_typeNamespace = 3
+local tag_TypeConversion = 3
+local tag_typeNamespace = 4
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
+local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion)
+local tagmask_typeConversion = typedb.reduction_tagmask( tag_TypeConversion)
 local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
 
 function constructorParts( constructor)
@@ -60,11 +63,11 @@ function definePromoteCall( returnType, thisType, opr, argTypes, promote_constru
 	local constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
 	local constructor_promoted_this = function( this, arg) return constructor( promote_constructor(this), arg[1]) end
 	local callType = typedb:def_type( thisType, opr, constructor_promoted_this, argTypes)
-	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeduction) end
+	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
 function defineCall( returnType, thisType, opr, argTypes, constructor)
 	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
-	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeduction) end
+	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
 
 local constexprIntegerType = typedb:def_type( 0, "constexpr int")
@@ -108,13 +111,13 @@ function defineConstExprOperators()
 	defineConstExprBitArithmetics( constexprIntegerType)
 	defineConstExprBooleanArithmetics( constexprBooleanType)
 
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeDeduction)
-	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeDeduction)
-	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeDeduction)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd:int( value) end, tag_typeDeduction)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd:int( value) end, tag_TypeConversion)
 
 	function bool2bcd( value) if value then return bcd:int("1") else return bcd:int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeDeduction)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion)
 
 	local int_arg_typenam = "long"
 	local int_arg_type = typedb:get_type( 0, "const " .. int_arg_typenam)
@@ -224,6 +227,16 @@ function defineIndexOperators( typnam, qualitype, typeDescription)
 	end
 end
 
+function defineFccConversions( typnam, typeDescription)
+	local qualitype = fccQualiTypeMap[ typnam]
+	if typeDescription.conv then
+		for oth_typenam,conv_fmt in pairs( typeDescription.conv) do
+			local oth_qualitype = fccQualiTypeMap[ oth_typenam]
+			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, convConstructor( conv_fmt), tag_TypeConversion)
+		end
+	end
+end
+
 function getDefContextType()
 	local rt = typedb:get_instance( "defcontext")
 	if rt then return rt else return 0 end
@@ -329,6 +342,7 @@ function initFirstClassCitizens()
 	end
 	for typnam, fcc_descr in pairs( llvmir.fcc) do
 		defineIndexOperators( typnam, fccQualiTypeMap[ typnam], fcc_descr)
+		defineFccConversions( typnam, fcc_descr)
 	end
 	defineConstExprOperators()
 	if fccBooleanType then initControlTypes() end
@@ -346,21 +360,31 @@ function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, 
 end
 
 function getReductionConstructor( node, redu_type, operand)
-	local redu_constructor = operand.constructor
+	local redu_constructor,weight = operand.constructor,0.0
 	if redu_type ~= operand.type then
-		local param_type,param_constructor_func = typedb:get_reduction( redu_type, operand.type, tagmask_resolveType)
-		if not param_type then return nil end
-		if param_constructor_func then
-			redu_constructor = param_constructor_func( redu_constructor)
+		local redulist,altpath
+		redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
+		-- ... derive type, but allow only one type conversion
+		if not redulist then
+			return nil
+		elseif altpath then
+			utils.errorMessage( line, "Ambiguous derivation paths for type %s: %s or %s",
+			                    typedb:type_string(operand.type), utils.typeListString(typedb,altpath,"=>"), utils.typeListString(typedb,redulist,"=>"))
+		end
+		for ri,redu in ipairs(redulist) do
+			if redu.constructor then redu_constructor = redu.constructor( redu_constructor) end
 		end
 	end
-	return redu_constructor
+	return redu_constructor,weight
 end
 
 function applyOperator( node, operator, arg)
+	local bestmatch = {}
+	local bestweight = nil
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
 	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
 	for ii,item in ipairs(items) do
+		local weight = 0.0
 		if typedb:type_nof_parameters( item.type) == #arg-1 then
 			local this_constructor = arg[1].constructor
 			for ri,redu in ipairs(reductions) do
@@ -371,18 +395,42 @@ function applyOperator( node, operator, arg)
 			local param_constructor_ar = {}
 			local parameters = typedb:type_parameters( item.type)
 			for ii=2,#arg do
-				local param_constructor = getReductionConstructor( node, parameters[ii-1].type, arg[ii])
+				local param_constructor,param_weight = getReductionConstructor( node, parameters[ii-1].type, arg[ii])
 				if not param_constructor then break end
+				weight = weight + param_weight
 				table.insert( param_constructor_ar, param_constructor)
 			end
 			if #param_constructor_ar+1 == #arg then
-				local operator_constructor = item.constructor( this_constructor, param_constructor_ar)
-				return {type=item.type, constructor=operator_constructor}
+				if not bestweight or weight < bestweight + 1E-5 then
+					local operator_constructor = item.constructor( this_constructor, param_constructor_ar)
+					if bestweight and weight >= bestweight - 1E-5 then
+						table.insert( bestmatch, {type=item.type, constructor=operator_constructor})
+					else
+						bestweight = weight
+						bestmatch = {{type=item.type, constructor=operator_constructor}}
+					end
+				end
 			end
 		end
 	end
-	utils.errorMessage( node.line, "failed to resolve %s",
-	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg) .. ")")
+	if not bestweight then
+		utils.errorMessage( node.line, "failed to resolve %s",
+	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")")
+	end
+	if #bestmatch == 1 then
+		return bestmatch[1]
+	else
+		local altmatchstr = ""
+		for ii,bm in ipairs(bestmatch) do
+			if altmatchstr ~= "" then
+				altmatchstr = altmatchstr .. ", "
+			end
+			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
+		end
+		utils.errorMessage( node.line, "ambiguous matches resolving %s, list of candidates: %s",
+				utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")",
+				altmatchstr)
+	end
 end
 
 function convertToBooleanType( node, operand)

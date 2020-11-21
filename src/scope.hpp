@@ -791,19 +791,21 @@ public:
 	class ResultElement
 	{
 	public:
-		ResultElement( const RELNODETYPE right_, const VALTYPE value_, float weight_)
-			:m_right(right_),m_value(value_),m_weight(weight_){}
+		ResultElement( const RELNODETYPE right_, const VALTYPE value_, float weight_, std::uint8_t tagval_)
+			:m_right(right_),m_value(value_),m_weight(weight_),m_tagval(tagval_){}
 		ResultElement( const ResultElement& o)
-			:m_right(o.m_right),m_value(o.m_value),m_weight(o.m_weight){}
+			:m_right(o.m_right),m_value(o.m_value),m_weight(o.m_weight),m_tagval(o.m_tagval){}
 
 		RELNODETYPE right() const noexcept	{return m_right;}
 		VALTYPE value() const noexcept		{return m_value;}
 		float weight() const noexcept		{return m_weight;}
+		std::uint8_t tagval() const noexcept	{return m_tagval;}
 
 	private:
 		RELNODETYPE m_right;
 		VALTYPE m_value;
 		float m_weight;
+		std::uint8_t m_tagval;
 	};
 
 	ScopedRelationMap( std::pmr::memory_resource* memrsc, std::size_t initsize)
@@ -859,7 +861,7 @@ public:
 					auto ins = candidatemap.insert( {le.related, rt.size()});
 					if (ins.second /*insert took place*/)
 					{
-						rt.push_back( ResultElement( le.related/*right*/, le.value, le.weight));
+						rt.push_back( ResultElement( le.related/*right*/, le.value, le.weight, le.tagval));
 					}
 				}
 				li = le.next;

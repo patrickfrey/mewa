@@ -243,6 +243,7 @@ const char* Error::code2String( int code_) noexcept
 		case BadRelationWeight: return "Bad weight <= 0.0 given to relation";
 		case BadRelationTag: return "Bad value tor tag attached to relation, must be a cardinal number in {1..32}";
 		case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
+		case InvalidBoundary: return "Invalid processing boundary value. Expected to be a non negative number";
 
 		case AmbiguousReductionDefinitions: return "Ambiguous definitions of reductions";
 		case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";

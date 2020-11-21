@@ -51,6 +51,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:BadRelationWeight**   _$ERRTEXT:BadRelationWeight_
 + **#$ERRCODE:BadRelationTag**   _$ERRTEXT:BadRelationTag_
 + **#$ERRCODE:InvalidHandle**   _$ERRTEXT:InvalidHandle_
++ **#$ERRCODE:InvalidBoundary**   _$ERRTEXT:InvalidBoundary_
 
 + **#$ERRCODE:AmbiguousReductionDefinitions**   _$ERRTEXT:AmbiguousReductionDefinitions_
 + **#$ERRCODE:ScopeHierarchyError**   _$ERRTEXT:ScopeHierarchyError_

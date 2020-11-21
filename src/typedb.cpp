@@ -240,11 +240,12 @@ struct ReduStackElem
 	int type;
 	int constructor;
 	int prev;
+	int pathlen;
 
 	ReduStackElem( const ReduStackElem& o) noexcept
-		:type(o.type),constructor(o.constructor),prev(o.prev){}
-	ReduStackElem( int type_, int constructor_, int prev_) noexcept
-		:type(type_),constructor(constructor_),prev(prev_){}
+		:type(o.type),constructor(o.constructor),prev(o.prev),pathlen(o.pathlen){}
+	ReduStackElem( int type_, int constructor_, int prev_, int pathlen_) noexcept
+		:type(type_),constructor(constructor_),prev(prev_),pathlen(pathlen_){}
 };
 
 class ReduStack
@@ -256,7 +257,7 @@ public:
 		m_ar.reserve( buffersize / sizeof(ReduStackElem));
 	}
 
-	int pushIfNew( int type, int constructor, int prev)
+	int pushIfNew( int type, int constructor, int prev, int pathlen)
 	{
 		int rt = -1;
 		int index = prev;
@@ -267,7 +268,7 @@ public:
 			index = ee.prev;
 		}
 		rt = m_ar.size();
-		m_ar.push_back( {type,constructor,prev});
+		m_ar.push_back( {type,constructor,prev,pathlen});
 		return rt;
 	}
 	int size() const noexcept
@@ -452,13 +453,17 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::getReductions( con
 	return rt;
 }
 
-TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int toType, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
+TypeDatabase::DeriveResult TypeDatabase::deriveType( 
+	const Scope::Step step, int toType, int fromType,
+	const TagMask& selectTags, const TagMask& selectTagsPathLength, int maxPathLengthCount, ResultBuffer& resbuf) const
 {
 	DeriveResult rt( resbuf);
 	bool alt_searchstate = false;
 
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
+	if (maxPathLengthCount == -1) maxPathLengthCount = std::numeric_limits<int>::max();
+	if (maxPathLengthCount < 0) throw Error( Error::InvalidBoundary, string_format( "%d", maxPathLengthCount));
 
 	int buffer[ 1024];
 	mewa::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
@@ -466,7 +471,7 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
 
-	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/);
+	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/, 0/*pathlen*/);
 	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
 
 	while (!priorityQueue.empty())
@@ -484,6 +489,7 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 			// ... we found a result
 			if (!alt_searchstate)
 			{
+				rt.defined = true;
 				rt.weightsum = qe.weight;
 				stack.collectResult( rt.reductions, qe.index);
 				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
@@ -503,10 +509,14 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType( const Scope::Step step, int
 
 		for (auto const& redu : redulist)
 		{
-			int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/);
-			if (index >= 0)
+			int pathlen = selectTagsPathLength.matches( redu.tagval()) ? (elem.pathlen+1) : elem.pathlen;
+			if (pathlen <= maxPathLengthCount)
 			{
-				priorityQueue.push( ReduQueueElem( qe.weight + redu.weight(), index));
+				int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/, pathlen);
+				if (index >= 0)
+				{
+					priorityQueue.push( ReduQueueElem( qe.weight + redu.weight(), index));
+				}
 			}
 		}
 	}
@@ -561,7 +571,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 			throw Error( Error::InvalidHandle, string_format( "%d", contextTypeAr[ci]));
 		}
 		int constructor = contextTypeAr[ci] ? m_typerecMap[ contextTypeAr[ci]-1].constructor : 0;
-		stack.pushIfNew( contextTypeAr[ci], constructor, -1/*prev*/);
+		stack.pushIfNew( contextTypeAr[ci], constructor, -1/*prev*/, 0/*pathlen*/);
 		priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
 	}
 	while (!priorityQueue.empty())
@@ -602,7 +612,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 
 		for (auto const& redu : redulist)
 		{
-			int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/);
+			int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/, elem.pathlen+1);
 			if (index >= 0)
 			{
 				//... type not used yet in a previous search (avoid cycles)

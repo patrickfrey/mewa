@@ -67,6 +67,7 @@ public:
 		BadRelationWeight=443,
 		BadRelationTag=444,
 		InvalidHandle=445,
+		InvalidBoundary=446,
 
 		AmbiguousReductionDefinitions=452,
 		ScopeHierarchyError=454,

@@ -173,16 +173,17 @@ public:
 		std::pmr::vector<ReductionResult> reductions;
 		std::pmr::vector<int> conflictPath;
 		float weightsum;
+		bool defined;
 
 		DeriveResult( ResultBuffer& resbuf) noexcept
-			:reductions(&resbuf.memrsc),conflictPath(&resbuf.memrsc),weightsum(0.0)
+			:reductions(&resbuf.memrsc),conflictPath(&resbuf.memrsc),weightsum(0.0),defined(false)
 		{
 			reductions.reserve(   ((resbuf.buffersize() / 4) * 3) / sizeof(ReductionResult));
 			conflictPath.reserve( ((resbuf.buffersize() / 4) * 1) / sizeof(int));
 		}
 		DeriveResult( const DeriveResult&) = delete;
 		DeriveResult( DeriveResult&& o)
-			:reductions(std::move(o.reductions)),conflictPath(std::move(o.conflictPath)),weightsum(o.weightsum){}
+			:reductions(std::move(o.reductions)),conflictPath(std::move(o.conflictPath)),weightsum(o.weightsum),defined(o.defined){}
 	};
 	struct ResolveResult
 	{
@@ -303,10 +304,13 @@ public:
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
+	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
+	/// \param[in] selectTagsPathLength set of tags (subset of selectTags) that contribute to the path length count of the search
+	/// \param[in] maxPathLengthCount maximum path length count (number of reductions matching selectTagsPathLength) of an accepted result, -1 for undefined
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the path found and its weight sum that is minimal and a conflict path if the solution is not unique
 	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, 
-				 const TagMask& selectTags, ResultBuffer& resbuf) const;
+				 const TagMask& selectTags, const TagMask& selectTagsPathLength, int maxPathLengthCount, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context reducible from one of the contexts passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
