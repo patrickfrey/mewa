@@ -177,8 +177,6 @@ function defineOperators( lval, c_lval, typeDescription)
 end
 
 function defineQualifiedTypes( typnam, typeDescription)
-	io.stderr:write( "+++++ ENTER\n")
-	io.stderr:write( "+++++ CALL defineQualifiedTypes " .. mewa.tostring({ typnam, typeDescription }) .. "\n")
 	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
 	local pointerPointerTypeDescription = llvmir.pointerType( pointerTypeDescription.llvmtype)
 
@@ -191,7 +189,6 @@ function defineQualifiedTypes( typnam, typeDescription)
 	local rpval = typedb:def_type( 0, "^&" .. typnam)
 	local c_rpval = typedb:def_type( 0, "const^&" .. typnam)
 
-	io.stderr:write( "+++++ STEP\n")
 	typeDescriptionMap[ lval] = typeDescription
 	typeDescriptionMap[ c_lval] = typeDescription
 	typeDescriptionMap[ rval] = pointerTypeDescription
@@ -261,6 +258,7 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
 	local register = typedb:get_instance( "register")
 	if not contextTypeId then
+		io.stderr:write( "+++++ CALL defineVariable LOCAL " .. mewa.tostring( {node.line,contextTypeId, typeId, name, initVal}) .. "\n")
 		local out = register()
 		local code = utils.constructor_format( descr.def_local, {out = out}, register)
 		local var = typedb:def_type( 0, name, out)
@@ -269,6 +267,7 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		if initval then rt = applyOperator( node, "=", {rt, initval}) end
 		return rt
 	elseif contextTypeId == 0 then
+		io.stderr:write( "+++++ CALL defineVariable GLOBAL " .. mewa.tostring( {node.line,contextTypeId, typeId, name, initVal}) .. "\n")
 		local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
 		if type(initval) == "table" then utils.errorMessage( node.line, "only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
@@ -300,12 +299,12 @@ function initControlTypes()
 
 	function falseExitToBoolean( constructor)
 		local register,label = typedb:get_instance( "register"),typedb:get_instance( "label")
-		out = register()
+		local out = register()
 		return {code=utils.constructor_format( llvmir.control.falseExitToBoolean, {falseExit=constructor.out, out=out}, label),out=out}
 	end
 	function trueExitToBoolean( constructor)
 		local register,label = typedb:get_instance( "register"),typedb:get_instance( "label")
-		out = register()
+		local out = register()
 		return {code=utils.constructor_format( llvmir.control.trueExitToBoolean, {trueExit=constructor.out, out=out}, label),out=out}
 	end
 	typedb:def_reduction( fccBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
@@ -313,12 +312,12 @@ function initControlTypes()
 
 	function BooleanToFalseExit( constructor)
 		local label = typedb:get_instance( "label")
-		out = label()
+		local out = label()
 		return {code=utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 	function BooleanToTrueExit( constructor)
 		local label = typedb:get_instance( "label")
-		out = label()
+		local out = label()
 		return {code=utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 
@@ -380,7 +379,7 @@ function applyOperator( node, operator, arg)
 	io.stderr:write( "+++++ CALL applyOperator " .. mewa.tostring( {arg, operator, tagmask_resolveType}) .. "\n")
 
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
-	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
+	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, operator) end
 	for ii,item in ipairs(items) do
 		local weight = 0.0
 		if typedb:type_nof_parameters( item.type) == #arg-1 then
@@ -599,12 +598,12 @@ function typesystem.conditional_while( node) return utils.visit( typedb, node) e
 function typesystem.typedef( node) return utils.visit( typedb, node) end
 
 function typesystem.typespec( node, qualifier)
-	typeName = qualifier .. node.arg[ #node.arg].value;
+	local typeName = qualifier .. node.arg[ #node.arg].value;
 	local typeId
 	if #node.arg == 1 then
 		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
 	else
-		contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
+		local contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
 		if #node.arg > 2 then
 			for ii = 2, #node.arg-1 do
 				contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
@@ -620,8 +619,9 @@ function typesystem.constant( node, typeName)
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
 end
 function typesystem.variable( node)
-	typeName = node.arg[ 1].value
-	typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
+	local typeName = node.arg[ 1].value
+	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
+	io.stderr:write( "+++++ CALL typesystem.variable " .. mewa.tostring( {node.line,typeId}) .. "\n")
 	return {type=typeId}
 end
 

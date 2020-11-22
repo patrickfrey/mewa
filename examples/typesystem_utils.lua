@@ -157,16 +157,16 @@ function M.resolveTypeString( typedb, contextType, typeName)
 	local rt
 	if type(contextType) == "table" then
 		if #contextType == 0 then
-			rt = "{} => " .. typeName
+			rt = "{} " .. typeName
 		else
 			rt = "{ " .. typeString( typedb, contextType[1])
 			for ii = 2,#contextType,1 do
 				rt = ", " .. typeString( typedb, contextType[ ii])
 			end
-			rt = rt .. " } => " .. typeName
+			rt = rt .. " } " .. typeName
 		end
 	else
-		rt = typeString( typedb, contextType) .. " => " .. typeName
+		rt = typeString( typedb, contextType) .. " " .. typeName
 	end
 	return rt;
 end
@@ -182,11 +182,11 @@ end
 function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
 	local resolveTypeString = M.resolveTypeString( typedb, contextType, typeName)
 	if not resultContextTypeId then
-		M.errorMessage( line, "Failed to resolve %s", resolveTypeString)
+		M.errorMessage( line, "Failed to resolve '%s'", resolveTypeString)
 	elseif type(typeId) == "table" then
 		local t1 = typedb:type_string( resultContextTypeId[1])
 		local t2 = typedb:type_string( resultContextTypeId[2])
-		M.errorMessage( line, "Ambiguous reference resolving %s: %s, %s", resolveTypeString, t1, t2)
+		M.errorMessage( line, "Ambiguous reference resolving '%s': %s, %s", resolveTypeString, t1, t2)
 	end
 end
 
