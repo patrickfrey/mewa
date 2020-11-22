@@ -3,33 +3,14 @@
 -- Module object with all functions exported
 local M = {}
 
--- Name mangling/demangling and unique name:
--- Helpers for encoding/decoding:
-function char_to_hex( c)
-	return string.format("_%02X", string.byte(c))
-end
-
-function hex_to_char( x)
-	return string.char( tonumber( x, 16))
-end
-
--- [1] Mangle a name
-function M.mangleName( name)
-	return name:gsub("([^_%w%d])", char_to_hex)
-end
-
--- [2] Demangle a name
-function M.demangleName( name)
-	return name:gsub("_(%x%x)", hex_to_char)
-end
-
+-- Create a unique name
 local uniqueNameIdxMap = {}
 function M.uniqueName( prefix)
 	if uniqueNameIdxMap[ prefix] then uniqueNameIdxMap[ prefix] = uniqueNameIdxMap[ prefix] + 1 else uniqueNameIdxMap[ prefix] = 1 end
 	return prefix .. uniqueNameIdxMap[ prefix]
 end
 
--- Map template for LLVM Code synthesis 
+-- Map template for LLVM Code synthesis
 function M.constructor_format( fmt, argtable, allocator)
 	local valtable = {}
 	local subst = function( match)
@@ -53,7 +34,7 @@ function M.constructor_format( fmt, argtable, allocator)
 	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
 end
 
--- Template for LLVM Code synthesis of control structures
+-- Template for LLVM Code synthesis with the arguments passed as vararg parameters
 function M.code_format_varg( fmt, ... )
 	local arg = {...}
 	local subst = function( match)
@@ -67,6 +48,7 @@ function M.code_format_varg( fmt, ... )
 	return fmt:gsub("[{]([%d]*)[}]", subst)
 end
 
+-- Map a LLVM Code synthesis template to a template substituting only the defined arguments and leaving the rest of the substitutions occurring untouched
 function M.template_format( fmt, arg )
 	if type( fmt) == "table" then
 		local rt = {}
@@ -86,7 +68,7 @@ function M.template_format( fmt, arg )
 	end
 end
 
--- Register allocator for LLVM
+-- Name allocators for LLVM
 function M.name_allocator( prefix)
         local i = 0
         return function ()
@@ -96,29 +78,25 @@ function M.name_allocator( prefix)
 end
 
 function M.label_allocator()
-        local i = 0
-        return function ()
-                i = i + 1
-                return "L" .. i
-        end
+	return M.name_allocator( "L")
 end
 
 function M.register_allocator()
-	return M.label_allocator( "%R")
+	return M.name_allocator( "%R")
 end
 
 -- Tree traversal:
--- [1] Tree traversal subnode call implementation
-function M.traverseCall( node)
+-- Call tree node callback function for subnodes
+function M.traverseCall( node, context)
 	if node.arg then
 		local rt = {}
 		for ii, vv in ipairs( node.arg) do
 			local subnode = node.arg[ ii]
 			if subnode.call then
 				if subnode.call.obj then
-					rt[ ii] = subnode.call.proc( subnode, subnode.call.obj)
+					rt[ ii] = subnode.call.proc( subnode, subnode.call.obj, context)
 				else
-					rt[ ii] = subnode.call.proc( subnode)
+					rt[ ii] = subnode.call.proc( subnode, context)
 				end
 			else
 				rt[ ii] = subnode.value
@@ -130,19 +108,19 @@ function M.traverseCall( node)
 	end
 end
 
--- [2] Tree traversal implementation, define scope/step and do the traversal call 
-function M.traverse( typedb, node)
+-- Tree traversal, define scope/step and do the traversal call 
+function M.traverse( typedb, node, context)
 	local rt = nil
 	if (node.scope) then
 		local parent_scope = typedb:scope( node.scope)
-		rt = M.traverseCall( node)
+		rt = M.traverseCall( node, context)
 		typedb:scope( parent_scope)
 	elseif (node.step) then
 		local prev_step = typedb:step( node.step)
-		rt = M.traverseCall( node)
+		rt = M.traverseCall( node, context)
 		typedb:step( prev_step)
 	else
-		rt = M.traverseCall( node)
+		rt = M.traverseCall( node, context)
 	end
 	return rt
 end
@@ -153,7 +131,7 @@ function M.visit( typedb, node)
 end
 
 -- Types in readable form for messages
--- [1] Type as string
+-- Type as string
 function typeString( typedb, typeId)
 	if typeId == 0 then
 		return "<>"
@@ -164,7 +142,7 @@ function typeString( typedb, typeId)
 	end
 end
 
--- [2] Type list as string
+-- Type list as string
 function typeListString( typedb, typeList, separator)
 	if not typeList or #typeList == 0 then return "" end
 	local rt = typeString( typedb, typeList[ 1])
@@ -174,7 +152,7 @@ function typeListString( typedb, typeList, separator)
 	return rt
 end
 
--- [2] Type to resolve as string
+-- Type to resolve as string for errir messages
 function M.resolveTypeString( typedb, contextType, typeName)
 	local rt
 	if type(contextType) == "table" then
@@ -194,13 +172,13 @@ function M.resolveTypeString( typedb, contextType, typeName)
 end
 
 -- Error reporting:
--- [1] General error
+-- Exit with error message and line info
 function M.errorMessage( line, fmt, ...)
 	local arg = {...}
 	error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
 end
 
--- [2] Exit with error for no result or an ambiguous result returned by typedb:resolve_type
+-- Exit with error for no result or an ambiguous result returned by typedb:resolve_type
 function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
 	local resolveTypeString = M.resolveTypeString( typedb, contextType, typeName)
 	if not resultContextTypeId then
@@ -212,6 +190,26 @@ function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typ
 	end
 end
 
+-- Unicode support, function taken from http://lua-users.org/wiki/LuaUnicode
+function M.utf8to32( utf8str)
+	local res, seq, val = {}, 0, nil
+	for i = 1, #utf8str do
+		local c = string.byte(utf8str, i)
+		if seq == 0 then
+			table.insert(res, val)
+			seq = c < 0x80 and 1 or c < 0xE0 and 2 or c < 0xF0 and 3 or
+			      c < 0xF8 and 4 or --c < 0xFC and 5 or c < 0xFE and 6 or
+				  error("invalid UTF-8 character sequence")
+			val = bit32.band(c, 2^(8-seq) - 1)
+		else
+			val = bit32.bor(bit32.lshift(val, 6), bit32.band(c, 0x3F))
+		end
+		seq = seq - 1
+	end
+	table.insert(res, val)
+	table.insert(res, 0)
+	return res
+end
 
 return M
 

@@ -49,6 +49,7 @@ function callConstructor( fmt)
 	end
 end
 
+local weightEpsilon = 1E-5	-- epsilon used for comparing weights for equality
 local fccQualiTypeMap = {}	-- maps fcc type names without qualifiers to the table of type ids for all qualifiers possible
 local fccIndexTypeMap = {}	-- maps fcc type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
 local fccBooleanType = 0	-- type id of the boolean type, result of cmpop binary operators
@@ -57,7 +58,6 @@ local controlFalseType = 0	-- type implementing a boolean not represented as val
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
-
 
 function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
 	local constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
@@ -77,6 +77,20 @@ local constexprDqStringType = typedb:def_type( 0, "constexpr dqstring")
 local constexprSqStringType = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
 
+function createConstExpr( node, constexpr_type, lexemvalue)
+	if constexpr_type == constexprIntegerType then return bcd:int(lexemvalue) end
+	if constexpr_type == constexprFloatType then return tonumber(lexemvalue) end
+	if constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end end
+	if constexpr_type == constexprDqStringType then
+		return lexemvalue
+	end
+	if constexpr_type == constexprSqStringType then
+		local ua = utils.utf8to32( lexemvalue)
+		if #ua == 0 then return 0 end
+		if #ua == 1 then return ua[1] end
+		utils.errorMessage( node.line, "single quoted string '%s' not containing a single unicode character", lexemvalue)
+	end
+end
 function defineConstExprBasicArithmetics( constexpr_type)
 	defineCall( constexpr_type, constexpr_type, "+", {constexpr_type}, function( this, arg) return this + arg[1] end)
 	defineCall( constexpr_type, constexpr_type, "-", {constexpr_type}, function( this, arg) return this - arg[1] end)
@@ -130,7 +144,6 @@ function defineConstExprOperators()
 	definePromoteCall( uint_arg_type, constexprIntegerType, "&", {uint_arg_type}, nil)
 	definePromoteCall( uint_arg_type, constexprIntegerType, "|", {uint_arg_type}, nil)
 	definePromoteCall( uint_arg_type, constexprIntegerType, "^", {uint_arg_type}, nil)
-	definePromoteCall( uint_arg_type, constexprIntegerType, "~", {}, nil)
 
 	local float_arg_typenam = "double"
 	local float_arg_type = typedb:get_type( 0, "const " .. float_arg_typenam)
@@ -143,7 +156,6 @@ function defineConstExprOperators()
 	local bool_arg_type = typedb:get_type( 0, "const " .. bool_arg_typenam)
 	definePromoteCall( bool_arg_type, constexprBooleanType, "&&", {bool_arg_type}, nil)
 	definePromoteCall( bool_arg_type, constexprBooleanType, "||", {bool_arg_type}, nil)
-	definePromoteCall( bool_arg_type, constexprBooleanType, "!", {}, nil)	
 end
 
 function defineOperators( lval, c_lval, typeDescription)
@@ -165,6 +177,8 @@ function defineOperators( lval, c_lval, typeDescription)
 end
 
 function defineQualifiedTypes( typnam, typeDescription)
+	io.stderr:write( "+++++ ENTER\n")
+	io.stderr:write( "+++++ CALL defineQualifiedTypes " .. mewa.tostring({ typnam, typeDescription }) .. "\n")
 	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
 	local pointerPointerTypeDescription = llvmir.pointerType( pointerTypeDescription.llvmtype)
 
@@ -177,6 +191,7 @@ function defineQualifiedTypes( typnam, typeDescription)
 	local rpval = typedb:def_type( 0, "^&" .. typnam)
 	local c_rpval = typedb:def_type( 0, "const^&" .. typnam)
 
+	io.stderr:write( "+++++ STEP\n")
 	typeDescriptionMap[ lval] = typeDescription
 	typeDescriptionMap[ c_lval] = typeDescription
 	typeDescriptionMap[ rval] = pointerTypeDescription
@@ -237,64 +252,45 @@ function defineFccConversions( typnam, typeDescription)
 	end
 end
 
-function getDefContextType()
-	local rt = typedb:get_instance( "defcontext")
-	if rt then return rt else return 0 end
-end
-
 function getContextTypes()
 	local rt = typedb:get_instance( "context")
 	if rt then return rt else return {0} end
 end
 
-function defineLocalVariable( node, type, name, initval, register)
-	local descr = typeDescriptionMap[ type]
-	local fmt = descr.def_local
-	local out = register()
-	local code = utils.constructor_format( fmt, {out = out}, register)
-	local var = typedb:def_type( 0, name, out)
-	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
-	if initval then applyOperator( node, "=", {initval}) end
-	return {code=code}
-end
-
-function defineGlobalVariable( node, type, name, initval)
-	local descr = typeDescriptionMap[ type]
-	local fmt
-	if initval then
-		fmt = descr.def_global_val
-		if type(initval) == "table" then utils.errorMessage( node.line, "only constexpr allowed to assign in global variable initialization") end
-	else
-		fmt = descr.def_global
-	end
-	local out = "@" .. mangleName( name)
-	print( utils.constructor_format( fmt, {out = out, inp = initval}))
-	local var = typedb:def_type( 0, name, out)
-	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
-end
-
-function defineVariable( node, typeId, varName, initVal)
+function defineVariable( node, contextTypeId, typeId, name, initVal)
+	local descr = typeDescriptionMap[ typeId]
 	local register = typedb:get_instance( "register")
-	local defcontext = typedb:get_instance( "defcontext")
-	if register then
-		return defineLocalVariable( node, typeId, varName, initval, register)
-	elseif defcontext then
-		utils.errorMessage( line, "Member variables not implemented yet")
+	if not contextTypeId then
+		local out = register()
+		local code = utils.constructor_format( descr.def_local, {out = out}, register)
+		local var = typedb:def_type( 0, name, out)
+		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
+		local rt = {type=var, constructor=code}
+		if initval then rt = applyOperator( node, "=", {rt, initval}) end
+		return rt
+	elseif contextTypeId == 0 then
+		local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
+		if type(initval) == "table" then utils.errorMessage( node.line, "only constexpr allowed to assign in global variable initialization") end
+		out = "@" .. name
+		print( utils.constructor_format( fmt, {out = out, inp = initval}))
+		local var = typedb:def_type( contextTypeId, name, out)
+		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
+		return {type=var}
 	else
-		return defineGlobalVariable( node, typeId, varName, initval)
+		utils.errorMessage( node.line, "Member variables not implemented yet")
 	end
 end
 
-function defineParameter( node, type, varName, register)
+function defineParameter( node, type, name, register)
 	local descr = typeDescriptionMap[ type]
 	local paramreg = register()
 	local var = typedb:def_type( 0, name, paramreg)
 	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
-	return desc.llvmtype .. " " .. paramreg
+	return descr.llvmtype .. " " .. paramreg
 end
 
 function defineType( node, typeName, typeDescription)
-	local lval = defineQualifiedTypes( typnam, fcc_descr)
+	local lval = defineQualifiedTypes( typnam, typeDescription)
 	defineIndexOperators( typnam, qualiTypeMap[ lval], typeDescription)
 end
 
@@ -381,6 +377,8 @@ end
 function applyOperator( node, operator, arg)
 	local bestmatch = {}
 	local bestweight = nil
+	io.stderr:write( "+++++ CALL applyOperator " .. mewa.tostring( {arg, operator, tagmask_resolveType}) .. "\n")
+
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
 	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, typeName) end
 	for ii,item in ipairs(items) do
@@ -401,9 +399,9 @@ function applyOperator( node, operator, arg)
 				table.insert( param_constructor_ar, param_constructor)
 			end
 			if #param_constructor_ar+1 == #arg then
-				if not bestweight or weight < bestweight + 1E-5 then
+				if not bestweight or weight < bestweight + weightEpsilon then
 					local operator_constructor = item.constructor( this_constructor, param_constructor_ar)
-					if bestweight and weight >= bestweight - 1E-5 then
+					if bestweight and weight >= bestweight - weightEpsilon then
 						table.insert( bestmatch, {type=item.type, constructor=operator_constructor})
 					else
 						bestweight = weight
@@ -495,36 +493,42 @@ function getInstructionList( node, arg)
 	return ""
 end
 
-function getSignatureString( name, args, is_global_def)
-	if not is_global_def then
+function getSignatureString( name, args, contextTypeId)
+	if not contextTypeId then
 		return utils.uniqueName( name .. "__")
 	else
 		local pstr = ""
+		if contextTypeId ~= 0 then
+			pstr = ptr .. "__C_" .. typedb:type_string( contextTypeId, "__") .. "__"
+		end
 		for aa in args do for pp in aa:gmatch("%S+") do if pstr ~= "" then pstr = pstr .. "_" .. pp else pstr = "__" .. pp end break end end
 		return name .. pstr
 	end
 end
 
-function defineFunction( node, arg, is_global_def)
+function defineFunction( node, arg, contextTypeId)
 	local linkage = node.arg[1].linkage
 	local attributes = node.arg[1].attributes
 	local returnTypeName = typeDescriptionMap[ arg[2]].llvmtype
-	local functionName = getSignatureString( arg[3], arg[4], is_global_def)
+	local functionName = getSignatureString( arg[3], arg[4], contextTypeId)
 	local args = table.concat( arg[4], ", ")
 	local body = getInstructionList( node.arg[5])
 	print( utils.code_format_varg( "\ndefine {1} {2} @{3}( {4} ) {5} {\n{6}}", linkage, returnTypeName, functionName, args, attributes, body))
 end
 
-function defineProcedure( node, arg, is_global_def)
+function defineProcedure( node, arg, contextTypeId)
 	local linkage = node.arg[1].linkage
 	local attributes = node.arg[1].attributes
-	local functionName = getSignatureString( arg[2], arg[3], is_global_def)
+	local functionName = getSignatureString( arg[2], arg[3], contextTypeId)
 	local argstr = table.concat( arg[3], ", ")
 	local body = getInstructionList( node.arg[4])
 	print( utils.code_format_varg( "\ndefine {1} void @{2}( {3} ) {4} {\n{5}}", linkage, functionName, argstr, attributes, body))
 end
 
 -- AST Callbacks:
+function typesystem.definition( node, contextTypeId)
+	return utils.traverse( typedb, node, contextTypeId)
+end
 function typesystem.paramdef( node) 
 	local subnode = utils.traverse( typedb, node)
 	return defineParameter( node, subnode[1], subnode[2], typedb:get_instance( "register"))
@@ -534,32 +538,30 @@ function typesystem.paramdeflist( node)
 	return utils.traverse( typedb, node)
 end
 
-function typesystem.vardef( node)
-	local subnode = utils.traverse( typedb, node)
-	return defineVariable( node, subnode[1], subnode[2], nil)
+function typesystem.vardef( node, contextTypeId)
+	local subnode = utils.traverse( typedb, node, contextTypeId)
+	return defineVariable( node, contextTypeId, subnode[1], subnode[2], nil)
 end
 
-function typesystem.vardef_assign( node)
-	local subnode = utils.traverse( typedb, node)
-	return defineVariable( node, subnode[1], subnode[2], subnode[3])
+function typesystem.vardef_assign( node, contextTypeId)
+	local subnode = utils.traverse( typedb, node, contextTypeId)
+	return defineVariable( node, contextTypeId, subnode[1], subnode[2], subnode[3])
 end
 
-function typesystem.vardef_array( node) return utils.visit( typedb, node) end
-function typesystem.vardef_array_assign( node) return utils.visit( typedb, node) end
+function typesystem.vardef_array( node, contextTypeId)
+	local subnode = utils.traverse( typedb, node, contextTypeId)
+	return nil
+end
+function typesystem.vardef_array_assign( node, contextTypeId)
+	local subnode = utils.traverse( typedb, node, contextTypeId)
+	return nil
+end
 
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
 	return applyOperator( node, "=", {arg[1], applyOperator( node, operator, arg)})
 end
-function typesystem.nary_operator( node, operator)
-	local arg = utils.traverse( typedb, node)
-	return applyOperator( node, operator, arg)
-end
-function typesystem.binary_operator( node, operator)
-	local arg = utils.traverse( typedb, node)
-	return applyOperator( node, operator, arg)
-end
-function typesystem.unary_operator( node, operator)
+function typesystem.operator( node, operator)
 	local arg = utils.traverse( typedb, node)
 	return applyOperator( node, operator, arg)
 end
@@ -602,11 +604,10 @@ function typesystem.typespec( node, qualifier)
 	if #node.arg == 1 then
 		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
 	else
-		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
+		contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
 		if #node.arg > 2 then
 			for ii = 2, #node.arg-1 do
-				typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
-				contextTypeId = typeId
+				contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
 			end
 		end
 		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
@@ -616,26 +617,27 @@ end
 
 function typesystem.constant( node, typeName)
 	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
-	return {type=typeId, constructor=node.arg[1].value}
+	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
+end
+function typesystem.variable( node)
+	typeName = node.arg[ 1].value
+	typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
+	return {type=typeId}
 end
 
 function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
-
-function typesystem.funcdef( node)
-	local is_global_def = typedb:get_instance( "register") == nil
+function typesystem.funcdef( node, contextTypeId)
 	typedb:set_instance( "register", utils.register_allocator())
 	typedb:set_instance( "label", utils.label_allocator())
-	defineFunction( node, utils.traverse( typedb, node), is_global_def)
+	defineFunction( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
 	return rt
 end
-
-function typesystem.procdef( node) 
-	local is_global_def = typedb:get_instance( "register") == nil
+function typesystem.procdef( node, contextTypeId) 
 	typedb:set_instance( "register", utils.register_allocator())
 	typedb:set_instance( "label", utils.label_allocator())
-	defineProcedure( node, utils.traverse( typedb, node, is_global_def))
+	defineProcedure( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
 	return rt
 end
 
@@ -652,8 +654,7 @@ function typesystem.count( node)
 		return utils.traverseCall( node)[ 1] + 1
 	end
 end
-
-function typesystem.rep_unary_operator( node)
+function typesystem.rep_operator( node)
 	local arg = utils.traverse( typedb, node)
 	local icount = arg[2]
 	local expr = arg[1]

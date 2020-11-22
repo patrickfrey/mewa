@@ -65,6 +65,15 @@ std::string_view mewa::lua::getArgumentAsString( const char* functionName, lua_S
 	return std::string_view( str, len);
 }
 
+const char* mewa::lua::getArgumentAsCString( const char* functionName, lua_State* ls, int li)
+{
+	if (!mewa::lua::isArgumentType( functionName, ls, li, (1 << LUA_TSTRING)))
+	{
+		mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedStringArgument);
+	}
+	return lua_tostring( ls, li);
+}
+
 long mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec)
 {
 	if (!mewa::lua::isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))

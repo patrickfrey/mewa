@@ -215,7 +215,7 @@ foreach my $line (@content)
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		print "\t\t\t[\"\!\"] = \"{out} = xor $llvmtype {inp}, -1\\n\"";
+		print "\t\t\t[\"\~\"] = \"{out} = xor $llvmtype {inp}, -1\\n\"";
 	}
 	elsif ($sgn eq "signed")
 	{

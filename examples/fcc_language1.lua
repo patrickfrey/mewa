@@ -95,7 +95,7 @@ return {
 			["byte"] = {fmt="{out} = zext i8 {inp} to i64\n", weight=0},
 			["bool"] = {fmt="{out} = zext i1 {inp} to i64\n", weight=0}},
 		unop = {
-			["!"] = "{out} = xor i64 {inp}, -1\n"},
+			["~"] = "{out} = xor i64 {inp}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i64 {this}, {arg1}\n",
 			["-"] = "{out} = add nsw i64 {this}, {arg1}\n",
@@ -176,7 +176,7 @@ return {
 			["byte"] = {fmt="{out} = zext i8 {inp} to i32\n", weight=0},
 			["bool"] = {fmt="{out} = zext i1 {inp} to i32\n", weight=0}},
 		unop = {
-			["!"] = "{out} = xor i32 {inp}, -1\n"},
+			["~"] = "{out} = xor i32 {inp}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i32 {this}, {arg1}\n",
 			["-"] = "{out} = add nsw i32 {this}, {arg1}\n",
@@ -257,7 +257,7 @@ return {
 			["byte"] = {fmt="{out} = zext i8 {inp} to i16\n", weight=0},
 			["bool"] = {fmt="{out} = zext i1 {inp} to i16\n", weight=0}},
 		unop = {
-			["!"] = "{out} = xor i16 {inp}, -1\n"},
+			["~"] = "{out} = xor i16 {inp}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i16 {this}, {arg1}\n",
 			["-"] = "{out} = add nsw i16 {this}, {arg1}\n",
@@ -338,7 +338,7 @@ return {
 			["short"] = {fmt="{out} = trunc i16 {inp} to i8\n", weight=0.2},
 			["bool"] = {fmt="{out} = zext i1 {inp} to i8\n", weight=0}},
 		unop = {
-			["!"] = "{out} = xor i8 {inp}, -1\n"},
+			["~"] = "{out} = xor i8 {inp}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i8 {this}, {arg1}\n",
 			["-"] = "{out} = add nsw i8 {this}, {arg1}\n",

@@ -22,7 +22,7 @@
 
 using namespace mewa;
 
-void TypeDatabase::appendTypeToString( std::pmr::string& res, int type) const
+void TypeDatabase::appendTypeToString( std::pmr::string& res, int type, const char* sep) const
 {
 	if (type == 0) return;
 	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
@@ -30,27 +30,27 @@ void TypeDatabase::appendTypeToString( std::pmr::string& res, int type) const
 	const TypeRecord& rec = m_typerecMap[ type-1];
 	if (rec.inv.contextType)
 	{
-		appendTypeToString( res, rec.inv.contextType);
-		res.push_back( ' ');
+		appendTypeToString( res, rec.inv.contextType, sep);
+		res.append( sep);
 	}
 	res.append( m_identMap->inv( rec.inv.ident));
 	if (rec.parameterlen)
 	{
-		res.append( "( ");
+		res.push_back( '(');
 		for (int pi = 0; pi < rec.parameterlen; ++pi)
 		{
-			if (pi) res.append( ", "); 
-			appendTypeToString( res, m_parameterMap[ rec.parameter + pi -1].type);
+			if (pi) res.push_back( ','); 
+			appendTypeToString( res, m_parameterMap[ rec.parameter + pi -1].type, sep);
 		}
 		res.push_back( ')');
 	}
 }
 
-std::pmr::string TypeDatabase::typeToString( int type, ResultBuffer& resbuf) const
+std::pmr::string TypeDatabase::typeToString( int type, const char* sep, ResultBuffer& resbuf) const
 {
 	std::pmr::string rt( &resbuf.memrsc);
 	rt.reserve( resbuf.buffersize()-1);
-	appendTypeToString( rt, type);
+	appendTypeToString( rt, type, sep);
 	return rt;
 }
 
@@ -357,7 +357,7 @@ std::string TypeDatabase::reductionsToString( const std::pmr::vector<ReductionRe
 	{
 		ResultBuffer resbuf;
 		if (ridx++) rt.append( " -> ");
-		rt.append( typeToString( redu.type, resbuf));
+		rt.append( typeToString( redu.type, " ", resbuf));
 	}
 	return rt;
 }
@@ -377,7 +377,7 @@ std::string TypeDatabase::resolveResultToString( const ResolveResult& res) const
 	{
 		ResultBuffer resbuf;
 		if (iidx++) rt.append( ", ");
-		rt.append( typeToString( item.type, resbuf));
+		rt.append( typeToString( item.type, " ", resbuf));
 	}
 	rt.append( "}");
 	return rt;
@@ -424,8 +424,8 @@ TypeDatabase::GetReductionResult TypeDatabase::getReduction( const Scope::Step s
 				{
 					//... weights are equal
 					ResultBuffer resbuf_err;
-					auto toTypeStr = typeToString( toType, resbuf_err);
-					auto fromTypeStr = typeToString( fromType, resbuf_err);
+					auto toTypeStr = typeToString( toType, " ", resbuf_err);
+					auto fromTypeStr = typeToString( fromType, " ", resbuf_err);
 					throw Error( Error::AmbiguousReductionDefinitions, string_format( "%s <- %s", toTypeStr.c_str(), fromTypeStr.c_str()));
 				}
 			}

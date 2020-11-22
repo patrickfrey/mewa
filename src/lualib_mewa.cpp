@@ -698,12 +698,13 @@ static int mewa_typedb_type_string( lua_State* ls)
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
-		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 3/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 2);
 		int type = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+		const char* sep = (nargs >= 3) ? mewa::lua::getArgumentAsCString( functionName, ls, 3) : " "/*default separator*/;
 		mewa::TypeDatabase::ResultBuffer resbuf;
 
-		auto rt = td->impl->typeToString( type, resbuf);
+		auto rt = td->impl->typeToString( type, sep, resbuf);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
 	catch (...) { lippincottFunction( ls); }

@@ -328,6 +328,7 @@ Get the full signature of the type as string. This is the full name of the conte
 | #          | Name | Type              | Description                                                                                    |
 | :--------- | :--- | :---------------- | :--------------------------------------------------------------------------------------------- |
 | 1st        | type | integer           | Type identifier                                                                                |
+| 2nd        | type | string            | (optional) Separator for multipart type name, default is space ' '                             |
 | Return     |      | string            | Full name of the type with context separated by spaces and parameters in oval brackets '(' ')' |
 
 

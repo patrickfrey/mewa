@@ -17,9 +17,9 @@ program		   	= definitionlist								(program)
 definitionlist/L	= definition definitionlist
 			| ε
 			;
-definition		= functiondefinition
-			| typedefinition ";"
-			| variabledefinition ";"
+definition		= functiondefinition								(definition 0)
+			| typedefinition ";"								(definition 0)
+			| variabledefinition ";"							(definition 0)
 			;
 typename/L1		= IDENT
 			| IDENT "::" typename
@@ -57,9 +57,9 @@ paramdecl		= typespec IDENT								(paramdef)
 statementlist/L		= statement statementlist							(>>statement)
 			| ε
 			;
-statement		= functiondefinition
-			| typedefinition ";"
-			| variabledefinition ";"
+statement		= functiondefinition								(definition)
+			| typedefinition ";"								(definition)
+			| variabledefinition ";"							(definition)
 			| expression ";"
 			| returnstatement ";"
 			| "if" "(" expression ")" "{" statementlist "}"					({}conditional_if)
@@ -67,14 +67,14 @@ statement		= functiondefinition
 			| "while" "(" expression ")" "{" statementlist "}"				({}conditional_while)
 			| "{" statementlist "}"								({})
 			;
-variabledefinition	= "var" typespec IDENT "=" expression						(>>vardef_assign)
-			| "var" typespec IDENT								(>>vardef)
+variabledefinition	= "var" typespec IDENT								(>>vardef)
+			| "var" typespec IDENT "=" expression						(>>vardef_assign)
 			| "var" typespec IDENT "[" "]" "=" expression					(>>vardef_array_assign)
 			| "var" typespec IDENT "[" "]"							(>>vardef_array)
-			;  
+			;
 returnstatement	   	= "return" expression								(>>return_value)
 			;
-expression/L1		= typename									(typespec "")
+expression/L1		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
 			| CARDINAL									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
@@ -82,7 +82,7 @@ expression/L1		= typename									(typespec "")
 			| SQSTRING									(constant "constexpr qstring")
 			| "(" expression ")"
 			;
-expression/L2		= expression  "="  expression							(binary_operator "=")
+expression/L2		= expression  "="  expression							(operator "=")
 			| expression  "+="  expression							(assign_operator "+")
 			| expression  "-="  expression							(assign_operator "-")
 			| expression  "*="  expression							(assign_operator "*")
@@ -99,42 +99,42 @@ expression/L3		= expression  "||"  expression							(logic_operator_or)
 			;
 expression/L4		= expression  "&&"  expression							(logic_operator_and)
 			;
-expression/L5		= expression  "|"  expression							(binary_operator "|")
+expression/L5		= expression  "|"  expression							(operator "|")
 			;			
-expression/L6		= expression  "^"  expression							(binary_operator "^")
-			| expression  "&"  expression							(binary_operator "&")
+expression/L6		= expression  "^"  expression							(operator "^")
+			| expression  "&"  expression							(operator "&")
 			;			
-expression/L7		= expression  "=="  expression							(binary_operator "==")
-			| expression  "!="  expression							(binary_operator "!=")
-			| expression  "<="  expression							(binary_operator "<=")
-			| expression  "<"  expression							(binary_operator "<")
-			| expression  ">="  expression							(binary_operator ">=")
-			| expression  ">"  expression							(binary_operator ">")
+expression/L7		= expression  "=="  expression							(operator "==")
+			| expression  "!="  expression							(operator "!=")
+			| expression  "<="  expression							(operator "<=")
+			| expression  "<"  expression							(operator "<")
+			| expression  ">="  expression							(operator ">=")
+			| expression  ">"  expression							(operator ">")
 			;
-expression/L8		= expression  "+"  expression							(binary_operator "+")
-			| expression  "-"  expression							(binary_operator "-") 
-			| "-"  expression								(unary_operator "-")
-			| "+"  expression								(unary_operator "+") 
-			| "~"  expression								(unary_operator "~")
+expression/L8		= expression  "+"  expression							(operator "+")
+			| expression  "-"  expression							(operator "-") 
+			| "-"  expression								(operator "-")
+			| "+"  expression								(operator "+") 
+			| "~"  expression								(operator "~")
 			| "!"  expression								(logic_operator_not) 
 			;
-expression/L9		= expression  "*"  expression							(binary_operator "*")
-			| expression  "/"  expression							(binary_operator "/")
-			| expression  "%"  expression							(binary_operator "%")
+expression/L9		= expression  "*"  expression							(operator "*")
+			| expression  "/"  expression							(operator "/")
+			| expression  "%"  expression							(operator "%")
 			;
-expression/L10		= expression  "<<"  expression							(binary_operator "<<")
-			| expression  ">>"  expression							(binary_operator ">>")
+expression/L10		= expression  "<<"  expression							(operator "<<")
+			| expression  ">>"  expression							(operator ">>")
 			;
 expression/L11		= iexpression
-			| expression "." IDENT								(binary_operator ".")
-			| expression "::" IDENT								(binary_operator "::")
-			| "*" expression								(unary_operator "->")
+			| expression "." IDENT								(operator ".")
+			| expression "::" IDENT								(operator "::")
+			| "*" expression								(operator "->")
 			;
-expression/L12		= expression  "(" expressionlist ")"						(nary_operator "()")
-			| expression  "(" ")"								(nary_operator "()")
-			| expression  "[" expressionlist "]"						(nary_operator "[]")
+expression/L12		= expression  "(" expressionlist ")"						(operator "()")
+			| expression  "(" ")"								(operator "()")
+			| expression  "[" expressionlist "]"						(operator "[]")
 			;
-iexpression		= expression indirection IDENT							(rep_unary_operator "->")
+iexpression		= expression indirection IDENT							(rep_operator "->")
 			;
 indirection		= "->" indirection								(count)
 			| "->"										(count)

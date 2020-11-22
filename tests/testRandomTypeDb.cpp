@@ -286,7 +286,7 @@ static std::string reductionsToString( TypeDatabase& typedb, TypeDatabaseContext
 	for (auto const& redu :reductions)
 	{
 		TypeDatabase::ResultBuffer resbuf;
-		auto tn = typedb.typeToString( redu.type, resbuf);
+		auto tn = typedb.typeToString( redu.type, " ", resbuf);
 		if (string_format( " -> %s", tn.c_str()) != ctx.constructors[ redu.constructor-1]
 		&&  string_format( "type %s", tn.c_str()) != ctx.constructors[ redu.constructor-1])
 		{
@@ -312,7 +312,7 @@ static std::string resolveResultToString( TypeDatabase& typedb, TypeDatabaseCont
 	{
 		TypeDatabase::ResultBuffer resbuf;
 		if (iidx++) rt.append( ", ");
-		rt.append( typedb.typeToString( item.type, resbuf));
+		rt.append( typedb.typeToString( item.type, " ", resbuf));
 	}
 	rt.append( "}");
 	return rt;
@@ -375,7 +375,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 		if (verbose)
 		{
 			TypeDatabase::ResultBuffer resbuf_typestr;
-			std::cerr << "Conflicting type: " << typedb.typeToString( result.conflictType, resbuf_typestr) << std::endl;
+			std::cerr << "Conflicting type: " << typedb.typeToString( result.conflictType, " ", resbuf_typestr) << std::endl;
 		}
 	}
 	else
@@ -397,7 +397,7 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			{
 				TypeDatabase::ResultBuffer resbuf_tostring;
 				redu_str.append( "type ");
-				redu_str.append( typedb.typeToString( ti->second, resbuf_tostring));
+				redu_str.append( typedb.typeToString( ti->second, " ", resbuf_tostring));
 				redu_str.append( deriveResultToString( typedb, ctx, deriveres));
 			}
 			else

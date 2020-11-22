@@ -336,9 +336,10 @@ public:
 
 	/// \brief Get the string representation of a type
 	/// \param[in] type the handle of the type (return value of defineType)
+	/// \param[in] sep separator between type elements
 	/// \param[in,out] resbuf buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the complete string assigned to a type
-	std::pmr::string typeToString( int type, ResultBuffer& resbuf) const;
+	std::pmr::string typeToString( int type, const char* sep, ResultBuffer& resbuf) const;
 
 	/// \brief Get the name of a type (without context info and parameters)
 	/// \param[in] type the handle of the type (return value of defineType)
@@ -364,7 +365,7 @@ private:
 	std::string reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const;
 	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;
-	void appendTypeToString( std::pmr::string& res, int type) const;
+	void appendTypeToString( std::pmr::string& res, int type, const char* sep) const;
 	ResolveResult resolveType_( const Scope::Step step, int const* contextTypeAr, std::size_t contextTypeSize,
 				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 

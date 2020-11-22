@@ -38,6 +38,7 @@ inline bool isArgumentType( const char* functionName, lua_State* ls, int li, int
 }
 
 std::string_view getArgumentAsString( const char* functionName, lua_State* ls, int li);
+const char* getArgumentAsCString( const char* functionName, lua_State* ls, int li);
 
 long getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec = mewa::Error::ExpectedIntegerArgument);
 

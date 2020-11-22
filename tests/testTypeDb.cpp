@@ -210,7 +210,7 @@ struct TypeDatabaseImpl
 	{
 		std::string rt;
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto typestr = typedb->typeToString( type, resbuf);
+		auto typestr = typedb->typeToString( type, " ", resbuf);
 		rt.append( typestr);
 		return rt;
 	}
@@ -526,9 +526,9 @@ myclass ~ #myclass<-inhclass
 
 Resolve type inhclass -> member1( long) [1] :
 Result candidates:
-Candidate [1]: inhclass member1( myclass)
+Candidate [1]: inhclass member1(myclass)
 - parameter [0] does not match ('myclass' <-/- 'long', )
-Candidate [2]: inhclass member1( int)
+Candidate [2]: inhclass member1(int)
 - parameter [0]: #int #int<-long
 Found match: #member1_int( #int <- #int<-long)
 
@@ -538,9 +538,9 @@ myclass ~ #myclass<-inhclass
 
 Resolve type inhclass -> member2( long) [2] :
 Result candidates:
-Candidate [1]: myclass member2( int)
+Candidate [1]: myclass member2(int)
 - parameter [0]: #int #int<-long
-Candidate [2]: myclass member2( float)
+Candidate [2]: myclass member2(float)
 - parameter [0] does not match ('float' <-/- 'long', )
 Found match: #member2_int( #int <- #int<-long)
 
@@ -551,9 +551,9 @@ double ~ #double<-myclass
 
 Resolve type myclass -> member2( long) [12] :
 Result candidates:
-Candidate [1]: myclass member2( int)
+Candidate [1]: myclass member2(int)
 - parameter [0]: #int #int<-long
-Candidate [2]: myclass member2( float)
+Candidate [2]: myclass member2(float)
 - parameter [0] does not match ('float' <-/- 'long', )
 Found match: #member2_int( #int <- #int<-long)
 
@@ -564,9 +564,9 @@ double ~ #double<-myclass
 
 Resolve type myclass -> member2( myclass) [12] :
 Result candidates:
-Candidate [1]: myclass member2( int)
+Candidate [1]: myclass member2(int)
 - parameter [0] does not match ('int' <-/- 'myclass', )
-Candidate [2]: myclass member2( float)
+Candidate [2]: myclass member2(float)
 - parameter [0]: #float #float<-myclass
 Found match: #member2_float( #float <- #float<-myclass)
 
@@ -577,9 +577,9 @@ double ~ #double<-myclass
 
 Resolve type myclass -> member2( myclass) [871] :
 Result candidates:
-Candidate [1]: myclass member2( int)
+Candidate [1]: myclass member2(int)
 - parameter [0] does not match ('int' <-/- 'myclass', )
-Candidate [2]: myclass member2( float)
+Candidate [2]: myclass member2(float)
 - parameter [0]: #float #float<-myclass
 Found match: #member2_float( #float <- #float<-myclass)
 
@@ -589,9 +589,9 @@ myclass ~ #myclass<-inhclass
 
 Resolve type inhclass -> member1( inhclass) [999] :
 Result candidates:
-Candidate [1]: inhclass member1( myclass)
+Candidate [1]: inhclass member1(myclass)
 - parameter [0]: #myclass #myclass<-inhclass
-Candidate [2]: inhclass member1( int)
+Candidate [2]: inhclass member1(int)
 - parameter [0] does not match ('int' <-/- 'inhclass', )
 Found match: #member1_myclass( #myclass <- #myclass<-inhclass)
 
