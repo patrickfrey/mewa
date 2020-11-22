@@ -379,7 +379,8 @@ function applyOperator( node, operator, arg)
 	local bestmatch = {}
 	local bestweight = nil
 	io.stderr:write( "+++++ CALL getResolveTypeTree\n" .. utils.getResolveTypeTreeDump( typedb, arg[1].type, operator, nil, tagmask_resolveType) .. "\n")
-	io.stderr:write( "+++++ TREE DUMP\n" .. utils.getTypeTreeDump( typedb) .. "\n")
+	io.stderr:write( "+++++ TYPE TREE DUMP\n" .. utils.getTypeTreeDump( typedb) .. "\n")
+	io.stderr:write( "+++++ REDU TREE DUMP\n" .. utils.getReductionTreeDump( typedb) .. "\n")
 
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
 	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, operator) end

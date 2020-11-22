@@ -235,21 +235,32 @@ function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, ta
 	return getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, "", {})
 end
 
-function M.getTypeTreeDump( typedb)
-	function typeTreeToString( node, indentstr)
-		rt = ""
-		local scope = node:scope()
-		rt = rt .. string.format( "%s[%d,%d]:", indentstr, scope[1], scope[2]) .. "\n"
-		for type in node:list() do
-			local constructor = typedb:type_constructor( type)
-			rt = rt .. string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor, false)) .. "\n"
-		end
-		for chld in node:chld() do
-			rt = rt .. typeTreeToString( chld, indentstr .. "  ")
-		end
-		return rt
+function treeToString( typedb, node, indentstr, node_tostring)
+	rt = ""
+	local scope = node:scope()
+	rt = rt .. string.format( "%s[%d,%d]:", indentstr, scope[1], scope[2]) .. "\n"
+	for elem in node:list() do
+		rt = rt .. string.format( "%s  - %s", indentstr, node_tostring(elem)) .. "\n"
 	end
-	return typeTreeToString( typedb:type_tree(), "")
+	for chld in node:chld() do
+		rt = rt .. treeToString( typedb, chld, indentstr .. "  ", node_tostring)
+	end
+	return rt
+end
+
+function M.getTypeTreeDump( typedb)
+	function node_tostring(nd)
+		return string.format( "%s : %s", typedb:type_string(nd), mewa.tostring(typedb:type_constructor(nd),false))
+	end
+	return treeToString( typedb, typedb:type_tree(), "", node_tostring)
+end
+function M.getReductionTreeDump( typedb)
+	function node_tostring(nd)
+		return string.format( "%s <- %s [%d]/%.3f : %s",
+					typedb:type_string(nd.to), typedb:type_string(nd.from), nd.tag, nd.weight,
+					mewa.tostring(nd.constructor,false))
+	end
+	return treeToString( typedb, typedb:reduction_tree(), "", node_tostring)
 end
 
 return M
