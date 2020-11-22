@@ -593,8 +593,8 @@ static int mewa_typedb_get_reductions( lua_State* ls)
 		mewa::TagMask selectTags( nargs >= 3 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 3) : mewa::TagMask::matchAll());
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto reductions = td->impl->getReductions( td->curStep, type, selectTags, resbuf);
-		mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, reductions);
+		auto res = td->impl->getReductions( td->curStep, type, selectTags, resbuf);
+		mewa::lua::pushWeightedReductions( ls, functionName, td->objTableName.buf, res.reductions);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;

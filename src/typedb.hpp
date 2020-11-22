@@ -158,6 +158,30 @@ public:
 		GetReductionResult( float weight_, int constructor_) noexcept
 			:weight(weight_),constructor(constructor_){}
 	};
+	struct WeightedReduction
+	{
+		int type;
+		int constructor;
+		float weight;
+
+		WeightedReduction( const WeightedReduction& o) noexcept
+			:type(o.type),constructor(o.constructor),weight(o.weight){}
+		WeightedReduction( int type_, int constructor_, float weight_) noexcept
+			:type(type_),constructor(constructor_),weight(weight_){}
+	};
+	struct GetReductionsResult
+	{
+		std::pmr::vector<WeightedReduction> reductions;
+
+		GetReductionsResult( ResultBuffer& resbuf) noexcept
+			:reductions(&resbuf.memrsc)
+		{
+			reductions.reserve( (resbuf.buffersize() / sizeof(WeightedReduction)));
+		}
+		GetReductionsResult( const GetReductionsResult&) = delete;
+		GetReductionsResult( GetReductionsResult&& o)
+			:reductions(std::move(o.reductions)){}
+	};
 	struct ResolveResultItem
 	{
 		int type;
@@ -298,7 +322,7 @@ public:
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
-	std::pmr::vector<ReductionResult> getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
+	GetReductionsResult getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions

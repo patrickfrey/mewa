@@ -76,6 +76,9 @@ void pushTypeConstructor(
 void pushReductionResults(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions);
+void pushWeightedReductions(
+		lua_State* ls, const char* functionName, const char* objTableName,
+		const std::pmr::vector<mewa::TypeDatabase::WeightedReduction>& reductions);
 void pushTypePath(
 		lua_State* ls, const char* functionName, const std::pmr::vector<int>& typepath);
 void pushResolveResultItems(

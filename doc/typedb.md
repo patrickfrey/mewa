@@ -50,7 +50,7 @@ The variable typedb holds now the type database created.
 <a name="scope"/>
 
 ### typedb:scope
-Get or/and set the current scope. All methods defining objects dependent on a scope (and as exception the getter get_type) like
+Get or/and set the current scope. All methods defining objects dependent on a scope like
 
  - [typedb:set_instance](#set_instance)
  - [typedb:def_type](#def_type)
@@ -195,7 +195,7 @@ A definition is siletly discarded it is a duplicate but with lower priority than
 <a name="get_type"/>
 
 ### typedb:get_type
-Get a type definition if it exists in the current scope (Does not search a valid definition in enclosing scopes).
+Get a type definition if it exists in the current scope (Does not search a valid definition in enclosing scopes, does not apply any reductions of the context type).
 The scope of the lookup type has been set with the last call of the setter [typedb::scope](#scope). 
 
 #### Parameter
@@ -264,11 +264,11 @@ Get the list of reductions defined for a type from a list of selected classes de
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #      | Name         | Type    | Description                                                                          |
-| :----- | :----------- | :------ | :----------------------------------------------------------------------------------- |
-| 1st    | type         | integer | Start type of the reductions to inspect.                                             |
-| 2nd    | tagmask      | integer | Set (bit-set) of tags (*) that selects the reduction classes to consider.            |
-| Return |              | table   | List of type/constructor pairs as structures with "type","constructor" member names. | 
+| #      | Name         | Type    | Description                                                                           |
+| :----- | :----------- | :------ | :------------------------------------------------------------------------------------ |
+| 1st    | type         | integer | Start type of the reductions to inspect.                                              |
+| 2nd    | tagmask      | integer | Set (bit-set) of tags (*) that selects the reduction classes to consider.             |
+| Return |              | table   | List of type/constructor/weight as tables with named members.                         | 
 
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
@@ -292,7 +292,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 3rd        | tagmask         | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions to use (select all if undefined).                        |
 | 3rd        | tagmask_pathlen | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions contributing to the path length count of a result. (**)  |
 | 4th        | maxpathlen      | integer  | (optional) maximum length count (number of reductions selected by tagmask_pathlen) of a path accepted as a result.        |
-| Return 1st |                 | table    | List of type/constructor pairs as structures with "type","constructor" member names or *nil* if no result path found.     |
+| Return 1st |                 | table    | List of type/constructor pairs as tables with named members or *nil* if no result path found.                             |
 | Return 2nd |                 | number   | Weight sum of best path found                                                                                             |
 | Return 3rd |                 | table    | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*.                       |
 
@@ -315,7 +315,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 2nd        | name            | string            | Name of the type searched                                                                                          |
 | 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No used reductions if not specified.   |
 | Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of an ambiguous result.       | 
-| Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as structures with "type","constructor" member names.      |
+| Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
 | Return 3rd |                 | table             | List of candidates found, differing in the parameters. The final result has to be client matching the parameters.  |
 
 #### Remark (*)
@@ -367,7 +367,7 @@ Get the list of parameters defined for a type.
 | #          | Name | Type     | Description                                                                          |
 | :--------- | :--- | :------- | :----------------------------------------------------------------------------------- |
 | 1st        | type | integer  | Type identifier                                                                      |
-| Return     |      | table    | List of type/constructor pairs as structures with "type","constructor" member names. |
+| Return     |      | table    | List of type/constructor pairs as tables with named members.                         |
 
 
 <a name="type_nof_parameters"/>

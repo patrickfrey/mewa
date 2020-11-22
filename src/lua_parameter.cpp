@@ -364,6 +364,15 @@ static inline void pushTypeConstructorPair( lua_State* ls, int type, int constru
 	}
 }
 
+/// \note Assume STK: [OBJTAB] [REDUTAB]
+static inline void pushTypeConstructorWeightTuple( lua_State* ls, int type, int constructor, float weight)
+{
+	pushTypeConstructorPair( ls, type, constructor);
+	lua_pushliteral( ls, "weight");			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight"
+	lua_pushinteger( ls, weight);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight" [TYPE]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
+}
+
 void mewa::lua::pushTypeConstructor(
 		lua_State* ls, const char* functionName, const char* objTableName, int constructor)
 {
@@ -396,6 +405,24 @@ void mewa::lua::pushReductionResults(
 		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] [REDUTAB]
 	}
 	lua_replace( ls, -2);								// STK: [REDUTAB]
+}
+
+void mewa::lua::pushWeightedReductions(
+		lua_State* ls, const char* functionName, const char* objTableName,
+		const std::pmr::vector<mewa::TypeDatabase::WeightedReduction>& reductions)
+{
+	checkStack( functionName, ls, 6);
+
+	lua_getglobal( ls, objTableName);
+	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);
+	int ridx = 0;
+	for (auto const& reduction : reductions)
+	{
+		++ridx;
+		pushTypeConstructorWeightTuple( ls, reduction.type, reduction.constructor, reduction.weight);	// STK: [OBJTAB] [REDUTAB] [REDU]
+		lua_rawseti( ls, -2, ridx);									// STK: [OBJTAB] [REDUTAB]
+	}
+	lua_replace( ls, -2);											// STK: [REDUTAB]
 }
 
 void mewa::lua::pushTypePath(

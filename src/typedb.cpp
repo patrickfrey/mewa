@@ -436,11 +436,11 @@ TypeDatabase::GetReductionResult TypeDatabase::getReduction( const Scope::Step s
 	return rt;
 }
 
-std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
+TypeDatabase::GetReductionsResult TypeDatabase::getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 
-	std::pmr::vector<ReductionResult> rt( &resbuf.memrsc);
+	GetReductionsResult rt( resbuf);
 
 	int redu_buffer[ 512];
 	mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
@@ -448,7 +448,7 @@ std::pmr::vector<TypeDatabase::ReductionResult> TypeDatabase::getReductions( con
 
 	for (auto const& redu : redulist)
 	{
-		rt.push_back( {redu.right(), redu.value()/*constructor*/});
+		rt.reductions.push_back( {redu.right(), redu.value()/*constructor*/, redu.weight()});
 	}
 	return rt;
 }
