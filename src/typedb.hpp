@@ -284,6 +284,7 @@ public:
 	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
 	/// \param[in] name name of the type
 	/// \param[in] parameter list of parameter types as part of the function signature
+	/// \return the type handle or 0 if not defined
 	int getType( const Scope& scope, int contextType, const std::string_view& name, const TypeList& parameter) const;
 
 	/// \brief Get the scope dependency tree of all types defined

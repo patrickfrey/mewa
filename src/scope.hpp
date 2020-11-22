@@ -341,6 +341,7 @@ public:
 	explicit ScopeHierarchyTreeBuilder( const VALTYPE& nullval_)
 		:m_tree(Node( Scope( 0, std::numeric_limits<Scope::Step>::max()), nullval_))
 		,m_scope2nodeidxMap()
+		,m_nullval(nullval_)
 	{
 		m_scope2nodeidxMap.insert( {Scope( 0, std::numeric_limits<Scope::Step>::max()),1/*root node index*/} );
 	}
@@ -362,7 +363,14 @@ public:
 				ndidx = sni->second;
 				if (m_tree[ ndidx].item().value != *ni)
 				{
-					throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+					if (ndidx == 1 && m_tree[ ndidx].item().value == m_nullval)
+					{
+						m_tree[ ndidx].item().value = *ni;
+					}
+					else
+					{
+						throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+					}
 				}
 				break;
 			}
@@ -387,6 +395,7 @@ public:
 private:
 	Tree<Node> m_tree;
 	std::map<Scope,std::size_t,ScopeCompare> m_scope2nodeidxMap;
+	VALTYPE m_nullval;
 };
 
 
@@ -533,7 +542,14 @@ public:
 
 			ScopeHierarchyTreeNode<ValueList> operator()( const ScopeHierarchyTreeNode<std::size_t>& node) const
 			{
-				return ScopeHierarchyTreeNode<ValueList>( node.scope, ar[ node.value-1]);
+				if (node.value == 0)
+				{	// Root node may not be defined in inverted tree:
+					return ScopeHierarchyTreeNode<ValueList>( node.scope, ValueList());
+				}
+				else
+				{
+					return ScopeHierarchyTreeNode<ValueList>( node.scope, ar[ node.value-1]);
+				}
 			}
 		};
 		TranslateItem translateItem( m_valueAr);

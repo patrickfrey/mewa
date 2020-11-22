@@ -204,7 +204,7 @@ The scope of the lookup type has been set with the last call of the setter [type
 | 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
 | 2nd    | name         | string           | Name of the type defined                                                                                    |
 | 3rd    | parameter    | table            | (optional) Array of type handles (integers) or *nil* if no parameters defined                               |
-| Return |              | integer          | identifier assigned to the type or 0 if not found                                                           |
+| Return |              | integer          | identifier assigned to the type or *nil* if not found                                                           |
 
 
 <a name="reductions"/>

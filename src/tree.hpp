@@ -204,7 +204,7 @@ public:
 	template <class OTH, class TranslateItem>
 	Tree<OTH> translate( TranslateItem& translate) const
 	{
-		Tree<OTH> rt({});
+		Tree<OTH> rt( translate( (*this)[ 1/*root*/].item()));
 
 		std::vector<std::pair<std::size_t,std::size_t> > stack;
 		stack.push_back( {1/*root*/,1/*root*/} );

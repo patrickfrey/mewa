@@ -211,5 +211,46 @@ function M.utf8to32( utf8str)
 	return res
 end
 
+-- Debug function that returns the tree with all resolve type paths
+function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
+	function getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, indentstr, visited)
+		local typeid = typedb:get_type( contextType, typeName, parameters)
+		if typeid then
+			return " " .. typeName .. " MATCH"
+		else
+			local rt = ""; if indentstr ~= "" then rt = rt .. "\n" end
+			table.insert( visited, typeid)
+			local rdlist = typedb:get_reductions( contextType, tagmask)
+			for ri,rd in ipairs(rdlist) do
+				local in_visited = nil; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; break end end
+				if not in_visited then
+					rt = rt .. indentstr .. rd.weight .. ": " .. typedb:type_string( rd.type)
+					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, parameters, tagmask, indentstr .. "  ", visited)
+				end
+			end
+			table.remove( visited, #visited)
+			return rt
+		end
+	end
+	return getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, "", {})
+end
+
+function M.getTypeTreeDump( typedb)
+	function typeTreeToString( node, indentstr)
+		rt = ""
+		local scope = node:scope()
+		rt = rt .. string.format( "%s[%d,%d]:", indentstr, scope[1], scope[2]) .. "\n"
+		for type in node:list() do
+			local constructor = typedb:type_constructor( type)
+			rt = rt .. string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor, false)) .. "\n"
+		end
+		for chld in node:chld() do
+			rt = rt .. typeTreeToString( chld, indentstr .. "  ")
+		end
+		return rt
+	end
+	return typeTreeToString( typedb:type_tree(), "")
+end
+
 return M
 

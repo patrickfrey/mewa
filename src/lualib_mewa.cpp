@@ -529,6 +529,7 @@ static int mewa_typedb_get_type( lua_State* ls)
 		std::pmr::vector<int> parameter;
 		if (nargs >= 4) parameter = mewa::lua::getArgumentAsTypeList( functionName, ls, 4, &memrsc_parameter);
 		int rt = td->impl->getType( td->curScope, contextType, name, parameter);
+		if (!rt) return 0;
 		lua_pushinteger( ls, rt);
 	}
 	catch (...) { lippincottFunction( ls); }

@@ -326,6 +326,8 @@ function initControlTypes()
 end
 
 function initFirstClassCitizens()
+	io.stderr:write( "+++++ INIT FCC\n")
+
 	for typnam, fcc_descr in pairs( llvmir.fcc) do
 		local lval = defineQualifiedTypes( typnam, fcc_descr)
 		fccQualiTypeMap[ typnam] = qualiTypeMap[ lval]
@@ -376,7 +378,8 @@ end
 function applyOperator( node, operator, arg)
 	local bestmatch = {}
 	local bestweight = nil
-	io.stderr:write( "+++++ CALL applyOperator " .. mewa.tostring( {arg, operator, tagmask_resolveType}) .. "\n")
+	io.stderr:write( "+++++ CALL getResolveTypeTree\n" .. utils.getResolveTypeTreeDump( typedb, arg[1].type, operator, nil, tagmask_resolveType) .. "\n")
+	io.stderr:write( "+++++ TREE DUMP\n" .. utils.getTypeTreeDump( typedb) .. "\n")
 
 	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
 	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, operator) end
