@@ -294,20 +294,6 @@ public:
 		std::reverse( result.begin(), result.end());
 	}
 
-	void collectResultWithStart( std::pmr::vector<TypeDatabase::ReductionResult>& result, int index)
-	{
-		while (index >= 0)
-		{
-			const ReduStackElem& ee = m_ar[ index];
-			if (ee.prev != -1 || (ee.type && ee.constructor))
-			{
-				result.push_back( {ee.type, ee.constructor} );
-			}
-			index = ee.prev;
-		}
-		std::reverse( result.begin(), result.end());
-	}
-
 	void collectConflictPath( std::pmr::vector<int>& result, int index)
 	{
 		while (index >= 0)
@@ -593,7 +579,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 				//... we found the first match
 				rt.weightsum = qe.weight;
 				rt.contextType = elem.type;
-				stack.collectResultWithStart( rt.reductions, qe.index);
+				stack.collectResult( rt.reductions, qe.index);
 				collectResultItems( rt.items, typerecidx);
 				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
 				alt_searchstate = true;

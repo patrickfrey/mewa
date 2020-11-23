@@ -287,11 +287,9 @@ static std::string reductionsToString( TypeDatabase& typedb, TypeDatabaseContext
 	{
 		TypeDatabase::ResultBuffer resbuf;
 		auto tn = typedb.typeToString( redu.type, " ", resbuf);
-		if (string_format( " -> %s", tn.c_str()) != ctx.constructors[ redu.constructor-1]
-		&&  string_format( "type %s", tn.c_str()) != ctx.constructors[ redu.constructor-1])
+		if (string_format( " -> %s", tn.c_str()) != ctx.constructors[ redu.constructor-1])
 		{
-			throw std::runtime_error( string_format( "expect 'type %s' or ' -> %s' instead of '%s'",
-									tn.c_str(), tn.c_str(), ctx.constructors[ redu.constructor-1].c_str()));
+			throw std::runtime_error( string_format( "expect ' -> %s' instead of '%s'", tn.c_str(), ctx.constructors[ redu.constructor-1].c_str()));
 		}
 		rt.append( ctx.constructors[ redu.constructor-1]);
 	}
@@ -345,9 +343,11 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 		int ridx = 0;
 		for (auto resultnode : resultnodes)
 		{
-			expc_str.append( ridx == 0 ? "type " : " -> ");
-			expc_str.append( string_format( "%ld", resultnode->item.product));
-			++ridx;
+			if (ridx++ > 0)
+			{
+				expc_str.append( " -> ");
+				expc_str.append( string_format( "%ld", resultnode->item.product));
+			}
 		}
 		expc_str.append( expc_str.empty() ? "{" : " {");
 		expc_str.append( string_format("%ld %s", resultnodes.back()->item.product, procnam.c_str()));
@@ -395,9 +395,6 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 			std::string redu_str;
 			if (deriveres.defined)
 			{
-				TypeDatabase::ResultBuffer resbuf_tostring;
-				redu_str.append( "type ");
-				redu_str.append( typedb.typeToString( ti->second, " ", resbuf_tostring));
 				redu_str.append( deriveResultToString( typedb, ctx, deriveres));
 			}
 			else
@@ -507,7 +504,7 @@ int main( int argc, const char* argv[] )
 	}
 	catch (const std::runtime_error& err)
 	{
-		std::cerr << "ERR runtime " << err.what() << std::endl;
+		std::cerr << "ERR RUNTIME " << err.what() << std::endl;
 		return 1;
 	}
 	catch (const std::bad_alloc&)

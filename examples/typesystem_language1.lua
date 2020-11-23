@@ -258,7 +258,6 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
 	local register = typedb:get_instance( "register")
 	if not contextTypeId then
-		io.stderr:write( "+++++ CALL defineVariable LOCAL " .. mewa.tostring( {node.line,contextTypeId, typeId, name, initVal}) .. "\n")
 		local out = register()
 		local code = utils.constructor_format( descr.def_local, {out = out}, register)
 		local var = typedb:def_type( 0, name, out)
@@ -267,7 +266,6 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		if initval then rt = applyCallable( node, rt, "=", {initval}) end
 		return rt
 	elseif contextTypeId == 0 then
-		io.stderr:write( "+++++ CALL defineVariable GLOBAL " .. mewa.tostring( {node.line,contextTypeId, typeId, name, initVal}) .. "\n")
 		local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
 		if type(initval) == "table" then utils.errorMessage( node.line, "only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
@@ -326,8 +324,6 @@ function initControlTypes()
 end
 
 function initFirstClassCitizens()
-	io.stderr:write( "+++++ INIT FCC\n")
-
 	for typnam, fcc_descr in pairs( llvmir.fcc) do
 		local lval = defineQualifiedTypes( typnam, fcc_descr)
 		fccQualiTypeMap[ typnam] = qualiTypeMap[ lval]
@@ -345,9 +341,9 @@ function initFirstClassCitizens()
 	if fccBooleanType then initControlTypes() end
 end
 
-function selectNoArgumentType( node, typeName, resultContextTypeId, reductions, items)
-	if not resultContextTypeId or type(resultContextTypeId) == "table" then
-		utils.errorResolveType( typedb, node.line, resultContextTypeId, getContextTypes(), typeName)
+function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then
+		utils.errorResolveType( typedb, node.line, resolveContextTypeId, getContextTypes(), typeName)
 	end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == 0 then return item.type end
@@ -383,17 +379,20 @@ function applyCallable( node, this, callable, args)
 	io.stderr:write( "+++++ CALL getResolveTypeTree\n" .. utils.getResolveTypeTreeDump( typedb, this.type, callable, args, tagmask_resolveType) .. "\n")
 
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
-	io.stderr:write( "+++++ GOT " .. mewa.tostring({resolveContextType,reductions,items}))
-	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, this.type, callable) end
+	io.stderr:write( "+++++ GOT " .. mewa.tostring(resolveContextType,false) .. "\n")
+	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 
 	local this_constructor = this.constructor
 	for ri,redu in ipairs(reductions) do
 		if redu.constructor then
+			io.stderr:write( "+++++ CONSTRUCTOR " .. mewa.tostring({typedb:type_string(redu.type),typedb:type_string(this.type),
+			                                                        this_constructor,redu.constructor},false) .. "\n")
 			this_constructor = redu.constructor( this_constructor)
 		end
 	end
 	if not args then args = {} end
 	for ii,item in ipairs(items) do
+		io.stderr:write( "+++++ ITEM " .. mewa.tostring({item}) .. "\n")
 		local weight = 0.0
 		if typedb:type_nof_parameters( item.type) == #args then
 			local param_constructor_ar = {}
