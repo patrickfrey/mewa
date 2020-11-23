@@ -56,15 +56,12 @@ mewa::TagMask getArgumentAsTagMask( const char* functionName, lua_State* ls, int
 
 int getArgumentAsConstructor( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td);
 
-mewa::TypeDatabase::Parameter getArgumentAsParameter( 
-	const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td);
-
 std::pmr::vector<mewa::TypeDatabase::Parameter> getArgumentAsParameterList( 
 	const char* functionName, lua_State* ls, int li, int objtable,
 	mewa_typedb_userdata_t* td, std::pmr::memory_resource* memrsc);
 
 std::pmr::vector<int> getArgumentAsTypeList( 
-	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc);
+	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc, bool allowTypeConstructorPairs);
 
 inline void checkStack( const char* functionName, lua_State* ls, int sz)
 {

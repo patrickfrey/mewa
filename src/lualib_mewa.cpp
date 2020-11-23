@@ -527,7 +527,7 @@ static int mewa_typedb_get_type( lua_State* ls)
 		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
 		std::pmr::vector<int> parameter;
-		if (nargs >= 4) parameter = mewa::lua::getArgumentAsTypeList( functionName, ls, 4, &memrsc_parameter);
+		if (nargs >= 4) parameter = mewa::lua::getArgumentAsTypeList( functionName, ls, 4, &memrsc_parameter, true/*allow t/c pairs*/);
 		int rt = td->impl->getType( td->curScope, contextType, name, parameter);
 		if (!rt) return 0;
 		lua_pushinteger( ls, rt);
@@ -663,7 +663,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 			int buffer_parameter[ 256];
 			mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
 
-			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter);
+			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter, false/*allow t/c pairs*/);
 			auto resolveres = td->impl->resolveType( td->curStep, contextTypes, name, selectTags, resbuf);
 			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
 		}

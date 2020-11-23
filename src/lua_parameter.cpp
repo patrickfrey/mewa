@@ -48,6 +48,10 @@ void mewa::lua::throwArgumentError( const char* functionName, int li, mewa::Erro
 		std::snprintf( idbuf, sizeof(idbuf), "%s [%d] ", functionName, li);
 		throw mewa::Error( ec, idbuf);
 	}
+	else if (functionName)
+	{
+		throw mewa::Error( ec, functionName);
+	}
 	else
 	{
 		throw mewa::Error( ec);
@@ -196,11 +200,11 @@ int mewa::lua::getArgumentAsConstructor( const char* functionName, lua_State* ls
 	return handle;
 }
 
-mewa::TypeDatabase::Parameter mewa::lua::getArgumentAsParameter( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td)
+static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td)
 {
 	if (lua_type( ls, li) == LUA_TNUMBER)
 	{
-		int type = getArgumentAsNonNegativeInteger( functionName, ls, li);
+		int type = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, li);
 		return mewa::TypeDatabase::Parameter( type, 0/*constructor*/);
 	}
 	else
@@ -230,7 +234,7 @@ mewa::TypeDatabase::Parameter mewa::lua::getArgumentAsParameter( const char* fun
 				}
 				else
 				{
-					throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+					mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructureList);
 				}
 			}
 			else if (lua_type( ls, -2) == LUA_TSTRING)
@@ -249,19 +253,19 @@ mewa::TypeDatabase::Parameter mewa::lua::getArgumentAsParameter( const char* fun
 				}
 				else
 				{
-					mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+					mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructureList);
 				}
 			}
 			else
 			{
-				mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+				mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructureList);
 			}
 			lua_pop( ls, 1);						// STK: [OBJTAB] [PARAMTAB] [KEY]
 		}
 		lua_pop( ls, 2);							// STK:
 		if (rowcnt != 2 || type < 0 || constructor <= 0)
 		{
-			mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructure);
+			mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructureList);
 		}
 		return mewa::TypeDatabase::Parameter( type, constructor);
 	}
@@ -284,7 +288,7 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 		if (lua_type( ls, -2) == LUA_TNUMBER)
 		{
 			int kidx = getTableIndex( ls, -2);
-			if (!kidx) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructure);
+			if (!kidx) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructureList);
 
 			std::size_t index = kidx-1;
 			if (index == rt.size())
@@ -297,12 +301,12 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 				{
 					rt.resize( index+1, mewa::TypeDatabase::Parameter( -1, -1));
 				}
-				rt[ index] = mewa::lua::getArgumentAsParameter( functionName, ls, -1, -4, td);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+				rt[ index] = getArgumentAsParameter( functionName, ls, -1, -4, td);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 			}
 		}
 		else
 		{
-			throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
+			throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentParameterStructureList);
 		}
 		lua_pop( ls, 1);											//STK: [OBJTAB] [PARAMTAB] [KEY]
 	}
@@ -312,7 +316,7 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 }
 
 std::pmr::vector<int> mewa::lua::getArgumentAsTypeList( 
-	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc)
+	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc, bool allowTypeConstructorPairs)
 {
 	std::pmr::vector<int> rt( memrsc);
 	if (lua_isnil( ls, li)) return rt;
@@ -325,9 +329,46 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 		if (lua_type( ls, -2) == LUA_TNUMBER)
 		{
 			int kidx = getTableIndex( ls, -2);
-			if (!kidx) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeList);
+			if (!kidx) mewa::lua::throwArgumentError(
+					functionName, li, allowTypeConstructorPairs
+								? mewa::Error::ExpectedArgumentTypeList
+								: mewa::Error::ExpectedArgumentTypeOrParameterStructureList);
 
-			int type = getArgumentAsNonNegativeInteger( functionName, ls, -1);
+			int type = -1;
+			if (lua_type( ls, -1) == LUA_TTABLE)
+			{
+				if (allowTypeConstructorPairs)
+				{
+					lua_rawgeti( ls, -1, 1);						// STK: [KEY] [VAL] [TYPE]
+					if (lua_isnumber( ls, -1)) type = lua_tointeger( ls, -1);
+					lua_pop( ls, 1);							// STK: [KEY] [VAL]
+					if (type <= 0)
+					{
+						lua_pushliteral( ls, "type");					// STK: [KEY] [VAL] "type"
+						lua_rawget( ls, -2);						// STK: [KEY] [VAL] [TYPE]
+						if (lua_isnumber( ls, -1)) type = lua_tointeger( ls, -1);
+						lua_pop( ls, 1);						// STK: [KEY] [VAL]
+					}
+					if (type < 0)
+					{
+						mewa::lua::throwArgumentError(
+								functionName, li, allowTypeConstructorPairs
+											? mewa::Error::ExpectedArgumentTypeList
+											: mewa::Error::ExpectedArgumentTypeOrParameterStructureList);
+					}
+				}
+				else
+				{
+					mewa::lua::throwArgumentError(
+						functionName, li, allowTypeConstructorPairs
+									? mewa::Error::ExpectedArgumentTypeList
+									: mewa::Error::ExpectedArgumentTypeOrParameterStructureList);
+				}
+			}
+			else
+			{
+				type = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, -1);
+			}
 			std::size_t index = kidx-1;
 			if (index == rt.size())
 			{

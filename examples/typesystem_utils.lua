@@ -214,10 +214,13 @@ end
 -- Debug function that returns the tree with all resolve type paths
 function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
 	function getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, indentstr, visited)
+		io.stderr:write( "+++++ CALL getResolveTypeTree_rec " .. mewa.tostring({typedb, contextType, typeName, parameters, tagmask, indentstr, visited}))
 		local typeid = typedb:get_type( contextType, typeName, parameters)
 		if typeid then
+			io.stderr:write( "+++++ STEP IF\n")
 			return " " .. typeName .. " MATCH"
 		else
+			io.stderr:write( "+++++ STEP ELSE\n")
 			local rt = ""; if indentstr ~= "" then rt = rt .. "\n" end
 			table.insert( visited, typeid)
 			local rdlist = typedb:get_reductions( contextType, tagmask)

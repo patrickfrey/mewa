@@ -264,7 +264,7 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 		local rt = {type=var, constructor=code}
-		if initval then rt = applyOperator( node, "=", {rt, initval}) end
+		if initval then rt = applyCallable( node, rt, "=", {initval}) end
 		return rt
 	elseif contextTypeId == 0 then
 		io.stderr:write( "+++++ CALL defineVariable GLOBAL " .. mewa.tostring( {node.line,contextTypeId, typeId, name, initVal}) .. "\n")
@@ -375,48 +375,54 @@ function getReductionConstructor( node, redu_type, operand)
 	return redu_constructor,weight
 end
 
-function applyOperator( node, operator, arg)
+function applyCallable( node, this, callable, args)
 	local bestmatch = {}
 	local bestweight = nil
-	io.stderr:write( "+++++ CALL getResolveTypeTree\n" .. utils.getResolveTypeTreeDump( typedb, arg[1].type, operator, nil, tagmask_resolveType) .. "\n")
 	io.stderr:write( "+++++ TYPE TREE DUMP\n" .. utils.getTypeTreeDump( typedb) .. "\n")
 	io.stderr:write( "+++++ REDU TREE DUMP\n" .. utils.getReductionTreeDump( typedb) .. "\n")
+	io.stderr:write( "+++++ CALL getResolveTypeTree\n" .. utils.getResolveTypeTreeDump( typedb, this.type, callable, args, tagmask_resolveType) .. "\n")
 
-	local resolveContextType,reductions,items = typedb:resolve_type( arg[1].type, operator, tagmask_resolveType)
-	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, arg[1].type, operator) end
+	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
+	io.stderr:write( "+++++ GOT " .. mewa.tostring({resolveContextType,reductions,items}))
+	if not resultContextType or type(resultContextType) == "table" then utils.errorResolveType( typedb, node.line, resultContextType, this.type, callable) end
+
+	local this_constructor = this.constructor
+	for ri,redu in ipairs(reductions) do
+		if redu.constructor then
+			this_constructor = redu.constructor( this_constructor)
+		end
+	end
+	if not args then args = {} end
 	for ii,item in ipairs(items) do
 		local weight = 0.0
-		if typedb:type_nof_parameters( item.type) == #arg-1 then
-			local this_constructor = arg[1].constructor
-			for ri,redu in ipairs(reductions) do
-				if redu.constructor then
-					this_constructor = redu.constructor( this_constructor)
+		if typedb:type_nof_parameters( item.type) == #args then
+			local param_constructor_ar = {}
+			if #args > 0 then
+				local parameters = typedb:type_parameters( item.type)
+				for arg in args do
+					local param_constructor,param_weight = getReductionConstructor( node, parameters[ii-1].type, arg)
+					if not param_constructor then break end
+
+					weight = weight + param_weight
+					table.insert( param_constructor_ar, param_constructor)
 				end
 			end
-			local param_constructor_ar = {}
-			local parameters = typedb:type_parameters( item.type)
-			for ii=2,#arg do
-				local param_constructor,param_weight = getReductionConstructor( node, parameters[ii-1].type, arg[ii])
-				if not param_constructor then break end
-				weight = weight + param_weight
-				table.insert( param_constructor_ar, param_constructor)
-			end
-			if #param_constructor_ar+1 == #arg then
+			if #param_constructor_ar == #args then
 				if not bestweight or weight < bestweight + weightEpsilon then
-					local operator_constructor = item.constructor( this_constructor, param_constructor_ar)
+					local callable_constructor = item.constructor( this_constructor, param_constructor_ar)
 					if bestweight and weight >= bestweight - weightEpsilon then
-						table.insert( bestmatch, {type=item.type, constructor=operator_constructor})
+						table.insert( bestmatch, {type=item.type, constructor=callable_constructor})
 					else
 						bestweight = weight
-						bestmatch = {{type=item.type, constructor=operator_constructor}}
+						bestmatch = {{type=item.type, constructor=callable_constructor}}
 					end
 				end
 			end
 		end
 	end
 	if not bestweight then
-		utils.errorMessage( node.line, "failed to resolve %s",
-	                    utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")")
+		utils.errorMessage( node.line, "failed to find callable with signature %s",
+	                    utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")")
 	end
 	if #bestmatch == 1 then
 		return bestmatch[1]
@@ -428,8 +434,8 @@ function applyOperator( node, operator, arg)
 			end
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
-		utils.errorMessage( node.line, "ambiguous matches resolving %s, list of candidates: %s",
-				utils.resolveTypeString( typedb, getContextTypes(), operator) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")",
+		utils.errorMessage( node.line, "ambiguous matches resolving callable with signature %s, list of candidates: %s",
+				utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")",
 				altmatchstr)
 	end
 end
@@ -462,26 +468,26 @@ function convertToControlBooleanType( node, controlBooleanType, operand)
 		return {type=controlBooleanType, constructor=control_constructor}
 	end
 end
-function negateControlBooleanType( node, operand)
-	if operand.type == fccBooleanType or operand.type == constexprBooleanType then
-		return applyOperator( node, "!", arg)
+function negateControlBooleanType( node, this)
+	if this.type == fccBooleanType or this.type == constexprBooleanType then
+		return applyCallable( node, this, "!")
 	else
-		if operand.type == controlFalseType then
-			return {type=controlTrueType, constructor=operand.constructor}
+		if this.type == controlFalseType then
+			return {type=controlTrueType, constructor=this.constructor}
 		else
-			return {type=controlFalseType, constructor=operand.constructor}
+			return {type=controlFalseType, constructor=this.constructor}
 		end
 	end
 end
-function applyControlBooleanJoin( node, arg, controlBooleanType)
-	local operand1 = convertToControlBooleanType( node, controlBooleanType, arg[1])
-	local operand2 = convertToBooleanType( node, arg[2])
+function applyControlBooleanJoin( node, this, operand, controlBooleanType)
+	local operand1 = convertToControlBooleanType( node, controlBooleanType, this)
+	local operand2 = convertToBooleanType( node, operand)
 	if operand1.operand.type == constexprBooleanType then
 		if operand1.operand.constructor then return operand2 else return {type=constexprBooleanType,constructor=false} end
 	elseif operand2.operand.type == constexprBooleanType then 
 		if operand2.operand.constructor then return operand1 else return {type=constexprBooleanType,constructor=false} end
 	elseif operand1.operand.type == fccBooleanType and operand2.operand.type == fccBooleanType then
-		return applyOperator( node, "&&", arg)
+		return applyCallable( node, this, "&&", {operand})
 	elseif operand1.operand.type == controlFalseType and operand2.operand.type == fccBooleanType then
 		local out = operand1.constructor.out
 		local fmt; if controlBooleanType == controlTrueType then fmt = llvmir.control.booleanToFalseExit else fmt = llvmir.control.booleanToTrueExit end
@@ -562,11 +568,13 @@ end
 
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
-	return applyOperator( node, "=", {arg[1], applyOperator( node, operator, arg)})
+	return applyCallable( node, "=", {arg[1], applyCallable( node, operator, arg)})
 end
 function typesystem.operator( node, operator)
-	local arg = utils.traverse( typedb, node)
-	return applyOperator( node, operator, arg)
+	local args = utils.traverse( typedb, node)
+	local this = args[1]
+	table.remove( args, 1)
+	return applyCallable( node, this, operator, args)
 end
 
 function typesystem.logic_operator_not( node, operator)
@@ -625,7 +633,6 @@ end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
 	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
-	io.stderr:write( "+++++ CALL typesystem.variable " .. mewa.tostring( {node.line,typeId}) .. "\n")
 	return {type=typeId}
 end
 
@@ -663,9 +670,9 @@ function typesystem.rep_operator( node)
 	local icount = arg[2]
 	local expr = arg[1]
 	for ii=1,icount do
-		expr = applyOperator( node, "->", {expr})
+		expr = applyCallable( node, expr, "->")
 	end
-	return applyOperator( node, node.arg[2].value, {expr})
+	return applyCallable( node, expr, node.arg[2].value)
 end
 
 return typesystem

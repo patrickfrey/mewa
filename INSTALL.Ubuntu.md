@@ -32,3 +32,8 @@ Install packages with 'apt-get'/aptitude.
 # Install
         make PREFIX=/usr/local install
 
+# Lua Environment
+For running the examples by hand don't forget to set the environment variables needed by Lua (LUA_CPATH,LUA_PATH) correctly by sourcing the script luaenv.sh in tests:
+	. tests/luaenv.sh
+
+
