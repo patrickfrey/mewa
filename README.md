@@ -18,6 +18,6 @@ The project development is currently ongoing and only what you find in the tests
 * [The Lua Module API](doc/libmewa.md)
 * [The AST (Abstract Syntax Tree) Format](doc/ast.md)
 * [The Mewa Error Codes](doc/errorcodes.md)
-* [Frequently asked and beforehand contemplated questions (FAQ)](doc/faq.md)
+* [Frequently asked questions (FAQ)](doc/faq.md)
 * [Collected Links](doc/links.md)
 
