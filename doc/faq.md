@@ -41,8 +41,7 @@ _Mewa_ was written to be capable to implement general purpose programming langua
 It is not recommended to use _Mewa_ for other than compilable, stronly typed programming languages, because it was not designed for other language classes.
 The system to define a typesystem as graph of types and reductions within the temporal concept of scope makes no sense for other language classes.
 
-#### (*)
-Unfortunately C++ can't be implemented with _Mewa_ as there is no clear separation of syntax and semantic analysis possible in C++.
+**(*)** Unfortunately C++ can't be implemented with _Mewa_ as there is no clear separation of syntax and semantic analysis possible in C++.
 To name only one example: There is no way to decide if "the statement A * B;" is an expression or a type declaration without semantical information about A.
 
 
