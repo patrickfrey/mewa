@@ -37,7 +37,9 @@ M.control = {
 	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
 	booleanToFalseExit = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
 	booleanToTrueExit = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
-	invertedControlType = "br %{out}\n{inp}:\n"
+	invertedControlType = "br %{out}\n{inp}:\n",
+	label = "{inp}:\n",
+	returnStatement = "ret {type} {inp}\n"
 }
 
 local pointerTypeMap = {}

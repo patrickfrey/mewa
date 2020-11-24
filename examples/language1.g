@@ -60,10 +60,10 @@ statementlist		= statement statementlist							(>>statement)
 statement		= functiondefinition								(definition)
 			| typedefinition ";"								(definition)
 			| variabledefinition ";"							(definition)
-			| expression ";"
-			| returnstatement ";"
+			| expression ";"								(free_expression)
+			| "return" expression								(>>return_value)
 			| "if" "(" expression ")" "{" statementlist "}"					({}conditional_if)
-			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	({}conditional_if)
+			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	({}conditional_if_else)
 			| "while" "(" expression ")" "{" statementlist "}"				({}conditional_while)
 			| "{" statementlist "}"								({})
 			;
@@ -71,8 +71,6 @@ variabledefinition	= "var" typespec IDENT								(>>vardef)
 			| "var" typespec IDENT "=" expression						(>>vardef_assign)
 			| "var" typespec IDENT "[" "]" "=" expression					(>>vardef_array_assign)
 			| "var" typespec IDENT "[" "]"							(>>vardef_array)
-			;
-returnstatement	   	= "return" expression								(>>return_value)
 			;
 expression/L1		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")

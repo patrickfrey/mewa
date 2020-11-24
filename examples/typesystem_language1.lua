@@ -442,14 +442,12 @@ function convertToBooleanType( node, operand)
 end
 
 function convertToControlBooleanType( node, controlBooleanType, operand)
-	if operand.type == controlFalseType or operand.type == controlTrueType then
-		if operand.type ~= controlBooleanType then
-			local out = typedb:get_instance( "label")()
-			return {type = controlBooleanType,
-				constructor = operand.constructor .. utils.constructor_format( llvmir.invertedControlType, {inp=constructor.out, out=out}) }
-		else
-			return operand
-		end
+	if operand.type == controlBooleanType then
+		return operand
+	elseif operand.type == controlFalseType or operand.type == controlTrueType then
+		local out = typedb:get_instance( "label")()
+		return {type = controlBooleanType,
+			constructor = operand.constructor .. utils.constructor_format( llvmir.control.invertedControlType, {inp=constructor.out, out=out}) }
 	else
 		local boolOperand = convertToBooleanType( node, operand)
 		if not typedb:get_instance( "label") then return boolOperand end
@@ -554,6 +552,15 @@ function typesystem.vardef_array_assign( node, contextTypeId)
 	local subnode = utils.traverse( typedb, node, contextTypeId)
 	return nil
 end
+function typesystem.typedef( node, contextTypeId)
+	local arg = utils.traverse( typedb, node)
+	if not contextTypeId or contextTypeId == 0 then
+		local type = typedb:def_type( 0, arg[2].value, typedb:type_constructor( arg[1]))
+		typedb:def_reduction( arg[1], type, nil, tag_typeDeclaration)
+	else
+		utils.errorMessage( node.line, "Member variables not implemented yet")
+	end
+end
 
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
@@ -578,25 +585,45 @@ function typesystem.logic_operator_or( node, operator)
 	local arg = utils.traverse( typedb, node)
 	return applyControlBooleanJoin( node, arg, controlFalseType)
 end
-
+function typesystem.free_expression( node)
+	local arg = utils.traverse( typedb, node)
+	if arg[1].type == controlTrueType or arg[1].type == controlFalseType then
+		return {code=arg[1].code .. utils.constructor_format( llvmir.control.label, {inp=arg[1].out})}
+	else
+		return {code=arg[1].code}
+	end
+end
 function typesystem.statement( node)
-	local code = nil
+	local code = ""
 	local arg = utils.traverse( typedb, node)
 	for ai=1,#arg do
-		if type(arg[ai]) == "table" then
-			if code then code = code .. arg[ ai].code else code = arg[ ai].code end
-		end
+		code = code .. arg[ ai].code
 	end
 	return {code=code}
 end
-
-function typesystem.return_value( node) return utils.visit( typedb, node) end
+function typesystem.return_value( node)
+	local arg = utils.traverse( typedb, node)
+	return {code=arg[1].code .. utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[arg[1].type], inp=arg[1].out})}
+end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
-	convertToControlBooleanType( node, controlBooleanType, operand)
+	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
+	return {code = cond.code + arg[2].code + utils.constructor_format( llvmir.control.label, {inp=arg[1].out})}
 end
-function typesystem.conditional_while( node) return utils.visit( typedb, node) end
-function typesystem.typedef( node) return utils.visit( typedb, node) end
+function typesystem.conditional_if_else( node)
+	local arg = utils.traverse( typedb, node)
+	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
+	local exit = typedb:get_instance( "label")()
+	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=exit, out=exit})
+	return {code = cond.code + arg[2].code + elsecode + arg[3].code + utils.constructor_format( llvmir.control.label, {inp=exit})}
+end
+function typesystem.conditional_while( node)
+	local arg = utils.traverse( typedb, node)
+	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
+	local start = typedb:get_instance( "label")()
+	local startcode = utils.constructor_format( llvmir.control.label, {inp=arg[1].out})
+	return {code = startcode + cond.code + arg[2].code + utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=arg[1].out})}
+end
 
 function typesystem.typespec( node, qualifier)
 	local typeName = qualifier .. node.arg[ #node.arg].value;
@@ -614,7 +641,6 @@ function typesystem.typespec( node, qualifier)
 	end
 	return typeId
 end
-
 function typesystem.constant( node, typeName)
 	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
@@ -643,8 +669,7 @@ end
 
 function typesystem.program( node)
 	initFirstClassCitizens()
-	local rt = utils.visit( typedb, node)
-	return rt;
+	utils.traverse( typedb, node)
 end
 
 function typesystem.count( node)

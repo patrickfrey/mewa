@@ -125,8 +125,8 @@ function M.traverse( typedb, node, context)
 	return rt
 end
 
--- [3] Default node visitor doing a traversal and returning the tree structure with the name and scope of the node
-function M.visit( typedb, node)
+-- [3] Node visitor doing a traversal and returning the tree structure with the name and scope of the node
+function M.abstractSyntaxTree( typedb, node)
 	return {name=node.call.name, scope=node.scope, arg=M.traverse( typedb, node)}
 end
 
