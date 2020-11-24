@@ -5,15 +5,20 @@
     * [What audience is targeted by _Mewa_?](#targetAudience)
     * [What classes of languages are covered by _Mewa_?](#coveredLanguageClasses)
 1. [Problem Solving HOWTO](#problemSolving)
-    * [How do we process the AST structure?](#astStructure)
-    * [How do we handle scopes?](#astTraversalAndScope)
-    * [How do we implement complex expressions?](#expressionsTypesAndConstructors)
-    * [How do we implement control structures?](#controlStructures)
-    * [How do we implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
-    * [How do we implement hierarchical data structures?](#dataStructures)
-    * [How do we implement object oriented polymorphism?](#virtualMethodTables)
-    * [How do we implement exception handling?](#exceptions)
-    * [How do we implement generic programming with templates?](#templates)
+    * [How to process the AST structure?](#astStructure)
+    * [How to handle scopes?](#astTraversalAndScope)
+    * [How to store and access scope related data?](#scopeInstanceAndAllocators)
+    * [How to implement type qualifiers like const and reference?](#typeQualifiers)
+    * [How to implement pointers and arrays?](#pointersAndArrays)
+    * [How to implement namespaces?](#namespaces)
+    * [How to implement complex expressions?](#complexExpressions)
+    * [How to implement control structures?](#controlStructures)
+    * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
+    * [How to implement hierarchical data structures?](#hierarchicalDataStructures)
+    * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
+    * [How to implement object oriented polymorphism?](#virtualMethodTables)
+    * [How to implement exception handling?](#exceptions)
+    * [How to implement generic programming with templates?](#templates)
 
 
 <a name="general"/>
@@ -52,38 +57,60 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 
 <a name="astStructure"/>
 
-### How do we process the AST structure?
+### How to process the AST structure?
 
 <a name="astTraversalAndScope"/>
 
-### How do we handle scopes?
+### How to handle scopes?
 
-<a name="expressionsTypesAndConstructors"/>
+<a name="scopeInstanceAndAllocators"/>
 
-### How do we implement complex expressions?
+### How to store and access scope related data?
+
+<a name="typeQualifiers"/>
+
+### How to implement type qualifiers like const and reference?
+
+<a name="pointersAndArrays"/>
+
+### How to implement pointers and arrays?
+
+<a name="namespaces"/>
+
+### How to implement namespaces?
+
+<a name="complexExpressions"/>
+
+### How to implement complex expressions?
 
 <a name="controlStructures"/>
 
-### How do we implement control structures?
+### How to implement control structures?
 
 <a name="functionsProceduresAndMethods"/>
 
-### How do we implement callables like functions, procedures and methods?
+### How to implement callables like functions, procedures and methods?
 
-<a name="dataStructures"/>
+<a name="hierarchicalDataStructures"/>
 
-### How do we implement hierarchical data structures?
+### How to implement hierarchical data structures?
+
+#### Why not with scope for inner data structures?
+
+<a name="withAndUsing"/>
+
+### How to implement the Pascal "WITH", the C++ "using" and friends?
 
 <a name="virtualMethodTables"/>
 
-### How do we implement object oriented polymorphism?
+### How to implement object oriented polymorphism?
 
 <a name="exceptions"/>
 
-### How do we implement exception handling?
+### How to implement exception handling?
 
 <a name="templates"/>
 
-### How do we implement generic programming with templates?
+### How to implement generic programming with templates?
 
 
