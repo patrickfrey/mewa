@@ -88,7 +88,7 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 		local ua = utils.utf8to32( lexemvalue)
 		if #ua == 0 then return 0 end
 		if #ua == 1 then return ua[1] end
-		utils.errorMessage( node.line, "single quoted string '%s' not containing a single unicode character", lexemvalue)
+		utils.errorMessage( node.line, "Single quoted string '%s' not containing a single unicode character", lexemvalue)
 	end
 end
 function defineConstExprBasicArithmetics( constexpr_type)
@@ -267,7 +267,7 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		return rt
 	elseif contextTypeId == 0 then
 		local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
-		if type(initval) == "table" then utils.errorMessage( node.line, "only constexpr allowed to assign in global variable initialization") end
+		if type(initval) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
 		print( utils.constructor_format( fmt, {out = out, inp = initval}))
 		local var = typedb:def_type( contextTypeId, name, out)
@@ -348,20 +348,22 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == 0 then return item.type end
 	end
-	utils.errorMessage( node.line, "failed to resolve %s",
+	utils.errorMessage( node.line, "Failed to resolve %s",
 	                    utils.resolveTypeString( typedb, getContextTypes(), typeName))
 end
 
 function getReductionConstructor( node, redu_type, operand)
+	io.stderr:write( "+++++ CALL getReductionConstructor " .. mewa.tostring({redu_type, operand}) .. "\n")
 	local redu_constructor,weight = operand.constructor,0.0
 	if redu_type ~= operand.type then
 		local redulist,altpath
 		redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
+		io.stderr:write( "+++++ RESULT typedb:derive_type " .. mewa.tostring({redulist,weight,altpath}) .. "\n")
 		-- ... derive type, but allow only one type conversion
 		if not redulist then
 			return nil
 		elseif altpath then
-			utils.errorMessage( line, "Ambiguous derivation paths for type %s: %s or %s",
+			utils.errorMessage( node.line, "Ambiguous derivation paths for type %s: %s or %s",
 			                    typedb:type_string(operand.type), utils.typeListString(typedb,altpath,"=>"), utils.typeListString(typedb,redulist,"=>"))
 		end
 		for ri,redu in ipairs(redulist) do
@@ -398,8 +400,10 @@ function applyCallable( node, this, callable, args)
 			local param_constructor_ar = {}
 			if #args > 0 then
 				local parameters = typedb:type_parameters( item.type)
-				for arg in args do
-					local param_constructor,param_weight = getReductionConstructor( node, parameters[ii-1].type, arg)
+				io.stderr:write( "+++++ PARAMETERS " .. mewa.tostring({typedb:type_nof_parameters( item.type),parameters},false) .. "\n")
+				for ai,arg in ipairs(args) do
+					io.stderr:write( "+++++ ARG " .. mewa.tostring(arg) .. "\n")
+					local param_constructor,param_weight = getReductionConstructor( node, parameters[ai].type, arg)
 					if not param_constructor then break end
 
 					weight = weight + param_weight
@@ -420,7 +424,7 @@ function applyCallable( node, this, callable, args)
 		end
 	end
 	if not bestweight then
-		utils.errorMessage( node.line, "failed to find callable with signature %s",
+		utils.errorMessage( node.line, "Failed to find callable with signature %s",
 	                    utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")")
 	end
 	if #bestmatch == 1 then
@@ -433,7 +437,7 @@ function applyCallable( node, this, callable, args)
 			end
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
-		utils.errorMessage( node.line, "ambiguous matches resolving callable with signature %s, list of candidates: %s",
+		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature %s, list of candidates: %s",
 				utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")",
 				altmatchstr)
 	end

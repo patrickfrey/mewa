@@ -34,10 +34,10 @@ _Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly ty
 <a name="targetAudience"/>
 
 ### What audience is targeted by _Mewa_?
-_Mewa_ is probably not the right tool for people without any clue how copilers work as the assistance for beginners is quite poor.
-There is for example no support given by _Mewa_ if your first grammar contains LALR(1) conflicts. You stand in front of a wall in this case.
-The ideal start to get familiar with _Mewa_ is after you have made some steps with other parser generators and you know how a table driven parser generator works
-and you start to ask yourself questions about how to implement a typesystem. Some background in theoretical computer science, especially some lectures about type theory helps too, as the glossary of _Mewa_ was designed to get people with such a background on board, but it is not necessary.
+_Mewa_ is probably not the right tool for people without any clue how parser generators work as the assistance for beginners is quite poor.
+There is for example no support given by _Mewa_ if your grammar contains conflicts.
+The ideal start to get familiar with _Mewa_ is after you have made some steps with other parser generators and you know how a table driven parser generator works.
+This is when you ask yourself questions about how to implement a typesystem.
 
 <a name="coveredLanguageClasses"/>
 

@@ -435,9 +435,9 @@ void mewa::lua::pushReductionResults(
 		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions)
 {
 	checkStack( functionName, ls, 6);
+	lua_getglobal( ls, objTableName);						// STK: [OBJTAB]
 
-	lua_getglobal( ls, objTableName);
-	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);
+	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [REDUTAB]
 	int ridx = 0;
 	for (auto const& reduction : reductions)
 	{
@@ -453,9 +453,9 @@ void mewa::lua::pushWeightedReductions(
 		const std::pmr::vector<mewa::TypeDatabase::WeightedReduction>& reductions)
 {
 	checkStack( functionName, ls, 6);
+	lua_getglobal( ls, objTableName);						// STK: [OBJTAB]
 
-	lua_getglobal( ls, objTableName);
-	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);
+	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [REDUTAB]
 	int ridx = 0;
 	for (auto const& reduction : reductions)
 	{
@@ -471,15 +471,14 @@ void mewa::lua::pushTypePath(
 {
 	checkStack( functionName, ls, 6);
 
-	lua_createtable( ls, typepath.size()/*narr*/, 0/*nrec*/);
+	lua_createtable( ls, typepath.size()/*narr*/, 0/*nrec*/);		// STK: [TYPETAB] 
 	int tidx = 0;
 	for (int tp : typepath)
 	{
 		++tidx;
-		lua_pushinteger( ls, tp);						// STK: [TYPETAB] [TYPE]
-		lua_rawseti( ls, -2, tidx);						// STK: [TYPETAB]
+		lua_pushinteger( ls, tp);					// STK: [TYPETAB] [TYPE]
+		lua_rawseti( ls, -2, tidx);					// STK: [TYPETAB]
 	}
-	lua_replace( ls, -2);								// STK: [TYPETAB]
 }
 
 void mewa::lua::pushResolveResultItems(
@@ -488,8 +487,8 @@ void mewa::lua::pushResolveResultItems(
 {
 	checkStack( functionName, ls, items.size()+6);
 
-	lua_getglobal( ls, objTableName);
-	lua_createtable( ls, items.size()/*narr*/, 0/*nrec*/);
+	lua_getglobal( ls, objTableName);					// STK: [OBJTAB]
+	lua_createtable( ls, items.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [ITEMTAB]
 	int ridx = 0;
 	for (auto const& item : items)
 	{
@@ -506,14 +505,14 @@ void mewa::lua::pushParameters(
 {
 	checkStack( functionName, ls, 8);
 
-	lua_getglobal( ls, objTableName);
-	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);
+	lua_getglobal( ls, objTableName);						// STK: [OBJTAB]
+	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [PARAMTAB]
 	int ridx = 0;
 	for (auto const& parameter : parameters)
 	{
 		++ridx;
-		pushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [OBJTAB] PARAMTAB] [PARAM]
-		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] PARAMTAB]
+		pushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [OBJTAB] [PARAMTAB] [PARAM]
+		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] [PARAMTAB]
 	}
 	lua_replace( ls, -2);								// STK: [PARAMTAB]
 }
@@ -524,42 +523,42 @@ void mewa::lua::pushReductionDefinition(
 {
 	checkStack( functionName, ls, 6);
 
-	lua_getglobal( ls, objTableName);		// STK: [OBJTAB] 
-	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);	// STK: [OBJTAB] [REDUTAB] 
+	lua_getglobal( ls, objTableName);						// STK: [OBJTAB] 
+	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);					// STK: [OBJTAB] [REDUTAB] 
 
-	lua_pushliteral( ls, "to");			// STK: [OBJTAB] [REDUTAB] "to"
-	lua_pushinteger( ls, redu.toType);		// STK: [OBJTAB] [REDUTAB] "to" [TYPE]
-	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "to");							// STK: [OBJTAB] [REDUTAB] "to"
+	lua_pushinteger( ls, redu.toType);						// STK: [OBJTAB] [REDUTAB] "to" [TYPE]
+	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
 
-	lua_pushliteral( ls, "from");			// STK: [OBJTAB] [REDUTAB] "from"
-	lua_pushinteger( ls, redu.fromType);		// STK: [OBJTAB] [REDUTAB] "from" [TYPE]
-	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "from");							// STK: [OBJTAB] [REDUTAB] "from"
+	lua_pushinteger( ls, redu.fromType);						// STK: [OBJTAB] [REDUTAB] "from" [TYPE]
+	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
 
 	if (redu.constructor > 0)
 	{
-		lua_pushliteral( ls, "constructor");	// STK: [OBJTAB] [REDUTAB] "constructor"
-		lua_rawgeti( ls, -3, redu.constructor);	// STK: [OBJTAB] [REDUTAB] "constructor" [CONSTRUCTOR]
-		lua_rawset( ls, -3);			// STK: [OBJTAB] [REDUTAB]
+		lua_pushliteral( ls, "constructor");					// STK: [OBJTAB] [REDUTAB] "constructor"
+		lua_rawgeti( ls, -3, redu.constructor);					// STK: [OBJTAB] [REDUTAB] "constructor" [CONSTRUCTOR]
+		lua_rawset( ls, -3);							// STK: [OBJTAB] [REDUTAB]
 	}
 
-	lua_pushliteral( ls, "tag");			// STK: [OBJTAB] [REDUTAB] "tag"
-	lua_pushinteger( ls, redu.tag);			// STK: [OBJTAB] [REDUTAB] "tag" [TAG]
-	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "tag");							// STK: [OBJTAB] [REDUTAB] "tag"
+	lua_pushinteger( ls, redu.tag);							// STK: [OBJTAB] [REDUTAB] "tag" [TAG]
+	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
 
-	lua_pushliteral( ls, "weight");			// STK: [OBJTAB] [REDUTAB] "weight"
-	lua_pushnumber( ls, redu.weight);		// STK: [OBJTAB] [REDUTAB] "weight" [WEIGHT]
-	lua_rawset( ls, -3);				// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "weight");							// STK: [OBJTAB] [REDUTAB] "weight"
+	lua_pushnumber( ls, redu.weight);						// STK: [OBJTAB] [REDUTAB] "weight" [WEIGHT]
+	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
 
-	lua_replace( ls, -2);				// STK: [OBJTAB]
+	lua_replace( ls, -2);								// STK: [OBJTAB]
 }
 
 void mewa::lua::pushScope( lua_State* ls, const char* functionName, const mewa::Scope& scope)
 {
-	lua_createtable( ls, 2/*narr*/, 0/*nrec*/);
-	lua_pushinteger( ls, scope.start());
-	lua_rawseti( ls, -2, 1);
-	lua_pushinteger( ls, scope.end());
-	lua_rawseti( ls, -2, 2);
+	lua_createtable( ls, 2/*narr*/, 0/*nrec*/);					// STK: [SCOPETAB]
+	lua_pushinteger( ls, scope.start());						// STK: [SCOPETAB] [START]
+	lua_rawseti( ls, -2, 1);							// STK: [SCOPETAB]
+	lua_pushinteger( ls, scope.end());						// STK: [SCOPETAB] [END]
+	lua_rawseti( ls, -2, 2);							// STK: [SCOPETAB]
 }
 
 int mewa::lua::pushResolveResult(
@@ -571,11 +570,11 @@ int mewa::lua::pushResolveResult(
 		if (resolveres.conflictType >= 0)
 		{
 			// Conflict, push alternatives as array:
-			lua_createtable( ls, 2/*narr*/, 0/*nrec*/);
-			lua_pushinteger( ls, resolveres.contextType);
-			lua_rawseti( ls, -2, 1);
-			lua_pushinteger( ls, resolveres.conflictType);
-			lua_rawseti( ls, -2, 2);
+			lua_createtable( ls, 2/*narr*/, 0/*nrec*/);			// STK: [CONFLICTAR]
+			lua_pushinteger( ls, resolveres.contextType);			// STK: [CONFLICTAR] [1ST CTX]
+			lua_rawseti( ls, -2, 1);					// STK: [CONFLICTAR]
+			lua_pushinteger( ls, resolveres.conflictType);			// STK: [CONFLICTAR] [2ND CTX]
+			lua_rawseti( ls, -2, 2);					// STK: [CONFLICTAR]
 			return 1;
 		}
 		else

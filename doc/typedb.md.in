@@ -255,7 +255,7 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 <a name="derive_type"/>
 
 ### typedb:derive_type
-Finds the minimum cost path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter. Throws an error if the result is ambiguous.
+Finds the path of reductions selected by the _tagmask_ parameter with the minimum cost (sum of reduction weights). Throws an error if the results are ambiguous.
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
@@ -288,7 +288,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 1st        | context-type(s) | integer/table     | Single type or array of types referring to the context of the type (*)                                             |
 | 2nd        | name            | string            | Name of the type searched                                                                                          |
 | 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No used reductions if not specified.   |
-| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of an ambiguous result.       | 
+| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.       | 
 | Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
 | Return 3rd |                 | table             | List of candidates found, differing in the parameters. The list has to be filtered by the caller (***).            |
 
@@ -302,8 +302,8 @@ In fact, how parameters are matched is a core characteristic of the language and
 Implemeting it in the resolve_type method would expand the interface in an unhealthy way. We would end in classifying different ways of matching the parameters for the user.
 
 #### Note
-To inspect the result you first have to look if the 1st return value is *nil* (=> the type could not be resolved).
-Then you have to check if the first return value is an table (=> ambiguous reference). The table contains two conflicting context types.
+To inspect the result you first have to look if the 1st return value is *nil* (meaning that the type could not be resolved).
+Then you have to check if the first return value is a table (meaning that there are ambiguous results). The table contains two of the conflicting context types.
 Otherwise the first return value is the context-type of the resolved type and the 2nd and 3rd return value specify how the resolved type is built.
 
 

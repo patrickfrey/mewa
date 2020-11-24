@@ -143,7 +143,7 @@ function typeString( typedb, typeId)
 end
 
 -- Type list as string
-function typeListString( typedb, typeList, separator)
+function M.typeListString( typedb, typeList, separator)
 	if not typeList or #typeList == 0 then return "" end
 	local rt = typeString( typedb, typeList[ 1])
 	for ii=2,#typeList do
