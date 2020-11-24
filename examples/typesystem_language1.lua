@@ -43,7 +43,7 @@ function callConstructor( fmt)
 		for ii=1,#arg do
 			local arg_code,arg_inp = constructorParts( arg[ ii])
 			code = code .. arg_code
-			subst[ arg .. ii] = arg_inp
+			subst[ "arg" .. ii] = arg_inp
 		end
 		return {code = code .. utils.constructor_format( fmt, subst, register), out = out}
 	end
@@ -78,13 +78,11 @@ local constexprSqStringType = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
 
 function createConstExpr( node, constexpr_type, lexemvalue)
-	if constexpr_type == constexprIntegerType then return bcd:int(lexemvalue) end
-	if constexpr_type == constexprFloatType then return tonumber(lexemvalue) end
-	if constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end end
-	if constexpr_type == constexprDqStringType then
-		return lexemvalue
-	end
-	if constexpr_type == constexprSqStringType then
+	if constexpr_type == constexprIntegerType then return bcd.int(lexemvalue)
+	elseif constexpr_type == constexprFloatType then return tonumber(lexemvalue)
+	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
+	elseif constexpr_type == constexprDqStringType then return lexemvalue
+	elseif constexpr_type == constexprSqStringType then
 		local ua = utils.utf8to32( lexemvalue)
 		if #ua == 0 then return 0 end
 		if #ua == 1 then return ua[1] end
@@ -128,9 +126,9 @@ function defineConstExprOperators()
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion)
 	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion)
 	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd:int( value) end, tag_TypeConversion)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion)
 
-	function bool2bcd( value) if value then return bcd:int("1") else return bcd:int("0") end end
+	function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion)
 
 	local int_arg_typenam = "long"
@@ -352,13 +350,10 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 end
 
 function getReductionConstructor( node, redu_type, operand)
-	io.stderr:write( "+++++ CALL getReductionConstructor " .. mewa.tostring({redu_type, operand},false) .. "\n")
 	local redu_constructor,weight = operand.constructor,0.0
 	if redu_type ~= operand.type then
-		io.stderr:write( "+++++ CALL typedb:derive_type\n")
 		local redulist,altpath
 		redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
-		io.stderr:write( "+++++ RESULT typedb:derive_type " .. mewa.tostring({redulist,weight,altpath},false) .. "\n")
 		-- ... derive type, but allow only one type conversion
 		if not redulist then
 			return nil
@@ -376,33 +371,24 @@ end
 function applyCallable( node, this, callable, args)
 	local bestmatch = {}
 	local bestweight = nil
-	io.stderr:write( "+++++ TYPE TREE DUMP\n" .. utils.getTypeTreeDump( typedb) .. "\n")
-	io.stderr:write( "+++++ REDU TREE DUMP\n" .. utils.getReductionTreeDump( typedb) .. "\n")
-	io.stderr:write( "+++++ CALL getResolveTypeTree\n" .. utils.getResolveTypeTreeDump( typedb, this.type, callable, args, tagmask_resolveType) .. "\n")
 
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
-	io.stderr:write( "+++++ GOT " .. mewa.tostring(resolveContextType,false) .. "\n")
 	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 
 	local this_constructor = this.constructor
 	for ri,redu in ipairs(reductions) do
 		if redu.constructor then
-			io.stderr:write( "+++++ CONSTRUCTOR " .. mewa.tostring({typedb:type_string(redu.type),typedb:type_string(this.type),
-			                                                        this_constructor,redu.constructor},false) .. "\n")
 			this_constructor = redu.constructor( this_constructor)
 		end
 	end
 	if not args then args = {} end
 	for ii,item in ipairs(items) do
-		io.stderr:write( "+++++ ITEM " .. mewa.tostring({item}) .. "\n")
 		local weight = 0.0
 		if typedb:type_nof_parameters( item.type) == #args then
 			local param_constructor_ar = {}
 			if #args > 0 then
 				local parameters = typedb:type_parameters( item.type)
-				io.stderr:write( "+++++ PARAMETERS " .. mewa.tostring({typedb:type_nof_parameters( item.type),parameters},false) .. "\n")
 				for ai,arg in ipairs(args) do
-					io.stderr:write( "+++++ ARG " .. mewa.tostring(arg) .. "\n")
 					local param_constructor,param_weight = getReductionConstructor( node, parameters[ai].type, arg)
 					if not param_constructor then break end
 
@@ -513,7 +499,7 @@ function getSignatureString( name, args, contextTypeId)
 		if contextTypeId ~= 0 then
 			pstr = ptr .. "__C_" .. typedb:type_string( contextTypeId, "__") .. "__"
 		end
-		for aa in args do for pp in aa:gmatch("%S+") do if pstr ~= "" then pstr = pstr .. "_" .. pp else pstr = "__" .. pp end break end end
+		for ai,arg in ipairs(args) do for pp in arg:gmatch("%S+") do if pstr ~= "" then pstr = pstr .. "_" .. pp else pstr = "__" .. pp end break end end
 		return name .. pstr
 	end
 end

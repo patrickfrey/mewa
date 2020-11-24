@@ -14,7 +14,7 @@ BOOLEAN : '((true)|(false))' ;
 
 program		   	= definitionlist								(program)
 			;
-definitionlist/L	= definition definitionlist
+definitionlist		= definition definitionlist
 			| ε
 			;
 definition		= functiondefinition								(definition 0)
@@ -48,13 +48,13 @@ functiondefinition	= linkage "function" typespec IDENT
 			;
 parameterlist		= parameters									(paramdeflist)
 			;
-parameters/L		= paramdecl "," parameters
+parameters		= paramdecl "," parameters
 			| paramdecl
 			| ε
 			;
 paramdecl		= typespec IDENT								(paramdef)
 			;
-statementlist/L		= statement statementlist							(>>statement)
+statementlist		= statement statementlist							(>>statement)
 			| ε
 			;
 statement		= functiondefinition								(definition)
