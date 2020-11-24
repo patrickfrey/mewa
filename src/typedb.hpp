@@ -391,6 +391,7 @@ private:
 	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;
 	void appendTypeToString( std::pmr::string& res, int type, const char* sep) const;
+	std::string debugTypeToString( int type, const char* sep) const;
 	ResolveResult resolveType_( const Scope::Step step, int const* contextTypeAr, std::size_t contextTypeSize,
 				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 

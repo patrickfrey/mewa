@@ -207,7 +207,6 @@ function defineQualifiedTypes( typnam, typeDescription)
 	referenceTypeMap[ rpval] = rpval
 	referenceTypeMap[ c_rpval] = c_rpval
 
-	typedb:def_reduction( lval, rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 	typedb:def_reduction( c_lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 
 	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
@@ -353,18 +352,19 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 end
 
 function getReductionConstructor( node, redu_type, operand)
-	io.stderr:write( "+++++ CALL getReductionConstructor " .. mewa.tostring({redu_type, operand}) .. "\n")
+	io.stderr:write( "+++++ CALL getReductionConstructor " .. mewa.tostring({redu_type, operand},false) .. "\n")
 	local redu_constructor,weight = operand.constructor,0.0
 	if redu_type ~= operand.type then
+		io.stderr:write( "+++++ CALL typedb:derive_type\n")
 		local redulist,altpath
 		redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
-		io.stderr:write( "+++++ RESULT typedb:derive_type " .. mewa.tostring({redulist,weight,altpath}) .. "\n")
+		io.stderr:write( "+++++ RESULT typedb:derive_type " .. mewa.tostring({redulist,weight,altpath},false) .. "\n")
 		-- ... derive type, but allow only one type conversion
 		if not redulist then
 			return nil
 		elseif altpath then
-			utils.errorMessage( node.line, "Ambiguous derivation paths for type %s: %s or %s",
-			                    typedb:type_string(operand.type), utils.typeListString(typedb,altpath,"=>"), utils.typeListString(typedb,redulist,"=>"))
+			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
+			                    typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
 		end
 		for ri,redu in ipairs(redulist) do
 			if redu.constructor then redu_constructor = redu.constructor( redu_constructor) end

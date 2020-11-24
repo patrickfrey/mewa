@@ -146,24 +146,6 @@ static int getLuaStackReductionSize( const std::pmr::vector<State>& stateStack, 
 	return end-start;
 }
 
-#undef MEWA_LOWLEVEL_DEBUG
-#ifdef MEWA_LOWLEVEL_DEBUG
-static int countLuaStackElements( const std::pmr::vector<State>& stateStack)
-{
-	return getLuaStackReductionSize( stateStack, stateStack.size());
-}
-
-static void dumpStateStack( std::ostream& out, const std::pmr::vector<State>& stateStack, const char* title)
-{
-	std::cerr << "Stack " << title << ":" << std::endl;
-	for (auto elem : stateStack)
-	{
-		std::cerr << "\tState " << elem.index << "[" << elem.luastki << " :" << elem.luastkn << "]" << std::endl;
-	}
-}
-#endif
-
-
 static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
 {
 	lua_createtable( ls, 0/*size array*/, 3/*size struct*/);				// STK [TABLE]

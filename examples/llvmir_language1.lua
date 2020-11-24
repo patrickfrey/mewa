@@ -11,8 +11,8 @@ local pointerTemplate = {
 	default = "null",
 	llvmtype = "{pointee}*",
 	class = "pointer",
-	store = "store {pointee} {inp}, {pointee}* {adr}",
-	load = "{out} = load {pointee}, {pointee}* {adr}\n",
+	assign = "store {pointee} {inp}, {pointee}* {this}\n",
+	load = "{out} = load {pointee}, {pointee}* {inp}\n",
 
 	index = {
 		["long"] = "{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {arg2}\n",

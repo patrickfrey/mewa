@@ -54,6 +54,13 @@ std::pmr::string TypeDatabase::typeToString( int type, const char* sep, ResultBu
 	return rt;
 }
 
+std::string TypeDatabase::debugTypeToString( int type, const char* sep) const
+{
+	ResultBuffer resbuf;
+	std::pmr::string res = typeToString( type, sep, resbuf);
+	return std::string( res.c_str(), res.size());
+}
+
 std::string_view TypeDatabase::typeName( int type) const
 {
 	if (type == 0) return std::string_view("",0);
@@ -451,7 +458,7 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType(
 	if (maxPathLengthCount == -1) maxPathLengthCount = std::numeric_limits<int>::max();
 	if (maxPathLengthCount < 0) throw Error( Error::InvalidBoundary, string_format( "%d", maxPathLengthCount));
 
-	int buffer[ 1024];
+	int buffer[ 4096];
 	mewa::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
@@ -469,7 +476,6 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType(
 		// ... weight bigger than best match, according Dijkstra we are done
 
 		auto const& elem = stack[ qe.index];
-
 		if (elem.type == toType)
 		{
 			// ... we found a result

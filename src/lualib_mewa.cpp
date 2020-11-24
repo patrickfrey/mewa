@@ -601,15 +601,6 @@ static int mewa_typedb_get_reductions( lua_State* ls)
 	return 1;
 }
 
-static void printStack( const char* title, lua_State* ls, int nn)
-{
-	std::cerr << "DUMP STK " << title << std::endl;
-	for (int ii=nn; ii>=1; --ii)
-	{
-		std::cerr << "[STK" << (-ii) << "] " << mewa::luaToString( ls, -ii, false/*formatted*/) << std::endl;
-	}
-}
-
 static int mewa_typedb_derive_type( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:derive_type";
@@ -622,15 +613,13 @@ static int mewa_typedb_derive_type( lua_State* ls)
 		int fromType = mewa::lua::getArgumentAsCardinal( functionName, ls, 3);
 		mewa::TagMask selectTags( nargs >= 4 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
 		mewa::TagMask selectTagsPathLen( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchNothing());
-		int maxPathLen = nargs >= 6 ? mewa::lua::getArgumentAsInteger( functionName, ls, 2) : -1;
+		int maxPathLen = nargs >= 6 ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : -1;
 		mewa::TypeDatabase::ResultBuffer resbuf;
 		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsPathLen, maxPathLen, resbuf);
 		if (deriveres.defined)
 		{
 			mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, deriveres.reductions);
-			/*[-]*/printStack( "derive_type result 1", ls, 1);
 			lua_pushnumber( ls, deriveres.weightsum);
-			/*[-]*/printStack( "derive_type result 2", ls, 2);
 			if (deriveres.conflictPath.empty())
 			{
 				return 2;
@@ -638,7 +627,6 @@ static int mewa_typedb_derive_type( lua_State* ls)
 			else
 			{
 				mewa::lua::pushTypePath( ls, functionName, deriveres.conflictPath);
-				/*[-]*/printStack( "derive_type result 3", ls, 3);
 				return 3;
 			}
 		}

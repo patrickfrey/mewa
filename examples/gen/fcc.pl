@@ -21,6 +21,16 @@ my %alignmap = (
 	i1 => 1
 );
 
+my %precisionBitsMap = (
+	double => 53,
+	float => 24,
+	i64 => 64,
+	i32 => 32,
+	i16 => 16,
+	i8 => 8,
+	i1 => 1
+);
+
 my %defaultmap = (
 	double => "0.00000",
 	float => "0.00000",
@@ -94,7 +104,7 @@ sub assign_constructor {
 	}
 	else
 	{
-		return "store $llvmtype {arg1}, $llvmtype* {this}, align $alignmap{$llvmtype}";
+		return "store $llvmtype {arg1}, $llvmtype* {this}, align $alignmap{$llvmtype}\\n";
 	}
 }
 
@@ -196,14 +206,20 @@ foreach my $line (@content)
 			if ($oi++ > 0) {print ",\n";} else {print "\n";}
 			my $cnv = conv_constructor( $llvmtype, $sgn, $op_llvmtype, $op_sgn);
 			my $weight = 0.0;
-			if ($alignmap{$llvmtype} < $alignmap{$op_llvmtype})
+			my $points = 0;
+			if ($precisionBitsMap{$llvmtype} < $precisionBitsMap{$op_llvmtype})
 			{
-				$weight += 0.1;
+				$points += 1;
 			}
-			if (($sgn eq "signed" && $op_sgn eq "unsigned") || ($sgn eq "unsigned" && $op_sgn eq "signed"))
+			if ($precisionBitsMap{$llvmtype} != $precisionBitsMap{$op_llvmtype})
 			{
-				$weight += 0.1;
+				$points += 1;
 			}
+			if ($sgn ne $op_sgn)
+			{
+				$points += 1;
+			}
+			$weight = $points * 1.0 / 8;
 			print "\t\t\t[\"$op_typename\"] = {fmt=\"" . $cnv . "\", weight=$weight}";
 		}
 	}
