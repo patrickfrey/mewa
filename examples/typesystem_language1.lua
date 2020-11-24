@@ -587,15 +587,17 @@ function typesystem.logic_operator_or( node, operator)
 end
 function typesystem.free_expression( node)
 	local arg = utils.traverse( typedb, node)
+	io.stderr:write( "*++++ NODE free_expression " .. mewa.tostring({arg},true) .. "\n")
 	if arg[1].type == controlTrueType or arg[1].type == controlFalseType then
-		return {code=arg[1].code .. utils.constructor_format( llvmir.control.label, {inp=arg[1].out})}
+		return {code=arg[1].constructor.code .. utils.constructor_format( llvmir.control.label, {inp=arg[1].constructor.out})}
 	else
-		return {code=arg[1].code}
+		return {code=arg[1].constructor.code}
 	end
 end
 function typesystem.statement( node)
 	local code = ""
 	local arg = utils.traverse( typedb, node)
+	io.stderr:write( "*++++ NODE statement " .. mewa.tostring({arg},true) .. "\n")
 	for ai=1,#arg do
 		code = code .. arg[ ai].code
 	end
@@ -603,26 +605,30 @@ function typesystem.statement( node)
 end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
-	return {code=arg[1].code .. utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[arg[1].type], inp=arg[1].out})}
+	local type,rcode,rout = arg[1].type, arg[1].constructor.code, arg[1].constructor.out
+	return {code=rcode .. utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[type], inp=rout})}
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
 	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
-	return {code = cond.code + arg[2].code + utils.constructor_format( llvmir.control.label, {inp=arg[1].out})}
+	local ccode,cout = cond.constructor.code, cond.constructor.out
+	return {code = ccode .. arg[2].code .. utils.constructor_format( llvmir.control.label, {inp=cout})}
 end
 function typesystem.conditional_if_else( node)
 	local arg = utils.traverse( typedb, node)
 	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
+	local ccode,cout = cond.constructor.code, cond.constructor.out
 	local exit = typedb:get_instance( "label")()
-	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=exit, out=exit})
-	return {code = cond.code + arg[2].code + elsecode + arg[3].code + utils.constructor_format( llvmir.control.label, {inp=exit})}
+	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=cout, out=exit})
+	return {code = ccode .. arg[2].code .. elsecode .. arg[3].code .. utils.constructor_format( llvmir.control.label, {inp=exit})}
 end
 function typesystem.conditional_while( node)
 	local arg = utils.traverse( typedb, node)
 	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
+	local ccode,cout = cond.constructor.code, cond.constructor.out
 	local start = typedb:get_instance( "label")()
 	local startcode = utils.constructor_format( llvmir.control.label, {inp=arg[1].out})
-	return {code = startcode + cond.code + arg[2].code + utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=arg[1].out})}
+	return {code = startcode .. ccode .. arg[2].code .. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cout})}
 end
 
 function typesystem.typespec( node, qualifier)
