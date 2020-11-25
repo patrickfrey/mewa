@@ -34,7 +34,9 @@ _Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly ty
 <a name="targetAudience"/>
 
 ### What audience is targeted by _Mewa_?
-_Mewa_ is for people with some base knowledge about how parser generators work (*).
+```diff
+- Mewa is for people with some base knowledge about how parser generators work (*).
+```
 It starts where many compiler compiler projects stop. It tries to assist you implementing a typesystem for your compiler project. 
 
 **(*)** There has not yet been much effort done to assist users in case of conflicts in a grammar. The conflicts are detected and reported and the building of the parser fails in consequence, but there is no mechanism implemented for autocorrection and there is no deeper analysis made by the _Mewa_ parser generator program.
