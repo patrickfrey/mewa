@@ -95,8 +95,6 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 
 ### How to implement hierarchical data structures?
 
-#### Why not with scope for inner data structures?
-
 <a name="withAndUsing"/>
 
 ### How to implement the Pascal "WITH", the C++ "using" and friends?

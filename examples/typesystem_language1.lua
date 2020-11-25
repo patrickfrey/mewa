@@ -343,10 +343,14 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, getContextTypes(), typeName)
 	end
 	for ii,item in ipairs(items) do
-		if typedb:type_nof_parameters( item.type) == 0 then return item.type end
+		if typedb:type_nof_parameters( item.type) == 0 then return item.type,item.constructor end
 	end
-	utils.errorMessage( node.line, "Failed to resolve %s",
-	                    utils.resolveTypeString( typedb, getContextTypes(), typeName))
+	utils.errorMessage( node.line, "Failed to resolve %s", utils.resolveTypeString( typedb, getContextTypes(), typeName))
+end
+function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	local rt,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	if constructor then utils.errorMessage( node.line, "No constructor type expected: %s", typeName) end
+	return rt
 end
 
 function getReductionConstructor( node, redu_type, operand)
@@ -526,8 +530,8 @@ function typesystem.definition( node, contextTypeId)
 	return utils.traverse( typedb, node, contextTypeId)
 end
 function typesystem.paramdef( node) 
-	local subnode = utils.traverse( typedb, node)
-	return defineParameter( node, subnode[1], subnode[2], typedb:get_instance( "register"))
+	local arg = utils.traverse( typedb, node)
+	return defineParameter( node, arg[1], arg[2], typedb:get_instance( "register"))
 end
 
 function typesystem.paramdeflist( node)
@@ -535,21 +539,21 @@ function typesystem.paramdeflist( node)
 end
 
 function typesystem.vardef( node, contextTypeId)
-	local subnode = utils.traverse( typedb, node, contextTypeId)
-	return defineVariable( node, contextTypeId, subnode[1], subnode[2], nil)
+	local arg = utils.traverse( typedb, node, contextTypeId)
+	return defineVariable( node, contextTypeId, arg[1], arg[2], nil)
 end
 
 function typesystem.vardef_assign( node, contextTypeId)
-	local subnode = utils.traverse( typedb, node, contextTypeId)
-	return defineVariable( node, contextTypeId, subnode[1], subnode[2], subnode[3])
+	local arg = utils.traverse( typedb, node, contextTypeId)
+	return defineVariable( node, contextTypeId, arg[1], arg[2], arg[3])
 end
 
 function typesystem.vardef_array( node, contextTypeId)
-	local subnode = utils.traverse( typedb, node, contextTypeId)
+	local arg = utils.traverse( typedb, node, contextTypeId)
 	return nil
 end
 function typesystem.vardef_array_assign( node, contextTypeId)
-	local subnode = utils.traverse( typedb, node, contextTypeId)
+	local arg = utils.traverse( typedb, node, contextTypeId)
 	return nil
 end
 function typesystem.typedef( node, contextTypeId)
@@ -587,7 +591,6 @@ function typesystem.logic_operator_or( node, operator)
 end
 function typesystem.free_expression( node)
 	local arg = utils.traverse( typedb, node)
-	io.stderr:write( "*++++ NODE free_expression " .. mewa.tostring({arg},true) .. "\n")
 	if arg[1].type == controlTrueType or arg[1].type == controlFalseType then
 		return {code=arg[1].constructor.code .. utils.constructor_format( llvmir.control.label, {inp=arg[1].constructor.out})}
 	else
@@ -597,7 +600,6 @@ end
 function typesystem.statement( node)
 	local code = ""
 	local arg = utils.traverse( typedb, node)
-	io.stderr:write( "*++++ NODE statement " .. mewa.tostring({arg},true) .. "\n")
 	for ai=1,#arg do
 		code = code .. arg[ ai].code
 	end
@@ -635,26 +637,30 @@ function typesystem.typespec( node, qualifier)
 	local typeName = qualifier .. node.arg[ #node.arg].value;
 	local typeId
 	if #node.arg == 1 then
-		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
+		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
 	else
-		local contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
+		local res = typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace)
+		local contextTypeId = selectNoConstructorNoArgumentType( node, typeName, res)
 		if #node.arg > 2 then
 			for ii = 2, #node.arg-1 do
-				contextTypeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, node.arg[ ii].value, tagmask_typeNameSpace))
+				local res = typedb:resolve_type( contextTypeId, node.arg[ii].value, tagmask_typeNameSpace)
+				contextTypeId = selectNoConstructorNoArgumentType( node, typeName, res)
 			end
 		end
-		typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
+		if not constructor then
+			typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
+		end
 	end
 	return typeId
 end
 function typesystem.constant( node, typeName)
-	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
+	local typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
 end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
-	local typeId = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
-	return {type=typeId}
+	local typeId,constructor = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
+	return {type=typeId, constructor=constructor}
 end
 
 function typesystem.linkage( node, llvm_linkage)
