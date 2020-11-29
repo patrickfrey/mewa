@@ -2,7 +2,7 @@ local utils = require "typesystem_utils"
 
 local M = {}
 
-M.fcc = require "fcc_language1"
+M.fcc = require "language1/fcc"
 
 local pointerTemplate = {
 	def_local = "{out} = alloca {pointee}\n",

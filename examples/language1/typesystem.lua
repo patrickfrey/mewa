@@ -1,5 +1,5 @@
 local mewa = require "mewa"
-local llvmir = require "llvmir_language1"
+local llvmir = require "language1/llvmir"
 local utils = require "typesystem_utils"
 local bcd = require "bcd"
 

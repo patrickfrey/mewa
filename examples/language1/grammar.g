@@ -1,16 +1,16 @@
-% LANGUAGE test ;
-% TYPESYSTEM typesystem_language1 ;
-% CMDLINE cmdlinearg ;
-% COMMENT "/*" "*/" ;
-% COMMENT "//" ;
+% LANGUAGE test;
+% TYPESYSTEM "language1/typesystem";
+% CMDLINE "cmdlinearg";
+% COMMENT "/*" "*/";
+% COMMENT "//";
 
-IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*' ;
-DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1 ;
-SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1 ;
-CARDINAL: '[0123456789]+' ;
-FLOAT	: '[0123456789]+[.][0123456789]+' ;
-FLOAT	: '[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+' ;
-BOOLEAN : '((true)|(false))' ;
+IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
+DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
+SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1;
+CARDINAL: '[0123456789]+';
+FLOAT	: '[0123456789]+[.][0123456789]+';
+FLOAT	: '[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+BOOLEAN : '((true)|(false))';
 
 program		   	= definitionlist								(program)
 			;
