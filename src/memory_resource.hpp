@@ -16,11 +16,6 @@
 #include <cstddef>
 #include <new>
 
-#ifndef NDEBUG
-#define MEWA_LOWLEVEL_DEBUG
-//... using bad_alloc_memory_resource as upstream of monotonic buffer resource
-#endif
-
 namespace mewa {
 
 /// \brief Memory resource that throws bad_alloc on every bad_alloc
@@ -115,7 +110,7 @@ public:
 private:
 	void init_new_upstream()
 	{
-#ifdef MEWA_LOWLEVEL_DEBUG
+#ifdef MEWA_TEST_LOCAL_MEMORY_RESOURCE
 		m_upstream = new mewa::bad_alloc_memory_resource();
 		m_ownership_upstream = true;
 #else
