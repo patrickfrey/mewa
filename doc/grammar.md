@@ -56,9 +56,6 @@ A definition is valid if its **scope step** is inside the scope checked:
 * _step_ **>=** _start_
 * _step_ **<** _end_.
 
-## Example
-1. [Simple Procedural Language 1](../examples/language1/grammar.g)
-* Grammar of a simple procedural programming language with variable declarations and functions/procedures.
 
 
 
