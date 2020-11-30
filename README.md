@@ -12,7 +12,7 @@ The project development is currently ongoing and only what you find in the tests
 
 # Documentation
 * [Glossary](doc/glossary.md)
-* [Example Compiler Implementation](doc/example_compiler.md)
+* [Example Compiler Frontend Implementation](doc/example_compiler.md)
 * [The Grammar Description Language](doc/grammar.md)
 * [The Parser Generator Program](doc/program_mewa.pdf)
 * [The Lua Module API](doc/libmewa.md)

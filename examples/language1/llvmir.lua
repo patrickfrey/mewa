@@ -39,7 +39,11 @@ M.control = {
 	booleanToTrueExit = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
 	invertedControlType = "br %{out}\n{inp}:\n",
 	label = "{inp}:\n",
-	returnStatement = "ret {type} {inp}\n"
+	returnStatement = "ret {type} {inp}\n",
+	functionDeclaration = "define {lnk} void @{name}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
+	procedureDeclaration = "define {lnk} void @{name}( {paramstr} ) {attr} {\n{body}}\n",
+	functionCall = "{out} = call {rtype} @{name)()\n",
+	procedureCall = "call void @{name}()\n"
 }
 
 local pointerTypeMap = {}

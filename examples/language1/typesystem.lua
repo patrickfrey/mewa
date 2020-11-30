@@ -32,6 +32,16 @@ function convConstructor( fmt)
 		return {code = code .. utils.constructor_format( fmt, {inp = inp, out = out}, register), out = out}
 	end
 end
+function assignConstructor( fmt)
+	return function( this, arg)
+		local code = ""
+		local this_code,this_inp = constructorParts( this)
+		local arg_code,arg_inp = constructorParts( arg[1])
+		local subst = {arg1 = arg_inp, this = this_inp}
+		code = code .. this_code .. arg_code
+		return {code = code .. utils.constructor_format( fmt, subst), out = this_inp}
+	end
+end
 function callConstructor( fmt)
 	return function( this, arg)
 		local register = typedb:get_instance( "register")
@@ -218,8 +228,8 @@ function defineQualifiedTypes( typnam, typeDescription)
 	defineCall( rval, pval, "->", {}, nil)
 	defineCall( c_rval, c_pval, "->", {}, nil)
 
-	defineCall( rval, rval, "=", {c_lval}, callConstructor( typeDescription.assign))
-	defineCall( rpval, rpval, "=", {c_pval}, callConstructor( pointerTypeDescription.assign))
+	defineCall( rval, rval, "=", {c_lval}, assignConstructor( typeDescription.assign))
+	defineCall( rpval, rpval, "=", {c_pval}, assignConstructor( pointerTypeDescription.assign))
 
 	defineOperators( lval, c_lval, typeDescription)
 	defineOperators( pval, c_pval, pointerTypeDescription)
@@ -259,9 +269,8 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		local code = utils.constructor_format( descr.def_local, {out = out}, register)
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
-		local rt = {type=var, constructor=code}
+		local rt = {type=var, constructor={code=code,out=out}}
 		if initval then rt = applyCallable( node, rt, "=", {initval}) end
-		return rt
 	elseif contextTypeId == 0 then
 		local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
 		if type(initval) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
@@ -269,7 +278,6 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		print( utils.constructor_format( fmt, {out = out, inp = initval}))
 		local var = typedb:def_type( contextTypeId, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
-		return {type=var}
 	else
 		utils.errorMessage( node.line, "Member variables not implemented yet")
 	end
@@ -280,7 +288,7 @@ function defineParameter( node, type, name, register)
 	local paramreg = register()
 	local var = typedb:def_type( 0, name, paramreg)
 	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
-	return descr.llvmtype .. " " .. paramreg
+	return {type=type, llvmtype=descr.llvmtype, reg=paramreg}
 end
 
 function defineType( node, typeName, typeDescription)
@@ -489,10 +497,6 @@ function applyControlBooleanJoin( node, this, operand, controlBooleanType)
 	end
 end
 
-function getInstructionList( node, arg)
-	return ""
-end
-
 function getSignatureString( name, args, contextTypeId)
 	if not contextTypeId then
 		return utils.uniqueName( name .. "__")
@@ -501,33 +505,45 @@ function getSignatureString( name, args, contextTypeId)
 		if contextTypeId ~= 0 then
 			pstr = ptr .. "__C_" .. typedb:type_string( contextTypeId, "__") .. "__"
 		end
-		for ai,arg in ipairs(args) do for pp in arg:gmatch("%S+") do if pstr ~= "" then pstr = pstr .. "_" .. pp else pstr = "__" .. pp end break end end
-		return name .. pstr
+		for ai,arg in ipairs(args) do if pstr == "" then pstr = pstr .. "__" .. arg.llvmtype else pstr = "_" .. arg.llvmtype end end
+		return utils.encodeName( name .. pstr)
 	end
 end
-
-function defineFunction( node, arg, contextTypeId)
-	local linkage = node.arg[1].linkage
-	local attributes = node.arg[1].attributes
-	local returnTypeName = typeDescriptionMap[ arg[2]].llvmtype
-	local functionName = getSignatureString( arg[3], arg[4], contextTypeId)
-	local args = table.concat( arg[4], ", ")
-	local body = getInstructionList( node.arg[5])
-	print( utils.code_format_varg( "\ndefine {1} {2} @{3}( {4} ) {5} {\n{6}}", linkage, returnTypeName, functionName, args, attributes, body))
+function getParameterString( args)
+	local rt = ""
+	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype .. " " .. arg.reg else rt = rt .. ", " .. arg.llvmtype .. " " .. arg.reg end end
+	return rt
 end
-
+function instantiateCallableScope( node)
+	typedb:set_instance( "register", utils.register_allocator())
+	typedb:set_instance( "label", utils.label_allocator())
+end
+function defineFunction( node, arg, contextTypeId)
+	local subst = {
+		lnk = arg[1].linkage,
+		attr = arg[1].attributes,
+		ret = typeDescriptionMap[ arg[2]].llvmtype,
+		name = getSignatureString( arg[3], arg[4], contextTypeId),
+		paramstr = getParameterString( arg[4]),
+		body = node.arg[5].code
+	}
+	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, subst))
+end
 function defineProcedure( node, arg, contextTypeId)
-	local linkage = node.arg[1].linkage
-	local attributes = node.arg[1].attributes
-	local functionName = getSignatureString( arg[2], arg[3], contextTypeId)
-	local argstr = table.concat( arg[3], ", ")
-	local body = getInstructionList( node.arg[4])
-	print( utils.code_format_varg( "\ndefine {1} void @{2}( {3} ) {4} {\n{5}}", linkage, functionName, argstr, attributes, body))
+	local subst = {
+		lnk = arg[1].linkage,
+		attr = arg[1].attributes,
+		name = getSignatureString( arg[2], arg[3], contextTypeId),
+		paramstr = getParameterString( arg[3]),
+		body = arg[4].code,
+	}
+	print( "\n" .. utils.constructor_format( llvmir.control.procedureDeclaration, subst))
 end
 
 -- AST Callbacks:
 function typesystem.definition( node, contextTypeId)
-	return utils.traverse( typedb, node, contextTypeId)
+	local arg = utils.traverse( typedb, node, contextTypeId)
+	return {code=""}
 end
 function typesystem.paramdef( node) 
 	local arg = utils.traverse( typedb, node)
@@ -540,21 +556,19 @@ end
 
 function typesystem.vardef( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	return defineVariable( node, contextTypeId, arg[1], arg[2], nil)
+	defineVariable( node, contextTypeId, arg[1], arg[2], nil)
 end
 
 function typesystem.vardef_assign( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	return defineVariable( node, contextTypeId, arg[1], arg[2], arg[3])
+	defineVariable( node, contextTypeId, arg[1], arg[2], arg[3])
 end
 
 function typesystem.vardef_array( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	return nil
 end
 function typesystem.vardef_array_assign( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	return nil
 end
 function typesystem.typedef( node, contextTypeId)
 	local arg = utils.traverse( typedb, node)
@@ -601,7 +615,9 @@ function typesystem.statement( node)
 	local code = ""
 	local arg = utils.traverse( typedb, node)
 	for ai=1,#arg do
-		code = code .. arg[ ai].code
+		if arg[ ai] then
+			code = code .. arg[ ai].code
+		end
 	end
 	return {code=code}
 end
@@ -667,16 +683,12 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, contextTypeId)
-	typedb:set_instance( "register", utils.register_allocator())
-	typedb:set_instance( "label", utils.label_allocator())
+	instantiateCallableScope( node)
 	defineFunction( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
-	return rt
 end
 function typesystem.procdef( node, contextTypeId) 
-	typedb:set_instance( "register", utils.register_allocator())
-	typedb:set_instance( "label", utils.label_allocator())
+	instantiateCallableScope( node)
 	defineProcedure( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
-	return rt
 end
 
 function typesystem.program( node)

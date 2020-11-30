@@ -3,6 +3,11 @@
 -- Module object with all functions exported
 local M = {}
 
+-- Encode a name
+function M.encodeName( name)
+	return name:gsub("([*])", "$")
+end
+
 -- Create a unique name
 local uniqueNameIdxMap = {}
 function M.uniqueName( prefix)
@@ -23,12 +28,13 @@ function M.constructor_format( fmt, argtable, allocator)
 				valtable[ index] = rr
 				return rr
 			else
-				M.errorMessage( 0, "Can't build constructor for %s, having unbound variables and no allocator defined", fmt)
+				M.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined", fmt, index)
 			end
 		elseif argtable[ match] then
 			return argtable[ match]
 		else
-			M.errorMessage( 0, "Can't build constructor for %s, having unbound variables", fmt)
+			io.stderr:write( "++++ DEBUG " .. mewa.tostring(argtable,false) .. "\n")
+			M.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s'", fmt, match)
 		end
 	end
 	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
@@ -82,7 +88,7 @@ function M.label_allocator()
 end
 
 function M.register_allocator()
-	return M.name_allocator( "%R")
+	return M.name_allocator( "%r")
 end
 
 -- Tree traversal:
