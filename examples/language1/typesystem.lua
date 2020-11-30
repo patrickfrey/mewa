@@ -514,28 +514,31 @@ function getParameterString( args)
 	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype .. " " .. arg.reg else rt = rt .. ", " .. arg.llvmtype .. " " .. arg.reg end end
 	return rt
 end
-function instantiateCallableScope( node)
-	typedb:set_instance( "register", utils.register_allocator())
-	typedb:set_instance( "label", utils.label_allocator())
+function getParameterTypeList( args)
+	rt = {}
+	for ai,arg in ipairs(args) do table.insert(rt,arg.type) end
+	return rt
 end
 function defineFunction( node, arg, contextTypeId)
 	local subst = {
 		lnk = arg[1].linkage,
 		attr = arg[1].attributes,
 		ret = typeDescriptionMap[ arg[2]].llvmtype,
-		name = getSignatureString( arg[3], arg[4], contextTypeId),
-		paramstr = getParameterString( arg[4]),
-		body = node.arg[5].code
+		name = getSignatureString( arg[3], arg[4].param, contextTypeId),
+		paramstr = getParameterString( arg[4].param),
+		body = arg[4].code
 	}
+	local functype = typedb:def_type( contextTypeId, arg[3], callConstructor( llvmir.control.functionCall), getParameterTypeList(arg))
+	typedb:def_reduction( arg[2], functype, !!!!! HIE WIITER
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, subst))
 end
 function defineProcedure( node, arg, contextTypeId)
 	local subst = {
 		lnk = arg[1].linkage,
 		attr = arg[1].attributes,
-		name = getSignatureString( arg[2], arg[3], contextTypeId),
-		paramstr = getParameterString( arg[3]),
-		body = arg[4].code,
+		name = getSignatureString( arg[2], arg[3].param, contextTypeId),
+		paramstr = getParameterString( arg[3].param),
+		body = arg[3].code,
 	}
 	print( "\n" .. utils.constructor_format( llvmir.control.procedureDeclaration, subst))
 end
@@ -683,14 +686,17 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, contextTypeId)
-	instantiateCallableScope( node)
 	defineFunction( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
 end
 function typesystem.procdef( node, contextTypeId) 
-	instantiateCallableScope( node)
 	defineProcedure( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
 end
-
+function typesystem.funcbody( node, contextTypeId) 
+	typedb:set_instance( "register", utils.register_allocator())
+	typedb:set_instance( "label", utils.label_allocator())
+	local args = utils.traverse( typedb, node, contextTypeId)
+	return {param = arg[1], code = node.arg[2].code}
+end	
 function typesystem.program( node)
 	initFirstClassCitizens()
 	utils.traverse( typedb, node)

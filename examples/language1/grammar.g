@@ -39,12 +39,10 @@ linkage			= "static"									(linkage {linkage="internal", attributes="#0 nounwi
 			| "extern"									(linkage {linkage="external", attributes="#0 noinline nounwind"})
 			|										(linkage {linkage="internal", attributes="#0 nounwind"})
 			;
-functiondefinition	= linkage "function" typespec IDENT
-				"(" parameterlist ")"
-				"{" statementlist "}"							({}funcdef)
-			| linkage "procedure" IDENT
-				"(" parameterlist ")"
-				"{" statementlist "}"							({}procdef)
+functiondefinition	= linkage "function" typespec IDENT functionbody				(funcdef)
+			| linkage "procedure" IDENT functionbody					(procdef)
+			;
+functionbody		= "(" parameterlist ")" "{" statementlist "}"					({}funcbody)
 			;
 parameterlist		= parameters									(paramdeflist)
 			;
