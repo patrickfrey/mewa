@@ -33,25 +33,10 @@ function M.constructor_format( fmt, argtable, allocator)
 		elseif argtable[ match] then
 			return argtable[ match]
 		else
-			io.stderr:write( "++++ DEBUG " .. mewa.tostring(argtable,false) .. "\n")
 			M.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s'", fmt, match)
 		end
 	end
 	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
-end
-
--- Template for LLVM Code synthesis with the arguments passed as vararg parameters
-function M.code_format_varg( fmt, ... )
-	local arg = {...}
-	local subst = function( match)
-		local index = tonumber( match)
-		if arg[ index] then
-			return arg[ index]
-		else
-			return ""
-		end
-	end
-	return fmt:gsub("[{]([%d]*)[}]", subst)
 end
 
 -- Map a LLVM Code synthesis template to a template substituting only the defined arguments and leaving the rest of the substitutions occurring untouched

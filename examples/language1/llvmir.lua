@@ -40,10 +40,9 @@ M.control = {
 	invertedControlType = "br %{out}\n{inp}:\n",
 	label = "{inp}:\n",
 	returnStatement = "ret {type} {inp}\n",
-	functionDeclaration = "define {lnk} void @{name}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
-	procedureDeclaration = "define {lnk} void @{name}( {paramstr} ) {attr} {\n{body}}\n",
-	functionCall = "{out} = call {rtype} @{name)()\n",
-	procedureCall = "call void @{name}()\n"
+	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
+	functionCall = "{out} = call {rtype} @{symbolname)( {callargstr})\n",
+	procedureCall = "call void @{symbolname)( {callargstr})\n"
 }
 
 local pointerTypeMap = {}

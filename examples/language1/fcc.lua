@@ -13,7 +13,7 @@ return {
 		maxvalue = "1.8e+308",
 		assign = "store double {arg1}, double* {this}, align 8\n",
 		load = "{out} = load double, double* {inp}, align 8\n",
-		advance = {"ulong", "long"},
+		promote = {},
 		conv = {
 			["float"] = {fmt="{out} = fpext float {inp} to double\n", weight=0.125},
 			["ulong"] = {fmt="{out} = uitofp i64 {inp} to double\n", weight=0.375},
@@ -50,7 +50,7 @@ return {
 		maxvalue = "3.402823e+38",
 		assign = "store float {arg1}, float* {this}, align 4\n",
 		load = "{out} = load float, float* {inp}, align 4\n",
-		advance = {"double", "ulong", "long", "uint", "int"},
+		promote = {"double", "ulong", "long"},
 		conv = {
 			["double"] = {fmt="{out} = fptrunc double {inp} to float\n", weight=0.25},
 			["ulong"] = {fmt="{out} = uitofp i64 {inp} to float\n", weight=0.375},
@@ -87,7 +87,7 @@ return {
 		maxvalue = "18446744073709551616",
 		assign = "store i64 {arg1}, i64* {this}, align 8\n",
 		load = "{out} = load i64, i64* {inp}, align 8\n",
-		advance = {"double", "long"},
+		promote = {"long"},
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i64\n", weight=0.25},
 			["float"] = {fmt="{out} = fptoui float {inp} to i64\n", weight=0.25},
@@ -129,7 +129,7 @@ return {
 		maxvalue = "9223372036854775808",
 		assign = "store i64 {arg1}, i64* {this}, align 8\n",
 		load = "{out} = load i64, i64* {inp}, align 8\n",
-		advance = {"double", "ulong"},
+		promote = {},
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i64\n", weight=0.25},
 			["float"] = {fmt="{out} = fptosi float {inp} to i64\n", weight=0.25},
@@ -168,7 +168,7 @@ return {
 		maxvalue = "4294967296",
 		assign = "store i32 {arg1}, i32* {this}, align 4\n",
 		load = "{out} = load i32, i32* {inp}, align 4\n",
-		advance = {"double", "float", "long", "int"},
+		promote = {"double", "ulong", "long", "int"},
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i32\n", weight=0.375},
 			["float"] = {fmt="{out} = fptoui float {inp} to i32\n", weight=0.25},
@@ -210,7 +210,7 @@ return {
 		maxvalue = "2147483648",
 		assign = "store i32 {arg1}, i32* {this}, align 4\n",
 		load = "{out} = load i32, i32* {inp}, align 4\n",
-		advance = {"double", "float", "ulong", "uint"},
+		promote = {"double", "ulong", "long"},
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i32\n", weight=0.375},
 			["float"] = {fmt="{out} = fptosi float {inp} to i32\n", weight=0.25},
@@ -249,7 +249,7 @@ return {
 		maxvalue = "65536",
 		assign = "store i16 {arg1}, i16* {this}, align 2\n",
 		load = "{out} = load i16, i16* {inp}, align 2\n",
-		advance = {"double", "float", "long", "int", "short"},
+		promote = {"double", "float", "ulong", "long", "uint", "int", "short"},
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i16\n", weight=0.375},
 			["float"] = {fmt="{out} = fptoui float {inp} to i16\n", weight=0.375},
@@ -291,7 +291,7 @@ return {
 		maxvalue = "32768",
 		assign = "store i16 {arg1}, i16* {this}, align 2\n",
 		load = "{out} = load i16, i16* {inp}, align 2\n",
-		advance = {"double", "float", "ulong", "uint", "ushort"},
+		promote = {"double", "float", "ulong", "long", "uint", "int"},
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i16\n", weight=0.375},
 			["float"] = {fmt="{out} = fptosi float {inp} to i16\n", weight=0.375},
@@ -330,7 +330,7 @@ return {
 		maxvalue = "256",
 		assign = "store i8 {arg1}, i8* {this}, align 1\n",
 		load = "{out} = load i8, i8* {inp}, align 1\n",
-		advance = {"double", "float", "long", "int", "short", "bool"},
+		promote = {"double", "float", "ulong", "long", "uint", "int", "ushort", "short"},
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i8\n", weight=0.375},
 			["float"] = {fmt="{out} = fptoui float {inp} to i8\n", weight=0.375},
@@ -372,7 +372,7 @@ return {
 		maxvalue = "1",
 		assign = "{1} = zext i1 {arg1} to i8\nstore i8 {1}, i8* {this}, align 1\n",
 		load = "{1} = load i8, i8* {inp}, align 1\n{out} = trunc i8 {1} to i1\n",
-		advance = {},
+		promote = {"double", "float", "ulong", "long", "uint", "int", "ushort", "short"},
 		conv = {
 			["double"] = {fmt="{out} = fcmp une double {inp}, 0.000000e+00\n", weight=0.375},
 			["float"] = {fmt="{out} = fcmp une float {inp}, 0.000000e+00\n", weight=0.375},

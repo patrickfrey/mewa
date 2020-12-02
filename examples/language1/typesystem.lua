@@ -519,28 +519,28 @@ function getParameterTypeList( args)
 	for ai,arg in ipairs(args) do table.insert(rt,arg.type) end
 	return rt
 end
-function defineFunction( node, arg, contextTypeId)
-	local subst = {
-		lnk = arg[1].linkage,
-		attr = arg[1].attributes,
-		ret = typeDescriptionMap[ arg[2]].llvmtype,
-		name = getSignatureString( arg[3], arg[4].param, contextTypeId),
-		paramstr = getParameterString( arg[4].param),
-		body = arg[4].code
-	}
-	local functype = typedb:def_type( contextTypeId, arg[3], callConstructor( llvmir.control.functionCall), getParameterTypeList(arg))
-	typedb:def_reduction( arg[2], functype, !!!!! HIE WIITER
-	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, subst))
+function getParameterListCallTemplate( param)
+	if #param == 0 then return "" end
+	local rt = param[1].llvmtype .. " {arg" .. 1 .. "}"
+	for i=2,#param do rt = rt .. ", " .. param[1].llvmtype .. " {arg" .. 1 .. "}" end
+	return rt
 end
-function defineProcedure( node, arg, contextTypeId)
-	local subst = {
-		lnk = arg[1].linkage,
-		attr = arg[1].attributes,
-		name = getSignatureString( arg[2], arg[3].param, contextTypeId),
-		paramstr = getParameterString( arg[3].param),
-		body = arg[3].code,
-	}
-	print( "\n" .. utils.constructor_format( llvmir.control.procedureDeclaration, subst))
+
+function defineCallable( node, descr, contextTypeId)
+	descr.paramstr = getParameterString( descr.param)
+	descr.symbolname = getSignatureString( descr.name, descr.param, contextTypeId)
+	descr.callargstr = getParameterListCallTemplate( descr.param)
+	if descr.ret then
+		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
+		local callfmt = utils.template_format( llvmir.control.functionCall, descr)
+		local functype = typedb:def_type( contextTypeId, descr.name, callConstructor( callfmt), getParameterTypeList(descr.param))
+		typedb:def_reduction( descr.ret, functype, nil, tag_typeDeclaration)
+	else
+		descr.rtype = "void"
+		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
+		typedb:def_type( contextTypeId, descr.name, callConstructor( callfmt), getParameterTypeList(descr.param))
+	end
+	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
 end
 
 -- AST Callbacks:
@@ -686,17 +686,21 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, contextTypeId)
-	defineFunction( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
+	local arg = utils.traverse( typedb, node, contextTypeId)
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3], param = arg[4].param, body = arg[4].code}
+	defineCallable( node, descr, contextTypeId)
 end
-function typesystem.procdef( node, contextTypeId) 
-	defineProcedure( node, utils.traverse( typedb, node, contextTypeId), contextTypeId)
+function typesystem.procdef( node, contextTypeId)
+	local arg = utils.traverse( typedb, node, contextTypeId)
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], param = arg[3].param, body = arg[3].code}
+	defineCallable( node, descr, contextTypeId)
 end
-function typesystem.funcbody( node, contextTypeId) 
+function typesystem.callablebody( node, contextTypeId) 
 	typedb:set_instance( "register", utils.register_allocator())
 	typedb:set_instance( "label", utils.label_allocator())
-	local args = utils.traverse( typedb, node, contextTypeId)
-	return {param = arg[1], code = node.arg[2].code}
-end	
+	local arg = utils.traverse( typedb, node, contextTypeId)
+	return {param = arg[1], code = arg[2].code}
+end
 function typesystem.program( node)
 	initFirstClassCitizens()
 	utils.traverse( typedb, node)

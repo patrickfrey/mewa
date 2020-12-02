@@ -181,16 +181,35 @@ foreach my $line (@content)
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
-	print "\t\tadvance = {";
-	if ($sgn eq "fp" || $sgn eq "signed" || $sgn eq "unsigned")
+	print "\t\tpromote = {";
+	my $oi = 0;
+	foreach my $operand (@content)
 	{
-		my $oi = 0;
-		foreach my $operand (@content)
+		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
+		if ($typename ne $op_typename)
 		{
-			my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
-			if ($typename ne $op_typename && $alignmap{$op_llvmtype} >= $alignmap{$llvmtype})
+			if ($alignmap{$op_llvmtype} >= $alignmap{$llvmtype})
 			{
-				if (($sgn ne "signed" && $sgn ne "unsigned") || $sgn ne $op_sgn)
+				my $do_promote = undef;
+				if ($alignmap{$op_llvmtype} == $alignmap{$llvmtype})
+				{
+					if ($sgn eq "unsigned" && $op_sgn eq "signed")
+					{
+						$do_promote = 1;
+					}
+				}
+				elsif ($precisionBitsMap{$op_llvmtype} < $precisionBitsMap{$llvmtype})
+				{
+					if ($op_llvmtype eq "double")
+					{
+						$do_promote = 1;
+					}
+				}
+				else
+				{
+					$do_promote = 1;
+				}
+				if ($do_promote)
 				{
 					if ($oi++ > 0) {print ", ";}
 					print "\"$op_typename\"";
@@ -200,7 +219,7 @@ foreach my $line (@content)
 	}
 	print "},\n";
 	print "\t\tconv = {";
-	my $oi = 0;
+	$oi = 0;
 	foreach my $operand (@content)
 	{
 		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
