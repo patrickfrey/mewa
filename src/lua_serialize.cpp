@@ -207,7 +207,7 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 			out << '"' << lua_tostring( ls, li) << '"';
 			break;
 		case LUA_TTABLE:
-			serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "\t"));
+			serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "  "));
 			break;
 		case LUA_TFUNCTION:
 		case LUA_TUSERDATA:
