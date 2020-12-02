@@ -2,7 +2,7 @@ local utils = require "typesystem_utils"
 
 local M = {}
 
-M.fcc = require "language1/fcc"
+M.scalar = require "language1/llvmir_scalar"
 
 local pointerTemplate = {
 	def_local = "{out} = alloca {pointee}\n",

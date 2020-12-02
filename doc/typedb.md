@@ -218,13 +218,13 @@ Define a reduction from a type resulting in another type with a tag to classify 
 The scope of the newly defined reduction has been set with the last call of the setter [typedb::scope](#scope). 
 
 #### Parameter
-| #      | Name         | Type             | Description                                                                                                         |
-| :----- | :----------- | :--------------- | :------------------------------------------------------------------------------------------------------------------ |
-| 1st    | dest-type    | integer          | Resulting type of the reduction                                                                                     |
-| 2nd    | src-type     | integer          | Origin type of the reduction                                                                                        |
-| 3rd    | constructor  | any type         | Constructor describing how the type reduction is implemented (*nil* if undefined ~ identity).                       |
-| 4th    | tag          | integer 1..32    | Tag assigned to the reduction, used to restrict a type search or derivation to selected classes of reductions.      |
-| 5th    | weight       | number           | (optional) Weight assigned to the reduction, used to calculate the shortest path of reductions for resolving types. |
+| #      | Name         | Type             | Description                                                                                                       |
+| :----- | :----------- | :--------------- | :---------------------------------------------------------------------------------------------------------------- |
+| 1st    | dest-type    | integer          | Resulting type of the reduction                                                                                   |
+| 2nd    | src-type     | integer          | Origin type of the reduction                                                                                      |
+| 3rd    | constructor  | any type         | Constructor describing how the type reduction is implemented (*nil* if undefined ~ identity).                     |
+| 4th    | tag          | integer 1..32    | Tag assigned to the reduction, used to restrict a type search or derivation to selected classes of reductions.    |
+| 5th    | weight       | number           | (optional) Weight of the reduction in the calculation of the shortest path when resolving types. Default is 0.0   |
 
 
 <a name="reduction_tagmask"/>

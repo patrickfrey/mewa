@@ -104,8 +104,8 @@ function testDefineResolveType()
 		return rt
 	end
 
-	local tag_fcc_conv = 1
-	local mask_resolve = typedb.reduction_tagmask( tag_fcc_conv)
+	local tag_scalar_conv = 1
+	local mask_resolve = typedb.reduction_tagmask( tag_scalar_conv)
 
 	local scope_bk = typedb:scope( {0,100} )
 	local any_type = typedb:def_type( 0, "any", {type="any",code="#any"})
@@ -118,14 +118,14 @@ function testDefineResolveType()
 	local add_int = typedb:def_type( int_type, "+", {op="add",type="int",code="int+int"}, {{int_type, pushParameter}})
 	local add_float = typedb:def_type( float_type, "+", {op="add",type="float",code="float+float"}, {{float_type, pushParameter}})
 
-	typedb:def_reduction( int_type, float_type, typeReduction( "int"), tag_fcc_conv, 0.5)
-	typedb:def_reduction( float_type, int_type, typeReduction( "float"), tag_fcc_conv, 1.0)
-	typedb:def_reduction( short_type, float_type, typeReduction( "short"), tag_fcc_conv, 0.5)
-	typedb:def_reduction( float_type, short_type, typeReduction( "float"), tag_fcc_conv, 1.0)
-	typedb:def_reduction( short_type, int_type, typeReduction( "short"), tag_fcc_conv, 0.5)
-	typedb:def_reduction( int_type, short_type, typeReduction( "int"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( int_type, float_type, typeReduction( "int"), tag_scalar_conv, 0.5)
+	typedb:def_reduction( float_type, int_type, typeReduction( "float"), tag_scalar_conv, 1.0)
+	typedb:def_reduction( short_type, float_type, typeReduction( "short"), tag_scalar_conv, 0.5)
+	typedb:def_reduction( float_type, short_type, typeReduction( "float"), tag_scalar_conv, 1.0)
+	typedb:def_reduction( short_type, int_type, typeReduction( "short"), tag_scalar_conv, 0.5)
+	typedb:def_reduction( int_type, short_type, typeReduction( "int"), tag_scalar_conv, 1.0)
 
-	typedb:def_reduction( float_type, any_type, typeReduction( "float"), tag_fcc_conv, 1.0)
+	typedb:def_reduction( float_type, any_type, typeReduction( "float"), tag_scalar_conv, 1.0)
 
 	local result = ""
 	result = result .. "TYPE TREE\n" .. typeTreeToString( typedb:type_tree(), 0)

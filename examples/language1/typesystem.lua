@@ -60,9 +60,9 @@ function callConstructor( fmt)
 end
 
 local weightEpsilon = 1E-5	-- epsilon used for comparing weights for equality
-local fccQualiTypeMap = {}	-- maps fcc type names without qualifiers to the table of type ids for all qualifiers possible
-local fccIndexTypeMap = {}	-- maps fcc type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
-local fccBooleanType = 0	-- type id of the boolean type, result of cmpop binary operators
+local scalarQualiTypeMap = {}	-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
+local scalarIndexTypeMap = {}	-- maps scalar type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
+local scalarBooleanType = 0	-- type id of the boolean type, result of cmpop binary operators
 local controlTrueType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
@@ -179,7 +179,7 @@ function defineOperators( lval, c_lval, typeDescription)
 	end
 	if typeDescription.cmpop then
 		for operator,operator_fmt in pairs( typeDescription.cmpop) do
-			defineCall( fccBooleanType, c_lval, operator, {c_lval}, callConstructor( operator_fmt))
+			defineCall( scalarBooleanType, c_lval, operator, {c_lval}, callConstructor( operator_fmt))
 		end
 	end
 end
@@ -240,17 +240,17 @@ end
 
 function defineIndexOperators( typnam, qualitype, typeDescription)
 	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
-	for index_typenam, index_type in pairs(fccIndexTypeMap) do
+	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
 		defineCall( qualitype.rval, qualitype.pval, "[]", {index_type}, convConstructor( pointerTypeDescription.index[ index_typnam]))
 		defineCall( qualitype.c_rval, qualitype.c_pval, "[]", {index_type}, convConstructor( pointerTypeDescription.index[ index_typnam]))
 	end
 end
 
-function defineFccConversions( typnam, typeDescription)
-	local qualitype = fccQualiTypeMap[ typnam]
+function defineBuiltInTypeConversions( typnam, typeDescription)
+	local qualitype = scalarQualiTypeMap[ typnam]
 	if typeDescription.conv then
 		for oth_typenam,conv_fmt in pairs( typeDescription.conv) do
-			local oth_qualitype = fccQualiTypeMap[ oth_typenam]
+			local oth_qualitype = scalarQualiTypeMap[ oth_typenam]
 			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, convConstructor( conv_fmt), tag_TypeConversion)
 		end
 	end
@@ -310,8 +310,8 @@ function initControlTypes()
 		local out = register()
 		return {code=utils.constructor_format( llvmir.control.trueExitToBoolean, {trueExit=constructor.out, out=out}, label),out=out}
 	end
-	typedb:def_reduction( fccBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
-	typedb:def_reduction( fccBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction)
+	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
+	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction)
 
 	function BooleanToFalseExit( constructor)
 		local label = typedb:get_instance( "label")
@@ -324,26 +324,26 @@ function initControlTypes()
 		return {code=utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 
-	typedb:def_reduction( controlTrueType, fccBooleanType, BooleanToFalseExit, tag_typeDeduction)
-	typedb:def_reduction( controlFalseType, fccBooleanType, BooleanToTrueExit, tag_typeDeduction)
+	typedb:def_reduction( controlTrueType, scalarBooleanType, BooleanToFalseExit, tag_typeDeduction)
+	typedb:def_reduction( controlFalseType, scalarBooleanType, BooleanToTrueExit, tag_typeDeduction)
 end
 
-function initFirstClassCitizens()
-	for typnam, fcc_descr in pairs( llvmir.fcc) do
-		local lval = defineQualifiedTypes( typnam, fcc_descr)
-		fccQualiTypeMap[ typnam] = qualiTypeMap[ lval]
-		if fcc_descr.class == "bool" then
-			fccBooleanType = qualiTypeMap[ lval].c_lval
-		elseif fcc_descr.class == "unsigned" or fcc_descr.class == "signed" then
-			fccIndexTypeMap[ typnam] = qualiTypeMap[ lval].c_lval
+function initBuiltInTypes()
+	for typnam, scalar_descr in pairs( llvmir.scalar) do
+		local lval = defineQualifiedTypes( typnam, scalar_descr)
+		scalarQualiTypeMap[ typnam] = qualiTypeMap[ lval]
+		if scalar_descr.class == "bool" then
+			scalarBooleanType = qualiTypeMap[ lval].c_lval
+		elseif scalar_descr.class == "unsigned" or scalar_descr.class == "signed" then
+			scalarIndexTypeMap[ typnam] = qualiTypeMap[ lval].c_lval
 		end
 	end
-	for typnam, fcc_descr in pairs( llvmir.fcc) do
-		defineIndexOperators( typnam, fccQualiTypeMap[ typnam], fcc_descr)
-		defineFccConversions( typnam, fcc_descr)
+	for typnam, scalar_descr in pairs( llvmir.scalar) do
+		defineIndexOperators( typnam, scalarQualiTypeMap[ typnam], scalar_descr)
+		defineBuiltInTypeConversions( typnam, scalar_descr)
 	end
 	defineConstExprOperators()
-	if fccBooleanType then initControlTypes() end
+	if scalarBooleanType then initControlTypes() end
 end
 
 function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
@@ -443,9 +443,9 @@ end
 
 function convertToBooleanType( node, operand)
 	if type(operand.constructor) == "table" then
-		local bool_constructor = getReductionConstructor( node, fccBooleanType, operand)
+		local bool_constructor = getReductionConstructor( node, scalarBooleanType, operand)
 		if not bool_constructor then utils.errorMessage( node.line, "Argument is not reducible to boolean") end
-		return {type=fccBooleanType, constructor=bool_constructor}
+		return {type=scalarBooleanType, constructor=bool_constructor}
 	else
 		local bool_constructor = getReductionConstructor( node, constexprBooleanType, operand)
 		if not bool_constructor then utils.errorMessage( node.line, "Argument is not reducible to boolean const expression") end
@@ -463,12 +463,12 @@ function convertToControlBooleanType( node, controlBooleanType, operand)
 	else
 		local boolOperand = convertToBooleanType( node, operand)
 		if not typedb:get_instance( "label") then return boolOperand end
-		local control_constructor = getReductionConstructor( node, controlBooleanType, {type=fccBooleanType,constructor=boolOperand.constructor})
+		local control_constructor = getReductionConstructor( node, controlBooleanType, {type=scalarBooleanType,constructor=boolOperand.constructor})
 		return {type=controlBooleanType, constructor=control_constructor}
 	end
 end
 function negateControlBooleanType( node, this)
-	if this.type == fccBooleanType or this.type == constexprBooleanType then
+	if this.type == scalarBooleanType or this.type == constexprBooleanType then
 		return applyCallable( node, this, "!")
 	else
 		if this.type == controlFalseType then
@@ -485,9 +485,9 @@ function applyControlBooleanJoin( node, this, operand, controlBooleanType)
 		if operand1.operand.constructor then return operand2 else return {type=constexprBooleanType,constructor=false} end
 	elseif operand2.operand.type == constexprBooleanType then 
 		if operand2.operand.constructor then return operand1 else return {type=constexprBooleanType,constructor=false} end
-	elseif operand1.operand.type == fccBooleanType and operand2.operand.type == fccBooleanType then
+	elseif operand1.operand.type == scalarBooleanType and operand2.operand.type == scalarBooleanType then
 		return applyCallable( node, this, "&&", {operand})
-	elseif operand1.operand.type == controlFalseType and operand2.operand.type == fccBooleanType then
+	elseif operand1.operand.type == controlFalseType and operand2.operand.type == scalarBooleanType then
 		local out = operand1.constructor.out
 		local fmt; if controlBooleanType == controlTrueType then fmt = llvmir.control.booleanToFalseExit else fmt = llvmir.control.booleanToTrueExit end
 		local code2 = utils.constructor_format( fmt, {inp=operand2.constructor.out, out=out}, typedb:get_instance( "label"))
@@ -702,7 +702,7 @@ function typesystem.callablebody( node, contextTypeId)
 	return {param = arg[1], code = arg[2].code}
 end
 function typesystem.program( node)
-	initFirstClassCitizens()
+	initBuiltInTypes()
 	utils.traverse( typedb, node)
 end
 
