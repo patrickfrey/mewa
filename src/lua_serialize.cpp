@@ -102,9 +102,24 @@ struct LuaTableKey
 				break;
 			}
 			case StringType:
-				out << std::get<const char*>(value);
+				if (isIdentifier())
+				{
+					out << std::get<const char*>(value);
+				}
+				else
+				{
+					out << "[\"" << std::get<const char*>(value) << "\"]";
+				}
 				break;
 		}
+	}
+
+	bool isIdentifier() const noexcept
+	{
+		char const* si = std::get<const char*>(value);
+		if (*si >= '0' && *si <= '9') return false;
+		for (; *si && (((*si|32) >= 'a' && (*si|32) <= 'z') || (*si >= '0' && *si <= '9') || *si == '_'); ++si){}
+		return !*si;
 	}
 };
 
@@ -189,6 +204,52 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 	lua_pop( ls, 1); // ... pop table and keyvec
 }
 
+static std::string encodeCString( const char* str)
+{
+	const char* HEX = "0123456789ABCDEF";
+	std::string rt;
+	char const* si = str;
+	for (; *si; ++si)
+	{
+		unsigned char ch = (unsigned char)*si;
+		if (ch < 32)
+		{
+			if (ch == '\t')
+			{
+				rt.append( "\\t");
+			}
+			else if (ch == '\n')
+			{
+				rt.append( "\\n");
+			}
+			else if (ch == '\r')
+			{
+				rt.append( "\\r");
+			}
+			else if (ch == '\b')
+			{
+				rt.append( "\\b");
+			}
+			else
+			{
+				char buf[32];
+				std::snprintf( buf, sizeof(buf), "\\x%c%c", HEX[ ch / 16], HEX[ ch % 16]);
+				rt.append( buf);
+			}
+		}
+		else if (ch == '\\')
+		{
+			rt.push_back( ch);
+			rt.push_back( ch);
+		}
+		else
+		{
+			rt.push_back( ch);
+		}
+	}
+	return rt;
+}
+
 static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const std::string& indent)
 {
 	int tp = lua_type( ls, li);
@@ -204,7 +265,7 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 			out << (lua_toboolean( ls, li) ? "true" : "false");
 			break;
 		case LUA_TSTRING:
-			out << '"' << lua_tostring( ls, li) << '"';
+			out << '"' << encodeCString( lua_tostring( ls, li)) << '"';
 			break;
 		case LUA_TTABLE:
 			serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "  "));

@@ -33,7 +33,7 @@ function M.constructor_format( fmt, argtable, allocator)
 		elseif argtable[ match] then
 			return argtable[ match]
 		else
-			M.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s'", fmt, match)
+			M.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", fmt, match, mewa.tostring(argtable,false))
 		end
 	end
 	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
@@ -123,7 +123,7 @@ end
 
 -- Types in readable form for messages
 -- Type as string
-function typeString( typedb, typeId)
+function M.typeString( typedb, typeId)
 	if typeId == 0 then
 		return "<>"
 	elseif type(typeId) == "table" then
@@ -136,9 +136,9 @@ end
 -- Type list as string
 function M.typeListString( typedb, typeList, separator)
 	if not typeList or #typeList == 0 then return "" end
-	local rt = typeString( typedb, typeList[ 1])
+	local rt = M.typeString( typedb, typeList[ 1])
 	for ii=2,#typeList do
-		rt = rt .. separator .. typeString( typedb, typeList[ ii])
+		rt = rt .. separator .. M.typeString( typedb, typeList[ ii])
 	end
 	return rt
 end
@@ -150,14 +150,14 @@ function M.resolveTypeString( typedb, contextType, typeName)
 		if #contextType == 0 then
 			rt = "{} " .. typeName
 		else
-			rt = "{ " .. typeString( typedb, contextType[1])
+			rt = "{ " .. M.typeString( typedb, contextType[1])
 			for ii = 2,#contextType,1 do
-				rt = ", " .. typeString( typedb, contextType[ ii])
+				rt = ", " .. M.typeString( typedb, contextType[ ii])
 			end
 			rt = rt .. " } " .. typeName
 		end
 	else
-		rt = typeString( typedb, contextType) .. " " .. typeName
+		rt = M.typeString( typedb, contextType) .. " " .. typeName
 	end
 	return rt;
 end
@@ -204,6 +204,7 @@ end
 
 -- Debug function that returns the tree with all resolve type paths
 function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
+	io.stderr:write( "++++ CALL utils.getResolveTypeTreeDump " .. mewa.tostring( {typedb:step(), contextType, typeName, parameters, tagmask},false) .. "\n")
 	function getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, indentstr, visited)
 		local typeid = typedb:get_type( contextType, typeName, parameters)
 		if typeid then
@@ -213,6 +214,7 @@ function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, ta
 			table.insert( visited, typeid)
 			local rdlist = typedb:get_reductions( contextType, tagmask)
 			for ri,rd in ipairs(rdlist) do
+				io.stderr:write( "++++ REDU " .. mewa.tostring({rd},false) .. "\n")
 				local in_visited = nil; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; break end end
 				if not in_visited then
 					rt = rt .. indentstr .. rd.weight .. ": " .. typedb:type_string( rd.type)

@@ -58,6 +58,11 @@ function callConstructor( fmt)
 		return {code = code .. utils.constructor_format( fmt, subst, register), out = out}
 	end
 end
+function promoteCallConstructor( call_constructor, promote_constructor)
+	return function( this, arg)
+		return call_constructor( promote_constructor( this), arg)
+	end
+end
 
 local weightEpsilon = 1E-5	-- epsilon used for comparing weights for equality
 local scalarQualiTypeMap = {}	-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
@@ -70,9 +75,8 @@ local referenceTypeMap = {}	-- maps any defined type id to its reference type
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
 
 function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
-	local constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
-	local constructor_promoted_this = function( this, arg) return constructor( promote_constructor(this), arg[1]) end
-	local callType = typedb:def_type( thisType, opr, constructor_promoted_this, argTypes)
+	local call_constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
+	local callType = typedb:def_type( thisType, opr, promoteCallConstructor( call_constructor, promote_constructor), argTypes)
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
 function defineCall( returnType, thisType, opr, argTypes, constructor)
@@ -133,13 +137,13 @@ function defineConstExprOperators()
 	defineConstExprBitArithmetics( constexprIntegerType)
 	defineConstExprBooleanArithmetics( constexprBooleanType)
 
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion)
-	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion)
-	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion, 0.25)
 
 	function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, 0.25)
 
 	local int_arg_typenam = "long"
 	local int_arg_type = typedb:get_type( 0, "const " .. int_arg_typenam)
@@ -246,12 +250,26 @@ function defineIndexOperators( typnam, qualitype, typeDescription)
 	end
 end
 
-function defineBuiltInTypeConversions( typnam, typeDescription)
+function defineBuiltInTypeConversions( typnam, descr)
 	local qualitype = scalarQualiTypeMap[ typnam]
-	if typeDescription.conv then
-		for oth_typenam,conv_fmt in pairs( typeDescription.conv) do
+	if descr.conv then
+		for oth_typenam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typenam]
-			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, convConstructor( conv_fmt), tag_TypeConversion)
+			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, convConstructor( conv.fmt), tag_TypeConversion, conv.weight)
+		end
+	end
+end
+
+function defineBuiltInTypePromoteCalls( typnam, descr)
+	local qualitype = scalarQualiTypeMap[ typnam]
+	for i,promote_typnam in ipairs( descr.promote) do
+		local promote_qualitype = scalarQualiTypeMap[ promote_typnam]
+		local promote_descr = typeDescriptionMap[ promote_qualitype.lval]
+		local promote_conv = convConstructor( promote_descr.conv[ typnam].fmt)
+		if promote_descr.binop then
+			for operator,operator_fmt in pairs( promote_descr.binop) do
+				definePromoteCall( promote_qualitype.lval, qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
+			end
 		end
 	end
 end
@@ -341,6 +359,7 @@ function initBuiltInTypes()
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineIndexOperators( typnam, scalarQualiTypeMap[ typnam], scalar_descr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
+		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
 	defineConstExprOperators()
 	if scalarBooleanType then initControlTypes() end
@@ -353,7 +372,7 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == 0 then return item.type,item.constructor end
 	end
-	utils.errorMessage( node.line, "Failed to resolve %s", utils.resolveTypeString( typedb, getContextTypes(), typeName))
+	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, getContextTypes(), typeName))
 end
 function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
 	local rt,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
@@ -366,7 +385,6 @@ function getReductionConstructor( node, redu_type, operand)
 	if redu_type ~= operand.type then
 		local redulist,altpath
 		redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
-		-- ... derive type, but allow only one type conversion
 		if not redulist then
 			return nil
 		elseif altpath then
@@ -383,7 +401,6 @@ end
 function applyCallable( node, this, callable, args)
 	local bestmatch = {}
 	local bestweight = nil
-
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 
@@ -400,6 +417,7 @@ function applyCallable( node, this, callable, args)
 			local param_constructor_ar = {}
 			if #args > 0 then
 				local parameters = typedb:type_parameters( item.type)
+
 				for ai,arg in ipairs(args) do
 					local param_constructor,param_weight = getReductionConstructor( node, parameters[ai].type, arg)
 					if not param_constructor then break end
@@ -423,7 +441,7 @@ function applyCallable( node, this, callable, args)
 	end
 	if not bestweight then
 		utils.errorMessage( node.line, "Failed to find callable with signature %s",
-	                    utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")")
+	                    utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
 	end
 	if #bestmatch == 1 then
 		return bestmatch[1]
@@ -436,7 +454,7 @@ function applyCallable( node, this, callable, args)
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
 		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature %s, list of candidates: %s",
-				utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, arg, ", ") .. ")",
+				utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")",
 				altmatchstr)
 	end
 end
@@ -538,7 +556,7 @@ function defineCallable( node, descr, contextTypeId)
 	else
 		descr.rtype = "void"
 		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
-		typedb:def_type( contextTypeId, descr.name, callConstructor( callfmt), getParameterTypeList(descr.param))
+		local functype = typedb:def_type( contextTypeId, descr.name, callConstructor( callfmt), getParameterTypeList(descr.param))
 	end
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
 end

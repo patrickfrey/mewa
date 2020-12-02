@@ -191,16 +191,18 @@ foreach my $line (@content)
 			if ($alignmap{$op_llvmtype} >= $alignmap{$llvmtype})
 			{
 				my $do_promote = undef;
-				if ($alignmap{$op_llvmtype} == $alignmap{$llvmtype})
+				if ($sgn eq "fp" && $op_sgn ne "fp")
 				{
-					if ($sgn eq "unsigned" && $op_sgn eq "signed")
-					{
-						$do_promote = 1;
-					}
+					# Never promote a floating point to a non floating point
 				}
-				elsif ($precisionBitsMap{$op_llvmtype} < $precisionBitsMap{$llvmtype})
+				elsif ($sgn eq "signed" && $op_sgn eq "unsigned")
 				{
-					if ($op_llvmtype eq "double")
+					# Never promote from signed to unsigned
+				}
+				elsif ($alignmap{$op_llvmtype} == $alignmap{$llvmtype})
+				{
+					# For equal size types only promote unsigned to signed or to floating point
+					if (($sgn eq "unsigned" && $op_sgn eq "signed") || $op_sgn eq "fp")
 					{
 						$do_promote = 1;
 					}

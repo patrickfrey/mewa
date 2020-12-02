@@ -50,7 +50,7 @@ return {
 		maxvalue = "3.402823e+38",
 		assign = "store float {arg1}, float* {this}, align 4\n",
 		load = "{out} = load float, float* {inp}, align 4\n",
-		promote = {"double", "ulong", "long"},
+		promote = {"double"},
 		conv = {
 			["double"] = {fmt="{out} = fptrunc double {inp} to float\n", weight=0.25},
 			["ulong"] = {fmt="{out} = uitofp i64 {inp} to float\n", weight=0.375},
@@ -87,7 +87,7 @@ return {
 		maxvalue = "18446744073709551616",
 		assign = "store i64 {arg1}, i64* {this}, align 8\n",
 		load = "{out} = load i64, i64* {inp}, align 8\n",
-		promote = {"long"},
+		promote = {"double", "long"},
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i64\n", weight=0.25},
 			["float"] = {fmt="{out} = fptoui float {inp} to i64\n", weight=0.25},
@@ -129,7 +129,7 @@ return {
 		maxvalue = "9223372036854775808",
 		assign = "store i64 {arg1}, i64* {this}, align 8\n",
 		load = "{out} = load i64, i64* {inp}, align 8\n",
-		promote = {},
+		promote = {"double"},
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i64\n", weight=0.25},
 			["float"] = {fmt="{out} = fptosi float {inp} to i64\n", weight=0.25},
@@ -168,7 +168,7 @@ return {
 		maxvalue = "4294967296",
 		assign = "store i32 {arg1}, i32* {this}, align 4\n",
 		load = "{out} = load i32, i32* {inp}, align 4\n",
-		promote = {"double", "ulong", "long", "int"},
+		promote = {"double", "float", "ulong", "long", "int"},
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i32\n", weight=0.375},
 			["float"] = {fmt="{out} = fptoui float {inp} to i32\n", weight=0.25},
@@ -210,7 +210,7 @@ return {
 		maxvalue = "2147483648",
 		assign = "store i32 {arg1}, i32* {this}, align 4\n",
 		load = "{out} = load i32, i32* {inp}, align 4\n",
-		promote = {"double", "ulong", "long"},
+		promote = {"double", "float", "long"},
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i32\n", weight=0.375},
 			["float"] = {fmt="{out} = fptosi float {inp} to i32\n", weight=0.25},
@@ -291,7 +291,7 @@ return {
 		maxvalue = "32768",
 		assign = "store i16 {arg1}, i16* {this}, align 2\n",
 		load = "{out} = load i16, i16* {inp}, align 2\n",
-		promote = {"double", "float", "ulong", "long", "uint", "int"},
+		promote = {"double", "float", "long", "int"},
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i16\n", weight=0.375},
 			["float"] = {fmt="{out} = fptosi float {inp} to i16\n", weight=0.375},
