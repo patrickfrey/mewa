@@ -72,6 +72,7 @@ local controlTrueType = 0	-- type implementing a boolean not represented as valu
 local controlFalseType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
+local valueTypeMap = {}		-- maps any defined type id to its value type (strips away reference qualifiers)
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
 
 function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
@@ -204,6 +205,15 @@ function defineQualifiedTypes( typnam, typeDescription)
 	referenceTypeMap[ rpval] = rpval
 	referenceTypeMap[ c_rpval] = c_rpval
 
+	valueTypeMap[ lval] = lval
+	valueTypeMap[ c_lval] = c_lval
+	valueTypeMap[ rval] = lval
+	valueTypeMap[ c_rval] = c_lval
+	valueTypeMap[ pval] = pval
+	valueTypeMap[ c_pval] = c_pval
+	valueTypeMap[ rpval] = pval
+	valueTypeMap[ c_rpval] = c_pval
+
 	typedb:def_reduction( c_lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 
 	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
@@ -284,15 +294,12 @@ function getContextTypes()
 end
 
 function getTypeDescription( type)
-	local rt = typeDescriptionMap[ type]
-	if not rt then
-		local redulist = typedb:get_reductions( type, tag_typeDeclaration)
-		for ri,redu in ipairs(redulist) do
-			rt = typeDescriptionMap[ redu.type]
-			if rt then break end
-		end
+	if valueTypeMap[ type] then return typeDescriptionMap[ valueTypeMap[ type]] end
+	local redulist = typedb:get_reductions( type, tag_typeDeclaration)
+	for ri,redu in ipairs(redulist) do
+		if valueTypeMap[ redu.type] then return typeDescriptionMap[ valueTypeMap[ redu.type]] end
 	end
-	return rt
+	return nil
 end
 
 function defineVariable( node, contextTypeId, typeId, name, initVal)
@@ -691,7 +698,6 @@ end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
 	local type,rcode,rout = arg[1].type, arg[1].constructor.code, arg[1].constructor.out
-	io.stderr:write("++++ RETURN FMT " .. mewa.tostring({type=getTypeDescription(type).llvmtype, rcode=rcode, rout=rout}) .. "\n")
 	return {code=rcode .. utils.constructor_format( llvmir.control.returnStatement, {type=getTypeDescription(type).llvmtype, inp=rout})}
 end
 function typesystem.conditional_if( node)
