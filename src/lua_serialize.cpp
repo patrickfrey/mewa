@@ -279,11 +279,11 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 	}
 }
 
-std::string mewa::luaToString( lua_State* ls, int li, bool formatted)
+std::string mewa::luaToString( lua_State* ls, int li, bool use_indent)
 {
 	std::string rt;
 	std::ostringstream out;
-	serializeLuaValue( out, ls, li, formatted ? "\n" : "");
+	serializeLuaValue( out, ls, li, use_indent ? "\n" : "");
 	rt.append( out.str());
 	return rt;
 }

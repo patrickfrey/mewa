@@ -166,7 +166,11 @@ end
 -- Exit with error message and line info
 function M.errorMessage( line, fmt, ...)
 	local arg = {...}
-	error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
+	if line ~= 0 then
+		error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
+	else
+		error( string.format( fmt, unpack(arg)))
+	end
 end
 
 -- Exit with error for no result or an ambiguous result returned by typedb:resolve_type
@@ -204,7 +208,6 @@ end
 
 -- Debug function that returns the tree with all resolve type paths
 function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
-	io.stderr:write( "++++ CALL utils.getResolveTypeTreeDump " .. mewa.tostring( {typedb:step(), contextType, typeName, parameters, tagmask},false) .. "\n")
 	function getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, indentstr, visited)
 		local typeid = typedb:get_type( contextType, typeName, parameters)
 		if typeid then
@@ -214,7 +217,6 @@ function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, ta
 			table.insert( visited, typeid)
 			local rdlist = typedb:get_reductions( contextType, tagmask)
 			for ri,rd in ipairs(rdlist) do
-				io.stderr:write( "++++ REDU " .. mewa.tostring({rd},false) .. "\n")
 				local in_visited = nil; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; break end end
 				if not in_visited then
 					rt = rt .. indentstr .. rd.weight .. ": " .. typedb:type_string( rd.type)

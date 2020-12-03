@@ -153,13 +153,13 @@ The scope of the newly defined type has been set with the last call of the sette
 | 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure            |
 | 2nd    | name         | string           | Name of the type defined                                                                                      |
 | 3rd    | constructor  | any type         | (optional) Constructor describing how the type is built (*nil* if undefined)                                  |
-| 4th    | parameter    | table            | (optional) Array of type/constructor pair or type handles without constructor (parameters). (*)               |
+| 4th    | parameter    | table            | (optional) Array of type/constructor pair or type handles without constructor. (*)                            |
 | 5th    | priority     | integer          | (optional) Priority of the definition; a higher priority overwrites a lower priority definition. (**)         |
 | Return |              | integer          | identifier assigned to the type or -1 if the definition is a duplicate or 0 if it is silently discarded (***) |
 
 ##### Remark (*)
-Putting no parameters on the same level as an empty parameter list, we risk falling into a trap of language design, equalizing *null* and *empty* where it shouldn't.
-If your compiler has to distinguish these cases, you have to encode the property "has parameters" or "is a variable" into the type name.
+To put no parameters on the same level as an empty parameter list is as declaring *null* and *empty* as equivalent as we do here is dangerous in language design.
+Be aware of the pitfalls and try to separate the types that can have paramaters and the ones that don't by an appropriate naming scheme.
 ##### Remark (**)
 The motivation here is to support default declarations that are complicated to implement without a mechanism of priorization.
 ##### Remark (***)
@@ -169,8 +169,8 @@ A definition is siletly discarded it is a duplicate but with lower priority than
 <a name="get_type"/>
 
 ### typedb:get_type
-Get a type definition if it exists in the current scope (Does not search a valid definition in enclosing scopes, does not apply any reductions of the context type).
-The scope of the lookup type has been set with the last call of the setter [typedb::scope](#scope). 
+Get a type definition defined in the current scope, without lookup in enclosing scopes and without any reductions of the context type.
+The current scope has been set with the last call of the setter [typedb::scope](#scope). 
 
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                 |
@@ -288,7 +288,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 1st        | context-type(s) | integer/table     | Single type or array of types referring to the context of the type (*)                                             |
 | 2nd        | name            | string            | Name of the type searched                                                                                          |
 | 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No used reductions if not specified.   |
-| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.       | 
+| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.         | 
 | Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
 | Return 3rd |                 | table             | List of candidates found, differing in the parameters. The list has to be filtered by the caller (***).            |
 

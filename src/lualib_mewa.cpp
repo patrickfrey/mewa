@@ -193,12 +193,12 @@ static int mewa_tostring( lua_State* ls)
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
-		bool formatted = true;
+		bool use_indent = false;
 		if (nargs == 2 && lua_isboolean( ls, 2))
 		{
-			formatted = lua_toboolean( ls, 2);
+			use_indent = lua_toboolean( ls, 2);
 		}
-		std::string rt = mewa::luaToString( ls, 1, formatted);
+		std::string rt = mewa::luaToString( ls, 1, use_indent);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
 	catch (...) { lippincottFunction( ls); }

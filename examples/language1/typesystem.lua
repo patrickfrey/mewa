@@ -85,14 +85,43 @@ function defineCall( returnType, thisType, opr, argTypes, constructor)
 end
 
 local constexprIntegerType = typedb:def_type( 0, "constexpr int")
+local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")
 local constexprFloatType = typedb:def_type( 0, "constexpr float")
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")
+local typeClassToConstExprTypeMap = {fp=constexprFloatType, bool=constexprBooleanType, signed=constexprIntegerType, unsigned=constexprUIntegerType}
 local constexprDqStringType = typedb:def_type( 0, "constexpr dqstring")
 local constexprSqStringType = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
-
+local constexprOperatorMap = {
+	["+"] = function( this, arg) return this + arg[1] end,
+	["-"] = function( this, arg) return this - arg[1] end,
+	["*"] = function( this, arg) return this * arg[1] end,
+	["/"] = function( this, arg) return this / arg[1] end,
+	["%"] = function( this, arg) return this % arg[1] end,
+	["&"] = function( this, arg) return this.bit_and( arg[1], bits64) end,
+	["|"] = function( this, arg) return this.bit_or( arg[1], bits64) end,
+	["^"] = function( this, arg) return this.bit_xor( arg[1], bits64) end,
+	["~"] = function( this, arg) return this.bit_not( bits64) end,
+	["&&"] = function( this, arg) return this == true and arg[1] == true end,
+	["||"] = function( this, arg) return this == true or arg[1] == true end,
+	["!"] = function( this, arg) return this ~= true end
+}
+local constexprTypeOperatorMap = {
+	[constexprIntegerType]  = {"+","-","*","/","%"},
+	[constexprUIntegerType] = {"&","|","^","~"},
+	[constexprFloatType]    = {"+","-","*","/","%"},
+	[constexprBooleanType]  = {"&&","||","!"}
+}
+local unaryOperatorMap = {["~"]=1,["!"]=1,["-"]=2}
+local constexprTypePromoteTypeMap = {
+	[constexprIntegerType]  = "long",
+	[constexprUIntegerType] = "ulong",
+	[constexprFloatType]    = "double",
+	[constexprBooleanType]  = "bool"
+}
 function createConstExpr( node, constexpr_type, lexemvalue)
 	if constexpr_type == constexprIntegerType then return bcd.int(lexemvalue)
+	elseif constexpr_type == constexprUIntegerType then return bcd.int(lexemvalue)
 	elseif constexpr_type == constexprFloatType then return tonumber(lexemvalue)
 	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
 	elseif constexpr_type == constexprDqStringType then return lexemvalue
@@ -103,89 +132,45 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 		utils.errorMessage( node.line, "Single quoted string '%s' not containing a single unicode character", lexemvalue)
 	end
 end
-function defineConstExprBasicArithmetics( constexpr_type)
-	defineCall( constexpr_type, constexpr_type, "+", {constexpr_type}, function( this, arg) return this + arg[1] end)
-	defineCall( constexpr_type, constexpr_type, "-", {constexpr_type}, function( this, arg) return this - arg[1] end)
-	defineCall( constexpr_type, constexpr_type, "/", {constexpr_type}, function( this, arg) return this / arg[1] end)
-	defineCall( constexpr_type, constexpr_type, "%", {constexpr_type}, function( this, arg) return this % arg[1] end)
-end
-
-function defineConstExprBasicArithmeticsPromoted( constexpr_type, arg_type, promote_this)
-	defineCall( constexpr_type, constexpr_type, "+", {arg_type}, function( this, arg) return promote_this( this) + arg[1] end)
-	defineCall( constexpr_type, constexpr_type, "-", {arg_type}, function( this, arg) return promote_this( this) - arg[1] end)
-	defineCall( constexpr_type, constexpr_type, "/", {arg_type}, function( this, arg) return promote_this( this) / arg[1] end)
-	defineCall( constexpr_type, constexpr_type, "%", {arg_type}, function( this, arg) return promote_this( this) % arg[1] end)
-end
-
-function defineConstExprBitArithmetics( constexpr_type)
-	defineCall( constexpr_type, constexpr_type, "&", {constexpr_type}, function( this, arg) return this.bit_and( arg[1], bits64) end)
-	defineCall( constexpr_type, constexpr_type, "|", {constexpr_type}, function( this, arg) return this.bit_or( arg[1], bits64) end)
-	defineCall( constexpr_type, constexpr_type, "^", {constexpr_type}, function( this, arg) return this.bit_xor( arg[1], bits64) end)
-	defineCall( constexpr_type, constexpr_type, "~", {constexpr_type}, function( this, arg) return this.bit_not( bits64) end)
-end
-
-function defineConstExprBooleanArithmetics( constexpr_type)
-	defineCall( constexpr_type, constexpr_type, "&&", {constexpr_type}, function( this, arg) return this == true and arg[1] == true end)
-	defineCall( constexpr_type, constexpr_type, "||", {constexpr_type}, function( this, arg) return this == true or arg[1] == true end)
-	defineCall( constexpr_type, constexpr_type, "!", {}, function( this, arg) return this ~= true end)
-end
-
-function defineConstExprOperators()
-	defineConstExprBasicArithmetics( constexprFloatType)
-	defineConstExprBasicArithmetics( constexprIntegerType)
-	defineConstExprBasicArithmeticsPromoted( constexprIntegerType, constexprFloatType, function(this) return this:tonumber() end)
-	defineConstExprBitArithmetics( constexprIntegerType)
-	defineConstExprBooleanArithmetics( constexprBooleanType)
-
+function defineConstExprArithmetics()
+	for constexpr_type,oprlist in pairs(constexprTypeOperatorMap) do
+		for oi,opr in ipairs(oprlist) do
+			if unaryOperatorMap[ opr] then
+				defineCall( constexpr_type, constexpr_type, opr, {}, constexprOperatorMap[ opr])
+			end
+			if not unaryOperatorMap[ opr] or unaryOperatorMap[ opr] == 2 then
+				defineCall( constexpr_type, constexpr_type, opr, {constexpr_type}, constexprOperatorMap[ opr])
+			end
+		end
+	end
+	local oprlist = constexprTypeOperatorMap[ constexprFloatType]
+	for oi,opr in ipairs(oprlist) do
+		definePromoteCall( constexprFloatType, constexprIntegerType, opr, {constexprFloatType}, function(this) return this:tonumber() end)
+	end
+	local oprlist = constexprTypeOperatorMap[ constexprUIntegerType]
+	for oi,opr in ipairs(oprlist) do
+		if not unaryOperatorMap[ opr] then
+			definePromoteCall( constexprUIntegerType, constexprIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
+		end
+	end
+	for constexpr_type,typenam in pairs(constexprTypePromoteTypeMap) do
+		local qualitype = scalarQualiTypeMap[ typenam]
+		local oprlist = constexprTypeOperatorMap[ constexpr_type]
+		for oi,opr in ipairs(oprlist) do
+			if not unaryOperatorMap[ opr] then
+				definePromoteCall( qualitype.lval, constexpr_type, opr, {qualitype.c_lval}, nil)
+			end
+		end
+	end
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, 0.25)
 	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion, 0.25)
 	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion, 0.25)
 	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_TypeConversion, 0.25)
 
 	function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, 0.25)
-
-	local int_arg_typenam = "long"
-	local int_arg_type = typedb:get_type( 0, "const " .. int_arg_typenam)
-	definePromoteCall( int_arg_type, constexprIntegerType, "+", {int_arg_type}, nil)
-	definePromoteCall( int_arg_type, constexprIntegerType, "-", {int_arg_type}, nil)
-	definePromoteCall( int_arg_type, constexprIntegerType, "/", {int_arg_type}, nil)
-	definePromoteCall( int_arg_type, constexprIntegerType, "%", {int_arg_type}, nil)
-	local uint_arg_typenam = "ulong"
-	local uint_arg_type = typedb:get_type( 0, "const " .. uint_arg_typenam)
-	definePromoteCall( uint_arg_type, constexprIntegerType, "&", {uint_arg_type}, nil)
-	definePromoteCall( uint_arg_type, constexprIntegerType, "|", {uint_arg_type}, nil)
-	definePromoteCall( uint_arg_type, constexprIntegerType, "^", {uint_arg_type}, nil)
-
-	local float_arg_typenam = "double"
-	local float_arg_type = typedb:get_type( 0, "const " .. float_arg_typenam)
-	definePromoteCall( float_arg_type, constexprFloatType, "+", {float_arg_type}, nil)
-	definePromoteCall( float_arg_type, constexprFloatType, "-", {float_arg_type}, nil)
-	definePromoteCall( float_arg_type, constexprFloatType, "/", {float_arg_type}, nil)
-	definePromoteCall( float_arg_type, constexprFloatType, "%", {float_arg_type}, nil)
-
-	local bool_arg_typenam = "bool"
-	local bool_arg_type = typedb:get_type( 0, "const " .. bool_arg_typenam)
-	definePromoteCall( bool_arg_type, constexprBooleanType, "&&", {bool_arg_type}, nil)
-	definePromoteCall( bool_arg_type, constexprBooleanType, "||", {bool_arg_type}, nil)
-end
-
-function defineOperators( lval, c_lval, typeDescription)
-	if typeDescription.unop then
-		for operator,operator_fmt in pairs( typeDescription.unop) do
-			defineCall( lval, c_lval, operator, {}, callConstructor( operator_fmt))
-		end
-	end
-	if typeDescription.binop then
-		for operator,operator_fmt in pairs( typeDescription.binop) do
-			defineCall( lval, c_lval, operator, {c_lval}, callConstructor( operator_fmt))
-		end
-	end
-	if typeDescription.cmpop then
-		for operator,operator_fmt in pairs( typeDescription.cmpop) do
-			defineCall( scalarBooleanType, c_lval, operator, {c_lval}, callConstructor( operator_fmt))
-		end
-	end
 end
 
 function defineQualifiedTypes( typnam, typeDescription)
@@ -235,21 +220,16 @@ function defineQualifiedTypes( typnam, typeDescription)
 	defineCall( rval, rval, "=", {c_lval}, assignConstructor( typeDescription.assign))
 	defineCall( rpval, rpval, "=", {c_pval}, assignConstructor( pointerTypeDescription.assign))
 
-	defineOperators( lval, c_lval, typeDescription)
-	defineOperators( pval, c_pval, pointerTypeDescription)
-
 	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
 	return lval
 end
-
-function defineIndexOperators( typnam, qualitype, typeDescription)
-	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
+function defineIndexOperators( typnam, qualitype, descr)
+	local pointerTypeDescription = llvmir.pointerType( descr.llvmtype)
 	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
 		defineCall( qualitype.rval, qualitype.pval, "[]", {index_type}, convConstructor( pointerTypeDescription.index[ index_typnam]))
 		defineCall( qualitype.c_rval, qualitype.c_pval, "[]", {index_type}, convConstructor( pointerTypeDescription.index[ index_typnam]))
 	end
 end
-
 function defineBuiltInTypeConversions( typnam, descr)
 	local qualitype = scalarQualiTypeMap[ typnam]
 	if descr.conv then
@@ -259,7 +239,6 @@ function defineBuiltInTypeConversions( typnam, descr)
 		end
 	end
 end
-
 function defineBuiltInTypePromoteCalls( typnam, descr)
 	local qualitype = scalarQualiTypeMap[ typnam]
 	for i,promote_typnam in ipairs( descr.promote) do
@@ -273,10 +252,47 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		end
 	end
 end
+function defineBuiltInTypeOperators( typnam, descr)
+	local qualitype = scalarQualiTypeMap[ typnam]
+	local constexprType = typeClassToConstExprTypeMap[ descr.class]
+	if descr.unop then
+		for operator,operator_fmt in pairs( descr.unop) do
+			defineCall( qualitype.lval, qualitype.c_lval, operator, {}, callConstructor( operator_fmt))
+		end
+	end
+	if descr.binop then
+		for operator,operator_fmt in pairs( descr.binop) do
+			defineCall( qualitype.lval, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
+			if constexprType then
+				defineCall( qualitype.lval, qualitype.c_lval, operator, {constexprType}, callConstructor( operator_fmt))
+			end
+		end
+	end
+	if descr.cmpop then
+		for operator,operator_fmt in pairs( descr.cmpop) do
+			defineCall( scalarBooleanType, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
+			if constexprType then
+				defineCall( scalarBooleanType, qualitype.c_lval, operator, {constexprType}, callConstructor( operator_fmt))
+			end
+		end
+	end
+end
 
 function getContextTypes()
 	local rt = typedb:get_instance( "context")
 	if rt then return rt else return {0} end
+end
+
+function getTypeDescription( type)
+	local rt = typeDescriptionMap[ type]
+	if not rt then
+		local redulist = typedb:get_reductions( type, tag_typeDeclaration)
+		for ri,redu in ipairs(redulist) do
+			rt = typeDescriptionMap[ redu.type]
+			if rt then break end
+		end
+	end
+	return rt
 end
 
 function defineVariable( node, contextTypeId, typeId, name, initVal)
@@ -359,10 +375,13 @@ function initBuiltInTypes()
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineIndexOperators( typnam, scalarQualiTypeMap[ typnam], scalar_descr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
+		defineBuiltInTypeOperators( typnam, scalar_descr)
+	end
+	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
-	defineConstExprOperators()
-	if scalarBooleanType then initControlTypes() end
+	defineConstExprArithmetics()
+	initControlTypes()
 end
 
 function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
@@ -370,7 +389,30 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, getContextTypes(), typeName)
 	end
 	for ii,item in ipairs(items) do
-		if typedb:type_nof_parameters( item.type) == 0 then return item.type,item.constructor end
+		if typedb:type_nof_parameters( item.type) == 0 then
+			local constructor = nil
+			if resolveContextTypeId ~= 0 then
+				constructor = typedb:type_constructor( resolveContextTypeId) 
+			end
+			for ri,redu in ipairs(reductions) do
+				if redu.constructor then
+					constructor = redu.constructor( constructor)
+				end
+			end
+			if item.constructor then
+				if type( item.constructor) == "function" then
+					constructor = item.constructor( constructor)
+				else
+					constructor = item.constructor
+				end
+			end
+			if constructor then
+				local code,out = constructorParts( constructor)
+				return item.type,{code=code,out=out}
+			else
+				return item.type
+			end
+		end
 	end
 	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, getContextTypes(), typeName))
 end
@@ -441,7 +483,7 @@ function applyCallable( node, this, callable, args)
 	end
 	if not bestweight then
 		utils.errorMessage( node.line, "Failed to find callable with signature %s",
-	                    utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
+	                    utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
 	end
 	if #bestmatch == 1 then
 		return bestmatch[1]
@@ -454,19 +496,22 @@ function applyCallable( node, this, callable, args)
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
 		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature %s, list of candidates: %s",
-				utils.resolveTypeString( typedb, getContextTypes(), callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")",
-				altmatchstr)
+				utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")", altmatchstr)
 	end
 end
 
 function convertToBooleanType( node, operand)
 	if type(operand.constructor) == "table" then
 		local bool_constructor = getReductionConstructor( node, scalarBooleanType, operand)
-		if not bool_constructor then utils.errorMessage( node.line, "Argument is not reducible to boolean") end
+		if not bool_constructor then
+			utils.errorMessage( node.line, "Operand type '%s' is not reducible to boolean", typedb:type_string(operand.type))
+		end
 		return {type=scalarBooleanType, constructor=bool_constructor}
 	else
 		local bool_constructor = getReductionConstructor( node, constexprBooleanType, operand)
-		if not bool_constructor then utils.errorMessage( node.line, "Argument is not reducible to boolean const expression") end
+		if not bool_constructor then
+			utils.errorMessage( node.line, "Operand type '%s' is not reducible to boolean const expression", typedb:type_string(operand.type))
+		end
 		return {type=constexprBooleanType, constructor=bool_constructor}
 	end
 end
@@ -548,15 +593,16 @@ function defineCallable( node, descr, contextTypeId)
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.name, descr.param, contextTypeId)
 	descr.callargstr = getParameterListCallTemplate( descr.param)
+	local callable = typedb:get_type( contextTypeId, descr.name)
+	if not callable then callable = typedb:def_type( contextTypeId, descr.name) end
 	if descr.ret then
 		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
 		local callfmt = utils.template_format( llvmir.control.functionCall, descr)
-		local functype = typedb:def_type( contextTypeId, descr.name, callConstructor( callfmt), getParameterTypeList(descr.param))
-		typedb:def_reduction( descr.ret, functype, nil, tag_typeDeclaration)
+		defineCall( descr.ret, callable, "()", descr.param, callConstructor( callfmt))
 	else
 		descr.rtype = "void"
 		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
-		local functype = typedb:def_type( contextTypeId, descr.name, callConstructor( callfmt), getParameterTypeList(descr.param))
+		defineCall( nil, callable, "()", descr.param, callConstructor( callfmt))
 	end
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
 end
@@ -645,7 +691,8 @@ end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
 	local type,rcode,rout = arg[1].type, arg[1].constructor.code, arg[1].constructor.out
-	return {code=rcode .. utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[type], inp=rout})}
+	io.stderr:write("++++ RETURN FMT " .. mewa.tostring({type=getTypeDescription(type).llvmtype, rcode=rcode, rout=rout}) .. "\n")
+	return {code=rcode .. utils.constructor_format( llvmir.control.returnStatement, {type=getTypeDescription(type).llvmtype, inp=rout})}
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
@@ -666,7 +713,7 @@ function typesystem.conditional_while( node)
 	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
 	local ccode,cout = cond.constructor.code, cond.constructor.out
 	local start = typedb:get_instance( "label")()
-	local startcode = utils.constructor_format( llvmir.control.label, {inp=arg[1].out})
+	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
 	return {code = startcode .. ccode .. arg[2].code .. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cout})}
 end
 

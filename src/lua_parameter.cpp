@@ -35,7 +35,7 @@ int mewa::lua::checkNofArguments( const char* functionName, lua_State* ls, int m
 	}
 	if (nn < minNofArgs)
 	{
-		throw mewa::Error( mewa::Error::TooFewArguments, mewa::string_format( "%s [%d, maximum %d]", functionName, nn, maxNofArgs));
+		throw mewa::Error( mewa::Error::TooFewArguments, mewa::string_format( "%s [%d, minimum %d]", functionName, nn, minNofArgs));
 	}
 	return nn;
 }
@@ -213,7 +213,7 @@ static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functio
 		lua_pushvalue( ls, li < 0 ? (li-1) : li );
 		lua_pushnil( ls);							//STK: [OBJTAB] [PARAMTAB] [KEY] NIL
 		int type = -1;
-		int constructor = -1;
+		int constructor = 0;
 		int rowcnt = 0;
 
 		while (lua_next( ls, -2))						// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
@@ -251,10 +251,6 @@ static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functio
 					lua_pushvalue( ls, -1);				// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
 					lua_rawseti( ls, -5, constructor);		// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 				}
-				else
-				{
-					mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructureList);
-				}
 			}
 			else
 			{
@@ -263,7 +259,7 @@ static mewa::TypeDatabase::Parameter getArgumentAsParameter( const char* functio
 			lua_pop( ls, 1);						// STK: [OBJTAB] [PARAMTAB] [KEY]
 		}
 		lua_pop( ls, 2);							// STK:
-		if (rowcnt != 2 || type < 0 || constructor <= 0)
+		if (type < 0)
 		{
 			mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentParameterStructureList);
 		}

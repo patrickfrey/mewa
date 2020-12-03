@@ -24,9 +24,9 @@ namespace mewa {
 /// \brief Serialize the contents of a lua value on the stack
 /// \param[in] ls Lua state
 /// \param[in] li lua value reference
-/// \param[in] formatted true if output with formatting (indentiation)
+/// \param[in] use_indent true if output with indent, false if to return everything on one line
 /// \return the result string
-std::string luaToString( lua_State* ls, int li, bool formatted);
+std::string luaToString( lua_State* ls, int li, bool use_indent);
 
 } //namespace
 #else

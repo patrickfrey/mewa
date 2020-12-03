@@ -8,8 +8,9 @@ IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
 DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
 SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1;
 CARDINAL: '[0123456789]+';
-FLOAT	: '[0123456789]+[.][0123456789]+';
-FLOAT	: '[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+INTEGER:  '[-][0123456789]+';
+FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+';
+FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
 BOOLEAN : '((true)|(false))';
 
 program		   	= definitionlist								(program)
@@ -72,7 +73,8 @@ variabledefinition	= "var" typespec IDENT								(>>vardef)
 			;
 expression/L1		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
-			| CARDINAL									(constant "constexpr int")
+			| CARDINAL									(constant "constexpr uint")
+			| INTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
 			| DQSTRING									(constant "constexpr dqstring")
 			| SQSTRING									(constant "constexpr qstring")

@@ -41,8 +41,8 @@ M.control = {
 	label = "{inp}:\n",
 	returnStatement = "ret {type} {inp}\n",
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
-	functionCall = "{out} = call {rtype} @{symbolname)( {callargstr})\n",
-	procedureCall = "call void @{symbolname)( {callargstr})\n"
+	functionCall = "{out} = call {rtype} @{symbolname}( {callargstr})\n",
+	procedureCall = "call void @{symbolname}( {callargstr})\n"
 }
 
 local pointerTypeMap = {}
