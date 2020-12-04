@@ -156,7 +156,6 @@ function testDefineResolveType()
 			if type(ctx) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( qry[1]) .. qry[2]) end
 
 			prev_type = any_type
-			io.stderr:write( "+++++ REDUCTIONS " .. typedb:type_string(qry[1]) .. " => " .. typedb:type_string(ctx) .. " " .. mewa.tostring(reductions) .. "\n")
 			for ri,reduction in ipairs( reductions) do
 				constructor = reduction.constructor( typedb:type_string( prev_type))
 				result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
