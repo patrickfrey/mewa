@@ -18,7 +18,7 @@ mewa = require("mewa")
 compiler = mewa.compiler( compilerdef)
 
 ```
-```compilerdev``` is the structure created from the grammar definition by the _mewa_ program.
+```compilerdef``` is the structure created from the grammar definition by the _mewa_ program.
 
 ### Run the Compiler
 The compiler has one method ```run``` that takes 3 arguments from which two are optional:
