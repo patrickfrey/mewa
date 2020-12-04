@@ -13,11 +13,11 @@ The project development is currently ongoing and only what you find in the tests
 # Documentation
 * [Glossary](doc/glossary.md)
 * [Example Compiler Frontend Implementation](doc/example_compiler.md)
-* [The Grammar Description Language](doc/grammar.md)
-* [The Parser Generator Program](doc/program_mewa.pdf)
-* [The Lua Module API](doc/libmewa.md)
-* [The AST (Abstract Syntax Tree) Format](doc/ast.md)
-* [The Mewa Error Codes](doc/errorcodes.md)
-* [Frequently asked questions (FAQ)](doc/faq.md)
-* [Collected Links](doc/links.md)
+* [Grammar Description Language](doc/grammar.md)
+* [Parser Generator](doc/program_mewa.pdf)
+* [API](doc/libmewa.md)
+* [AST (Abstract Syntax Tree) Format](doc/ast.md)
+* [Error Codes](doc/errorcodes.md)
+* [FAQ](doc/faq.md)
+* [Links](doc/links.md)
 
