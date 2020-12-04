@@ -134,7 +134,7 @@ function testDefineResolveType()
 	typedb:step( 34)
 	local types = {short_type, int_type, float_type}
 	for i,type in ipairs( types) do
-		for i,reduction in ipairs( typedb:type_reductions( type, mask_resolve)) do
+		for i,reduction in ipairs( typedb:get_reductions( type, mask_resolve)) do
 			result = result .. "\nREDU " .. typedb:type_string( type) .. " -> " .. typedb:type_string( reduction.type)
 					.. " : " .. reduction.constructor( typedb:type_string( type))
 		end
@@ -144,8 +144,9 @@ function testDefineResolveType()
 			{short_type,int_type},{short_type,float_type},{int_type,float_type},
 			{int_type,short_type},{float_type,short_type},{float_type,int_type}}
 	for i,redu in ipairs( reduction_queries) do
-		local constructor = typedb:type_reduction( redu[1], redu[2], mask_resolve)
+		local weight,constructor = typedb:get_reduction( redu[1], redu[2], mask_resolve)
 		result = result .. "\nSELECT REDU " .. typedb:type_string( redu[2]) .. " -> " .. typedb:type_string( redu[1])
+					.. string.format( " /%.4f", weight)
 					.. " : " .. constructor( typedb:type_string( redu[2]))
 	end
 	local resolve_queries = {{short_type, "+"},{int_type, "+"},{float_type, "+"},{any_type, "+"}}
@@ -155,15 +156,11 @@ function testDefineResolveType()
 			if type(ctx) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( qry[1]) .. qry[2]) end
 
 			prev_type = any_type
+			io.stderr:write( "+++++ REDUCTIONS " .. typedb:type_string(qry[1]) .. " => " .. typedb:type_string(ctx) .. " " .. mewa.tostring(reductions) .. "\n")
 			for ri,reduction in ipairs( reductions) do
-				if ri == 1 then
-					constructor = mewa.tostring( reduction.constructor, false)
-					result = result .. "\nRESOLVE START " .. typedb:type_string( reduction.type) .. " : " .. constructor
-				else
-					constructor = reduction.constructor( typedb:type_string( prev_type))
-					result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
-							.. " : " .. constructor
-				end
+				constructor = reduction.constructor( typedb:type_string( prev_type))
+				result = result .. "\nRESOLVE REDU " .. typedb:type_string( reduction.type) .. "<-" .. typedb:type_string( prev_type)
+						.. " : " .. constructor
 				prev_type = reduction.type
 			end
 			for i,item in ipairs( items) do
@@ -180,9 +177,9 @@ TYPE TREE
   - short : {code = "#short",type = "short"}
   - int : {code = "#int",type = "int"}
   - float : {code = "#float",type = "float"}
-  - short +( short) : {code = "short+short",op = "add",type = "short"}
-  - int +( int) : {code = "int+int",op = "add",type = "int"}
-  - float +( float) : {code = "float+float",op = "add",type = "float"}
+  - short +(short) : {code = "short+short",op = "add",type = "short"}
+  - int +(int) : {code = "int+int",op = "add",type = "int"}
+  - float +(float) : {code = "float+float",op = "add",type = "float"}
 
 REDU short -> float : #float(short)
 REDU short -> int : #int(short)
@@ -190,21 +187,17 @@ REDU int -> float : #float(int)
 REDU int -> short : #short(int)
 REDU float -> int : #int(float)
 REDU float -> short : #short(float)
-SELECT REDU int -> short : #short(int)
-SELECT REDU float -> short : #short(float)
-SELECT REDU float -> int : #int(float)
-SELECT REDU short -> int : #int(short)
-SELECT REDU short -> float : #float(short)
-SELECT REDU int -> float : #float(int)
-RESOLVE START short : {code = "#short",type = "short"}
-RESOLVE ITEM short +( short) : {code = "short+short",op = "add",type = "short"}
-RESOLVE START int : {code = "#int",type = "int"}
-RESOLVE ITEM int +( int) : {code = "int+int",op = "add",type = "int"}
-RESOLVE START float : {code = "#float",type = "float"}
-RESOLVE ITEM float +( float) : {code = "float+float",op = "add",type = "float"}
-RESOLVE START any : {code = "#any",type = "any"}
+SELECT REDU int -> short /0.5000 : #short(int)
+SELECT REDU float -> short /0.5000 : #short(float)
+SELECT REDU float -> int /0.5000 : #int(float)
+SELECT REDU short -> int /1.0000 : #int(short)
+SELECT REDU short -> float /1.0000 : #float(short)
+SELECT REDU int -> float /1.0000 : #float(int)
+RESOLVE ITEM short +(short) : {code = "short+short",op = "add",type = "short"}
+RESOLVE ITEM int +(int) : {code = "int+int",op = "add",type = "int"}
+RESOLVE ITEM float +(float) : {code = "float+float",op = "add",type = "float"}
 RESOLVE REDU float<-any : #float(any)
-RESOLVE ITEM float +( float) : {code = "float+float",op = "add",type = "float"}]]
+RESOLVE ITEM float +(float) : {code = "float+float",op = "add",type = "float"}]]
 	checkTestResult( "testDefineResolveType", result, expected)
 end
 
