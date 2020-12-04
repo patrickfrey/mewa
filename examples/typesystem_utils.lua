@@ -78,19 +78,19 @@ end
 
 -- Tree traversal:
 -- Call tree node callback function for subnodes
-function utils.traverseCall( node, context)
+function utils.traverseCallRange( node, range, ...)
 	if node.arg then
 		local rt = {}
-		for ii, vv in ipairs( node.arg) do
-			local subnode = node.arg[ ii]
+		for ii=range[1],range[2] do
+			local subnode = node.arg[ii]
 			if subnode.call then
 				if subnode.call.obj then
-					rt[ ii] = subnode.call.proc( subnode, subnode.call.obj, context)
+					rt[ii] = subnode.call.proc( subnode, subnode.call.obj, ...)
 				else
-					rt[ ii] = subnode.call.proc( subnode, context)
+					rt[ii] = subnode.call.proc( subnode, ...)
 				end
 			else
-				rt[ ii] = subnode.value
+				rt[ii] = subnode.value
 			end
 		end
 		return rt
@@ -99,21 +99,27 @@ function utils.traverseCall( node, context)
 	end
 end
 
--- Tree traversal, define scope/step and do the traversal call 
-function utils.traverse( typedb, node, context)
+-- Tree traversal or a subrange of argument nodes, define scope/step and do the traversal call
+function utils.traverseRange( typedb, node, range, ...)
 	local rt = nil
 	if (node.scope) then
 		local parent_scope = typedb:scope( node.scope)
-		rt = utils.traverseCall( node, context)
+		rt = utils.traverseCallRange( node, range, ...)
 		typedb:scope( parent_scope)
 	elseif (node.step) then
 		local prev_step = typedb:step( node.step)
-		rt = utils.traverseCall( node, context)
+		rt = utils.traverseCallRange( node, range, ...)
 		typedb:step( prev_step)
 	else
-		rt = utils.traverseCall( node, context)
+		rt = utils.traverseCallRange( node, range, ...)
 	end
 	return rt
+end
+
+-- Tree traversal, define scope/step and do the traversal call
+function utils.traverse( typedb, node, ...)
+	local range; if node.arg then range = {1,#node.arg} else range = {} end
+	return utils.traverseRange( typedb, node, range, ...)
 end
 
 -- [3] Node visitor doing a traversal and returning the tree structure with the name and scope of the node

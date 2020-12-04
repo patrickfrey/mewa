@@ -214,7 +214,7 @@ function defineQualifiedTypes( typnam, typeDescription)
 	valueTypeMap[ rpval] = pval
 	valueTypeMap[ c_rpval] = c_pval
 
-	typedb:def_reduction( c_lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
+	typedb:def_reduction( lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 
 	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
 	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
@@ -291,15 +291,6 @@ end
 function getContextTypes()
 	local rt = typedb:get_instance( "context")
 	if rt then return rt else return {0} end
-end
-
-function getTypeDescription( type)
-	if valueTypeMap[ type] then return typeDescriptionMap[ valueTypeMap[ type]] end
-	local redulist = typedb:get_reductions( type, tag_typeDeclaration)
-	for ri,redu in ipairs(redulist) do
-		if valueTypeMap[ redu.type] then return typeDescriptionMap[ valueTypeMap[ redu.type]] end
-	end
-	return nil
 end
 
 function defineVariable( node, contextTypeId, typeId, name, initVal)
@@ -697,8 +688,11 @@ function typesystem.statement( node)
 end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
-	local type,rcode,rout = arg[1].type, arg[1].constructor.code, arg[1].constructor.out
-	return {code=rcode .. utils.constructor_format( llvmir.control.returnStatement, {type=getTypeDescription(type).llvmtype, inp=rout})}
+	local type = typedb:get_instance( "return")
+	if type == 0 then utils.errorMessage( node.line, "Procedure can't return value") end
+	local constructor = getReductionConstructor( node, type, arg[1])
+	local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[type].llvmtype, inp=constructor.out})
+	return {code = constructor.code .. code}
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
@@ -757,18 +751,20 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, contextTypeId)
-	local arg = utils.traverse( typedb, node, contextTypeId)
+	local arg = utils.traverseRange( typedb, node, {1,#node.arg-1}, contextTypeId)
+	arg[#node.arg] = utils.traverseRange( typedb, node, {#node.arg-1,#node.arg}, contextTypeId, arg[2])[#node.arg]
 	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3], param = arg[4].param, body = arg[4].code}
 	defineCallable( node, descr, contextTypeId)
 end
 function typesystem.procdef( node, contextTypeId)
-	local arg = utils.traverse( typedb, node, contextTypeId)
+	local arg = utils.traverse( typedb, node, contextTypeId, 0)
 	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], param = arg[3].param, body = arg[3].code}
 	defineCallable( node, descr, contextTypeId)
 end
-function typesystem.callablebody( node, contextTypeId) 
+function typesystem.callablebody( node, contextTypeId, rtype) 
 	typedb:set_instance( "register", utils.register_allocator())
 	typedb:set_instance( "label", utils.label_allocator())
+	typedb:set_instance( "return", rtype)
 	local arg = utils.traverse( typedb, node, contextTypeId)
 	return {param = arg[1], code = arg[2].code}
 end

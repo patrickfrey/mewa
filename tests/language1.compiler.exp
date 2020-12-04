@@ -26,4 +26,4 @@ L1:
 ret i32 %r3
 }
 
-FALSE, NOT CHECKED YET mv build/language1.compiler.out  tests/language1.compiler.exp!
+FALSE, NOT CHECKED YET
