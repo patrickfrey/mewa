@@ -60,6 +60,20 @@ std::string mewa::readFile( const std::string& filename)
 	return rt;
 }
 
+std::vector<std::string> mewa::readFileLines( const std::string& filename)
+{
+	std::vector<std::string> rt;
+	std::string content = mewa::readFile( filename);
+	char const* si = content.c_str();
+	char const* sn = std::strchr( si, '\n');
+	for (; sn; si=sn+1,sn = std::strchr( si, '\n'))
+	{
+		rt.emplace_back( std::string( si, sn));
+	}
+	rt.emplace_back( std::string( si));
+	return rt;
+}
+
 void mewa::removeFile( const std::string& filename)
 {
 	while (0>::remove( filename.c_str()))

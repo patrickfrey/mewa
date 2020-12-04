@@ -63,6 +63,8 @@ std::pmr::vector<mewa::TypeDatabase::Parameter> getArgumentAsParameterList(
 std::pmr::vector<int> getArgumentAsTypeList( 
 	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc, bool allowTypeConstructorPairs);
 
+std::vector<std::string> getArgumentAsStringList( const char* functionName, lua_State* ls, int li);
+
 inline void checkStack( const char* functionName, lua_State* ls, int sz)
 {
 	if (!lua_checkstack( ls, sz)) throw mewa::Error( mewa::Error::LuaStackOutOfMemory, functionName);
@@ -91,7 +93,8 @@ void pushScope( lua_State* ls, const char* functionName, const mewa::Scope& scop
 int pushResolveResult(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const mewa::TypeDatabase::ResolveResult& resolveres);
-		
+
+void pushStackTrace( lua_State* ls, const char* functionName, int nn, const std::vector<std::string>& ignoreList);
 
 }} //namespace
 #else

@@ -22,40 +22,41 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#411**   _Expected table as argument_
 + **#412**   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
 + **#413**   _Expected argument to be a list of type,constructor pairs (named or positional)_
-+ **#414**   _Expected argument to be a list of types (integers)_
-+ **#415**   _Expected argument to be a list of types (integers) or type,constructor pairs_
-+ **#416**   _Expected argument to be not nil_
-+ **#417**   _Too few arguments_
-+ **#418**   _Too many arguments_
-+ **#419**	_Compile error_
++ **#414**   _Expected argument to be a list of strings_
++ **#415**   _Expected argument to be a list of types (integers)_
++ **#416**   _Expected argument to be a list of types (integers) or type,constructor pairs_
++ **#417**   _Expected argument to be not nil_
++ **#418**   _Too few arguments_
++ **#419**   _Too many arguments_
++ **#420**	_Compile error_
 
 ## Errors in Lexer
-+ **#421**   _Bad character in a regular expression passed to the lexer_
-+ **#422**   _Syntax error in the lexer definition_
-+ **#423**   _Logic error (array bound read) in the lexer definition_
-+ **#424**   _Bad regular expression definition for the lexer_
-+ **#425**   _Keyword defined twice for the lexer_
++ **#431**   _Bad character in a regular expression passed to the lexer_
++ **#432**   _Syntax error in the lexer definition_
++ **#433**   _Logic error (array bound read) in the lexer definition_
++ **#434**   _Bad regular expression definition for the lexer_
++ **#435**   _Keyword defined twice for the lexer_
 
 ## Compiler Complexity Boundaries
-+ **#426**   _Too many instances created (internal counter overflow)_
-+ **#427**   _Too complex source file (counter overflow)_
++ **#436**   _Too many instances created (internal counter overflow)_
++ **#437**   _Too complex source file (counter overflow)_
 
 ## Mewa Version Mismatch Errors
-+ **#437**   _Bad mewa version_
-+ **#438**   _Missing mewa version_
-+ **#439**   _Incompatible mewa major version. You need a higher version of the mewa Lua module_
++ **#447**   _Bad mewa version_
++ **#448**   _Missing mewa version_
++ **#449**   _Incompatible mewa major version. You need a higher version of the mewa Lua module_
 
 ## Typedb Errors
-+ **#440**   _Too many arguments in type definition_
-+ **#441**   _Priority value out of range_
-+ **#442**   _Duplicate definition_
-+ **#443**   _Bad weight <= 0.0 given to relation_
-+ **#444**   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
-+ **#445**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
-+ **#446**   _Invalid processing boundary value. Expected to be a non negative number_
++ **#450**   _Too many arguments in type definition_
++ **#451**   _Priority value out of range_
++ **#452**   _Duplicate definition_
++ **#453**   _Bad weight <= 0.0 given to relation_
++ **#454**   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
++ **#455**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
++ **#456**   _Invalid processing boundary value. Expected to be a non negative number_
 
-+ **#452**   _Ambiguous definitions of reductions_
-+ **#454**   _Error in scope hierarchy: Defined overlapping scopes without one including the other_
++ **#462**   _Ambiguous definitions of reductions_
++ **#463**   _Error in scope hierarchy: Defined overlapping scopes without one including the other_
 
 ## Grammar Definition Errors
 + **#501**   _Bad character in the grammar definition_

@@ -1,8 +1,8 @@
 local utils = require "typesystem_utils"
 
-local M = {}
+local llvmir = {}
 
-M.scalar = require "language1/llvmir_scalar"
+llvmir.scalar = require "language1/llvmir_scalar"
 
 local pointerTemplate = {
 	def_local = "{out} = alloca {pointee}\n",
@@ -32,7 +32,7 @@ local pointerTemplate = {
 		[">"] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp sgt {size_t} {1}, {2}\n"}
 }
 
-M.control = {
+llvmir.control = {
 	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
 	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
 	booleanToFalseExit = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
@@ -46,7 +46,7 @@ M.control = {
 }
 
 local pointerTypeMap = {}
-function M.pointerType( llvmPointeeType)
+function llvmir.pointerType( llvmPointeeType)
 	local pointerType = pointerTypeMap[ llvmPointeeType]
 	if not pointerType then
 		pointerType = utils.template_format( pointerTemplate, {pointee=llvmPointeeType, size_t="i64"} )
@@ -55,5 +55,5 @@ function M.pointerType( llvmPointeeType)
 	return pointerType
 end
 
-return M
+return llvmir
 

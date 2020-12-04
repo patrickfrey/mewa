@@ -1,22 +1,22 @@
 --- Utility functions for the typesystem module
 
 -- Module object with all functions exported
-local M = {}
+local utils = {}
 
 -- Encode a name
-function M.encodeName( name)
+function utils.encodeName( name)
 	return name:gsub("([*])", "$")
 end
 
 -- Create a unique name
 local uniqueNameIdxMap = {}
-function M.uniqueName( prefix)
+function utils.uniqueName( prefix)
 	if uniqueNameIdxMap[ prefix] then uniqueNameIdxMap[ prefix] = uniqueNameIdxMap[ prefix] + 1 else uniqueNameIdxMap[ prefix] = 1 end
 	return prefix .. uniqueNameIdxMap[ prefix]
 end
 
 -- Map template for LLVM Code synthesis
-function M.constructor_format( fmt, argtable, allocator)
+function utils.constructor_format( fmt, argtable, allocator)
 	local valtable = {}
 	local subst = function( match)
 		local index = tonumber( match)
@@ -28,23 +28,23 @@ function M.constructor_format( fmt, argtable, allocator)
 				valtable[ index] = rr
 				return rr
 			else
-				M.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined", fmt, index)
+				utils.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined", fmt, index)
 			end
 		elseif argtable[ match] then
 			return argtable[ match]
 		else
-			M.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", fmt, match, mewa.tostring(argtable,false))
+			utils.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", fmt, match, mewa.tostring(argtable,false))
 		end
 	end
 	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
 end
 
 -- Map a LLVM Code synthesis template to a template substituting only the defined arguments and leaving the rest of the substitutions occurring untouched
-function M.template_format( fmt, arg )
+function utils.template_format( fmt, arg )
 	if type( fmt) == "table" then
 		local rt = {}
 		for kk,vv in pairs( fmt) do
-			rt[ kk] = M.template_format( vv, arg)
+			rt[ kk] = utils.template_format( vv, arg)
 		end
 		return rt;
 	else
@@ -60,7 +60,7 @@ function M.template_format( fmt, arg )
 end
 
 -- Name allocators for LLVM
-function M.name_allocator( prefix)
+function utils.name_allocator( prefix)
         local i = 0
         return function ()
                 i = i + 1
@@ -68,17 +68,17 @@ function M.name_allocator( prefix)
         end
 end
 
-function M.label_allocator()
-	return M.name_allocator( "L")
+function utils.label_allocator()
+	return utils.name_allocator( "L")
 end
 
-function M.register_allocator()
-	return M.name_allocator( "%r")
+function utils.register_allocator()
+	return utils.name_allocator( "%r")
 end
 
 -- Tree traversal:
 -- Call tree node callback function for subnodes
-function M.traverseCall( node, context)
+function utils.traverseCall( node, context)
 	if node.arg then
 		local rt = {}
 		for ii, vv in ipairs( node.arg) do
@@ -100,30 +100,30 @@ function M.traverseCall( node, context)
 end
 
 -- Tree traversal, define scope/step and do the traversal call 
-function M.traverse( typedb, node, context)
+function utils.traverse( typedb, node, context)
 	local rt = nil
 	if (node.scope) then
 		local parent_scope = typedb:scope( node.scope)
-		rt = M.traverseCall( node, context)
+		rt = utils.traverseCall( node, context)
 		typedb:scope( parent_scope)
 	elseif (node.step) then
 		local prev_step = typedb:step( node.step)
-		rt = M.traverseCall( node, context)
+		rt = utils.traverseCall( node, context)
 		typedb:step( prev_step)
 	else
-		rt = M.traverseCall( node, context)
+		rt = utils.traverseCall( node, context)
 	end
 	return rt
 end
 
 -- [3] Node visitor doing a traversal and returning the tree structure with the name and scope of the node
-function M.abstractSyntaxTree( typedb, node)
-	return {name=node.call.name, scope=node.scope, arg=M.traverse( typedb, node)}
+function utils.abstractSyntaxTree( typedb, node)
+	return {name=node.call.name, scope=node.scope, arg=utils.traverse( typedb, node)}
 end
 
 -- Types in readable form for messages
 -- Type as string
-function M.typeString( typedb, typeId)
+function utils.typeString( typedb, typeId)
 	if typeId == 0 then
 		return "<>"
 	elseif type(typeId) == "table" then
@@ -134,37 +134,37 @@ function M.typeString( typedb, typeId)
 end
 
 -- Type list as string
-function M.typeListString( typedb, typeList, separator)
+function utils.typeListString( typedb, typeList, separator)
 	if not typeList or #typeList == 0 then return "" end
-	local rt = M.typeString( typedb, typeList[ 1])
+	local rt = utils.typeString( typedb, typeList[ 1])
 	for ii=2,#typeList do
-		rt = rt .. separator .. M.typeString( typedb, typeList[ ii])
+		rt = rt .. separator .. utils.typeString( typedb, typeList[ ii])
 	end
 	return rt
 end
 
 -- Type to resolve as string for errir messages
-function M.resolveTypeString( typedb, contextType, typeName)
+function utils.resolveTypeString( typedb, contextType, typeName)
 	local rt
 	if type(contextType) == "table" then
 		if #contextType == 0 then
 			rt = "{} " .. typeName
 		else
-			rt = "{ " .. M.typeString( typedb, contextType[1])
+			rt = "{ " .. utils.typeString( typedb, contextType[1])
 			for ii = 2,#contextType,1 do
-				rt = ", " .. M.typeString( typedb, contextType[ ii])
+				rt = ", " .. utils.typeString( typedb, contextType[ ii])
 			end
 			rt = rt .. " } " .. typeName
 		end
 	else
-		rt = M.typeString( typedb, contextType) .. " " .. typeName
+		rt = utils.typeString( typedb, contextType) .. " " .. typeName
 	end
 	return rt;
 end
 
 -- Error reporting:
 -- Exit with error message and line info
-function M.errorMessage( line, fmt, ...)
+function utils.errorMessage( line, fmt, ...)
 	local arg = {...}
 	if line ~= 0 then
 		error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
@@ -174,19 +174,19 @@ function M.errorMessage( line, fmt, ...)
 end
 
 -- Exit with error for no result or an ambiguous result returned by typedb:resolve_type
-function M.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
-	local resolveTypeString = M.resolveTypeString( typedb, contextType, typeName)
+function utils.errorResolveType( typedb, line, resultContextTypeId, contextType, typeName)
+	local resolveTypeString = utils.resolveTypeString( typedb, contextType, typeName)
 	if not resultContextTypeId then
-		M.errorMessage( line, "Failed to resolve '%s'", resolveTypeString)
+		utils.errorMessage( line, "Failed to resolve '%s'", resolveTypeString)
 	elseif type(typeId) == "table" then
 		local t1 = typedb:type_string( resultContextTypeId[1])
 		local t2 = typedb:type_string( resultContextTypeId[2])
-		M.errorMessage( line, "Ambiguous reference resolving '%s': %s, %s", resolveTypeString, t1, t2)
+		utils.errorMessage( line, "Ambiguous reference resolving '%s': %s, %s", resolveTypeString, t1, t2)
 	end
 end
 
 -- Unicode support, function taken from http://lua-users.org/wiki/LuaUnicode
-function M.utf8to32( utf8str)
+function utils.utf8to32( utf8str)
 	local res, seq, val = {}, 0, nil
 	for i = 1, #utf8str do
 		local c = string.byte(utf8str, i)
@@ -207,7 +207,7 @@ function M.utf8to32( utf8str)
 end
 
 -- Debug function that returns the tree with all resolve type paths
-function M.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
+function utils.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
 	function getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, indentstr, visited)
 		local typeid = typedb:get_type( contextType, typeName, parameters)
 		if typeid then
@@ -243,13 +243,13 @@ function treeToString( typedb, node, indentstr, node_tostring)
 	return rt
 end
 
-function M.getTypeTreeDump( typedb)
+function utils.getTypeTreeDump( typedb)
 	function node_tostring(nd)
 		return string.format( "%s : %s", typedb:type_string(nd), mewa.tostring(typedb:type_constructor(nd),false))
 	end
 	return treeToString( typedb, typedb:type_tree(), "", node_tostring)
 end
-function M.getReductionTreeDump( typedb)
+function utils.getReductionTreeDump( typedb)
 	function node_tostring(nd)
 		return string.format( "%s <- %s [%d]/%.3f : %s",
 					typedb:type_string(nd.to), typedb:type_string(nd.from), nd.tag, nd.weight,
@@ -258,5 +258,5 @@ function M.getReductionTreeDump( typedb)
 	return treeToString( typedb, typedb:reduction_tree(), "", node_tostring)
 end
 
-return M
+return utils
 

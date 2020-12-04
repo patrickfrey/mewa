@@ -15,7 +15,9 @@
 #include "scope.hpp"
 #include "typedb.hpp"
 #include "strings.hpp"
+#include "fileio.hpp"
 #include <cstdlib>
+#include <iostream>
 #include <cmath>
 
 extern "C" {
@@ -311,6 +313,36 @@ std::pmr::vector<mewa::TypeDatabase::Parameter>
 	return rt;
 }
 
+std::vector<std::string> mewa::lua::getArgumentAsStringList( const char* functionName, lua_State* ls, int li)
+{
+	std::vector<std::string> rt;
+	if (lua_isnil( ls, li)) return rt;
+	checkArgumentAsTable( functionName, ls, li);
+
+	lua_pushvalue( ls, li);
+	lua_pushnil( ls);		//STK: [STRLIST] NIL
+	while (lua_next( ls, -2))	//STK: [STRLIST] [KEY] [VAL]
+	{
+		if (lua_type( ls, -2) == LUA_TNUMBER && lua_type( ls, -1) == LUA_TSTRING)
+		{
+			int kidx = getTableIndex( ls, -2);
+			if (!kidx) throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentStringList);
+			while (kidx > (int)rt.size())
+			{
+				rt.push_back( std::string());
+			}
+			rt[ kidx-1] = lua_tostring( ls, -1);
+		}
+		else
+		{
+			throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentStringList);
+		}
+		lua_pop( ls, 1);	//STK: [STRLIST] [KEY]
+	}
+	lua_pop( ls, 1);		//STK:
+	return rt;
+}
+
 std::pmr::vector<int> mewa::lua::getArgumentAsTypeList( 
 	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc, bool allowTypeConstructorPairs)
 {
@@ -378,6 +410,13 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 				}
 				rt[ index] = type;
 			}
+		}
+		else
+		{
+			mewa::lua::throwArgumentError(
+				functionName, li, allowTypeConstructorPairs
+							? mewa::Error::ExpectedArgumentTypeList
+							: mewa::Error::ExpectedArgumentTypeOrParameterStructureList);
 		}
 		lua_pop( ls, 1);	//STK: [PARAMTAB] [KEY]
 	}
@@ -583,5 +622,70 @@ int mewa::lua::pushResolveResult(
 	}
 	return 0;
 }
+
+void mewa::lua::pushStackTrace( lua_State* ls, const char* functionName, int nn, const std::vector<std::string>& ignoreList)
+{
+	std::map<std::string,std::vector<std::string> > locationMap;
+	lua_newtable( ls);								// STK: [STKTR]
+	int ridx = 1;
+	int resultIndex = 1;
+	lua_Debug ar;
+	while (resultIndex <= nn && lua_getstack( ls, ridx, &ar))
+	{
+		bool do_ignore = false;
+		lua_getinfo( ls, "S", &ar);
+		if (0 == std::strcmp( ar.short_src, "[C]")) break;
+
+		lua_createtable( ls, 0/*narr*/, 3/*nrec*/);				// STK: [STKTR] [ELEM]
+		if (ar.linedefined >= 1)
+		{
+			lua_pushliteral( ls, "line");					// STK: [STKTR] [ELEM] "line"
+			lua_pushinteger( ls, ar.linedefined);				// STK: [STKTR] [ELEM] "line" [LINE]
+			lua_rawset( ls, -3);						// STK: [STKTR] [ELEM]
+		}
+		lua_pushliteral( ls, "file");						// STK: [STKTR] [ELEM] "file"
+		lua_pushstring( ls, ar.short_src);					// STK: [STKTR] [ELEM] "file" [FILENAME]
+		lua_rawset( ls, -3);							// STK: [STKTR] [ELEM]
+		auto fi = locationMap.find( ar.short_src);
+		if (fi == locationMap.end())
+		{
+			auto ins = locationMap.insert( {ar.short_src, mewa::readFileLines( ar.short_src)} );
+			fi = ins.first;
+		}
+		if ((int)fi->second.size() >= ar.linedefined)
+		{
+			char const* ln = fi->second[ ar.linedefined-1].c_str();
+			for (; *ln && (unsigned char)*ln <= 32; ++ln){}
+			if (0==std::memcmp( ln, "function ", 8)) ln += 8;
+			for (; *ln && (unsigned char)*ln <= 32; ++ln){}
+			char const* le = std::strchr( ln, '(');
+			if (!le) le = std::strchr( ln, '\0');
+			std::string funcstr( ln, le-ln);
+			for (auto ignore : ignoreList)
+			{
+				const char* si = std::strstr( funcstr.c_str(), ignore.c_str());
+				do_ignore |= (!!si);
+			}
+			lua_pushliteral( ls, "function");				// STK: [STKTR] [ELEM] "function"
+			lua_pushlstring( ls, ln, le-ln);				// STK: [STKTR] [ELEM] "function" [FUNCNAME]
+			lua_rawset( ls, -3);						// STK: [STKTR] [ELEM]
+		}
+		else
+		{
+			throw mewa::Error( mewa::Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
+		if (do_ignore)
+		{
+			lua_pop( ls, 1);
+		}
+		else
+		{
+			lua_rawseti( ls, -2, resultIndex);				// STK: [STKTR]
+			++resultIndex;
+		}
+		++ridx;
+	}
+}
+
 
 

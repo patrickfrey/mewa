@@ -12,6 +12,7 @@
 #ifndef _MEWA_FILEIO_HPP_INCLUDED
 #define _MEWA_FILEIO_HPP_INCLUDED
 #if __cplusplus >= 201703L
+#include <vector>
 #include <string>
 #include <string_view>
 
@@ -19,6 +20,7 @@ namespace mewa {
 
 void writeFile( const std::string& filename, const std::string& content);
 std::string readFile( const std::string& filename);
+std::vector<std::string> readFileLines( const std::string& filename);
 void removeFile( const std::string& filename);
 
 }//namespace

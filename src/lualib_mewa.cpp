@@ -205,6 +205,20 @@ static int mewa_tostring( lua_State* ls)
 	return 1;
 }
 
+static int mewa_stacktrace( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "mewa.stacktrace";
+	try
+	{
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 0/*minNofArgs*/, 2/*maxNofArgs*/);
+		int nn = (nargs >= 1) ? (int)mewa::lua::getArgumentAsCardinal( functionName, ls, 1) : std::numeric_limits<int>::max();
+		std::vector<std::string> ignore = (nargs >= 2) ? mewa::lua::getArgumentAsStringList( functionName, ls, 2) : std::vector<std::string>();
+		mewa::lua::pushStackTrace( ls, functionName, nn, ignore);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
 static int mewa_new_compiler( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "mewa.compiler";
@@ -1052,6 +1066,7 @@ static const struct luaL_Reg mewa_functions[] = {
 	{ "compiler",		mewa_new_compiler },
 	{ "typedb",		mewa_new_typedb },
 	{ "tostring",		mewa_tostring },
+	{ "stacktrace",		mewa_stacktrace },
 	{ nullptr,  		nullptr }
 };
 
