@@ -775,6 +775,7 @@ end
 function typesystem.program( node)
 	initBuiltInTypes()
 	utils.traverse( typedb, node)
+	return node -- return AST
 end
 
 function typesystem.count( node)
@@ -795,4 +796,3 @@ function typesystem.rep_operator( node)
 end
 
 return typesystem
-
