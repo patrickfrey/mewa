@@ -245,7 +245,8 @@ function defineBuiltInTypeConversions( typnam, descr)
 	if descr.conv then
 		for oth_typenam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typenam]
-			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, convConstructor( conv.fmt), tag_TypeConversion, conv.weight)
+			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
+			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_TypeConversion, conv.weight)
 		end
 	end
 end

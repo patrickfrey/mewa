@@ -94,7 +94,7 @@ return {
 		conv = {
 			["double"] = {fmt="{out} = fptoui double {inp} to i64\n", weight=0.25},
 			["float"] = {fmt="{out} = fptoui float {inp} to i64\n", weight=0.25},
-			["long"] = {fmt="{out} = sext i64 {inp} to i64\n", weight=0.125},
+			["long"] = {weight=0.125},
 			["uint"] = {fmt="{out} = zext i32 {inp} to i64\n", weight=0.125},
 			["int"] = {fmt="{out} = sext i32 {inp} to i64\n", weight=0.25},
 			["ushort"] = {fmt="{out} = zext i16 {inp} to i64\n", weight=0.125},
@@ -137,7 +137,7 @@ return {
 		conv = {
 			["double"] = {fmt="{out} = fptosi double {inp} to i64\n", weight=0.25},
 			["float"] = {fmt="{out} = fptosi float {inp} to i64\n", weight=0.25},
-			["ulong"] = {fmt="{out} = zext i64 {inp} to i64\n", weight=0.125},
+			["ulong"] = {weight=0.125},
 			["uint"] = {fmt="{out} = zext i32 {inp} to i64\n", weight=0.25},
 			["int"] = {fmt="{out} = sext i32 {inp} to i64\n", weight=0.125},
 			["ushort"] = {fmt="{out} = zext i16 {inp} to i64\n", weight=0.25},
@@ -179,7 +179,7 @@ return {
 			["float"] = {fmt="{out} = fptoui float {inp} to i32\n", weight=0.25},
 			["ulong"] = {fmt="{out} = trunc i64 {inp} to i32\n", weight=0.25},
 			["long"] = {fmt="{out} = trunc i64 {inp} to i32\n", weight=0.375},
-			["int"] = {fmt="{out} = sext i32 {inp} to i32\n", weight=0.125},
+			["int"] = {weight=0.125},
 			["ushort"] = {fmt="{out} = zext i16 {inp} to i32\n", weight=0.125},
 			["short"] = {fmt="{out} = sext i16 {inp} to i32\n", weight=0.25},
 			["byte"] = {fmt="{out} = zext i8 {inp} to i32\n", weight=0.125},
@@ -222,7 +222,7 @@ return {
 			["float"] = {fmt="{out} = fptosi float {inp} to i32\n", weight=0.25},
 			["ulong"] = {fmt="{out} = trunc i64 {inp} to i32\n", weight=0.375},
 			["long"] = {fmt="{out} = trunc i64 {inp} to i32\n", weight=0.25},
-			["uint"] = {fmt="{out} = zext i32 {inp} to i32\n", weight=0.125},
+			["uint"] = {weight=0.125},
 			["ushort"] = {fmt="{out} = zext i16 {inp} to i32\n", weight=0.25},
 			["short"] = {fmt="{out} = sext i16 {inp} to i32\n", weight=0.125},
 			["byte"] = {fmt="{out} = zext i8 {inp} to i32\n", weight=0.25},
@@ -264,7 +264,7 @@ return {
 			["long"] = {fmt="{out} = trunc i64 {inp} to i16\n", weight=0.375},
 			["uint"] = {fmt="{out} = trunc i32 {inp} to i16\n", weight=0.25},
 			["int"] = {fmt="{out} = trunc i32 {inp} to i16\n", weight=0.375},
-			["short"] = {fmt="{out} = sext i16 {inp} to i16\n", weight=0.125},
+			["short"] = {weight=0.125},
 			["byte"] = {fmt="{out} = zext i8 {inp} to i16\n", weight=0.125},
 			["bool"] = {fmt="{out} = zext i1 {inp} to i16\n", weight=0.25}},
 		unop = {
@@ -307,7 +307,7 @@ return {
 			["long"] = {fmt="{out} = trunc i64 {inp} to i16\n", weight=0.25},
 			["uint"] = {fmt="{out} = trunc i32 {inp} to i16\n", weight=0.375},
 			["int"] = {fmt="{out} = trunc i32 {inp} to i16\n", weight=0.25},
-			["ushort"] = {fmt="{out} = zext i16 {inp} to i16\n", weight=0.125},
+			["ushort"] = {weight=0.125},
 			["byte"] = {fmt="{out} = zext i8 {inp} to i16\n", weight=0.25},
 			["bool"] = {fmt="{out} = zext i1 {inp} to i16\n", weight=0.25}},
 		unop = {
