@@ -337,12 +337,12 @@ function initControlTypes()
 	function falseExitToBoolean( constructor)
 		local register,label = typedb:get_instance( "register"),typedb:get_instance( "label")
 		local out = register()
-		return {code=utils.constructor_format( llvmir.control.falseExitToBoolean, {falseExit=constructor.out, out=out}, label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.falseExitToBoolean, {falseExit=constructor.out, out=out}, label),out=out}
 	end
 	function trueExitToBoolean( constructor)
 		local register,label = typedb:get_instance( "register"),typedb:get_instance( "label")
 		local out = register()
-		return {code=utils.constructor_format( llvmir.control.trueExitToBoolean, {trueExit=constructor.out, out=out}, label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.trueExitToBoolean, {trueExit=constructor.out, out=out}, label),out=out}
 	end
 	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
 	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction)
@@ -350,12 +350,12 @@ function initControlTypes()
 	function BooleanToFalseExit( constructor)
 		local label = typedb:get_instance( "label")
 		local out = label()
-		return {code=utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 	function BooleanToTrueExit( constructor)
 		local label = typedb:get_instance( "label")
 		local out = label()
-		return {code=utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 
 	typedb:def_reduction( controlTrueType, scalarBooleanType, BooleanToFalseExit, tag_typeDeduction)
