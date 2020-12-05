@@ -264,6 +264,7 @@ const char* Error::code2String( int code_) noexcept
 
 		case CommandNumberOfArgumentsInGrammarDef: return "Wrong number of arguments for command (followed by '%') in the grammar definition";
 		case CommandNameUnknownInGrammarDef: return "Unknown command (followed by '%') in the grammar definition";
+		case MandatoryCommandMissingInGrammarDef: return "Mandatory command is missing in grammar definition";
 
 		case DefinedAsTerminalAndNonterminalInGrammarDef: return "Identifier defined as nonterminal and as lexem in the grammar definition not allowed";
 		case UnresolvedIdentifierInGrammarDef: return "Unresolved identifier in the grammar definition";

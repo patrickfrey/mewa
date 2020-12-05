@@ -70,6 +70,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:EscapeQuoteErrorInString**   _$ERRTEXT:EscapeQuoteErrorInString_
 + **#$ERRCODE:CommandNumberOfArgumentsInGrammarDef**   _$ERRTEXT:CommandNumberOfArgumentsInGrammarDef_
 + **#$ERRCODE:CommandNameUnknownInGrammarDef**   _$ERRTEXT:CommandNameUnknownInGrammarDef_
++ **#$ERRCODE:MandatoryCommandMissingInGrammarDef**   _$ERRTEXT:MandatoryCommandMissingInGrammarDef_
+
 + **#$ERRCODE:DefinedAsTerminalAndNonterminalInGrammarDef**   _$ERRTEXT:DefinedAsTerminalAndNonterminalInGrammarDef_
 + **#$ERRCODE:UnresolvedIdentifierInGrammarDef**   _$ERRTEXT:UnresolvedIdentifierInGrammarDef_
 + **#$ERRCODE:UnreachableNonTerminalInGrammarDef**   _$ERRTEXT:UnreachableNonTerminalInGrammarDef_

@@ -70,6 +70,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#532**   _Some internal pattern string mapping error in the grammar definition_
 + **#541**   _Wrong number of arguments for command (followed by '%') in the grammar definition_
 + **#542**   _Unknown command (followed by '%') in the grammar definition_
++ **#543**   _Mandatory command is missing in grammar definition_
+
 + **#551**   _Identifier defined as nonterminal and as lexem in the grammar definition not allowed_
 + **#552**   _Unresolved identifier in the grammar definition_
 + **#553**   _Unreachable nonteminal in the grammar definition_

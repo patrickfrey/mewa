@@ -87,6 +87,7 @@ public:
 
 		CommandNumberOfArgumentsInGrammarDef=541,
 		CommandNameUnknownInGrammarDef=542,
+		MandatoryCommandMissingInGrammarDef=543,
 
 		DefinedAsTerminalAndNonterminalInGrammarDef=551,
 		UnresolvedIdentifierInGrammarDef=552,

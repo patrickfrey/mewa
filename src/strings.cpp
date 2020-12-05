@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
+#include <cstring>
 #include <stdexcept>
 #include <new>
 
@@ -61,6 +62,33 @@ std::string mewa::string_format( const char* fmt, ...)
 	va_start( ap, fmt);
 	rt = string_format_va( fmt, ap);
 	va_end( ap);
+	return rt;
+}
+
+std::string mewa::template_format( const std::string& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap)
+{
+	std::string rt;
+	char const* ti = templatstr.c_str();
+	char const* ts = std::strchr( ti, sb);
+	while (*ts)
+	{
+		char const* keystart = ts+1;
+		char const* te = std::strchr( keystart, eb);
+		if (te)
+		{
+			auto si = substmap.find( std::string( keystart, te-keystart));
+			if (si != substmap.end())
+			{
+				rt.append( ti, ts-ti);
+				rt.append( si->second);
+				ti = te + 1;
+			}
+			ts = std::strchr( te+1, sb);
+			if (!ts) break;
+		}
+		else break;
+	}
+	rt.append( ti);
 	return rt;
 }
 

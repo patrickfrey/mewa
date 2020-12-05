@@ -73,20 +73,7 @@ static void printWarning( const std::string& filename, const Error& error)
 	std::cerr << error.what() << std::endl;
 }
 
-static const std::string g_defaultTemplate_no_cmdline{R"(#!%luabin%
-
-typesystem = require( "%typesystem%")
-mewa = require("mewa")
-
-compilerdef = %automaton%
-
-if #arg == 0 then error( "arguments missing") end
-if #arg > 1 then error( "too many arguments") end
-compiler = mewa.compiler( compilerdef)
-compiler:run( arg[0])
-)"};
-
-static const std::string g_defaultTemplate_with_cmdline{R"(#!%luabin%
+static const std::string g_defaultTemplate{R"(#!%luabin%
 
 typesystem = require( "%typesystem%")
 cmdline = require( "%cmdline%")
@@ -95,10 +82,9 @@ mewa = require("mewa")
 compilerdef = %automaton%
 
 ccmd = cmdline:parse( "%language%", typesystem, arg)
-typesystem.target = ccmd.target
 
 compiler = mewa.compiler( compilerdef)
-compiler:run( ccmd.input, ccmd.output, ccmd.debug)
+compiler:run( ccmd.target, ccmd.input, ccmd.output, ccmd.debug)
 )"};
 
 
@@ -328,11 +314,11 @@ int main( int argc, const char* argv[] )
 		{
 			if (automaton.cmdline().empty())
 			{
-				templat = g_defaultTemplate_no_cmdline;
+				throw mewa::Error( mewa::Error::MandatoryCommandMissingInGrammarDef, "CMDLINE");
 			}
 			else
 			{
-				templat = g_defaultTemplate_with_cmdline;
+				templat = g_defaultTemplate;
 			}
 		}
 		switch (cmd)

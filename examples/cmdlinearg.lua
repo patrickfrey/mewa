@@ -15,7 +15,8 @@ Compiler for language %s
 	-t,--target (default "x86_64-pc-linux-gnu") Optional compile target
 	<input> (string) File with source to compile
 ]], langname))
-                return {input=args.input, output=nilIfEmpty( args.output), debug=nilIfEmpty( args.debug), target=args.target}
+		local targetTemplatePath = "examples/target/" .. args.target .. ".tpl"
+                return {input=args.input, output=nilIfEmpty( args.output), debug=nilIfEmpty( args.debug), target=targetTemplatePath}
         end
 }
 

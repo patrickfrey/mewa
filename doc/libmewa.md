@@ -24,9 +24,10 @@ compiler = mewa.compiler( compilerdef)
 The compiler has one method ```run``` that takes 3 arguments from which two are optional:
 
 ```Lua
-compiler:run( inputfile, outputfile, dbgout)
+compiler:run( targetfile, inputfile, outputfile, dbgout)
 
 ```
+```targetfile``` specifies the path to the file that is the template used for a specific target where {Code} and {Source} are substituted by the output printed and the name of the source file.
 ```inputfile``` specifies the path to the file to compile.
 ```outputfile``` specifies the path to the file to write the compiler output to. If not specified the output is written to stdandard output.
 ```dbgout``` specifies the path to the file to write the compiler debug output to. The debug output logs the actions of the compiler and may be helpful during the early stages of development.

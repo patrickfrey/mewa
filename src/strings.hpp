@@ -13,6 +13,7 @@
 #define _MEWA_STRINGS_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include <string>
+#include <map>
 
 namespace mewa {
 
@@ -23,6 +24,13 @@ std::string string_format( const char* fmt, ...) __attribute__ ((format (printf,
 #else
 std::string string_format( const char* fmt, ...);
 #endif
+
+/// \brief Substitute Patterns [sb][key][eb] for keys that are defined in a map by their value
+/// \param[in] templatstr string to substitute variables in
+/// \param[in] sb start bracket character
+/// \param[in] eb end bracket character
+/// \param[in] substmap variables to substitute
+std::string template_format( const std::string& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap);
 
 }//namespace
 

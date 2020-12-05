@@ -76,19 +76,19 @@ struct mewa_compiler_userdata_t
 {
 	mewa::Automaton automaton;
 	mewa::lua::CallTableName callTableName;
-	FILE* outputFileHandle;
 	FILE* debugFileHandle;
+	typedef std::string OutputBuffer;
+	std::string outputBuffer;
 
 	void init()
 	{
-		outputFileHandle = nullptr;
 		debugFileHandle = nullptr;
 		new (&automaton) mewa::Automaton();
+		new (&outputBuffer) OutputBuffer();
 		callTableName.init();
 	}
 	void closeOutput() noexcept
 	{
-		closeFile( outputFileHandle);
 		closeFile( debugFileHandle);
 	}
 	void destroy( lua_State* ls) noexcept
@@ -98,6 +98,7 @@ struct mewa_compiler_userdata_t
 
 		closeOutput();
 		automaton.~Automaton();
+		outputBuffer.~OutputBuffer();
 	}
 	static const char* metatableName() noexcept {return MEWA_COMPILER_METATABLE_NAME;}
 

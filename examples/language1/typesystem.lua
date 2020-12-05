@@ -89,7 +89,12 @@ local constexprIntegerType = typedb:def_type( 0, "constexpr int")
 local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")
 local constexprFloatType = typedb:def_type( 0, "constexpr float")
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")
-local typeClassToConstExprTypeMap = {fp=constexprFloatType, bool=constexprBooleanType, signed=constexprIntegerType, unsigned=constexprUIntegerType}
+local typeClassToConstExprTypesMap = {
+	fp = {constexprFloatType,constexprIntegerType,constexprUIntegerType}, 
+	bool = {constexprBooleanType},
+	signed = {constexprIntegerType,constexprUIntegerType},
+	unsigned = {constexprUIntegerType}
+}
 local constexprDqStringType = typedb:def_type( 0, "constexpr dqstring")
 local constexprSqStringType = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
@@ -114,12 +119,7 @@ local constexprTypeOperatorMap = {
 	[constexprBooleanType]  = {"&&","||","!"}
 }
 local unaryOperatorMap = {["~"]=1,["!"]=1,["-"]=2}
-local constexprTypePromoteTypeMap = {
-	[constexprIntegerType]  = "long",
-	[constexprUIntegerType] = "ulong",
-	[constexprFloatType]    = "double",
-	[constexprBooleanType]  = "bool"
-}
+
 function createConstExpr( node, constexpr_type, lexemvalue)
 	if constexpr_type == constexprIntegerType then return bcd.int(lexemvalue)
 	elseif constexpr_type == constexprUIntegerType then return bcd.int(lexemvalue)
@@ -152,15 +152,6 @@ function defineConstExprArithmetics()
 	for oi,opr in ipairs(oprlist) do
 		if not unaryOperatorMap[ opr] then
 			definePromoteCall( constexprUIntegerType, constexprIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
-		end
-	end
-	for constexpr_type,typenam in pairs(constexprTypePromoteTypeMap) do
-		local qualitype = scalarQualiTypeMap[ typenam]
-		local oprlist = constexprTypeOperatorMap[ constexpr_type]
-		for oi,opr in ipairs(oprlist) do
-			if not unaryOperatorMap[ opr] then
-				definePromoteCall( qualitype.lval, constexpr_type, opr, {qualitype.c_lval}, nil)
-			end
 		end
 	end
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, 0.25)
@@ -261,11 +252,16 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 				definePromoteCall( promote_qualitype.lval, qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
 			end
 		end
+		if promote_descr.cmpop then
+			for operator,operator_fmt in pairs( promote_descr.cmpop) do
+				definePromoteCall( scalarBooleanType, qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
+			end
+		end
 	end
 end
 function defineBuiltInTypeOperators( typnam, descr)
 	local qualitype = scalarQualiTypeMap[ typnam]
-	local constexprType = typeClassToConstExprTypeMap[ descr.class]
+	local constexprTypes = typeClassToConstExprTypesMap[ descr.class]
 	if descr.unop then
 		for operator,operator_fmt in pairs( descr.unop) do
 			defineCall( qualitype.lval, qualitype.c_lval, operator, {}, callConstructor( operator_fmt))
@@ -274,7 +270,7 @@ function defineBuiltInTypeOperators( typnam, descr)
 	if descr.binop then
 		for operator,operator_fmt in pairs( descr.binop) do
 			defineCall( qualitype.lval, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
-			if constexprType then
+			for i,constexprType in ipairs(constexprTypes) do
 				defineCall( qualitype.lval, qualitype.c_lval, operator, {constexprType}, callConstructor( operator_fmt))
 			end
 		end
@@ -282,7 +278,7 @@ function defineBuiltInTypeOperators( typnam, descr)
 	if descr.cmpop then
 		for operator,operator_fmt in pairs( descr.cmpop) do
 			defineCall( scalarBooleanType, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
-			if constexprType then
+			for i,constexprType in ipairs(constexprTypes) do
 				defineCall( scalarBooleanType, qualitype.c_lval, operator, {constexprType}, callConstructor( operator_fmt))
 			end
 		end
