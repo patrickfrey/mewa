@@ -178,6 +178,7 @@ foreach my $line (@content)
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
 	print "\t\tllvmtype = \"$llvmtype\",\n";
 	print "\t\tclass = \"$sgn\",\n";
+	print "\t\tsize = $alignmap{$llvmtype},\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";

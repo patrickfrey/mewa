@@ -302,12 +302,13 @@ function defineVariable( node, contextTypeId, typeId, name, initVal)
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 		local rt = {type=var, constructor={code=code,out=out}}
-		if initval then rt = applyCallable( node, rt, "=", {initval}) end
+		if initVal then rt = applyCallable( node, rt, "=", {initVal}) end
+		return rt
 	elseif contextTypeId == 0 then
-		local fmt; if initval then fmt = descr.def_global_val else fmt = descr.def_global end
-		if type(initval) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
+		local fmt; if initVal then fmt = descr.def_global_val else fmt = descr.def_global end
+		if type(initVal) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
-		print( utils.constructor_format( fmt, {out = out, inp = initval}))
+		print( utils.constructor_format( fmt, {out = out, inp = initVal}))
 		local var = typedb:def_type( contextTypeId, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	else
@@ -363,11 +364,19 @@ end
 function initBuiltInTypes()
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local lval = defineQualifiedTypes( typnam, scalar_descr)
+		local c_lval = qualiTypeMap[ lval].c_lval
 		scalarQualiTypeMap[ typnam] = qualiTypeMap[ lval]
 		if scalar_descr.class == "bool" then
-			scalarBooleanType = qualiTypeMap[ lval].c_lval
-		elseif scalar_descr.class == "unsigned" or scalar_descr.class == "signed" then
-			scalarIndexTypeMap[ typnam] = qualiTypeMap[ lval].c_lval
+			scalarBooleanType = c_lval
+			typedb:def_reduction( c_lval, constexprBooleanType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.125)
+		elseif scalar_descr.class == "unsigned" then
+			scalarIndexTypeMap[ typnam] = c_lval
+			typedb:def_reduction( c_lval, constexprUIntegerType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.25/scalar_descr.size)
+		elseif scalar_descr.class == "signed" then
+			scalarIndexTypeMap[ typnam] = c_lval
+			typedb:def_reduction( c_lval, constexprIntegerType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.25/scalar_descr.size)
+		elseif scalar_descr.class == "fp" then
+			typedb:def_reduction( c_lval, constexprFloatType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.25/scalar_descr.size)
 		end
 	end
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
@@ -608,7 +617,7 @@ end
 -- AST Callbacks:
 function typesystem.definition( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	return {code=""}
+	if arg[1] then return {code = arg[1].constructor.code} else return {code=""} end
 end
 function typesystem.paramdef( node) 
 	local arg = utils.traverse( typedb, node)
@@ -621,19 +630,19 @@ end
 
 function typesystem.vardef( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	defineVariable( node, contextTypeId, arg[1], arg[2], nil)
+	return defineVariable( node, contextTypeId, arg[1], arg[2], nil)
 end
-
 function typesystem.vardef_assign( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
-	defineVariable( node, contextTypeId, arg[1], arg[2], arg[3])
+	return defineVariable( node, contextTypeId, arg[1], arg[2], arg[3])
 end
-
 function typesystem.vardef_array( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
+	utils.errorMessage( node.line, "Array variables not implemented yet")
 end
 function typesystem.vardef_array_assign( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId)
+	utils.errorMessage( node.line, "Array variables not implemented yet")
 end
 function typesystem.typedef( node, contextTypeId)
 	local arg = utils.traverse( typedb, node)
@@ -691,6 +700,7 @@ function typesystem.return_value( node)
 	local type = typedb:get_instance( "return")
 	if type == 0 then utils.errorMessage( node.line, "Procedure can't return value") end
 	local constructor = getReductionConstructor( node, type, arg[1])
+	if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type", typedb:type_string(type)) end
 	local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[type].llvmtype, inp=constructor.out})
 	return {code = constructor.code .. code}
 end

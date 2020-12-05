@@ -45,7 +45,7 @@ typedb = mewa.typedb()
 ```
 
 ## The Type Database API
-The type database API provides some functions to build the type system of your compiler. 
+A type database object provides some functions to build the type system of your compiler. 
 A documentation can be found [here](typedb.md).
 
 

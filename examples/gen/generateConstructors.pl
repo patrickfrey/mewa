@@ -19,7 +19,7 @@ GetOptions (
 	"verbose|V"     => \$verbose,     # flag, verbose output
 	"permute|P"     => \$permute)     # flag, permute arguments
 or die("Error in command line arguments\n");
-unless ($template) {die "Error in command line: Mandatory option --template|-T undefined";}
+unless ($template) {die "Error in command line: Mandatory option --template|-t undefined";}
 
 my $callEmitLlvm = "$clangbin -S -emit-llvm";
 my $compileLlvm = "llc";
