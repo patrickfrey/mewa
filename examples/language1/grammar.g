@@ -13,9 +13,24 @@ FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
 BOOLEAN : '((true)|(false))';
 
-program		   	= definitionlist								(program)
+program		   	= externlist definitionlist mainproc						(program)
+			;
+externlist		= externdefinition externlist
+			| ε
 			;
 definitionlist		= definition definitionlist
+			| ε
+			;
+externdefinition	= "extern" DQSTRING "function" typespec IDENT "(" externparameterlist ")" ";"	(extern_funcdef)
+			| "extern" DQSTRING "procedure" IDENT "(" externparameterlist ")" ";"		(extern_procdef)
+			;
+externparameterlist	= externparameters								(extern_paramdeflist)
+			;
+externparameters 	= typespec "," externparameters
+			| typespec
+			| ε
+			;
+mainproc		= "main" "{" statementlist "}"							({}main_procdef)
 			| ε
 			;
 definition		= functiondefinition								(definition 0)
@@ -33,11 +48,15 @@ typespec/L1		= typename									(typespec "")
 			| "const" typename "^"								(typespec "const^")
 			| typename "^" "&"								(typespec "^&")
 			| "const" typename "^" "&"							(typespec "const^&")
+			| typename "^" "^"								(typespec "^^")
+			| "const" typename "^" "^"							(typespec "const^^")
+			| typename "^" "^" "&"								(typespec "^^&")
+			| "const" typename  "^" "^" "&"							(typespec "const^^&")
 			;
 typedefinition		= "typedef" typename IDENT							(>>typedef)
 			;
-linkage			= "static"									(linkage {linkage="internal", attributes="#0 nounwind"})
-			| "extern"									(linkage {linkage="external", attributes="#0 noinline nounwind"})
+linkage			= "private"									(linkage {linkage="internal", attributes="#0 nounwind"})
+			| "public"									(linkage {linkage="external", attributes="#0 noinline nounwind"})
 			|										(linkage {linkage="internal", attributes="#0 nounwind"})
 			;
 functiondefinition	= linkage "function" typespec IDENT callablebody				(funcdef)
@@ -76,8 +95,8 @@ expression/L1		= IDENT										(variable)
 			| CARDINAL									(constant "constexpr uint")
 			| INTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
-			| DQSTRING									(constant "constexpr dqstring")
-			| SQSTRING									(constant "constexpr qstring")
+			| DQSTRING									(string_constant)
+			| SQSTRING									(char_constant)
 			| "(" expression ")"
 			;
 expression/L2		= expression  "="  expression							(operator "=")

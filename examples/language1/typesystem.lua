@@ -67,13 +67,17 @@ end
 local weightEpsilon = 1E-5	-- epsilon used for comparing weights for equality
 local scalarQualiTypeMap = {}	-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
 local scalarIndexTypeMap = {}	-- maps scalar type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
-local scalarBooleanType = 0	-- type id of the boolean type, result of cmpop binary operators
-local controlTrueType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
-local controlFalseType = 0	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
+local scalarBooleanType = nil	-- type id of the boolean type, result of cmpop binary operators
+local scalarIntegerType = nil	-- type id of the main integer type, result of main function
+local stringPointerType = nil	-- type id of the string constant type used for free string litterals
+local stringPointerRefType =nil	-- type id of the string constant type used for free string litterals
+local controlTrueType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
+local controlFalseType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
 local valueTypeMap = {}		-- maps any defined type id to its value type (strips away reference qualifiers)
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
+local stringConstantMap = {}    -- maps string constant values to their allocated name
 
 function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
 	local call_constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
@@ -95,8 +99,6 @@ local typeClassToConstExprTypesMap = {
 	signed = {constexprIntegerType,constexprUIntegerType},
 	unsigned = {constexprUIntegerType}
 }
-local constexprDqStringType = typedb:def_type( 0, "constexpr dqstring")
-local constexprSqStringType = typedb:def_type( 0, "constexpr sqstring")
 local bits64 = bcd.bits( 64)
 local constexprOperatorMap = {
 	["+"] = function( this, arg) return this + arg[1] end,
@@ -125,12 +127,6 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 	elseif constexpr_type == constexprUIntegerType then return bcd.int(lexemvalue)
 	elseif constexpr_type == constexprFloatType then return tonumber(lexemvalue)
 	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
-	elseif constexpr_type == constexprDqStringType then return lexemvalue
-	elseif constexpr_type == constexprSqStringType then
-		local ua = utils.utf8to32( lexemvalue)
-		if #ua == 0 then return 0 end
-		if #ua == 1 then return ua[1] end
-		utils.errorMessage( node.line, "Single quoted string '%s' not containing a single unicode character", lexemvalue)
 	end
 end
 function defineConstExprArithmetics()
@@ -158,13 +154,21 @@ function defineConstExprArithmetics()
 	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion, 0.25)
 	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion, 0.25)
 	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion, 0.25)
-	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_TypeConversion, 0.25)
-	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_TypeConversion, 0.125)
+	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_TypeConversion, 0.125)
 
 	function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, 0.25)
 end
-
+function getStringConstantName( value)
+	if not stringConstantMap[ value] then 
+		stringConstantMap[ value] = utils.uniqueName( "string")
+		local encval,enclen = utils.encodeCString(value)
+		local addr = "@" .. stringConstantMap[value]
+		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {out=addr, size=enclen+1, value=encval}) .. "\n")
+	end
+	return stringConstantMap[ value]
+end
 function defineQualifiedTypes( typnam, typeDescription)
 	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
 	local pointerPointerTypeDescription = llvmir.pointerType( pointerTypeDescription.llvmtype)
@@ -206,7 +210,6 @@ function defineQualifiedTypes( typnam, typeDescription)
 	valueTypeMap[ c_rpval] = c_pval
 
 	typedb:def_reduction( lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
-
 	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
 	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
 
@@ -317,7 +320,7 @@ function defineParameter( node, type, name, register)
 	local descr = typeDescriptionMap[ type]
 	local paramreg = register()
 	local var = typedb:def_type( 0, name, paramreg)
-	typedb:def_reduction( referenceTypeMap[ type], var, nil, tag_typeDeclaration)
+	typedb:def_reduction( type, var, nil, tag_typeDeclaration)
 	return {type=type, llvmtype=descr.llvmtype, reg=paramreg}
 end
 
@@ -365,17 +368,29 @@ function initBuiltInTypes()
 		scalarQualiTypeMap[ typnam] = qualiTypeMap[ lval]
 		if scalar_descr.class == "bool" then
 			scalarBooleanType = c_lval
-			typedb:def_reduction( c_lval, constexprBooleanType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.125)
 		elseif scalar_descr.class == "unsigned" then
+			if scalar_descr.llvmtype == "i8" then
+				stringPointerType = qualiTypeMap[ lval].c_pval
+				stringPointerRefType = qualiTypeMap[ lval].c_rpval
+			end
 			scalarIndexTypeMap[ typnam] = c_lval
-			typedb:def_reduction( c_lval, constexprUIntegerType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.25/scalar_descr.size)
 		elseif scalar_descr.class == "signed" then
+			if scalar_descr.llvmtype == "i32" then scalarIntegerType = qualiTypeMap[ lval].c_lval end
+			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
+				stringPointerType = qualiTypeMap[ lval].c_pval
+				stringPointerRefType = qualiTypeMap[ lval].c_rpval
+			end
 			scalarIndexTypeMap[ typnam] = c_lval
-			typedb:def_reduction( c_lval, constexprIntegerType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.25/scalar_descr.size)
-		elseif scalar_descr.class == "fp" then
-			typedb:def_reduction( c_lval, constexprFloatType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, 0.25/scalar_descr.size)
+		end
+		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
+			local weight = 0.25*(1.0-scalar_descr.sizeweight)
+			typedb:def_reduction( lval, constexprType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, weight)
 		end
 	end
+	if not scalarBooleanType then utils.errorMessage( 0, "No boolean type defined in built-in scalar types") end
+	if not scalarIntegerType then utils.errorMessage( 0, "No integer type mapping to i32 defined in built-in scalar types (return value of main)") end
+	if not stringPointerType then utils.errorMessage( 0, "No i8 type defined suitable to be used for free string constants)") end
+
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineIndexOperators( typnam, scalarQualiTypeMap[ typnam], scalar_descr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
@@ -425,7 +440,6 @@ function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId
 	if constructor then utils.errorMessage( node.line, "No constructor type expected: %s", typeName) end
 	return rt
 end
-
 function getReductionConstructor( node, redu_type, operand)
 	local redu_constructor,weight = operand.constructor,0.0
 	if redu_type ~= operand.type then
@@ -463,7 +477,6 @@ function applyCallable( node, this, callable, args)
 			local param_constructor_ar = {}
 			if #args > 0 then
 				local parameters = typedb:type_parameters( item.type)
-
 				for ai,arg in ipairs(args) do
 					local param_constructor,param_weight = getReductionConstructor( node, parameters[ai].type, arg)
 					if not param_constructor then break end
@@ -486,7 +499,7 @@ function applyCallable( node, this, callable, args)
 		end
 	end
 	if not bestweight then
-		utils.errorMessage( node.line, "Failed to find callable with signature %s",
+		utils.errorMessage( node.line, "Failed to find callable with signature '%s'",
 	                    utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
 	end
 	if #bestmatch == 1 then
@@ -581,6 +594,11 @@ function getParameterString( args)
 	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype .. " " .. arg.reg else rt = rt .. ", " .. arg.llvmtype .. " " .. arg.reg end end
 	return rt
 end
+function getParameterLlvmTypeString( args)
+	local rt = ""
+	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype else rt = rt .. ", " .. arg.llvmtype end end
+	return rt
+end
 function getParameterTypeList( args)
 	rt = {}
 	for ai,arg in ipairs(args) do table.insert(rt,arg.type) end
@@ -589,14 +607,11 @@ end
 function getParameterListCallTemplate( param)
 	if #param == 0 then return "" end
 	local rt = param[1].llvmtype .. " {arg" .. 1 .. "}"
-	for i=2,#param do rt = rt .. ", " .. param[1].llvmtype .. " {arg" .. 1 .. "}" end
+	for i=2,#param do rt = rt .. ", " .. param[i].llvmtype .. " {arg" .. i .. "}" end
 	return rt
 end
 
-function defineCallable( node, descr, contextTypeId)
-	descr.paramstr = getParameterString( descr.param)
-	descr.symbolname = getSignatureString( descr.name, descr.param, contextTypeId)
-	descr.callargstr = getParameterListCallTemplate( descr.param)
+function defineCallableType( node, descr, contextTypeId)
 	local callable = typedb:get_type( contextTypeId, descr.name)
 	if not callable then callable = typedb:def_type( contextTypeId, descr.name) end
 	if descr.ret then
@@ -608,7 +623,29 @@ function defineCallable( node, descr, contextTypeId)
 		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
 		defineCall( nil, callable, "()", descr.param, callConstructor( callfmt))
 	end
+end
+function defineCallable( node, descr, contextTypeId)
+	descr.paramstr = getParameterString( descr.param)
+	descr.symbolname = getSignatureString( descr.name, descr.param, contextTypeId)
+	descr.callargstr = getParameterListCallTemplate( descr.param)
+	defineCallableType( node, descr, contextTypeId)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
+end
+function defineExternCallable( node, descr)
+	descr.argstr = getParameterLlvmTypeString( descr.param)
+	if descr.externtype == "C" then
+		descr.symbolname = descr.name
+	else
+		utils.errorMessage( node.line, "Unknown extern call type \"%s\" (must be one of {\"C\"})", descr.externtype)
+	end
+	descr.callargstr = getParameterListCallTemplate( descr.param)
+	defineCallableType( node, descr, 0)
+	print( "\n" .. utils.constructor_format( llvmir.control.extern_functionDeclaration, descr))
+end
+function defineCallableBodyContext( rtype)
+	typedb:set_instance( "register", utils.register_allocator())
+	typedb:set_instance( "label", utils.label_allocator())
+	typedb:set_instance( "return", rtype)
 end
 
 -- AST Callbacks:
@@ -748,6 +785,17 @@ function typesystem.constant( node, typeName)
 	local typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
 end
+function typesystem.string_constant( node)
+	local addr = "@" .. getStringConstantName( node.arg[1].value)
+	return {type=stringPointerRefType, constructor={out=addr,code=""}}
+end
+function typesystem.char_constant( node)
+	local ua = utils.utf8to32( node.arg[1].value)
+	if #ua == 0 then return {type=constexprUIntegerType, constructor=bcd.int(0)}
+	elseif #ua == 1 then return {type=constexprUIntegerType, constructor=bcd.int(ua[1])}
+	else utils.errorMessage( node.line, "Single quoted string '%s' not containing a single unicode character", node.arg[1].value)
+	end
+end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
 	local typeId,constructor = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
@@ -765,20 +813,42 @@ function typesystem.funcdef( node, contextTypeId)
 end
 function typesystem.procdef( node, contextTypeId)
 	local arg = utils.traverse( typedb, node, contextTypeId, 0)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], param = arg[3].param, body = arg[3].code}
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], param = arg[3].param, body = arg[3].code .. "ret void\n" }
 	defineCallable( node, descr, contextTypeId)
 end
 function typesystem.callablebody( node, contextTypeId, rtype) 
-	typedb:set_instance( "register", utils.register_allocator())
-	typedb:set_instance( "label", utils.label_allocator())
-	typedb:set_instance( "return", rtype)
+	defineCallableBodyContext( rtype)
 	local arg = utils.traverse( typedb, node, contextTypeId)
 	return {param = arg[1], code = arg[2].code}
+end
+function typesystem.extern_paramdeflist( node)
+	local args = utils.traverse( typedb, node)
+	local rt = {}; for ai,arg in ipairs(args) do
+		local llvmtype = typeDescriptionMap[ arg].llvmtype
+		table.insert( rt, {type=arg,llvmtype=llvmtype} )
+	end
+	return rt
+end
+function typesystem.extern_funcdef( node)
+	local arg = utils.traverse( typedb, node)
+	local descr = {externtype = arg[1], ret = arg[2], name = arg[3], param = arg[4]}
+	defineExternCallable( node, descr)
+end
+function typesystem.extern_procdef( node)
+	local arg = utils.traverse( typedb, node)
+	local descr = {externtype = arg[1], name = arg[2], param = arg[3]}
+	defineExternCallable( node, descr)
+end
+function typesystem.main_procdef( node)
+	defineCallableBodyContext( scalarIntegerType)
+	local arg = utils.traverse( typedb, node)
+	local descr = {body = arg[1].code}
+	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
 end
 function typesystem.program( node)
 	initBuiltInTypes()
 	utils.traverse( typedb, node)
-	return node -- return AST
+	return node
 end
 
 function typesystem.count( node)

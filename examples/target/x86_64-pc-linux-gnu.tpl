@@ -5,7 +5,15 @@ target triple = "x86_64-pc-linux-gnu"
 
 {Code}
 
-attributes #0 = { "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "frame-pointer"="all" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #0 = {
+	"disable-tail-calls"="false" "frame-pointer"="all" "min-legal-vector-width"="0" 
+	"correctly-rounded-divide-sqrt-fp-math"="false" "less-precise-fpmad"="false" "no-infs-fp-math"="false" 
+	"no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "unsafe-fp-math"="false" 
+	"no-jump-tables"="false" "stack-protector-buffer-size"="8" 
+	"target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "use-soft-float"="false"
+}
+attributes #1 = {
+	"no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" }
 
 !llvm.module.flags = !{!0}
 !llvm.ident = !{!1}

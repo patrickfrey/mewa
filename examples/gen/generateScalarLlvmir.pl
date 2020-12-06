@@ -21,6 +21,16 @@ my %alignmap = (
 	i1 => 1
 );
 
+my %sizeWeightMap = (
+	double => 0.40,
+	float => 0.35,
+	i64 => 0.30,
+	i32 => 0.25,
+	i16 => 0.20,
+	i8 => 0.15,
+	i1 => 0.125
+);
+
 my %precisionBitsMap = (
 	double => 53,
 	float => 24,
@@ -193,6 +203,7 @@ foreach my $line (@content)
 	print "\t\tllvmtype = \"$llvmtype\",\n";
 	print "\t\tclass = \"$sgn\",\n";
 	print "\t\tsize = $alignmap{$llvmtype},\n";
+	print "\t\tsizeweight = $sizeWeightMap{$llvmtype},\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";

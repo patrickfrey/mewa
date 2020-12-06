@@ -7,6 +7,26 @@ local utils = {}
 function utils.encodeName( name)
 	return name:gsub("([*])", "$")
 end
+-- C String Character Substitution Map without hex and dec encoding, see from https://en.wikipedia.org/wiki/Escape_sequences_in_C
+local cStringSubstMap = {
+	["\\a"]  = "\\07",
+	["\\b"]  = "\\08",
+	["\\f"]  = "\\0C",
+	["\\n"]  = "\\0A",
+	["\\t"]  = "\\09",
+	["\\v"]  = "\\0B",
+	["\\\\"] = "\\5C",
+	["'"]    = "\\27",
+	['"']    = "\\22"
+}
+function utils.encodeCString( name)
+	local len = string.len(name)
+	local subst = function( match)
+		len = len - 1
+		return cStringSubstMap[ match] or " "
+	end
+	return name:gsub("([\\][abfnrtv\\'\"])", subst), len
+end
 
 -- Create a unique name
 local uniqueNameIdxMap = {}

@@ -14,11 +14,14 @@
     * [How to implement complex expressions?](#complexExpressions)
     * [How to implement control structures?](#controlStructures)
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
+    * [How to implement return in a function?](#functionReturn)
     * [How to implement hierarchical data structures?](#hierarchicalDataStructures)
     * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
     * [How to implement object oriented polymorphism?](#virtualMethodTables)
+    * [How to implement visibility rules, e.g. private,public,protected?](#visibilityRules)
     * [How to implement exception handling?](#exceptions)
     * [How to implement generic programming with templates?](#templates)
+    * [How to implement call of C-Library functions?](#cLibraryCalls)
 
 
 <a name="general"/>
@@ -91,17 +94,25 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 
 ### How to implement callables like functions, procedures and methods?
 
+<a name="functionReturn"/>
+
+### How to implement return in a function?
+
 <a name="hierarchicalDataStructures"/>
 
 ### How to implement hierarchical data structures?
 
 <a name="withAndUsing"/>
 
-### How to implement the Pascal "WITH", the C++ "using" and friends?
+### How to implement type contexts, e.g. the Pascal "WITH", the C++ "using" and friends?
 
 <a name="virtualMethodTables"/>
 
 ### How to implement object oriented polymorphism?
+
+<a name="visibilityRules"/>
+
+### How to implement visibility rules, e.g. private,public,protected?
 
 <a name="exceptions"/>
 
@@ -111,4 +122,7 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 
 ### How to implement generic programming with templates?
 
+<a name="cLibraryCalls"/>
+
+### How to implement call of C-Library functions?
 
