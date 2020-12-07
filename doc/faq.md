@@ -175,7 +175,7 @@ class A {
 };
 ```
 For the first example we need more than one tree traversal each of implementing only a subset of functions. 
-I did not figure out yet how it would be the best to support multiple tree traversals. But I am sure that the problem does not blow up the framework of _Mewa_. You need two traversals, one restricted on type and variable declarations first and a second complate one as it is defined now.
+I did not figure out yet how it would be the best to support multiple tree traversals. But I am sure that the problem does not blow up the framework of _Mewa_. You need two traversals, one restricted on type and variable declarations first and a second complete one as it is defined now.
 
 _We leave this question as TODO_.
 
