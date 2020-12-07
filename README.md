@@ -11,8 +11,9 @@ For reading more see the [collected links](doc/links.md).
 The project development is currently ongoing and only what you find in the tests really works.
 
 # Documentation
-* [Glossary](doc/glossary.md)
 * [Example Compiler Frontend Implementation](doc/example_compiler.md)
+* [Installation](INSTALL.Ubuntu.md)
+* [Glossary](doc/glossary.md)
 * [Grammar Description Language](doc/grammar.md)
 * [Parser Generator](doc/program_mewa.pdf)
 * [API](doc/libmewa.md)
