@@ -100,10 +100,15 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 The constructors of constant values are implemented as userdata. Expressions are values calculated immediately by the constructor functions. 
 The propagation of types is a more complex topic:
 ```
-byte d = 1
+byte b = 1
 int a = b + 2304879
 ```
-What type should the expression on the right side of the second assignment have? There is no absolutly correct answer to that question. 
+What type should the expression on the right side of the second assignment have? 
+ 1. We can reduce ```2304879``` to the type of 'b' before the addition
+ 1. We can promote 'b' to a maximum size integer type and so ```2304879``` before the addition
+ 1. We can propagate the type ```int``` of the left side of the assignment to the expression ```b + 2304879``` as result type.
+
+In the example language I decided for solution (1) even though it lead to anomalies, but I will return to the problem later.
 
 ##### What Types to Use
 The decision for data types used to implement constants is more complex as it actually looks like at the first glance. But for implementing constant values you can't rely on the scalar types of the language your implementing a compiler with because the language you design may have a different set of scalar types with a different set of rules. You need arbitrary precision arithmetics for integers and floating point numbers at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. A silly decision that should be revisited. I just did not find a module for arbitrary precision integer arithmetics on luarocks with a working installation at the time. So I decided to activate some older project (implementing arbitrary BCD arithmetics for Lua) as a luarocks module on my own. This will be replaced in the future.
