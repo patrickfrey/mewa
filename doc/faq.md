@@ -13,12 +13,15 @@
     * [How to implement namespaces?](#namespaces)
     * [How to implement complex expressions?](#complexExpressions)
     * [How to implement control structures?](#controlStructures)
+    * [How to implement constants and constant expressions?](#constants)
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
     * [How to implement return in a function?](#functionReturn)
     * [How to implement hierarchical data structures?](#hierarchicalDataStructures)
     * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
     * [How to implement object oriented polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private,public,protected?](#visibilityRules)
+    * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
+    * [How to implement access of types declared later in the source?](#orderOfDefinition)
     * [How to implement exception handling?](#exceptions)
     * [How to implement generic programming with templates?](#templates)
     * [How to implement call of C-Library functions?](#cLibraryCalls)
@@ -56,7 +59,7 @@ To name one example: There is no way to decide if the statement ```A * B;``` is 
 <a name="problemSolving"/>
 
 ## Problem Solving HOWTO
-This section of the FAQ gives some recommendations on how to solve specific problems in compilers for strongly typed languages. The hints given here are not meant as instructions. There might be better solutions for the problems presented.
+This section of the FAQ gives some recommendations on how to solve specific problems in compilers for strongly typed languages. The hints given here are not meant as instructions. There might be better solutions for the problems presented. Some questions are still open and wait for a good and practical answer.
 
 <a name="astStructure"/>
 
@@ -90,6 +93,21 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 
 ### How to implement control structures?
 
+<a name="constants"/>
+
+### How to implement constants and constant expressions?
+##### Propagation of Types
+The constructors of constant values are implemented as userdata. Expressions are values calculated immediately by the constructor functions. 
+The propagation of types is a more complex topic:
+```
+byte d = 1
+int a = b + 2304879
+```
+What type should the expression on the right side of the second assignment have? There is no absolutly correct answer to that question. 
+
+##### What Types to Use
+The decision for data types used to implement constants is more complex as it actually looks like at the first glance. But for implementing constant values you can't rely on the scalar types of the language your implementing a compiler with because the language you design may have a different set of scalar types with a different set of rules. You need arbitrary precision arithmetics for integers and floating point numbers at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. A silly decision that should be revisited. I just did not find a module for arbitrary precision integer arithmetics on luarocks with a working installation at the time. So I decided to activate some older project (implementing arbitrary BCD arithmetics for Lua) as a luarocks module on my own. This will be replaced in the future.
+
 <a name="functionsProceduresAndMethods"/>
 
 ### How to implement callables like functions, procedures and methods?
@@ -113,6 +131,48 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 <a name="visibilityRules"/>
 
 ### How to implement visibility rules, e.g. private,public,protected?
+
+<a name="localFunctionCaptureRules"/>
+
+### How to implement capture rules of local function definitions?
+The concept of scope is hierarchical and allows to access items of an enclosing scope by an enclosed scope. This raises some problems when dealing with local function definitions.
+```
+function y() {
+	int a = 3;
+	function b( int x) {
+		return a*x;
+	}
+```
+By default ```a``` is accessible in function ```b```. This can lead to anomalies without precaution. Especially if we use naively define a new register allocator for every function. One solution could be using a register allocator that uses a different prefix of the allocated items depending on the function hierarchy level. In this case it could be possible to define rules on the constructors issued for variables accessed.
+
+_This is still an open question and I do not know the correct answer yet_.
+
+<a name="orderOfDefinition"/>
+
+### How to implement access of types declared later in the source?
+In C++ you can reference types declared later in the source.
+```
+class A {
+	B b;
+
+	class B {
+		...
+	};
+};
+```
+When relying on one traversal of the AST to emit code, we can only implement an access scheme following the order of definitions like this:
+```
+class A {
+	class B {
+		...
+	};
+	B b;
+};
+```
+For the first example we need more than one tree traversal each of implementing only a subset of functions. 
+I did not figure out yet how it would be the best to support multiple tree traversals. But I am sure that the problem does not blow up the framework of _Mewa_. You need two traversals, one restricted on type and variable declarations first and a second complate one as it is defined now.
+
+_We leave this question as TODO_.
 
 <a name="exceptions"/>
 
