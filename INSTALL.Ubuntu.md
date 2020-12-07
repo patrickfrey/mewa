@@ -8,48 +8,48 @@ Install packages with 'apt-get'/aptitude.
 
 #### Required packages
 ```Bash
-        lua5.2 liblua5.2-dev luarocks llvm LuaBcd
+lua5.2 liblua5.2-dev luarocks llvm
 ```
 
 #### Required luarocks packages
 ```Bash
-	penlight filesystem
+luarocks install penlight LuaBcd
 ```
 
 ### Fetch sources
 ```Bash
-        git clone https://github.com/patrickfrey/mewa
-        cd mewa
+git clone https://github.com/patrickfrey/mewa
+cd mewa
 ```
 
 ### Configure to find Lua includes and to write the file Lua.inc included by make
 ```Bash
-        ./configure
+./configure
 ```
 
 ### Build with GNU C/C++
 ```Bash
-        make -DCOMPILER=gcc -DRELEASE=true
+make -DCOMPILER=gcc -DRELEASE=true
 ```
 
 ### Build with Clang C/C++
 ```Bash
-        make -DCOMPILER=clang -DRELEASE=true
+make -DCOMPILER=clang -DRELEASE=true
 ```
 
 ### Run tests
 ```Bash
-        make test
+make test
 ```
 
 ### Install
 ```Bash
-        make PREFIX=/usr/local install
+make PREFIX=/usr/local install
 ```
 
 ### Lua Environment
 For running the examples by hand don't forget to set the environment variables needed by Lua (LUA_CPATH,LUA_PATH) correctly by sourcing the script luaenv.sh in tests:
 ```Bash
-	. tests/luaenv.sh
+. tests/luaenv.sh
 ```
 

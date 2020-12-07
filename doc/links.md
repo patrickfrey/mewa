@@ -18,3 +18,6 @@
 * [LLVMdev: The nsw story](https://lists.llvm.org/pipermail/llvm-dev/2011-November/045735.html)
 
 
+## LuaRocks (packaging)
+* [Rockspec-format](https://github.com/luarocks/luarocks/wiki/Rockspec-format)
+
