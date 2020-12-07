@@ -11,9 +11,10 @@ Install packages with 'apt-get'/aptitude.
 lua5.2 liblua5.2-dev luarocks llvm
 ```
 
-#### Required luarocks packages
+#### Install required luarocks packages
 ```Bash
-luarocks install penlight LuaBcd
+luarocks install penlight 
+luarocks install LuaBcd
 ```
 
 ### Fetch sources
