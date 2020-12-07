@@ -14,9 +14,11 @@
 * [Mapping High Level Constructs to LLVM IR Documentation](https://readthedocs.org/projects/mapping-high-level-constructs-to-llvm-ir/downloads/pdf/latest)
 * [Mapping High Level Constructs to LLVM IR](https://github.com/f0rki/mapping-high-level-constructs-to-llvm-ir)
 
+### Optimization
+* [Performance Tips](https://llvm.org/docs/Frontend/PerformanceTips.html)
+
 ### Some Deeper Digging
 * [LLVMdev: The nsw story](https://lists.llvm.org/pipermail/llvm-dev/2011-November/045735.html)
-
 
 ## LuaRocks (packaging)
 * [Rockspec-format](https://github.com/luarocks/luarocks/wiki/Rockspec-format)
