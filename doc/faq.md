@@ -4,6 +4,7 @@
     * [What is _Mewa_](#WTF)
     * [What audience is targeted by _Mewa_?](#targetAudience)
     * [What classes of languages are covered by _Mewa_?](#coveredLanguageClasses)
+    * [What does this silly name _Mewa_ stand for?](#nameMewa)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
     * [How to handle scopes?](#astTraversalAndScope)
@@ -56,6 +57,11 @@ To define a type system as graph of types and reductions within the hierarchical
 **(*)** Unfortunately C++ (and C) can't be implemented with _Mewa_ as there is no clear separation of syntax and semantic analysis possible in C/C++.
 To name one example: There is no way to decide if the statement ```A * B;``` is an expression or a type declaration without having semantical information about A.
 
+
+<a name="nameMewa"/>
+
+### What does this silly name _Mewa_ stand for?
+Name finding is difficult. I got stuck in Polish names of birds without non ASCII characters. _Mewa_ is the Polish name for seagull.
 
 <a name="problemSolving"/>
 
