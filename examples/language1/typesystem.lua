@@ -70,14 +70,14 @@ local scalarIndexTypeMap = {}	-- maps scalar type names usable as index without 
 local scalarBooleanType = nil	-- type id of the boolean type, result of cmpop binary operators
 local scalarIntegerType = nil	-- type id of the main integer type, result of main function
 local stringPointerType = nil	-- type id of the string constant type used for free string litterals
-local stringPointerRefType =nil	-- type id of the string constant type used for free string litterals
+local stringAddressType = nil	-- type id of the string constant type used string constants outsize a function scope
 local controlTrueType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
 local valueTypeMap = {}		-- maps any defined type id to its value type (strips away reference qualifiers)
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
-local stringConstantMap = {}    -- maps string constant values to their allocated name
+local stringConstantMap = {}    -- maps string constant values to a structure with its attributes {fmt,name,size}
 
 function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
 	local call_constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
@@ -159,15 +159,6 @@ function defineConstExprArithmetics()
 
 	function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, 0.25)
-end
-function getStringConstantName( value)
-	if not stringConstantMap[ value] then 
-		stringConstantMap[ value] = utils.uniqueName( "string")
-		local encval,enclen = utils.encodeCString(value)
-		local addr = "@" .. stringConstantMap[value]
-		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {out=addr, size=enclen+1, value=encval}) .. "\n")
-	end
-	return stringConstantMap[ value]
 end
 function defineQualifiedTypes( typnam, typeDescription)
 	local pointerTypeDescription = llvmir.pointerType( typeDescription.llvmtype)
@@ -362,6 +353,7 @@ function initControlTypes()
 end
 
 function initBuiltInTypes()
+	stringAddressType = typedb:def_type( 0, " stringAddressType")
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local lval = defineQualifiedTypes( typnam, scalar_descr)
 		local c_lval = qualiTypeMap[ lval].c_lval
@@ -371,14 +363,12 @@ function initBuiltInTypes()
 		elseif scalar_descr.class == "unsigned" then
 			if scalar_descr.llvmtype == "i8" then
 				stringPointerType = qualiTypeMap[ lval].c_pval
-				stringPointerRefType = qualiTypeMap[ lval].c_rpval
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		elseif scalar_descr.class == "signed" then
 			if scalar_descr.llvmtype == "i32" then scalarIntegerType = qualiTypeMap[ lval].c_lval end
 			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
 				stringPointerType = qualiTypeMap[ lval].c_pval
-				stringPointerRefType = qualiTypeMap[ lval].c_rpval
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		end
@@ -647,6 +637,21 @@ function defineCallableBodyContext( rtype)
 	typedb:set_instance( "label", utils.label_allocator())
 	typedb:set_instance( "return", rtype)
 end
+function getStringConstant( value)
+	if not stringConstantMap[ value] then
+		local encval,enclen = utils.encodeCString(value)
+		local name = utils.uniqueName( "string")
+		stringConstantMap[ value] = {fmt=utils.template_format( llvmir.control.stringConstConstructor, {name=name,size=enclen+1}),name=name,size=enclen+1}
+		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {out="@" .. name, size=enclen+1, value=encval}) .. "\n")
+	end
+	local register = typedb:get_instance( "register")
+	if not register then
+		return {type=stringAddressType,constructor=stringConstantMap[ value]}
+	else
+		out = register()
+		return {type=stringPointerType,constructor={code=utils.constructor_format( stringConstantMap[ value].fmt, {out=out}), out=out}}
+	end
+end
 
 -- AST Callbacks:
 function typesystem.definition( node, contextTypeId)
@@ -786,8 +791,7 @@ function typesystem.constant( node, typeName)
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
 end
 function typesystem.string_constant( node)
-	local addr = "@" .. getStringConstantName( node.arg[1].value)
-	return {type=stringPointerRefType, constructor={out=addr,code=""}}
+	return getStringConstant( node.arg[1].value)
 end
 function typesystem.char_constant( node)
 	local ua = utils.utf8to32( node.arg[1].value)

@@ -8,7 +8,7 @@ Install packages with 'apt-get'/aptitude.
 
 #### Required packages
 ```Bash
-lua5.2 liblua5.2-dev luarocks llvm
+lua5.2 liblua5.2-dev luarocks llvm llvm-runtime
 ```
 
 #### Install required luarocks packages

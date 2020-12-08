@@ -24,12 +24,12 @@ local pointerTemplate = {
 		["byte"] = "{1} = zext i8 {arg2} to i64\n{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {1}\n"
 	},
 	cmpop = {
-		["=="] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp eq {size_t} {1}, {2}\n",
-		["!="] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp ne {size_t} {1}, {2}\n",
-		["<="] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp sle {size_t} {1}, {2}\n",
-		["<"] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp slt {size_t} {1}, {2}\n",
-		[">="] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp sge {size_t} {1}, {2}\n",
-		[">"] = "{1} = ptrtoint {pointee}* {this} to {size_t}\n{2} = ptrtoint {pointee}* {arg1} to {size_t}\n{out} = icmp sgt {size_t} {1}, {2}\n"}
+		["=="] = "{1} = {out} = icmp eq {pointee}* {1}, {2}\n",
+		["!="] = "{1} = {out} = icmp ne {pointee}* {1}, {2}\n",
+		["<="] = "{1} = {out} = icmp sle {pointee}* {1}, {2}\n",
+		["<"] = "{1} = {out} = icmp slt {pointee}* {1}, {2}\n",
+		[">="] = "{1} = {out} = icmp sge {pointee}* {1}, {2}\n",
+		[">"] = "{1} = {out} = icmp sgt {pointee}* {1}, {2}\n"}
 }
 
 llvmir.control = {
@@ -45,7 +45,7 @@ llvmir.control = {
 	procedureCall = "call void @{symbolname}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
-	stringConstLoad = "{out} = getelementptr i8*, i8** @{name}, i64 0, i64 0\n",
+	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "define external i32 @main() #0 noinline nounwind {\nentry:\n{body}ret i32 0\n}\n"
 }
 
