@@ -204,7 +204,7 @@ function utils.errorResolveType( typedb, line, resultContextTypeId, contextType,
 	local resolveTypeString = utils.resolveTypeString( typedb, contextType, typeName)
 	if not resultContextTypeId then
 		utils.errorMessage( line, "Failed to resolve '%s'", resolveTypeString)
-	elseif type(typeId) == "table" then
+	elseif type(resultContextTypeId) == "table" then
 		local t1 = typedb:type_string( resultContextTypeId[1])
 		local t2 = typedb:type_string( resultContextTypeId[2])
 		utils.errorMessage( line, "Ambiguous reference resolving '%s': %s, %s", resolveTypeString, t1, t2)
