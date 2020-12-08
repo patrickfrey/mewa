@@ -4,14 +4,14 @@ The [parser generator program mewa](doc/program_mewa.pdf) generates a Lua module
 A Lua module written in C++ (see [typedb API](doc/typedb.md)) provides you some assistance to define your own type system and to generate code.
 
 # Design Philosophy and Limitations
- - _Mewa_'s approach is *naive*. It tries to get as far as possible with a *minimal* set of tools.
-It is *not complete*. This means that you will come up against limits of things you can't implement.
-Furthermore, it is *not optimised for collaborative work* unlike other compiler frontends.
+ - _Mewa_'s approach is **naive**. It tries to get as far as possible with a **minimal** set of tools.
+It is **not complete**. This means that you will come up against limits of things you can't implement.
+Furthermore, it is **not optimised for collaborative work** unlike other compiler frontends.
 
  - _Mewa_ provides no support for evaluation of different paths of code generation.
-The idea is to do one to one mapping of program structures to code and to *leave all analytical optimization steps to the backend*.
+The idea is to do one to one mapping of program structures to code and to **leave all analytical optimization steps to the backend**.
 
- - _Mewa_ is just a tool to *experiment*, to discover.
+ - _Mewa_ is just a tool **to experiment, to discover**.
 
 # LLVM
 The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/docs/LangRef.html) for code generation. 
