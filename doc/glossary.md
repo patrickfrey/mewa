@@ -1,6 +1,6 @@
 # Glossary
 
-# Name _Mewa_
+## Name _Mewa_
 Polish name for seagull. It's difficult to find short memorizable names. I got stuck to names of birds in the polish language without non ASCII characters.
 
 ## Type System

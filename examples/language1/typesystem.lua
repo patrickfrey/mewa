@@ -337,19 +337,63 @@ function initControlTypes()
 	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
 	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction)
 
-	function BooleanToFalseExit( constructor)
+	function booleanToFalseExit( constructor)
 		local label = typedb:get_instance( "label")
 		local out = label()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, label),out=out}
 	end
-	function BooleanToTrueExit( constructor)
+	function booleanToTrueExit( constructor)
 		local label = typedb:get_instance( "label")
 		local out = label()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 
-	typedb:def_reduction( controlTrueType, scalarBooleanType, BooleanToFalseExit, tag_typeDeduction)
-	typedb:def_reduction( controlFalseType, scalarBooleanType, BooleanToTrueExit, tag_typeDeduction)
+	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction)
+	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction)
+
+	function negateControlTrueType( this) return {type=controlFalseType, constructor=this.constructor} end
+	function negateControlFalseType( this) return {type=controlTrueType, constructor=this.constructor} end
+
+	function joinControlTrueTypeWithBool( this, arg)
+		local out = this.out
+		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, typedb:get_instance( "label"))
+		return {code=this.code .. arg[1].code .. code2, out=out}
+	end
+	function joinControlFalseTypeWithBool( this, arg)
+		local out = this.out
+		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, typedb:get_instance( "label"))
+		return {code=this.code .. arg[1].code .. code2, out=out}
+	end
+	function invertControlBooleanType( this)
+		local code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out})
+	end
+	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
+	defineCall( controlFalseType, controlTrueType, "!", {}, nil)
+	defineCall( controlTrueType, controlTrueType, "&&", {scalarBooleanType}, joinControlTrueTypeWithBool)
+	defineCall( controlFalseType, controlTrueType, "||", {scalarBooleanType}, joinControlFalseTypeWithBool)
+
+	function joinControlFalseTypeWithConstexprBool( this, arg)
+		if arg == false then
+			return this
+		else 
+			return {code= this.code .. utils.constructor_format( llvmir.control.terminateFalseExit,{out=this.out},typedb:get_instance( "label")), out=this.out}
+		end
+	end
+	function joinControlTrueTypeWithConstexprBool( this, arg)
+		if arg == true then
+			return this
+		else 
+			return {code= this.code .. utils.constructor_format( llvmir.control.terminateFalseExit,{out=this.out},typedb:get_instance( "label")), out=this.out}
+		end
+	end
+	defineCall( controlTrueType, controlTrueType, "&&", {constexprBooleanType}, joinControlTrueTypeWithConstexprBool)
+	defineCall( controlFalseType, controlFalseType, "||", {constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
+
+	-- typedb:def_reduction( controlFalseType, constexprBooleanType, function(this) return {code="",out=, tag_typeDeduction)
+	-- typedb:def_reduction( controlTrueType, constexprBooleanType, invertControlBooleanType, tag_typeDeduction)
+
+	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction)
+	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction)
 end
 
 function initBuiltInTypes()
