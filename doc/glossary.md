@@ -1,7 +1,7 @@
 # Glossary
 
 # Name _Mewa_
-Polish name for seagull. It's difficult to find short memorizable names. I stick to names of birds in the polish language without non ascii characters.
+Polish name for seagull. It's difficult to find short memorizable names. I got stuck to names of birds in the polish language without non ASCII characters.
 
 ## Type System
 A set of term rewrite rules to reduce structures of types to types and in this process construct a program that represents this structure. 

@@ -61,7 +61,8 @@ To name one example: There is no way to decide if the statement ```A * B;``` is 
 <a name="nameMewa"/>
 
 ### What does this silly name _Mewa_ stand for?
-Name finding is difficult. I got stuck in Polish names of birds without non ASCII characters. _Mewa_ is the Polish name for seagull.
+Name finding is difficult. I got stuck in Polish names of birds without non ASCII characters. _Mewa_ is the Polish name for seagull. 
+I think the original idea was that seagulls are a sign of land nearby when you are lost in the sea. Compiler projects are usually a neverending thing (like the sea). With _Mewa_ you see land, meaning that you can at least prototype your compiler. :-)
 
 <a name="problemSolving"/>
 
