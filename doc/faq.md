@@ -35,14 +35,14 @@ This section of the FAQ answers some broader questions about what one can do wit
 <a name="WTF"/>
 
 ### What is _Mewa_?
-_Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly typed languages. 
-It follows a naive approach, trying to solve the mapping of a programming language to a intermediate representation in the simplest way. It leaves all analytical optimization steps to the backend. It may try to support the backend by ordering the output in its preferred way (put allocas at the start of entry block to support SROA and Mem2Reg). But it does not optimize code generation in any way.
+_Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly typed languages without the claim to be complete.
+It aims to support the mapping of a programming language to a intermediate representation in the simplest way leaving all analytical optimization steps to the backend. 
 
 <a name="targetAudience"/>
 
 ### What audience is targeted by _Mewa_?
 **_Mewa_ is for people with some base knowledge about how parser generators work (*).**
-It starts where many compiler compiler projects stop. It tries to assist you implementing a typesystem for your compiler project. 
+Maybe some insights into other compiler frontend implementations is recommended as the *naive* approach of _Mewa_ as the only point of view could be misleading.
 
 **(*)** There has not yet been much effort done to assist users in case of conflicts in a grammar. The conflicts are detected and reported and the building of the parser fails in consequence, but there is no mechanism implemented for autocorrection and there is no deeper analysis made by the _Mewa_ parser generator program.
 
@@ -51,7 +51,7 @@ It starts where many compiler compiler projects stop. It tries to assist you imp
 ### What classes of languages are covered by _Mewa_?
 **_Mewa_ was been designed to be capable to implement general purpose programming languages with the power of C++ (*) or Rust having a LALR(1) grammar definition.**
 It is not recommended to use _Mewa_ for other than compilable, stronly typed programming languages, because it was not designed for other language classes.
-To define a typesystem as graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
+To define a type system as graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
 
 **(*)** Unfortunately C++ (and C) can't be implemented with _Mewa_ as there is no clear separation of syntax and semantic analysis possible in C/C++.
 To name one example: There is no way to decide if the statement ```A * B;``` is an expression or a type declaration without having semantical information about A.
