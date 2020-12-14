@@ -357,15 +357,12 @@ function initControlTypes()
 	function joinControlTrueTypeWithBool( this, arg)
 		local out = this.out
 		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, typedb:get_instance( "label"))
-		return {code=this.code .. arg[1].code .. code2, out=out}
+		return {code=this.code .. arg[1].code .. arg[2].code .. code2, out=out}
 	end
 	function joinControlFalseTypeWithBool( this, arg)
 		local out = this.out
 		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, typedb:get_instance( "label"))
-		return {code=this.code .. arg[1].code .. code2, out=out}
-	end
-	function invertControlBooleanType( this)
-		local code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out})
+		return {code=this.code .. arg[1].code .. arg[2].code .. code2, out=out}
 	end
 	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
 	defineCall( controlFalseType, controlTrueType, "!", {}, nil)
@@ -376,7 +373,7 @@ function initControlTypes()
 		if arg == false then
 			return this
 		else 
-			return {code= this.code .. utils.constructor_format( llvmir.control.terminateFalseExit,{out=this.out},typedb:get_instance( "label")), out=this.out}
+			return {code= this.code .. utils.constructor_format( llvmir.control.terminateTrueExit,{out=this.out},typedb:get_instance( "label")), out=this.out}
 		end
 	end
 	function joinControlTrueTypeWithConstexprBool( this, arg)
@@ -389,11 +386,24 @@ function initControlTypes()
 	defineCall( controlTrueType, controlTrueType, "&&", {constexprBooleanType}, joinControlTrueTypeWithConstexprBool)
 	defineCall( controlFalseType, controlFalseType, "||", {constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
 
-	-- typedb:def_reduction( controlFalseType, constexprBooleanType, function(this) return {code="",out=, tag_typeDeduction)
-	-- typedb:def_reduction( controlTrueType, constexprBooleanType, invertControlBooleanType, tag_typeDeduction)
+	function constexprBooleanToControlTrueType( value)
+		local out = typedb:get_instance( "label")()
+		local code; if value == true then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}) end
+		return {code=code, out=out}
+	end
+	function constexprBooleanToControlFalseType( value)
+		local out = typedb:get_instance( "label")()
+		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}) end
+		return {code=code, out=out}
+	end
+	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction)
+	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction)
 
-	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction)
-	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction)
+	function invertControlBooleanType( this)
+		local code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out})
+	end
+	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, 0.1)
+	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, 0.1)
 end
 
 function initBuiltInTypes()
@@ -551,66 +561,6 @@ function applyCallable( node, this, callable, args)
 	end
 end
 
-function convertToBooleanType( node, operand)
-	if type(operand.constructor) == "table" then
-		local bool_constructor = getReductionConstructor( node, scalarBooleanType, operand)
-		if not bool_constructor then
-			utils.errorMessage( node.line, "Operand type '%s' is not reducible to boolean", typedb:type_string(operand.type))
-		end
-		return {type=scalarBooleanType, constructor=bool_constructor}
-	else
-		local bool_constructor = getReductionConstructor( node, constexprBooleanType, operand)
-		if not bool_constructor then
-			utils.errorMessage( node.line, "Operand type '%s' is not reducible to boolean const expression", typedb:type_string(operand.type))
-		end
-		return {type=constexprBooleanType, constructor=bool_constructor}
-	end
-end
-
-function convertToControlBooleanType( node, controlBooleanType, operand)
-	if operand.type == controlBooleanType then
-		return operand
-	elseif operand.type == controlFalseType or operand.type == controlTrueType then
-		local out = typedb:get_instance( "label")()
-		return {type = controlBooleanType,
-			constructor = operand.constructor .. utils.constructor_format( llvmir.control.invertedControlType, {inp=constructor.out, out=out}) }
-	else
-		local boolOperand = convertToBooleanType( node, operand)
-		if not typedb:get_instance( "label") then return boolOperand end
-		local control_constructor = getReductionConstructor( node, controlBooleanType, {type=scalarBooleanType,constructor=boolOperand.constructor})
-		return {type=controlBooleanType, constructor=control_constructor}
-	end
-end
-function negateControlBooleanType( node, this)
-	if this.type == scalarBooleanType or this.type == constexprBooleanType then
-		return applyCallable( node, this, "!")
-	else
-		if this.type == controlFalseType then
-			return {type=controlTrueType, constructor=this.constructor}
-		else
-			return {type=controlFalseType, constructor=this.constructor}
-		end
-	end
-end
-function applyControlBooleanJoin( node, this, operand, controlBooleanType)
-	local operand1 = convertToControlBooleanType( node, controlBooleanType, this)
-	local operand2 = convertToBooleanType( node, operand)
-	if operand1.operand.type == constexprBooleanType then
-		if operand1.operand.constructor then return operand2 else return {type=constexprBooleanType,constructor=false} end
-	elseif operand2.operand.type == constexprBooleanType then 
-		if operand2.operand.constructor then return operand1 else return {type=constexprBooleanType,constructor=false} end
-	elseif operand1.operand.type == scalarBooleanType and operand2.operand.type == scalarBooleanType then
-		return applyCallable( node, this, "&&", {operand})
-	elseif operand1.operand.type == controlFalseType and operand2.operand.type == scalarBooleanType then
-		local out = operand1.constructor.out
-		local fmt; if controlBooleanType == controlTrueType then fmt = llvmir.control.booleanToFalseExit else fmt = llvmir.control.booleanToTrueExit end
-		local code2 = utils.constructor_format( fmt, {inp=operand2.constructor.out, out=out}, typedb:get_instance( "label"))
-		return {code=operand1.constructor.code .. code2, out=out}
-	else
-		utils.errorMessage( node.line, "Boolean expression cannot be evaluated")
-	end
-end
-
 function getSignatureString( name, args, contextTypeId)
 	if not contextTypeId then
 		return utils.uniqueName( name .. "__")
@@ -748,18 +698,6 @@ function typesystem.operator( node, operator)
 	return applyCallable( node, this, operator, args)
 end
 
-function typesystem.logic_operator_not( node, operator)
-	local arg = utils.traverse( typedb, node)
-	return negateControlBooleanType( node, convertToControlBooleanType( node, controlFalseType, arg[1]))
-end
-function typesystem.logic_operator_and( node, operator)
-	local arg = utils.traverse( typedb, node)
-	return applyControlBooleanJoin( node, arg, controlTrueType)
-end
-function typesystem.logic_operator_or( node, operator)
-	local arg = utils.traverse( typedb, node)
-	return applyControlBooleanJoin( node, arg, controlFalseType)
-end
 function typesystem.free_expression( node)
 	local arg = utils.traverse( typedb, node)
 	if arg[1].type == controlTrueType or arg[1].type == controlFalseType then
@@ -789,25 +727,26 @@ function typesystem.return_value( node)
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
-	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
-	local ccode,cout = cond.constructor.code, cond.constructor.out
-	return {code = ccode .. arg[2].code .. utils.constructor_format( llvmir.control.label, {inp=cout})}
+	local cond_constructor = getReductionConstructor( node, controlTrueType, arg[1])
+	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
+	return {code = cond_constructor.code .. arg[2].code .. utils.constructor_format( llvmir.control.label, {inp=cond_constructor.out})}
 end
 function typesystem.conditional_if_else( node)
 	local arg = utils.traverse( typedb, node)
-	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
-	local ccode,cout = cond.constructor.code, cond.constructor.out
+	local cond_constructor = getReductionConstructor( node, controlTrueType, arg[1])
+	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
 	local exit = typedb:get_instance( "label")()
-	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=cout, out=exit})
-	return {code = ccode .. arg[2].code .. elsecode .. arg[3].code .. utils.constructor_format( llvmir.control.label, {inp=exit})}
+	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=cond_constructor.out, out=exit})
+	return {code = cond_constructor.code .. arg[2].code .. elsecode .. arg[3].code .. utils.constructor_format( llvmir.control.label, {inp=exit})}
 end
 function typesystem.conditional_while( node)
 	local arg = utils.traverse( typedb, node)
-	local cond = convertToControlBooleanType( node, controlTrueType, arg[1])
-	local ccode,cout = cond.constructor.code, cond.constructor.out
+	local cond_constructor = getReductionConstructor( node, controlTrueType, arg[1])
+	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
 	local start = typedb:get_instance( "label")()
 	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
-	return {code = startcode .. ccode .. arg[2].code .. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cout})}
+	return {code = startcode .. cond_constructor.code .. arg[2].code 
+			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
 end
 
 function typesystem.typespec( node, qualifier)

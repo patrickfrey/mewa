@@ -10284,7 +10284,7 @@ expressionlist =
 	expression/L11 = expression . "." IDENT, FOLLOW [165] -> SHIFT '.' GOTO 117
 	indirection = . "->" indirection, FOLLOW [6] -> SHIFT "->" GOTO 118
 	indirection = . "->", FOLLOW [6] -> SHIFT "->" GOTO 118
-	expression/L8 = "!" expression . (71), FOLLOW [165] -> REDUCE expression #2 CALL logic_operator_not "~"
+	expression/L8 = "!" expression . (71), FOLLOW [165] -> REDUCE expression #2 CALL operator "!"
 [128]
 	iexpression = expression . indirection IDENT, FOLLOW [165] -> GOTO 82
 	expression/L12 = expression . "(" expressionlist ")", FOLLOW [165] -> SHIFT '(' GOTO 83
@@ -11063,7 +11063,7 @@ expressionlist =
 	expression/L11 = expression . "." IDENT, FOLLOW [165] -> SHIFT '.' GOTO 117
 	indirection = . "->" indirection, FOLLOW [6] -> SHIFT "->" GOTO 118
 	indirection = . "->", FOLLOW [6] -> SHIFT "->" GOTO 118
-	expression/L3 = expression "||" expression . (57), FOLLOW [165] -> REDUCE expression #3 CALL logic_operator_or
+	expression/L3 = expression "||" expression . (57), FOLLOW [165] -> REDUCE expression #3 CALL operator "||"
 [164]
 	iexpression = expression . indirection IDENT, FOLLOW [165] -> GOTO 82
 	expression/L12 = expression . "(" expressionlist ")", FOLLOW [165] -> SHIFT '(' GOTO 83
@@ -11103,7 +11103,7 @@ expressionlist =
 	expression/L11 = expression . "." IDENT, FOLLOW [165] -> SHIFT '.' GOTO 117
 	indirection = . "->" indirection, FOLLOW [6] -> SHIFT "->" GOTO 118
 	indirection = . "->", FOLLOW [6] -> SHIFT "->" GOTO 118
-	expression/L4 = expression "&&" expression . (58), FOLLOW [165] -> REDUCE expression #3 CALL logic_operator_and
+	expression/L4 = expression "&&" expression . (58), FOLLOW [165] -> REDUCE expression #3 CALL operator "&&"
 [165]
 	iexpression = expression . indirection IDENT, FOLLOW [165] -> GOTO 82
 	expression/L12 = expression . "(" expressionlist ")", FOLLOW [165] -> SHIFT '(' GOTO 83
@@ -12343,8 +12343,8 @@ expressionlist =
 (54) assign_operator, "|"
 (55) assign_operator, "<<"
 (56) assign_operator, ">>"
-(57) logic_operator_or
-(58) logic_operator_and
+(57) operator, "||"
+(58) operator, "&&"
 (59) operator, "|"
 (60) operator, "^"
 (61) operator, "&"
@@ -12357,7 +12357,7 @@ expressionlist =
 (68) operator, "+"
 (69) operator, "-"
 (70) operator, "~"
-(71) logic_operator_not, "~"
+(71) operator, "!"
 (72) operator, "*"
 (73) operator, "/"
 (74) operator, "%"
@@ -13953,44 +13953,44 @@ expressionlist =
 	"->" => Reduce #2 expression call operator "~"
 [127]
 	'(' => Shift goto 83
-	')' => Reduce #2 expression call logic_operator_not "~"
-	';' => Reduce #2 expression call logic_operator_not "~"
-	',' => Reduce #2 expression call logic_operator_not "~"
+	')' => Reduce #2 expression call operator "!"
+	';' => Reduce #2 expression call operator "!"
+	',' => Reduce #2 expression call operator "!"
 	"::" => Shift goto 85
-	'&' => Reduce #2 expression call logic_operator_not "~"
-	'^' => Reduce #2 expression call logic_operator_not "~"
-	'=' => Reduce #2 expression call logic_operator_not "~"
+	'&' => Reduce #2 expression call operator "!"
+	'^' => Reduce #2 expression call operator "!"
+	'=' => Reduce #2 expression call operator "!"
 	'[' => Shift goto 89
-	']' => Reduce #2 expression call logic_operator_not "~"
-	"+=" => Reduce #2 expression call logic_operator_not "~"
-	"-=" => Reduce #2 expression call logic_operator_not "~"
-	"*=" => Reduce #2 expression call logic_operator_not "~"
-	"/=" => Reduce #2 expression call logic_operator_not "~"
-	"%=" => Reduce #2 expression call logic_operator_not "~"
-	"&&=" => Reduce #2 expression call logic_operator_not "~"
-	"||=" => Reduce #2 expression call logic_operator_not "~"
-	"&=" => Reduce #2 expression call logic_operator_not "~"
-	"|=" => Reduce #2 expression call logic_operator_not "~"
-	"<<=" => Reduce #2 expression call logic_operator_not "~"
-	">>=" => Reduce #2 expression call logic_operator_not "~"
-	"||" => Reduce #2 expression call logic_operator_not "~"
-	"&&" => Reduce #2 expression call logic_operator_not "~"
-	'|' => Reduce #2 expression call logic_operator_not "~"
-	"==" => Reduce #2 expression call logic_operator_not "~"
-	"!=" => Reduce #2 expression call logic_operator_not "~"
-	"<=" => Reduce #2 expression call logic_operator_not "~"
-	'<' => Reduce #2 expression call logic_operator_not "~"
-	">=" => Reduce #2 expression call logic_operator_not "~"
-	'>' => Reduce #2 expression call logic_operator_not "~"
-	'+' => Reduce #2 expression call logic_operator_not "~"
-	'-' => Reduce #2 expression call logic_operator_not "~"
+	']' => Reduce #2 expression call operator "!"
+	"+=" => Reduce #2 expression call operator "!"
+	"-=" => Reduce #2 expression call operator "!"
+	"*=" => Reduce #2 expression call operator "!"
+	"/=" => Reduce #2 expression call operator "!"
+	"%=" => Reduce #2 expression call operator "!"
+	"&&=" => Reduce #2 expression call operator "!"
+	"||=" => Reduce #2 expression call operator "!"
+	"&=" => Reduce #2 expression call operator "!"
+	"|=" => Reduce #2 expression call operator "!"
+	"<<=" => Reduce #2 expression call operator "!"
+	">>=" => Reduce #2 expression call operator "!"
+	"||" => Reduce #2 expression call operator "!"
+	"&&" => Reduce #2 expression call operator "!"
+	'|' => Reduce #2 expression call operator "!"
+	"==" => Reduce #2 expression call operator "!"
+	"!=" => Reduce #2 expression call operator "!"
+	"<=" => Reduce #2 expression call operator "!"
+	'<' => Reduce #2 expression call operator "!"
+	">=" => Reduce #2 expression call operator "!"
+	'>' => Reduce #2 expression call operator "!"
+	'+' => Reduce #2 expression call operator "!"
+	'-' => Reduce #2 expression call operator "!"
 	'*' => Shift goto 112
 	'/' => Shift goto 113
 	'%' => Shift goto 114
 	"<<" => Shift goto 115
 	">>" => Shift goto 116
 	'.' => Shift goto 117
-	"->" => Reduce #2 expression call logic_operator_not "~"
+	"->" => Reduce #2 expression call operator "!"
 [128]
 	'(' => Shift goto 83
 	')' => Reduce #2 expression call operator "->"
@@ -14856,27 +14856,27 @@ expressionlist =
 	"->" => Reduce #3 expression call assign_operator ">>"
 [163]
 	'(' => Shift goto 83
-	')' => Reduce #3 expression call logic_operator_or
-	';' => Reduce #3 expression call logic_operator_or
-	',' => Reduce #3 expression call logic_operator_or
+	')' => Reduce #3 expression call operator "||"
+	';' => Reduce #3 expression call operator "||"
+	',' => Reduce #3 expression call operator "||"
 	"::" => Shift goto 85
 	'&' => Shift goto 86
 	'^' => Shift goto 87
-	'=' => Reduce #3 expression call logic_operator_or
+	'=' => Reduce #3 expression call operator "||"
 	'[' => Shift goto 89
-	']' => Reduce #3 expression call logic_operator_or
-	"+=" => Reduce #3 expression call logic_operator_or
-	"-=" => Reduce #3 expression call logic_operator_or
-	"*=" => Reduce #3 expression call logic_operator_or
-	"/=" => Reduce #3 expression call logic_operator_or
-	"%=" => Reduce #3 expression call logic_operator_or
-	"&&=" => Reduce #3 expression call logic_operator_or
-	"||=" => Reduce #3 expression call logic_operator_or
-	"&=" => Reduce #3 expression call logic_operator_or
-	"|=" => Reduce #3 expression call logic_operator_or
-	"<<=" => Reduce #3 expression call logic_operator_or
-	">>=" => Reduce #3 expression call logic_operator_or
-	"||" => Reduce #3 expression call logic_operator_or
+	']' => Reduce #3 expression call operator "||"
+	"+=" => Reduce #3 expression call operator "||"
+	"-=" => Reduce #3 expression call operator "||"
+	"*=" => Reduce #3 expression call operator "||"
+	"/=" => Reduce #3 expression call operator "||"
+	"%=" => Reduce #3 expression call operator "||"
+	"&&=" => Reduce #3 expression call operator "||"
+	"||=" => Reduce #3 expression call operator "||"
+	"&=" => Reduce #3 expression call operator "||"
+	"|=" => Reduce #3 expression call operator "||"
+	"<<=" => Reduce #3 expression call operator "||"
+	">>=" => Reduce #3 expression call operator "||"
+	"||" => Reduce #3 expression call operator "||"
 	"&&" => Shift goto 102
 	'|' => Shift goto 103
 	"==" => Shift goto 104
@@ -14893,31 +14893,31 @@ expressionlist =
 	"<<" => Shift goto 115
 	">>" => Shift goto 116
 	'.' => Shift goto 117
-	"->" => Reduce #3 expression call logic_operator_or
+	"->" => Reduce #3 expression call operator "||"
 [164]
 	'(' => Shift goto 83
-	')' => Reduce #3 expression call logic_operator_and
-	';' => Reduce #3 expression call logic_operator_and
-	',' => Reduce #3 expression call logic_operator_and
+	')' => Reduce #3 expression call operator "&&"
+	';' => Reduce #3 expression call operator "&&"
+	',' => Reduce #3 expression call operator "&&"
 	"::" => Shift goto 85
 	'&' => Shift goto 86
 	'^' => Shift goto 87
-	'=' => Reduce #3 expression call logic_operator_and
+	'=' => Reduce #3 expression call operator "&&"
 	'[' => Shift goto 89
-	']' => Reduce #3 expression call logic_operator_and
-	"+=" => Reduce #3 expression call logic_operator_and
-	"-=" => Reduce #3 expression call logic_operator_and
-	"*=" => Reduce #3 expression call logic_operator_and
-	"/=" => Reduce #3 expression call logic_operator_and
-	"%=" => Reduce #3 expression call logic_operator_and
-	"&&=" => Reduce #3 expression call logic_operator_and
-	"||=" => Reduce #3 expression call logic_operator_and
-	"&=" => Reduce #3 expression call logic_operator_and
-	"|=" => Reduce #3 expression call logic_operator_and
-	"<<=" => Reduce #3 expression call logic_operator_and
-	">>=" => Reduce #3 expression call logic_operator_and
-	"||" => Reduce #3 expression call logic_operator_and
-	"&&" => Reduce #3 expression call logic_operator_and
+	']' => Reduce #3 expression call operator "&&"
+	"+=" => Reduce #3 expression call operator "&&"
+	"-=" => Reduce #3 expression call operator "&&"
+	"*=" => Reduce #3 expression call operator "&&"
+	"/=" => Reduce #3 expression call operator "&&"
+	"%=" => Reduce #3 expression call operator "&&"
+	"&&=" => Reduce #3 expression call operator "&&"
+	"||=" => Reduce #3 expression call operator "&&"
+	"&=" => Reduce #3 expression call operator "&&"
+	"|=" => Reduce #3 expression call operator "&&"
+	"<<=" => Reduce #3 expression call operator "&&"
+	">>=" => Reduce #3 expression call operator "&&"
+	"||" => Reduce #3 expression call operator "&&"
+	"&&" => Reduce #3 expression call operator "&&"
 	'|' => Shift goto 103
 	"==" => Shift goto 104
 	"!=" => Shift goto 105
@@ -14933,7 +14933,7 @@ expressionlist =
 	"<<" => Shift goto 115
 	">>" => Shift goto 116
 	'.' => Shift goto 117
-	"->" => Reduce #3 expression call logic_operator_and
+	"->" => Reduce #3 expression call operator "&&"
 [165]
 	'(' => Shift goto 83
 	')' => Reduce #3 expression call operator "|"

@@ -36,7 +36,7 @@ This section of the FAQ answers some broader questions about what one can do wit
 <a name="WTF"/>
 
 ### What is _Mewa_?
-_Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly typed languages without the claim to be complete.
+_Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly typed languages.
 It aims to support the mapping of a programming language to a intermediate representation in the simplest way leaving all analytical optimization steps to the backend. 
 
 <a name="targetAudience"/>

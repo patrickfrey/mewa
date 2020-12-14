@@ -112,9 +112,9 @@ expression/L2		= expression  "="  expression							(operator "=")
 			| expression  "<<="  expression							(assign_operator "<<")
 			| expression  ">>="  expression							(assign_operator ">>")
 			;
-expression/L3		= expression  "||"  expression							(logic_operator_or)
+expression/L3		= expression  "||"  expression							(operator "||")
 			;
-expression/L4		= expression  "&&"  expression							(logic_operator_and)
+expression/L4		= expression  "&&"  expression							(operator "&&")
 			;
 expression/L5		= expression  "|"  expression							(operator "|")
 			;			
@@ -133,7 +133,7 @@ expression/L8		= expression  "+"  expression							(operator "+")
 			| "-"  expression								(operator "-")
 			| "+"  expression								(operator "+") 
 			| "~"  expression								(operator "~")
-			| "!"  expression								(logic_operator_not) 
+			| "!"  expression								(operator "!") 
 			;
 expression/L9		= expression  "*"  expression							(operator "*")
 			| expression  "/"  expression							(operator "/")

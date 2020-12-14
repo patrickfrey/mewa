@@ -307,7 +307,6 @@ foreach my $line (@content)
 	my @ops = ();
 	if ($sgn eq "bool")
 	{
-		@ops = ("[\"&&\"] and", "[\"||\"] or");
 	}
 	elsif ($sgn eq "unsigned")
 	{

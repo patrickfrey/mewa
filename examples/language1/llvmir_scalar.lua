@@ -405,9 +405,7 @@ return {
 			["byte"] = {fmt="{out} = cmp ne i8 {inp}, 0\n", weight=0.375}},
 		unop = {
 			["!"] = "{out} = xor i1 {inp}, true\n"},
-		binop = {
-			["&&"] = "{out} = and i1 {this}, {arg1}\n",
-			["||"] = "{out} = or i1 {this}, {arg1}\n"},
+		binop = {},
 		cmpop = {
 			["=="] = "{out} = icmp eq i1 {this}, {arg1}\n",
 			["!="] = "{out} = icmp ne i1 {this}, {arg1}\n",

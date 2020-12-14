@@ -153,5 +153,5 @@ doc: all $(DOCSRC)
 	@echo "Create documentation of program mewa from its man page ..."
 	groff -mandoc -T pdf MANPAGE > $(DOCDIR)/program_mewa.pdf
 	@echo "Substitute some .in files in $(DOCDIR) with verified examples. Needs perl installed ..."
-	perl doc/gen/map_md_in.pl $(TSTVBFLAGS)
+	. $(TESTDIR)/luaenv.sh && perl doc/gen/map_md_in.pl $(TSTVBFLAGS)
 
