@@ -1,57 +1,86 @@
+#include <cstddef>
 
-bool do_throw_flag = false;
-
-void freeptr( char const*)
-{
-	do_throw_flag = true;
+extern "C" {
+	int puts( const char* str);
+	void* malloc( std::size_t nn);
+	void free( char* ptr);
+	void memcpy( char* dest, const char* str, std::size_t nn);
+	std::size_t strlen( const char* str);
 }
 
-class E
+
+class Exception
 {
 public:
-	E( const char* msg_) :m_msg(msg_){}
-	const char* operator*() const {return m_msg;}
+	Exception( int errcode_, const char* msg_)
+		:m_errcode(errcode_)
+	{
+		std::size_t nn = ::strlen(msg_);
+		if (nn >= MsgBufSize) nn = MsgBufSize-1;
+		::memcpy( m_msg, msg_, nn);
+		m_msg[ nn] = 0;
+	}
+
+	const char* what() const {return m_msg;}
+
 private:
-	const char* m_msg;
+	enum {MsgBufSize = (1<<12) - sizeof( int)};
+	int m_errcode;
+	char m_msg[ MsgBufSize];
 };
 
-class A
+
+class String
 {
 public:
-	A( const char* ptr_)
+	String( const char* ptr_)
 	{
-		m_ptr = ptr_;
-		if (do_throw_flag) throw E(ptr_);
+		init( ptr_);
 	}
-	A( const A& o)
+	String( const String& o)
 	{
-		m_ptr = o.m_ptr;
+		init( o.m_ptr);
 	}
-	~A()
+	~String()
 	{
-		freeptr( m_ptr);
+		::free( m_ptr);
 	}
+
+	const char* c_str() const noexcept	{return m_ptr;}
+	std::size_t size() const noexcept	{return m_len;}
+
 private:
-	const char* m_ptr;
+	void init( const char* ptr_)
+	{
+		std::size_t nn = ::strlen( ptr_);
+		m_ptr = (char*)::malloc( nn+1);
+		if (!m_ptr) throw Exception( 12/*ENOMEM*/, "Bad alloc");
+		::memcpy( m_ptr, ptr_, nn+1);
+	}
+
+private:
+	char* m_ptr;
+	std::size_t m_len;
 };
 
-class B
+class StringPair
 {
 public:
-	B( const A& _1, const A& _2) :m_1(_1),m_2(_2){}
-	~B(){}
+	StringPair( const String& _1, const String& _2)
+		:m_1(_1),m_2(_2){}
+	~StringPair(){}
 
 private:
-	A m_1;
-	A m_2;
+	String m_1;
+	String m_2;
 };
+
 
 int main( int argc, char const* argv[])
 {
 	try {
-		do_throw_flag = argc > 3;
-		B( "blabla", "hallygally");
-	} catch (const E& e) {
+		StringPair( "blabla", "hallygally");
+	} catch (const Exception& e) {
 		return 1;
 	}
 	return 0;
