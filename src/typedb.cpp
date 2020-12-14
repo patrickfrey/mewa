@@ -109,6 +109,15 @@ int TypeDatabase::typeConstructor( int type) const
 	return rec.constructor;
 }
 
+Scope::Step TypeDatabase::typeScopeStart( int type) const
+{
+	if (type == 0) return 0;
+	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
+
+	const TypeRecord& rec = m_typerecMap[ type-1];
+	return rec.scopestart;
+}
+
 bool TypeDatabase::compareParameterSignature( const TypeDatabase::ParameterList& parameter, int param2, int paramlen2) const noexcept
 {
 	if (parameter.arsize != paramlen2) return false;
@@ -189,7 +198,7 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	}
 	int typerec = m_typerecMap.size()+1;
 	TypeDef typeDef( contextType, m_identMap->get( name));
-	m_typerecMap.push_back( TypeRecord( constructor, parameteridx, parameterlen, priority, typeDef));
+	m_typerecMap.push_back( TypeRecord( constructor, scope.start(), parameteridx, parameterlen, priority, typeDef));
 
 	int prev_typerec = m_typeTable->getOrSet( scope, typeDef, typerec);
 	if (prev_typerec/*already exists*/)

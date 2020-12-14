@@ -401,6 +401,23 @@ Get the constructor of a type.
 Exits with error if the type passed is not valid. Returns *nil* if type is 0 or if not constructor is defined for that type.
 
 
+<a name="type_scope_start"/>
+
+### typedb:type_scope_start
+Get the start of the scope where the type has been defined.
+
+#### Parameter
+| #          | Name | Type              | Description                                         |
+| :--------- | :--- | :---------------- | :-------------------------------------------------- |
+| 1st        | type | integer           | Type identifier                                     |
+| Return     |      | integer           | start of the scope where the type has been defined. |
+
+#### Remark
+Exits with error if the type passed is not valid.
+#### Note
+Used to enforce some stricter rules for the visibility of certain objects, e.g. restrict access of variables in locally declared functions to a declared capture, the own stack frame and global variables. 
+
+
 <a name="introspection"/>
 
 ## Instrospection for Debugging:
