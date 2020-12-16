@@ -165,15 +165,11 @@ Reduce #4 to expression by token ';' at line 18 in state 195, call operator "()"
 Shift token ';' at line 18 in state 47, goto 84
 Reduce #2 to statement by token IDENT = "i" at line 19 in state 84, call free_expression, goto 45
 Shift token IDENT = "i" at line 19 in state 45, goto 50
-Reduce #1 to expression by token '=' at line 19 in state 50, call variable, goto 47
-Shift token '=' at line 19 in state 47, goto 88
-Shift token IDENT = "i" at line 19 in state 88, goto 50
-Reduce #1 to expression by token '+' at line 19 in state 50, call variable, goto 150
-Shift token '+' at line 19 in state 150, goto 110
-Shift token CARDINAL = "1" at line 19 in state 110, goto 53
-Reduce #1 to expression by token ';' at line 19 in state 53, call constant "constexpr uint", goto 172
-Reduce #3 to expression by token ';' at line 19 in state 172, call operator "+", goto 150
-Reduce #3 to expression by token ';' at line 19 in state 150, call operator "=", goto 47
+Reduce #1 to expression by token "+=" at line 19 in state 50, call variable, goto 47
+Shift token "+=" at line 19 in state 47, goto 90
+Shift token CARDINAL = "1" at line 19 in state 90, goto 53
+Reduce #1 to expression by token ';' at line 19 in state 53, call constant "constexpr uint", goto 152
+Reduce #3 to expression by token ';' at line 19 in state 152, call assign_operator "+", goto 47
 Shift token ';' at line 19 in state 47, goto 84
 Reduce #2 to statement by token '}' at line 20 in state 84, call free_expression, goto 45
 Reduce #0 to statementlist by token '}' at line 20 in state 45, goto 80
@@ -871,37 +867,18 @@ Lua call result [1]
                                                         {
                                                           arg = {
                                                             {
-                                                              arg = {
-                                                                {
-                                                                  line = 19,
-                                                                  name = "IDENT",
-                                                                  value = "i"}},
-                                                              call = {
-                                                                name = "variable",
-                                                                proc = <function>},
                                                               line = 19,
-                                                              step = 8},
-                                                            {
-                                                              arg = {
-                                                                {
-                                                                  line = 19,
-                                                                  name = "CARDINAL",
-                                                                  value = "1"}},
-                                                              call = {
-                                                                name = "constant constexpr uint",
-                                                                obj = "constexpr uint",
-                                                                proc = <function>},
-                                                              line = 19,
-                                                              step = 8}},
+                                                              name = "CARDINAL",
+                                                              value = "1"}},
                                                           call = {
-                                                            name = "operator +",
-                                                            obj = "+",
+                                                            name = "constant constexpr uint",
+                                                            obj = "constexpr uint",
                                                             proc = <function>},
                                                           line = 19,
                                                           step = 8}},
                                                       call = {
-                                                        name = "operator =",
-                                                        obj = "=",
+                                                        name = "assign_operator +",
+                                                        obj = "+",
                                                         proc = <function>},
                                                       line = 19,
                                                       step = 8}},

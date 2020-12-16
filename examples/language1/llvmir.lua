@@ -13,6 +13,7 @@ local pointerTemplate = {
 	class = "pointer",
 	assign = "store {pointee} {inp}, {pointee}* {this}\n",
 	load = "{out} = load {pointee}, {pointee}* {inp}\n",
+	ctor = "store {pointee}* null, {pointee}** {this}\n",
 
 	index = {
 		["long"] = "{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {arg2}\n",

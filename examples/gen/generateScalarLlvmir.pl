@@ -98,11 +98,11 @@ sub load_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{1} = load i8, i8* {inp}, align 1\\n{out} = trunc i8 {1} to i1\\n";
+		return "{1} = load i8, i8* {inp}\\n{out} = trunc i8 {1} to i1\\n";
 	}
 	else
 	{
-		return "{out} = load $llvmtype, $llvmtype* {inp}, align $alignmap{$llvmtype}\\n";
+		return "{out} = load $llvmtype, $llvmtype* {inp}\\n";
 	}
 }
 
@@ -110,12 +110,17 @@ sub assign_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{1} = zext i1 {arg1} to i8\\nstore i8 {1}, i8* {this}, align 1\\n";
+		return "{1} = zext i1 {arg1} to i8\\nstore i8 {1}, i8* {this}\\n";
 	}
 	else
 	{
-		return "store $llvmtype {arg1}, $llvmtype* {this}, align $alignmap{$llvmtype}\\n";
+		return "store $llvmtype {arg1}, $llvmtype* {this}\\n";
 	}
+}
+
+sub default_constructor {
+	my $llvmtype = $_[0];
+	return "store $llvmtype 0, $llvmtype* {this}\\n";
 }
 
 sub typeSize {
@@ -206,6 +211,7 @@ foreach my $line (@content)
 	print "\t\tsizeweight = $sizeWeightMap{$llvmtype},\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
+	print "\t\tctor = \"" . default_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
 	print "\t\tpromote = {";
 	my $oi = 0;
