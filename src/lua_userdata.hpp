@@ -79,12 +79,15 @@ struct mewa_compiler_userdata_t
 	FILE* debugFileHandle;
 	typedef std::string OutputBuffer;
 	std::string outputBuffer;
+	typedef std::map<std::string,std::string> OutputSectionMap;
+	OutputSectionMap outputSectionMap;
 
 	void init()
 	{
 		debugFileHandle = nullptr;
 		new (&automaton) mewa::Automaton();
 		new (&outputBuffer) OutputBuffer();
+		new (&outputSectionMap) OutputSectionMap();
 		callTableName.init();
 	}
 	void closeOutput() noexcept
@@ -99,6 +102,7 @@ struct mewa_compiler_userdata_t
 		closeOutput();
 		automaton.~Automaton();
 		outputBuffer.~OutputBuffer();
+		outputSectionMap.~OutputSectionMap();
 	}
 	static const char* metatableName() noexcept {return MEWA_COMPILER_METATABLE_NAME;}
 

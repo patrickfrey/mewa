@@ -65,6 +65,19 @@ std::string mewa::string_format( const char* fmt, ...)
 	return rt;
 }
 
+static inline bool isAlpha( char ch)
+{
+	return (((ch|32) >= 'a' && (ch|32) <= 'z')) || ch == '_';
+}
+static inline bool isDigit( char ch)
+{
+	return ch >= '0' && ch <= '9';
+}
+static inline bool isAlphaNum( char ch)
+{
+	return isAlpha(ch)||isDigit(ch);
+}
+
 std::string mewa::template_format( const std::string& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap)
 {
 	std::string rt;
@@ -82,9 +95,28 @@ std::string mewa::template_format( const std::string& templatstr, char sb, char 
 				rt.append( ti, ts-ti);
 				rt.append( si->second);
 				ti = te + 1;
+				if (!(ts = std::strchr( ti, sb))) break;
 			}
-			ts = std::strchr( te+1, sb);
-			if (!ts) break;
+			else
+			{
+				char const* ki = keystart;
+				char const* ke = te;
+				if (ke-ki >= 2 && isAlpha(*ki))
+				{
+					for (++ki; ki != ke && isAlphaNum(*ki); ++ki){}
+				}
+				if (ki == ke)
+				{
+					rt.append( ti, ts-ti);
+					ti = te + 1;
+					if (!(ts = std::strchr( ti, sb))) break;
+					// ... an identifier is mapped to an empty string if not found
+				}
+				else
+				{
+					if (!(ts = std::strchr( keystart, sb))) break;
+				}
+			}
 		}
 		else break;
 	}

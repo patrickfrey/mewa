@@ -7,8 +7,9 @@ local utils = {}
 function utils.encodeName( name)
 	return name:gsub("([*])", "$")
 end
--- C String Character Substitution Map without hex and dec encoding, see from https://en.wikipedia.org/wiki/Escape_sequences_in_C
-local cStringSubstMap = {
+
+-- Map Lexem values to strings encoded for LLVM IR output
+local lexemLlvmSubstMap = {
 	["\\a"]  = "\\07",
 	["\\b"]  = "\\08",
 	["\\f"]  = "\\0C",
@@ -19,13 +20,32 @@ local cStringSubstMap = {
 	["'"]    = "\\27",
 	['"']    = "\\22"
 }
-function utils.encodeCString( name)
+function utils.encodeLexemLlvm( name)
 	local len = string.len(name)
+	local subst = function( match)
+		len = len - 1
+		return lexemLlvmSubstMap[ match] or " "
+	end
+	return name:gsub("([\\][abfnrtv\\'\"])", subst), len
+end
+
+-- Encode C strings
+local cStringSubstMap = {
+	["\a"]  = "\\a",
+	["\b"]  = "\\b",
+	["\f"]  = "\\f",
+	["\n"]  = "\\n",
+	["\t"]  = "\\t",
+	["\v"]  = "\\v",
+	["\\\\"] = "\\\\",
+}
+function utils.encodeCString( str)
+	local len = string.len( str)
 	local subst = function( match)
 		len = len - 1
 		return cStringSubstMap[ match] or " "
 	end
-	return name:gsub("([\\][abfnrtv\\'\"])", subst), len
+	return str:gsub("([\a\b\f\n\r\t\v\\])", subst), len
 end
 
 -- Create a unique name
@@ -48,12 +68,13 @@ function utils.constructor_format( fmt, argtable, allocator)
 				valtable[ index] = rr
 				return rr
 			else
-				utils.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined", fmt, index)
+				utils.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined", 
+							utils.encodeCString( fmt), index)
 			end
 		elseif argtable[ match] then
 			return argtable[ match]
 		else
-			utils.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", fmt, match, mewa.tostring(argtable,false))
+			utils.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", utils.encodeCString(fmt), match, mewa.tostring(argtable,false))
 		end
 	end
 	return fmt:gsub("[{]([_%d%w]*)[}]", subst)

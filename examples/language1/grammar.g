@@ -4,6 +4,7 @@
 % COMMENT "/*" "*/";
 % COMMENT "//";
 
+BOOLEAN : '((true)|(false))';
 IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
 DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
 SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1;
@@ -11,7 +12,6 @@ CARDINAL: '[0123456789]+';
 INTEGER:  '[-][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
-BOOLEAN : '((true)|(false))';
 
 program		   	= externlist definitionlist mainproc						(program)
 			;

@@ -111,7 +111,8 @@ static std::string_view move_string_on_lua_stack( lua_State* ls, std::string&& s
 	return obj->obj();
 }
 
-static int lua_print_redirected_impl( lua_State* ls, FILE* fh) {
+static int lua_print_redirected_impl( lua_State* ls, FILE* fh)
+{
 	[[maybe_unused]] static const char* functionName = "mewa print redirected";
 	int nargs = lua_gettop( ls);
 	for (int li=1; li <= nargs; ++li)
@@ -156,6 +157,52 @@ static int lua_print_redirected_impl( lua_State* ls, FILE* fh) {
 	return 0;
 }
 
+static void append_printbuffer( lua_State* ls, int ai, int ae, std::string& buffer)
+{
+	for (int li = ai; li <= ae; ++li)
+	{
+		std::string content;
+		std::size_t len = 0;
+		const char* str = "";
+		if (lua_isnil( ls, li))
+		{
+			str = "<nil>";
+			len = 5;
+		}
+		else if (lua_isstring( ls, li))
+		{
+			str = lua_tolstring( ls, li, &len);
+		}
+		else
+		{
+			content = mewa::luaToString( ls, li, false/*formatted*/);
+			len = content.size();
+			str = content.c_str();
+		}
+		buffer.append( str, len);
+	}
+	buffer.push_back( '\n');
+}
+
+static int lua_print_section_redirected( lua_State* ls)
+{
+	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
+	[[maybe_unused]] static const char* functionName = "mewa print section redirected";
+	if (!cp)
+	{
+		mewa::Error err( mewa::Error::LuaInvalidUserData, functionName);
+		luaL_error( ls, "%s", err.what());
+	}
+	try
+	{
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, std::numeric_limits<int>::max()/*maxNofArgs*/);
+		auto section = (nargs >= 1) ? std::string(mewa::lua::getArgumentAsString( functionName, ls, 1)) : std::string();
+		append_printbuffer( ls, 2, nargs, cp->outputSectionMap[ section]);
+	}
+	catch (...) {lippincottFunction( ls);}
+	return 0;
+}
+
 static int lua_print_redirected( lua_State* ls) {
 	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)lua_touserdata(ls, lua_upvalueindex(1));
 	[[maybe_unused]] static const char* functionName = "mewa print redirected";
@@ -167,36 +214,7 @@ static int lua_print_redirected( lua_State* ls) {
 	try
 	{
 		int nargs = lua_gettop( ls);
-		for (int li=1; li <= nargs; ++li)
-		{
-			std::string content;
-			std::size_t len = 0;
-			const char* str = "";
-			if (lua_isnil( ls, li))
-			{
-				str = "<nil>";
-				len = 5;
-			}
-			else if (lua_isstring( ls, li))
-			{
-				str = lua_tolstring( ls, li, &len);
-			}
-			else
-			{
-				try
-				{
-					content = mewa::luaToString( ls, li, false/*formatted*/);
-					len = content.size();
-					str = content.c_str();
-				}
-				catch (...)
-				{
-					lippincottFunction( ls);
-				}
-			}
-			cp->outputBuffer.append( str, len);
-		}
-		cp->outputBuffer.push_back( '\n');
+		append_printbuffer( ls, 1, nargs, cp->outputBuffer);
 	}
 	catch (...) {lippincottFunction( ls);}
 	return 0;
@@ -214,6 +232,7 @@ static int lua_debug_redirected( lua_State* ls) {
 }
 
 static const struct luaL_Reg g_printlib [] = {
+	{"print_section", lua_print_section_redirected},
 	{"print", lua_print_redirected},
 	{"debug", lua_debug_redirected},
 	{nullptr, nullptr} /* end of array */
@@ -367,11 +386,10 @@ static int mewa_compiler_run( lua_State* ls)
 		mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, cp->debugFileHandle);
 		{
 			// Map output with target template:
-			std::map<std::string,std::string> outputTemplateMap;
-			outputTemplateMap[ "Source"] = filename;
-			outputTemplateMap[ "Code"] = cp->outputBuffer;
+			cp->outputSectionMap[ "Source"] = filename;
+			cp->outputSectionMap[ "Code"].append( cp->outputBuffer);
 			std::string targetstr = mewa::readFile( std::string(targetfn));
-			std::string output = mewa::template_format( targetstr, '{', '}', outputTemplateMap);
+			std::string output = mewa::template_format( targetstr, '{', '}', cp->outputSectionMap);
 			if (outputfn == "stderr")
 			{
 				std::fputs( output.c_str(), ::stderr);

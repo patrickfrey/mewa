@@ -1,13 +1,13 @@
 == Language 'test', type system 'language1/typesystem' ==
 -- Lexems:
-TOKEN IDENT [a-zA-Z_]+[a-zA-Z_0-9]* 0 [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_]  ~ 1
-TOKEN DQSTRING ["]((([^\\"\n]+)|([\\][^"\n]))*)["] 1 ["]  ~ 2
-TOKEN SQSTRING [']((([^\\'\n]+)|([\\][^'\n]))*)['] 1 [']  ~ 3
-TOKEN CARDINAL [0123456789]+ 0 [0123456789]  ~ 4
-TOKEN INTEGER [-][0123456789]+ 0 [-]  ~ 5
-TOKEN FLOAT [-]{0,1}[0123456789]+[.][0123456789]+ 0 [-]  ~ 6
-TOKEN FLOAT [-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+ 0 [-]  ~ 6
-TOKEN BOOLEAN ((true)|(false)) 0 [tf]  ~ 7
+TOKEN BOOLEAN ((true)|(false)) 0 [tf]  ~ 1
+TOKEN IDENT [a-zA-Z_]+[a-zA-Z_0-9]* 0 [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_]  ~ 2
+TOKEN DQSTRING ["]((([^\\"\n]+)|([\\][^"\n]))*)["] 1 ["]  ~ 3
+TOKEN SQSTRING [']((([^\\'\n]+)|([\\][^'\n]))*)['] 1 [']  ~ 4
+TOKEN CARDINAL [0123456789]+ 0 [0123456789]  ~ 5
+TOKEN INTEGER [-][0123456789]+ 0 [-]  ~ 6
+TOKEN FLOAT [-]{0,1}[0123456789]+[.][0123456789]+ 0 [-]  ~ 7
+TOKEN FLOAT [-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+ 0 [-]  ~ 7
 KEYWORD extern [e] ~ 8
 KEYWORD function [f] ~ 9
 KEYWORD ( [(] ~ 10
@@ -605,19 +605,19 @@ expressionlist =
 [48]
 	expression/L11 = iexpression .
 [49]
-	expression/L1 = IDENT .
-[50]
-	expression/L1 = DQSTRING .
-[51]
-	expression/L1 = SQSTRING .
-[52]
-	expression/L1 = CARDINAL .
-[53]
-	expression/L1 = INTEGER .
-[54]
-	expression/L1 = FLOAT .
-[55]
 	expression/L1 = BOOLEAN .
+[50]
+	expression/L1 = IDENT .
+[51]
+	expression/L1 = DQSTRING .
+[52]
+	expression/L1 = SQSTRING .
+[53]
+	expression/L1 = CARDINAL .
+[54]
+	expression/L1 = INTEGER .
+[55]
+	expression/L1 = FLOAT .
 [56]
 	expression/L1 = . IDENT
 	expression/L1 = . BOOLEAN
@@ -5380,19 +5380,19 @@ expressionlist =
 [48]
 	expression/L11 = iexpression .
 [49]
-	expression/L1 = IDENT .
-[50]
-	expression/L1 = DQSTRING .
-[51]
-	expression/L1 = SQSTRING .
-[52]
-	expression/L1 = CARDINAL .
-[53]
-	expression/L1 = INTEGER .
-[54]
-	expression/L1 = FLOAT .
-[55]
 	expression/L1 = BOOLEAN .
+[50]
+	expression/L1 = IDENT .
+[51]
+	expression/L1 = DQSTRING .
+[52]
+	expression/L1 = SQSTRING .
+[53]
+	expression/L1 = CARDINAL .
+[54]
+	expression/L1 = INTEGER .
+[55]
+	expression/L1 = FLOAT .
 [56]
 	expression/L1 = "(" . expression ")"
 [57]
@@ -7264,13 +7264,13 @@ expressionlist =
 [51]: {"function" "procedure"}
 [53]: {IDENT '&' '^'}
 [88]: {'(' ';' "::" '&' '^' '=' '[' "+=" "-=" "*=" "/=" "%=" "&&=" "||=" "&=" "|=" "<<=" ">>=" "||" "&&" '|' "==" "!=" "<=" '<' ">=" '>' '+' '-' '*' '/' '%' "<<" ">>" '.' "->"}
-[89]: {$ IDENT DQSTRING SQSTRING CARDINAL INTEGER FLOAT BOOLEAN "function" '(' "procedure" '{' '}' "typedef" "private" "public" "return" "if" "while" "var" '+' '-' '~' '!' '*'}
+[89]: {$ BOOLEAN IDENT DQSTRING SQSTRING CARDINAL INTEGER FLOAT "function" '(' "procedure" '{' '}' "typedef" "private" "public" "return" "if" "while" "var" '+' '-' '~' '!' '*'}
 [91]: {')' ','}
 [126]: {')' ',' '&' '^'}
 [164]: {'(' ')' "::" '&' '^' '=' '[' "+=" "-=" "*=" "/=" "%=" "&&=" "||=" "&=" "|=" "<<=" ">>=" "||" "&&" '|' "==" "!=" "<=" '<' ">=" '>' '+' '-' '*' '/' '%' "<<" ">>" '.' "->"}
 [165]: {'(' ')' ';' ',' "::" '&' '^' '=' '[' ']' "+=" "-=" "*=" "/=" "%=" "&&=" "||=" "&=" "|=" "<<=" ">>=" "||" "&&" '|' "==" "!=" "<=" '<' ">=" '>' '+' '-' '*' '/' '%' "<<" ">>" '.' "->"}
 [169]: {'(' ')' ',' "::" '&' '^' '=' '[' ']' "+=" "-=" "*=" "/=" "%=" "&&=" "||=" "&=" "|=" "<<=" ">>=" "||" "&&" '|' "==" "!=" "<=" '<' ">=" '>' '+' '-' '*' '/' '%' "<<" ">>" '.' "->"}
-[170]: {$ IDENT DQSTRING SQSTRING CARDINAL INTEGER FLOAT BOOLEAN "function" '(' "procedure" "main" '{' '}' "typedef" "private" "public" "return" "if" "while" "var" '+' '-' '~' '!' '*'}
+[170]: {$ BOOLEAN IDENT DQSTRING SQSTRING CARDINAL INTEGER FLOAT "function" '(' "procedure" "main" '{' '}' "typedef" "private" "public" "return" "if" "while" "var" '+' '-' '~' '!' '*'}
 [171]: {')' ']'}
 [172]: {IDENT ')' ','}
 [173]: {IDENT ')' ',' '&' '^'}
@@ -7489,13 +7489,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -7602,13 +7602,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -7674,19 +7674,19 @@ expressionlist =
 [48]
 	expression/L11 = iexpression ., FOLLOW [165] -> REDUCE expression #1
 [49]
-	expression/L1 = IDENT . (38), FOLLOW [165] -> REDUCE expression #1 CALL variable
-[50]
-	expression/L1 = DQSTRING . (43), FOLLOW [165] -> REDUCE expression #1 CALL string_constant "constexpr float"
-[51]
-	expression/L1 = SQSTRING . (44), FOLLOW [165] -> REDUCE expression #1 CALL char_constant "constexpr float"
-[52]
-	expression/L1 = CARDINAL . (40), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr uint"
-[53]
-	expression/L1 = INTEGER . (41), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr int"
-[54]
-	expression/L1 = FLOAT . (42), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr float"
-[55]
 	expression/L1 = BOOLEAN . (39), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr bool"
+[50]
+	expression/L1 = IDENT . (38), FOLLOW [165] -> REDUCE expression #1 CALL variable
+[51]
+	expression/L1 = DQSTRING . (43), FOLLOW [165] -> REDUCE expression #1 CALL string_constant "constexpr float"
+[52]
+	expression/L1 = SQSTRING . (44), FOLLOW [165] -> REDUCE expression #1 CALL char_constant "constexpr float"
+[53]
+	expression/L1 = CARDINAL . (40), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr uint"
+[54]
+	expression/L1 = INTEGER . (41), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr int"
+[55]
+	expression/L1 = FLOAT . (42), FOLLOW [165] -> REDUCE expression #1 CALL constant "constexpr float"
 [56]
 	expression/L1 = "(" . expression ")", FOLLOW [165] -> GOTO 119
 	expression/L2 = . expression "=" expression, FOLLOW [165] -> GOTO 119
@@ -7726,13 +7726,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 119
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 119
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -7785,13 +7785,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -7851,13 +7851,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 121
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 121
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [88] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [88] -> SHIFT '-' GOTO 62
@@ -7908,13 +7908,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 124
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 124
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -7960,13 +7960,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 125
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 125
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8012,13 +8012,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 126
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 126
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8064,13 +8064,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 127
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 127
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8116,13 +8116,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 128
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 128
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8201,13 +8201,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 135
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 135
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [88] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [88] -> SHIFT '-' GOTO 62
@@ -8297,13 +8297,13 @@ expressionlist =
 	expressionlist = . expression, FOLLOW [7] -> GOTO 144
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
 	expression/L12 = expression "(" . expressionlist ")", FOLLOW [165] -> GOTO 145
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L12 = expression "(" . ")", FOLLOW [165] -> SHIFT ')' GOTO 146
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
@@ -8355,13 +8355,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 148
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 148
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8407,13 +8407,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 149
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 149
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8459,13 +8459,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 150
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 150
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8513,13 +8513,13 @@ expressionlist =
 	expressionlist = . expression, FOLLOW [48] -> GOTO 144
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
 	expression/L12 = expression "[" . expressionlist "]", FOLLOW [165] -> GOTO 151
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8566,13 +8566,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 152
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 152
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8618,13 +8618,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 153
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 153
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8670,13 +8670,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 154
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 154
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8722,13 +8722,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 155
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 155
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8774,13 +8774,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 156
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 156
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8826,13 +8826,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 157
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 157
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8878,13 +8878,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 158
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 158
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8930,13 +8930,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 159
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 159
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -8982,13 +8982,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 160
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 160
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9034,13 +9034,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 161
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 161
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9086,13 +9086,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 162
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 162
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9138,13 +9138,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 163
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 163
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9190,13 +9190,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 164
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 164
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9242,13 +9242,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 165
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 165
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9294,13 +9294,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 166
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 166
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9346,13 +9346,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 167
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 167
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9398,13 +9398,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 168
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 168
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9450,13 +9450,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 169
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 169
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9502,13 +9502,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 170
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 170
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9554,13 +9554,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 171
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 171
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9606,13 +9606,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 172
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 172
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9658,13 +9658,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 173
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 173
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9710,13 +9710,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 174
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 174
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9762,13 +9762,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 175
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 175
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9814,13 +9814,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 176
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 176
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9866,13 +9866,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 177
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 177
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -9918,13 +9918,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [165] -> GOTO 178
 	iexpression = . expression indirection IDENT, FOLLOW [165] -> GOTO 178
 	expression/L11 = . iexpression, FOLLOW [165] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [165] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [165] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [165] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [165] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [165] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [165] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [165] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [165] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [165] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [165] -> SHIFT '-' GOTO 62
@@ -10060,13 +10060,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [164] -> GOTO 184
 	iexpression = . expression indirection IDENT, FOLLOW [164] -> GOTO 184
 	expression/L11 = . iexpression, FOLLOW [164] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [164] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [164] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [164] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [164] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [164] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [164] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [164] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [164] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [164] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [164] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [164] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [164] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [164] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [164] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [164] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [164] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [164] -> SHIFT '-' GOTO 62
@@ -10112,13 +10112,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [164] -> GOTO 185
 	iexpression = . expression indirection IDENT, FOLLOW [164] -> GOTO 185
 	expression/L11 = . iexpression, FOLLOW [164] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [164] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [164] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [164] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [164] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [164] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [164] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [164] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [164] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [164] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [164] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [164] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [164] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [164] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [164] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [164] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [164] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [164] -> SHIFT '-' GOTO 62
@@ -11818,13 +11818,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 201
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 201
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [88] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [88] -> SHIFT '-' GOTO 62
@@ -11897,13 +11897,13 @@ expressionlist =
 	expressionlist = . expression, FOLLOW [171] -> GOTO 144
 	expression/L11 = . iexpression, FOLLOW [169] -> GOTO 48
 	expressionlist = expression "," . expressionlist, FOLLOW [171] -> GOTO 205
-	expression/L1 = . IDENT, FOLLOW [169] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [169] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [169] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [169] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [169] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [169] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [169] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [169] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [169] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [169] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [169] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [169] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [169] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [169] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [169] -> SHIFT '(' GOTO 56
 	expression/L8 = . "+" expression, FOLLOW [169] -> SHIFT '+' GOTO 61
 	expression/L8 = . "-" expression, FOLLOW [169] -> SHIFT '-' GOTO 62
@@ -11966,13 +11966,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -12090,13 +12090,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -12163,13 +12163,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -12254,13 +12254,13 @@ expressionlist =
 	expression/L12 = . expression "[" expressionlist "]", FOLLOW [88] -> GOTO 47
 	iexpression = . expression indirection IDENT, FOLLOW [88] -> GOTO 47
 	expression/L11 = . iexpression, FOLLOW [88] -> GOTO 48
-	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 49
-	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 50
-	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 51
-	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 52
-	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 53
-	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 54
-	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 55
+	expression/L1 = . BOOLEAN, FOLLOW [88] -> SHIFT BOOLEAN GOTO 49
+	expression/L1 = . IDENT, FOLLOW [88] -> SHIFT IDENT GOTO 50
+	expression/L1 = . DQSTRING, FOLLOW [88] -> SHIFT DQSTRING GOTO 51
+	expression/L1 = . SQSTRING, FOLLOW [88] -> SHIFT SQSTRING GOTO 52
+	expression/L1 = . CARDINAL, FOLLOW [88] -> SHIFT CARDINAL GOTO 53
+	expression/L1 = . INTEGER, FOLLOW [88] -> SHIFT INTEGER GOTO 54
+	expression/L1 = . FLOAT, FOLLOW [88] -> SHIFT FLOAT GOTO 55
 	expression/L1 = . "(" expression ")", FOLLOW [88] -> SHIFT '(' GOTO 56
 	statement = . "{" statementlist "}", FOLLOW [89] -> SHIFT '{' GOTO 57
 	typedefinition = . "typedef" typename IDENT, FOLLOW [10] -> SHIFT "typedef" GOTO 11
@@ -12509,13 +12509,13 @@ expressionlist =
 [30]
 	IDENT => Shift goto 41
 [31]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -12569,13 +12569,13 @@ expressionlist =
 	';' => Shift goto 78
 [43]
 	$ => Reduce #1 statement call definition
+	BOOLEAN => Reduce #1 statement call definition
 	IDENT => Reduce #1 statement call definition
 	DQSTRING => Reduce #1 statement call definition
 	SQSTRING => Reduce #1 statement call definition
 	CARDINAL => Reduce #1 statement call definition
 	INTEGER => Reduce #1 statement call definition
 	FLOAT => Reduce #1 statement call definition
-	BOOLEAN => Reduce #1 statement call definition
 	"function" => Reduce #1 statement call definition
 	'(' => Reduce #1 statement call definition
 	"procedure" => Reduce #1 statement call definition
@@ -12596,13 +12596,13 @@ expressionlist =
 [44]
 	'}' => Shift goto 79
 [45]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -12700,246 +12700,6 @@ expressionlist =
 	'.' => Reduce #1 expression
 	"->" => Reduce #1 expression
 [49]
-	'(' => Reduce #1 expression call variable
-	')' => Reduce #1 expression call variable
-	';' => Reduce #1 expression call variable
-	',' => Reduce #1 expression call variable
-	"::" => Reduce #1 expression call variable
-	'&' => Reduce #1 expression call variable
-	'^' => Reduce #1 expression call variable
-	'=' => Reduce #1 expression call variable
-	'[' => Reduce #1 expression call variable
-	']' => Reduce #1 expression call variable
-	"+=" => Reduce #1 expression call variable
-	"-=" => Reduce #1 expression call variable
-	"*=" => Reduce #1 expression call variable
-	"/=" => Reduce #1 expression call variable
-	"%=" => Reduce #1 expression call variable
-	"&&=" => Reduce #1 expression call variable
-	"||=" => Reduce #1 expression call variable
-	"&=" => Reduce #1 expression call variable
-	"|=" => Reduce #1 expression call variable
-	"<<=" => Reduce #1 expression call variable
-	">>=" => Reduce #1 expression call variable
-	"||" => Reduce #1 expression call variable
-	"&&" => Reduce #1 expression call variable
-	'|' => Reduce #1 expression call variable
-	"==" => Reduce #1 expression call variable
-	"!=" => Reduce #1 expression call variable
-	"<=" => Reduce #1 expression call variable
-	'<' => Reduce #1 expression call variable
-	">=" => Reduce #1 expression call variable
-	'>' => Reduce #1 expression call variable
-	'+' => Reduce #1 expression call variable
-	'-' => Reduce #1 expression call variable
-	'*' => Reduce #1 expression call variable
-	'/' => Reduce #1 expression call variable
-	'%' => Reduce #1 expression call variable
-	"<<" => Reduce #1 expression call variable
-	">>" => Reduce #1 expression call variable
-	'.' => Reduce #1 expression call variable
-	"->" => Reduce #1 expression call variable
-[50]
-	'(' => Reduce #1 expression call string_constant "constexpr float"
-	')' => Reduce #1 expression call string_constant "constexpr float"
-	';' => Reduce #1 expression call string_constant "constexpr float"
-	',' => Reduce #1 expression call string_constant "constexpr float"
-	"::" => Reduce #1 expression call string_constant "constexpr float"
-	'&' => Reduce #1 expression call string_constant "constexpr float"
-	'^' => Reduce #1 expression call string_constant "constexpr float"
-	'=' => Reduce #1 expression call string_constant "constexpr float"
-	'[' => Reduce #1 expression call string_constant "constexpr float"
-	']' => Reduce #1 expression call string_constant "constexpr float"
-	"+=" => Reduce #1 expression call string_constant "constexpr float"
-	"-=" => Reduce #1 expression call string_constant "constexpr float"
-	"*=" => Reduce #1 expression call string_constant "constexpr float"
-	"/=" => Reduce #1 expression call string_constant "constexpr float"
-	"%=" => Reduce #1 expression call string_constant "constexpr float"
-	"&&=" => Reduce #1 expression call string_constant "constexpr float"
-	"||=" => Reduce #1 expression call string_constant "constexpr float"
-	"&=" => Reduce #1 expression call string_constant "constexpr float"
-	"|=" => Reduce #1 expression call string_constant "constexpr float"
-	"<<=" => Reduce #1 expression call string_constant "constexpr float"
-	">>=" => Reduce #1 expression call string_constant "constexpr float"
-	"||" => Reduce #1 expression call string_constant "constexpr float"
-	"&&" => Reduce #1 expression call string_constant "constexpr float"
-	'|' => Reduce #1 expression call string_constant "constexpr float"
-	"==" => Reduce #1 expression call string_constant "constexpr float"
-	"!=" => Reduce #1 expression call string_constant "constexpr float"
-	"<=" => Reduce #1 expression call string_constant "constexpr float"
-	'<' => Reduce #1 expression call string_constant "constexpr float"
-	">=" => Reduce #1 expression call string_constant "constexpr float"
-	'>' => Reduce #1 expression call string_constant "constexpr float"
-	'+' => Reduce #1 expression call string_constant "constexpr float"
-	'-' => Reduce #1 expression call string_constant "constexpr float"
-	'*' => Reduce #1 expression call string_constant "constexpr float"
-	'/' => Reduce #1 expression call string_constant "constexpr float"
-	'%' => Reduce #1 expression call string_constant "constexpr float"
-	"<<" => Reduce #1 expression call string_constant "constexpr float"
-	">>" => Reduce #1 expression call string_constant "constexpr float"
-	'.' => Reduce #1 expression call string_constant "constexpr float"
-	"->" => Reduce #1 expression call string_constant "constexpr float"
-[51]
-	'(' => Reduce #1 expression call char_constant "constexpr float"
-	')' => Reduce #1 expression call char_constant "constexpr float"
-	';' => Reduce #1 expression call char_constant "constexpr float"
-	',' => Reduce #1 expression call char_constant "constexpr float"
-	"::" => Reduce #1 expression call char_constant "constexpr float"
-	'&' => Reduce #1 expression call char_constant "constexpr float"
-	'^' => Reduce #1 expression call char_constant "constexpr float"
-	'=' => Reduce #1 expression call char_constant "constexpr float"
-	'[' => Reduce #1 expression call char_constant "constexpr float"
-	']' => Reduce #1 expression call char_constant "constexpr float"
-	"+=" => Reduce #1 expression call char_constant "constexpr float"
-	"-=" => Reduce #1 expression call char_constant "constexpr float"
-	"*=" => Reduce #1 expression call char_constant "constexpr float"
-	"/=" => Reduce #1 expression call char_constant "constexpr float"
-	"%=" => Reduce #1 expression call char_constant "constexpr float"
-	"&&=" => Reduce #1 expression call char_constant "constexpr float"
-	"||=" => Reduce #1 expression call char_constant "constexpr float"
-	"&=" => Reduce #1 expression call char_constant "constexpr float"
-	"|=" => Reduce #1 expression call char_constant "constexpr float"
-	"<<=" => Reduce #1 expression call char_constant "constexpr float"
-	">>=" => Reduce #1 expression call char_constant "constexpr float"
-	"||" => Reduce #1 expression call char_constant "constexpr float"
-	"&&" => Reduce #1 expression call char_constant "constexpr float"
-	'|' => Reduce #1 expression call char_constant "constexpr float"
-	"==" => Reduce #1 expression call char_constant "constexpr float"
-	"!=" => Reduce #1 expression call char_constant "constexpr float"
-	"<=" => Reduce #1 expression call char_constant "constexpr float"
-	'<' => Reduce #1 expression call char_constant "constexpr float"
-	">=" => Reduce #1 expression call char_constant "constexpr float"
-	'>' => Reduce #1 expression call char_constant "constexpr float"
-	'+' => Reduce #1 expression call char_constant "constexpr float"
-	'-' => Reduce #1 expression call char_constant "constexpr float"
-	'*' => Reduce #1 expression call char_constant "constexpr float"
-	'/' => Reduce #1 expression call char_constant "constexpr float"
-	'%' => Reduce #1 expression call char_constant "constexpr float"
-	"<<" => Reduce #1 expression call char_constant "constexpr float"
-	">>" => Reduce #1 expression call char_constant "constexpr float"
-	'.' => Reduce #1 expression call char_constant "constexpr float"
-	"->" => Reduce #1 expression call char_constant "constexpr float"
-[52]
-	'(' => Reduce #1 expression call constant "constexpr uint"
-	')' => Reduce #1 expression call constant "constexpr uint"
-	';' => Reduce #1 expression call constant "constexpr uint"
-	',' => Reduce #1 expression call constant "constexpr uint"
-	"::" => Reduce #1 expression call constant "constexpr uint"
-	'&' => Reduce #1 expression call constant "constexpr uint"
-	'^' => Reduce #1 expression call constant "constexpr uint"
-	'=' => Reduce #1 expression call constant "constexpr uint"
-	'[' => Reduce #1 expression call constant "constexpr uint"
-	']' => Reduce #1 expression call constant "constexpr uint"
-	"+=" => Reduce #1 expression call constant "constexpr uint"
-	"-=" => Reduce #1 expression call constant "constexpr uint"
-	"*=" => Reduce #1 expression call constant "constexpr uint"
-	"/=" => Reduce #1 expression call constant "constexpr uint"
-	"%=" => Reduce #1 expression call constant "constexpr uint"
-	"&&=" => Reduce #1 expression call constant "constexpr uint"
-	"||=" => Reduce #1 expression call constant "constexpr uint"
-	"&=" => Reduce #1 expression call constant "constexpr uint"
-	"|=" => Reduce #1 expression call constant "constexpr uint"
-	"<<=" => Reduce #1 expression call constant "constexpr uint"
-	">>=" => Reduce #1 expression call constant "constexpr uint"
-	"||" => Reduce #1 expression call constant "constexpr uint"
-	"&&" => Reduce #1 expression call constant "constexpr uint"
-	'|' => Reduce #1 expression call constant "constexpr uint"
-	"==" => Reduce #1 expression call constant "constexpr uint"
-	"!=" => Reduce #1 expression call constant "constexpr uint"
-	"<=" => Reduce #1 expression call constant "constexpr uint"
-	'<' => Reduce #1 expression call constant "constexpr uint"
-	">=" => Reduce #1 expression call constant "constexpr uint"
-	'>' => Reduce #1 expression call constant "constexpr uint"
-	'+' => Reduce #1 expression call constant "constexpr uint"
-	'-' => Reduce #1 expression call constant "constexpr uint"
-	'*' => Reduce #1 expression call constant "constexpr uint"
-	'/' => Reduce #1 expression call constant "constexpr uint"
-	'%' => Reduce #1 expression call constant "constexpr uint"
-	"<<" => Reduce #1 expression call constant "constexpr uint"
-	">>" => Reduce #1 expression call constant "constexpr uint"
-	'.' => Reduce #1 expression call constant "constexpr uint"
-	"->" => Reduce #1 expression call constant "constexpr uint"
-[53]
-	'(' => Reduce #1 expression call constant "constexpr int"
-	')' => Reduce #1 expression call constant "constexpr int"
-	';' => Reduce #1 expression call constant "constexpr int"
-	',' => Reduce #1 expression call constant "constexpr int"
-	"::" => Reduce #1 expression call constant "constexpr int"
-	'&' => Reduce #1 expression call constant "constexpr int"
-	'^' => Reduce #1 expression call constant "constexpr int"
-	'=' => Reduce #1 expression call constant "constexpr int"
-	'[' => Reduce #1 expression call constant "constexpr int"
-	']' => Reduce #1 expression call constant "constexpr int"
-	"+=" => Reduce #1 expression call constant "constexpr int"
-	"-=" => Reduce #1 expression call constant "constexpr int"
-	"*=" => Reduce #1 expression call constant "constexpr int"
-	"/=" => Reduce #1 expression call constant "constexpr int"
-	"%=" => Reduce #1 expression call constant "constexpr int"
-	"&&=" => Reduce #1 expression call constant "constexpr int"
-	"||=" => Reduce #1 expression call constant "constexpr int"
-	"&=" => Reduce #1 expression call constant "constexpr int"
-	"|=" => Reduce #1 expression call constant "constexpr int"
-	"<<=" => Reduce #1 expression call constant "constexpr int"
-	">>=" => Reduce #1 expression call constant "constexpr int"
-	"||" => Reduce #1 expression call constant "constexpr int"
-	"&&" => Reduce #1 expression call constant "constexpr int"
-	'|' => Reduce #1 expression call constant "constexpr int"
-	"==" => Reduce #1 expression call constant "constexpr int"
-	"!=" => Reduce #1 expression call constant "constexpr int"
-	"<=" => Reduce #1 expression call constant "constexpr int"
-	'<' => Reduce #1 expression call constant "constexpr int"
-	">=" => Reduce #1 expression call constant "constexpr int"
-	'>' => Reduce #1 expression call constant "constexpr int"
-	'+' => Reduce #1 expression call constant "constexpr int"
-	'-' => Reduce #1 expression call constant "constexpr int"
-	'*' => Reduce #1 expression call constant "constexpr int"
-	'/' => Reduce #1 expression call constant "constexpr int"
-	'%' => Reduce #1 expression call constant "constexpr int"
-	"<<" => Reduce #1 expression call constant "constexpr int"
-	">>" => Reduce #1 expression call constant "constexpr int"
-	'.' => Reduce #1 expression call constant "constexpr int"
-	"->" => Reduce #1 expression call constant "constexpr int"
-[54]
-	'(' => Reduce #1 expression call constant "constexpr float"
-	')' => Reduce #1 expression call constant "constexpr float"
-	';' => Reduce #1 expression call constant "constexpr float"
-	',' => Reduce #1 expression call constant "constexpr float"
-	"::" => Reduce #1 expression call constant "constexpr float"
-	'&' => Reduce #1 expression call constant "constexpr float"
-	'^' => Reduce #1 expression call constant "constexpr float"
-	'=' => Reduce #1 expression call constant "constexpr float"
-	'[' => Reduce #1 expression call constant "constexpr float"
-	']' => Reduce #1 expression call constant "constexpr float"
-	"+=" => Reduce #1 expression call constant "constexpr float"
-	"-=" => Reduce #1 expression call constant "constexpr float"
-	"*=" => Reduce #1 expression call constant "constexpr float"
-	"/=" => Reduce #1 expression call constant "constexpr float"
-	"%=" => Reduce #1 expression call constant "constexpr float"
-	"&&=" => Reduce #1 expression call constant "constexpr float"
-	"||=" => Reduce #1 expression call constant "constexpr float"
-	"&=" => Reduce #1 expression call constant "constexpr float"
-	"|=" => Reduce #1 expression call constant "constexpr float"
-	"<<=" => Reduce #1 expression call constant "constexpr float"
-	">>=" => Reduce #1 expression call constant "constexpr float"
-	"||" => Reduce #1 expression call constant "constexpr float"
-	"&&" => Reduce #1 expression call constant "constexpr float"
-	'|' => Reduce #1 expression call constant "constexpr float"
-	"==" => Reduce #1 expression call constant "constexpr float"
-	"!=" => Reduce #1 expression call constant "constexpr float"
-	"<=" => Reduce #1 expression call constant "constexpr float"
-	'<' => Reduce #1 expression call constant "constexpr float"
-	">=" => Reduce #1 expression call constant "constexpr float"
-	'>' => Reduce #1 expression call constant "constexpr float"
-	'+' => Reduce #1 expression call constant "constexpr float"
-	'-' => Reduce #1 expression call constant "constexpr float"
-	'*' => Reduce #1 expression call constant "constexpr float"
-	'/' => Reduce #1 expression call constant "constexpr float"
-	'%' => Reduce #1 expression call constant "constexpr float"
-	"<<" => Reduce #1 expression call constant "constexpr float"
-	">>" => Reduce #1 expression call constant "constexpr float"
-	'.' => Reduce #1 expression call constant "constexpr float"
-	"->" => Reduce #1 expression call constant "constexpr float"
-[55]
 	'(' => Reduce #1 expression call constant "constexpr bool"
 	')' => Reduce #1 expression call constant "constexpr bool"
 	';' => Reduce #1 expression call constant "constexpr bool"
@@ -12979,14 +12739,254 @@ expressionlist =
 	">>" => Reduce #1 expression call constant "constexpr bool"
 	'.' => Reduce #1 expression call constant "constexpr bool"
 	"->" => Reduce #1 expression call constant "constexpr bool"
+[50]
+	'(' => Reduce #1 expression call variable
+	')' => Reduce #1 expression call variable
+	';' => Reduce #1 expression call variable
+	',' => Reduce #1 expression call variable
+	"::" => Reduce #1 expression call variable
+	'&' => Reduce #1 expression call variable
+	'^' => Reduce #1 expression call variable
+	'=' => Reduce #1 expression call variable
+	'[' => Reduce #1 expression call variable
+	']' => Reduce #1 expression call variable
+	"+=" => Reduce #1 expression call variable
+	"-=" => Reduce #1 expression call variable
+	"*=" => Reduce #1 expression call variable
+	"/=" => Reduce #1 expression call variable
+	"%=" => Reduce #1 expression call variable
+	"&&=" => Reduce #1 expression call variable
+	"||=" => Reduce #1 expression call variable
+	"&=" => Reduce #1 expression call variable
+	"|=" => Reduce #1 expression call variable
+	"<<=" => Reduce #1 expression call variable
+	">>=" => Reduce #1 expression call variable
+	"||" => Reduce #1 expression call variable
+	"&&" => Reduce #1 expression call variable
+	'|' => Reduce #1 expression call variable
+	"==" => Reduce #1 expression call variable
+	"!=" => Reduce #1 expression call variable
+	"<=" => Reduce #1 expression call variable
+	'<' => Reduce #1 expression call variable
+	">=" => Reduce #1 expression call variable
+	'>' => Reduce #1 expression call variable
+	'+' => Reduce #1 expression call variable
+	'-' => Reduce #1 expression call variable
+	'*' => Reduce #1 expression call variable
+	'/' => Reduce #1 expression call variable
+	'%' => Reduce #1 expression call variable
+	"<<" => Reduce #1 expression call variable
+	">>" => Reduce #1 expression call variable
+	'.' => Reduce #1 expression call variable
+	"->" => Reduce #1 expression call variable
+[51]
+	'(' => Reduce #1 expression call string_constant "constexpr float"
+	')' => Reduce #1 expression call string_constant "constexpr float"
+	';' => Reduce #1 expression call string_constant "constexpr float"
+	',' => Reduce #1 expression call string_constant "constexpr float"
+	"::" => Reduce #1 expression call string_constant "constexpr float"
+	'&' => Reduce #1 expression call string_constant "constexpr float"
+	'^' => Reduce #1 expression call string_constant "constexpr float"
+	'=' => Reduce #1 expression call string_constant "constexpr float"
+	'[' => Reduce #1 expression call string_constant "constexpr float"
+	']' => Reduce #1 expression call string_constant "constexpr float"
+	"+=" => Reduce #1 expression call string_constant "constexpr float"
+	"-=" => Reduce #1 expression call string_constant "constexpr float"
+	"*=" => Reduce #1 expression call string_constant "constexpr float"
+	"/=" => Reduce #1 expression call string_constant "constexpr float"
+	"%=" => Reduce #1 expression call string_constant "constexpr float"
+	"&&=" => Reduce #1 expression call string_constant "constexpr float"
+	"||=" => Reduce #1 expression call string_constant "constexpr float"
+	"&=" => Reduce #1 expression call string_constant "constexpr float"
+	"|=" => Reduce #1 expression call string_constant "constexpr float"
+	"<<=" => Reduce #1 expression call string_constant "constexpr float"
+	">>=" => Reduce #1 expression call string_constant "constexpr float"
+	"||" => Reduce #1 expression call string_constant "constexpr float"
+	"&&" => Reduce #1 expression call string_constant "constexpr float"
+	'|' => Reduce #1 expression call string_constant "constexpr float"
+	"==" => Reduce #1 expression call string_constant "constexpr float"
+	"!=" => Reduce #1 expression call string_constant "constexpr float"
+	"<=" => Reduce #1 expression call string_constant "constexpr float"
+	'<' => Reduce #1 expression call string_constant "constexpr float"
+	">=" => Reduce #1 expression call string_constant "constexpr float"
+	'>' => Reduce #1 expression call string_constant "constexpr float"
+	'+' => Reduce #1 expression call string_constant "constexpr float"
+	'-' => Reduce #1 expression call string_constant "constexpr float"
+	'*' => Reduce #1 expression call string_constant "constexpr float"
+	'/' => Reduce #1 expression call string_constant "constexpr float"
+	'%' => Reduce #1 expression call string_constant "constexpr float"
+	"<<" => Reduce #1 expression call string_constant "constexpr float"
+	">>" => Reduce #1 expression call string_constant "constexpr float"
+	'.' => Reduce #1 expression call string_constant "constexpr float"
+	"->" => Reduce #1 expression call string_constant "constexpr float"
+[52]
+	'(' => Reduce #1 expression call char_constant "constexpr float"
+	')' => Reduce #1 expression call char_constant "constexpr float"
+	';' => Reduce #1 expression call char_constant "constexpr float"
+	',' => Reduce #1 expression call char_constant "constexpr float"
+	"::" => Reduce #1 expression call char_constant "constexpr float"
+	'&' => Reduce #1 expression call char_constant "constexpr float"
+	'^' => Reduce #1 expression call char_constant "constexpr float"
+	'=' => Reduce #1 expression call char_constant "constexpr float"
+	'[' => Reduce #1 expression call char_constant "constexpr float"
+	']' => Reduce #1 expression call char_constant "constexpr float"
+	"+=" => Reduce #1 expression call char_constant "constexpr float"
+	"-=" => Reduce #1 expression call char_constant "constexpr float"
+	"*=" => Reduce #1 expression call char_constant "constexpr float"
+	"/=" => Reduce #1 expression call char_constant "constexpr float"
+	"%=" => Reduce #1 expression call char_constant "constexpr float"
+	"&&=" => Reduce #1 expression call char_constant "constexpr float"
+	"||=" => Reduce #1 expression call char_constant "constexpr float"
+	"&=" => Reduce #1 expression call char_constant "constexpr float"
+	"|=" => Reduce #1 expression call char_constant "constexpr float"
+	"<<=" => Reduce #1 expression call char_constant "constexpr float"
+	">>=" => Reduce #1 expression call char_constant "constexpr float"
+	"||" => Reduce #1 expression call char_constant "constexpr float"
+	"&&" => Reduce #1 expression call char_constant "constexpr float"
+	'|' => Reduce #1 expression call char_constant "constexpr float"
+	"==" => Reduce #1 expression call char_constant "constexpr float"
+	"!=" => Reduce #1 expression call char_constant "constexpr float"
+	"<=" => Reduce #1 expression call char_constant "constexpr float"
+	'<' => Reduce #1 expression call char_constant "constexpr float"
+	">=" => Reduce #1 expression call char_constant "constexpr float"
+	'>' => Reduce #1 expression call char_constant "constexpr float"
+	'+' => Reduce #1 expression call char_constant "constexpr float"
+	'-' => Reduce #1 expression call char_constant "constexpr float"
+	'*' => Reduce #1 expression call char_constant "constexpr float"
+	'/' => Reduce #1 expression call char_constant "constexpr float"
+	'%' => Reduce #1 expression call char_constant "constexpr float"
+	"<<" => Reduce #1 expression call char_constant "constexpr float"
+	">>" => Reduce #1 expression call char_constant "constexpr float"
+	'.' => Reduce #1 expression call char_constant "constexpr float"
+	"->" => Reduce #1 expression call char_constant "constexpr float"
+[53]
+	'(' => Reduce #1 expression call constant "constexpr uint"
+	')' => Reduce #1 expression call constant "constexpr uint"
+	';' => Reduce #1 expression call constant "constexpr uint"
+	',' => Reduce #1 expression call constant "constexpr uint"
+	"::" => Reduce #1 expression call constant "constexpr uint"
+	'&' => Reduce #1 expression call constant "constexpr uint"
+	'^' => Reduce #1 expression call constant "constexpr uint"
+	'=' => Reduce #1 expression call constant "constexpr uint"
+	'[' => Reduce #1 expression call constant "constexpr uint"
+	']' => Reduce #1 expression call constant "constexpr uint"
+	"+=" => Reduce #1 expression call constant "constexpr uint"
+	"-=" => Reduce #1 expression call constant "constexpr uint"
+	"*=" => Reduce #1 expression call constant "constexpr uint"
+	"/=" => Reduce #1 expression call constant "constexpr uint"
+	"%=" => Reduce #1 expression call constant "constexpr uint"
+	"&&=" => Reduce #1 expression call constant "constexpr uint"
+	"||=" => Reduce #1 expression call constant "constexpr uint"
+	"&=" => Reduce #1 expression call constant "constexpr uint"
+	"|=" => Reduce #1 expression call constant "constexpr uint"
+	"<<=" => Reduce #1 expression call constant "constexpr uint"
+	">>=" => Reduce #1 expression call constant "constexpr uint"
+	"||" => Reduce #1 expression call constant "constexpr uint"
+	"&&" => Reduce #1 expression call constant "constexpr uint"
+	'|' => Reduce #1 expression call constant "constexpr uint"
+	"==" => Reduce #1 expression call constant "constexpr uint"
+	"!=" => Reduce #1 expression call constant "constexpr uint"
+	"<=" => Reduce #1 expression call constant "constexpr uint"
+	'<' => Reduce #1 expression call constant "constexpr uint"
+	">=" => Reduce #1 expression call constant "constexpr uint"
+	'>' => Reduce #1 expression call constant "constexpr uint"
+	'+' => Reduce #1 expression call constant "constexpr uint"
+	'-' => Reduce #1 expression call constant "constexpr uint"
+	'*' => Reduce #1 expression call constant "constexpr uint"
+	'/' => Reduce #1 expression call constant "constexpr uint"
+	'%' => Reduce #1 expression call constant "constexpr uint"
+	"<<" => Reduce #1 expression call constant "constexpr uint"
+	">>" => Reduce #1 expression call constant "constexpr uint"
+	'.' => Reduce #1 expression call constant "constexpr uint"
+	"->" => Reduce #1 expression call constant "constexpr uint"
+[54]
+	'(' => Reduce #1 expression call constant "constexpr int"
+	')' => Reduce #1 expression call constant "constexpr int"
+	';' => Reduce #1 expression call constant "constexpr int"
+	',' => Reduce #1 expression call constant "constexpr int"
+	"::" => Reduce #1 expression call constant "constexpr int"
+	'&' => Reduce #1 expression call constant "constexpr int"
+	'^' => Reduce #1 expression call constant "constexpr int"
+	'=' => Reduce #1 expression call constant "constexpr int"
+	'[' => Reduce #1 expression call constant "constexpr int"
+	']' => Reduce #1 expression call constant "constexpr int"
+	"+=" => Reduce #1 expression call constant "constexpr int"
+	"-=" => Reduce #1 expression call constant "constexpr int"
+	"*=" => Reduce #1 expression call constant "constexpr int"
+	"/=" => Reduce #1 expression call constant "constexpr int"
+	"%=" => Reduce #1 expression call constant "constexpr int"
+	"&&=" => Reduce #1 expression call constant "constexpr int"
+	"||=" => Reduce #1 expression call constant "constexpr int"
+	"&=" => Reduce #1 expression call constant "constexpr int"
+	"|=" => Reduce #1 expression call constant "constexpr int"
+	"<<=" => Reduce #1 expression call constant "constexpr int"
+	">>=" => Reduce #1 expression call constant "constexpr int"
+	"||" => Reduce #1 expression call constant "constexpr int"
+	"&&" => Reduce #1 expression call constant "constexpr int"
+	'|' => Reduce #1 expression call constant "constexpr int"
+	"==" => Reduce #1 expression call constant "constexpr int"
+	"!=" => Reduce #1 expression call constant "constexpr int"
+	"<=" => Reduce #1 expression call constant "constexpr int"
+	'<' => Reduce #1 expression call constant "constexpr int"
+	">=" => Reduce #1 expression call constant "constexpr int"
+	'>' => Reduce #1 expression call constant "constexpr int"
+	'+' => Reduce #1 expression call constant "constexpr int"
+	'-' => Reduce #1 expression call constant "constexpr int"
+	'*' => Reduce #1 expression call constant "constexpr int"
+	'/' => Reduce #1 expression call constant "constexpr int"
+	'%' => Reduce #1 expression call constant "constexpr int"
+	"<<" => Reduce #1 expression call constant "constexpr int"
+	">>" => Reduce #1 expression call constant "constexpr int"
+	'.' => Reduce #1 expression call constant "constexpr int"
+	"->" => Reduce #1 expression call constant "constexpr int"
+[55]
+	'(' => Reduce #1 expression call constant "constexpr float"
+	')' => Reduce #1 expression call constant "constexpr float"
+	';' => Reduce #1 expression call constant "constexpr float"
+	',' => Reduce #1 expression call constant "constexpr float"
+	"::" => Reduce #1 expression call constant "constexpr float"
+	'&' => Reduce #1 expression call constant "constexpr float"
+	'^' => Reduce #1 expression call constant "constexpr float"
+	'=' => Reduce #1 expression call constant "constexpr float"
+	'[' => Reduce #1 expression call constant "constexpr float"
+	']' => Reduce #1 expression call constant "constexpr float"
+	"+=" => Reduce #1 expression call constant "constexpr float"
+	"-=" => Reduce #1 expression call constant "constexpr float"
+	"*=" => Reduce #1 expression call constant "constexpr float"
+	"/=" => Reduce #1 expression call constant "constexpr float"
+	"%=" => Reduce #1 expression call constant "constexpr float"
+	"&&=" => Reduce #1 expression call constant "constexpr float"
+	"||=" => Reduce #1 expression call constant "constexpr float"
+	"&=" => Reduce #1 expression call constant "constexpr float"
+	"|=" => Reduce #1 expression call constant "constexpr float"
+	"<<=" => Reduce #1 expression call constant "constexpr float"
+	">>=" => Reduce #1 expression call constant "constexpr float"
+	"||" => Reduce #1 expression call constant "constexpr float"
+	"&&" => Reduce #1 expression call constant "constexpr float"
+	'|' => Reduce #1 expression call constant "constexpr float"
+	"==" => Reduce #1 expression call constant "constexpr float"
+	"!=" => Reduce #1 expression call constant "constexpr float"
+	"<=" => Reduce #1 expression call constant "constexpr float"
+	'<' => Reduce #1 expression call constant "constexpr float"
+	">=" => Reduce #1 expression call constant "constexpr float"
+	'>' => Reduce #1 expression call constant "constexpr float"
+	'+' => Reduce #1 expression call constant "constexpr float"
+	'-' => Reduce #1 expression call constant "constexpr float"
+	'*' => Reduce #1 expression call constant "constexpr float"
+	'/' => Reduce #1 expression call constant "constexpr float"
+	'%' => Reduce #1 expression call constant "constexpr float"
+	"<<" => Reduce #1 expression call constant "constexpr float"
+	">>" => Reduce #1 expression call constant "constexpr float"
+	'.' => Reduce #1 expression call constant "constexpr float"
+	"->" => Reduce #1 expression call constant "constexpr float"
 [56]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -12994,13 +12994,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [57]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -13019,13 +13019,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [58]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13037,13 +13037,13 @@ expressionlist =
 [60]
 	'(' => Shift goto 123
 [61]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13051,13 +13051,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [62]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13065,13 +13065,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [63]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13079,13 +13079,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [64]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13093,13 +13093,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [65]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13110,13 +13110,13 @@ expressionlist =
 	'(' => Shift goto 68
 [67]
 	$ => Reduce #4 functiondefinition call procdef
+	BOOLEAN => Reduce #4 functiondefinition call procdef
 	IDENT => Reduce #4 functiondefinition call procdef
 	DQSTRING => Reduce #4 functiondefinition call procdef
 	SQSTRING => Reduce #4 functiondefinition call procdef
 	CARDINAL => Reduce #4 functiondefinition call procdef
 	INTEGER => Reduce #4 functiondefinition call procdef
 	FLOAT => Reduce #4 functiondefinition call procdef
-	BOOLEAN => Reduce #4 functiondefinition call procdef
 	"function" => Reduce #4 functiondefinition call procdef
 	'(' => Reduce #4 functiondefinition call procdef
 	"procedure" => Reduce #4 functiondefinition call procdef
@@ -13155,13 +13155,13 @@ expressionlist =
 	',' => Reduce #3 typespec call typespec "^^"
 	'&' => Shift goto 134
 [72]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13188,13 +13188,13 @@ expressionlist =
 	"const" => Shift goto 28
 [78]
 	$ => Reduce #2 statement call definition
+	BOOLEAN => Reduce #2 statement call definition
 	IDENT => Reduce #2 statement call definition
 	DQSTRING => Reduce #2 statement call definition
 	SQSTRING => Reduce #2 statement call definition
 	CARDINAL => Reduce #2 statement call definition
 	INTEGER => Reduce #2 statement call definition
 	FLOAT => Reduce #2 statement call definition
-	BOOLEAN => Reduce #2 statement call definition
 	"function" => Reduce #2 statement call definition
 	'(' => Reduce #2 statement call definition
 	"procedure" => Reduce #2 statement call definition
@@ -13218,13 +13218,13 @@ expressionlist =
 	'}' => Reduce #2 statementlist call statement
 [81]
 	$ => Reduce #2 statement call definition
+	BOOLEAN => Reduce #2 statement call definition
 	IDENT => Reduce #2 statement call definition
 	DQSTRING => Reduce #2 statement call definition
 	SQSTRING => Reduce #2 statement call definition
 	CARDINAL => Reduce #2 statement call definition
 	INTEGER => Reduce #2 statement call definition
 	FLOAT => Reduce #2 statement call definition
-	BOOLEAN => Reduce #2 statement call definition
 	"function" => Reduce #2 statement call definition
 	'(' => Reduce #2 statement call definition
 	"procedure" => Reduce #2 statement call definition
@@ -13245,13 +13245,13 @@ expressionlist =
 [82]
 	IDENT => Shift goto 143
 [83]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	')' => Shift goto 146
 	'+' => Shift goto 61
@@ -13261,13 +13261,13 @@ expressionlist =
 	'*' => Shift goto 65
 [84]
 	$ => Reduce #2 statement call free_expression
+	BOOLEAN => Reduce #2 statement call free_expression
 	IDENT => Reduce #2 statement call free_expression
 	DQSTRING => Reduce #2 statement call free_expression
 	SQSTRING => Reduce #2 statement call free_expression
 	CARDINAL => Reduce #2 statement call free_expression
 	INTEGER => Reduce #2 statement call free_expression
 	FLOAT => Reduce #2 statement call free_expression
-	BOOLEAN => Reduce #2 statement call free_expression
 	"function" => Reduce #2 statement call free_expression
 	'(' => Reduce #2 statement call free_expression
 	"procedure" => Reduce #2 statement call free_expression
@@ -13288,13 +13288,13 @@ expressionlist =
 [85]
 	IDENT => Shift goto 147
 [86]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13302,13 +13302,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [87]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13316,13 +13316,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [88]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13330,13 +13330,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [89]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	']' => Reduce #0 expressionlist
 	'+' => Shift goto 61
@@ -13345,13 +13345,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [90]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13359,13 +13359,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [91]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13373,13 +13373,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [92]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13387,13 +13387,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [93]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13401,13 +13401,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [94]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13415,13 +13415,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [95]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13429,13 +13429,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [96]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13443,13 +13443,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [97]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13457,13 +13457,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [98]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13471,13 +13471,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [99]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13485,13 +13485,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [100]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13499,13 +13499,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [101]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13513,13 +13513,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [102]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13527,13 +13527,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [103]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13541,13 +13541,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [104]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13555,13 +13555,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [105]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13569,13 +13569,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [106]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13583,13 +13583,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [107]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13597,13 +13597,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [108]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13611,13 +13611,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [109]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13625,13 +13625,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [110]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13639,13 +13639,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [111]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13653,13 +13653,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [112]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13667,13 +13667,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [113]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13681,13 +13681,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [114]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13695,13 +13695,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [115]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13709,13 +13709,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [116]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13804,13 +13804,13 @@ expressionlist =
 	'.' => Shift goto 117
 	"->" => Shift goto 118
 [122]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -13818,13 +13818,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [123]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -14033,13 +14033,13 @@ expressionlist =
 	"->" => Reduce #2 expression call operator "->"
 [129]
 	$ => Reduce #5 functiondefinition call funcdef
+	BOOLEAN => Reduce #5 functiondefinition call funcdef
 	IDENT => Reduce #5 functiondefinition call funcdef
 	DQSTRING => Reduce #5 functiondefinition call funcdef
 	SQSTRING => Reduce #5 functiondefinition call funcdef
 	CARDINAL => Reduce #5 functiondefinition call funcdef
 	INTEGER => Reduce #5 functiondefinition call funcdef
 	FLOAT => Reduce #5 functiondefinition call funcdef
-	BOOLEAN => Reduce #5 functiondefinition call funcdef
 	"function" => Reduce #5 functiondefinition call funcdef
 	'(' => Reduce #5 functiondefinition call funcdef
 	"procedure" => Reduce #5 functiondefinition call funcdef
@@ -15578,13 +15578,13 @@ expressionlist =
 	"->" => Reduce #3 expression
 [182]
 	$ => Reduce #3 statement
+	BOOLEAN => Reduce #3 statement
 	IDENT => Reduce #3 statement
 	DQSTRING => Reduce #3 statement
 	SQSTRING => Reduce #3 statement
 	CARDINAL => Reduce #3 statement
 	INTEGER => Reduce #3 statement
 	FLOAT => Reduce #3 statement
-	BOOLEAN => Reduce #3 statement
 	"function" => Reduce #3 statement
 	'(' => Reduce #3 statement
 	"procedure" => Reduce #3 statement
@@ -15604,13 +15604,13 @@ expressionlist =
 	'*' => Reduce #3 statement
 [183]
 	$ => Reduce #3 statement call return_value
+	BOOLEAN => Reduce #3 statement call return_value
 	IDENT => Reduce #3 statement call return_value
 	DQSTRING => Reduce #3 statement call return_value
 	SQSTRING => Reduce #3 statement call return_value
 	CARDINAL => Reduce #3 statement call return_value
 	INTEGER => Reduce #3 statement call return_value
 	FLOAT => Reduce #3 statement call return_value
-	BOOLEAN => Reduce #3 statement call return_value
 	"function" => Reduce #3 statement call return_value
 	'(' => Reduce #3 statement call return_value
 	"procedure" => Reduce #3 statement call return_value
@@ -15712,13 +15712,13 @@ expressionlist =
 	')' => Reduce #0 parameters
 	"const" => Shift goto 28
 [189]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	'+' => Shift goto 61
 	'-' => Shift goto 62
@@ -15738,13 +15738,13 @@ expressionlist =
 	')' => Reduce #0 externparameters
 	"const" => Shift goto 28
 [194]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	'(' => Shift goto 56
 	')' => Reduce #0 expressionlist
 	']' => Reduce #0 expressionlist
@@ -15838,13 +15838,13 @@ expressionlist =
 [198]
 	'{' => Shift goto 207
 [199]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -15919,13 +15919,13 @@ expressionlist =
 	')' => Reduce #3 expressionlist
 	']' => Reduce #3 expressionlist
 [206]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -15944,13 +15944,13 @@ expressionlist =
 	'!' => Shift goto 64
 	'*' => Shift goto 65
 [207]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -15986,13 +15986,13 @@ expressionlist =
 	'}' => Shift goto 214
 [212]
 	$ => Reduce #6 callablebody call callablebody
+	BOOLEAN => Reduce #6 callablebody call callablebody
 	IDENT => Reduce #6 callablebody call callablebody
 	DQSTRING => Reduce #6 callablebody call callablebody
 	SQSTRING => Reduce #6 callablebody call callablebody
 	CARDINAL => Reduce #6 callablebody call callablebody
 	INTEGER => Reduce #6 callablebody call callablebody
 	FLOAT => Reduce #6 callablebody call callablebody
-	BOOLEAN => Reduce #6 callablebody call callablebody
 	"function" => Reduce #6 callablebody call callablebody
 	'(' => Reduce #6 callablebody call callablebody
 	"procedure" => Reduce #6 callablebody call callablebody
@@ -16013,13 +16013,13 @@ expressionlist =
 	'*' => Reduce #6 callablebody call callablebody
 [213]
 	$ => Reduce #7 statement call conditional_if
+	BOOLEAN => Reduce #7 statement call conditional_if
 	IDENT => Reduce #7 statement call conditional_if
 	DQSTRING => Reduce #7 statement call conditional_if
 	SQSTRING => Reduce #7 statement call conditional_if
 	CARDINAL => Reduce #7 statement call conditional_if
 	INTEGER => Reduce #7 statement call conditional_if
 	FLOAT => Reduce #7 statement call conditional_if
-	BOOLEAN => Reduce #7 statement call conditional_if
 	"function" => Reduce #7 statement call conditional_if
 	'(' => Reduce #7 statement call conditional_if
 	"procedure" => Reduce #7 statement call conditional_if
@@ -16040,13 +16040,13 @@ expressionlist =
 	'*' => Reduce #7 statement call conditional_if
 [214]
 	$ => Reduce #7 statement call conditional_while
+	BOOLEAN => Reduce #7 statement call conditional_while
 	IDENT => Reduce #7 statement call conditional_while
 	DQSTRING => Reduce #7 statement call conditional_while
 	SQSTRING => Reduce #7 statement call conditional_while
 	CARDINAL => Reduce #7 statement call conditional_while
 	INTEGER => Reduce #7 statement call conditional_while
 	FLOAT => Reduce #7 statement call conditional_while
-	BOOLEAN => Reduce #7 statement call conditional_while
 	"function" => Reduce #7 statement call conditional_while
 	'(' => Reduce #7 statement call conditional_while
 	"procedure" => Reduce #7 statement call conditional_while
@@ -16067,13 +16067,13 @@ expressionlist =
 [215]
 	'{' => Shift goto 216
 [216]
-	IDENT => Shift goto 49
-	DQSTRING => Shift goto 50
-	SQSTRING => Shift goto 51
-	CARDINAL => Shift goto 52
-	INTEGER => Shift goto 53
-	FLOAT => Shift goto 54
-	BOOLEAN => Shift goto 55
+	BOOLEAN => Shift goto 49
+	IDENT => Shift goto 50
+	DQSTRING => Shift goto 51
+	SQSTRING => Shift goto 52
+	CARDINAL => Shift goto 53
+	INTEGER => Shift goto 54
+	FLOAT => Shift goto 55
 	"function" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
 	'(' => Shift goto 56
 	"procedure" => Reduce #0 linkage call linkage {linkage="internal",attributes="#0 nounwind"}
@@ -16095,13 +16095,13 @@ expressionlist =
 	'}' => Shift goto 218
 [218]
 	$ => Reduce #11 statement call conditional_if_else
+	BOOLEAN => Reduce #11 statement call conditional_if_else
 	IDENT => Reduce #11 statement call conditional_if_else
 	DQSTRING => Reduce #11 statement call conditional_if_else
 	SQSTRING => Reduce #11 statement call conditional_if_else
 	CARDINAL => Reduce #11 statement call conditional_if_else
 	INTEGER => Reduce #11 statement call conditional_if_else
 	FLOAT => Reduce #11 statement call conditional_if_else
-	BOOLEAN => Reduce #11 statement call conditional_if_else
 	"function" => Reduce #11 statement call conditional_if_else
 	'(' => Reduce #11 statement call conditional_if_else
 	"procedure" => Reduce #11 statement call conditional_if_else

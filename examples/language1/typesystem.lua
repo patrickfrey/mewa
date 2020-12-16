@@ -79,8 +79,8 @@ local valueTypeMap = {}		-- maps any defined type id to its value type (strips a
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
 local stringConstantMap = {}    -- maps string constant values to a structure with its attributes {fmt,name,size}
 
-function definePromoteCall( returnType, thisType, opr, argTypes, promote_constructor)
-	local call_constructor = typedb:type_constructor( typedb:get_type( argTypes[1], opr, argTypes ))
+function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, promote_constructor)
+	local call_constructor = typedb:type_constructor( typedb:get_type( promoteType, opr, argTypes))
 	local callType = typedb:def_type( thisType, opr, promoteCallConstructor( call_constructor, promote_constructor), argTypes)
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
@@ -142,12 +142,12 @@ function defineConstExprArithmetics()
 	end
 	local oprlist = constexprTypeOperatorMap[ constexprFloatType]
 	for oi,opr in ipairs(oprlist) do
-		definePromoteCall( constexprFloatType, constexprIntegerType, opr, {constexprFloatType}, function(this) return this:tonumber() end)
+		definePromoteCall( constexprFloatType, constexprIntegerType, constexprFloatType, opr, {constexprFloatType}, function(this) return this:tonumber() end)
 	end
 	local oprlist = constexprTypeOperatorMap[ constexprUIntegerType]
 	for oi,opr in ipairs(oprlist) do
 		if not unaryOperatorMap[ opr] then
-			definePromoteCall( constexprUIntegerType, constexprIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
+			definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
 		end
 	end
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, 0.25)
@@ -243,12 +243,12 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		local promote_conv = convConstructor( promote_descr.conv[ typnam].fmt)
 		if promote_descr.binop then
 			for operator,operator_fmt in pairs( promote_descr.binop) do
-				definePromoteCall( promote_qualitype.lval, qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
+				definePromoteCall( promote_qualitype.lval, qualitype.c_lval, promote_qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
 			end
 		end
 		if promote_descr.cmpop then
 			for operator,operator_fmt in pairs( promote_descr.cmpop) do
-				definePromoteCall( scalarBooleanType, qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
+				definePromoteCall( scalarBooleanType, qualitype.c_lval, promote_qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
 			end
 		end
 	end
@@ -334,8 +334,8 @@ function initControlTypes()
 		local out = register()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.trueExitToBoolean, {trueExit=constructor.out, out=out}, label),out=out}
 	end
-	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction)
-	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction)
+	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction, 0.1)
+	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, 0.1)
 
 	function booleanToFalseExit( constructor)
 		local label = typedb:get_instance( "label")
@@ -348,8 +348,8 @@ function initControlTypes()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, label),out=out}
 	end
 
-	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction)
-	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction)
+	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction, 0.1)
+	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction, 0.1)
 
 	function negateControlTrueType( this) return {type=controlFalseType, constructor=this.constructor} end
 	function negateControlFalseType( this) return {type=controlTrueType, constructor=this.constructor} end
@@ -357,17 +357,17 @@ function initControlTypes()
 	function joinControlTrueTypeWithBool( this, arg)
 		local out = this.out
 		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, typedb:get_instance( "label"))
-		return {code=this.code .. arg[1].code .. arg[2].code .. code2, out=out}
+		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	function joinControlFalseTypeWithBool( this, arg)
 		local out = this.out
 		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, typedb:get_instance( "label"))
-		return {code=this.code .. arg[1].code .. arg[2].code .. code2, out=out}
+		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
 	defineCall( controlFalseType, controlTrueType, "!", {}, nil)
 	defineCall( controlTrueType, controlTrueType, "&&", {scalarBooleanType}, joinControlTrueTypeWithBool)
-	defineCall( controlFalseType, controlTrueType, "||", {scalarBooleanType}, joinControlFalseTypeWithBool)
+	defineCall( controlFalseType, controlFalseType, "||", {scalarBooleanType}, joinControlFalseTypeWithBool)
 
 	function joinControlFalseTypeWithConstexprBool( this, arg)
 		if arg == false then
@@ -387,23 +387,29 @@ function initControlTypes()
 	defineCall( controlFalseType, controlFalseType, "||", {constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
 
 	function constexprBooleanToControlTrueType( value)
-		local out = typedb:get_instance( "label")()
-		local code; if value == true then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}) end
+		local label = typedb:get_instance( "label")
+		local out = label()
+		local code; if value == true then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, label) end
 		return {code=code, out=out}
 	end
 	function constexprBooleanToControlFalseType( value)
-		local out = typedb:get_instance( "label")()
-		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}) end
+		local label = typedb:get_instance( "label")
+		local out = label()
+		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, label) end
 		return {code=code, out=out}
 	end
-	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction)
-	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction)
+	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, 0.1)
+	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction, 0.1)
 
 	function invertControlBooleanType( this)
-		local code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out})
+		local out = typedb:get_instance( "label")()
+		return {code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out}), out = out}
 	end
 	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, 0.1)
 	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, 0.1)
+
+	definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType, "&&", {scalarBooleanType}, constexprBooleanToControlTrueType)
+	definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType, "||", {scalarBooleanType}, constexprBooleanToControlFalseType)
 end
 
 function initBuiltInTypes()
@@ -523,7 +529,7 @@ function applyCallable( node, this, callable, args)
 				local parameters = typedb:type_parameters( item.type)
 				for ai,arg in ipairs(args) do
 					local param_constructor,param_weight = getReductionConstructor( node, parameters[ai].type, arg)
-					if not param_constructor then break end
+					if not param_weight then break end
 
 					weight = weight + param_weight
 					table.insert( param_constructor_ar, param_constructor)
@@ -556,7 +562,7 @@ function applyCallable( node, this, callable, args)
 			end
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
-		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature %s, list of candidates: %s",
+		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s",
 				utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")", altmatchstr)
 	end
 end
@@ -633,7 +639,7 @@ function defineCallableBodyContext( rtype)
 end
 function getStringConstant( value)
 	if not stringConstantMap[ value] then
-		local encval,enclen = utils.encodeCString(value)
+		local encval,enclen = utils.encodeLexemLlvm(value)
 		local name = utils.uniqueName( "string")
 		stringConstantMap[ value] = {fmt=utils.template_format( llvmir.control.stringConstConstructor, {name=name,size=enclen+1}),name=name,size=enclen+1}
 		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {out="@" .. name, size=enclen+1, value=encval}) .. "\n")
@@ -689,7 +695,7 @@ end
 
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
-	return applyCallable( node, "=", {arg[1], applyCallable( node, operator, arg)})
+	return applyCallable( node, arg[1], "=", {applyCallable( node, arg[1], operator, {arg[2]})})
 end
 function typesystem.operator( node, operator)
 	local args = utils.traverse( typedb, node)

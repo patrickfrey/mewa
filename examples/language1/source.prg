@@ -16,7 +16,7 @@ private function int fibonacci( int n)
 	{
 		i1 = i2 + i1;
 		swap( i1, i2);
-		i = i + 1;
+		i += 1;
 	}
 	return i2;
 }

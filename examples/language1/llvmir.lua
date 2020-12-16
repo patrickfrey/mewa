@@ -32,6 +32,41 @@ local pointerTemplate = {
 		[">"] = "{1} = {out} = icmp sgt {pointee}* {1}, {2}\n"}
 }
 
+local arrayTemplate = {
+	def_local = "{out} = alloca [{size} x {element}], align 16\n",
+	def_global = "{out} = internal global [{size} x {element}] zeroinitializer, align 16\n",
+	llvmtype = "[{size} x {element}]",
+	class = "array",
+	ctorproc = "define private dso_local hidden void @__ctor_{size}__{element}( {element}* %ar) alwaysinline {\n"
+		.. "enter:\nbr label %loop\nloop:\n"
+		.. "%ptr = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
+		.. "{ctorelement}\n%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 1\n"
+		.. "%r3 = icmp eq {element}* %r2, "
+			.. "getelementptr inbounds ({element}, {element}*"
+			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size})\n"
+		.. "br i1 %r3, label %end, label %loop\n"
+		.. "end:\nreturn void\n}\n",
+	dtorproc = "define private dso_local hidden void @__dtor_{size}__{element}( {element}* %ar) alwaysinline {\n"
+		.. "enter:\nbr label %loop\nloop:\n"
+		.. "%ptr = phi {element}* [ getelementptr inbounds ({element}, {element}*"
+		.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size}), %enter], [%r2, %loop]\n"
+		.. "{dtorelement}\n%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 -1\n"
+		.. "%r3 = icmp eq {element}* %2, getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0)\n"
+		.. "br i1 %r3, label %end, label %loop\n"
+		.. "end:\nreturn void\n}\n",
+	ctor = "call void @__ctor_{size}__{element}( {element}* {inp})\n",
+	dtor = "call void @__dtor_{size}__{element}( {element}* {inp})\n",
+	index = {
+		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {arg2}\n",
+		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {arg2}\n",
+		["int"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i32 0, i32 {arg2}\n",
+		["uint"] = "{1} = zext i32 {arg2} to i64\n{out} = inbounds getelementptr [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {1}\n",
+		["short"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i16 0, i16 {arg2}\n",
+		["ushort"] = "{1} = zext i16 {arg2} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {1}\n",
+		["byte"] = "{1} = zext i8 {arg2} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {1}\n"
+	}
+}
+
 llvmir.control = {
 	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
 	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
