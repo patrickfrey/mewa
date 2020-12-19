@@ -16,13 +16,13 @@ local pointerTemplate = {
 	ctor = "store {pointee}* null, {pointee}** {this}\n",
 
 	index = {
-		["long"] = "{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {arg2}\n",
-		["ulong"] = "{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {arg2}\n",
-		["int"] = "{out} = getelementptr {pointee}, {pointee}* {arg1}, i32 {arg2}\n",
-		["uint"] = "{1} = zext i32 {arg2} to i64\n{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {1}\n",
-		["short"] = "{out} = getelementptr {pointee}, {pointee}* {arg1}, i16 {arg2}\n",
-		["ushort"] = "{1} = zext i16 {arg2} to i64\n{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {1}\n",
-		["byte"] = "{1} = zext i8 {arg2} to i64\n{out} = getelementptr {pointee}, {pointee}* {arg1}, i64 {1}\n"
+		["long"] = "{out} = getelementptr {pointee}, {pointee}* {this}, i64 {arg1}\n",
+		["ulong"] = "{out} = getelementptr {pointee}, {pointee}* {this}, i64 {arg1}\n",
+		["int"] = "{out} = getelementptr {pointee}, {pointee}* {this}, i32 {arg1}\n",
+		["uint"] = "{1} = zext i32 {arg1} to i64\n{out} = getelementptr {pointee}, {pointee}* {this}, i64 {1}\n",
+		["short"] = "{out} = getelementptr {pointee}, {pointee}* {this}, i16 {arg1}\n",
+		["ushort"] = "{1} = zext i16 {arg1} to i64\n{out} = getelementptr {pointee}, {pointee}* {this}, i64 {1}\n",
+		["byte"] = "{1} = zext i8 {arg1} to i64\n{out} = getelementptr {pointee}, {pointee}* {this}, i64 {1}\n"
 	},
 	cmpop = {
 		["=="] = "{1} = {out} = icmp eq {pointee}* {1}, {2}\n",
@@ -58,13 +58,36 @@ local arrayTemplate = {
 	ctor = "call void @__ctor_{size}__{element}( {element}* {this})\n",
 	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
 	index = {
-		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {arg2}\n",
-		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {arg2}\n",
-		["int"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i32 0, i32 {arg2}\n",
-		["uint"] = "{1} = zext i32 {arg2} to i64\n{out} = inbounds getelementptr [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {1}\n",
-		["short"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i16 0, i16 {arg2}\n",
-		["ushort"] = "{1} = zext i16 {arg2} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {1}\n",
-		["byte"] = "{1} = zext i8 {arg2} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {1}\n"
+		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
+		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
+		["int"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {arg1}\n",
+		["uint"] = "{1} = zext i32 {arg1} to i64\n{out} = inbounds getelementptr [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n",
+		["short"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i16 0, i16 {arg1}\n",
+		["ushort"] = "{1} = zext i16 {arg1} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n",
+		["byte"] = "{1} = zext i8 {arg1} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n"
+	}
+}
+
+llvmir.structTemplate = {
+	structname = "{structname}",
+	def_local = "{out} = alloca %{structname}, align 16\n",
+	def_global = "{out} = internal global %{structname} zeroinitializer, align 16\n",
+	llvmtype = "%{structname}",
+	class = "array",
+	ctorproc = "define private dso_local hidden void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
+		.. "enter:\n{ctors}end:\nreturn void\n}\n",
+	dtorproc = "define private dso_local hidden void @__dtor_{structname}( %{structname}* %ptr) alwaysinline {\n"
+		.. "enter:\n{dtors}end:\nreturn void\n}\n",
+	ctor = "call void @__ctor_{structname}( %{structname}* {this})\n",
+	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
+	index = {
+		["long"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {arg1}\n",
+		["ulong"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {arg1}\n",
+		["int"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {arg1}\n",
+		["uint"] = "{1} = zext i32 {arg1} to i64\n{out} = inbounds getelementptr %{structname}, %{structname}* {this}, i64 0, i64 {1}\n",
+		["short"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i16 0, i16 {arg1}\n",
+		["ushort"] = "{1} = zext i16 {arg1} to i64\n{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {1}\n",
+		["byte"] = "{1} = zext i8 {arg1} to i64\n{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {1}\n"
 	}
 }
 

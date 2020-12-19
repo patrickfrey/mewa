@@ -214,16 +214,18 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	defineCall( rval, pval, "->", {}, nil)
 	defineCall( c_rval, c_pval, "->", {}, nil)
 
-	if typeDescription.assign then defineCall( rval, rval, "=", {c_lval}, assignConstructor( typeDescription.assign)) end
-	defineCall( rpval, rpval, "=", {c_pval}, assignConstructor( pointerTypeDescription.assign))
-
 	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
-	return lval
+	return qualiTypeMap[ lval]
+end
+function defineAssignConstructors( qualitype, descr)
+	local pointer_descr = llvmir.pointerDescr( descr)
+	if descr.assign then defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
+	defineCall( qualitype.rpval, qualitype.rpval, "=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
 end
 function defineIndexOperators( element_qualitype, pointer_descr)
 	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
-		defineCall( element_qualitype.rval, element_qualitype.pval, "[]", {index_type}, convConstructor( pointer_descr.index[ index_typnam]))
-		defineCall( element_qualitype.c_rval, element_qualitype.c_pval, "[]", {index_type}, convConstructor( pointer_descr.index[ index_typnam]))
+		defineCall( element_qualitype.rval, element_qualitype.pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
+		defineCall( element_qualitype.c_rval, element_qualitype.c_pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
 	end
 end
 function defineBuiltInTypeConversions( typnam, descr)
@@ -300,10 +302,11 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 		typedb:scope( scopebk)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
-		lval = defineQualifiedTypes( element_sep.lval, typnam, descr)
+		local qualitype = defineQualifiedTypes( element_sep.lval, typnam, descr)
+		defineAssignConstructors( qualitype, descr)
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
 		typedb:scope( scopebk)
-		arrayTypeMap[ typekey] = lval
+		arrayTypeMap[ typekey] = qualitype.lval
 	end
 	return rt
 end
@@ -436,26 +439,27 @@ end
 function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
-		local lval = defineQualifiedTypes( 0, typnam, scalar_descr)
-		local c_lval = qualiTypeMap[ lval].c_lval
-		scalarQualiTypeMap[ typnam] = qualiTypeMap[ lval]
+		local qualitype = defineQualifiedTypes( 0, typnam, scalar_descr)
+		defineAssignConstructors( qualitype, scalar_descr)
+		local c_lval = qualitype.c_lval
+		scalarQualiTypeMap[ typnam] = qualitype
 		if scalar_descr.class == "bool" then
 			scalarBooleanType = c_lval
 		elseif scalar_descr.class == "unsigned" then
 			if scalar_descr.llvmtype == "i8" then
-				stringPointerType = qualiTypeMap[ lval].c_pval
+				stringPointerType = qualitype.c_pval
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		elseif scalar_descr.class == "signed" then
-			if scalar_descr.llvmtype == "i32" then scalarIntegerType = qualiTypeMap[ lval].c_lval end
+			if scalar_descr.llvmtype == "i32" then scalarIntegerType = qualitype.c_lval end
 			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
-				stringPointerType = qualiTypeMap[ lval].c_pval
+				stringPointerType = qualitype.c_pval
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		end
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
 			local weight = 0.25*(1.0-scalar_descr.sizeweight)
-			typedb:def_reduction( lval, constexprType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, weight)
+			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, weight)
 		end
 	end
 	if not scalarBooleanType then utils.errorMessage( 0, "No boolean type defined in built-in scalar types") end
@@ -872,6 +876,11 @@ end
 function typesystem.interface_procdef( node)
 end
 function typesystem.structdef( node, context)
+	local structname = utils.uniqueName( noder.arg[1].value)
+	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
+	
+	local arg = utils.traverse( typedb, node, members)
+	
 end
 function typesystem.interfacedef( node, context)
 end
