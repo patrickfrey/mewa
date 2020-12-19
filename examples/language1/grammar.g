@@ -21,6 +21,12 @@ externlist		= externdefinition externlist
 definitionlist		= definition definitionlist
 			| ε
 			;
+datadefinitionlist	= datadefinition datadefinitionlist
+			| ε
+			;
+methoddefinitionlist 	= methoddefinition methoddefinitionlist
+			| ε
+			;
 externdefinition	= "extern" DQSTRING "function" typespec IDENT "(" externparameterlist ")" ";"	(extern_funcdef)
 			| "extern" DQSTRING "procedure" IDENT "(" externparameterlist ")" ";"		(extern_procdef)
 			;
@@ -30,12 +36,22 @@ externparameters 	= typespec "," externparameters
 			| typespec
 			| ε
 			;
+methoddefinition 	= "function" typespec IDENT "(" parameterlist ")" ";"				(interface_funcdef)
+			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef)
+			;
+externparameterlist	= externparameters								(extern_paramdeflist)
+			;
 mainproc		= "main" "{" statementlist "}"							({}main_procdef)
 			| ε
 			;
-definition		= functiondefinition								(definition 0)
-			| typedefinition ";"								(definition 0)
-			| variabledefinition ";"							(definition 0)
+datadefinition		= typedefinition ";"								(definition)
+			| variabledefinition ";"							(definition)
+			| structdefinition ";"								(definition)
+			;
+definition		= datadefinition
+			| functiondefinition								(definition)
+			| classdefinition ";"								(definition)
+			| interfacedefinition ";"							(definition)
 			;
 typename/L1		= IDENT
 			| IDENT "::" typename
@@ -54,6 +70,12 @@ typespec/L1		= typename									(typespec "")
 			| "const" typename  "^" "^" "&"							(typespec "const^^&")
 			;
 typedefinition		= "typedef" typename IDENT							(>>typedef)
+			;
+structdefinition	= "struct" IDENT "{" datadefinitionlist "}"					(>>structdef)
+			;
+interfacedefinition	= "interface" IDENT "{" methoddefinitionlist "}"				(>>interfacedef)
+			;
+classdefinition		= "class" IDENT "{" definitionlist "}"						(>>classdef)
 			;
 linkage			= "private"									(linkage {linkage="internal", attributes="#0 nounwind"})
 			| "public"									(linkage {linkage="external", attributes="#0 noinline nounwind"})
@@ -87,8 +109,8 @@ statement		= functiondefinition								(definition)
 			;
 variabledefinition	= "var" typespec IDENT								(>>vardef)
 			| "var" typespec IDENT "=" expression						(>>vardef_assign)
-			| "var" typespec IDENT "[" "]" "=" expression					(>>vardef_array_assign)
-			| "var" typespec IDENT "[" "]"							(>>vardef_array)
+			| "var" typespec IDENT "[" expression "]" "=" expression			(>>vardef_array_assign)
+			| "var" typespec IDENT "[" expression "]"					(>>vardef_array)
 			;
 expression/L1		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
@@ -129,7 +151,8 @@ expression/L7		= expression  "=="  expression							(operator "==")
 			| expression  ">"  expression							(operator ">")
 			;
 expression/L8		= expression  "+"  expression							(operator "+")
-			| expression  "-"  expression							(operator "-") 
+			| expression  "-"  expression							(operator "-")
+			| "&"  expression								(operator "&")
 			| "-"  expression								(operator "-")
 			| "+"  expression								(operator "+") 
 			| "~"  expression								(operator "~")

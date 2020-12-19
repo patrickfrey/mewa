@@ -381,11 +381,11 @@ public:
 	/// \return the handle of the constructor of the type
 	int typeConstructor( int type) const;
 
-	/// \brief Get the scope step marking the start of the scope where the type is defined
+	/// \brief Get the scope where the type has been defined
 	/// \note Used to enforce some stricter rules for the visibility of certain objects, e.g. access variables in locally declared functions
 	/// \param[in] type the handle of the type (return value of defineType)
-	/// \return the start of the scope where type is defined
-	Scope::Step typeScopeStart( int type) const;
+	/// \return the scope where type has been defined
+	Scope typeScope( int type) const;
 
 private:
 	bool compareParameterSignature( const ParameterList& parameter, int param2, int paramlen2) const noexcept;
@@ -483,8 +483,8 @@ private:
 
 	struct TypeRecord
 	{
+		Scope scope;
 		int constructor;
-		Scope::Step scopestart;
 		short priority;
 		short parameterlen;
 		int parameter;
@@ -492,10 +492,10 @@ private:
 		TypeDef inv;
 
 		TypeRecord( const TypeRecord& o)
-			:constructor(o.constructor),scopestart(o.scopestart),priority(o.priority),parameterlen(o.parameterlen)
+			:scope(o.scope),constructor(o.constructor),priority(o.priority),parameterlen(o.parameterlen)
 			,parameter(o.parameter),next(o.next),inv(o.inv){}
-		TypeRecord( int constructor_, Scope::Step scopestart_, int parameter_, short parameterlen_, short priority_, const TypeDef& inv_)
-			:constructor(constructor_),scopestart(scopestart_),priority(priority_),parameterlen(parameterlen_)
+		TypeRecord( int constructor_, const Scope scope_, int parameter_, short parameterlen_, short priority_, const TypeDef& inv_)
+			:scope(scope_),constructor(constructor_),priority(priority_),parameterlen(parameterlen_)
 			,parameter(parameter_),next(0),inv(inv_){}
 	};
 

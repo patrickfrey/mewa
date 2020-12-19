@@ -843,17 +843,18 @@ static int mewa_typedb_type_constructor( lua_State* ls)
 	return 1;
 }
 
-static int mewa_typedb_type_scope_start( lua_State* ls)
+static int mewa_typedb_type_scope( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:type_scope_start";
+	[[maybe_unused]] static const char* functionName = "typedb:type_scope";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
 		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 2);
 		int type = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
-		auto rt = td->impl->typeScopeStart( type);
-		lua_pushinteger( ls, rt);
+		auto rt = td->impl->typeScope( type);
+		if (!rt.defined()) return 0;
+		mewa::lua::pushScope( ls, functionName, rt);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;
@@ -1115,7 +1116,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "type_parameters",	mewa_typedb_type_parameters },
 	{ "type_nof_parameters",mewa_typedb_type_nof_parameters },
 	{ "type_constructor",	mewa_typedb_type_constructor },
-	{ "type_scope_start",	mewa_typedb_type_scope_start },
+	{ "type_scope",		mewa_typedb_type_scope },
 	{ "get_reduction",	mewa_typedb_get_reduction },
 	{ "get_reductions",	mewa_typedb_get_reductions },
 	{ "instance_tree",	LuaTreeMetaMethods<mewa_objtree_userdata_t>::create },

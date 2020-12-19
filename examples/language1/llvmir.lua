@@ -41,7 +41,7 @@ local arrayTemplate = {
 	ctorproc = "define private dso_local hidden void @__ctor_{size}__{element}( {element}* %ar) alwaysinline {\n"
 		.. "enter:\nbr label %loop\nloop:\n"
 		.. "%ptr = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
-		.. "{ctorelement}\n%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 1\n"
+		.. "{ctorelement}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 1\n"
 		.. "%r3 = icmp eq {element}* %r2, "
 			.. "getelementptr inbounds ({element}, {element}*"
 			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size})\n"
@@ -51,12 +51,12 @@ local arrayTemplate = {
 		.. "enter:\nbr label %loop\nloop:\n"
 		.. "%ptr = phi {element}* [ getelementptr inbounds ({element}, {element}*"
 		.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size}), %enter], [%r2, %loop]\n"
-		.. "{dtorelement}\n%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 -1\n"
+		.. "{dtorelement}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 -1\n"
 		.. "%r3 = icmp eq {element}* %2, getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0)\n"
 		.. "br i1 %r3, label %end, label %loop\n"
 		.. "end:\nreturn void\n}\n",
-	ctor = "call void @__ctor_{size}__{element}( {element}* {inp})\n",
-	dtor = "call void @__dtor_{size}__{element}( {element}* {inp})\n",
+	ctor = "call void @__ctor_{size}__{element}( {element}* {this})\n",
+	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
 	index = {
 		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {arg2}\n",
 		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {arg1}, i64 0, i64 {arg2}\n",
@@ -87,14 +87,31 @@ llvmir.control = {
 	mainDeclaration = "define external i32 @main() #0 noinline nounwind {\nentry:\n{body}ret i32 0\n}\n"
 }
 
-local pointerTypeMap = {}
-function llvmir.pointerType( llvmPointeeType)
-	local pointerType = pointerTypeMap[ llvmPointeeType]
-	if not pointerType then
-		pointerType = utils.template_format( pointerTemplate, {pointee=llvmPointeeType, size_t="i64"} )
-		pointerTypeMap[ llvmPointeeType] = pointerType
+local pointerDescrMap = {}
+function llvmir.pointerDescr( pointeeDescr)
+	local llvmPointerType = pointeeDescr.llvmtype
+	local pointerDescr = pointerDescrMap[ llvmPointerType]
+	if not pointerDescr then
+		pointerDescr = utils.template_format( pointerTemplate, {pointee=llvmPointerType} )
+		pointerDescrMap[ llvmPointerType] = pointerDescr
 	end
-	return pointerType
+	return pointerDescr
+end
+
+local arrayDescrMap = {}
+function llvmir.arrayDescr( elementDescr, arraySize)
+	local llvmElementType = elementDescr.llvmtype
+	local arrayDescrKey = llvmElementType .. "#" .. arraySize
+	local arrayDescr = arrayDescrMap[ arrayDescrKey]
+	if not arrayDescr then
+		local ctorElement = utils.template_format( elementDescr.ctor or "", {this="%ptr"})
+		local dtorElement = utils.template_format( elementDescr.dtor or "", {this="%ptr"})
+		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType, size=arraySize, ctorelement=ctorElement, dtorelement=dtorElement})
+		arrayDescrMap[ arrayDescrKey] = arrayDescr;
+		if elementDescr.ctor then print_section( "Auto", arrayDescr.ctorproc) else arrayDescr.ctor = nil end
+		if elementDescr.dtor then print_section( "Auto", arrayDescr.dtorproc) else arrayDescr.dtor = nil end
+	end
+	return arrayDescr
 end
 
 return llvmir

@@ -5,7 +5,7 @@ target triple = "x86_64-pc-linux-gnu"
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
 @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
 
-{Code}
+{Auto}
 
 define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {
   {GlobalCtors}ret void
@@ -14,6 +14,8 @@ define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp sec
 define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp section ".text.startup" {
   {GlobalDtors}ret void
 }
+
+{Code}
 
 attributes #0 = {
 	"disable-tail-calls"="false" "frame-pointer"="all" "min-legal-vector-width"="0" 

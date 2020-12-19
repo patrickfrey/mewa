@@ -27,6 +27,7 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
     * [typedb:type_parameters](#type_parameters)
     * [typedb:type_nof_parameters](#type_nof_parameters)
     * [typedb:type_constructor](#type_constructor)
+    * [typedb:type_scope](#type_scope)
 1. [Instrospection for Debugging](#introspection)
     * [typedb:instance_tree](#instance_tree)
     * [typedb:type_tree](#type_tree)
@@ -401,21 +402,22 @@ Get the constructor of a type.
 Exits with error if the type passed is not valid. Returns *nil* if type is 0 or if not constructor is defined for that type.
 
 
-<a name="type_scope_start"/>
+<a name="type_scope"/>
 
-### typedb:type_scope_start
-Get the start of the scope where the type has been defined.
+### typedb:type_scope
+Get the scope where a type has been defined.
 
 #### Parameter
-| #          | Name | Type              | Description                                         |
-| :--------- | :--- | :---------------- | :-------------------------------------------------- |
-| 1st        | type | integer           | Type identifier                                     |
-| Return     |      | integer           | start of the scope where the type has been defined. |
+| #          | Name | Type              | Description                                                            |
+| :--------- | :--- | :---------------- | :--------------------------------------------------------------------- |
+| 1st        | type | integer           | Type identifier to query the scope                                     |
+| Return     |      | integer           | the scope where the type has been defined (global scope for typeid 0). |
 
 #### Remark
 Exits with error if the type passed is not valid.
 #### Note
 Used to enforce some stricter rules for the visibility of certain objects, e.g. restrict access of variables in locally declared functions to a declared capture, the own stack frame and global variables. 
+Also used for binding implicitely defined types to the scope of the type they are bound to.
 
 
 <a name="introspection"/>

@@ -34,6 +34,8 @@ public:
 	typedef int Step;
 
 public:
+	Scope() noexcept
+		:m_start(0),m_end(0){}
 	Scope( Step start_, Step end_) noexcept
 		:m_start(start_ >= 0 ? start_ : 0),m_end(end_ >= 0 ? end_ : std::numeric_limits<Step>::max()){}
 	Scope( Scope const& o) noexcept
@@ -41,11 +43,15 @@ public:
 	Scope& operator=( Scope const& o) noexcept
 		{m_start=o.m_start; m_end=o.m_end; return *this;}
 
+	bool defined() const noexcept
+	{
+		return m_end > 0;
+	}
+
 	bool contains( Scope const& o) const noexcept
 	{
 		return o.m_start >= m_start && o.m_end <= m_end;
 	}
-
 	bool contains( Step step) const noexcept
 	{
 		return step >= m_start && step < m_end;
