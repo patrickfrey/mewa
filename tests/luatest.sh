@@ -39,3 +39,4 @@ verify_test_result "Lua test (4) output compiling example program with language1
 lli build/language1.compiler.1.out > build/language1.run.1.out
 verify_test_result "Lua test (5) output running program translated with language1 compiler"  build/language1.run.1.out tests/language1.compiler.run.1.exp
 
+build/language1.compiler.lua -d build/language1.compiler.debug.2.out -o build/language1.compiler.2.out examples/language1/sources/tree.prg

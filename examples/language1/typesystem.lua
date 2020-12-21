@@ -915,7 +915,7 @@ end
 function typesystem.interface_procdef( node)
 end
 function typesystem.structdef( node, context)
-	local typnam = noder.arg[1].value
+	local typnam = node.arg[1].value
 	local structname = utils.uniqueName( typnam)
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local qualitype = defineQualifiedTypes( getTypeDeclContextTypeId( context), typnam, descr)
