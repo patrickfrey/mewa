@@ -80,15 +80,8 @@ llvmir.structTemplate = {
 		.. "enter:\n{dtors}end:\nreturn void\n}\n",
 	ctor = "call void @__ctor_{structname}( %{structname}* {this})\n",
 	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
-	index = {
-		["long"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {arg1}\n",
-		["ulong"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {arg1}\n",
-		["int"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {arg1}\n",
-		["uint"] = "{1} = zext i32 {arg1} to i64\n{out} = inbounds getelementptr %{structname}, %{structname}* {this}, i64 0, i64 {1}\n",
-		["short"] = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i16 0, i16 {arg1}\n",
-		["ushort"] = "{1} = zext i16 {arg1} to i64\n{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {1}\n",
-		["byte"] = "{1} = zext i8 {arg1} to i64\n{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i64 0, i64 {1}\n"
-	}
+	load = "{out} = load {type}, getelementptr inbounds {type}*, %{structname}* {this}, i64 {index}\n",
+	loadref = "{out} = getelementptr inbounds {type}*, %{structname}* {this}, i64 {index}\n"
 }
 
 llvmir.control = {
@@ -107,7 +100,8 @@ llvmir.control = {
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
-	mainDeclaration = "define external i32 @main() #0 noinline nounwind {\nentry:\n{body}ret i32 0\n}\n"
+	mainDeclaration = "define external i32 @main() #0 noinline nounwind {\nentry:\n{body}ret i32 0\n}\n",
+	structdef = "%{structname} = type { {llvmtype} }\n"
 }
 
 local pointerDescrMap = {}

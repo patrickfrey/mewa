@@ -217,7 +217,7 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
 	return qualiTypeMap[ lval]
 end
-function defineAssignConstructors( qualitype, descr)
+function defineAssignOperators( qualitype, descr)
 	local pointer_descr = llvmir.pointerDescr( descr)
 	if descr.assign then defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
 	defineCall( qualitype.rpval, qualitype.rpval, "=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
@@ -303,7 +303,7 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
 		local qualitype = defineQualifiedTypes( element_sep.lval, typnam, descr)
-		defineAssignConstructors( qualitype, descr)
+		defineAssignOperators( qualitype, descr)
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
 		typedb:scope( scopebk)
 		arrayTypeMap[ typekey] = qualitype.lval
@@ -322,15 +322,53 @@ function defineVariable( node, context, typeId, name, initVal)
 		local rt = {type=var, constructor={code=code,out=out}}
 		if initVal then rt = applyCallable( node, rt, "=", {initVal}) end
 		return rt
-	elseif context.typeId == 0 then
+	elseif not context.qualitype then
 		local fmt; if initVal then fmt = descr.def_global_val else fmt = descr.def_global end
 		if type(initVal) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
 		print( utils.constructor_format( fmt, {out = out, inp = initVal}))
-		local var = typedb:def_type( context.typeId, name, out)
+		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	else
-		utils.errorMessage( node.line, "Member variables not implemented yet")
+		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
+		local element_lval,element_quali = typeQualiMap[ typeId];
+		local element_index = context.index; context.index = element_index + 1
+		local element_qualitype = qualiTypeMap[ element_lval]
+		local element_descr = typeDescriptionMap[ typeId]
+		if context.llvmtype then
+			context.llvmtype = context.llvmtype  .. ", " .. element_descr.llvmtype
+		else
+			context.llvmtype = element_descr.llvmtype
+		end
+		local out = context.register()
+		local load_code = utils.constructor_format( context.qualitype.rval, {out=out,this="%ptr",index=element_index, type=element_descr.llvmtype} )
+		if element_descr.ctor then
+			context.ctors = (context.ctors or "") .. load_code .. utils.constructor_format( element_descr.ctor, {this=out}, context.register)
+		end
+		if element_descr.dtor then
+			context.dtors = (context.dtors or "") .. load_code .. utils.constructor_format( element_descr.dtor, {this=out}, context.register)
+		end
+		local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=element_descr.llvmtype}))
+		local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=element_descr.llvmtype}))
+		if element_quali == "" then
+			defineCall( element_qualitype.rval, context.qualitype.rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_lval, context.qualitype.c_lval, name, {}, load_val)
+		elseif element_quali == "^" then
+			defineCall( element_qualitype.rpval, context.qualitype.rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
+		elseif element_quali == "const " then
+			defineCall( element_qualitype.c_rval, context.qualitype.rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_lval, context.qualitype.c_lval, name, {}, load_val)
+		elseif element_quali == "const^" then
+			defineCall( element_qualitype.c_rpval, context.qualitype.rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
+			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
+		else
+			utils.errorMessage( node.line, "Reference qualifier '&' not defined for member variables")
+		end
 	end
 end
 
@@ -440,7 +478,7 @@ function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( 0, typnam, scalar_descr)
-		defineAssignConstructors( qualitype, scalar_descr)
+		defineAssignOperators( qualitype, scalar_descr)
 		local c_lval = qualitype.c_lval
 		scalarQualiTypeMap[ typnam] = qualitype
 		if scalar_descr.class == "bool" then
@@ -597,8 +635,8 @@ function getSignatureString( name, args, context)
 		return utils.uniqueName( name .. "__")
 	else
 		local pstr = ""
-		if context.typeId ~= 0 then
-			pstr = ptr .. "__C_" .. typedb:type_string( context.typeId, "__") .. "__"
+		if context.qualitype then
+			pstr = ptr .. "__C_" .. typedb:type_string( context.qualitype.lval, "__") .. "__"
 		end
 		for ai,arg in ipairs(args) do if pstr == "" then pstr = pstr .. "__" .. arg.llvmtype else pstr = "_" .. arg.llvmtype end end
 		return utils.encodeName( name .. pstr)
@@ -625,7 +663,9 @@ function getParameterListCallTemplate( param)
 	for i=2,#param do rt = rt .. ", " .. param[i].llvmtype .. " {arg" .. i .. "}" end
 	return rt
 end
-
+function getTypeDeclContextTypeId( context)
+	if not context then return 0 elseif context.qualitype then return context.qualitype.lval else return 0 end
+end
 function defineCallableType( node, descr, contextTypeId)
 	local callable = typedb:get_type( contextTypeId, descr.name)
 	if not callable then callable = typedb:def_type( contextTypeId, descr.name) end
@@ -643,8 +683,7 @@ function defineCallable( node, descr, context)
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.name, descr.param, context)
 	descr.callargstr = getParameterListCallTemplate( descr.param)
-	local contextTypeId; if not context then contextTypeId = 0 else contextTypeId = context.typeId end
-	defineCallableType( node, descr, contextTypeId)
+	defineCallableType( node, descr, getTypeDeclContextTypeId( context))
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
 end
 function defineExternCallable( node, descr)
@@ -704,14 +743,14 @@ function typesystem.vardef_array( node, context)
 	if arg[3].type ~= constexprUIntegerType then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
 	local arsize = arg[3].constructor:tonumber()
 	local arrayTypeId = implicitDefineArrayType( node, arg[1], arsize)
-	return defineVariable( node, contextTypeId, arrayTypeId, arg[2], nil)
+	return defineVariable( node, context, arrayTypeId, arg[2], nil)
 end
 function typesystem.vardef_array_assign( node, context)
 	local arg = utils.traverse( typedb, node, context)
 	if arg[3].type ~= constexprUIntegerType then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
 	local arsize = arg[3].constructor:tonumber()
 	local arrayTypeId = implicitDefineArrayType( node, arg[1], arsize)
-	return defineVariable( node, contextTypeId, arrayTypeId, arg[2], arg[4])
+	return defineVariable( node, context, arrayTypeId, arg[2], arg[4])
 end
 function typesystem.typedef( node, context)
 	local arg = utils.traverse( typedb, node)
@@ -876,11 +915,15 @@ end
 function typesystem.interface_procdef( node)
 end
 function typesystem.structdef( node, context)
-	local structname = utils.uniqueName( noder.arg[1].value)
+	local typnam = noder.arg[1].value
+	local structname = utils.uniqueName( typnam)
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
-	
-	local arg = utils.traverse( typedb, node, members)
-	
+	local qualitype = defineQualifiedTypes( getTypeDeclContextTypeId( context), typnam, descr)
+	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
+	local arg = utils.traverse( typedb, node, context)
+	print( "Auto", utils.template_format( llvmir.structTemplate.ctorproc, {ctors=context.ctors or ""}))
+	print( "Auto", utils.template_format( llvmir.structTemplate.dtorproc, {ctors=context.dtors or ""}))
+	print( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
 end
 function typesystem.interfacedef( node, context)
 end
@@ -894,7 +937,7 @@ function typesystem.main_procdef( node)
 end
 function typesystem.program( node)
 	initBuiltInTypes()
-	utils.traverse( typedb, node, {typeId=0})
+	utils.traverse( typedb, node, {})
 	return node
 end
 
