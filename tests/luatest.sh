@@ -32,7 +32,7 @@ verify_test_result "Lua test (2) dump states dumped from language1 grammar"  bui
 /usr/bin/time -f "Time Lua test 3/4 running %e seconds"\
     build/mewa -b "$LUABIN" -g -o build/language1.compiler.lua examples/language1/grammar.g
 chmod +x build/language1.compiler.lua
-build/language1.compiler.lua -d build/language1.compiler.debug.1.out -o build/language1.compiler.1.out examples/language1/source.prg
+build/language1.compiler.lua -d build/language1.compiler.debug.1.out -o build/language1.compiler.1.out examples/language1/sources/fibo.prg
 verify_test_result "Lua test (3) debug output compiling example program with language1 compiler"  build/language1.compiler.debug.1.out tests/language1.compiler.debug.1.exp
 verify_test_result "Lua test (4) output compiling example program with language1 compiler"  build/language1.compiler.1.out tests/language1.compiler.1.exp
 

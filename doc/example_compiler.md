@@ -12,7 +12,7 @@ Here is a description of the example language "language1" also used in tests.
       - [Built-in Scalar Type Descriptions](../examples/language1/scalar_types.txt)
       - [Built-in Scalar Type LLVM Templates](../examples/language1/llvmir_scalar.lua)
  - [Typesystem / Lua Callbacks Referenced in Grammar](../examples/language1/typesystem.lua)
- - [Example Source File](../examples/language1/source.prg)
- 
- 
+ - Example Source Files
+    - [Fibonacci](../examples/language1/sources/fibo.prg)
+    - [Tree Structure](../examples/language1/sources/tree.prg)
  
