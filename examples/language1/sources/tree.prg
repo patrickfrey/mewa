@@ -16,7 +16,6 @@ var Tree g_tree;
 main
 {
 	var Tree tree;
-	var int val = fibonacci( 20);
 	printf( "Result: %d\n", tree.data.val);
 }
 

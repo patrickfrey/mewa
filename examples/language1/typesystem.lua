@@ -75,7 +75,7 @@ local controlTrueType = nil	-- type implementing a boolean not represented as va
 local controlFalseType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
-local typeQualiMap = {}		-- maps any defined type id to a pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
+local typeQualiSepMap = {}	-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
 local stringConstantMap = {}    -- maps string constant values to a structure with its attributes {fmt,name,size}
 local arrayTypeMap = {}		-- maps the pair lval,size to the array type lval for an array size 
@@ -192,14 +192,14 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	referenceTypeMap[ rpval] = rpval
 	referenceTypeMap[ c_rpval] = c_rpval
 
-	typeQualiMap[ lval] = {lval=lval}
-	typeQualiMap[ c_lval] = {lval=lval,qualifier="const "}
-	typeQualiMap[ rval] = {lval=lval,qualifier="&"}
-	typeQualiMap[ c_rval] = {lval=lval,qualifier="const&"}
-	typeQualiMap[ pval] = {lval=lval,qualifier="^"}
-	typeQualiMap[ c_pval] = {lval=lval,qualifier="const^"}
-	typeQualiMap[ rpval] = {lval=lval,qualifier="^&"}
-	typeQualiMap[ c_rpval] = {lval=lval,qualifier="const^&"}
+	typeQualiSepMap[ lval] = {lval=lval,qualifier=""}
+	typeQualiSepMap[ c_lval] = {lval=lval,qualifier="const "}
+	typeQualiSepMap[ rval] = {lval=lval,qualifier="&"}
+	typeQualiSepMap[ c_rval] = {lval=lval,qualifier="const&"}
+	typeQualiSepMap[ pval] = {lval=lval,qualifier="^"}
+	typeQualiSepMap[ c_pval] = {lval=lval,qualifier="const^"}
+	typeQualiSepMap[ rpval] = {lval=lval,qualifier="^&"}
+	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
 
 	typedb:def_reduction( lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
@@ -288,7 +288,7 @@ function getContextTypes()
 end
 
 function implicitDefineArrayType( node, elementTypeId, arsize)
-	local element_sep = typeQualiMap[ elementTypeId]
+	local element_sep = typeQualiSepMap[ elementTypeId]
 	local element_descr = typeDescriptionMap[ elementTypeId]
 	local descr = llvmir.arrayDescr( element_descr, arsize)
 	local typenam = "[" .. arsize .. "]"
@@ -331,9 +331,10 @@ function defineVariable( node, context, typeId, name, initVal)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	else
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
-		local element_lval,element_quali = typeQualiMap[ typeId];
+		local element_qualisep = typeQualiSepMap[ typeId];
+		local element_qualitype = qualiTypeMap[ element_qualisep.lval]
+		local element_qualifier = element_qualisep.qualifier
 		local element_index = context.index; context.index = element_index + 1
-		local element_qualitype = qualiTypeMap[ element_lval]
 		local element_descr = typeDescriptionMap[ typeId]
 		if context.llvmtype then
 			context.llvmtype = context.llvmtype  .. ", " .. element_descr.llvmtype
@@ -341,7 +342,7 @@ function defineVariable( node, context, typeId, name, initVal)
 			context.llvmtype = element_descr.llvmtype
 		end
 		local out = context.register()
-		local load_code = utils.constructor_format( context.qualitype.rval, {out=out,this="%ptr",index=element_index, type=element_descr.llvmtype} )
+		local load_code = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=element_descr.llvmtype} )
 		if element_descr.ctor then
 			context.ctors = (context.ctors or "") .. load_code .. utils.constructor_format( element_descr.ctor, {this=out}, context.register)
 		end
@@ -350,24 +351,24 @@ function defineVariable( node, context, typeId, name, initVal)
 		end
 		local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=element_descr.llvmtype}))
 		local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=element_descr.llvmtype}))
-		if element_quali == "" then
+		if element_qualifier == "" then
 			defineCall( element_qualitype.rval, context.qualitype.rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_lval, context.qualitype.c_lval, name, {}, load_val)
-		elseif element_quali == "^" then
+		elseif element_qualifier == "^" then
 			defineCall( element_qualitype.rpval, context.qualitype.rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
-		elseif element_quali == "const " then
+		elseif element_qualifier == "const " then
 			defineCall( element_qualitype.c_rval, context.qualitype.rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_lval, context.qualitype.c_lval, name, {}, load_val)
-		elseif element_quali == "const^" then
+		elseif element_qualifier == "const^" then
 			defineCall( element_qualitype.c_rpval, context.qualitype.rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
 		else
-			utils.errorMessage( node.line, "Reference qualifier '&' not defined for member variables")
+			utils.errorMessage( node.line, "Qualifier '%s' not defined for member variables", element_qualifier)
 		end
 	end
 end
@@ -833,17 +834,14 @@ function typesystem.typespec( node, qualifier)
 	if #node.arg == 1 then
 		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
 	else
-		local res = typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace)
-		local contextTypeId = selectNoConstructorNoArgumentType( node, typeName, res)
+		local contextTypeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
 		if #node.arg > 2 then
 			for ii = 2, #node.arg-1 do
-				local res = typedb:resolve_type( contextTypeId, node.arg[ii].value, tagmask_typeNameSpace)
-				contextTypeId = selectNoConstructorNoArgumentType( node, typeName, res)
+				local val  = node.arg[ii].value
+				contextTypeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, val, tagmask_typeNameSpace))
 			end
 		end
-		if not constructor then
-			typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
-		end
+		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
 	end
 	return typeId
 end
@@ -919,6 +917,9 @@ function typesystem.structdef( node, context)
 	local structname = utils.uniqueName( typnam)
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local qualitype = defineQualifiedTypes( getTypeDeclContextTypeId( context), typnam, descr)
+	local defcontext = getContextTypes()
+	table.insert( defcontext, qualitype.lval)
+	typedb:set_instance( "context", defcontext)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
 	local arg = utils.traverse( typedb, node, context)
 	print( "Auto", utils.template_format( llvmir.structTemplate.ctorproc, {ctors=context.ctors or ""}))

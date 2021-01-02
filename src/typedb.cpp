@@ -273,6 +273,18 @@ public:
 		m_ar.reserve( buffersize / sizeof(ReduStackElem));
 	}
 
+	int pushNonDuplicateStart( int type, int constructor)
+	{
+		int rt = -1;
+		std::size_t ai = 0;
+		for (; ai < m_ar.size() && m_ar[ ai].type != type; ++ai){}
+		if (ai == m_ar.size())
+		{
+			rt = ai;
+			m_ar.push_back( {type,constructor,-1/*prev*/,0/*path len*/});
+		}
+		return rt;
+	}
 	int pushIfNew( int type, int constructor, int prev, int pathlen)
 	{
 		int rt = -1;
@@ -472,10 +484,10 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType(
 
 	ReduStack stack( &stack_memrsc, sizeof buffer);
 	std::priority_queue<ReduQueueElem,LocalMemVector<ReduQueueElem>,std::greater<ReduQueueElem> > priorityQueue;
-
-	stack.pushIfNew( fromType, 0/*constructor*/, -1/*prev*/, 0/*pathlen*/);
-	priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
-
+	{
+		int index = stack.pushNonDuplicateStart( fromType, 0/*constructor*/);
+		priorityQueue.push( ReduQueueElem( 0.0/*weight*/, index));
+	}
 	while (!priorityQueue.empty())
 	{
 		auto qe = priorityQueue.top();
@@ -572,8 +584,8 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 			throw Error( Error::InvalidHandle, string_format( "%d", contextTypeAr[ci]));
 		}
 		int constructor = contextTypeAr[ci] ? m_typerecMap[ contextTypeAr[ci]-1].constructor : 0;
-		stack.pushIfNew( contextTypeAr[ci], constructor, -1/*prev*/, 0/*pathlen*/);
-		priorityQueue.push( ReduQueueElem( 0.0/*weight*/, 0/*index*/));
+		int index = stack.pushNonDuplicateStart( contextTypeAr[ci], constructor);
+		priorityQueue.push( ReduQueueElem( 0.0/*weight*/, index));
 	}
 	while (!priorityQueue.empty())
 	{
