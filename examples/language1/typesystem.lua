@@ -220,7 +220,9 @@ end
 function defineAssignOperators( qualitype, descr)
 	local pointer_descr = llvmir.pointerDescr( descr)
 	if descr.assign then defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.ctor_assign or descr.assign))
 	defineCall( qualitype.rpval, qualitype.rpval, "=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
+	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
 end
 function defineIndexOperators( element_qualitype, pointer_descr)
 	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
@@ -320,7 +322,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 		local rt = {type=var, constructor={code=code,out=out}}
-		if initVal then rt = applyCallable( node, rt, "=", {initVal}) end
+		if initVal then rt = applyCallable( node, rt, ":=", {initVal}) end
 		return rt
 	elseif not context.qualitype then
 		local fmt; if initVal then fmt = descr.def_global_val else fmt = descr.def_global end
@@ -331,7 +333,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	else
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
-		local element_qualisep = typeQualiSepMap[ typeId];
+		local element_qualisep = typeQualiSepMap[ typeId]
 		local element_qualitype = qualiTypeMap[ element_qualisep.lval]
 		local element_qualifier = element_qualisep.qualifier
 		local element_index = context.index; context.index = element_index + 1
@@ -342,12 +344,17 @@ function defineVariable( node, context, typeId, name, initVal)
 			context.llvmtype = element_descr.llvmtype
 		end
 		local out = context.register()
-		local load_code = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=element_descr.llvmtype} )
+		local inp = context.register()
+		local load_code_ths = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=element_descr.llvmtype} )
+		local load_code_oth = utils.constructor_format( context.descr.loadref, {out=out,this="%oth",index=element_index, type=element_descr.llvmtype} )
 		if element_descr.ctor then
-			context.ctors = (context.ctors or "") .. load_code .. utils.constructor_format( element_descr.ctor, {this=out}, context.register)
+			context.ctors = (context.ctors or "") .. load_code_ths .. utils.constructor_format( element_descr.ctor, {this=out}, context.register)
 		end
+		local code_ctor_assign = utils.constructor_format( element_descr.ctor_assign or element_descr.assign, {this=out,arg1=inp}, context.register)
+		context.ctors_assign = (context.ctors_assign or "") .. load_code_ths .. load_code_oth .. code_ctor_assign
+
 		if element_descr.dtor then
-			context.dtors = (context.dtors or "") .. load_code .. utils.constructor_format( element_descr.dtor, {this=out}, context.register)
+			context.dtors = (context.dtors or "") .. load_code_ths .. utils.constructor_format( element_descr.dtor, {this=out}, context.register)
 		end
 		local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=element_descr.llvmtype}))
 		local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=element_descr.llvmtype}))
@@ -829,16 +836,17 @@ function typesystem.conditional_while( node)
 end
 
 function typesystem.typespec( node, qualifier)
-	local typeName = qualifier .. node.arg[ #node.arg].value;
+	local typeName = qualifier .. node.arg[ #node.arg].value
 	local typeId
 	if #node.arg == 1 then
 		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
 	else
-		local contextTypeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), node.arg[ 1].value, tagmask_typeNameSpace))
+		local ctxTypeName = node.arg[ 1].value
+		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), node.arg[1].value, tagmask_typeNameSpace))
 		if #node.arg > 2 then
 			for ii = 2, #node.arg-1 do
-				local val  = node.arg[ii].value
-				contextTypeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, val, tagmask_typeNameSpace))
+				ctxTypeName  = node.arg[ii].value
+				ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( ctxTypeId, ctxTypeName, tagmask_typeNameSpace))
 			end
 		end
 		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
@@ -923,6 +931,7 @@ function typesystem.structdef( node, context)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
 	local arg = utils.traverse( typedb, node, context)
 	print( "Auto", utils.template_format( llvmir.structTemplate.ctorproc, {ctors=context.ctors or ""}))
+	print( "Auto", utils.template_format( llvmir.structTemplate.ctorproc_assign, {ctors=context.ctors_assign or ""}))
 	print( "Auto", utils.template_format( llvmir.structTemplate.dtorproc, {ctors=context.dtors or ""}))
 	print( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
 end
@@ -957,6 +966,10 @@ function typesystem.rep_operator( node)
 		expr = applyCallable( node, expr, "->")
 	end
 	return applyCallable( node, expr, node.arg[2].value)
+end
+function typesystem.member( node)
+	local arg = utils.traverse( typedb, node)
+	return applyCallable( node, arg[1], node.arg[2].value)
 end
 
 return typesystem

@@ -166,8 +166,7 @@ expression/L10		= expression  "<<"  expression							(operator "<<")
 			| expression  ">>"  expression							(operator ">>")
 			;
 expression/L11		= iexpression
-			| expression "." IDENT								(operator ".")
-			| expression "::" IDENT								(operator "::")
+			| expression "." IDENT								(member)
 			| "*" expression								(operator "->")
 			;
 expression/L12		= expression  "(" expressionlist ")"						(operator "()")

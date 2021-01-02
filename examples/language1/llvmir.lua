@@ -11,7 +11,7 @@ local pointerTemplate = {
 	default = "null",
 	llvmtype = "{pointee}*",
 	class = "pointer",
-	assign = "store {pointee} {inp}, {pointee}* {this}\n",
+	assign = "store {pointee} {arg1}, {pointee}* {this}\n",
 	load = "{out} = load {pointee}, {pointee}* {inp}\n",
 	ctor = "store {pointee}* null, {pointee}** {this}\n",
 
@@ -76,9 +76,11 @@ llvmir.structTemplate = {
 	class = "array",
 	ctorproc = "define private dso_local hidden void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
 		.. "enter:\n{ctors}end:\nreturn void\n}\n",
+	ctorproc_assign = "define private dso_local hidden void @__ctor_assign_{structname}( %{structname}* %ptr, %{structname}* %oth) alwaysinline {\n"
+		.. "enter:\n{ctors_assign}end:\nreturn void\n}\n",
 	dtorproc = "define private dso_local hidden void @__dtor_{structname}( %{structname}* %ptr) alwaysinline {\n"
 		.. "enter:\n{dtors}end:\nreturn void\n}\n",
-	ctor = "call void @__ctor_{structname}( %{structname}* {this})\n",
+	ctor_assign = "call void @__ctor_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
 	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
 	load = "{out} = load {type}, getelementptr inbounds {type}*, %{structname}* {this}, i64 {index}\n",
 	loadref = "{out} = getelementptr inbounds {type}*, %{structname}* {this}, i64 {index}\n"
