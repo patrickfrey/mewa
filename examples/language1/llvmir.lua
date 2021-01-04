@@ -5,15 +5,17 @@ local llvmir = {}
 llvmir.scalar = require "language1/llvmir_scalar"
 
 local pointerTemplate = {
-	def_local = "{out} = alloca {pointee}\n",
-	def_global = "{out} = internal global {pointee} null\n",
-	def_global_val = "{out} = internal global {pointee} {inp}\n",
+	def_local = "{out} = alloca {pointee}*\n",
+	def_global = "{out} = internal global {pointee}* null\n",
+	def_global_val = "{out} = internal global {pointee}* {inp}\n",
 	default = "null",
 	llvmtype = "{pointee}*",
 	class = "pointer",
-	assign = "store {pointee} {arg1}, {pointee}* {this}\n",
-	load = "{out} = load {pointee}, {pointee}* {inp}\n",
+	assign = "store {pointee}* {arg1}, {pointee}** {this}\n",
+	ctor_assign = "{1} = load {pointee}*, {pointee}** {arg1}\nstore {pointee}* {1}, {pointee}** {this}\n",
+	load = "{out} = load {pointee}*, {pointee}** {inp}\n",
 	ctor = "store {pointee}* null, {pointee}** {this}\n",
+	scalar = true,
 
 	index = {
 		["long"] = "{out} = getelementptr {pointee}, {pointee}* {this}, i64 {arg1}\n",
@@ -34,28 +36,41 @@ local pointerTemplate = {
 }
 
 local arrayTemplate = {
-	def_local = "{out} = alloca [{size} x {element}], align 16\n",
-	def_global = "{out} = internal global [{size} x {element}] zeroinitializer, align 16\n",
+	def_local = "{out} = alloca [{size} x {element}], align 8\n",
+	def_global = "{out} = internal global [{size} x {element}] zeroinitializer, align 8\n",
 	llvmtype = "[{size} x {element}]",
 	class = "array",
-	ctorproc = "define private dso_local hidden void @__ctor_{size}__{element}( {element}* %ar) alwaysinline {\n"
+	assign = "store [{size} x {element}] {arg1}, [{size} x {element}]* {this}\n",
+	scalar = false,
+	ctorproc = "define private dso_local void @__ctor_{size}__{element}( {element}* %ar) alwaysinline {\n"
 		.. "enter:\nbr label %loop\nloop:\n"
 		.. "%ptr = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
-		.. "{ctorelement}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 1\n"
+		.. "{ctors}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 1\n"
 		.. "%r3 = icmp eq {element}* %r2, "
 			.. "getelementptr inbounds ({element}, {element}*"
 			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size})\n"
 		.. "br i1 %r3, label %end, label %loop\n"
-		.. "end:\nreturn void\n}\n",
-	dtorproc = "define private dso_local hidden void @__dtor_{size}__{element}( {element}* %ar) alwaysinline {\n"
+		.. "end:\nret void\n}\n",
+	ctorproc_assign = "define private dso_local void @__ctor_assign_{size}__{element}( {element}* %ths_ar, {element}* %oth_ar) alwaysinline {\n"
+		.. "enter:\nbr label %loop\nloop:\n"
+		.. "%ths = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
+		.. "%oth = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %oth_ar, i32 0, i32 0), %enter], [%r3, %loop]\n"
+		.. "{ctors_assign}%r2 = getelementptr inbounds {element}, {element}* %ths, i64 1\n%r3 = getelementptr inbounds {element}, {element}* %oth, i64 1\n"
+		.. "%r4 = icmp eq {element}* %r2, "
+			.. "getelementptr inbounds ({element}, {element}*"
+			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), i64 {size})\n"
+		.. "br i1 %r4, label %end, label %loop\n"
+		.. "end:\nret void\n}\n",
+	dtorproc = "define private dso_local void @__dtor_{size}__{element}( {element}* %ar) alwaysinline {\n"
 		.. "enter:\nbr label %loop\nloop:\n"
 		.. "%ptr = phi {element}* [ getelementptr inbounds ({element}, {element}*"
 		.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size}), %enter], [%r2, %loop]\n"
-		.. "{dtorelement}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 -1\n"
+		.. "{dtors}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 -1\n"
 		.. "%r3 = icmp eq {element}* %2, getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0)\n"
 		.. "br i1 %r3, label %end, label %loop\n"
-		.. "end:\nreturn void\n}\n",
+		.. "end:\nret void\n}\n",
 	ctor = "call void @__ctor_{size}__{element}( {element}* {this})\n",
+	ctor_assign = "call void @__ctor_assign_{size}__{element}( {element}* {this}, {element}* {arg1})\n",
 	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
 	index = {
 		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
@@ -70,20 +85,26 @@ local arrayTemplate = {
 
 llvmir.structTemplate = {
 	structname = "{structname}",
-	def_local = "{out} = alloca %{structname}, align 16\n",
-	def_global = "{out} = internal global %{structname} zeroinitializer, align 16\n",
+	def_local = "{out} = alloca %{structname}, align 8\n",
+	def_global = "{out} = internal global %{structname} zeroinitializer, align 8\n",
 	llvmtype = "%{structname}",
+	scalar = false,
 	class = "array",
-	ctorproc = "define private dso_local hidden void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
-		.. "enter:\n{ctors}end:\nreturn void\n}\n",
-	ctorproc_assign = "define private dso_local hidden void @__ctor_assign_{structname}( %{structname}* %ptr, %{structname}* %oth) alwaysinline {\n"
-		.. "enter:\n{ctors_assign}end:\nreturn void\n}\n",
-	dtorproc = "define private dso_local hidden void @__dtor_{structname}( %{structname}* %ptr) alwaysinline {\n"
-		.. "enter:\n{dtors}end:\nreturn void\n}\n",
-	ctor_assign = "call void @__ctor_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
+	assign = "store %{structname} {arg1}, %{structname}* {this}\n",
+	ctorproc = "define private dso_local void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
+		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
+	ctorproc_assign = "define private dso_local void @__ctor_assign_{structname}( %{structname}* %ptr, %{structname}* %oth) alwaysinline {\n"
+		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
+	ctorproc_elements = "define private dso_local void @__ctor_elements_{structname}( %{structname}* %ptr{paramstr}) alwaysinline {\n"
+		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
+	dtorproc = "define private dso_local void @__dtor_{structname}( %{structname}* %ptr) alwaysinline {\n"
+		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
+	ctor = "call void @__ctor_{structname}( %{structname}* {this})\n",
+	ctor_assign = "call void @__ctor_assign_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
+	ctor_elements = "call void @__ctor_elements_{structname}( %{structname}* {this}{args})\n",
 	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
-	load = "{out} = load {type}, getelementptr inbounds {type}*, %{structname}* {this}, i64 {index}\n",
-	loadref = "{out} = getelementptr inbounds {type}*, %{structname}* {this}, i64 {index}\n"
+	loadref = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n",
+	load = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n"
 }
 
 llvmir.control = {

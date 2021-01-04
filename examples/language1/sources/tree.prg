@@ -4,14 +4,14 @@ struct Tree
 {
 	struct Data
 	{
-		var int val;
+		int val;
 	};
-	var Data data;
-	var Tree^ left;
-	var Tree^ right;
+	Data data;
+	Tree^ left;
+	Tree^ right;
 };
 
-var Tree g_tree;
+Tree g_tree;
 
 main
 {

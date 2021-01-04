@@ -5,7 +5,7 @@ local utils = {}
 
 -- Encode a name
 function utils.encodeName( name)
-	return name:gsub("([*])", "$")
+	return (name:gsub("([*])", "$"))
 end
 
 -- Map Lexem values to strings encoded for LLVM IR output
@@ -26,7 +26,7 @@ function utils.encodeLexemLlvm( name)
 		len = len - 1
 		return lexemLlvmSubstMap[ match] or " "
 	end
-	return name:gsub("([\\][abfnrtv\\'\"])", subst), len
+	return (name:gsub("([\\][abfnrtv\\'\"])", subst)), len
 end
 
 -- Encode C strings
@@ -45,7 +45,7 @@ function utils.encodeCString( str)
 		len = len - 1
 		return cStringSubstMap[ match] or " "
 	end
-	return str:gsub("([\a\b\f\n\r\t\v\\])", subst), len
+	return (str:gsub("([\a\b\f\n\r\t\v\\])", subst)), len
 end
 
 -- Create a unique name
@@ -77,7 +77,7 @@ function utils.constructor_format( fmt, argtable, allocator)
 			utils.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", utils.encodeCString(fmt), match, mewa.tostring(argtable,false))
 		end
 	end
-	return fmt:gsub("[{]([_%d%w]*)[}]", subst)
+	return (fmt:gsub("[{]([_%d%w]*)[}]", subst))
 end
 
 -- Map a LLVM Code synthesis template to a template substituting only the defined arguments and leaving the rest of the substitutions occurring untouched
@@ -88,7 +88,7 @@ function utils.template_format( fmt, arg )
 			rt[ kk] = utils.template_format( vv, arg)
 		end
 		return rt;
-	else
+	elseif type( fmt) == "string" then
 		local subst = function( match)
 			if arg[ match] then
 				return arg[ match]
@@ -96,7 +96,9 @@ function utils.template_format( fmt, arg )
 				return "{" .. match .. "}"
 			end
 		end
-		return fmt:gsub("[{]([_%w%d]*)[}]", subst)
+		return (fmt:gsub("[{]([_%w%d]*)[}]", subst))
+	else
+		return fmt
 	end
 end
 

@@ -118,6 +118,15 @@ sub assign_constructor {
 	}
 }
 
+sub ctor_assign_constructor {
+	my $llvmtype = $_[0];
+	if ($llvmtype eq "i1")
+	{
+		$llvmtype = "i8";
+	}
+	return "{1} = load $llvmtype, $llvmtype* {arg1}\\nstore $llvmtype {1}, $llvmtype* {this}\\n";
+}
+
 sub default_constructor {
 	my $llvmtype = $_[0];
 	return "store $llvmtype 0, $llvmtype* {this}\\n";
@@ -206,12 +215,14 @@ foreach my $line (@content)
 	print "\t\tdef_global_val = \"{out} = internal global $llvmtype_storage {inp}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
 	print "\t\tllvmtype = \"$llvmtype\",\n";
+	print "\t\tscalar = true,\n";
 	print "\t\tclass = \"$sgn\",\n";
 	print "\t\tsize = $alignmap{$llvmtype},\n";
 	print "\t\tsizeweight = $sizeWeightMap{$llvmtype},\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tctor = \"" . default_constructor( $llvmtype) . "\",\n";
+	print "\t\tctor_assign = \"" . ctor_assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
 	print "\t\tpromote = {";
 	my $oi = 0;

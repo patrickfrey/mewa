@@ -34,12 +34,13 @@ function convConstructor( fmt)
 end
 function assignConstructor( fmt)
 	return function( this, arg)
+		local callable = typedb:get_instance( "callable")
 		local code = ""
 		local this_code,this_inp = constructorParts( this)
 		local arg_code,arg_inp = constructorParts( arg[1])
 		local subst = {arg1 = arg_inp, this = this_inp}
 		code = code .. this_code .. arg_code
-		return {code = code .. utils.constructor_format( fmt, subst), out = this_inp}
+		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = this_inp}
 	end
 end
 function callConstructor( fmt)
@@ -201,14 +202,14 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	typeQualiSepMap[ rpval] = {lval=lval,qualifier="^&"}
 	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
 
-	typedb:def_reduction( lval, c_rval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
-	typedb:def_reduction( pval, rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
-	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerPointerTypeDescription.load), tag_typeDeduction)
+	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction)
+	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
+	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 
-	typedb:def_reduction( c_lval, lval, nil, tag_typeDeduction)
-	typedb:def_reduction( c_rval, rval, nil, tag_typeDeduction)
-	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction)
-	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction)
+	typedb:def_reduction( c_lval, lval, nil, tag_typeDeduction, 0.1)
+	typedb:def_reduction( c_rval, rval, nil, tag_typeDeduction, 0.1)
+	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction, 0.1)
+	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction, 0.1)
 
 	defineCall( pval, rval, "&", {}, nil)
 	defineCall( rval, pval, "->", {}, nil)
@@ -217,12 +218,25 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
 	return qualiTypeMap[ lval]
 end
-function defineAssignOperators( qualitype, descr)
+function defineAssignOperators( qualitype, descr, ctors, ctors_assign, ctors_elements, dtors, elements)
 	local pointer_descr = llvmir.pointerDescr( descr)
 	if descr.assign then defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
-	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.ctor_assign or descr.assign))
+	if descr.ctorproc then print_section( "Auto", utils.template_format( descr.ctorproc, {ctors=ctors or ""})) end
+	if descr.ctorproc_assign then print_section( "Auto", utils.template_format( descr.ctorproc_assign, {ctors=ctors_assign or ""})) end
+	local paramstr,argstr = "",""
+	for ei,element in ipairs(elements or {}) do
+		paramstr = paramstr .. ", " .. typeDescriptionMap[ element].llvmtype .. " %p" .. ei
+		argstr = argstr .. ", " .. typeDescriptionMap[ element].llvmtype .. " {arg" .. ei .. "}"
+	end
+	if descr.ctorproc_elements then print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements or "", paramstr=paramstr})) end
+	if descr.dtorproc then print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors or ""})) end
+	if descr.scalar == true then defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_assign))
+	ctor_elements = utils.template_format( descr.ctor_elements, {args=argstr} )
+	if elements then defineCall( qualitype.rval, qualitype.rval, ":=", elements, assignConstructor( ctor_elements)) end
 	defineCall( qualitype.rpval, qualitype.rpval, "=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
+	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_assign))
 end
 function defineIndexOperators( element_qualitype, pointer_descr)
 	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
@@ -305,7 +319,7 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
 		local qualitype = defineQualifiedTypes( element_sep.lval, typnam, descr)
-		defineAssignOperators( qualitype, descr)
+		defineAssignOperators( qualitype, descr, element_descr.ctor, element_descr.ctor_assign, nil, element_descr.dtor, {})
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
 		typedb:scope( scopebk)
 		arrayTypeMap[ typekey] = qualitype.lval
@@ -337,27 +351,28 @@ function defineVariable( node, context, typeId, name, initVal)
 		local element_qualitype = qualiTypeMap[ element_qualisep.lval]
 		local element_qualifier = element_qualisep.qualifier
 		local element_index = context.index; context.index = element_index + 1
-		local element_descr = typeDescriptionMap[ typeId]
 		if context.llvmtype then
-			context.llvmtype = context.llvmtype  .. ", " .. element_descr.llvmtype
+			context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype
 		else
-			context.llvmtype = element_descr.llvmtype
+			context.llvmtype = descr.llvmtype
 		end
 		local out = context.register()
 		local inp = context.register()
-		local load_code_ths = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=element_descr.llvmtype} )
-		local load_code_oth = utils.constructor_format( context.descr.loadref, {out=out,this="%oth",index=element_index, type=element_descr.llvmtype} )
-		if element_descr.ctor then
-			context.ctors = (context.ctors or "") .. load_code_ths .. utils.constructor_format( element_descr.ctor, {this=out}, context.register)
+		local load_ths = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=descr.llvmtype} )
+		local load_oth = utils.constructor_format( context.descr.loadref, {out=inp,this="%oth",index=element_index, type=descr.llvmtype},context.register)
+		if descr.ctor then
+			context.ctors = (context.ctors or "") .. load_ths .. utils.constructor_format( descr.ctor, {this=out}, context.register)
 		end
-		local code_ctor_assign = utils.constructor_format( element_descr.ctor_assign or element_descr.assign, {this=out,arg1=inp}, context.register)
-		context.ctors_assign = (context.ctors_assign or "") .. load_code_ths .. load_code_oth .. code_ctor_assign
-
-		if element_descr.dtor then
-			context.dtors = (context.dtors or "") .. load_code_ths .. utils.constructor_format( element_descr.dtor, {this=out}, context.register)
+		if not context.elements then context.elements = {element_qualitype.c_lval} else table.insert( context.elements, element_qualitype.c_lval) end
+		local code_ctor_assign = utils.constructor_format( descr.ctor_assign, {this=out,arg1=inp}, context.register)
+		context.ctors_assign = (context.ctors_assign or "") .. load_ths .. load_oth .. code_ctor_assign
+		local code_ctor_elements = utils.constructor_format( descr.assign, {this=out,arg1="%p" .. #context.elements}, context.register)
+		context.ctors_elements = (context.ctors_elements or "") .. load_ths .. code_ctor_elements
+		if descr.dtor then
+			context.dtors = (context.dtors or "") .. load_ths .. utils.constructor_format( descr.dtor, {this=out}, context.register)
 		end
-		local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=element_descr.llvmtype}))
-		local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=element_descr.llvmtype}))
+		local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=descr.llvmtype}))
+		local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=descr.llvmtype}))
 		if element_qualifier == "" then
 			defineCall( element_qualitype.rval, context.qualitype.rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
@@ -486,7 +501,7 @@ function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( 0, typnam, scalar_descr)
-		defineAssignOperators( qualitype, scalar_descr)
+		defineAssignOperators( qualitype, scalar_descr, nil, nil, nil, nil, nil, nil)
 		local c_lval = qualitype.c_lval
 		scalarQualiTypeMap[ typnam] = qualitype
 		if scalar_descr.class == "bool" then
@@ -930,10 +945,8 @@ function typesystem.structdef( node, context)
 	typedb:set_instance( "context", defcontext)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
 	local arg = utils.traverse( typedb, node, context)
-	print( "Auto", utils.template_format( llvmir.structTemplate.ctorproc, {ctors=context.ctors or ""}))
-	print( "Auto", utils.template_format( llvmir.structTemplate.ctorproc_assign, {ctors=context.ctors_assign or ""}))
-	print( "Auto", utils.template_format( llvmir.structTemplate.dtorproc, {ctors=context.dtors or ""}))
-	print( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
+	defineAssignOperators( qualitype, descr, context.ctors, context.ctors_assign, context.ctors_elements, context.dtors, context.elements)
+	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
 end
 function typesystem.interfacedef( node, context)
 end
