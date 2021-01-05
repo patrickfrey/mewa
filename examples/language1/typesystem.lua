@@ -336,7 +336,11 @@ function defineVariable( node, context, typeId, name, initVal)
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 		local rt = {type=var, constructor={code=code,out=out}}
-		if initVal then rt = applyCallable( node, rt, ":=", {initVal}) end
+		if initVal then
+			rt = applyCallable( node, rt, ":=", {initVal})
+		elseif descr.ctor then
+			rt.constructor.code = rt.constructor.code .. utils.constructor_format( descr.ctor, {this=rt.constructor.out}, callable.register)
+		end
 		return rt
 	elseif not context.qualitype then
 		local fmt; if initVal then fmt = descr.def_global_val else fmt = descr.def_global end
@@ -363,7 +367,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		if descr.ctor then
 			context.ctors = (context.ctors or "") .. load_ths .. utils.constructor_format( descr.ctor, {this=out}, context.register)
 		end
-		if not context.elements then context.elements = {element_qualitype.c_lval} else table.insert( context.elements, element_qualitype.c_lval) end
+		if not context.elements then context.elements = {typeId} else table.insert( context.elements, typeId) end
 		local code_ctor_assign = utils.constructor_format( descr.ctor_assign, {this=out,arg1=inp}, context.register)
 		context.ctors_assign = (context.ctors_assign or "") .. load_ths .. load_oth .. code_ctor_assign
 		local code_ctor_elements = utils.constructor_format( descr.assign, {this=out,arg1="%p" .. #context.elements}, context.register)
@@ -390,7 +394,7 @@ function defineVariable( node, context, typeId, name, initVal)
 			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
 			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
 		else
-			utils.errorMessage( node.line, "Qualifier '%s' not defined for member variables", element_qualifier)
+			utils.errorMessage( node.line, "Qualifier '%s' not allowed for member variables", element_qualifier)
 		end
 	end
 end

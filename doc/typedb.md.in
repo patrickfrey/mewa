@@ -7,9 +7,10 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 1. [Implementing the Concept of Scope](#scopeImpl)
     * [typedb:scope](#scope)
     * [typedb:step](#step)
-1. [User Defined Objects in Different Scopes](#instance)
+1. [User Defined Objects Assigned to Scopes](#instance)
     * [typedb:set_instance](#set_instance)
     * [typedb:get_instance](#get_instance)
+    * [typedb:this_instance](#this_instance)
 1. [Definition and Lookup of Types](#types)
     * [typedb:def_type](#def_type)
     * [typedb:get_type](#get_type)
@@ -54,6 +55,7 @@ The variable typedb holds now the type database created.
 Get or/and set the current scope. All methods defining objects dependent on a scope like
 
  - [typedb:set_instance](#set_instance)
+ - [typedb:this_instance](#this_instance)
  - [typedb:def_type](#def_type)
  - [typedb:get_type](#get_type)
  - [typedb:def_reduction](#def_reduction)
@@ -137,6 +139,18 @@ $EXAMPLE:RegisterAlloc
 ```
 $EXAMOUT:RegisterAlloc
 ```
+
+<a name="this_instance"/>
+
+### typedb:this_instance
+Get the instance for the object with name _name_ assigned to the current scope (set with [typedb::scope](#scope) or [typedb::step](#step)).
+
+#### Parameter
+| #      | Name     | Type     | Description                                                                           |
+| :----- | :------- | :------- | :------------------------------------------------------------------------------------ |
+| 1st    | name     | string   | Name of the object we are addressing                                                  |
+| Return |          | *        | The instance of the object we addressed or *nil* if not defined in the current scope. |
+
 
 <a name="types"/>
 

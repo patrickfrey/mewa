@@ -491,6 +491,34 @@ static int mewa_typedb_step( lua_State* ls)
 	return 1;
 }
 
+static int mewa_typedb_this_instance( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:this_instance";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+	int handle = -1;
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 4);
+		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 2);
+		handle = td->impl->getObjectInstanceOfScope( name, td->curScope);
+	}
+	catch (...) { lippincottFunction( ls); }
+
+	if (handle > 0)
+	{
+		// Get the item addressed with handle from the object table on the top of the stack and return it:
+		lua_getglobal( ls, td->objTableName.buf);
+		lua_rawgeti( ls, -1, handle);
+		lua_replace( ls, -2);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 static int mewa_typedb_get_instance( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:get_instance";
@@ -1103,6 +1131,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "__gc",		mewa_destroy_typedb },
 	{ "scope",		mewa_typedb_scope },
 	{ "step",		mewa_typedb_step },
+	{ "this_instance",	mewa_typedb_this_instance },
 	{ "get_instance",	mewa_typedb_get_instance },
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },

@@ -47,4 +47,4 @@ verify_test_result "Lua test (2.1) debug output compiling example program with l
 verify_test_result "Lua test (2.2) output compiling example program with language1 compiler"  build/language1.compiler.2.out tests/language1.compiler.2.exp
 
 lli build/language1.compiler.2.out > build/language1.run.2.out
-verify_test_result "Lua test (2.3) output running program translated with language1 compiler"  build/language1.run.2.out tests/language1.compiler.run.2.exp
+verify_test_result "Lua test (2.3) output running program translated with language1 compiler"  build/language1.run.2.out tests/language1.run.2.exp

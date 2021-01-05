@@ -261,6 +261,12 @@ public:
 	/// \return handle of the object defined by the caller in the given scope step with the name specified (setObject), or -1 if no object found
 	int getObjectInstance( const std::string_view& name, const Scope::Step step) const;
 
+	/// \brief Retrieve an object by its name assigned to the scope specified as parameter
+	/// \param[in] name the name of the object
+	/// \param[in] scope the scope of the definition we are looking for
+	/// \return handle of the object defined by the caller in the given scope with the name specified (setObject), or -1 if no object defined in that scope
+	int getObjectInstanceOfScope( const std::string_view& name, const Scope scope) const;
+
 	/// \brief Get the scope dependency tree of all objects with a defined name
 	/// \param[in] name name of the elements to retrieve
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging

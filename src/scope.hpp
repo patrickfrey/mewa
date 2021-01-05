@@ -453,6 +453,17 @@ public:
 		return rt;
 	}
 
+	VALTYPE getThis( const Scope scope) const noexcept
+	{
+		VALTYPE rt = m_invtree.nullval();
+		auto ref = m_map.find( scope.end());
+		if (ref != m_map.end())
+		{
+			rt = m_invtree.findUpValue( ref->second, scope);
+		}
+		return rt;
+	}
+
 	typedef ScopeHierarchyTreeNode<VALTYPE> TreeNode;
 
 	Tree<TreeNode> getTree() const

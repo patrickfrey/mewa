@@ -90,6 +90,13 @@ int TypeDatabase::getObjectInstance( const std::string_view& name, const Scope::
 	return m_objAr[ oi->second].get( step);
 }
 
+int TypeDatabase::getObjectInstanceOfScope( const std::string_view& name, const Scope scope) const
+{
+	auto oi = m_objidMap->find( m_identMap->lookup( name));
+	if (oi == m_objidMap->end()) return -1/*undefined*/;
+	return m_objAr[ oi->second].getThis( scope);
+}
+
 TypeDatabase::ParameterList TypeDatabase::typeParameters( int type) const
 {
 	if (type == 0) return ParameterList( 0, nullptr);

@@ -38,6 +38,13 @@ end:
 ret void
 }
 
+define private dso_local void @__dtor_Data1( %Data1* %ptr) alwaysinline {
+enter:
+br label %end
+end:
+ret void
+}
+
 define private dso_local void @__ctor_Tree1( %Tree1* %ptr) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree1, %Tree1* %ptr, i32 0, i32 0
@@ -112,6 +119,7 @@ declare external void @printf( i8*, i32 ) #1 nounwind
 define external i32 @main() #0 noinline nounwind {
 entry:
 %r1 = alloca %Tree1, align 8
+call void @__ctor_Tree1( %Tree1* %r1)
 %r2 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
 %r3 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 0
 %r4 = getelementptr inbounds %Data1, %Data1* %r3, i32 0, i32 0
