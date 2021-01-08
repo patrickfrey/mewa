@@ -218,6 +218,7 @@ foreach my $line (@content)
 	print "\t\tscalar = true,\n";
 	print "\t\tclass = \"$sgn\",\n";
 	print "\t\tsize = $alignmap{$llvmtype},\n";
+	print "\t\talign = $alignmap{$llvmtype},\n";
 	print "\t\tsizeweight = $sizeWeightMap{$llvmtype},\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";

@@ -34,14 +34,14 @@ externparameterlist	= externparameters								(extern_paramdeflist)
 			;
 externparameters 	= typespec "," externparameters
 			| typespec
-			| ε
 			;
 methoddefinition 	= "function" typespec IDENT "(" parameterlist ")" ";"				(interface_funcdef)
 			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef)
 			;
 externparameterlist	= externparameters								(extern_paramdeflist)
+			| ε
 			;
-mainproc		= "main" "{" statementlist "}"							({}main_procdef)
+mainproc		= "main" "{" codeblock "}"							({}main_procdef)
 			| ε
 			;
 datadefinition		= typedefinition ";"								(definition)
@@ -84,44 +84,52 @@ linkage			= "private"									(linkage {linkage="internal", attributes="#0 nounw
 functiondefinition	= linkage "function" typespec IDENT callablebody				(funcdef)
 			| linkage "procedure" IDENT callablebody					(procdef)
 			;
-callablebody		= "(" parameterlist ")" "{" statementlist "}"					({}callablebody)
+callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody)
 			;
 parameterlist		= parameters									(paramdeflist)
+			| ε
 			;
 parameters		= paramdecl "," parameters
 			| paramdecl
-			| ε
 			;
 paramdecl		= typespec IDENT								(paramdef)
 			;
-statementlist		= statement statementlist							(>>statement)
+codeblock		= statementlist									(codeblock)
+			;
+statementlist		= statement statementlist							(>>)
 			| ε
 			;
-statement		= functiondefinition								(definition)
+statement/L1		= functiondefinition								(definition)
 			| typedefinition ";"								(definition)
 			| "var" variabledefinition ";"							(definition)
 			| expression ";"								(free_expression)
 			| "return" expression ";"							(>>return_value)
-			| "if" "(" expression ")" "{" statementlist "}"					({}conditional_if)
-			| "if" "(" expression ")" "{" statementlist "}" "else" "{" statementlist "}"	({}conditional_if_else)
-			| "while" "(" expression ")" "{" statementlist "}"				({}conditional_while)
-			| "{" statementlist "}"								({})
+			| "delete" expression ";"							(delete)
+			| "if" "(" expression ")" "{" codeblock "}"					({}conditional_if)
+			| "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock "}"		({}conditional_if_else)
+			| "while" "(" expression ")" "{" codeblock "}"					({}conditional_while)
+			| "{" codeblock "}"								({})
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
 			| typespec IDENT "=" expression							(>>vardef_assign)
 			| typespec IDENT "[" expression "]" "=" expression				(>>vardef_array_assign)
 			| typespec IDENT "[" expression "]"						(>>vardef_array)
 			;
-expression/L1		= IDENT										(variable)
+expression/L1		= "{" expressionlist "}"							(structure)
+			| "{" "}"									(structure)
+			| "new" typespec ":" expression							(allocate)
+			;
+expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
 			| CARDINAL									(constant "constexpr uint")
 			| INTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
+			| "null"									(constant "constexpr null")
 			| DQSTRING									(string_constant)
 			| SQSTRING									(char_constant)
 			| "(" expression ")"
 			;
-expression/L2		= expression  "="  expression							(operator "=")
+expression/L3		= expression  "="  expression							(operator "=")
 			| expression  "+="  expression							(assign_operator "+")
 			| expression  "-="  expression							(assign_operator "-")
 			| expression  "*="  expression							(assign_operator "*")
@@ -134,23 +142,23 @@ expression/L2		= expression  "="  expression							(operator "=")
 			| expression  "<<="  expression							(assign_operator "<<")
 			| expression  ">>="  expression							(assign_operator ">>")
 			;
-expression/L3		= expression  "||"  expression							(operator "||")
+expression/L4		= expression  "||"  expression							(operator "||")
 			;
-expression/L4		= expression  "&&"  expression							(operator "&&")
+expression/L5		= expression  "&&"  expression							(operator "&&")
 			;
-expression/L5		= expression  "|"  expression							(operator "|")
+expression/L6		= expression  "|"  expression							(operator "|")
 			;			
-expression/L6		= expression  "^"  expression							(operator "^")
+expression/L7		= expression  "^"  expression							(operator "^")
 			| expression  "&"  expression							(operator "&")
 			;			
-expression/L7		= expression  "=="  expression							(operator "==")
+expression/L8		= expression  "=="  expression							(operator "==")
 			| expression  "!="  expression							(operator "!=")
 			| expression  "<="  expression							(operator "<=")
 			| expression  "<"  expression							(operator "<")
 			| expression  ">="  expression							(operator ">=")
 			| expression  ">"  expression							(operator ">")
 			;
-expression/L8		= expression  "+"  expression							(operator "+")
+expression/L9		= expression  "+"  expression							(operator "+")
 			| expression  "-"  expression							(operator "-")
 			| "&"  expression								(operator "&")
 			| "-"  expression								(operator "-")
@@ -158,18 +166,18 @@ expression/L8		= expression  "+"  expression							(operator "+")
 			| "~"  expression								(operator "~")
 			| "!"  expression								(operator "!") 
 			;
-expression/L9		= expression  "*"  expression							(operator "*")
+expression/L10		= expression  "*"  expression							(operator "*")
 			| expression  "/"  expression							(operator "/")
 			| expression  "%"  expression							(operator "%")
 			;
-expression/L10		= expression  "<<"  expression							(operator "<<")
+expression/L11		= expression  "<<"  expression							(operator "<<")
 			| expression  ">>"  expression							(operator ">>")
 			;
-expression/L11		= iexpression
+expression/L12		= iexpression
 			| expression "." IDENT								(member)
 			| "*" expression								(operator "->")
 			;
-expression/L12		= expression  "(" expressionlist ")"						(operator "()")
+expression/L13		= expression  "(" expressionlist ")"						(operator "()")
 			| expression  "(" ")"								(operator "()")
 			| expression  "[" expressionlist "]"						(operator "[]")
 			;
@@ -180,6 +188,5 @@ indirection		= "->" indirection								(count)
 			;
 expressionlist		= expression "," expressionlist
 			| expression
-			| ε
 			;
 

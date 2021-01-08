@@ -11,6 +11,8 @@ local pointerTemplate = {
 	default = "null",
 	llvmtype = "{pointee}*",
 	class = "pointer",
+	align = 8,
+	size = 8,
 	assign = "store {pointee}* {arg1}, {pointee}** {this}\n",
 	ctor_assign = "{1} = load {pointee}*, {pointee}** {arg1}\nstore {pointee}* {1}, {pointee}** {this}\n",
 	load = "{out} = load {pointee}*, {pointee}** {inp}\n",
@@ -89,7 +91,8 @@ llvmir.structTemplate = {
 	def_global = "{out} = internal global %{structname} zeroinitializer, align 8\n",
 	llvmtype = "%{structname}",
 	scalar = false,
-	class = "array",
+	class = "struct",
+	align = 8,
 	assign = "store %{structname} {arg1}, %{structname}* {this}\n",
 	ctorproc = "define private dso_local void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
@@ -124,7 +127,9 @@ llvmir.control = {
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "define external i32 @main() #0 noinline nounwind {\nentry:\n{body}ret i32 0\n}\n",
-	structdef = "%{structname} = type { {llvmtype} }\n"
+	structdef = "%{structname} = type { {llvmtype} }\n",
+	memPointerCast = "{out} = bitcast {i8* {inp} to {llvmtype}*\n",
+	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }
 
 local pointerDescrMap = {}
@@ -146,7 +151,9 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	if not arrayDescr then
 		local ctorElement = utils.template_format( elementDescr.ctor or "", {this="%ptr"})
 		local dtorElement = utils.template_format( elementDescr.dtor or "", {this="%ptr"})
-		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType, size=arraySize, ctorelement=ctorElement, dtorelement=dtorElement})
+		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType,size=arraySize,ctorelement=ctorElement, dtorelement=dtorElement})
+		arrayDescr.size = elementDescr.size * arraySize
+		arrayDescr.align = elementDescr.align
 		arrayDescrMap[ arrayDescrKey] = arrayDescr;
 		if elementDescr.ctor then print_section( "Auto", arrayDescr.ctorproc) else arrayDescr.ctor = nil end
 		if elementDescr.dtor then print_section( "Auto", arrayDescr.dtorproc) else arrayDescr.dtor = nil end

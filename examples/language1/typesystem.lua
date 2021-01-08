@@ -22,7 +22,7 @@ local tagmask_typeConversion = typedb.reduction_tagmask( tag_TypeConversion)
 local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
 
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.code,constructor.out else return "",tostring(constructor) end
+	if type(constructor) == "table" then return constructor.code or "",constructor.out else return "",tostring(constructor) end
 end
 function convConstructor( fmt)
 	return function( constructor)
@@ -30,6 +30,12 @@ function convConstructor( fmt)
 		local out = callable.register()
 		local code,inp = constructorParts( constructor)
 		return {code = code .. utils.constructor_format( fmt, {inp = inp, out = out}, callable.register), out = out}
+	end
+end
+function manipConstructor( fmt)
+	return function( this, arg)
+		local code,inp = constructorParts( this)
+		return {code = code .. utils.constructor_format( fmt, {this=inp})}
 	end
 end
 function assignConstructor( fmt)
@@ -71,11 +77,13 @@ local scalarIndexTypeMap = {}	-- maps scalar type names usable as index without 
 local scalarBooleanType = nil	-- type id of the boolean type, result of cmpop binary operators
 local scalarIntegerType = nil	-- type id of the main integer type, result of main function
 local stringPointerType = nil	-- type id of the string constant type used for free string litterals
+local memPointerType = nil	-- type id of the type used for result of allocmem and argument of freemem
 local stringAddressType = nil	-- type id of the string constant type used string constants outsize a function scope
 local controlTrueType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
+local pointerTypeMap = {}	-- maps any defined type id to its pointer type
 local typeQualiSepMap = {}	-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
 local stringConstantMap = {}    -- maps string constant values to a structure with its attributes {fmt,name,size}
@@ -95,6 +103,8 @@ local constexprIntegerType = typedb:def_type( 0, "constexpr int")
 local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")
 local constexprFloatType = typedb:def_type( 0, "constexpr float")
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")
+local constexprNullType = typedb:def_type( 0, "constexpr null")
+local constexprStructureType = typedb:def_type( 0, "constexpr struct")
 local typeClassToConstExprTypesMap = {
 	fp = {constexprFloatType,constexprIntegerType,constexprUIntegerType}, 
 	bool = {constexprBooleanType},
@@ -193,6 +203,9 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	referenceTypeMap[ rpval] = rpval
 	referenceTypeMap[ c_rpval] = c_rpval
 
+	pointerTypeMap[ lval] = pval
+	pointerTypeMap[ c_lval] = c_pval
+
 	typeQualiSepMap[ lval] = {lval=lval,qualifier=""}
 	typeQualiSepMap[ c_lval] = {lval=lval,qualifier="const "}
 	typeQualiSepMap[ rval] = {lval=lval,qualifier="&"}
@@ -202,6 +215,7 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	typeQualiSepMap[ rpval] = {lval=lval,qualifier="^&"}
 	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
 
+	typedb:def_reduction( c_pval, constexprNullType, function() return {code="",out="null"} end, tag_TypeConversion)
 	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction)
 	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
 	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction)
@@ -218,26 +232,91 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
 	return qualiTypeMap[ lval]
 end
-function defineAssignOperators( qualitype, descr, ctors, ctors_assign, ctors_elements, dtors, elements)
+function defineAssignOperators( qualitype, descr)
 	local pointer_descr = llvmir.pointerDescr( descr)
 	if descr.assign then defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
+	if descr.scalar == true then defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_assign))
+	ctor_elements = utils.template_format( descr.ctor_elements, {args=argstr} )
+	defineCall( qualitype.rpval, qualitype.rpval, "=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
+	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
+	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_assign))
+	local destructor = {code=""}; if descr.dtor then destructor = manipConstructor( descr.dtor) end
+	defineCall( qualitype.pval, qualitype.pval, " delete", {}, destructor)
+end
+function assignStructureConstructor( node, thisTypeId, elements)
+	return function( this, args)
+		if #args == 1 and args[1].type == constexprStructureType then args = args[1].constructor end
+		if #args ~= #elements then utils.errorMessage( node.line, "Number of elements in structure do not match for '%s'", mewa.type_string( thisTypeId)) end
+		local callable = typedb:get_instance( "callable")
+		local this_code,this_inp = constructorParts( this)
+		local rt = {type=thisTypeId, constructor={code=this_code,out=this_inp}}
+		for ei,element in ipairs( elements) do
+			local out = callable.register()
+			local code = utils.constructor_format( descr.loadref, {out = out, this = this_inp, index = ei}, callable.register)
+			local maparg = applyCallable( node, {type=element,constructor={out=out,code=code}}, ":=", {args[ei]})
+			rt.constructor.code = rt.constructor.code .. maparg.constructor.code
+		end
+		return rt
+	end
+end
+function assignClassConstructor( node, thisTypeId)
+	return function( this, args)
+		local rt = {}
+		if #args == 1 and args[1].type == constexprStructureType then args = args[1].constructor end
+		local callable = typedb:get_instance( "callable")
+		local descr = typeDescriptionMap[ thisTypeId]
+		local this_code,this_inp = constructorParts( this)
+		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, ":=")
+		if not contextTypeId then utils.errorMessage( node.line, "No constructor found for '%s'", mewa.type_string( thisTypeId)) end
+		for ci,item in ipairs( candidateFunctions) do
+			if typedb:type_nof_parameters( item.type) == #args then
+				local param_ar = {}
+				if #args > 0 then
+					local parameters = typedb:type_parameters( item.type)
+					for ai,arg in ipairs(args) do
+						local param_type = parameters[ ai].type
+						local param_descr = typeDescriptionMap[ param_type]
+						local out = callable.register()
+						local code = utils.constructor_format( param_descr.def_local, {out=out}, callable.register)
+						local res,maparg = pcall( applyCallable, node, {type=param_type,constructor={out=out,code=code}}, ":=", {args[ei]})
+						if res == false then break end
+						table.insert( param_ar, maparg)
+					end
+				end
+				if #param_ar == #args then
+					table.insert( applyCallable( node, {type=thisTypeId, constructor={code=this_code,out=this_inp}}, ":=", param_ar))
+				end
+			end
+		end
+		if #rt == 0 then
+			utils.errorMessage( node.line, "No constructor found for '%s'", mewa.type_string( thisTypeId))
+		elseif #rt > 1 then
+			utils.errorMessage( node.line, "Ambiguus reference for constructor of '%s'", mewa.type_string( thisTypeId))
+		else
+			return rt[1]
+		end
+	end
+end
+function defineConstructors( node, qualitype, descr, ctors, ctors_assign, dtors)
 	if descr.ctorproc then print_section( "Auto", utils.template_format( descr.ctorproc, {ctors=ctors or ""})) end
 	if descr.ctorproc_assign then print_section( "Auto", utils.template_format( descr.ctorproc_assign, {ctors=ctors_assign or ""})) end
+	if descr.dtorproc then print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors or ""})) end
+end
+function defineStructureConstructors( node, qualitype, descr, ctors_elements, elements)
 	local paramstr,argstr = "",""
 	for ei,element in ipairs(elements or {}) do
 		paramstr = paramstr .. ", " .. typeDescriptionMap[ element].llvmtype .. " %p" .. ei
 		argstr = argstr .. ", " .. typeDescriptionMap[ element].llvmtype .. " {arg" .. ei .. "}"
 	end
 	if descr.ctorproc_elements then print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements or "", paramstr=paramstr})) end
-	if descr.dtorproc then print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors or ""})) end
-	if descr.scalar == true then defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign)) end
-	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_assign))
-	ctor_elements = utils.template_format( descr.ctor_elements, {args=argstr} )
-	if elements then defineCall( qualitype.rval, qualitype.rval, ":=", elements, assignConstructor( ctor_elements)) end
-	defineCall( qualitype.rpval, qualitype.rpval, "=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
-	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
-	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_assign))
+	defineCall( qualitype.rval, qualitype.rval, ":=", elements, assignConstructor( ctor_elements))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, assignStructureConstructor( node, qualitype.rval, ctor_elements))
 end
+function defineClassConstructors( node, qualitype, descr)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, assignClassConstructor( node, qualitype.rval))
+end
+
 function defineIndexOperators( element_qualitype, pointer_descr)
 	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
 		defineCall( element_qualitype.rval, element_qualitype.pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
@@ -319,14 +398,48 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
 		local qualitype = defineQualifiedTypes( element_sep.lval, typnam, descr)
-		defineAssignOperators( qualitype, descr, element_descr.ctor, element_descr.ctor_assign, nil, element_descr.dtor, {})
+		defineAssignOperators( qualitype, descr)
+		defineConstructors( node, qualitype, descr, element_descr.ctor, element_descr.ctor_assign, element_descr.dtor)
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
 		typedb:scope( scopebk)
 		arrayTypeMap[ typekey] = qualitype.lval
 	end
 	return rt
 end
-
+function getFrame()
+	local rt = typedb:this_instance( "frame")
+	if not rt then	
+		local label = utils.label_allocator()
+		rt = {entry=label(), register=utils.register_allocator(), label=label}
+		typedb:set_instance( "frame", rt)
+	end
+	return rt
+end
+function setInitCode( descr, this, initVal)
+	local frame = getFrame()
+	if initVal then
+		frame.ctor = (frame.ctor or "") .. utils.constructor_format( descr.ctor_assign, {this=this,arg1=initVal})
+	else
+		frame.ctor = (frame.ctor or "") .. utils.constructor_format( descr.ctor, {this=this})
+	end
+end
+function setCleanupCode( descr, this)
+	local frame = getFrame()
+	if not frame.dtor then frame.dtor = utils.template_format( llvmir.control.label,{inp=frame.entry}) end
+	frame.dtor = frame.dtor .. utils.constructor_format( descr.dtor, {this=this})
+end
+function getFrameCodeBlock( code)
+	local frame = typedb:this_instance( "frame")
+	if frame then
+		local rt = ""
+		if frame.ctor then rt = rt .. frame.ctor end
+		rt = rt .. code
+		if frame.dtor then rt = rt .. frame.dtor end
+		return rt
+	else
+		return code
+	end
+end
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
 	local callable = typedb:get_instance( "callable")
@@ -341,12 +454,22 @@ function defineVariable( node, context, typeId, name, initVal)
 		elseif descr.ctor then
 			rt.constructor.code = rt.constructor.code .. utils.constructor_format( descr.ctor, {this=rt.constructor.out}, callable.register)
 		end
+		if descr.dtor then setCleanupCode( descr, rt.constructor.out) end
 		return rt
 	elseif not context.qualitype then
-		local fmt; if initVal then fmt = descr.def_global_val else fmt = descr.def_global end
 		if type(initVal) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
-		print( utils.constructor_format( fmt, {out = out, inp = initVal}))
+		if descr.scalar == true and initVal then
+			print( utils.constructor_format( descr.def_global_val, {out = out, inp = initVal}))
+		else
+			print( utils.constructor_format( descr.def_global, {out = out}))
+			if initVal then
+				if descr.ctor_assign then setInitCode( descr, out, initVal) end
+			else
+				if descr.ctor then setInitCode( descr, out) end
+			end
+			if descr.dtor then setCleanupCode( descr, out) end
+		end
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	else
@@ -360,6 +483,11 @@ function defineVariable( node, context, typeId, name, initVal)
 		else
 			context.llvmtype = descr.llvmtype
 		end
+		while math.fmod( context.structsize or 0, descr.align) ~= 0 do
+			context.structsize = context.structsize + 1
+		end
+		context.structsize = (context.structsize or 0) + descr.size
+
 		local out = context.register()
 		local inp = context.register()
 		local load_ths = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=descr.llvmtype} )
@@ -505,7 +633,7 @@ function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( 0, typnam, scalar_descr)
-		defineAssignOperators( qualitype, scalar_descr, nil, nil, nil, nil, nil, nil)
+		defineAssignOperators( qualitype, scalar_descr)
 		local c_lval = qualitype.c_lval
 		scalarQualiTypeMap[ typnam] = qualitype
 		if scalar_descr.class == "bool" then
@@ -513,12 +641,14 @@ function initBuiltInTypes()
 		elseif scalar_descr.class == "unsigned" then
 			if scalar_descr.llvmtype == "i8" then
 				stringPointerType = qualitype.c_pval
+				memPointerType = qualitype.pval
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		elseif scalar_descr.class == "signed" then
 			if scalar_descr.llvmtype == "i32" then scalarIntegerType = qualitype.c_lval end
 			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
 				stringPointerType = qualitype.c_pval
+				memPointerType = qualitype.pval
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		end
@@ -580,6 +710,11 @@ function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId
 	if constructor then utils.errorMessage( node.line, "No constructor type expected: %s", typeName) end
 	return rt
 end
+function callFunction( node, contextTypes, name, args)
+	local typeId,constructor = selectNoArgumentType( node, name, typedb:resolve_type( contextTypes, name, tagmask_resolveType))
+	local this = {type=typeId, constructor=constructor}
+	return applyCallable( node, this, "()", args)
+end
 function getReductionConstructor( node, redu_type, operand)
 	local redu_constructor,weight = operand.constructor,0.0
 	if redu_type ~= operand.type then
@@ -597,20 +732,9 @@ function getReductionConstructor( node, redu_type, operand)
 	end
 	return redu_constructor,weight
 end
-
-function applyCallable( node, this, callable, args)
+function selectItemsMatchParameters( items, args, this_constructor)
 	local bestmatch = {}
 	local bestweight = nil
-	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
-	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
-
-	local this_constructor = this.constructor
-	for ri,redu in ipairs(reductions) do
-		if redu.constructor then
-			this_constructor = redu.constructor( this_constructor)
-		end
-	end
-	if not args then args = {} end
 	for ii,item in ipairs(items) do
 		local weight = 0.0
 		if typedb:type_nof_parameters( item.type) == #args then
@@ -638,6 +762,22 @@ function applyCallable( node, this, callable, args)
 			end
 		end
 	end
+	return bestmatch,bestweight
+end
+function findApplyCallable( node, this, callable, args)
+	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
+	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
+
+	local this_constructor = this.constructor
+	for ri,redu in ipairs(reductions) do
+		if redu.constructor then
+			this_constructor = redu.constructor( this_constructor)
+		end
+	end
+	return selectItemsMatchParameters( items, args or {}, this_constructor)
+end
+function applyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if not bestweight then
 		utils.errorMessage( node.line, "Failed to find callable with signature '%s'",
 	                    utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
@@ -656,7 +796,6 @@ function applyCallable( node, this, callable, args)
 				utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")", altmatchstr)
 	end
 end
-
 function getSignatureString( name, args, context)
 	if not context then
 		return utils.uniqueName( name .. "__")
@@ -757,6 +896,36 @@ function typesystem.paramdeflist( node)
 	return utils.traverse( typedb, node)
 end
 
+function typesystem.structure( node, context)
+	local arg = utils.traverse( typedb, node, context)
+	return {type=constexprStructureType, constructor=arg}
+end
+function typesystem.allocate( node, context)
+	local callable = typedb:get_instance( "callable")
+	local args = utils.traverse( typedb, node, context)
+	local typeId = args[1].type
+	local pointerTypeId = pointerTypeMap[typeId]
+	if not pointerTypeId then utils.errorMessage("Only const qualifier allowed in 'new' type") end
+	local refTypeId = referenceTypeMap[ typeId]
+	local descr = typeDescriptionMap[ typeId]
+	local memblk = callFunction( node, {0}, "allocmem", {{type=constexprUIntegerType, constructor=bcd.int(descr.size)}})
+	if memblk.type ~= memPointerType then utils.errorMessage("Function 'allocmem' not returning a pointer") end
+	local out = callable.register()
+	local cast = utils.constructor_format( llvmir.control.memPointerCast, {out=out,inp=memblk.constructor.out}, callable.register)
+	return applyCallable( node, {type=pointerTypeId,constructor={this=out,code=cast.constructor.code}}, ":=", {args[2]})
+end
+function typesystem.delete( node, context)
+	local callable = typedb:get_instance( "callable")
+	local args = utils.traverse( typedb, node, context)
+	local typeId = args[1].type
+	local code,out = constructorParts( args[1].constructor)
+	local res = applyCallable( node, {type=typeId,constructor={code=code,out=out}}, " delete")
+	local descr = typeDescriptionMap[ qualiTypeMap[ res.type].lval]
+	local out = callable.register()
+	local cast = utils.constructor_format( llvmir.control.bytePointerCast, {llvmtype=descr.llvmtype, out=out, inp=res.constructor.out}, callable.register)
+	local memblk = callFunction( node, {0}, "freemem", {{type=memPointerType, constructor={code=cast,out=out}}})
+	return {constructor=memblk.constructor}
+end
 function typesystem.vardef( node, context)
 	local arg = utils.traverse( typedb, node, context)
 	return defineVariable( node, context, arg[1], arg[2], nil)
@@ -808,7 +977,7 @@ function typesystem.free_expression( node)
 		return {code=arg[1].constructor.code}
 	end
 end
-function typesystem.statement( node)
+function typesystem.codeblock( node)
 	local code = ""
 	local arg = utils.traverse( typedb, node)
 	for ai=1,#arg do
@@ -816,7 +985,7 @@ function typesystem.statement( node)
 			code = code .. arg[ ai].code
 		end
 	end
-	return {code=code}
+	return {code=getFrameCodeBlock( code)}
 end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
@@ -949,7 +1118,10 @@ function typesystem.structdef( node, context)
 	typedb:set_instance( "context", defcontext)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
 	local arg = utils.traverse( typedb, node, context)
-	defineAssignOperators( qualitype, descr, context.ctors, context.ctors_assign, context.ctors_elements, context.dtors, context.elements)
+	descr.size = context.structsize
+	defineAssignOperators( qualitype, descr)
+	defineConstructors( node, qualitype, descr, context.ctors, context.ctors_assign, context.dtors)
+	defineStructureConstructors( node, qualitype, descr, context.ctors_elements, context.elements)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
 end
 function typesystem.interfacedef( node, context)

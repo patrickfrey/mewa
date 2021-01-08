@@ -518,7 +518,11 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 					{
 						std::string nodestr = nd.tostring();
 						std::string prodprefix = prod.prefix_tostring( item.prodpos);
-						warnings.push_back( Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr));
+						char priobuf[ 128];
+						std::string p1 = pins.first->second.tostring();
+						std::string p2 = prod.priority.tostring();
+						std::snprintf( priobuf, sizeof( priobuf), " (%s != %s)", p1.c_str(), p2.c_str());
+						warnings.push_back( Error( Error::PriorityConflictInGrammarDef, prodprefix + " -> " + nodestr + priobuf));
 					}
 				}
 			}
@@ -610,10 +614,15 @@ static ReductionDef
 			}
 			else if (rt.priority != prod.priority)
 			{
+				char priobuf[ 128];
+				std::string p1 = rt.priority.tostring();
+				std::string p2 = prod.priority.tostring();
+				std::snprintf( priobuf, sizeof( priobuf), " (%s != %s)", p1.c_str(), p2.c_str());
 				warnings.push_back( Error( Error::PriorityConflictInGrammarDef,
 						prod.tostring() + ", "
 						+ prodlist[ last_prodidx].tostring() + " <- "
-						+ followMap.follow2String( follow, lexer)));
+						+ followMap.follow2String( follow, lexer)
+						+ priobuf));
 			}
 		}
 	}

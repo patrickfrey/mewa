@@ -29,17 +29,17 @@ end:
 ret void
 }
 
-define private dso_local void @__ctor_elements_Data1( %Data1* %ptr, i32 %p1) alwaysinline {
+define private dso_local void @__dtor_Data1( %Data1* %ptr) alwaysinline {
 enter:
-%r1 = getelementptr inbounds %Data1, %Data1* %ptr, i32 0, i32 0
-store i32 %p1, i32* %r1
 br label %end
 end:
 ret void
 }
 
-define private dso_local void @__dtor_Data1( %Data1* %ptr) alwaysinline {
+define private dso_local void @__ctor_elements_Data1( %Data1* %ptr, i32 %p1) alwaysinline {
 enter:
+%r1 = getelementptr inbounds %Data1, %Data1* %ptr, i32 0, i32 0
+store i32 %p1, i32* %r1
 br label %end
 end:
 ret void
@@ -76,6 +76,15 @@ end:
 ret void
 }
 
+define private dso_local void @__dtor_Tree1( %Tree1* %ptr) alwaysinline {
+enter:
+%r1 = getelementptr inbounds %Tree1, %Tree1* %ptr, i32 0, i32 0
+call void @__dtor_Data1( %Data1* %r1)
+br label %end
+end:
+ret void
+}
+
 define private dso_local void @__ctor_elements_Tree1( %Tree1* %ptr, %Data1 %p1, %Tree1* %p2, %Tree1* %p3) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree1, %Tree1* %ptr, i32 0, i32 0
@@ -84,15 +93,6 @@ store %Data1 %p1, %Data1* %r1
 store %Tree1* %p2, %Tree1** %r3
 %r6 = getelementptr inbounds %Tree1, %Tree1* %ptr, i32 0, i32 2
 store %Tree1* %p3, %Tree1** %r6
-br label %end
-end:
-ret void
-}
-
-define private dso_local void @__dtor_Tree1( %Tree1* %ptr) alwaysinline {
-enter:
-%r1 = getelementptr inbounds %Tree1, %Tree1* %ptr, i32 0, i32 0
-call void @__dtor_Data1( %Data1* %r1)
 br label %end
 end:
 ret void
@@ -125,6 +125,9 @@ call void @__ctor_Tree1( %Tree1* %r1)
 %r4 = getelementptr inbounds %Data1, %Data1* %r3, i32 0, i32 0
 %r5 = load i32, i32* %r4
 call void @printf( i8* %r2, i32 %r5)
+br label %L1
+L1:
+call void @__dtor_Tree1( %Tree1* %r1)
 ret i32 0
 }
 
