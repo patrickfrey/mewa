@@ -124,7 +124,7 @@ expression/L2		= IDENT										(variable)
 			| CARDINAL									(constant "constexpr uint")
 			| INTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
-			| "null"									(constant "constexpr null")
+			| "null"									(null)
 			| DQSTRING									(string_constant)
 			| SQSTRING									(char_constant)
 			| "(" expression ")"

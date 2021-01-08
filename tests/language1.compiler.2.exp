@@ -111,6 +111,12 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
 
 declare external void @printf( i8*, i32 ) #1 nounwind
 
+
+declare external i8* @malloc( i64 ) #1 nounwind
+
+
+declare external void @free( i8* ) #1 nounwind
+
 @g_tree = internal global %Tree1 zeroinitializer, align 8
 
 @string1 = private unnamed_addr constant [12 x i8] c"Result: %d\0A\00"
@@ -119,12 +125,18 @@ declare external void @printf( i8*, i32 ) #1 nounwind
 define external i32 @main() #0 noinline nounwind {
 entry:
 %r1 = alloca %Tree1, align 8
-call void @__ctor_Tree1( %Tree1* %r1)
-%r2 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
-%r3 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 0
-%r4 = getelementptr inbounds %Data1, %Data1* %r3, i32 0, i32 0
-%r5 = load i32, i32* %r4
-call void @printf( i8* %r2, i32 %r5)
+%r2 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 0
+%r3 = getelementptr inbounds %Data1, %Data1* %r2, i32 0, i32 0
+store i32 0, i32* %r3
+%r4 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 1
+store %Tree1* null, %Tree1** %r4
+%r5 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 2
+store %Tree1* null, %Tree1** %r5
+%r6 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
+%r7 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 0
+%r8 = getelementptr inbounds %Data1, %Data1* %r7, i32 0, i32 0
+%r9 = load i32, i32* %r8
+call void @printf( i8* %r6, i32 %r9)
 br label %L1
 L1:
 call void @__dtor_Tree1( %Tree1* %r1)

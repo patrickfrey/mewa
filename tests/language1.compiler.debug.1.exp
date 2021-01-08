@@ -222,7 +222,7 @@ Shift token IDENT = "printf" at line 27 in state 68, goto 72
 Reduce #1 to expression by token '(' at line 27 in state 72, call variable, goto 69
 Shift token '(' at line 27 in state 69, goto 115
 Shift token DQSTRING = "Result: %d\n" at line 27 in state 115, goto 73
-Reduce #1 to expression by token ',' at line 27 in state 73, call string_constant "constexpr null", goto 167
+Reduce #1 to expression by token ',' at line 27 in state 73, call string_constant "constexpr float", goto 167
 Shift token ',' at line 27 in state 167, goto 224
 Shift token IDENT = "val" at line 27 in state 224, goto 72
 Reduce #1 to expression by token ')' at line 27 in state 72, call variable, goto 167
@@ -1005,8 +1005,8 @@ Lua call result [1]
                           name = "DQSTRING",
                           value = "Result: %d\\n"}},
                       call = {
-                        name = "string_constant constexpr null",
-                        obj = "constexpr null",
+                        name = "string_constant constexpr float",
+                        obj = "constexpr float",
                         proc = <function>},
                       line = 27,
                       step = 9},

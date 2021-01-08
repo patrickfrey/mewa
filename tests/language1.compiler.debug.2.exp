@@ -17,107 +17,159 @@ Reduce #3 to externparameters by token ')' at line 1 in state 254, goto 184
 Reduce #1 to externparameterlist by token ')' at line 1 in state 184, call extern_paramdeflist, goto 183
 Shift token ')' at line 1 in state 183, goto 239
 Shift token ';' at line 1 in state 239, goto 253
-Reduce #8 to externdefinition by token "struct" at line 3 in state 253, call extern_procdef, goto 3
-Reduce #0 to externlist by token "struct" at line 3 in state 3, goto 25
-Reduce #2 to externlist by token "struct" at line 3 in state 25, goto 2
-Shift token "struct" at line 3 in state 2, goto 20
-Shift token IDENT = "Tree" at line 3 in state 20, goto 43
-Shift token '{' at line 4 in state 43, goto 59
-Shift token "struct" at line 5 in state 59, goto 20
-Shift token IDENT = "Data" at line 5 in state 20, goto 43
+Reduce #8 to externdefinition by token "extern" at line 2 in state 253, call extern_procdef, goto 3
+Shift token "extern" at line 2 in state 3, goto 4
+Shift token DQSTRING = "C" at line 2 in state 4, goto 26
+Shift token "function" at line 2 in state 26, goto 46
+Shift token IDENT = "byte" at line 2 in state 46, goto 17
+Reduce #1 to typename by token '^' at line 2 in state 17, goto 8
+Shift token '^' at line 2 in state 8, goto 31
+Reduce #2 to typespec by token IDENT = "malloc" at line 2 in state 31, call typespec "^", goto 62
+Shift token IDENT = "malloc" at line 2 in state 62, goto 109
+Shift token '(' at line 2 in state 109, goto 182
+Shift token IDENT = "long" at line 2 in state 182, goto 17
+Reduce #1 to typename by token ')' at line 2 in state 17, goto 8
+Reduce #1 to typespec by token ')' at line 2 in state 8, call typespec "", goto 185
+Reduce #1 to externparameters by token ')' at line 2 in state 185, goto 184
+Reduce #1 to externparameterlist by token ')' at line 2 in state 184, call extern_paramdeflist, goto 238
+Shift token ')' at line 2 in state 238, goto 252
+Shift token ';' at line 2 in state 252, goto 260
+Reduce #9 to externdefinition by token "extern" at line 3 in state 260, call extern_funcdef, goto 3
+Shift token "extern" at line 3 in state 3, goto 4
+Shift token DQSTRING = "C" at line 3 in state 4, goto 26
+Shift token "procedure" at line 3 in state 26, goto 47
+Shift token IDENT = "free" at line 3 in state 47, goto 63
+Shift token '(' at line 3 in state 63, goto 110
+Shift token IDENT = "byte" at line 3 in state 110, goto 17
+Reduce #1 to typename by token '^' at line 3 in state 17, goto 8
+Shift token '^' at line 3 in state 8, goto 31
+Reduce #2 to typespec by token ')' at line 3 in state 31, call typespec "^", goto 185
+Reduce #1 to externparameters by token ')' at line 3 in state 185, goto 184
+Reduce #1 to externparameterlist by token ')' at line 3 in state 184, call extern_paramdeflist, goto 183
+Shift token ')' at line 3 in state 183, goto 239
+Shift token ';' at line 3 in state 239, goto 253
+Reduce #8 to externdefinition by token "struct" at line 5 in state 253, call extern_procdef, goto 3
+Reduce #0 to externlist by token "struct" at line 5 in state 3, goto 25
+Reduce #2 to externlist by token "struct" at line 5 in state 25, goto 25
+Reduce #2 to externlist by token "struct" at line 5 in state 25, goto 25
+Reduce #2 to externlist by token "struct" at line 5 in state 25, goto 2
+Shift token "struct" at line 5 in state 2, goto 20
+Shift token IDENT = "Tree" at line 5 in state 20, goto 43
 Shift token '{' at line 6 in state 43, goto 59
-Shift token IDENT = "int" at line 7 in state 59, goto 17
-Reduce #1 to typename by token IDENT = "val" at line 7 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "val" at line 7 in state 8, call typespec "", goto 9
-Shift token IDENT = "val" at line 7 in state 9, goto 32
-Reduce #2 to variabledefinition by token ';' at line 7 in state 32, call vardef, goto 16
-Shift token ';' at line 7 in state 16, goto 39
-Reduce #2 to datadefinition by token '}' at line 8 in state 39, call definition, goto 103
-Reduce #0 to datadefinitionlist by token '}' at line 8 in state 103, goto 176
-Reduce #2 to datadefinitionlist by token '}' at line 8 in state 176, goto 102
-Shift token '}' at line 8 in state 102, goto 175
-Reduce #5 to structdefinition by token ';' at line 8 in state 175, call structdef, goto 11
-Shift token ';' at line 8 in state 11, goto 34
-Reduce #2 to datadefinition by token IDENT = "Data" at line 9 in state 34, call definition, goto 103
-Shift token IDENT = "Data" at line 9 in state 103, goto 17
-Reduce #1 to typename by token IDENT = "data" at line 9 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "data" at line 9 in state 8, call typespec "", goto 9
-Shift token IDENT = "data" at line 9 in state 9, goto 32
+Shift token "struct" at line 7 in state 59, goto 20
+Shift token IDENT = "Data" at line 7 in state 20, goto 43
+Shift token '{' at line 8 in state 43, goto 59
+Shift token IDENT = "int" at line 9 in state 59, goto 17
+Reduce #1 to typename by token IDENT = "val" at line 9 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "val" at line 9 in state 8, call typespec "", goto 9
+Shift token IDENT = "val" at line 9 in state 9, goto 32
 Reduce #2 to variabledefinition by token ';' at line 9 in state 32, call vardef, goto 16
 Shift token ';' at line 9 in state 16, goto 39
-Reduce #2 to datadefinition by token IDENT = "Tree" at line 10 in state 39, call definition, goto 103
-Shift token IDENT = "Tree" at line 10 in state 103, goto 17
-Reduce #1 to typename by token '^' at line 10 in state 17, goto 8
-Shift token '^' at line 10 in state 8, goto 31
-Reduce #2 to typespec by token IDENT = "left" at line 10 in state 31, call typespec "^", goto 9
-Shift token IDENT = "left" at line 10 in state 9, goto 32
-Reduce #2 to variabledefinition by token ';' at line 10 in state 32, call vardef, goto 16
-Shift token ';' at line 10 in state 16, goto 39
-Reduce #2 to datadefinition by token IDENT = "Tree" at line 11 in state 39, call definition, goto 103
-Shift token IDENT = "Tree" at line 11 in state 103, goto 17
-Reduce #1 to typename by token '^' at line 11 in state 17, goto 8
-Shift token '^' at line 11 in state 8, goto 31
-Reduce #2 to typespec by token IDENT = "right" at line 11 in state 31, call typespec "^", goto 9
-Shift token IDENT = "right" at line 11 in state 9, goto 32
+Reduce #2 to datadefinition by token '}' at line 10 in state 39, call definition, goto 103
+Reduce #0 to datadefinitionlist by token '}' at line 10 in state 103, goto 176
+Reduce #2 to datadefinitionlist by token '}' at line 10 in state 176, goto 102
+Shift token '}' at line 10 in state 102, goto 175
+Reduce #5 to structdefinition by token ';' at line 10 in state 175, call structdef, goto 11
+Shift token ';' at line 10 in state 11, goto 34
+Reduce #2 to datadefinition by token IDENT = "Data" at line 11 in state 34, call definition, goto 103
+Shift token IDENT = "Data" at line 11 in state 103, goto 17
+Reduce #1 to typename by token IDENT = "data" at line 11 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "data" at line 11 in state 8, call typespec "", goto 9
+Shift token IDENT = "data" at line 11 in state 9, goto 32
 Reduce #2 to variabledefinition by token ';' at line 11 in state 32, call vardef, goto 16
 Shift token ';' at line 11 in state 16, goto 39
-Reduce #2 to datadefinition by token '}' at line 12 in state 39, call definition, goto 103
-Reduce #0 to datadefinitionlist by token '}' at line 12 in state 103, goto 176
-Reduce #2 to datadefinitionlist by token '}' at line 12 in state 176, goto 176
-Reduce #2 to datadefinitionlist by token '}' at line 12 in state 176, goto 176
-Reduce #2 to datadefinitionlist by token '}' at line 12 in state 176, goto 176
-Reduce #2 to datadefinitionlist by token '}' at line 12 in state 176, goto 102
-Shift token '}' at line 12 in state 102, goto 175
-Reduce #5 to structdefinition by token ';' at line 12 in state 175, call structdef, goto 11
-Shift token ';' at line 12 in state 11, goto 34
-Reduce #2 to datadefinition by token IDENT = "Tree" at line 14 in state 34, call definition, goto 6
-Reduce #1 to definition by token IDENT = "Tree" at line 14 in state 6, goto 7
-Shift token IDENT = "Tree" at line 14 in state 7, goto 17
-Reduce #1 to typename by token IDENT = "g_tree" at line 14 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "g_tree" at line 14 in state 8, call typespec "", goto 9
-Shift token IDENT = "g_tree" at line 14 in state 9, goto 32
-Reduce #2 to variabledefinition by token ';' at line 14 in state 32, call vardef, goto 16
-Shift token ';' at line 14 in state 16, goto 39
-Reduce #2 to datadefinition by token "main" at line 16 in state 39, call definition, goto 6
-Reduce #1 to definition by token "main" at line 16 in state 6, goto 7
-Reduce #0 to definitionlist by token "main" at line 16 in state 7, goto 29
-Reduce #2 to definitionlist by token "main" at line 16 in state 29, goto 29
-Reduce #2 to definitionlist by token "main" at line 16 in state 29, goto 5
-Shift token "main" at line 16 in state 5, goto 28
-Shift token '{' at line 17 in state 28, goto 48
-Shift token "var" at line 18 in state 48, goto 81
-Shift token IDENT = "Tree" at line 18 in state 81, goto 17
-Reduce #1 to typename by token IDENT = "tree" at line 18 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "tree" at line 18 in state 8, call typespec "", goto 9
-Shift token IDENT = "tree" at line 18 in state 9, goto 32
-Reduce #2 to variabledefinition by token ';' at line 18 in state 32, call vardef, goto 156
-Shift token ';' at line 18 in state 156, goto 226
-Reduce #3 to statement by token IDENT = "printf" at line 19 in state 226, call definition, goto 68
-Shift token IDENT = "printf" at line 19 in state 68, goto 72
-Reduce #1 to expression by token '(' at line 19 in state 72, call variable, goto 69
-Shift token '(' at line 19 in state 69, goto 115
-Shift token DQSTRING = "Result: %d\n" at line 19 in state 115, goto 73
-Reduce #1 to expression by token ',' at line 19 in state 73, call string_constant "constexpr null", goto 167
-Shift token ',' at line 19 in state 167, goto 224
-Shift token IDENT = "tree" at line 19 in state 224, goto 72
-Reduce #1 to expression by token '.' at line 19 in state 72, call variable, goto 167
-Shift token '.' at line 19 in state 167, goto 148
-Shift token IDENT = "data" at line 19 in state 148, goto 220
-Reduce #3 to expression by token '.' at line 19 in state 220, call member, goto 167
-Shift token '.' at line 19 in state 167, goto 148
-Shift token IDENT = "val" at line 19 in state 148, goto 220
-Reduce #3 to expression by token ')' at line 19 in state 220, call member, goto 167
-Reduce #1 to expressionlist by token ')' at line 19 in state 167, goto 243
-Reduce #3 to expressionlist by token ')' at line 19 in state 243, goto 187
-Shift token ')' at line 19 in state 187, goto 241
-Reduce #4 to expression by token ';' at line 19 in state 241, call operator "()", goto 69
-Shift token ';' at line 19 in state 69, goto 116
-Reduce #2 to statement by token '}' at line 20 in state 116, call free_expression, goto 68
-Reduce #0 to statementlist by token '}' at line 20 in state 68, goto 113
-Reduce #2 to statementlist by token '}' at line 20 in state 113, goto 113
-Reduce #2 to statementlist by token '}' at line 20 in state 113, goto 67
-Reduce #1 to codeblock by token '}' at line 20 in state 67, call codeblock, goto 66
-Shift token '}' at line 20 in state 66, goto 112
+Reduce #2 to datadefinition by token IDENT = "Tree" at line 12 in state 39, call definition, goto 103
+Shift token IDENT = "Tree" at line 12 in state 103, goto 17
+Reduce #1 to typename by token '^' at line 12 in state 17, goto 8
+Shift token '^' at line 12 in state 8, goto 31
+Reduce #2 to typespec by token IDENT = "left" at line 12 in state 31, call typespec "^", goto 9
+Shift token IDENT = "left" at line 12 in state 9, goto 32
+Reduce #2 to variabledefinition by token ';' at line 12 in state 32, call vardef, goto 16
+Shift token ';' at line 12 in state 16, goto 39
+Reduce #2 to datadefinition by token IDENT = "Tree" at line 13 in state 39, call definition, goto 103
+Shift token IDENT = "Tree" at line 13 in state 103, goto 17
+Reduce #1 to typename by token '^' at line 13 in state 17, goto 8
+Shift token '^' at line 13 in state 8, goto 31
+Reduce #2 to typespec by token IDENT = "right" at line 13 in state 31, call typespec "^", goto 9
+Shift token IDENT = "right" at line 13 in state 9, goto 32
+Reduce #2 to variabledefinition by token ';' at line 13 in state 32, call vardef, goto 16
+Shift token ';' at line 13 in state 16, goto 39
+Reduce #2 to datadefinition by token '}' at line 14 in state 39, call definition, goto 103
+Reduce #0 to datadefinitionlist by token '}' at line 14 in state 103, goto 176
+Reduce #2 to datadefinitionlist by token '}' at line 14 in state 176, goto 176
+Reduce #2 to datadefinitionlist by token '}' at line 14 in state 176, goto 176
+Reduce #2 to datadefinitionlist by token '}' at line 14 in state 176, goto 176
+Reduce #2 to datadefinitionlist by token '}' at line 14 in state 176, goto 102
+Shift token '}' at line 14 in state 102, goto 175
+Reduce #5 to structdefinition by token ';' at line 14 in state 175, call structdef, goto 11
+Shift token ';' at line 14 in state 11, goto 34
+Reduce #2 to datadefinition by token IDENT = "Tree" at line 16 in state 34, call definition, goto 6
+Reduce #1 to definition by token IDENT = "Tree" at line 16 in state 6, goto 7
+Shift token IDENT = "Tree" at line 16 in state 7, goto 17
+Reduce #1 to typename by token IDENT = "g_tree" at line 16 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "g_tree" at line 16 in state 8, call typespec "", goto 9
+Shift token IDENT = "g_tree" at line 16 in state 9, goto 32
+Reduce #2 to variabledefinition by token ';' at line 16 in state 32, call vardef, goto 16
+Shift token ';' at line 16 in state 16, goto 39
+Reduce #2 to datadefinition by token "main" at line 18 in state 39, call definition, goto 6
+Reduce #1 to definition by token "main" at line 18 in state 6, goto 7
+Reduce #0 to definitionlist by token "main" at line 18 in state 7, goto 29
+Reduce #2 to definitionlist by token "main" at line 18 in state 29, goto 29
+Reduce #2 to definitionlist by token "main" at line 18 in state 29, goto 5
+Shift token "main" at line 18 in state 5, goto 28
+Shift token '{' at line 19 in state 28, goto 48
+Shift token "var" at line 20 in state 48, goto 81
+Shift token IDENT = "Tree" at line 20 in state 81, goto 17
+Reduce #1 to typename by token IDENT = "tree" at line 20 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "tree" at line 20 in state 8, call typespec "", goto 9
+Shift token IDENT = "tree" at line 20 in state 9, goto 32
+Shift token '=' at line 20 in state 32, goto 51
+Shift token '{' at line 20 in state 51, goto 95
+Shift token '{' at line 20 in state 95, goto 95
+Shift token CARDINAL = "0" at line 20 in state 95, goto 75
+Reduce #1 to expression by token '}' at line 20 in state 75, call constant "constexpr uint", goto 167
+Reduce #1 to expressionlist by token '}' at line 20 in state 167, goto 153
+Shift token '}' at line 20 in state 153, goto 225
+Reduce #3 to expression by token ',' at line 20 in state 225, call structure, goto 167
+Shift token ',' at line 20 in state 167, goto 224
+Shift token "null" at line 20 in state 224, goto 87
+Reduce #1 to expression by token ',' at line 20 in state 87, call null "constexpr float", goto 167
+Shift token ',' at line 20 in state 167, goto 224
+Shift token "null" at line 20 in state 224, goto 87
+Reduce #1 to expression by token '}' at line 20 in state 87, call null "constexpr float", goto 167
+Reduce #1 to expressionlist by token '}' at line 20 in state 167, goto 243
+Reduce #3 to expressionlist by token '}' at line 20 in state 243, goto 243
+Reduce #3 to expressionlist by token '}' at line 20 in state 243, goto 153
+Shift token '}' at line 20 in state 153, goto 225
+Reduce #3 to expression by token ';' at line 20 in state 225, call structure, goto 94
+Reduce #4 to variabledefinition by token ';' at line 20 in state 94, call vardef_assign, goto 156
+Shift token ';' at line 20 in state 156, goto 226
+Reduce #3 to statement by token IDENT = "printf" at line 21 in state 226, call definition, goto 68
+Shift token IDENT = "printf" at line 21 in state 68, goto 72
+Reduce #1 to expression by token '(' at line 21 in state 72, call variable, goto 69
+Shift token '(' at line 21 in state 69, goto 115
+Shift token DQSTRING = "Result: %d\n" at line 21 in state 115, goto 73
+Reduce #1 to expression by token ',' at line 21 in state 73, call string_constant "constexpr float", goto 167
+Shift token ',' at line 21 in state 167, goto 224
+Shift token IDENT = "tree" at line 21 in state 224, goto 72
+Reduce #1 to expression by token '.' at line 21 in state 72, call variable, goto 167
+Shift token '.' at line 21 in state 167, goto 148
+Shift token IDENT = "data" at line 21 in state 148, goto 220
+Reduce #3 to expression by token '.' at line 21 in state 220, call member, goto 167
+Shift token '.' at line 21 in state 167, goto 148
+Shift token IDENT = "val" at line 21 in state 148, goto 220
+Reduce #3 to expression by token ')' at line 21 in state 220, call member, goto 167
+Reduce #1 to expressionlist by token ')' at line 21 in state 167, goto 243
+Reduce #3 to expressionlist by token ')' at line 21 in state 243, goto 187
+Shift token ')' at line 21 in state 187, goto 241
+Reduce #4 to expression by token ';' at line 21 in state 241, call operator "()", goto 69
+Shift token ';' at line 21 in state 69, goto 116
+Reduce #2 to statement by token '}' at line 22 in state 116, call free_expression, goto 68
+Reduce #0 to statementlist by token '}' at line 22 in state 68, goto 113
+Reduce #2 to statementlist by token '}' at line 22 in state 113, goto 113
+Reduce #2 to statementlist by token '}' at line 22 in state 113, goto 67
+Reduce #1 to codeblock by token '}' at line 22 in state 67, call codeblock, goto 66
+Shift token '}' at line 22 in state 66, goto 112
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -172,9 +224,89 @@ Lua call result [1]
     {
       arg = {
         {
+          line = 2,
+          name = "DQSTRING",
+          value = "C"},
+        {
           arg = {
             {
+              line = 2,
+              name = "IDENT",
+              value = "byte"}},
+          call = {
+            name = "typespec ^",
+            obj = "^",
+            proc = <function>},
+          line = 2,
+          step = 0},
+        {
+          line = 2,
+          name = "IDENT",
+          value = "malloc"},
+        {
+          arg = {
+            {
+              arg = {
+                {
+                  line = 2,
+                  name = "IDENT",
+                  value = "long"}},
+              call = {
+                name = "typespec ",
+                obj = "",
+                proc = <function>},
+              line = 2,
+              step = 0}},
+          call = {
+            name = "extern_paramdeflist",
+            proc = <function>},
+          line = 2,
+          step = 0}},
+      call = {
+        name = "extern_funcdef",
+        proc = <function>},
+      line = 2,
+      step = 0},
+    {
+      arg = {
+        {
+          line = 3,
+          name = "DQSTRING",
+          value = "C"},
+        {
+          line = 3,
+          name = "IDENT",
+          value = "free"},
+        {
+          arg = {
+            {
+              arg = {
+                {
+                  line = 3,
+                  name = "IDENT",
+                  value = "byte"}},
+              call = {
+                name = "typespec ^",
+                obj = "^",
+                proc = <function>},
               line = 3,
+              step = 0}},
+          call = {
+            name = "extern_paramdeflist",
+            proc = <function>},
+          line = 3,
+          step = 0}},
+      call = {
+        name = "extern_procdef",
+        proc = <function>},
+      line = 3,
+      step = 0},
+    {
+      arg = {
+        {
+          arg = {
+            {
+              line = 5,
               name = "IDENT",
               value = "Tree"},
             {
@@ -182,7 +314,7 @@ Lua call result [1]
                 {
                   arg = {
                     {
-                      line = 5,
+                      line = 7,
                       name = "IDENT",
                       value = "Data"},
                     {
@@ -192,99 +324,39 @@ Lua call result [1]
                             {
                               arg = {
                                 {
-                                  line = 7,
+                                  line = 9,
                                   name = "IDENT",
                                   value = "int"}},
                               call = {
                                 name = "typespec ",
                                 obj = "",
                                 proc = <function>},
-                              line = 7,
+                              line = 9,
                               step = 0},
                             {
-                              line = 7,
+                              line = 9,
                               name = "IDENT",
                               value = "val"}},
                           call = {
                             name = "vardef",
                             proc = <function>},
-                          line = 7,
+                          line = 9,
                           step = 1}},
                       call = {
                         name = "definition",
                         proc = <function>},
-                      line = 7,
+                      line = 9,
                       step = 1}},
                   call = {
                     name = "structdef",
                     proc = <function>},
-                  line = 7,
+                  line = 9,
                   step = 2}},
               call = {
                 name = "definition",
                 proc = <function>},
-              line = 7,
-              step = 2},
-            {
-              arg = {
-                {
-                  arg = {
-                    {
-                      arg = {
-                        {
-                          line = 9,
-                          name = "IDENT",
-                          value = "Data"}},
-                      call = {
-                        name = "typespec ",
-                        obj = "",
-                        proc = <function>},
-                      line = 9,
-                      step = 2},
-                    {
-                      line = 9,
-                      name = "IDENT",
-                      value = "data"}},
-                  call = {
-                    name = "vardef",
-                    proc = <function>},
-                  line = 9,
-                  step = 3}},
-              call = {
-                name = "definition",
-                proc = <function>},
               line = 9,
-              step = 3},
-            {
-              arg = {
-                {
-                  arg = {
-                    {
-                      arg = {
-                        {
-                          line = 10,
-                          name = "IDENT",
-                          value = "Tree"}},
-                      call = {
-                        name = "typespec ^",
-                        obj = "^",
-                        proc = <function>},
-                      line = 10,
-                      step = 3},
-                    {
-                      line = 10,
-                      name = "IDENT",
-                      value = "left"}},
-                  call = {
-                    name = "vardef",
-                    proc = <function>},
-                  line = 10,
-                  step = 4}},
-              call = {
-                name = "definition",
-                proc = <function>},
-              line = 10,
-              step = 4},
+              step = 2},
             {
               arg = {
                 {
@@ -294,36 +366,96 @@ Lua call result [1]
                         {
                           line = 11,
                           name = "IDENT",
+                          value = "Data"}},
+                      call = {
+                        name = "typespec ",
+                        obj = "",
+                        proc = <function>},
+                      line = 11,
+                      step = 2},
+                    {
+                      line = 11,
+                      name = "IDENT",
+                      value = "data"}},
+                  call = {
+                    name = "vardef",
+                    proc = <function>},
+                  line = 11,
+                  step = 3}},
+              call = {
+                name = "definition",
+                proc = <function>},
+              line = 11,
+              step = 3},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 12,
+                          name = "IDENT",
                           value = "Tree"}},
                       call = {
                         name = "typespec ^",
                         obj = "^",
                         proc = <function>},
-                      line = 11,
+                      line = 12,
+                      step = 3},
+                    {
+                      line = 12,
+                      name = "IDENT",
+                      value = "left"}},
+                  call = {
+                    name = "vardef",
+                    proc = <function>},
+                  line = 12,
+                  step = 4}},
+              call = {
+                name = "definition",
+                proc = <function>},
+              line = 12,
+              step = 4},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 13,
+                          name = "IDENT",
+                          value = "Tree"}},
+                      call = {
+                        name = "typespec ^",
+                        obj = "^",
+                        proc = <function>},
+                      line = 13,
                       step = 4},
                     {
-                      line = 11,
+                      line = 13,
                       name = "IDENT",
                       value = "right"}},
                   call = {
                     name = "vardef",
                     proc = <function>},
-                  line = 11,
+                  line = 13,
                   step = 5}},
               call = {
                 name = "definition",
                 proc = <function>},
-              line = 11,
+              line = 13,
               step = 5}},
           call = {
             name = "structdef",
             proc = <function>},
-          line = 11,
+          line = 13,
           step = 6}},
       call = {
         name = "definition",
         proc = <function>},
-      line = 11,
+      line = 13,
       step = 6},
     {
       arg = {
@@ -332,28 +464,28 @@ Lua call result [1]
             {
               arg = {
                 {
-                  line = 14,
+                  line = 16,
                   name = "IDENT",
                   value = "Tree"}},
               call = {
                 name = "typespec ",
                 obj = "",
                 proc = <function>},
-              line = 14,
+              line = 16,
               step = 6},
             {
-              line = 14,
+              line = 16,
               name = "IDENT",
               value = "g_tree"}},
           call = {
             name = "vardef",
             proc = <function>},
-          line = 14,
+          line = 16,
           step = 7}},
       call = {
         name = "definition",
         proc = <function>},
-      line = 14,
+      line = 16,
       step = 7},
     {
       arg = {
@@ -366,28 +498,70 @@ Lua call result [1]
                     {
                       arg = {
                         {
-                          line = 18,
+                          line = 20,
                           name = "IDENT",
                           value = "Tree"}},
                       call = {
                         name = "typespec ",
                         obj = "",
                         proc = <function>},
-                      line = 18,
+                      line = 20,
                       step = 7},
                     {
-                      line = 18,
+                      line = 20,
                       name = "IDENT",
-                      value = "tree"}},
+                      value = "tree"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 20,
+                                  name = "CARDINAL",
+                                  value = "0"}},
+                              call = {
+                                name = "constant constexpr uint",
+                                obj = "constexpr uint",
+                                proc = <function>},
+                              line = 20,
+                              step = 7}},
+                          call = {
+                            name = "structure",
+                            proc = <function>},
+                          line = 20,
+                          step = 7},
+                        {
+                          arg = {},
+                          call = {
+                            name = "null constexpr float",
+                            obj = "constexpr float",
+                            proc = <function>},
+                          line = 20,
+                          step = 7},
+                        {
+                          arg = {},
+                          call = {
+                            name = "null constexpr float",
+                            obj = "constexpr float",
+                            proc = <function>},
+                          line = 20,
+                          step = 7}},
+                      call = {
+                        name = "structure",
+                        proc = <function>},
+                      line = 20,
+                      step = 7}},
                   call = {
-                    name = "vardef",
+                    name = "vardef_assign",
                     proc = <function>},
-                  line = 18,
+                  line = 20,
                   step = 8}},
               call = {
                 name = "definition",
                 proc = <function>},
-              line = 18,
+              line = 20,
               step = 8},
             {
               arg = {
@@ -396,25 +570,25 @@ Lua call result [1]
                     {
                       arg = {
                         {
-                          line = 19,
+                          line = 21,
                           name = "IDENT",
                           value = "printf"}},
                       call = {
                         name = "variable",
                         proc = <function>},
-                      line = 19,
+                      line = 21,
                       step = 8},
                     {
                       arg = {
                         {
-                          line = 19,
+                          line = 21,
                           name = "DQSTRING",
                           value = "Result: %d\\n"}},
                       call = {
-                        name = "string_constant constexpr null",
-                        obj = "constexpr null",
+                        name = "string_constant constexpr float",
+                        obj = "constexpr float",
                         proc = <function>},
-                      line = 19,
+                      line = 21,
                       step = 8},
                     {
                       arg = {
@@ -423,57 +597,57 @@ Lua call result [1]
                             {
                               arg = {
                                 {
-                                  line = 19,
+                                  line = 21,
                                   name = "IDENT",
                                   value = "tree"}},
                               call = {
                                 name = "variable",
                                 proc = <function>},
-                              line = 19,
+                              line = 21,
                               step = 8},
                             {
-                              line = 19,
+                              line = 21,
                               name = "IDENT",
                               value = "data"}},
                           call = {
                             name = "member",
                             proc = <function>},
-                          line = 19,
+                          line = 21,
                           step = 8},
                         {
-                          line = 19,
+                          line = 21,
                           name = "IDENT",
                           value = "val"}},
                       call = {
                         name = "member",
                         proc = <function>},
-                      line = 19,
+                      line = 21,
                       step = 8}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
-                  line = 19,
+                  line = 21,
                   step = 8}},
               call = {
                 name = "free_expression",
                 proc = <function>},
-              line = 19,
+              line = 21,
               step = 8}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 19,
+          line = 21,
           step = 8}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 19,
+      line = 21,
       scope = {
         7,
         9}}},
   call = {
     name = "program",
     proc = <function>},
-  line = 19,
+  line = 21,
   step = 9}

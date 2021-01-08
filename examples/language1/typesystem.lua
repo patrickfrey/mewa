@@ -246,16 +246,21 @@ function defineAssignOperators( qualitype, descr)
 end
 function assignStructureConstructor( node, thisTypeId, elements)
 	return function( this, args)
-		if #args == 1 and args[1].type == constexprStructureType then args = args[1].constructor end
-		if #args ~= #elements then utils.errorMessage( node.line, "Number of elements in structure do not match for '%s'", mewa.type_string( thisTypeId)) end
+		args = args[1] -- args contains one list node
+		if #args ~= #elements then 
+			utils.errorMessage( node.line, "Number of elements %d in structure do not match for '%s' [%d]", #args, typedb:type_string( thisTypeId), #elements)
+		end
+		local qualitype = qualiTypeMap[ thisTypeId]
+		local descr = typeDescriptionMap[ thisTypeId]
 		local callable = typedb:get_instance( "callable")
 		local this_code,this_inp = constructorParts( this)
-		local rt = {type=thisTypeId, constructor={code=this_code,out=this_inp}}
+		local rt = {code=this_code,out=this_inp}
 		for ei,element in ipairs( elements) do
 			local out = callable.register()
-			local code = utils.constructor_format( descr.loadref, {out = out, this = this_inp, index = ei}, callable.register)
-			local maparg = applyCallable( node, {type=element,constructor={out=out,code=code}}, ":=", {args[ei]})
-			rt.constructor.code = rt.constructor.code .. maparg.constructor.code
+			local code = utils.constructor_format( descr.loadref, {out = out, this = this_inp, index = ei-1}, callable.register)
+			local element_reftype = referenceTypeMap[ element]
+			local maparg = applyCallable( node, {type=element_reftype,constructor={out=out,code=code}}, ":=", {args[ei]})
+			rt.code = rt.code .. maparg.constructor.code
 		end
 		return rt
 	end
@@ -310,8 +315,8 @@ function defineStructureConstructors( node, qualitype, descr, ctors_elements, el
 		argstr = argstr .. ", " .. typeDescriptionMap[ element].llvmtype .. " {arg" .. ei .. "}"
 	end
 	if descr.ctorproc_elements then print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements or "", paramstr=paramstr})) end
-	defineCall( qualitype.rval, qualitype.rval, ":=", elements, assignConstructor( ctor_elements))
-	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, assignStructureConstructor( node, qualitype.rval, ctor_elements))
+	defineCall( qualitype.rval, qualitype.rval, ":=", elements, assignConstructor( ctors_elements))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, assignStructureConstructor( node, qualitype.lval, elements))
 end
 function defineClassConstructors( node, qualitype, descr)
 	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, assignClassConstructor( node, qualitype.rval))
@@ -1044,6 +1049,9 @@ end
 function typesystem.constant( node, typeName)
 	local typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
+end
+function typesystem.null( node)
+	return {type=constexprNullType, constructor="null"}
 end
 function typesystem.string_constant( node)
 	return getStringConstant( node.arg[1].value)
