@@ -225,9 +225,9 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction, 0.1)
 	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction, 0.1)
 
-	defineCall( pval, rval, "&", {}, nil)
-	defineCall( rval, pval, "->", {}, nil)
-	defineCall( c_rval, c_pval, "->", {}, nil)
+	defineCall( pval, rval, "&", {}, function(this) return this end)
+	defineCall( rval, pval, "->", {}, function(this) return this end)
+	defineCall( c_rval, c_pval, "->", {}, function(this) return this end)
 
 	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
 	return qualiTypeMap[ lval]
@@ -536,6 +536,7 @@ function defineParameter( node, type, name, callable)
 	local descr = typeDescriptionMap[ type]
 	local paramreg = callable.register()
 	local var = typedb:def_type( 0, name, paramreg)
+	if var < 0 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", name) end
 	typedb:def_reduction( type, var, nil, tag_typeDeclaration)
 	return {type=type, llvmtype=descr.llvmtype, reg=paramreg}
 end
@@ -855,6 +856,8 @@ function defineCallable( node, descr, context)
 	descr.symbolname = getSignatureString( descr.name, descr.param, context)
 	descr.callargstr = getParameterListCallTemplate( descr.param)
 	defineCallableType( node, descr, getTypeDeclContextTypeId( context))
+end
+function printCallable( node, descr, context)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
 end
 function defineExternCallable( node, descr)
@@ -1057,10 +1060,10 @@ function typesystem.string_constant( node)
 	return getStringConstant( node.arg[1].value)
 end
 function typesystem.char_constant( node)
-	local ua = utils.utf8to32( node.arg[1].value)
+	local ua = utils.utf8to32( node, node.arg[1].value)
 	if #ua == 0 then return {type=constexprUIntegerType, constructor=bcd.int(0)}
 	elseif #ua == 1 then return {type=constexprUIntegerType, constructor=bcd.int(ua[1])}
-	else utils.errorMessage( node.line, "Single quoted string '%s' not containing a single unicode character", node.arg[1].value)
+	else utils.errorMessage( node.line, "Single quoted string '%s' length %d not containing a single unicode character", node.arg[1].value, #ua)
 	end
 end
 function typesystem.variable( node)
@@ -1079,20 +1082,31 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, context)
-	local arg = utils.traverseRange( typedb, node, {1,#node.arg-1}, context)
-	arg[#node.arg] = utils.traverseRange( typedb, node, {#node.arg-1,#node.arg}, context, arg[2])[#node.arg]
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3], param = arg[4].param, body = arg[4].code}
+	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3] }
+	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
 	defineCallable( node, descr, context)
+	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
+	printCallable( node, descr, context)
 end
 function typesystem.procdef( node, context)
-	local arg = utils.traverse( typedb, node, context, 0)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], param = arg[3].param, body = arg[3].code .. "ret void\n" }
+	local arg = utils.traverseRange( typedb, node, {1,2}, context)
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = nil, name = arg[2] }
+	descr.param = utils.traverseRange( typedb, node, {3,3}, context, nil, 1)[3]
 	defineCallable( node, descr, context)
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, nil, 2)[3] .. "ret void\n"
+	printCallable( node, descr, context)
 end
-function typesystem.callablebody( node, contextTypeId, rtype) 
-	defineCallableBodyContext( node.scope, rtype)
-	local arg = utils.traverse( typedb, node, contextTypeId)
-	return {param = arg[1], code = arg[2].code}
+function typesystem.callablebody( node, context, rtype, select)
+	-- HACK: This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable recursion (self reference)
+	if select == 1 then
+		defineCallableBodyContext( node.scope, rtype)
+		local arg = utils.traverseRange( typedb, node, {1,1}, context)
+		return arg[1]
+	else
+		local arg = utils.traverseRange( typedb, node, {2,2}, context)
+		return arg[2].code
+	end
 end
 function typesystem.extern_paramdeflist( node)
 	local args = utils.traverse( typedb, node)
@@ -1162,11 +1176,11 @@ function typesystem.rep_operator( node)
 	for ii=1,icount do
 		expr = applyCallable( node, expr, "->")
 	end
-	return applyCallable( node, expr, node.arg[2].value)
+	return applyCallable( node, expr, arg[3])
 end
 function typesystem.member( node)
 	local arg = utils.traverse( typedb, node)
-	return applyCallable( node, arg[1], node.arg[2].value)
+	return applyCallable( node, arg[1], arg[2])
 end
 
 return typesystem

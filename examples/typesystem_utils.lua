@@ -234,24 +234,28 @@ function utils.errorResolveType( typedb, line, resultContextTypeId, contextType,
 	end
 end
 
--- Unicode support, function taken from http://lua-users.org/wiki/LuaUnicode
-function utils.utf8to32( utf8str)
-	local res, seq, val = {}, 0, nil
+-- Unicode support, function inspired from http://lua-users.org/wiki/LuaUnicode
+function utils.utf8to32( node, utf8str)
+	local res = {}
+	local seq = 0
+	local val = nil
 	for i = 1, #utf8str do
-		local c = string.byte(utf8str, i)
+		local c = string.byte( utf8str, i)
 		if seq == 0 then
-			table.insert(res, val)
+			if val then table.insert( res, val) end
 			seq = c < 0x80 and 1 or c < 0xE0 and 2 or c < 0xF0 and 3 or
 			      c < 0xF8 and 4 or --c < 0xFC and 5 or c < 0xFE and 6 or
-				  error("invalid UTF-8 character sequence")
+				  utils.errorMessage( node.line, "invalid UTF-8 character sequence at byte %d: %s", i-1, utf8str)
 			val = bit32.band(c, 2^(8-seq) - 1)
 		else
 			val = bit32.bor(bit32.lshift(val, 6), bit32.band(c, 0x3F))
 		end
 		seq = seq - 1
 	end
-	table.insert(res, val)
-	table.insert(res, 0)
+	if val then
+		if seq ~= 0 then utils.errorMessage( node.line, "incomplete UTF-8 character sequence: %s", utf8str) end
+		table.insert( res, val)
+	end
 	return res
 end
 
