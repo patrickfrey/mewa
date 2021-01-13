@@ -1,3 +1,5 @@
+extern "C" void printf( const char* fmt, ...);
+
 struct Tree
 {
 	struct Data
@@ -38,6 +40,7 @@ int main( int argc, const char** argv)
 	tree.data.val1 = 2;
 	tree.left = 0;
 	copyTree( &tree, &oth);
+	printf( "RES %d\n", tree.data.val1);
 	return tree.data.val1;
 }
 

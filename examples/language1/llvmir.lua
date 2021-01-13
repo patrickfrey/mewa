@@ -29,12 +29,12 @@ local pointerTemplate = {
 		["byte"] = "{1} = zext i8 {arg1} to i64\n{out} = getelementptr {pointee}, {pointee}* {this}, i64 {1}\n"
 	},
 	cmpop = {
-		["=="] = "{1} = {out} = icmp eq {pointee}* {1}, {2}\n",
-		["!="] = "{1} = {out} = icmp ne {pointee}* {1}, {2}\n",
-		["<="] = "{1} = {out} = icmp sle {pointee}* {1}, {2}\n",
-		["<"] = "{1} = {out} = icmp slt {pointee}* {1}, {2}\n",
-		[">="] = "{1} = {out} = icmp sge {pointee}* {1}, {2}\n",
-		[">"] = "{1} = {out} = icmp sgt {pointee}* {1}, {2}\n"}
+		["=="] = "{out} = icmp eq {pointee}* {this}, {arg1}\n",
+		["!="] = "{out} = icmp ne {pointee}* {this}, {arg1}\n",
+		["<="] = "{out} = icmp sle {pointee}* {this}, {arg1}\n",
+		["<"] = "{out} = icmp slt {pointee}* {this}, {arg1}\n",
+		[">="] = "{out} = icmp sge {pointee}* {this}, {arg1}\n",
+		[">"] = "{out} = icmp sgt {pointee}* {this}, {arg1}\n"}
 }
 
 local arrayTemplate = {
@@ -121,14 +121,15 @@ llvmir.control = {
 	label = "br label %{inp}\n{inp}:\n",
 	returnStatement = "ret {type} {inp}\n",
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
-	functionCall = "{out} = call {rtype} @{symbolname}( {callargstr})\n",
-	procedureCall = "call void @{symbolname}( {callargstr})\n",
+	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
+	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
+	extern_functionDeclaration_vararg = "declare external {rtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "define external i32 @main() #0 noinline nounwind {\nentry:\n{body}ret i32 0\n}\n",
 	structdef = "%{structname} = type { {llvmtype} }\n",
-	memPointerCast = "{out} = bitcast {i8* {inp} to {llvmtype}*\n",
+	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }
 

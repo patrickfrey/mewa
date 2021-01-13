@@ -823,6 +823,23 @@ static int mewa_typedb_type_string( lua_State* ls)
 	return 1;
 }
 
+static int mewa_typedb_type_context( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:type_context";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 2/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 2);
+		int type = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+
+		int rt = td->impl->typeContext( type);
+		lua_pushinteger( ls, rt);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
 static int mewa_typedb_type_parameters( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:type_parameters";
@@ -1142,6 +1159,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "resolve_type",	mewa_typedb_resolve_type },
 	{ "type_name",		mewa_typedb_type_name },
 	{ "type_string",	mewa_typedb_type_string },
+	{ "type_context",	mewa_typedb_type_context },
 	{ "type_parameters",	mewa_typedb_type_parameters },
 	{ "type_nof_parameters",mewa_typedb_type_nof_parameters },
 	{ "type_constructor",	mewa_typedb_type_constructor },

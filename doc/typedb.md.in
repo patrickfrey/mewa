@@ -24,6 +24,7 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
     * [typedb:resolve_type](#resolve_type)
 1. [Type Attributes](#typeAttributes)
     * [typedb:type_name](#type_name)
+    * [typedb:type_context](#type_context)
     * [typedb:type_string](#type_string)
     * [typedb:type_parameters](#type_parameters)
     * [typedb:type_nof_parameters](#type_nof_parameters)
@@ -336,6 +337,17 @@ Get the name of the type as it was specified as argument of 'typedb:def_type'.
 | :--------- | :----- | :---------------- | :------------------------------- |
 | 1st        | type   | integer           | Type identifier                  |
 | Return     |        | string            | Name of the type without context |
+
+<a name="type_context"/>
+
+### typedb:type_context
+Get the type handle of the type as specified as context-type argument (first) of 'typedb:def_type'.
+
+#### Parameter
+| #          | Name   | Type              | Description                                                         |
+| :--------- | :----- | :---------------- | :------------------------------------------------------------------ |
+| 1st        | type   | integer           | Type identifier                                                     |
+| Return     |        | string            | Handle of the context type of this type or 0 for the global context |
 
 
 <a name="type_string"/>

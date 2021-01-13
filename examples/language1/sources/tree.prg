@@ -1,4 +1,4 @@
-extern "C" procedure printf( const byte^, int);
+extern "C" procedure printf( const byte^ ...);
 extern "C" procedure putchar( const byte);
 extern "C" function byte^ malloc( long);
 extern "C" procedure free( byte^);
@@ -34,8 +34,8 @@ procedure printTree( const Tree^ node, int indent)
 		ii += 1;
 	}
 	printf( "Node: %d\n", node->data.val);
-	printTree( node->left, indent+1);
-	printTree( node->right, indent+1);
+	if (node->left != null) {printTree( node->left, indent+1);}
+	if (node->right != null) {printTree( node->right, indent+1);}
 }
 
 procedure deleteTree( Tree^ node)
@@ -47,8 +47,9 @@ procedure deleteTree( Tree^ node)
 
 main
 {
-	var Tree^ tree = new Tree: {{0},new Tree: {{1},null,null}, new Tree: {{2},null,null}};
-	printTree( tree);
+	var Tree^ tree = new Tree: {{11},new Tree: {{1},null,null}, new Tree: {{2},null,null}};
+	printf( "VAL %d\n", tree->data.val);
+	printTree( tree, 0);
 	deleteTree( tree);
 	printf( "Done\n");
 }

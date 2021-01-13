@@ -4,8 +4,14 @@
 local utils = {}
 
 -- Encode a name
+local encodeNameSubstMap = {
+	["*"]  = "$"
+}
 function utils.encodeName( name)
-	return (name:gsub("([*])", "$"))
+	local subst = function( match)
+		return encodeNameSubstMap[ match] or ""
+	end
+	return (name:gsub("([*%%])", subst))
 end
 
 -- Map Lexem values to strings encoded for LLVM IR output
@@ -260,9 +266,9 @@ function utils.utf8to32( node, utf8str)
 end
 
 -- Debug function that returns the tree with all resolve type paths
-function utils.getResolveTypeTreeDump( typedb, contextType, typeName, parameters, tagmask)
-	function getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, indentstr, visited)
-		local typeid = typedb:get_type( contextType, typeName, parameters)
+function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
+	function getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, indentstr, visited, weightsum)
+		local typeid = typedb:get_type( contextType, typeName)
 		if typeid then
 			return " " .. typeName .. " MATCH"
 		else
@@ -272,15 +278,15 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, parameters
 			for ri,rd in ipairs(rdlist) do
 				local in_visited = nil; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; break end end
 				if not in_visited then
-					rt = rt .. indentstr .. rd.weight .. ": " .. typedb:type_string( rd.type)
-					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, parameters, tagmask, indentstr .. "  ", visited)
+					rt = rt .. indentstr .. "[" .. weightsum+rd.weight .."] ".. typedb:type_string(contextType) .." -> ".. typedb:type_string(rd.type)
+					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, tagmask, indentstr .. "  ", visited, weightsum+rd.weight)
 				end
 			end
 			table.remove( visited, #visited)
 			return rt
 		end
 	end
-	return getResolveTypeTree_rec( typedb, contextType, typeName, parameters, tagmask, "", {})
+	return getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, "", {}, 0.0)
 end
 
 function treeToString( typedb, node, indentstr, node_tostring)

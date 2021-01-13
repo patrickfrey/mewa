@@ -445,7 +445,7 @@ static inline void pushTypeConstructorWeightTuple( lua_State* ls, int type, int 
 {
 	pushTypeConstructorPair( ls, type, constructor);
 	lua_pushliteral( ls, "weight");			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight"
-	lua_pushinteger( ls, weight);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight" [TYPE]
+	lua_pushnumber( ls, weight);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight" [TYPE]
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
 }
 

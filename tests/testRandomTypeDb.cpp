@@ -321,7 +321,126 @@ static bool startsWith( const std::string& str, const std::string& prefix)
 	return (prefix.size() <= str.size() && 0==std::memcmp( prefix.c_str(), str.c_str(), prefix.size()));
 }
 
-static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, const Scope::Step step, NodeDefTree const* tree, bool verbose)
+static std::string getExpectedString( NodeDefTree const* tree, uint64_t expc_oracle, const std::string& procnam)
+{
+	std::string rt;
+	if (expc_oracle)
+	{
+		std::vector<NodeDefTree const*> resultnodes;
+		collectPath( resultnodes, tree, expc_oracle, hibit(expc_oracle)/*mask*/);
+		int ridx = 0;
+		for (auto resultnode : resultnodes)
+		{
+			if (ridx++ > 0)
+			{
+				rt.append( " -> ");
+				rt.append( string_format( "%ld", resultnode->item.product));
+			}
+		}
+		rt.append( rt.empty() ? "{" : " {");
+		rt.append( string_format("%ld %s", resultnodes.back()->item.product, procnam.c_str()));
+		rt.append( "}");
+	}
+	else
+	{
+		rt.append( "{}");
+	}
+	return rt;
+}
+
+static std::vector<int> collectElementTypes( TypeDatabaseContext& ctx, NodeDefTree const* tree, uint64_t expc_oracle)
+{
+	std::vector<int> rt;
+	std::vector<NodeDefTree const*> resultnodes;
+	collectPath( resultnodes, tree, expc_oracle, hibit(expc_oracle)/*mask*/);
+	int ridx = 0;
+	for (auto resultnode : resultnodes)
+	{
+		std::string typenam = string_format("%ld", resultnode->item.product);
+		auto ti = ctx.typemap.find( typenam);
+		if (ti == ctx.typemap.end())
+		{
+			throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		}
+		if (ridx++ > 0) rt.push_back( ti->second);
+	}
+	return rt;
+}
+
+/// \brief Checks a condition that leads to correct results that cannot be verified:
+///	If list of result nodes contains two nodes A,B with distance > 2 but a reduction exists: A -> C -> B, but reduction B <- A exists 
+static bool checkExpectedContainingShortcutPaths( 
+		TypeDatabase& typedb, TypeDatabaseContext& ctx, const Scope::Step step,
+		NodeDefTree const* tree, uint64_t expc_oracle, bool verbose)
+{
+	bool rt = true;
+	std::vector<int> vv = collectElementTypes( ctx, tree, expc_oracle);
+	std::size_t vi = 0, ve = vv.size();
+	for (; vi < ve; ++vi)
+	{
+		std::size_t oi = vi+2, oe = vv.size();
+		for (; oi < oe; ++oi)
+		{
+			auto res = typedb.getReduction( step, vv[oi], vv[vi], TagMask::matchAll());
+			if (res.defined())
+			{
+				if (verbose)
+				{
+					std::cerr << "Rejected because of '" << typedb.typeName(vv[oi]) << "' <- '" << typedb.typeName(vv[vi]) << "' defined" << std::endl;
+				}
+				rt = false;
+			}
+		}
+	}
+	return rt;
+}
+
+static bool hasQueryLeaf( NodeDefTree const* tree, int query)
+{
+	if (tree->chld)
+	{
+		return hasQueryLeaf( tree->chld, query) || (tree->chld->next && hasQueryLeaf( tree->chld->next, query));
+	}
+	else if (tree->item.product == query)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+static bool collectPositions( std::map<int,int>& posmap, NodeDefTree const* tree, int query, int dist, bool verbose)
+{
+	if (hasQueryLeaf( tree, query))
+	{
+		auto ins = posmap.insert( {tree->item.product, dist});
+		if (ins.second == false/*not new*/ && ins.first->second != dist)
+		{
+			std::string typenam = string_format("%ld", tree->item.product);
+			if (verbose)
+			{
+				std::cerr << "Rejected because of '" << typenam << "' defined in different positions: " << ins.first->second << "," << dist << std::endl;
+			}
+			return false;
+		}
+		if (tree->chld)
+		{
+			if (!collectPositions( posmap, tree->chld, query, dist+1, verbose)) return false;
+			if (tree->chld->next) if (!collectPositions( posmap, tree->chld->next, query, dist+1, verbose)) return false;
+		}
+	}
+	return true;
+}
+
+static bool checkExpectedContainingSameElementsOfDifferentPositions( TypeDatabase& typedb, NodeDefTree const* tree, int query, bool verbose)
+{
+	std::map<int,int> posmap;
+	return collectPositions( posmap, tree, query, 0, verbose);
+}
+
+static bool testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, const Scope::Step step, NodeDefTree const* tree, bool verbose)
 {
 	int randomSearch = g_primes[ g_random.get( 0, NofPrimes)];
 	uint64_t expc_oracle1 = getShortestPath( tree, randomSearch/*elem*/, 1/*in*/, true/*ambiguity*/);
@@ -335,27 +454,16 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 	if (expc_oracle1 && expc_oracle2 && expc_oracle1 != expc_oracle2)
 	{
 		expc_str = "ambiguous";
-	}
-	else if (expc_oracle)
-	{
-		std::vector<NodeDefTree const*> resultnodes;
-		collectPath( resultnodes, tree, expc_oracle, hibit(expc_oracle)/*mask*/);
-		int ridx = 0;
-		for (auto resultnode : resultnodes)
+		if (verbose)
 		{
-			if (ridx++ > 0)
-			{
-				expc_str.append( " -> ");
-				expc_str.append( string_format( "%ld", resultnode->item.product));
-			}
+			std::cerr << "Expected ambiguous result: "
+				<< getExpectedString( tree, expc_oracle1, procnam) << " | "
+				<< getExpectedString( tree, expc_oracle2, procnam) << std::endl;
 		}
-		expc_str.append( expc_str.empty() ? "{" : " {");
-		expc_str.append( string_format("%ld %s", resultnodes.back()->item.product, procnam.c_str()));
-		expc_str.append( "}");
 	}
 	else
 	{
-		expc_str.append( "{}");
+		expc_str = getExpectedString( tree, expc_oracle, procnam);
 	}
 	auto ti = ctx.typemap.find( typenam);
 	if (ti == ctx.typemap.end())
@@ -375,7 +483,10 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 		if (verbose)
 		{
 			TypeDatabase::ResultBuffer resbuf_typestr;
-			std::cerr << "Conflicting type: " << typedb.typeToString( result.conflictType, " ", resbuf_typestr) << std::endl;
+			std::cerr << "Conflicting types: '"
+				<< typedb.typeToString( result.contextType, " ", resbuf_typestr) << "', '"
+				<< typedb.typeToString( result.conflictType, " ", resbuf_typestr) << "'"
+				<< std::endl;
 		}
 	}
 	else
@@ -421,16 +532,34 @@ static void testRandomQuery( TypeDatabase& typedb, TypeDatabaseContext& ctx, con
 		std::cerr << "Result: " << resc_str << std::endl;
 		std::cerr << "Expected: " << expc_str << std::endl;
 	}
+	if (expc_oracle1 && !checkExpectedContainingShortcutPaths( typedb, ctx, step, tree, expc_oracle1, verbose))
+	{
+		if (verbose && resc_str != expc_str) std::cerr << string_format( "Result not as expected: '%s' != '%s'", resc_str.c_str(), expc_str.c_str()) << std::endl; 
+		return false;
+	}
+	if (expc_oracle2 && !checkExpectedContainingShortcutPaths( typedb, ctx, step, tree, expc_oracle2, verbose))
+	{
+		if (verbose && resc_str != expc_str) std::cerr << string_format( "Result not as expected: '%s' != '%s'", resc_str.c_str(), expc_str.c_str()) << std::endl; 
+		return false;
+	}
+	if (!checkExpectedContainingSameElementsOfDifferentPositions( typedb, tree, randomSearch, verbose))
+	{
+		if (verbose && resc_str != expc_str) std::cerr << string_format( "Result not as expected: '%s' != '%s'", resc_str.c_str(), expc_str.c_str()) << std::endl; 
+		return false;
+	}
 	if (resc_str != expc_str)
 	{
 		throw std::runtime_error( string_format( "result not as expected: '%s' != '%s'", resc_str.c_str(), expc_str.c_str())); 
 	}
+	return true;
 }
 
 int main( int argc, const char* argv[] )
 {
 	try
 	{
+		int queryCount = 0;
+		int rejectedCount = 0;
 		int nofTests = 200;
 		int nofQueries = 5;
 		bool verbose = false;
@@ -486,14 +615,37 @@ int main( int argc, const char* argv[] )
 			(void)defineTypeInfo( *typedb, ctx, scope, tree.get());
 			if (verbose)
 			{
-				std::cerr << "Test [" << (ti+1) << "] random tree:" << std::endl;
+				std::cerr << "Test [" << (ti+1) << "]" << std::endl;
+				std::cerr << "Random Tree:" << std::endl;
 				tree->print( std::cerr);
+
+				TypeDatabase::ReductionDefinitionTree redutree = typedb->getReductionDefinitionTree();
+				std::cerr << "Reduction Definition Tree:" << std::endl;
+				auto ri = redutree.begin(), re = redutree.end();
+				for (; ri != re; ++ri)
+				{
+					std::string indentstr( ri.depth() * 2, ' ');
+					auto li = ri->item().value.begin(), le = ri->item().value.end();
+					for (; li != le; ++li)
+					{
+						std::cerr << indentstr
+							<< typedb->typeName( li->toType) << " [" << li->toType << "]"
+							<< " <- " << typedb->typeName( li->fromType) << " [" << li->fromType << "]"
+							<< " : " << li->weight << std::endl;
+					}
+				}
 			}
 			for (int qi=0; qi<nofQueries; ++qi)
 			{
-				testRandomQuery( *typedb, ctx, g_random.get( 0, scope.end()), tree.get(), verbose);
+				++queryCount;
+				if (!testRandomQuery( *typedb, ctx, g_random.get( 0, scope.end()), tree.get(), verbose))
+				{
+					++rejectedCount;
+					if (verbose) std::cerr << "Query rejected " << rejectedCount << " out of " << queryCount << std::endl;
+				}
 			}
 		}
+		if (verbose) std::cerr << "Queries rejected " << rejectedCount << " out of " << queryCount << std::endl;
 		std::cerr << "OK" << std::endl;
 		return 0;
 	}

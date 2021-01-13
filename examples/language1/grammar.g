@@ -27,10 +27,10 @@ datadefinitionlist	= datadefinition datadefinitionlist
 methoddefinitionlist 	= methoddefinition methoddefinitionlist
 			| ε
 			;
-externdefinition	= "extern" DQSTRING "function" typespec IDENT "(" externparameterlist ")" ";"	(extern_funcdef)
-			| "extern" DQSTRING "procedure" IDENT "(" externparameterlist ")" ";"		(extern_procdef)
-			;
-externparameterlist	= externparameters								(extern_paramdeflist)
+externdefinition	= "extern" DQSTRING "function" typespec IDENT "(" externparamlist ")" ";"	(extern_funcdef)
+			| "extern" DQSTRING "procedure" IDENT "(" externparamlist ")" ";"		(extern_procdef)
+			| "extern" DQSTRING "function" typespec IDENT "(" externparamlist "..." ")" ";"	(extern_funcdef_vararg)
+			| "extern" DQSTRING "procedure" IDENT "(" externparamlist "..." ")" ";"		(extern_procdef_vararg)
 			;
 externparameters 	= typespec "," externparameters
 			| typespec
@@ -38,7 +38,7 @@ externparameters 	= typespec "," externparameters
 methoddefinition 	= "function" typespec IDENT "(" parameterlist ")" ";"				(interface_funcdef)
 			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef)
 			;
-externparameterlist	= externparameters								(extern_paramdeflist)
+externparamlist		= externparameters								(extern_paramdeflist)
 			| ε
 			;
 mainproc		= "main" "{" codeblock "}"							({}main_procdef)

@@ -70,6 +70,15 @@ std::string_view TypeDatabase::typeName( int type) const
 	return m_identMap->inv( rec.inv.ident);
 }
 
+int TypeDatabase::typeContext( int type) const
+{
+	if (type == 0) return 0;
+	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
+
+	const TypeRecord& rec = m_typerecMap[ type-1];
+	return rec.inv.contextType;
+}
+
 void TypeDatabase::setObjectInstance( const std::string_view& name, const Scope& scope, int handle)
 {
 	if (handle <= 0) throw Error( Error::InvalidHandle, string_format( "%d", handle));
@@ -315,7 +324,7 @@ public:
 		return m_ar[ idx];
 	}
 
-	void collectResult( std::pmr::vector<TypeDatabase::ReductionResult>& result, int index)
+	void collectResult( std::pmr::vector<TypeDatabase::ReductionResult>& result, int index) const
 	{
 		while (index >= 0)
 		{
@@ -329,7 +338,23 @@ public:
 		std::reverse( result.begin(), result.end());
 	}
 
-	void collectConflictPath( std::pmr::vector<int>& result, int index)
+	std::vector<int> debugCollectConflictPath( int index) const
+	{
+		std::vector<int> rt;
+		while (index >= 0)
+		{
+			const ReduStackElem& ee = m_ar[ index];
+			if (ee.prev != -1)
+			{
+				rt.push_back( ee.type );
+			}
+			index = ee.prev;
+		}
+		std::reverse( rt.begin(), rt.end());
+		return rt;
+	}
+
+	void collectConflictPath( std::pmr::vector<int>& result, int index) const
 	{
 		while (index >= 0)
 		{
@@ -592,7 +617,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 		}
 		int constructor = contextTypeAr[ci] ? m_typerecMap[ contextTypeAr[ci]-1].constructor : 0;
 		int index = stack.pushNonDuplicateStart( contextTypeAr[ci], constructor);
-		priorityQueue.push( ReduQueueElem( 0.0/*weight*/, index));
+		if (index >= 0) priorityQueue.push( ReduQueueElem( 0.0/*weight*/, index));
 	}
 	while (!priorityQueue.empty())
 	{

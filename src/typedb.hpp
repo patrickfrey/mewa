@@ -393,6 +393,11 @@ public:
 	/// \return the scope where type has been defined
 	Scope typeScope( int type) const;
 
+	/// \brief Get the context type of this type
+	/// \param[in] type the handle of the type (return value of defineType)
+	/// \return the parameter contextType passed to defineType when defining this type
+	int typeContext( int type) const;
+
 private:
 	bool compareParameterSignature( const ParameterList& parameter, int param2, int paramlen2) const noexcept;
 	int findTypeWithSignature( int typerecidx, const ParameterList& parameter, int& lastIndex) const noexcept;

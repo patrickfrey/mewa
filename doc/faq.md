@@ -72,10 +72,15 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 <a name="astStructure"/>
 
 ### How to process the AST structure?
+The compiler builds an Abstract Syntax Tree (AST) with the lexems explicitely declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the AST. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in (typesystem_utils.lua)[examples/typesystem_utils.lua] for the tree traversal of sub nodes. The traversal function sets the current scope or scope step if defined in the AST and calls the function defined for the AST node.
+
+Unlike in most other compiler frontend frameworks the tree is meant to be traversed once. This means that at specific places it gets ugly. But the hacks needed are describable. It probably depends on the environment if this is justifiable or not. In my opinion it is for rapid prototyping.
 
 <a name="astTraversalAndScope"/>
 
 ### How to handle scopes?
+
+Scopes are part of the type database. Every definition has a scope attached. Depending on the current scope step only the subset of definitions having a scope covering it are visible when resolving a type. The current scope and the current scope step are set by the tree traversal function before calling the function attached to a node and set to the previous value after calling the function attached to a node.
 
 <a name="scopeInstanceAndAllocators"/>
 
