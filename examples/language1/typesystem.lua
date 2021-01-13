@@ -85,7 +85,6 @@ function callableCallConstructor( fmt, sep, argvar)
 		local this_code,this_inp = constructorParts( this)
 		local code = this_code
 		local argstr = ""
-		io.stderr:write( "++++ CALLABLE CALL " .. mewa.tostring( {args,llvmtypes}) .. "\n")
 		for ii=1,#args do
 			local arg = args[ ii]
 			local llvmtype = llvmtypes[ ii]
@@ -793,7 +792,7 @@ function selectItemsMatchParameters( items, args, this_constructor)
 						if not param_weight then break end
 
 						weight = weight + param_weight
-						local lvmtype,constructor = reduceArgLlvmtype( parameters[ pi].type, param_constructor)
+						local llvmtype,constructor = reduceArgLlvmtype( parameters[ pi].type, param_constructor)
 						table.insert( param_constructor_ar, constructor)
 						table.insert( param_llvmtype_ar, llvmtype)
 					end
@@ -806,15 +805,15 @@ function selectItemsMatchParameters( items, args, this_constructor)
 						if not param_weight then break end
 
 						weight = weight + param_weight
-						local lvmtype,constructor = reduceArgLlvmtype( parameters[ pi].type, param_constructor)
+						local llvmtype,constructor = reduceArgLlvmtype( parameters[ pi].type, param_constructor)
 						table.insert( param_constructor_ar, constructor)
 						table.insert( param_llvmtype_ar, llvmtype)
 					end
 					if #parameters == #param_constructor_ar then
 						for ai=#parameters+1,#args do
-							local lvmtype,constructor = reduceArgLlvmtype( args[ai].type, args[ai].constructor)
+							local llvmtype,constructor = reduceArgLlvmtype( args[ai].type, args[ai].constructor)
 							table.insert( param_constructor_ar, constructor)
-							table.insert( param_llvmtype_ar, lvmtype)
+							table.insert( param_llvmtype_ar, llvmtype)
 						end
 					end			
 				end
@@ -905,11 +904,11 @@ function defineCallableType( node, descr, contextTypeId)
 	if descr.ret then
 		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
 		local callfmt = utils.template_format( llvmir.control.functionCall, descr)
-		functype = defineCall( descr.ret, callable, "()", descr.param, callableCallConstructor( callfmt, ",", "callargstr"))
+		functype = defineCall( descr.ret, callable, "()", descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
 	else
 		descr.rtype = "void"
 		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
-		functype = defineCall( nil, callable, "()", descr.param, callableCallConstructor( callfmt, ",", "callargstr"))
+		functype = defineCall( nil, callable, "()", descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
 	end
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
