@@ -47,7 +47,7 @@ procedure deleteTree( Tree^ node)
 
 main
 {
-	var Tree^ tree = new Tree: {{11},new Tree: {{1},null,null}, new Tree: {{2},null,null}};
+	var Tree^ tree = new Tree: {{11},new Tree: {{1},null,null}, new Tree: {{2},null,new Tree: {{22},null,null}}};
 	printf( "VAL %d\n", tree->data.val);
 	printTree( tree, 0);
 	deleteTree( tree);

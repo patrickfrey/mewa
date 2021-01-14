@@ -221,13 +221,13 @@ ret void
 
 define external i32 @main() #0 noinline nounwind {
 entry:
-%r19 = alloca %Tree1*
-%r13 = call i8* @allocmem__i64( i64 24)
-%r14 = bitcast i8* %r13 to %Tree1*
-%r15 = getelementptr inbounds %Tree1, %Tree1* %r14, i32 0, i32 0
-%r16 = getelementptr inbounds %Data1, %Data1* %r15, i32 0, i32 0
-store i32 11, i32* %r16
-%r17 = getelementptr inbounds %Tree1, %Tree1* %r14, i32 0, i32 1
+%r25 = alloca %Tree1*
+%r19 = call i8* @allocmem__i64( i64 24)
+%r20 = bitcast i8* %r19 to %Tree1*
+%r21 = getelementptr inbounds %Tree1, %Tree1* %r20, i32 0, i32 0
+%r22 = getelementptr inbounds %Data1, %Data1* %r21, i32 0, i32 0
+store i32 11, i32* %r22
+%r23 = getelementptr inbounds %Tree1, %Tree1* %r20, i32 0, i32 1
 %r1 = call i8* @allocmem__i64( i64 24)
 %r2 = bitcast i8* %r1 to %Tree1*
 %r3 = getelementptr inbounds %Tree1, %Tree1* %r2, i32 0, i32 0
@@ -237,31 +237,40 @@ store i32 1, i32* %r4
 store %Tree1* null, %Tree1** %r5
 %r6 = getelementptr inbounds %Tree1, %Tree1* %r2, i32 0, i32 2
 store %Tree1* null, %Tree1** %r6
-store %Tree1* %r2, %Tree1** %r17
+store %Tree1* %r2, %Tree1** %r23
+%r24 = getelementptr inbounds %Tree1, %Tree1* %r20, i32 0, i32 2
+%r13 = call i8* @allocmem__i64( i64 24)
+%r14 = bitcast i8* %r13 to %Tree1*
+%r15 = getelementptr inbounds %Tree1, %Tree1* %r14, i32 0, i32 0
+%r16 = getelementptr inbounds %Data1, %Data1* %r15, i32 0, i32 0
+store i32 2, i32* %r16
+%r17 = getelementptr inbounds %Tree1, %Tree1* %r14, i32 0, i32 1
+store %Tree1* null, %Tree1** %r17
 %r18 = getelementptr inbounds %Tree1, %Tree1* %r14, i32 0, i32 2
 %r7 = call i8* @allocmem__i64( i64 24)
 %r8 = bitcast i8* %r7 to %Tree1*
 %r9 = getelementptr inbounds %Tree1, %Tree1* %r8, i32 0, i32 0
 %r10 = getelementptr inbounds %Data1, %Data1* %r9, i32 0, i32 0
-store i32 2, i32* %r10
+store i32 22, i32* %r10
 %r11 = getelementptr inbounds %Tree1, %Tree1* %r8, i32 0, i32 1
 store %Tree1* null, %Tree1** %r11
 %r12 = getelementptr inbounds %Tree1, %Tree1* %r8, i32 0, i32 2
 store %Tree1* null, %Tree1** %r12
 store %Tree1* %r8, %Tree1** %r18
-store %Tree1* %r14, %Tree1** %r19
-%r20 = getelementptr inbounds [8 x i8], [8 x i8]* @string2, i64 0, i64 0
-%r21 = load %Tree1*, %Tree1** %r19
-%r22 = getelementptr inbounds %Tree1, %Tree1* %r21, i32 0, i32 0
-%r23 = getelementptr inbounds %Data1, %Data1* %r22, i32 0, i32 0
-%r24 = load i32, i32* %r23
-call void(i8*, ...) @printf( i8* %r20, i32 %r24)
-%r26 = load %Tree1*, %Tree1** %r19
-call void @printTree_i32( %Tree1* %r26, i32 0)
-%r28 = load %Tree1*, %Tree1** %r19
-call void @deleteTree__Tree1$( %Tree1* %r28)
-%r30 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-call void(i8*, ...) @printf( i8* %r30)
+store %Tree1* %r14, %Tree1** %r24
+store %Tree1* %r20, %Tree1** %r25
+%r26 = getelementptr inbounds [8 x i8], [8 x i8]* @string2, i64 0, i64 0
+%r27 = load %Tree1*, %Tree1** %r25
+%r28 = getelementptr inbounds %Tree1, %Tree1* %r27, i32 0, i32 0
+%r29 = getelementptr inbounds %Data1, %Data1* %r28, i32 0, i32 0
+%r30 = load i32, i32* %r29
+call void(i8*, ...) @printf( i8* %r26, i32 %r30)
+%r32 = load %Tree1*, %Tree1** %r25
+call void @printTree_i32( %Tree1* %r32, i32 0)
+%r34 = load %Tree1*, %Tree1** %r25
+call void @deleteTree__Tree1$( %Tree1* %r34)
+%r36 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
+call void(i8*, ...) @printf( i8* %r36)
 ret i32 0
 }
 

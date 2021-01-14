@@ -544,8 +544,30 @@ Shift token ',' at line 50 in state 167, goto 224
 Shift token "null" at line 50 in state 224, goto 87
 Reduce #1 to expression by token ',' at line 50 in state 87, call null "constexpr float", goto 167
 Shift token ',' at line 50 in state 167, goto 224
+Shift token "new" at line 50 in state 224, goto 86
+Shift token IDENT = "Tree" at line 50 in state 86, goto 17
+Reduce #1 to typename by token ':' at line 50 in state 17, goto 8
+Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 161
+Shift token ':' at line 50 in state 161, goto 231
+Shift token '{' at line 50 in state 231, goto 95
+Shift token '{' at line 50 in state 95, goto 95
+Shift token CARDINAL = "22" at line 50 in state 95, goto 75
+Reduce #1 to expression by token '}' at line 50 in state 75, call constant "constexpr uint", goto 167
+Reduce #1 to expressionlist by token '}' at line 50 in state 167, goto 153
+Shift token '}' at line 50 in state 153, goto 225
+Reduce #3 to expression by token ',' at line 50 in state 225, call structure, goto 167
+Shift token ',' at line 50 in state 167, goto 224
+Shift token "null" at line 50 in state 224, goto 87
+Reduce #1 to expression by token ',' at line 50 in state 87, call null "constexpr float", goto 167
+Shift token ',' at line 50 in state 167, goto 224
 Shift token "null" at line 50 in state 224, goto 87
 Reduce #1 to expression by token '}' at line 50 in state 87, call null "constexpr float", goto 167
+Reduce #1 to expressionlist by token '}' at line 50 in state 167, goto 244
+Reduce #3 to expressionlist by token '}' at line 50 in state 244, goto 244
+Reduce #3 to expressionlist by token '}' at line 50 in state 244, goto 153
+Shift token '}' at line 50 in state 153, goto 225
+Reduce #3 to expression by token '}' at line 50 in state 225, call structure, goto 247
+Reduce #4 to expression by token '}' at line 50 in state 247, call allocate, goto 167
 Reduce #1 to expressionlist by token '}' at line 50 in state 167, goto 244
 Reduce #3 to expressionlist by token '}' at line 50 in state 244, goto 244
 Reduce #3 to expressionlist by token '}' at line 50 in state 244, goto 153
@@ -2328,10 +2350,63 @@ Lua call result [1]
                                       line = 50,
                                       step = 18},
                                     {
-                                      arg = {},
+                                      arg = {
+                                        {
+                                          arg = {
+                                            {
+                                              line = 50,
+                                              name = "IDENT",
+                                              value = "Tree"}},
+                                          call = {
+                                            name = "typespec ",
+                                            obj = "",
+                                            proc = <function>},
+                                          line = 50,
+                                          step = 18},
+                                        {
+                                          arg = {
+                                            {
+                                              arg = {
+                                                {
+                                                  arg = {
+                                                    {
+                                                      line = 50,
+                                                      name = "CARDINAL",
+                                                      value = "22"}},
+                                                  call = {
+                                                    name = "constant constexpr uint",
+                                                    obj = "constexpr uint",
+                                                    proc = <function>},
+                                                  line = 50,
+                                                  step = 18}},
+                                              call = {
+                                                name = "structure",
+                                                proc = <function>},
+                                              line = 50,
+                                              step = 18},
+                                            {
+                                              arg = {},
+                                              call = {
+                                                name = "null constexpr float",
+                                                obj = "constexpr float",
+                                                proc = <function>},
+                                              line = 50,
+                                              step = 18},
+                                            {
+                                              arg = {},
+                                              call = {
+                                                name = "null constexpr float",
+                                                obj = "constexpr float",
+                                                proc = <function>},
+                                              line = 50,
+                                              step = 18}},
+                                          call = {
+                                            name = "structure",
+                                            proc = <function>},
+                                          line = 50,
+                                          step = 18}},
                                       call = {
-                                        name = "null constexpr float",
-                                        obj = "constexpr float",
+                                        name = "allocate",
                                         proc = <function>},
                                       line = 50,
                                       step = 18}},
