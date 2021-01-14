@@ -34,6 +34,7 @@ local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template
 local stringConstantMap = {}    -- maps string constant values to a structure with its attributes {fmt,name,size}
 local arrayTypeMap = {}		-- maps the pair lval,size to the array type lval for an array size 
 local varargFuncMap = {}	-- maps types to true for vararg functions/procedures
+local varargParameterMap = {}	-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to
 
 function constructorParts( constructor)
 	if type(constructor) == "table" then return constructor.code or "",constructor.out else return "",tostring(constructor) end
@@ -90,7 +91,11 @@ function callableCallConstructor( fmt, sep, argvar)
 			local llvmtype = llvmtypes[ ii]
 			local arg_code,arg_inp = constructorParts( arg)
 			code = code .. arg_code
-			if ii == 1 then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
+			if llvmtype then
+				if ii == 1 then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
+			else
+				if ii == 1 then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
+			end
 		end
 		local subst = {out = out, this = this_inp, [argvar] = argstr}
 		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
@@ -118,6 +123,12 @@ local constexprFloatType = typedb:def_type( 0, "constexpr float")
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")
 local constexprNullType = typedb:def_type( 0, "constexpr null")
 local constexprStructureType = typedb:def_type( 0, "constexpr struct")
+
+varargParameterMap[ constexprIntegerType] = {llvmtype="i64",type=constexprIntegerType}
+varargParameterMap[ constexprUIntegerType] = {llvmtype="i64",type=constexprUIntegerType}
+varargParameterMap[ constexprFloatType] = {llvmtype="double",type=constexprFloatType}
+varargParameterMap[ constexprBooleanType] = {llvmtype="i1",type=constexprBooleanType}
+
 local typeClassToConstExprTypesMap = {
 	fp = {constexprFloatType,constexprIntegerType,constexprUIntegerType}, 
 	bool = {constexprBooleanType},
@@ -197,6 +208,15 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	local c_pval = typedb:def_type( contextTypeId, "const^" .. typnam)
 	local rpval = typedb:def_type( contextTypeId, "^&" .. typnam)
 	local c_rpval = typedb:def_type( contextTypeId, "const^&" .. typnam)
+
+	varargParameterMap[ lval] = {llvmtype=typeDescription.llvmtype,type=c_lval}
+	varargParameterMap[ c_lval] = {llvmtype=typeDescription.llvmtype,type=c_lval}
+	varargParameterMap[ rval] = {llvmtype=typeDescription.llvmtype,type=c_lval}
+	varargParameterMap[ c_rval] = {llvmtype=typeDescription.llvmtype,type=c_lval}
+	varargParameterMap[ pval] = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
+	varargParameterMap[ c_pval] = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
+	varargParameterMap[ rpval] = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
+	varargParameterMap[ c_rpval] = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
 
 	typeDescriptionMap[ lval] = typeDescription
 	typeDescriptionMap[ c_lval] = typeDescription
@@ -757,25 +777,28 @@ function getReductionConstructor( node, redu_type, operand)
 	end
 	return redu_constructor,weight
 end
-function reduceArgLlvmtype( argtype, argconstructor)
-	if argtype == constexprIntegerType then return "i64",argconstructor
-	elseif argtype == constexprUIntegerType then return "i64",argconstructor
-	elseif argtype == constexprFloatType then return "double",argconstructor
-	elseif argtype == constexprBooleanType then return "i1",argconstructor
-	else
-		local descr = typeDescriptionMap[ argtype]
-		if descr and descr.llvmtype then return descr.llvmtype, argconstructor end
-		local redulist = typedb:get_reductions( argtype, tagmask_declaration)
-		for ri,redu in ipairs(redulist) do
-			descr = typeDescriptionMap[ redu.type]
-			if descr and descr.llvmtype then
-				if redu.constructor then return descr.llvmtype, redu.constructor( argconstructor) else return descr.llvmtype, argconstructor end
-			end
+function getParameterConstructor( node, redu_type, operand)
+	local constructor,weight = getReductionConstructor( node, redu_type, operand)
+	if weight then
+		local vp = typeDescriptionMap[ redu_type]
+		if vp then return constructor,vp.llvmtype,weight else return constructor,nil,weight end
+	end
+end
+function getVarargConstructor( node, operand)
+	local vp = varargParameterMap[ operand.type]
+	if not vp then
+		local redulist = typedb:get_reductions( operand.type, tagmask_declaration)
+		for ri,redu in ipairs( redulist) do
+			vp = varargParameterMap[ redu.type]
+			if vp then break end
 		end
 	end
-	return nil,nil
+	if vp then
+		local constructor,weight = getReductionConstructor( node, vp.type, operand)
+		return constructor,vp.llvmtype,weight
+	end
 end
-function selectItemsMatchParameters( items, args, this_constructor)
+function selectItemsMatchParameters( node, items, args, this_constructor)
 	local bestmatch = {}
 	local bestweight = nil
 	for ii,item in ipairs(items) do
@@ -788,32 +811,30 @@ function selectItemsMatchParameters( items, args, this_constructor)
 				if #args > 0 then
 					local parameters = typedb:type_parameters( item.type)
 					for pi=1,#parameters do
-						local param_constructor,param_weight = getReductionConstructor( node, parameters[ pi].type, args[pi])
+						local param_constructor,param_llvmtype,param_weight = getParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
-
 						weight = weight + param_weight
-						local llvmtype,constructor = reduceArgLlvmtype( parameters[ pi].type, param_constructor)
-						table.insert( param_constructor_ar, constructor)
-						table.insert( param_llvmtype_ar, llvmtype)
+						table.insert( param_constructor_ar, param_constructor)
+						table.insert( param_llvmtype_ar, param_llvmtype)
 					end
 				end
 			elseif varargFuncMap[ item.type] then
 				if #args > 0 then
 					local parameters = typedb:type_parameters( item.type)
 					for pi=1,#parameters do
-						local param_constructor,param_weight = getReductionConstructor( node, parameters[ pi].type, args[pi])
+						local param_constructor,param_llvmtype,param_weight = getParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
-
 						weight = weight + param_weight
-						local llvmtype,constructor = reduceArgLlvmtype( parameters[ pi].type, param_constructor)
-						table.insert( param_constructor_ar, constructor)
-						table.insert( param_llvmtype_ar, llvmtype)
+						table.insert( param_constructor_ar, param_constructor)
+						table.insert( param_llvmtype_ar, param_llvmtype)
 					end
 					if #parameters == #param_constructor_ar then
 						for ai=#parameters+1,#args do
-							local llvmtype,constructor = reduceArgLlvmtype( args[ai].type, args[ai].constructor)
-							table.insert( param_constructor_ar, constructor)
-							table.insert( param_llvmtype_ar, llvmtype)
+							local param_constructor,param_llvmtype,param_weight = getVarargConstructor( node, args[ai])
+							if not param_weight then break end
+							weight = weight + param_weight
+							table.insert( param_constructor_ar, param_constructor)
+							table.insert( param_llvmtype_ar, param_llvmtype)
 						end
 					end			
 				end
@@ -833,7 +854,7 @@ function selectItemsMatchParameters( items, args, this_constructor)
 	end
 	return bestmatch,bestweight
 end
-function findApplyCallable( node, this, callable, args, param_pass_constructor)
+function findApplyCallable( node, this, callable, args)
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 
@@ -843,11 +864,11 @@ function findApplyCallable( node, this, callable, args, param_pass_constructor)
 			this_constructor = redu.constructor( this_constructor)
 		end
 	end
-	local bestmatch,bestweight = selectItemsMatchParameters( items, args or {}, this_constructor, param_pass_constructor)
+	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight
 end
-function applyCallable( node, this, callable, args, param_pass_constructor)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args, param_pass_constructor)
+function applyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if not bestweight then
 		utils.errorMessage( node.line, "Failed to find callable with signature '%s'",
 	                    utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")

@@ -497,7 +497,7 @@ Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto
 Shift token ':' at line 50 in state 161, goto 231
 Shift token '{' at line 50 in state 231, goto 95
 Shift token '{' at line 50 in state 95, goto 95
-Shift token CARDINAL = "0" at line 50 in state 95, goto 75
+Shift token CARDINAL = "11" at line 50 in state 95, goto 75
 Reduce #1 to expression by token '}' at line 50 in state 75, call constant "constexpr uint", goto 167
 Reduce #1 to expressionlist by token '}' at line 50 in state 167, goto 153
 Shift token '}' at line 50 in state 153, goto 225
@@ -560,48 +560,71 @@ Reduce #3 to expression by token ';' at line 50 in state 225, call structure, go
 Reduce #4 to expression by token ';' at line 50 in state 247, call allocate, goto 94
 Reduce #4 to variabledefinition by token ';' at line 50 in state 94, call vardef_assign, goto 156
 Shift token ';' at line 50 in state 156, goto 226
-Reduce #3 to statement by token IDENT = "printTree" at line 51 in state 226, call definition, goto 68
-Shift token IDENT = "printTree" at line 51 in state 68, goto 72
+Reduce #3 to statement by token IDENT = "printf" at line 51 in state 226, call definition, goto 68
+Shift token IDENT = "printf" at line 51 in state 68, goto 72
 Reduce #1 to expression by token '(' at line 51 in state 72, call variable, goto 69
 Shift token '(' at line 51 in state 69, goto 115
-Shift token IDENT = "tree" at line 51 in state 115, goto 72
-Reduce #1 to expression by token ',' at line 51 in state 72, call variable, goto 167
+Shift token DQSTRING = "VAL %d\n" at line 51 in state 115, goto 73
+Reduce #1 to expression by token ',' at line 51 in state 73, call string_constant "constexpr float", goto 167
 Shift token ',' at line 51 in state 167, goto 224
-Shift token CARDINAL = "0" at line 51 in state 224, goto 75
-Reduce #1 to expression by token ')' at line 51 in state 75, call constant "constexpr uint", goto 167
+Shift token IDENT = "tree" at line 51 in state 224, goto 72
+Reduce #1 to expression by token "->" at line 51 in state 72, call variable, goto 167
+Shift token "->" at line 51 in state 167, goto 149
+Reduce #1 to indirection by token IDENT = "data" at line 51 in state 149, call count, goto 114
+Shift token IDENT = "data" at line 51 in state 114, goto 186
+Reduce #3 to iexpression by token '.' at line 51 in state 186, call rep_operator "->", goto 70
+Reduce #1 to expression by token '.' at line 51 in state 70, goto 167
+Shift token '.' at line 51 in state 167, goto 148
+Shift token IDENT = "val" at line 51 in state 148, goto 220
+Reduce #3 to expression by token ')' at line 51 in state 220, call member, goto 167
 Reduce #1 to expressionlist by token ')' at line 51 in state 167, goto 244
 Reduce #3 to expressionlist by token ')' at line 51 in state 244, goto 187
 Shift token ')' at line 51 in state 187, goto 242
 Reduce #4 to expression by token ';' at line 51 in state 242, call operator "()", goto 69
 Shift token ';' at line 51 in state 69, goto 116
-Reduce #2 to statement by token IDENT = "deleteTree" at line 52 in state 116, call free_expression, goto 68
-Shift token IDENT = "deleteTree" at line 52 in state 68, goto 72
+Reduce #2 to statement by token IDENT = "printTree" at line 52 in state 116, call free_expression, goto 68
+Shift token IDENT = "printTree" at line 52 in state 68, goto 72
 Reduce #1 to expression by token '(' at line 52 in state 72, call variable, goto 69
 Shift token '(' at line 52 in state 69, goto 115
 Shift token IDENT = "tree" at line 52 in state 115, goto 72
-Reduce #1 to expression by token ')' at line 52 in state 72, call variable, goto 167
-Reduce #1 to expressionlist by token ')' at line 52 in state 167, goto 187
+Reduce #1 to expression by token ',' at line 52 in state 72, call variable, goto 167
+Shift token ',' at line 52 in state 167, goto 224
+Shift token CARDINAL = "0" at line 52 in state 224, goto 75
+Reduce #1 to expression by token ')' at line 52 in state 75, call constant "constexpr uint", goto 167
+Reduce #1 to expressionlist by token ')' at line 52 in state 167, goto 244
+Reduce #3 to expressionlist by token ')' at line 52 in state 244, goto 187
 Shift token ')' at line 52 in state 187, goto 242
 Reduce #4 to expression by token ';' at line 52 in state 242, call operator "()", goto 69
 Shift token ';' at line 52 in state 69, goto 116
-Reduce #2 to statement by token IDENT = "printf" at line 53 in state 116, call free_expression, goto 68
-Shift token IDENT = "printf" at line 53 in state 68, goto 72
+Reduce #2 to statement by token IDENT = "deleteTree" at line 53 in state 116, call free_expression, goto 68
+Shift token IDENT = "deleteTree" at line 53 in state 68, goto 72
 Reduce #1 to expression by token '(' at line 53 in state 72, call variable, goto 69
 Shift token '(' at line 53 in state 69, goto 115
-Shift token DQSTRING = "Done\n" at line 53 in state 115, goto 73
-Reduce #1 to expression by token ')' at line 53 in state 73, call string_constant "constexpr float", goto 167
+Shift token IDENT = "tree" at line 53 in state 115, goto 72
+Reduce #1 to expression by token ')' at line 53 in state 72, call variable, goto 167
 Reduce #1 to expressionlist by token ')' at line 53 in state 167, goto 187
 Shift token ')' at line 53 in state 187, goto 242
 Reduce #4 to expression by token ';' at line 53 in state 242, call operator "()", goto 69
 Shift token ';' at line 53 in state 69, goto 116
-Reduce #2 to statement by token '}' at line 54 in state 116, call free_expression, goto 68
-Reduce #0 to statementlist by token '}' at line 54 in state 68, goto 113
-Reduce #2 to statementlist by token '}' at line 54 in state 113, goto 113
-Reduce #2 to statementlist by token '}' at line 54 in state 113, goto 113
-Reduce #2 to statementlist by token '}' at line 54 in state 113, goto 113
-Reduce #2 to statementlist by token '}' at line 54 in state 113, goto 67
-Reduce #1 to codeblock by token '}' at line 54 in state 67, call codeblock, goto 66
-Shift token '}' at line 54 in state 66, goto 112
+Reduce #2 to statement by token IDENT = "printf" at line 54 in state 116, call free_expression, goto 68
+Shift token IDENT = "printf" at line 54 in state 68, goto 72
+Reduce #1 to expression by token '(' at line 54 in state 72, call variable, goto 69
+Shift token '(' at line 54 in state 69, goto 115
+Shift token DQSTRING = "Done\n" at line 54 in state 115, goto 73
+Reduce #1 to expression by token ')' at line 54 in state 73, call string_constant "constexpr float", goto 167
+Reduce #1 to expressionlist by token ')' at line 54 in state 167, goto 187
+Shift token ')' at line 54 in state 187, goto 242
+Reduce #4 to expression by token ';' at line 54 in state 242, call operator "()", goto 69
+Shift token ';' at line 54 in state 69, goto 116
+Reduce #2 to statement by token '}' at line 55 in state 116, call free_expression, goto 68
+Reduce #0 to statementlist by token '}' at line 55 in state 68, goto 113
+Reduce #2 to statementlist by token '}' at line 55 in state 113, goto 113
+Reduce #2 to statementlist by token '}' at line 55 in state 113, goto 113
+Reduce #2 to statementlist by token '}' at line 55 in state 113, goto 113
+Reduce #2 to statementlist by token '}' at line 55 in state 113, goto 113
+Reduce #2 to statementlist by token '}' at line 55 in state 113, goto 67
+Reduce #1 to codeblock by token '}' at line 55 in state 67, call codeblock, goto 66
+Shift token '}' at line 55 in state 66, goto 112
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -2188,7 +2211,7 @@ Lua call result [1]
                                     {
                                       line = 50,
                                       name = "CARDINAL",
-                                      value = "0"}},
+                                      value = "11"}},
                                   call = {
                                     name = "constant constexpr uint",
                                     obj = "constexpr uint",
@@ -2351,7 +2374,7 @@ Lua call result [1]
                         {
                           line = 51,
                           name = "IDENT",
-                          value = "printTree"}},
+                          value = "printf"}},
                       call = {
                         name = "variable",
                         proc = <function>},
@@ -2359,24 +2382,54 @@ Lua call result [1]
                       step = 19},
                     {
                       arg = {
+                        {
+                          line = 51,
+                          name = "DQSTRING",
+                          value = "VAL %d\\n"}},
+                      call = {
+                        name = "string_constant constexpr float",
+                        obj = "constexpr float",
+                        proc = <function>},
+                      line = 51,
+                      step = 19},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 51,
+                                  name = "IDENT",
+                                  value = "tree"}},
+                              call = {
+                                name = "variable",
+                                proc = <function>},
+                              line = 51,
+                              step = 19},
+                            {
+                              arg = {},
+                              call = {
+                                name = "count",
+                                proc = <function>},
+                              line = 51,
+                              step = 19},
+                            {
+                              line = 51,
+                              name = "IDENT",
+                              value = "data"}},
+                          call = {
+                            name = "rep_operator ->",
+                            obj = "->",
+                            proc = <function>},
+                          line = 51,
+                          step = 19},
                         {
                           line = 51,
                           name = "IDENT",
-                          value = "tree"}},
+                          value = "val"}},
                       call = {
-                        name = "variable",
-                        proc = <function>},
-                      line = 51,
-                      step = 19},
-                    {
-                      arg = {
-                        {
-                          line = 51,
-                          name = "CARDINAL",
-                          value = "0"}},
-                      call = {
-                        name = "constant constexpr uint",
-                        obj = "constexpr uint",
+                        name = "member",
                         proc = <function>},
                       line = 51,
                       step = 19}},
@@ -2400,7 +2453,7 @@ Lua call result [1]
                         {
                           line = 52,
                           name = "IDENT",
-                          value = "deleteTree"}},
+                          value = "printTree"}},
                       call = {
                         name = "variable",
                         proc = <function>},
@@ -2414,6 +2467,18 @@ Lua call result [1]
                           value = "tree"}},
                       call = {
                         name = "variable",
+                        proc = <function>},
+                      line = 52,
+                      step = 19},
+                    {
+                      arg = {
+                        {
+                          line = 52,
+                          name = "CARDINAL",
+                          value = "0"}},
+                      call = {
+                        name = "constant constexpr uint",
+                        obj = "constexpr uint",
                         proc = <function>},
                       line = 52,
                       step = 19}},
@@ -2437,7 +2502,7 @@ Lua call result [1]
                         {
                           line = 53,
                           name = "IDENT",
-                          value = "printf"}},
+                          value = "deleteTree"}},
                       call = {
                         name = "variable",
                         proc = <function>},
@@ -2447,11 +2512,10 @@ Lua call result [1]
                       arg = {
                         {
                           line = 53,
-                          name = "DQSTRING",
-                          value = "Done\\n"}},
+                          name = "IDENT",
+                          value = "tree"}},
                       call = {
-                        name = "string_constant constexpr float",
-                        obj = "constexpr float",
+                        name = "variable",
                         proc = <function>},
                       line = 53,
                       step = 19}},
@@ -2465,21 +2529,59 @@ Lua call result [1]
                 name = "free_expression",
                 proc = <function>},
               line = 53,
+              step = 19},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 54,
+                          name = "IDENT",
+                          value = "printf"}},
+                      call = {
+                        name = "variable",
+                        proc = <function>},
+                      line = 54,
+                      step = 19},
+                    {
+                      arg = {
+                        {
+                          line = 54,
+                          name = "DQSTRING",
+                          value = "Done\\n"}},
+                      call = {
+                        name = "string_constant constexpr float",
+                        obj = "constexpr float",
+                        proc = <function>},
+                      line = 54,
+                      step = 19}},
+                  call = {
+                    name = "operator ()",
+                    obj = "()",
+                    proc = <function>},
+                  line = 54,
+                  step = 19}},
+              call = {
+                name = "free_expression",
+                proc = <function>},
+              line = 54,
               step = 19}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 53,
+          line = 54,
           step = 19}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 53,
+      line = 54,
       scope = {
         18,
         20}}},
   call = {
     name = "program",
     proc = <function>},
-  line = 53,
+  line = 54,
   step = 20}
