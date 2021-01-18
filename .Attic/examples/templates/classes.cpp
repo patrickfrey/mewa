@@ -48,7 +48,7 @@ private:
 int main( int argc, char const* argv[])
 {
 	do_throw_flag = argc > 3;
-	B( "blabla", "hallygally");
+	B( "blabla", argv[1]);
 	return 0;
 }
 

@@ -63,7 +63,9 @@ ret i32 %r24
 @string1 = private unnamed_addr constant [12 x i8] c"Result: %d\0A\00"
 
 
-define external i32 @main() #0 noinline nounwind {
+declare dso_local i32 @__gxx_personality_v0(...)
+define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+{
 entry:
 %r2 = alloca i32, align 4
 %r1 = call i32 @fibonacci__i32( i32 20)

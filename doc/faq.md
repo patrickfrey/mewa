@@ -86,25 +86,58 @@ Scopes are part of the type database. Every definition has a scope attached. Dep
 
 ### How to store and access scope related data?
 
+Scope related data in form of a lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing scopes inherit an object from the parent scope) with [typedb:get_instance](#get_instance).
+
 <a name="typeQualifiers"/>
 
 ### How to implement type qualifiers like const and reference?
+
+Qualifiers are not considered to be attached to the type but part of the type definition. So a const reference to an integer is a type on its its own, like an integer value type or a pointer to an integer. There are no attributes of types in the typedb, but you can associate attributes to types with lua tables. The implementation of the "language1" example does this quite extensively. In the typedb the only relations of types are implemented as reduction definitions.
 
 <a name="pointersAndArrays"/>
 
 ### How to implement pointers and arrays?
 
+Pointers and arrays are types on its own. Because there are no attributes attached to types in the typedb, you have to declare an array of size 40 as own type that differs from the array of size 20. For arrays you need a mechanism for definition on demand. Such a mechanism you need for templates too.
+
 <a name="namespaces"/>
 
 ### How to implement namespaces?
+
+Namespaces are as types. A namespace type can then be used as context type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context types or a single context type as argument. 
 
 <a name="complexExpressions"/>
 
 ### How to implement complex expressions?
 
+For complex expressions you may need some sort of recursive type resolution within a constructor call. In the "example language 1" I defined a const expression type for unresolved structures represented as list of type constructor pairs. The reduction of such a structure to a type that can bew instantiated with structures using type resolution ([typedb:resolve_type](#resolve_type)) and type derivation ([typedb:derive_type](#derive_type)) to build the structures as composition of the structure members. This mechanism can be defined recursively, meaning that the members can be defined as const expression type for unresolved structures themselves.
+
 <a name="controlStructures"/>
 
 ### How to implement control structures?
+
+Control structure constructors are special because you need to interrupt and terminate expression evaluation as soon as the expression evaluation result is determined. Most known programming languages have this behaviour in their specification. For example in an expression in C/C++ like 
+```C
+if (expr != NULL && expr->data != NULL) {...}
+```
+the subexpression ```expr->data != NULL``` is not evaluated if ```expr != NULL``` evaluated to false.
+
+For control structures two new types have been defined in the example "language1":
+1. Control True Type that represents a constructor as structure with 2 members: 
+    1. **code** containing the code that is executed in the case the expression evaluates to **true** and 
+    1. **out** the name of a free label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and 
+1. Control False Type
+    1. **code** containing the code that is executed in the case the expression evaluates to **false** and 
+    1. **out** the name of a free label (not appearing in the code yet) where the evaluation jumps to in the case the expression evaluates to **true** and 
+
+An expression with the operator ```||``` is evaluated to a control false type.
+An expression with the operator ```&&``` is evaluated to a control true type.
+This is because the behaviour has also to apply to expressions without control structures like the C99/C++ example
+```C
+bool hasData = (expr != NULL && expr->data != NULL);
+```
+Control true/false types are convertible into each other.
+Depending on the control structure one of control true type or control false type is required.
 
 <a name="constants"/>
 
@@ -196,11 +229,18 @@ _We leave this question as TODO_.
 
 ### How to implement exception handling?
 
+Exception handling and especially zero-cost exception handling is a subject of further investigation in _Mewa_. As I broadly understood it you define a block with destructors to be executed in case of a thrown exception and LLVM builds the tables needed. This can be be implemented without any support needed from _typedb_.
+
 <a name="templates"/>
 
 ### How to implement generic programming with templates?
 
+Templates are a subject of further investigation in _Mewa_. I have the vague idea to define a type ```TPL<ARG1,...>``` and reductions ```TPL<ARG1,...> -> ARG1``` and for all template arguments ARGi respectively. The resulting type of the reduction is the template parameter passed. The sub with the template definition is then evaluated with these reductions in the template scope defined. Templates are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and assoziate it with a type instead of directly evaluating it.
+
 <a name="cLibraryCalls"/>
 
-### How to implement call of C-Library functions?
+### How to implement the call of a C-Library function?
+
+LLVM supports extern calls. In the specification of the example "language1" I support calls of the C standard library.
+
 

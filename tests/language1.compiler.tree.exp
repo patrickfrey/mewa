@@ -219,7 +219,9 @@ ret void
 @string3 = private unnamed_addr constant [6 x i8] c"Done\0A\00"
 
 
-define external i32 @main() #0 noinline nounwind {
+declare dso_local i32 @__gxx_personality_v0(...)
+define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+{
 entry:
 %r25 = alloca %Tree1*
 %r19 = call i8* @allocmem__i64( i64 24)

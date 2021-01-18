@@ -13,45 +13,53 @@ INTEGER : '[-][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
 
-program		   	= externlist definitionlist mainproc						(program)
+program		   	= extern_definitionlist free_definitionlist main_procedure			(program)
 			;
-externlist		= externdefinition externlist
+extern_definitionlist	= extern_definition extern_definitionlist
 			| ε
 			;
-definitionlist		= definition definitionlist
+free_definitionlist	= free_definition free_definitionlist
 			| ε
 			;
-datadefinitionlist	= datadefinition datadefinitionlist
+struct_definitionlist	= struct_definition struct_definitionlist
 			| ε
 			;
-methoddefinitionlist 	= methoddefinition methoddefinitionlist
+class_definitionlist	= class_definition class_definitionlist
 			| ε
 			;
-externdefinition	= "extern" DQSTRING "function" typespec IDENT "(" externparamlist ")" ";"	(extern_funcdef)
-			| "extern" DQSTRING "procedure" IDENT "(" externparamlist ")" ";"		(extern_procdef)
-			| "extern" DQSTRING "function" typespec IDENT "(" externparamlist "..." ")" ";"	(extern_funcdef_vararg)
-			| "extern" DQSTRING "procedure" IDENT "(" externparamlist "..." ")" ";"		(extern_procdef_vararg)
+interface_definitionlist= interface_definition interface_definitionlist
+			| ε
 			;
-externparameters 	= typespec "," externparameters
+extern_definition	= "extern" DQSTRING "function" typespec IDENT "(" extern_paramlist ")" ";"	(extern_funcdef)
+			| "extern" DQSTRING "procedure" IDENT "(" extern_paramlist ")" ";"		(extern_procdef)
+			| "extern" DQSTRING "function" typespec IDENT "(" extern_paramlist "..." ")" ";"(extern_funcdef_vararg)
+			| "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";"	(extern_procdef_vararg)
+			;
+extern_parameters 	= typespec "," extern_parameters
 			| typespec
 			;
-methoddefinition 	= "function" typespec IDENT "(" parameterlist ")" ";"				(interface_funcdef)
-			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef)
-			;
-externparamlist		= externparameters								(extern_paramdeflist)
+extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε
 			;
-mainproc		= "main" "{" codeblock "}"							({}main_procdef)
-			| ε
+interface_definition 	= "function" typespec IDENT "(" parameterlist ")" ";"				(interface_funcdef "&")
+			| "function" typespec IDENT "(" parameterlist ")" "const" ";"			(interface_funcdef "const&")
+			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef "&")
+			| "procedure" IDENT "(" parameterlist ")" "const" ";"				(interface_procdef "const&")
 			;
-datadefinition		= typedefinition ";"								(definition)
+struct_definition	= typedefinition ";"								(definition)
 			| variabledefinition ";"							(definition)
-			| structdefinition ";"								(definition)
+			| structdefinition								(definition)
 			;
-definition		= datadefinition
+class_definition	= struct_definition
+			| constructordefinition
 			| functiondefinition								(definition)
-			| classdefinition ";"								(definition)
-			| interfacedefinition ";"							(definition)
+			| classdefinition 								(definition)
+			| interfacedefinition								(definition)
+			;
+free_definition		= struct_definition
+			| functiondefinition								(definition)
+			| classdefinition 								(definition)
+			| interfacedefinition								(definition)
 			;
 typename/L1		= IDENT
 			| IDENT "::" typename
@@ -71,11 +79,15 @@ typespec/L1		= typename									(typespec "")
 			;
 typedefinition		= "typedef" typename IDENT							(>>typedef)
 			;
-structdefinition	= "struct" IDENT "{" datadefinitionlist "}"					(>>structdef)
+structdefinition	= "struct" IDENT "{" struct_definitionlist "}"					(>>structdef)
 			;
-interfacedefinition	= "interface" IDENT "{" methoddefinitionlist "}"				(>>interfacedef)
+interfacedefinition	= "interface" IDENT "{" interface_definitionlist "}"				(>>interfacedef)
 			;
-classdefinition		= "class" IDENT "{" definitionlist "}"						(>>classdef)
+inheritlist		= typename "," inheritlist							(>>inheritdef)
+			| typename									(>>inheritdef)
+			;
+classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
+			| "class" IDENT ":" inheritlist "{" class_definitionlist "}"			(>>classdef_inherit)
 			;
 linkage			= "private"									(linkage {linkage="internal", attributes="#0 nounwind"})
 			| "public"									(linkage {linkage="external", attributes="#0 noinline nounwind"})
@@ -84,7 +96,14 @@ linkage			= "private"									(linkage {linkage="internal", attributes="#0 nounw
 functiondefinition	= linkage "function" typespec IDENT callablebody				(funcdef)
 			| linkage "procedure" IDENT callablebody					(procdef)
 			;
-callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody)
+constructordefinition	= linkage "constructor" callablebody						(constructordef)
+			| "destructor" "{" codeblock "}"						(destructordef)
+			;
+callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody "&")
+			|  "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody "const&")
+			;
+main_procedure		= "main" "{" codeblock "}"							({}main_procdef)
+			| ε
 			;
 parameterlist		= parameters									(paramdeflist)
 			| ε

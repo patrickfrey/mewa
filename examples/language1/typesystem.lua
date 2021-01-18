@@ -92,9 +92,9 @@ function callableCallConstructor( fmt, sep, argvar)
 			local arg_code,arg_inp = constructorParts( arg)
 			code = code .. arg_code
 			if llvmtype then
-				if ii == 1 then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
+				if argstr == "" then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
 			else
-				if ii == 1 then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
+				if argstr == "" then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
 			end
 		end
 		local subst = {out = out, this = this_inp, [argvar] = argstr}
@@ -483,6 +483,10 @@ function getFrameCodeBlock( code)
 	else
 		return code
 	end
+end
+function defineVariableHardcoded( node, typeId, name, reg)
+	local var = typedb:def_type( 0, name, reg)
+	typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)	
 end
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
@@ -915,7 +919,18 @@ function getParameterTypeList( args)
 	return rt
 end
 function getTypeDeclContextTypeId( context)
-	if not context then return 0 elseif context.qualitype then return context.qualitype.lval else return 0 end
+	-- io.stderr:write( "++++ CALL getTypeDeclContextTypeId " .. mewa.tostring(context) .. "\n")
+	if context.qualitype then return context.qualitype.lval else return 0 end
+end
+function getCallableContextTypeId( node, context)
+	-- io.stderr:write( "++++ CALL getCallableContextTypeId " .. mewa.tostring(mewa.stacktrace(9,{"traverse"})) .. "\n")
+	if context.qualitype then
+		-- io.stderr:write( "++++ CONTEXT " .. mewa.tostring(context) .. "\n")
+		if context.const == true then return context.qualitype.c_rval else return context.qualitype.rval end
+	else
+		-- io.stderr:write( "++++ NO CONTEXT\n")
+		if context.const == true then utils.errorMessage( node.line, "Callable const declaration undefined for free function") else return 0 end
+	end
 end
 function defineCallableType( node, descr, contextTypeId)
 	local callable = typedb:get_type( contextTypeId, descr.name)
@@ -934,9 +949,11 @@ function defineCallableType( node, descr, contextTypeId)
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallable( node, descr, context)
+	-- io.stderr:write("++++ CALL defineCallable " .. mewa.tostring(context) .. "\n")
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.name, descr.param, context)
-	defineCallableType( node, descr, getTypeDeclContextTypeId( context))
+	defineCallableType( node, descr, getCallableContextTypeId( node, context))
+	-- io.stderr:write("++++ DONE defineCallable\n")
 end
 function printCallable( node, descr, context)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -976,6 +993,7 @@ end
 
 -- AST Callbacks:
 function typesystem.definition( node, context)
+	-- io.stderr:write( "++++ CALL typesystem.definition " .. mewa.tostring(context) .. "\n")
 	local arg = utils.traverse( typedb, node, context)
 	if arg[1] then return {code = arg[1].constructor.code} else return {code=""} end
 end
@@ -1173,6 +1191,7 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, context)
+	-- io.stderr:write("++++ CALL typesystem.funcdef " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3] }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
@@ -1181,6 +1200,7 @@ function typesystem.funcdef( node, context)
 	printCallable( node, descr, context)
 end
 function typesystem.procdef( node, context)
+	-- io.stderr:write("++++ CALL typesystem.procdef " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = nil, name = arg[2] }
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, nil, 1)[3]
@@ -1188,8 +1208,14 @@ function typesystem.procdef( node, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, nil, 2)[3] .. "ret void\n"
 	printCallable( node, descr, context)
 end
-function typesystem.callablebody( node, context, rtype, select)
+function typesystem.constructordef( node, context)
+end
+function typesystem.destructordef( node, context)
+end
+function typesystem.callablebody( node, qualifier, context, rtype, select)
+	-- io.stderr:write( "++++ CALL typesystem.callablebody ".. mewa.tostring( mewa.stacktrace( 7, {"traverse"})) .. "\n")
 	-- HACK: This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable recursion (self reference)
+	context.const = (qualifier == "const&")
 	if select == 1 then
 		defineCallableBodyContext( node.scope, rtype)
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
@@ -1227,9 +1253,15 @@ function typesystem.extern_procdef_vararg( node)
 	local descr = {externtype = arg[1], name = arg[2], param = arg[3], vararg=true}
 	defineExternCallable( node, descr)
 end
-function typesystem.interface_funcdef( node)
+function typesystem.interface_funcdef( node, qualifier, context)
+	-- io.stderr:write("++++ CALL typesystem.funcdef " .. qualifier .. " " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
+	local arg = utils.traverse( typedb, node)
+	local descr = {ret = arg[1], name = arg[2], param = arg[3]}
 end
-function typesystem.interface_procdef( node)
+function typesystem.interface_procdef( node, qualifier, context)
+	-- io.stderr:write("++++ CALL typesystem.funcdef " .. qualifier .. " " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
+	local arg = utils.traverse( typedb, node)
+	local descr = {name = arg[1], param = arg[2]}
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
@@ -1252,7 +1284,13 @@ function typesystem.interfacedef( node, context)
 end
 function typesystem.classdef( node, context)
 end
+function typesystem.classdef_inherit( node, context)
+end
+function typesystem.inheritdef( node, context)
+end
 function typesystem.main_procdef( node)
+	defineVariableHardcoded( node, stringPointerType, "argc", "%argc")
+	defineVariableHardcoded( node, scalarIntegerType, "argv", "%argv")
 	defineCallableBodyContext( node.scope, scalarIntegerType)
 	local arg = utils.traverse( typedb, node)
 	local descr = {body = arg[1].code}

@@ -17,11 +17,11 @@ struct Tree
 	struct Data
 	{
 		int val;
-	};
+	}
 	Data data;
 	Tree^ left;
 	Tree^ right;
-};
+}
 
 Tree g_tree;
 
