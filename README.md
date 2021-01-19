@@ -25,4 +25,5 @@ The project development is currently ongoing and only what you find in the tests
 * [Error Codes](doc/errorcodes.md)
 * [FAQ](doc/faq.md)
 * [Links](doc/links.md)
+* [Wishlist for LLVM IR](doc/wishlist_llvmir.md)
 
