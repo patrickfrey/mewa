@@ -196,6 +196,48 @@ function defineConstExprArithmetics()
 	function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, 0.25)
 end
+function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
+	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
+
+	local priv_rval = typedb:def_type( contextTypeId, "private &" .. typnam)
+	local priv_c_rval = typedb:def_type( contextTypeId, "private const&" .. typnam)
+	local priv_pval = typedb:def_type( contextTypeId, "private ^" .. typnam)
+	local priv_c_pval = typedb:def_type( contextTypeId, "private const^" .. typnam)
+
+	qualitype.priv_rval = priv_rval
+	qualitype.priv_c_rval = priv_c_rval
+	qualitype.priv_pval = priv_pval
+	qualitype.priv_c_pval = priv_c_pval
+
+	varargParameterMap[ priv_rval] = {llvmtype=typeDescription.llvmtype,type=qualitype.c_lval}
+	varargParameterMap[ priv_c_rval] = {llvmtype=typeDescription.llvmtype,type=qualitype.c_lval}
+	varargParameterMap[ priv_pval] = {llvmtype=pointerTypeDescription.llvmtype,type=qualitype.c_pval}
+	varargParameterMap[ priv_c_pval] = {llvmtype=pointerTypeDescription.llvmtype,type=qualitype.c_pval}
+
+	typeDescriptionMap[ priv_rval] = pointerTypeDescription
+	typeDescriptionMap[ priv_c_rval] = pointerTypeDescription
+	typeDescriptionMap[ priv_pval] = pointerTypeDescription
+	typeDescriptionMap[ priv_c_pval] = pointerTypeDescription
+
+	referenceTypeMap[ priv_rval] = priv_rval
+	referenceTypeMap[ priv_c_rval] = priv_c_rval
+	referenceTypeMap[ priv_pval] = rpval
+	referenceTypeMap[ priv_c_pval] = c_rpval
+
+	typeQualiSepMap[ priv_rval] = {lval=lval,qualifier="private &"}
+	typeQualiSepMap[ priv_c_rval] = {lval=lval,qualifier="private const&"}
+	typeQualiSepMap[ priv_pval] = {lval=lval,qualifier="private ^"}
+	typeQualiSepMap[ priv_c_pval] = {lval=lval,qualifier="private const^"}
+
+	typedb:def_reduction( rval, priv_rval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( c_rval, priv_c_rval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( pval, priv_pval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( c_pval, priv_c_pval, nil, tag_typeDeduction, 0.125/16)
+
+	defineCall( priv_pval, priv_rval, "&", {}, function(this) return this end)
+	defineCall( priv_rval, priv_pval, "->", {}, function(this) return this end)
+	defineCall( priv_c_rval, priv_c_pval, "->", {}, function(this) return this end)
+end
 function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 	local pointerPointerTypeDescription = llvmir.pointerDescr( pointerTypeDescription)
@@ -361,9 +403,10 @@ function defineIndexOperators( element_qualitype, pointer_descr)
 		defineCall( element_qualitype.c_rval, element_qualitype.c_pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
 	end
 end
-function definePointerOperators( c_pval, pointer_descr)
+function definePointerOperators( priv_c_pval, c_pval, pointer_descr)
 	for operator,operator_fmt in pairs( pointer_descr.cmpop) do
 		defineCall( scalarBooleanType, c_pval, operator, {c_pval}, callConstructor( operator_fmt))
+		if priv_c_pval then defineCall( scalarBooleanType, priv_c_pval, operator, {c_pval}, callConstructor( operator_fmt)) end
 	end
 end
 function defineBuiltInTypeConversions( typnam, descr)
@@ -446,7 +489,7 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
 		typedb:scope( scopebk)
 		arrayTypeMap[ typekey] = qualitype.lval
-		definePointerOperators( qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+		definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	end
 	return rt
 end
@@ -1267,7 +1310,8 @@ function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
 	local structname = utils.uniqueName( typnam)
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
-	local qualitype = defineQualifiedTypes( getTypeDeclContextTypeId( context), typnam, descr)
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	local defcontext = getContextTypes()
 	table.insert( defcontext, qualitype.lval)
 	typedb:set_instance( "context", defcontext)
@@ -1275,7 +1319,7 @@ function typesystem.structdef( node, context)
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize
 	defineAssignOperators( qualitype, descr)
-	definePointerOperators( qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineConstructors( node, qualitype, descr, context.ctors, context.ctors_assign, context.dtors)
 	defineStructureConstructors( node, qualitype, descr, context.ctors_elements, context.elements)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
@@ -1283,6 +1327,22 @@ end
 function typesystem.interfacedef( node, context)
 end
 function typesystem.classdef( node, context)
+	local typnam = node.arg[1].value
+	local classname = utils.uniqueName( typnam)
+	local descr = utils.template_format( llvmir.classTemplate, {classname=classname})
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local defcontext = getContextTypes()
+	table.insert( defcontext, qualitype.lval)
+	typedb:set_instance( "context", defcontext)
+	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
+	local arg = utils.traverse( typedb, node, context)
+	descr.size = context.structsize
+	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
+	defineAssignOperators( qualitype, descr)
+	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	defineConstructors( node, qualitype, descr, context.ctors, context.ctors_assign, context.dtors)
+	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=classname,llvmtype=context.llvmtype}))
 end
 function typesystem.classdef_inherit( node, context)
 end

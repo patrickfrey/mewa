@@ -110,6 +110,25 @@ llvmir.structTemplate = {
 	load = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n"
 }
 
+llvmir.classTemplate = {
+	classname = "{classname}",
+	def_local = "{out} = alloca %{classname}, align 8\n",
+	def_global = "{out} = internal global %{classname} zeroinitializer, align 8\n",
+	llvmtype = "%{classname}",
+	scalar = false,
+	class = "class",
+	align = 8,
+	assign = "store %{classname} {arg1}, %{classname}* {this}\n",
+	ctorproc = "define private dso_local void @__ctor_{classname}( %{classname}* %ptr) alwaysinline {\n"
+		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
+	dtorproc = "define private dso_local void @__dtor_{classname}( %{classname}* %ptr) alwaysinline {\n"
+		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
+	ctor = "call void @__ctor_{classname}( %{classname}* {this})\n",
+	dtor = "call void @__dtor_{classname}( %{classname}* {this})\n",
+	loadref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
+	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n"
+}
+
 llvmir.control = {
 	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
 	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
