@@ -21,6 +21,8 @@ define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i3
 {
 entry:
 ret i32 0
+br label %exit
+exit:
 ret i32 0
 }
 

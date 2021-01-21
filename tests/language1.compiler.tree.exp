@@ -273,6 +273,8 @@ call void @printTree_i32( %Tree1* %r32, i32 0)
 call void @deleteTree__Tree1$( %Tree1* %r34)
 %r36 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
 call void(i8*, ...) @printf( i8* %r36)
+br label %exit
+exit:
 ret i32 0
 }
 

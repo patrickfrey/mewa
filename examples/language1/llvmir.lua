@@ -149,7 +149,7 @@ llvmir.control = {
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
-				.. "{\nentry:\n{body}ret i32 0\n}\n",
+				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
 	structdef = "%{structname} = type { {llvmtype} }\n",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"

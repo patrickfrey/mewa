@@ -1,15 +1,14 @@
 extern "C" procedure printf( const byte^, int);
 
-private procedure swap( int& a, int& b)
-{
-        var int tmp = a;
-	a = b;
-	b = tmp;
-}
-
 private function int fibonacci( int n)
 {
-        var int i1 = 0;
+	procedure swap( int& a, int& b)
+	{
+		var int tmp = a;
+		a = b;
+		b = tmp;
+	}
+	var int i1 = 0;
         var int i2 = 1;
         var int i = 0;
 	while (i < n)

@@ -77,17 +77,19 @@ typespec/L1		= typename									(typespec "")
 			| typename "^" "^" "&"								(typespec "^^&")
 			| "const" typename  "^" "^" "&"							(typespec "const^^&")
 			;
-typedefinition		= "typedef" typename IDENT							(>>typedef)
+typepath/L1		= typename									(typespec "")
+			;
+typedefinition		= "typedef" typepath IDENT							(>>typedef)
 			;
 structdefinition	= "struct" IDENT "{" struct_definitionlist "}"					(>>structdef)
 			;
 interfacedefinition	= "interface" IDENT "{" interface_definitionlist "}"				(>>interfacedef)
 			;
-inheritlist		= typename "," inheritlist							(>>inheritdef)
-			| typename									(>>inheritdef)
+inheritlist		= typepath "," inheritlist							(>>inheritdef)
+			| typepath									(>>inheritdef)
 			;
 classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
-			| "class" IDENT ":" inheritlist "{" class_definitionlist "}"			(>>classdef_inherit)
+			| "class" IDENT ":" inheritlist "{" class_definitionlist "}"			(>>classdef)
 			;
 linkage			= "private"									(linkage {linkage="internal", attributes="#0 nounwind"})
 			| "public"									(linkage {linkage="external", attributes="#0 noinline nounwind"})

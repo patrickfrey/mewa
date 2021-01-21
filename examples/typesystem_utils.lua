@@ -158,7 +158,7 @@ function utils.traverseRange( typedb, node, range, ...)
 	elseif (node.step) then
 		local prev_step = typedb:step( node.step)
 		rt = utils.traverseCallRange( node, range, ...)
-		typedb:step( prev_step)
+		-- in contrast to then scope the scope step is not restored
 	else
 		rt = utils.traverseCallRange( node, range, ...)
 	end
@@ -217,6 +217,10 @@ function utils.resolveTypeString( typedb, contextType, typeName)
 	return rt;
 end
 
+-- Stacktrace:
+function utils.stack( msg)
+	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( 7,{"traverse","utils.stack"}), true) .. "\n")
+end
 -- Error reporting:
 -- Exit with error message and line info
 function utils.errorMessage( line, fmt, ...)

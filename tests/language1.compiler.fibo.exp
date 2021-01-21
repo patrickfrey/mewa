@@ -19,7 +19,7 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
 declare external void @printf( i8*, i32 ) #1 nounwind
 
 
-define internal void @swap_i32$( i32* %r1, i32* %r2 ) #0 nounwind {
+define internal void @swap__1( i32* %r1, i32* %r2 ) #0 nounwind {
 entry:
 %r3 = alloca i32, align 4
 %r5 = load i32, i32* %r1
@@ -50,7 +50,7 @@ L2:
 %r11 = load i32, i32* %r2
 %r12 = add nsw i32 %r10, %r11
 store i32 %r12, i32* %r2
-call void @swap_i32$( i32* %r2, i32* %r3)
+call void @swap__1( i32* %r2, i32* %r3)
 %r20 = load i32, i32* %r4
 %r23 = add nsw i32 %r20, 1
 store i32 %r23, i32* %r4
@@ -73,6 +73,8 @@ store i32 %r1, i32* %r2
 %r3 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
 %r4 = load i32, i32* %r2
 call void @printf( i8* %r3, i32 %r4)
+br label %exit
+exit:
 ret i32 0
 }
 

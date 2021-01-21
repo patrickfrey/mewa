@@ -229,10 +229,10 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	typeQualiSepMap[ priv_pval] = {lval=lval,qualifier="private ^"}
 	typeQualiSepMap[ priv_c_pval] = {lval=lval,qualifier="private const^"}
 
-	typedb:def_reduction( rval, priv_rval, nil, tag_typeDeduction, 0.125/16)
-	typedb:def_reduction( c_rval, priv_c_rval, nil, tag_typeDeduction, 0.125/16)
-	typedb:def_reduction( pval, priv_pval, nil, tag_typeDeduction, 0.125/16)
-	typedb:def_reduction( c_pval, priv_c_pval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( qualitype.pval, priv_pval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( qualitype.c_pval, priv_c_pval, nil, tag_typeDeduction, 0.125/16)
 
 	defineCall( priv_pval, priv_rval, "&", {}, function(this) return this end)
 	defineCall( priv_rval, priv_pval, "->", {}, function(this) return this end)
@@ -528,8 +528,10 @@ function getFrameCodeBlock( code)
 	end
 end
 function defineVariableHardcoded( node, typeId, name, reg)
+	local prev_scope = typedb:scope( node.scope)
 	local var = typedb:def_type( 0, name, reg)
-	typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)	
+	typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
+	typedb:scope( prev_scope)
 end
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
@@ -565,56 +567,79 @@ function defineVariable( node, context, typeId, name, initVal)
 		typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	else
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
-		local element_qualisep = typeQualiSepMap[ typeId]
-		local element_qualitype = qualiTypeMap[ element_qualisep.lval]
-		local element_qualifier = element_qualisep.qualifier
-		local element_index = context.index; context.index = element_index + 1
-		if context.llvmtype then
-			context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype
-		else
-			context.llvmtype = descr.llvmtype
-		end
-		while math.fmod( context.structsize or 0, descr.align) ~= 0 do
-			context.structsize = context.structsize + 1
-		end
-		context.structsize = (context.structsize or 0) + descr.size
+		defineVariableMember( node, context, typeId, name, context.private)
+	end
+end
+function defineVariableMember( node, context, typeId, name, private)
+	local descr = typeDescriptionMap[ typeId]
+	local element_qualisep = typeQualiSepMap[ typeId]
+	local element_qualitype = qualiTypeMap[ element_qualisep.lval]
+	local element_qualifier = element_qualisep.qualifier
+	local element_index = context.index; context.index = element_index + 1
+	if context.llvmtype then
+		context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype
+	else
+		context.llvmtype = descr.llvmtype
+	end
+	while math.fmod( context.structsize or 0, descr.align) ~= 0 do
+		context.structsize = context.structsize + 1
+	end
+	context.structsize = (context.structsize or 0) + descr.size
 
-		local out = context.register()
-		local inp = context.register()
-		local load_ths = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=descr.llvmtype} )
-		local load_oth = utils.constructor_format( context.descr.loadref, {out=inp,this="%oth",index=element_index, type=descr.llvmtype},context.register)
-		if descr.ctor then
-			context.ctors = (context.ctors or "") .. load_ths .. utils.constructor_format( descr.ctor, {this=out}, context.register)
-		end
-		if not context.elements then context.elements = {typeId} else table.insert( context.elements, typeId) end
-		local code_ctor_assign = utils.constructor_format( descr.ctor_assign, {this=out,arg1=inp}, context.register)
-		context.ctors_assign = (context.ctors_assign or "") .. load_ths .. load_oth .. code_ctor_assign
-		local code_ctor_elements = utils.constructor_format( descr.assign, {this=out,arg1="%p" .. #context.elements}, context.register)
-		context.ctors_elements = (context.ctors_elements or "") .. load_ths .. code_ctor_elements
-		if descr.dtor then
-			context.dtors = (context.dtors or "") .. load_ths .. utils.constructor_format( descr.dtor, {this=out}, context.register)
-		end
-		local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=descr.llvmtype}))
-		local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=descr.llvmtype}))
-		if element_qualifier == "" then
-			defineCall( element_qualitype.rval, context.qualitype.rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_lval, context.qualitype.c_lval, name, {}, load_val)
-		elseif element_qualifier == "^" then
-			defineCall( element_qualitype.rpval, context.qualitype.rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
-		elseif element_qualifier == "const " then
-			defineCall( element_qualitype.c_rval, context.qualitype.rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_rval, context.qualitype.c_rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_lval, context.qualitype.c_lval, name, {}, load_val)
-		elseif element_qualifier == "const^" then
-			defineCall( element_qualitype.c_rpval, context.qualitype.rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_rpval, context.qualitype.c_rval, name, {}, load_ref)
-			defineCall( element_qualitype.c_pval, context.qualitype.c_lval, name, {}, load_val)
-		else
-			utils.errorMessage( node.line, "Qualifier '%s' not allowed for member variables", element_qualifier)
-		end
+	local out = context.register()
+	local inp = context.register()
+	local load_ths = utils.constructor_format( context.descr.loadref, {out=out,this="%ptr",index=element_index, type=descr.llvmtype} )
+	local load_oth = utils.constructor_format( context.descr.loadref, {out=inp,this="%oth",index=element_index, type=descr.llvmtype},context.register)
+	if descr.ctor then
+		context.ctors = (context.ctors or "") .. load_ths .. utils.constructor_format( descr.ctor, {this=out}, context.register)
+	end
+	if not context.elements then context.elements = {typeId} else table.insert( context.elements, typeId) end
+	local code_ctor_assign = utils.constructor_format( descr.ctor_assign, {this=out,arg1=inp}, context.register)
+	context.ctors_assign = (context.ctors_assign or "") .. load_ths .. load_oth .. code_ctor_assign
+	local code_ctor_elements = utils.constructor_format( descr.assign, {this=out,arg1="%p" .. #context.elements}, context.register)
+	context.ctors_elements = (context.ctors_elements or "") .. load_ths .. code_ctor_elements
+	if descr.dtor then
+		context.dtors = (context.dtors or "") .. load_ths .. utils.constructor_format( descr.dtor, {this=out}, context.register)
+	end
+	local load_ref = callConstructor( utils.template_format( context.descr.loadref, {index=element_index, type=descr.llvmtype}))
+	local load_val = callConstructor( utils.template_format( context.descr.load, {index=element_index, type=descr.llvmtype}))
+	local dx; if private == true then
+		dx = {rval=context.qualitype.priv_rval, c_rval=context.qualitype.priv_c_rval}
+	else
+		dx = {rval=context.qualitype.rval, c_rval=context.qualitype.c_rval, c_lval=context.qualitype.c_lval}
+	end
+	if element_qualifier == "" then
+		if dx.rval then defineCall( element_qualitype.rval, dx.rval, name, {}, load_ref) end
+		if dx.c_rval then defineCall( element_qualitype.c_rval, dx.c_rval, name, {}, load_ref) end
+		if dx.c_lval then defineCall( element_qualitype.c_lval, dx.c_lval, name, {}, load_val) end
+	elseif element_qualifier == "^" then
+		if dx.rval then defineCall( element_qualitype.rpval, dx.rval, name, {}, load_ref) end
+		if dx.c_rval then defineCall( element_qualitype.c_rpval, dx.c_rval, name, {}, load_ref) end
+		if dx.c_lval then defineCall( element_qualitype.c_pval, dx.c_lval, name, {}, load_val) end
+	elseif element_qualifier == "const " then
+		if dx.rval then defineCall( element_qualitype.c_rval, dx.rval, name, {}, load_ref) end
+		if dx.c_rval then defineCall( element_qualitype.c_rval, dx.c_rval, name, {}, load_ref) end
+		if dx.c_lval then defineCall( element_qualitype.c_lval, dx.c_lval, name, {}, load_val) end
+	elseif element_qualifier == "const^" then
+		if dx.rval then defineCall( element_qualitype.c_rpval, dx.rval, name, {}, load_ref) end
+		if dx.c_rval then defineCall( element_qualitype.c_rpval, dx.c_rval, name, {}, load_ref) end
+		if dx.c_lval then defineCall( element_qualitype.c_pval, dx.c_lval, name, {}, load_val) end
+	else
+		utils.errorMessage( node.line, "Qualifier '%s' not allowed for member variables", element_qualifier)
+	end
+end
+function defineReductionToMember( objTypeId, name)
+	memberTypeId = typedb:get_type( objTypeId, name)
+	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, 0.125/32)
+end
+function defineInheritance( context, name)
+	if context.private == true then
+		defineReductionToMember( context.qualitype.priv_rval, name)
+		defineReductionToMember( context.qualitype.priv_c_rval, name)
+	else
+		defineReductionToMember( context.qualitype.rval, name)
+		defineReductionToMember( context.qualitype.c_rval, name)
+		defineReductionToMember( context.qualitype.c_lval, name)
 	end
 end
 
@@ -962,16 +987,13 @@ function getParameterTypeList( args)
 	return rt
 end
 function getTypeDeclContextTypeId( context)
-	-- io.stderr:write( "++++ CALL getTypeDeclContextTypeId " .. mewa.tostring(context) .. "\n")
 	if context.qualitype then return context.qualitype.lval else return 0 end
 end
 function getCallableContextTypeId( node, context)
-	-- io.stderr:write( "++++ CALL getCallableContextTypeId " .. mewa.tostring(mewa.stacktrace(9,{"traverse"})) .. "\n")
+	if not context then return 0 end
 	if context.qualitype then
-		-- io.stderr:write( "++++ CONTEXT " .. mewa.tostring(context) .. "\n")
 		if context.const == true then return context.qualitype.c_rval else return context.qualitype.rval end
 	else
-		-- io.stderr:write( "++++ NO CONTEXT\n")
 		if context.const == true then utils.errorMessage( node.line, "Callable const declaration undefined for free function") else return 0 end
 	end
 end
@@ -992,11 +1014,9 @@ function defineCallableType( node, descr, contextTypeId)
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallable( node, descr, context)
-	-- io.stderr:write("++++ CALL defineCallable " .. mewa.tostring(context) .. "\n")
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.name, descr.param, context)
 	defineCallableType( node, descr, getCallableContextTypeId( node, context))
-	-- io.stderr:write("++++ DONE defineCallable\n")
 end
 function printCallable( node, descr, context)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -1015,8 +1035,17 @@ function defineExternCallable( node, descr)
 	local declfmt; if descr.vararg then declfmt = llvmir.control.extern_functionDeclaration_vararg else declfmt = llvmir.control.extern_functionDeclaration end
 	print( "\n" .. utils.constructor_format( declfmt, descr))
 end
-function defineCallableBodyContext( scope, rtype)
-	typedb:set_instance( "callable", {scope=scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=rtype})
+function defineCallableBodyContext( node, rtype)
+	local prev_scope = typedb:scope( node.scope)
+	typedb:set_instance( "callable", {scope=node.scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=rtype})
+	typedb:scope( prev_scope)
+end
+function defineMainProcContext( node)
+	local prev_scope = typedb:scope( node.scope)
+	defineVariableHardcoded( node, stringPointerType, "argc", "%argc")
+	defineVariableHardcoded( node, scalarIntegerType, "argv", "%argv")
+	typedb:set_instance( "callable", {scope=node.scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=scalarIntegerType})
+	typedb:scope( prev_scope)
 end
 function getStringConstant( value)
 	if not stringConstantMap[ value] then
@@ -1036,7 +1065,6 @@ end
 
 -- AST Callbacks:
 function typesystem.definition( node, context)
-	-- io.stderr:write( "++++ CALL typesystem.definition " .. mewa.tostring(context) .. "\n")
 	local arg = utils.traverse( typedb, node, context)
 	if arg[1] then return {code = arg[1].constructor.code} else return {code=""} end
 end
@@ -1182,7 +1210,6 @@ function typesystem.conditional_while( node)
 	return {code = startcode .. cond_constructor.code .. arg[2].code 
 			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
 end
-
 function typesystem.typespec( node, qualifier)
 	local typeName = qualifier .. node.arg[ #node.arg].value
 	local typeId
@@ -1234,7 +1261,6 @@ function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
 function typesystem.funcdef( node, context)
-	-- io.stderr:write("++++ CALL typesystem.funcdef " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3] }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
@@ -1243,7 +1269,6 @@ function typesystem.funcdef( node, context)
 	printCallable( node, descr, context)
 end
 function typesystem.procdef( node, context)
-	-- io.stderr:write("++++ CALL typesystem.procdef " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = nil, name = arg[2] }
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, nil, 1)[3]
@@ -1256,11 +1281,10 @@ end
 function typesystem.destructordef( node, context)
 end
 function typesystem.callablebody( node, qualifier, context, rtype, select)
-	-- io.stderr:write( "++++ CALL typesystem.callablebody ".. mewa.tostring( mewa.stacktrace( 7, {"traverse"})) .. "\n")
-	-- HACK: This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable recursion (self reference)
-	context.const = (qualifier == "const&")
+	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
+	if context then context.const = (qualifier == "const&") end
 	if select == 1 then
-		defineCallableBodyContext( node.scope, rtype)
+		defineCallableBodyContext( node, rtype)
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		return arg[1]
 	else
@@ -1297,12 +1321,10 @@ function typesystem.extern_procdef_vararg( node)
 	defineExternCallable( node, descr)
 end
 function typesystem.interface_funcdef( node, qualifier, context)
-	-- io.stderr:write("++++ CALL typesystem.funcdef " .. qualifier .. " " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
 	local arg = utils.traverse( typedb, node)
 	local descr = {ret = arg[1], name = arg[2], param = arg[3]}
 end
 function typesystem.interface_procdef( node, qualifier, context)
-	-- io.stderr:write("++++ CALL typesystem.funcdef " .. qualifier .. " " .. mewa.tostring(context) .. " STK " .. mewa.tostring(mewa.stacktrace(7,{"traverse"})) .. "\n")
 	local arg = utils.traverse( typedb, node)
 	local descr = {name = arg[1], param = arg[2]}
 end
@@ -1315,7 +1337,7 @@ function typesystem.structdef( node, context)
 	local defcontext = getContextTypes()
 	table.insert( defcontext, qualitype.lval)
 	typedb:set_instance( "context", defcontext)
-	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
+	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=false}
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize
 	defineAssignOperators( qualitype, descr)
@@ -1332,26 +1354,30 @@ function typesystem.classdef( node, context)
 	local descr = utils.template_format( llvmir.classTemplate, {classname=classname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	local defcontext = getContextTypes()
 	table.insert( defcontext, qualitype.lval)
 	typedb:set_instance( "context", defcontext)
-	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator()}
+	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=true}
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize
-	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	defineAssignOperators( qualitype, descr)
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineConstructors( node, qualitype, descr, context.ctors, context.ctors_assign, context.dtors)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=classname,llvmtype=context.llvmtype}))
 end
-function typesystem.classdef_inherit( node, context)
-end
 function typesystem.inheritdef( node, context)
+	local arg = utils.traverseRange( typedb, node, {1,1}, context)
+ 	local typeId = arg[1]
+	local typnam = typedb:type_name(typeId)
+	local private = false
+	defineVariableMember( node, context, typeId, typnam, private)
+	defineInheritance( context, typnam)
+	local next = utils.traverseRange( typedb, node, {2,2}, context)
+	return {typeId, next[2]}
 end
 function typesystem.main_procdef( node)
-	defineVariableHardcoded( node, stringPointerType, "argc", "%argc")
-	defineVariableHardcoded( node, scalarIntegerType, "argv", "%argv")
-	defineCallableBodyContext( node.scope, scalarIntegerType)
+	defineMainProcContext( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {body = arg[1].code}
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
@@ -1361,7 +1387,6 @@ function typesystem.program( node)
 	utils.traverse( typedb, node, {})
 	return node
 end
-
 function typesystem.count( node)
 	if #node.arg == 0 then
 		return 1
