@@ -26,4 +26,5 @@ The project development is currently ongoing and only what you find in the tests
 * [FAQ](doc/faq.md)
 * [Links](doc/links.md)
 * [Wishlist for LLVM IR](doc/wishlist_llvmir.md)
+* [TODO](doc/todo.md)
 
