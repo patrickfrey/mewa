@@ -232,7 +232,7 @@ struct FunctionDef
 	int contextType;
 	std::string name;
 	std::string label;
-	std::vector<TypeDatabase::Parameter> parameter;
+	std::vector<TypeDatabase::TypeConstructorPair> parameter;
 
 	FunctionDef( const FunctionDef& o)
 		:contextType(o.contextType),name(o.name),label(o.label),parameter(o.parameter){}
@@ -368,7 +368,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 			++ii;
 			int distance = 0;
 			out << "Candidate [" << ii << "]: " << tdbimpl.typeToString( item.type) << std::endl;
-			TypeDatabase::ParameterList parameters = tdbimpl.typedb->typeParameters( item.type);
+			TypeDatabase::TypeConstructorPairList parameters = tdbimpl.typedb->typeParameters( item.type);
 			int pi = 0;
 			if (fdef.parameter.size() != parameters.size())
 			{

@@ -217,10 +217,10 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
 		case ExpectedTableArgument: return "Expected table as argument";
 		case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
-		case ExpectedArgumentParameterStructureList:  return "Expected argument to be a list of type,constructor pairs (named or positional)";
+		case ExpectedArgumentTypeConstructorPairList:  return "Expected argument to be a list of type,constructor pairs (named or positional)";
 		case ExpectedArgumentStringList: return "Expected argument to be a list of strings";
 		case ExpectedArgumentTypeList: return "Expected argument to be a list of types (integers)";
-		case ExpectedArgumentTypeOrParameterStructureList: return "Expected argument to be a list of types (integers) or type,constructor pairs";
+		case ExpectedArgumentTypeOrTypeConstructorPairList: return "Expected argument to be a list of types (integers) or type,constructor pairs";
 
 		case ExpectedArgumentNotNil: return "Expected argument to be not nil";
 		case TooFewArguments: return "Too few arguments";

@@ -76,30 +76,30 @@ public:
 			return ar[ idx];
 		}
 	};
-	struct Parameter
+	struct TypeConstructorPair
 	{
 		int type;
 		int constructor;
 
-		Parameter() noexcept
+		TypeConstructorPair() noexcept
 			:type(0),constructor(0){}
-		Parameter( const Parameter& o) noexcept
+		TypeConstructorPair( const TypeConstructorPair& o) noexcept
 			:type(o.type),constructor(o.constructor){}
-		Parameter( int type_, int constructor_) noexcept
+		TypeConstructorPair( int type_, int constructor_) noexcept
 			:type(type_),constructor(constructor_){}
 	};
-	struct ParameterList
+	struct TypeConstructorPairList
 	{
 		int arsize;
-		Parameter const* ar;
+		TypeConstructorPair const* ar;
 
-		ParameterList( const std::vector<Parameter>& ar_) noexcept
+		TypeConstructorPairList( const std::vector<TypeConstructorPair>& ar_) noexcept
 			:arsize(ar_.size()),ar(ar_.data()){}
-		ParameterList( const std::pmr::vector<Parameter>& ar_) noexcept
+		TypeConstructorPairList( const std::pmr::vector<TypeConstructorPair>& ar_) noexcept
 			:arsize(ar_.size()),ar(ar_.data()){}
-		ParameterList( int arsize_, const Parameter* ar_) noexcept
+		TypeConstructorPairList( int arsize_, const TypeConstructorPair* ar_) noexcept
 			:arsize(arsize_),ar(ar_){}
-		ParameterList( const ParameterList& o) noexcept
+		TypeConstructorPairList( const TypeConstructorPairList& o) noexcept
 			:arsize(o.arsize),ar(o.ar){}
 
 		bool empty() const noexcept
@@ -110,12 +110,12 @@ public:
 		{
 			return arsize;
 		}
-		const Parameter& operator[]( int idx) const noexcept
+		const TypeConstructorPair& operator[]( int idx) const noexcept
 		{
 			return ar[ idx];
 		}
 
-		typedef CArrayForwardIterator::const_iterator<Parameter> const_iterator;
+		typedef CArrayForwardIterator::const_iterator<TypeConstructorPair> const_iterator;
 
 		const_iterator begin() const noexcept						{return const_iterator( ar);}
 		const_iterator end() const noexcept						{return const_iterator( ar+arsize);}
@@ -133,16 +133,6 @@ public:
 		ResultBuffer() noexcept
 			:memrsc( buffer, BufferSize){}
 		ResultBuffer( const ResultBuffer&) = delete;
-	};
-	struct ReductionResult
-	{
-		int type;
-		int constructor;
-
-		ReductionResult( const ReductionResult& o) noexcept
-			:type(o.type),constructor(o.constructor){}
-		ReductionResult( int type_, int constructor_) noexcept
-			:type(type_),constructor(constructor_){}
 	};
 	struct GetReductionResult
 	{
@@ -194,7 +184,7 @@ public:
 	};
 	struct DeriveResult
 	{
-		std::pmr::vector<ReductionResult> reductions;
+		std::pmr::vector<TypeConstructorPair> reductions;
 		std::pmr::vector<int> conflictPath;
 		float weightsum;
 		bool defined;
@@ -202,7 +192,7 @@ public:
 		DeriveResult( ResultBuffer& resbuf) noexcept
 			:reductions(&resbuf.memrsc),conflictPath(&resbuf.memrsc),weightsum(0.0),defined(false)
 		{
-			reductions.reserve(   ((resbuf.buffersize() / 4) * 3) / sizeof(ReductionResult));
+			reductions.reserve(   ((resbuf.buffersize() / 4) * 3) / sizeof(TypeConstructorPair));
 			conflictPath.reserve( ((resbuf.buffersize() / 4) * 1) / sizeof(int));
 		}
 		DeriveResult( const DeriveResult&) = delete;
@@ -211,22 +201,23 @@ public:
 	};
 	struct ResolveResult
 	{
-		std::pmr::vector<ReductionResult> reductions;
+		std::pmr::vector<TypeConstructorPair> reductions;
 		std::pmr::vector<ResolveResultItem> items;
+		int rootIndex;
 		int contextType;
 		int conflictType;
 		float weightsum;
 
 		ResolveResult( ResultBuffer& resbuf) noexcept
-			:reductions(&resbuf.memrsc),items(&resbuf.memrsc),contextType(-1),conflictType(-1),weightsum(0.0)
+			:reductions(&resbuf.memrsc),items(&resbuf.memrsc),rootIndex(-1),contextType(-1),conflictType(-1),weightsum(0.0)
 		{
-			reductions.reserve( resbuf.buffersize() / 2 / sizeof(ReductionResult));
+			reductions.reserve( resbuf.buffersize() / 2 / sizeof(TypeConstructorPair));
 			items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
 		}
 		ResolveResult( const ResolveResult&) = delete;
 		ResolveResult( ResolveResult&& o)
 			:reductions(std::move(o.reductions)),items(std::move(o.items))
-			,contextType(o.contextType),conflictType(o.conflictType),weightsum(o.weightsum){}
+			,rootIndex(o.rootIndex),contextType(o.contextType),conflictType(o.conflictType),weightsum(o.weightsum){}
 	};
 	struct ReductionDefinition
 	{
@@ -283,7 +274,7 @@ public:
 	/// \return the handle assigned to the new created type
 	///		or -1 if the type is already defined in the same scope with the same signature (duplicate definition)
 	///		or 0 if the type is already defined in the same scope with the same signature but with a highjer priority (second definition siletly discarded)
-	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority);
+	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter, int priority);
 
 	/// \brief Get a type with exact signature defined in a specified scope (does not search other valid definitions in enclosing scopes)
 	/// \param[in] scope the scope of this definition
@@ -380,7 +371,7 @@ public:
 	/// \brief Get the parameters attached to a type
 	/// \param[in] type the handle of the type (return value of defineType)
 	/// \return a view on the list of parameters
-	ParameterList typeParameters( int type) const;
+	TypeConstructorPairList typeParameters( int type) const;
 
 	/// \brief Get the constructor of a type or 0 if undefined
 	/// \param[in] type the handle of the type (return value of defineType)
@@ -399,12 +390,12 @@ public:
 	int typeContext( int type) const;
 
 private:
-	bool compareParameterSignature( const ParameterList& parameter, int param2, int paramlen2) const noexcept;
-	int findTypeWithSignature( int typerecidx, const ParameterList& parameter, int& lastIndex) const noexcept;
+	bool compareParameterSignature( const TypeConstructorPairList& parameter, int param2, int paramlen2) const noexcept;
+	int findTypeWithSignature( int typerecidx, const TypeConstructorPairList& parameter, int& lastIndex) const noexcept;
 	bool compareParameterSignature( const TypeList& parameter, int param2, int paramlen2) const noexcept;
 	int findTypeWithSignature( int typerecidx, const TypeList& parameter) const noexcept;
 	void collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const;
-	std::string reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const;
+	std::string reductionsToString( const std::pmr::vector<TypeConstructorPair>& reductions) const;
 	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;
 	void appendTypeToString( std::pmr::string& res, int type, const char* sep) const;
@@ -517,7 +508,7 @@ private:
 	std::unique_ptr<TypeTable> m_typeTable;		//< table of types
 	std::unique_ptr<ReductionTable> m_reduTable;	//< table of reductions
 	std::unique_ptr<IdentMap> m_identMap;		//< identifier string to integer map
-	std::vector<Parameter> m_parameterMap;		//< map cardinal to parameter arrays
+	std::vector<TypeConstructorPair> m_parameterMap;		//< map cardinal to parameter arrays
 	std::vector<TypeRecord> m_typerecMap;		//< type definition structures
 };
 

@@ -21,7 +21,7 @@ local errorCount = 0
 function checkTestResult( testname, result, expected)
 	if result ~= expected then
 		if (verbose) then
-			print( "RUN " .. testname .. "()\n" .. result .. "\nERR\nEXPECTED:" .. expected .. "\n")
+			print( "RUN " .. testname .. "()\n[[" .. result .. "]]\nERR\nEXPECTED:[[" .. expected .. "]]\n")
 		else
 			print( "RUN " .. testname .. "() ERR")
 		end
@@ -200,8 +200,70 @@ RESOLVE ITEM float +(float) : {code = "float+float",op = "add",type = "float"}]]
 	checkTestResult( "testDefineResolveType", result, expected)
 end
 
+-- Function that tests the typedb resolve type with many context type with constructors
+function testResolveTypeContext()
+	typedb = mewa.typedb()
+	local tag_conv = 1
+	local mask_resolve = typedb.reduction_tagmask( tag_conv)
+
+	local type1 = typedb:def_type( 0, "type1", "constructor type1")
+	local funA = typedb:def_type( type1, "A", function(arg) return arg .. " # " .. " constructor fun A" end)
+	local type2 = typedb:def_type( 0, "type2", "constructor type2")
+	local ext_type2 = typedb:def_type( 0, "type2 ext", "constructor ext type2")
+	typedb:def_reduction( type2, ext_type2, function(arg) return arg .. " [22->11]" end, tag_conv)
+	local funB = typedb:def_type( type2, "B", function(arg) return arg .. " # " .. " constructor fun B" end)
+	local type3 = typedb:def_type( 0, "type3", "constructor type3")
+	local ext_type3 = typedb:def_type( 0, "type3 ext", "constructor ext type3")
+	local ext_ext_type3 = typedb:def_type( 0, "type3 XXext", "constructor ext XX type3")
+	typedb:def_reduction( type3, ext_type3, function(arg) return arg .. " [2->1]" end, tag_conv)
+	typedb:def_reduction( ext_type3, ext_ext_type3, function(arg) return arg .. " [3->2]" end, tag_conv)
+	local funC = typedb:def_type( type3, "C", function(arg) return arg .. " # " .. " constructor fun C" end)
+	local type4 = typedb:def_type( 0, "type4", "constructor type4")
+	local funD = typedb:def_type( type4, "D", function(arg) return arg .. " # " .. " constructor fun D" end)
+	local contextList =  {
+		type1,
+		{constructor = "contextual constructor 2", type = ext_type2},
+		{constructor = "contextual constructor 3", type = ext_ext_type3},
+		{constructor = "contextual constructor 4", type = type4}
+	}
+	function getResolveResultString( fun)
+		local rt = ""
+		local ctx,reductions,items = typedb:resolve_type( contextList, fun, mask_resolve)
+		if not ctx or type(ctx) == "table" then error( "Failed to resolve function " .. fun) end
+		rt = rt .. "CTX " .. typedb:type_string(ctx) .. "\n"
+		local redures = nil
+		for ri,redu in ipairs(reductions) do
+			if type(redu.constructor) == "function" then redures = redu.constructor(redures or "ORIG") else redures = redu.constructor end
+		end
+		rt = rt .. "REDU " .. (redures or "ORIG") .. "\n"
+		for ii,item in ipairs(items) do
+			local itemstr
+			if type(item.constructor) == "function" then itemstr = item.constructor(redures or "ORIG") else itemstr = item.constructor end
+			rt = rt .. "ITEM " .. itemstr .. "\n"
+		end
+		return rt
+	end
+	local result = 	getResolveResultString( "A") .. getResolveResultString( "B") .. getResolveResultString( "C") .. getResolveResultString( "D")
+	local expected = [[
+CTX type1
+REDU ORIG
+ITEM ORIG #  constructor fun A
+CTX type2
+REDU contextual constructor 2 [22->11]
+ITEM contextual constructor 2 [22->11] #  constructor fun B
+CTX type3
+REDU contextual constructor 3 [3->2] [2->1]
+ITEM contextual constructor 3 [3->2] [2->1] #  constructor fun C
+CTX type4
+REDU contextual constructor 4
+ITEM contextual constructor 4 #  constructor fun D
+]]
+	checkTestResult( "testResolveTypeContext", result, expected)
+end
+
 testRegisterAllocator()
 testDefineResolveType()
+testResolveTypeContext()
 
 if errorCount > 0 then
 	error( "result of " .. errorCount .. " tests not as expected!")

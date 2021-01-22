@@ -613,8 +613,8 @@ static int mewa_typedb_def_type( lua_State* ls)
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
 		lua_getglobal( ls, td->objTableName.buf);
 		int constructor = (nargs >= 4) ? mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td) : 0;
-		std::pmr::vector<mewa::TypeDatabase::Parameter> parameter;
-		if (nargs >= 5) parameter = mewa::lua::getArgumentAsParameterList( functionName, ls, 5, -1/*objtable*/, td, &memrsc_parameter);
+		std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> parameter;
+		if (nargs >= 5) parameter = mewa::lua::getArgumentAsTypeConstructorPairList( functionName, ls, 5, -1/*objtable*/, td, &memrsc_parameter);
 		int priority = (nargs >= 6) ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 0;
 		lua_pop( ls, 1); // ... obj table
 		int rt = td->impl->defineType( td->curScope, contextType, name, constructor, parameter, priority);
@@ -729,7 +729,7 @@ static int mewa_typedb_derive_type( lua_State* ls)
 		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsPathLen, maxPathLen, resbuf);
 		if (deriveres.defined)
 		{
-			mewa::lua::pushReductionResults( ls, functionName, td->objTableName.buf, deriveres.reductions);
+			mewa::lua::pushTypeConstructorPairs( ls, functionName, td->objTableName.buf, deriveres.reductions);
 			lua_pushnumber( ls, deriveres.weightsum);
 			if (deriveres.conflictPath.empty())
 			{
@@ -767,16 +767,16 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 		{
 			int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 			auto resolveres = td->impl->resolveType( td->curStep, contextType, name, selectTags, resbuf);
-			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
+			return mewa::lua::pushResolveResult( ls, functionName, 0/*root context argument lua index*/, td->objTableName.buf, resolveres);
 		}
 		else if (lua_type( ls, 2) == LUA_TTABLE)
 		{
 			int buffer_parameter[ 256];
 			mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
 
-			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter, false/*allow t/c pairs*/);
+			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter, true/*allow t/c pairs*/);
 			auto resolveres = td->impl->resolveType( td->curStep, contextTypes, name, selectTags, resbuf);
-			return mewa::lua::pushResolveResult( ls, functionName, td->objTableName.buf, resolveres);
+			return mewa::lua::pushResolveResult( ls, functionName, 2/*root context argument lua index*/, td->objTableName.buf, resolveres);
 		}
 		else
 		{
@@ -850,7 +850,7 @@ static int mewa_typedb_type_parameters( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 6);
 		int type = mewa::lua::getArgumentAsCardinal( functionName, ls, 2);
 		auto rt = td->impl->typeParameters( type);
-		mewa::lua::pushParameters( ls, functionName, td->objTableName.buf, rt);
+		mewa::lua::pushTypeConstructorPairs( ls, functionName, td->objTableName.buf, rt);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;

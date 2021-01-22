@@ -106,14 +106,14 @@ int TypeDatabase::getObjectInstanceOfScope( const std::string_view& name, const 
 	return m_objAr[ oi->second].getThis( scope);
 }
 
-TypeDatabase::ParameterList TypeDatabase::typeParameters( int type) const
+TypeDatabase::TypeConstructorPairList TypeDatabase::typeParameters( int type) const
 {
-	if (type == 0) return ParameterList( 0, nullptr);
+	if (type == 0) return TypeConstructorPairList( 0, nullptr);
 	if (type < 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle);
 
 	const TypeRecord& rec = m_typerecMap[ type-1];
-	if (rec.parameter < 0) return ParameterList( 0, nullptr);
-	return ParameterList( rec.parameterlen, m_parameterMap.data() + rec.parameter - 1);
+	if (rec.parameter < 0) return TypeConstructorPairList( 0, nullptr);
+	return TypeConstructorPairList( rec.parameterlen, m_parameterMap.data() + rec.parameter - 1);
 }
 
 int TypeDatabase::typeConstructor( int type) const
@@ -134,7 +134,7 @@ Scope TypeDatabase::typeScope( int type) const
 	return rec.scope;
 }
 
-bool TypeDatabase::compareParameterSignature( const TypeDatabase::ParameterList& parameter, int param2, int paramlen2) const noexcept
+bool TypeDatabase::compareParameterSignature( const TypeDatabase::TypeConstructorPairList& parameter, int param2, int paramlen2) const noexcept
 {
 	if (parameter.arsize != paramlen2) return false;
 	for (int pi = 0; pi < paramlen2; ++pi)
@@ -144,7 +144,7 @@ bool TypeDatabase::compareParameterSignature( const TypeDatabase::ParameterList&
 	return true;
 }
 
-int TypeDatabase::findTypeWithSignature( int typerec, const TypeDatabase::ParameterList& parameter, int& lastListIndex) const noexcept
+int TypeDatabase::findTypeWithSignature( int typerec, const TypeDatabase::TypeConstructorPairList& parameter, int& lastListIndex) const noexcept
 {
 	lastListIndex = 0;
 	int tri = typerec;
@@ -191,7 +191,7 @@ int TypeDatabase::getType( const Scope& scope, int contextType, const std::strin
 	return typerec ? findTypeWithSignature( typerec, parameter) : 0;
 }
 
-int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const ParameterList& parameter, int priority)
+int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter, int priority)
 {
 	if (parameter.size() >= MaxNofParameter) throw Error( Error::TooManyTypeArguments, string_format( "%zu", parameter.size()));
 	if ((int)(m_parameterMap.size() + parameter.size()) >= std::numeric_limits<int>::max()) throw Error( Error::CompiledSourceTooComplex);
@@ -324,7 +324,7 @@ public:
 		return m_ar[ idx];
 	}
 
-	void collectResult( std::pmr::vector<TypeDatabase::ReductionResult>& result, int index) const
+	void collectResult( std::pmr::vector<TypeDatabase::TypeConstructorPair>& result, int index) const
 	{
 		while (index >= 0)
 		{
@@ -332,6 +332,24 @@ public:
 			if (ee.prev != -1)
 			{
 				result.push_back( {ee.type, ee.constructor} );
+			}
+			index = ee.prev;
+		}
+		std::reverse( result.begin(), result.end());
+	}
+
+	void collectResultWithRootIndex( int& rootIndex, std::pmr::vector<TypeDatabase::TypeConstructorPair>& result, int index) const
+	{
+		while (index >= 0)
+		{
+			const ReduStackElem& ee = m_ar[ index];
+			if (ee.prev != -1)
+			{
+				result.push_back( {ee.type, ee.constructor} );
+			}
+			else
+			{
+				rootIndex = ee.constructor;
 			}
 			index = ee.prev;
 		}
@@ -394,7 +412,7 @@ struct ReduQueueElem
 	}
 };
 
-std::string TypeDatabase::reductionsToString( const std::pmr::vector<ReductionResult>& reductions) const
+std::string TypeDatabase::reductionsToString( const std::pmr::vector<TypeConstructorPair>& reductions) const
 {
 	std::string rt;
 
@@ -615,8 +633,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 		{
 			throw Error( Error::InvalidHandle, string_format( "%d", contextTypeAr[ci]));
 		}
-		int constructor = contextTypeAr[ci] ? m_typerecMap[ contextTypeAr[ci]-1].constructor : 0;
-		int index = stack.pushNonDuplicateStart( contextTypeAr[ci], constructor);
+		int index = stack.pushNonDuplicateStart( contextTypeAr[ci], (int)ci+1/*root index stored as constructor*/);
 		if (index >= 0) priorityQueue.push( ReduQueueElem( 0.0/*weight*/, index));
 	}
 	while (!priorityQueue.empty())
@@ -638,7 +655,7 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 				//... we found the first match
 				rt.weightsum = qe.weight;
 				rt.contextType = elem.type;
-				stack.collectResult( rt.reductions, qe.index);
+				stack.collectResultWithRootIndex( rt.rootIndex, rt.reductions, qe.index);
 				collectResultItems( rt.items, typerecidx);
 				// Set alternative search state, continue search for an alternative solution to report an ambiguous reference error:
 				alt_searchstate = true;

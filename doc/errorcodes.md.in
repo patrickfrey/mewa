@@ -21,10 +21,10 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:ExpectedFloatingPointArgument**   _$ERRTEXT:ExpectedFloatingPointArgument_
 + **#$ERRCODE:ExpectedTableArgument**   _$ERRTEXT:ExpectedTableArgument_
 + **#$ERRCODE:ExpectedArgumentScopeStructure**   _$ERRTEXT:ExpectedArgumentScopeStructure_
-+ **#$ERRCODE:ExpectedArgumentParameterStructureList**   _$ERRTEXT:ExpectedArgumentParameterStructureList_
++ **#$ERRCODE:ExpectedArgumentTypeConstructorPairList**   _$ERRTEXT:ExpectedArgumentTypeConstructorPairList_
 + **#$ERRCODE:ExpectedArgumentStringList**   _$ERRTEXT:ExpectedArgumentStringList_
 + **#$ERRCODE:ExpectedArgumentTypeList**   _$ERRTEXT:ExpectedArgumentTypeList_
-+ **#$ERRCODE:ExpectedArgumentTypeOrParameterStructureList**   _$ERRTEXT:ExpectedArgumentTypeOrParameterStructureList_
++ **#$ERRCODE:ExpectedArgumentTypeOrTypeConstructorPairList**   _$ERRTEXT:ExpectedArgumentTypeOrTypeConstructorPairList_
 + **#$ERRCODE:ExpectedArgumentNotNil**   _$ERRTEXT:ExpectedArgumentNotNil_
 + **#$ERRCODE:TooFewArguments**   _$ERRTEXT:TooFewArguments_
 + **#$ERRCODE:TooManyArguments**   _$ERRTEXT:TooManyArguments_

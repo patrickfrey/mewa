@@ -224,6 +224,9 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	referenceTypeMap[ priv_pval] = rpval
 	referenceTypeMap[ priv_c_pval] = c_rpval
 
+	pointerTypeMap[ priv_rval] = priv_pval
+	pointerTypeMap[ priv_c_rval] = priv_c_pval
+
 	typeQualiSepMap[ priv_rval] = {lval=lval,qualifier="private &"}
 	typeQualiSepMap[ priv_c_rval] = {lval=lval,qualifier="private const&"}
 	typeQualiSepMap[ priv_pval] = {lval=lval,qualifier="private ^"}
@@ -280,6 +283,8 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 
 	pointerTypeMap[ lval] = pval
 	pointerTypeMap[ c_lval] = c_pval
+	pointerTypeMap[ rval] = pval
+	pointerTypeMap[ c_rval] = c_pval
 
 	typeQualiSepMap[ lval] = {lval=lval,qualifier=""}
 	typeQualiSepMap[ c_lval] = {lval=lval,qualifier="const "}
@@ -466,6 +471,11 @@ end
 function getContextTypes()
 	local rt = typedb:get_instance( "context")
 	if rt then return rt else return {0} end
+end
+function addContextType( typeId)
+	local defcontext = getContextTypes()
+	table.insert( defcontext, typeId)
+	typedb:set_instance( "context", defcontext)
 end
 
 function implicitDefineArrayType( node, elementTypeId, arsize)
@@ -797,17 +807,24 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item.type) == 0 then
 			local constructor = nil
-			if resolveContextTypeId ~= 0 then
-				constructor = typedb:type_constructor( resolveContextTypeId) 
-			end
 			for ri,redu in ipairs(reductions) do
 				if redu.constructor then
-					constructor = redu.constructor( constructor)
+					if (type(redu.constructor) == "function") then
+						constructor = redu.constructor( constructor)
+					elseif constructor then
+						utils.errorMessage( node.line, "reduction constructor overwriting previous constructor for '%s'",
+										typedb:type_string(redu.type))
+					else
+						constructor = redu.constructor
+					end
 				end
 			end
 			if item.constructor then
 				if type( item.constructor) == "function" then
 					constructor = item.constructor( constructor)
+				elseif constructor then
+						utils.errorMessage( node.line, "type constructor overwriting previous constructor for '%s'",
+										typedb:type_string(item.type))
 				else
 					constructor = item.constructor
 				end
@@ -1047,6 +1064,14 @@ function defineMainProcContext( node)
 	typedb:set_instance( "callable", {scope=node.scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=scalarIntegerType})
 	typedb:scope( prev_scope)
 end
+function defineMethodContext( node, classTypeId, rtype)
+	local prev_scope = typedb:scope( node.scope)
+	local classPointerTypeId = pointerTypeMap[ classTypeId]
+	defineVariableHardcoded( node, classPointerTypeId, "this", "%ths")
+	typedb:set_instance( "callable", {scope=node.scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=rtype})
+	addContextType( classTypeId)
+	typedb:scope( prev_scope)
+end
 function getStringConstant( value)
 	if not stringConstantMap[ value] then
 		local encval,enclen = utils.encodeLexemLlvm(value)
@@ -1284,7 +1309,12 @@ function typesystem.callablebody( node, qualifier, context, rtype, select)
 	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
 	if context then context.const = (qualifier == "const&") end
 	if select == 1 then
-		defineCallableBodyContext( node, rtype)
+		if context and context.qualitype then
+			local thisType; if context.const then thisType = context.qualitype.c_rval else thisType = context.qualitype.rval end
+			defineMethodContext( node, thisType, rtype)
+		else
+			defineCallableBodyContext( node, rtype)
+		end
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		return arg[1]
 	else
@@ -1334,9 +1364,7 @@ function typesystem.structdef( node, context)
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
-	local defcontext = getContextTypes()
-	table.insert( defcontext, qualitype.lval)
-	typedb:set_instance( "context", defcontext)
+	addContextType( qualitype.lval)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=false}
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize
@@ -1355,9 +1383,7 @@ function typesystem.classdef( node, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
-	local defcontext = getContextTypes()
-	table.insert( defcontext, qualitype.lval)
-	typedb:set_instance( "context", defcontext)
+	addContextType( qualitype.lval)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=true}
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize

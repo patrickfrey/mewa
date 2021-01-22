@@ -56,7 +56,7 @@ mewa::TagMask getArgumentAsTagMask( const char* functionName, lua_State* ls, int
 
 int getArgumentAsConstructor( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td);
 
-std::pmr::vector<mewa::TypeDatabase::Parameter> getArgumentAsParameterList( 
+std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> getArgumentAsTypeConstructorPairList( 
 	const char* functionName, lua_State* ls, int li, int objtable,
 	mewa_typedb_userdata_t* td, std::pmr::memory_resource* memrsc);
 
@@ -72,9 +72,6 @@ inline void checkStack( const char* functionName, lua_State* ls, int sz)
 
 void pushTypeConstructor(
 		lua_State* ls, const char* functionName, const char* objTableName, int constructor);
-void pushReductionResults(
-		lua_State* ls, const char* functionName, const char* objTableName,
-		const std::pmr::vector<mewa::TypeDatabase::ReductionResult>& reductions);
 void pushWeightedReductions(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::WeightedReduction>& reductions);
@@ -83,15 +80,15 @@ void pushTypePath(
 void pushResolveResultItems(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const std::pmr::vector<mewa::TypeDatabase::ResolveResultItem>& items);
-void pushParameters(
+void pushTypeConstructorPairs(
 		lua_State* ls, const char* functionName, const char* objTableName,
-		const mewa::TypeDatabase::ParameterList& parameters);
+		const mewa::TypeDatabase::TypeConstructorPairList& list);
 void pushReductionDefinition(
 		lua_State* ls, const char* functionName, const char* objTableName,
 		const mewa::TypeDatabase::ReductionDefinition& redu);
 void pushScope( lua_State* ls, const char* functionName, const mewa::Scope& scope);
 int pushResolveResult(
-		lua_State* ls, const char* functionName, const char* objTableName,
+		lua_State* ls, const char* functionName, int rootContextArgumentLuaIndex, const char* objTableName,
 		const mewa::TypeDatabase::ResolveResult& resolveres);
 
 void pushStackTrace( lua_State* ls, const char* functionName, int nn, const std::vector<std::string>& ignoreList);
