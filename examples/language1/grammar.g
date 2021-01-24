@@ -39,27 +39,29 @@ extern_parameters 	= typespec "," extern_parameters
 			| typespec
 			;
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
-			| ε
+			| ε										(extern_paramdeflist)
 			;
 interface_definition 	= "function" typespec IDENT "(" parameterlist ")" ";"				(interface_funcdef "&")
 			| "function" typespec IDENT "(" parameterlist ")" "const" ";"			(interface_funcdef "const&")
 			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef "&")
 			| "procedure" IDENT "(" parameterlist ")" "const" ";"				(interface_procdef "const&")
 			;
-struct_definition	= typedefinition ";"								(definition)
-			| variabledefinition ";"							(definition)
-			| structdefinition								(definition)
+struct_definition	= typedefinition ";"								(definition 1)
+			| variabledefinition ";"							(definition 1)
+			| structdefinition								(definition 1)
 			;
-class_definition	= struct_definition
-			| constructordefinition
-			| functiondefinition								(definition)
-			| classdefinition 								(definition)
-			| interfacedefinition								(definition)
+class_definition	= typedefinition ";"								(definition 1)
+			| variabledefinition ";"							(definition 1)
+			| structdefinition								(definition 1)
+			| classdefinition 								(definition 1)
+			| interfacedefinition								(definition 1)
+			| constructordefinition								(definition 2)
+			| functiondefinition								(definition 2)
 			;
 free_definition		= struct_definition
-			| functiondefinition								(definition)
-			| classdefinition 								(definition)
-			| interfacedefinition								(definition)
+			| functiondefinition								(definition 1)
+			| classdefinition 								(definition 1)
+			| interfacedefinition								(definition 1)
 			;
 typename/L1		= IDENT
 			| IDENT "::" typename
@@ -85,8 +87,8 @@ structdefinition	= "struct" IDENT "{" struct_definitionlist "}"					(>>structdef
 			;
 interfacedefinition	= "interface" IDENT "{" interface_definitionlist "}"				(>>interfacedef)
 			;
-inheritlist		= typepath "," inheritlist							(>>inheritdef)
-			| typepath									(>>inheritdef)
+inheritlist		= typepath "," inheritlist							(>>inheritdef 1)
+			| typepath									(>>inheritdef 1)
 			;
 classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
 			| "class" IDENT ":" inheritlist "{" class_definitionlist "}"			(>>classdef)
@@ -108,7 +110,7 @@ main_procedure		= "main" "{" codeblock "}"							({}main_procdef)
 			| ε
 			;
 parameterlist		= parameters									(paramdeflist)
-			| ε
+			| ε										(paramdeflist)
 			;
 parameters		= paramdecl "," parameters
 			| paramdecl

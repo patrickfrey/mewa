@@ -71,10 +71,12 @@ function callConstructor( fmt)
 		local this_code,this_inp = constructorParts( this)
 		local subst = {out = out, this = this_inp}
 		local code = this_code
-		for ii=1,#arg do
-			local arg_code,arg_inp = constructorParts( arg[ ii])
-			code = code .. arg_code
-			subst[ "arg" .. ii] = arg_inp
+		if arg then
+			for ii=1,#arg do
+				local arg_code,arg_inp = constructorParts( arg[ ii])
+				code = code .. arg_code
+				subst[ "arg" .. ii] = arg_inp
+			end
 		end
 		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
 	end
@@ -113,6 +115,7 @@ function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, pr
 end
 function defineCall( returnType, thisType, opr, argTypes, constructor)
 	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
+	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of type '%s %s'", typedb:type_string(thisType), opr) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 	return callType
 end
@@ -221,16 +224,16 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 
 	referenceTypeMap[ priv_rval] = priv_rval
 	referenceTypeMap[ priv_c_rval] = priv_c_rval
-	referenceTypeMap[ priv_pval] = rpval
-	referenceTypeMap[ priv_c_pval] = c_rpval
+	referenceTypeMap[ priv_pval] = qualitype.rpval
+	referenceTypeMap[ priv_c_pval] = qualitype.c_rpval
 
 	pointerTypeMap[ priv_rval] = priv_pval
 	pointerTypeMap[ priv_c_rval] = priv_c_pval
 
-	typeQualiSepMap[ priv_rval] = {lval=lval,qualifier="private &"}
-	typeQualiSepMap[ priv_c_rval] = {lval=lval,qualifier="private const&"}
-	typeQualiSepMap[ priv_pval] = {lval=lval,qualifier="private ^"}
-	typeQualiSepMap[ priv_c_pval] = {lval=lval,qualifier="private const^"}
+	typeQualiSepMap[ priv_rval] = {lval=qualitype.lval,qualifier="private &"}
+	typeQualiSepMap[ priv_c_rval] = {lval=qualitype.lval,qualifier="private const&"}
+	typeQualiSepMap[ priv_pval] = {lval=qualitype.lval,qualifier="private ^"}
+	typeQualiSepMap[ priv_c_pval] = {lval=qualitype.lval,qualifier="private const^"}
 
 	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, 0.125/16)
 	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, 0.125/16)
@@ -472,10 +475,26 @@ function getContextTypes()
 	local rt = typedb:get_instance( "context")
 	if rt then return rt else return {0} end
 end
-function addContextType( typeId)
-	local defcontext = getContextTypes()
-	table.insert( defcontext, typeId)
-	typedb:set_instance( "context", defcontext)
+function addContextTypeConstructorPair( val)
+	local defcontext = typedb:this_instance( "context")
+	if defcontext then
+		table.insert( defcontext, val)
+	else
+		defcontext = typedb:get_instance( "context")
+		if defcontext then
+			-- inherit context from enclosing scope and add new element
+			local defcontext_copy = {}
+			for di,ctx in ipairs(defcontext) do
+				table.insert( defcontext_copy, ctx)
+			end
+			table.insert( defcontext_copy, val)
+			typedb:set_instance( "context", defcontext_copy)
+		else
+			-- create empty context and add new element
+			defcontext = {0,val}
+			typedb:set_instance( "context", defcontext)
+		end
+	end
 end
 
 function implicitDefineArrayType( node, elementTypeId, arsize)
@@ -542,6 +561,7 @@ function defineVariableHardcoded( node, typeId, name, reg)
 	local var = typedb:def_type( 0, name, reg)
 	typedb:def_reduction( referenceTypeMap[ typeId], var, nil, tag_typeDeclaration)
 	typedb:scope( prev_scope)
+	return var
 end
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
@@ -603,11 +623,17 @@ function defineVariableMember( node, context, typeId, name, private)
 	if descr.ctor then
 		context.ctors = (context.ctors or "") .. load_ths .. utils.constructor_format( descr.ctor, {this=out}, context.register)
 	end
-	if not context.elements then context.elements = {typeId} else table.insert( context.elements, typeId) end
-	local code_ctor_assign = utils.constructor_format( descr.ctor_assign, {this=out,arg1=inp}, context.register)
-	context.ctors_assign = (context.ctors_assign or "") .. load_ths .. load_oth .. code_ctor_assign
-	local code_ctor_elements = utils.constructor_format( descr.assign, {this=out,arg1="%p" .. #context.elements}, context.register)
-	context.ctors_elements = (context.ctors_elements or "") .. load_ths .. code_ctor_elements
+	if not context.elements then 
+		context.elements = {typeId} else table.insert( context.elements, typeId)
+	end
+	local code_ctor_assign; if descr.ctor_assign then 
+		code_ctor_assign = utils.constructor_format( descr.ctor_assign, {this=out,arg1=inp}, context.register)
+		context.ctors_assign = (context.ctors_assign or "") .. load_ths .. load_oth .. code_ctor_assign
+	end
+	local code_ctor_elements; if descr.assign then 
+		code_ctor_elements = utils.constructor_format( descr.assign, {this=out,arg1="%p" .. #context.elements}, context.register)
+		context.ctors_elements = (context.ctors_elements or "") .. load_ths .. code_ctor_elements
+	end
 	if descr.dtor then
 		context.dtors = (context.dtors or "") .. load_ths .. utils.constructor_format( descr.dtor, {this=out}, context.register)
 	end
@@ -642,8 +668,8 @@ function defineReductionToMember( objTypeId, name)
 	memberTypeId = typedb:get_type( objTypeId, name)
 	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, 0.125/32)
 end
-function defineInheritance( context, name)
-	if context.private == true then
+function defineInheritance( context, name, private)
+	if private == true then
 		defineReductionToMember( context.qualitype.priv_rval, name)
 		defineReductionToMember( context.qualitype.priv_c_rval, name)
 	else
@@ -982,7 +1008,7 @@ function getSignatureString( name, args, context)
 	else
 		local pstr = ""
 		if context.qualitype then
-			pstr = ptr .. "__C_" .. typedb:type_string( context.qualitype.lval, "__") .. "__"
+			pstr = pstr .. "__C_" .. typedb:type_string( context.qualitype.lval, "__") .. "__"
 		end
 		for ai,arg in ipairs(args) do if pstr == "" then pstr = pstr .. "__" .. arg.llvmtype else pstr = "_" .. arg.llvmtype end end
 		return utils.encodeName( name .. pstr)
@@ -1068,8 +1094,9 @@ function defineMethodContext( node, classTypeId, rtype)
 	local prev_scope = typedb:scope( node.scope)
 	local classPointerTypeId = pointerTypeMap[ classTypeId]
 	defineVariableHardcoded( node, classPointerTypeId, "this", "%ths")
+	local classvar = defineVariableHardcoded( node, classTypeId, "*this", "%ths")
 	typedb:set_instance( "callable", {scope=node.scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=rtype})
-	addContextType( classTypeId)
+	addContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
 	typedb:scope( prev_scope)
 end
 function getStringConstant( value)
@@ -1089,9 +1116,11 @@ function getStringConstant( value)
 end
 
 -- AST Callbacks:
-function typesystem.definition( node, context)
-	local arg = utils.traverse( typedb, node, context)
-	if arg[1] then return {code = arg[1].constructor.code} else return {code=""} end
+function typesystem.definition( node, pass, context, pass_selected)
+	if not pass_selected or pass == pass_selected then
+		local arg = utils.traverse( typedb, node, context)
+		if arg[1] then return {code = arg[1].constructor.code} else return {code=""} end
+	end
 end
 function typesystem.paramdef( node) 
 	local arg = utils.traverse( typedb, node)
@@ -1310,7 +1339,7 @@ function typesystem.callablebody( node, qualifier, context, rtype, select)
 	if context then context.const = (qualifier == "const&") end
 	if select == 1 then
 		if context and context.qualitype then
-			local thisType; if context.const then thisType = context.qualitype.c_rval else thisType = context.qualitype.rval end
+			local thisType; if context.const then thisType = context.qualitype.priv_c_rval else thisType = context.qualitype.priv_rval end
 			defineMethodContext( node, thisType, rtype)
 		else
 			defineCallableBodyContext( node, rtype)
@@ -1364,7 +1393,7 @@ function typesystem.structdef( node, context)
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
-	addContextType( qualitype.lval)
+	addContextTypeConstructorPair( qualitype.lval)
 	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=false}
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize
@@ -1383,24 +1412,33 @@ function typesystem.classdef( node, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
-	addContextType( qualitype.lval)
-	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=true}
-	local arg = utils.traverse( typedb, node, context)
+	addContextTypeConstructorPair( qualitype.lval)
+	local context = {qualitype=qualitype,descr=descr,index=0,register=utils.register_allocator(), private=true,
+				c_thisref=qualitype.priv_c_rval, thisref=qualitype.c_rval}
+	-- Traversal in two passes, first type and variable declarations, then method definitions
+	utils.traverse( typedb, node, context, 1)
+	utils.traverse( typedb, node, context, 2)
 	descr.size = context.structsize
 	defineAssignOperators( qualitype, descr)
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineConstructors( node, qualitype, descr, context.ctors, context.ctors_assign, context.dtors)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=classname,llvmtype=context.llvmtype}))
 end
-function typesystem.inheritdef( node, context)
-	local arg = utils.traverseRange( typedb, node, {1,1}, context)
- 	local typeId = arg[1]
-	local typnam = typedb:type_name(typeId)
-	local private = false
-	defineVariableMember( node, context, typeId, typnam, private)
-	defineInheritance( context, typnam)
-	local next = utils.traverseRange( typedb, node, {2,2}, context)
-	return {typeId, next[2]}
+function typesystem.inheritdef( node, pass, context, pass_selected)
+	if not pass_selected or pass == pass_selected then
+		local arg = utils.traverseRange( typedb, node, {1,1}, context)
+		local typeId = arg[1]
+		local typnam = typedb:type_name(typeId)
+		local private = false
+		defineVariableMember( node, context, typeId, typnam, private)
+		defineInheritance( context, typnam, private)
+		if #node.arg > 1 then
+			local next = utils.traverseRange( typedb, node, {2,2}, context)
+			return {typeId, next[2]}
+		else
+			return {typeId}
+		end
+	end
 end
 function typesystem.main_procdef( node)
 	defineMainProcContext( node)

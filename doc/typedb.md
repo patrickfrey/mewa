@@ -327,15 +327,16 @@ The scope step of the search that defines the valid reduction candidates has bee
 #### Parameter
 | #          | Name            | Type              | Description                                                                                                        |
 | :--------- | :-------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------- |
-| 1st        | context-type(s) | integer/table     | Single type or array of types referring to the context of the type (*)                                             |
+| 1st        | context-type(s) | integer/table     | Single type or array of types or type/constructor pairs referring to the context of the type (*)                   |
 | 2nd        | name            | string            | Name of the type searched                                                                                          |
 | 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No used reductions if not specified.   |
-| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.         | 
+| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.         |
 | Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
 | Return 3rd |                 | table             | List of candidates found, differing in the parameters. The list has to be filtered by the caller (***).            |
 
 #### Remark (*)
-The context-type 0 is reserved for types that are not a member of some other structure.
+The context-type 0 is reserved for types that are not a member of some other structure. 
+In case of a type/constructor pair selected as root type of the resolved type, this pair is returned as first element if the list of reductions (2nd return value).
 #### Remark (**)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
 #### Remark (***)
