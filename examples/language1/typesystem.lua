@@ -1444,6 +1444,16 @@ function typesystem.procdef( node, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, nil, 2)[3] .. "ret void\n"
 	printCallable( node, descr, context)
 end
+function typesystem.operatordef( node, decl, context)
+	local arg = utils.traverseRange( typedb, node, {1,2}, context)
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = decl.name }
+	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 1)[3]
+	if #descr.param < decl.minarg then utils.errorMessage( node.line, "Too few parameters for operator '%s' [%d < %d]", decl.name, #descr.param, decl.minarg) end
+	if #descr.param > decl.maxarg then utils.errorMessage( node.line, "Too many parameters for operator '%s' [%d > %d]", decl.name, #descr.param, decl.minarg) end
+	defineCallable( node, descr, context)
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 2)[3]
+	printCallable( node, descr, context)
+end
 function typesystem.constructordef( node, context)
 end
 function typesystem.destructordef( node, context)
