@@ -118,7 +118,7 @@ sub assign_constructor {
 	}
 }
 
-sub ctor_assign_constructor {
+sub ctor_copy_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
@@ -223,7 +223,7 @@ foreach my $line (@content)
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
 	print "\t\tctor = \"" . default_constructor( $llvmtype) . "\",\n";
-	print "\t\tctor_assign = \"" . ctor_assign_constructor( $llvmtype) . "\",\n";
+	print "\t\tctor_copy = \"" . ctor_copy_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
 	print "\t\tpromote = {";
 	my $oi = 0;

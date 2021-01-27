@@ -224,7 +224,6 @@ end
 -- Error reporting:
 -- Exit with error message and line info
 function utils.errorMessage( line, fmt, ...)
-	utils.stack("ERROR ")
 	local arg = {...}
 	if line ~= 0 then
 		error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))

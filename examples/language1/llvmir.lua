@@ -14,7 +14,7 @@ local pointerTemplate = {
 	align = 8,
 	size = 8,
 	assign = "store {pointee}* {arg1}, {pointee}** {this}\n",
-	ctor_assign = "{1} = load {pointee}*, {pointee}** {arg1}\nstore {pointee}* {1}, {pointee}** {this}\n",
+	ctor_copy = "{1} = load {pointee}*, {pointee}** {arg1}\nstore {pointee}* {1}, {pointee}** {this}\n",
 	load = "{out} = load {pointee}*, {pointee}** {inp}\n",
 	ctor = "store {pointee}* null, {pointee}** {this}\n",
 	scalar = true,
@@ -53,11 +53,11 @@ local arrayTemplate = {
 			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size})\n"
 		.. "br i1 %r3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctorproc_assign = "define private dso_local void @__ctor_assign_{size}__{element}( {element}* %ths_ar, {element}* %oth_ar) alwaysinline {\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{element}( {element}* %ths_ar, {element}* %oth_ar) alwaysinline {\n"
 		.. "enter:\nbr label %loop\nloop:\n"
 		.. "%ths = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
 		.. "%oth = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %oth_ar, i32 0, i32 0), %enter], [%r3, %loop]\n"
-		.. "{ctors_assign}%r2 = getelementptr inbounds {element}, {element}* %ths, i64 1\n%r3 = getelementptr inbounds {element}, {element}* %oth, i64 1\n"
+		.. "{ctors}%r2 = getelementptr inbounds {element}, {element}* %ths, i64 1\n%r3 = getelementptr inbounds {element}, {element}* %oth, i64 1\n"
 		.. "%r4 = icmp eq {element}* %r2, "
 			.. "getelementptr inbounds ({element}, {element}*"
 			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), i64 {size})\n"
@@ -72,7 +72,7 @@ local arrayTemplate = {
 		.. "br i1 %r3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
 	ctor = "call void @__ctor_{size}__{element}( {element}* {this})\n",
-	ctor_assign = "call void @__ctor_assign_{size}__{element}( {element}* {this}, {element}* {arg1})\n",
+	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( {element}* {this}, {element}* {arg1})\n",
 	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
 	index = {
 		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
@@ -96,14 +96,14 @@ llvmir.structTemplate = {
 	assign = "store %{structname} {arg1}, %{structname}* {this}\n",
 	ctorproc = "define private dso_local void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_assign = "define private dso_local void @__ctor_assign_{structname}( %{structname}* %ptr, %{structname}* %oth) alwaysinline {\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{structname}( %{structname}* %ptr, %{structname}* %oth) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
 	ctorproc_elements = "define private dso_local void @__ctor_elements_{structname}( %{structname}* %ptr{paramstr}) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
 	dtorproc = "define private dso_local void @__dtor_{structname}( %{structname}* %ptr) alwaysinline {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor = "call void @__ctor_{structname}( %{structname}* {this})\n",
-	ctor_assign = "call void @__ctor_assign_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
+	ctor_copy = "call void @__ctor_{procname}_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
 	ctor_elements = "call void @__ctor_elements_{structname}( %{structname}* {this}{args})\n",
 	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
 	loadref = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n",
@@ -172,9 +172,8 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	local arrayDescrKey = llvmElementType .. "#" .. arraySize
 	local arrayDescr = arrayDescrMap[ arrayDescrKey]
 	if not arrayDescr then
-		local ctorElement = utils.template_format( elementDescr.ctor or "", {this="%ptr"})
 		local dtorElement = utils.template_format( elementDescr.dtor or "", {this="%ptr"})
-		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType,size=arraySize,ctorelement=ctorElement, dtorelement=dtorElement})
+		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType,size=arraySize,dtors=dtorElement})
 		arrayDescr.size = elementDescr.size * arraySize
 		arrayDescr.align = elementDescr.align
 		arrayDescrMap[ arrayDescrKey] = arrayDescr;

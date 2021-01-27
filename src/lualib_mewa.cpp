@@ -615,7 +615,7 @@ static int mewa_typedb_def_type( lua_State* ls)
 		int constructor = (nargs >= 4) ? mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td) : 0;
 		std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> parameter;
 		if (nargs >= 5) parameter = mewa::lua::getArgumentAsTypeConstructorPairList( functionName, ls, 5, -1/*objtable*/, td, &memrsc_parameter);
-		int priority = (nargs >= 6) ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 0;
+		int priority = (nargs >= 6 && !lua_isnil( ls, 6)) ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 0;
 		lua_pop( ls, 1); // ... obj table
 		int rt = td->impl->defineType( td->curScope, contextType, name, constructor, parameter, priority);
 		lua_pushinteger( ls, rt);

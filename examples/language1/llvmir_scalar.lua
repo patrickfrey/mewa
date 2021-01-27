@@ -17,7 +17,7 @@ return {
 		maxvalue = "1.8e+308",
 		assign = "store double {arg1}, double* {this}\n",
 		ctor = "store double 0, double* {this}\n",
-		ctor_assign = "{1} = load double, double* {arg1}\nstore double {1}, double* {this}\n",
+		ctor_copy = "{1} = load double, double* {arg1}\nstore double {1}, double* {this}\n",
 		load = "{out} = load double, double* {inp}\n",
 		promote = {},
 		conv = {
@@ -60,7 +60,7 @@ return {
 		maxvalue = "3.402823e+38",
 		assign = "store float {arg1}, float* {this}\n",
 		ctor = "store float 0, float* {this}\n",
-		ctor_assign = "{1} = load float, float* {arg1}\nstore float {1}, float* {this}\n",
+		ctor_copy = "{1} = load float, float* {arg1}\nstore float {1}, float* {this}\n",
 		load = "{out} = load float, float* {inp}\n",
 		promote = {"double"},
 		conv = {
@@ -103,7 +103,7 @@ return {
 		maxvalue = "18446744073709551616",
 		assign = "store i64 {arg1}, i64* {this}\n",
 		ctor = "store i64 0, i64* {this}\n",
-		ctor_assign = "{1} = load i64, i64* {arg1}\nstore i64 {1}, i64* {this}\n",
+		ctor_copy = "{1} = load i64, i64* {arg1}\nstore i64 {1}, i64* {this}\n",
 		load = "{out} = load i64, i64* {inp}\n",
 		promote = {"double", "long"},
 		conv = {
@@ -151,7 +151,7 @@ return {
 		maxvalue = "9223372036854775808",
 		assign = "store i64 {arg1}, i64* {this}\n",
 		ctor = "store i64 0, i64* {this}\n",
-		ctor_assign = "{1} = load i64, i64* {arg1}\nstore i64 {1}, i64* {this}\n",
+		ctor_copy = "{1} = load i64, i64* {arg1}\nstore i64 {1}, i64* {this}\n",
 		load = "{out} = load i64, i64* {inp}\n",
 		promote = {"double"},
 		conv = {
@@ -196,7 +196,7 @@ return {
 		maxvalue = "4294967296",
 		assign = "store i32 {arg1}, i32* {this}\n",
 		ctor = "store i32 0, i32* {this}\n",
-		ctor_assign = "{1} = load i32, i32* {arg1}\nstore i32 {1}, i32* {this}\n",
+		ctor_copy = "{1} = load i32, i32* {arg1}\nstore i32 {1}, i32* {this}\n",
 		load = "{out} = load i32, i32* {inp}\n",
 		promote = {"double", "float", "ulong", "long", "int"},
 		conv = {
@@ -244,7 +244,7 @@ return {
 		maxvalue = "2147483648",
 		assign = "store i32 {arg1}, i32* {this}\n",
 		ctor = "store i32 0, i32* {this}\n",
-		ctor_assign = "{1} = load i32, i32* {arg1}\nstore i32 {1}, i32* {this}\n",
+		ctor_copy = "{1} = load i32, i32* {arg1}\nstore i32 {1}, i32* {this}\n",
 		load = "{out} = load i32, i32* {inp}\n",
 		promote = {"double", "float", "long"},
 		conv = {
@@ -289,7 +289,7 @@ return {
 		maxvalue = "65536",
 		assign = "store i16 {arg1}, i16* {this}\n",
 		ctor = "store i16 0, i16* {this}\n",
-		ctor_assign = "{1} = load i16, i16* {arg1}\nstore i16 {1}, i16* {this}\n",
+		ctor_copy = "{1} = load i16, i16* {arg1}\nstore i16 {1}, i16* {this}\n",
 		load = "{out} = load i16, i16* {inp}\n",
 		promote = {"double", "float", "ulong", "long", "uint", "int", "short"},
 		conv = {
@@ -337,7 +337,7 @@ return {
 		maxvalue = "32768",
 		assign = "store i16 {arg1}, i16* {this}\n",
 		ctor = "store i16 0, i16* {this}\n",
-		ctor_assign = "{1} = load i16, i16* {arg1}\nstore i16 {1}, i16* {this}\n",
+		ctor_copy = "{1} = load i16, i16* {arg1}\nstore i16 {1}, i16* {this}\n",
 		load = "{out} = load i16, i16* {inp}\n",
 		promote = {"double", "float", "long", "int"},
 		conv = {
@@ -382,7 +382,7 @@ return {
 		maxvalue = "256",
 		assign = "store i8 {arg1}, i8* {this}\n",
 		ctor = "store i8 0, i8* {this}\n",
-		ctor_assign = "{1} = load i8, i8* {arg1}\nstore i8 {1}, i8* {this}\n",
+		ctor_copy = "{1} = load i8, i8* {arg1}\nstore i8 {1}, i8* {this}\n",
 		load = "{out} = load i8, i8* {inp}\n",
 		promote = {"double", "float", "ulong", "long", "uint", "int", "ushort", "short"},
 		conv = {
@@ -430,7 +430,7 @@ return {
 		maxvalue = "1",
 		assign = "{1} = zext i1 {arg1} to i8\nstore i8 {1}, i8* {this}\n",
 		ctor = "store i1 0, i1* {this}\n",
-		ctor_assign = "{1} = load i8, i8* {arg1}\nstore i8 {1}, i8* {this}\n",
+		ctor_copy = "{1} = load i8, i8* {arg1}\nstore i8 {1}, i8* {this}\n",
 		load = "{1} = load i8, i8* {inp}\n{out} = trunc i8 {1} to i1\n",
 		promote = {"double", "float", "ulong", "long", "uint", "int", "ushort", "short"},
 		conv = {
