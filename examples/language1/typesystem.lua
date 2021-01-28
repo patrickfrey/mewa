@@ -136,14 +136,14 @@ function assignStructureConstructor( node, thisTypeId, members)
 		return rt
 	end
 end
-function assignClassConstructor( node, thisTypeId)
+function recursiveResolveConstructor( node, thisTypeId, opr)
 	return function( this, args)
 		local rt = {}
 		if #args == 1 and args[1].type == constexprStructureType then args = args[1].constructor end
 		local callable = getCallableInstance()
 		local descr = typeDescriptionMap[ thisTypeId]
 		local this_code,this_inp = constructorParts( this)
-		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, ":=")
+		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, opr)
 		if not contextTypeId then utils.errorMessage( node.line, "No constructor found for '%s'", mewa.type_string( thisTypeId)) end
 		for ci,item in ipairs( candidateFunctions) do
 			if typedb:type_nof_parameters( item.type) == #args then
@@ -173,6 +173,9 @@ function assignClassConstructor( node, thisTypeId)
 			return rt[1]
 		end
 	end
+end
+function assignClassConstructor( node, thisTypeId)
+	return recursiveResolveConstructor( node, thisTypeId, ":=")
 end
 function promoteCallConstructor( call_constructor, promote_constructor)
 	return function( this, arg)
@@ -693,8 +696,8 @@ function defineVariable( node, context, typeId, name, initVal)
 		local rt = {type=var, constructor={code=code,out=out}}
 		if initVal then
 			rt = applyCallable( node, rt, ":=", {initVal})
-		elseif descr.ctor then
-			rt.constructor.code = rt.constructor.code .. utils.constructor_format( descr.ctor, {this=rt.constructor.out}, callable.register)
+		else
+			rt = applyCallable( node, rt, ":=", {})
 		end
 		if descr.dtor then setCleanupCode( descr, rt.constructor.out) end
 		return rt
