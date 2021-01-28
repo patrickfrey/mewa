@@ -931,6 +931,19 @@ function initBuiltInTypes()
 	initControlTypes()
 end
 
+function applyConversionConstructor( node, conv, arg)
+	if conv.constructor then
+		if (type(conv.constructor) == "function") then
+			return conv.constructor( arg)
+		elseif arg then
+			utils.errorMessage( node.line, "reduction constructor overwriting previous constructor for '%s'", typedb:type_string(conv.type))
+		else
+			return conv.constructor
+		end
+	else
+		return arg
+	end
+end
 function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
 	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, getContextTypes(), typeName)
@@ -939,27 +952,9 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 		if typedb:type_nof_parameters( item.type) == 0 then
 			local constructor = nil
 			for ri,redu in ipairs(reductions) do
-				if redu.constructor then
-					if (type(redu.constructor) == "function") then
-						constructor = redu.constructor( constructor)
-					elseif constructor then
-						utils.errorMessage( node.line, "reduction constructor overwriting previous constructor for '%s'",
-										typedb:type_string(redu.type))
-					else
-						constructor = redu.constructor
-					end
-				end
+				constructor = applyConversionConstructor( node, redu, constructor)
 			end
-			if item.constructor then
-				if type( item.constructor) == "function" then
-					constructor = item.constructor( constructor)
-				elseif constructor then
-						utils.errorMessage( node.line, "type constructor overwriting previous constructor for '%s'",
-										typedb:type_string(item.type))
-				else
-					constructor = item.constructor
-				end
-			end
+			constructor = applyConversionConstructor( node, item, constructor)
 			if constructor then
 				local code,out = constructorParts( constructor)
 				return item.type,{code=code,out=out}
@@ -1268,6 +1263,20 @@ function typesystem.allocate( node, context)
 	rt.type = pointerTypeId
 	return rt
 end
+function typesystem.typecast( node, context)
+	local callable = getCallableInstance()
+	local args = utils.traverse( typedb, node, context)
+	local typeId = args[1]
+	local operand = args[2]
+	local descr = typeDescriptionMap[ typeId]
+	if operand then
+		return getReductionConstructor( node, typeId, operand)
+	else
+		local out = callable.register()
+		local code = utils.constructor_format( descr.def_local, {out=out}, callable.register)
+		return tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
+	end
+end
 function typesystem.delete( node, context)
 	local callable = getCallableInstance()
 	local args = utils.traverse( typedb, node, context)
@@ -1430,7 +1439,7 @@ function typesystem.linkage( node, llvm_linkage)
 end
 function typesystem.funcdef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = arg[3] }
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], ret = arg[3] }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
@@ -1444,14 +1453,15 @@ function typesystem.procdef( node, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, nil, 2)[3] .. "ret void\n"
 	printCallable( node, descr, context)
 end
+function typesystem.operatordecl( node, opr)
+	return opr
+end
 function typesystem.operatordef( node, decl, context)
-	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[2], name = decl.name }
-	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 1)[3]
-	if #descr.param < decl.minarg then utils.errorMessage( node.line, "Too few parameters for operator '%s' [%d < %d]", decl.name, #descr.param, decl.minarg) end
-	if #descr.param > decl.maxarg then utils.errorMessage( node.line, "Too many parameters for operator '%s' [%d > %d]", decl.name, #descr.param, decl.minarg) end
+	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[3], name = arg[2] }
+	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 2)[3]
+	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
 	printCallable( node, descr, context)
 end
 function typesystem.constructordef( node, context)
@@ -1485,7 +1495,7 @@ function typesystem.extern_paramdeflist( node)
 end
 function typesystem.extern_funcdef( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {externtype = arg[1], ret = arg[2], name = arg[3], param = arg[4], vararg=false}
+	local descr = {externtype = arg[1], ret = arg[3], name = arg[2], param = arg[4], vararg=false}
 	defineExternCallable( node, descr)
 end
 function typesystem.extern_procdef( node)
@@ -1505,11 +1515,15 @@ function typesystem.extern_procdef_vararg( node)
 end
 function typesystem.interface_funcdef( node, qualifier, context)
 	local arg = utils.traverse( typedb, node)
-	local descr = {ret = arg[1], name = arg[2], param = arg[3]}
+	local descr = {name = arg[1], ret = arg[2], param = arg[3]}
 end
 function typesystem.interface_procdef( node, qualifier, context)
 	local arg = utils.traverse( typedb, node)
 	local descr = {name = arg[1], param = arg[2]}
+end
+function typesystem.interface_operatordef( node, qualifier, context)
+	local arg = utils.traverse( typedb, node)
+	local descr = {name = arg[1], ret = arg[2], param = arg[3]}
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value

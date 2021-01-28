@@ -1,8 +1,8 @@
 
 interface Object
 {
-	function int x() const;
-	function int y() const;
+	function x int() const;
+	function y int() const;
 }
 
 class Point
@@ -13,12 +13,12 @@ class Point
 		m_y = y_;
 	}
 
-	public function int x() const
+	public function x int() const
 	{
 		return m_x;
 	}
 
-	public function int y() const
+	public function y int() const
 	{
 		return m_y;
 	}

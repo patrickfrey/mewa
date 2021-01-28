@@ -1,9 +1,9 @@
 extern "C" procedure printf( const byte^ ...);
 extern "C" procedure putchar( const byte);
-extern "C" function byte^ malloc( long);
+extern "C" function malloc byte^( long);
 extern "C" procedure free( byte^);
 
-function byte^ allocmem( long bytes)
+function allocmem byte^( long bytes)
 {
 	return malloc( bytes);
 }

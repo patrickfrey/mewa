@@ -1,6 +1,6 @@
 extern "C" procedure printf( const byte^, int);
 
-private function int fibonacci( int n)
+private function fibonacci int( int n)
 {
 	procedure swap( int& a, int& b)
 	{
