@@ -535,16 +535,18 @@ function defineClassConstructors( node, qualitype, descr, context)
 	instantCallable = nil
 end
 
-function defineOperatorAttributes( context, const, private, opr, returnType, param)
-	local oprThisType = context.qualitype.lval;
-	if const == true then oprThisType = constTypeMap[ oprThisType] end
-	if private == true then oprThisType = privateTypeMap[ oprThisType] end
+function getFunctionThisType( private, const, thisType)
+	if private == true then thisType = privateTypeMap[ thisType] end
+	if const == true then thisType = constTypeMap[ thisType] end
+	return thisType
+end
+function defineOperatorAttributes( context, thisType, opr, returnType, param)
 	local def = context.operators[ opr]
 	if def then
 		if #param > def.maxNofArguments then def.maxNofArguments = #param end
-		if def.thisType ~= oprThisType or def.returnType ~= returnType then def.hasStructArgument = false end
+		if def.thisType ~= thisType or def.returnType ~= returnType then def.hasStructArgument = false end
 	else
-		context.operators[ opr] = {returnType = returnType, thisType = oprThisType, hasStructArgument = true, maxNofArguments = #param}
+		context.operators[ opr] = {thisType = thisType, returnType = returnType, hasStructArgument = true, maxNofArguments = #param}
 	end
 end
 function defineOperatorsWithStructArgument( context)
@@ -1467,20 +1469,24 @@ end
 function typesystem.linkage( node, llvm_linkage)
 	return llvm_linkage
 end
-function typesystem.funcdef( node, context)
+function typesystem.funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2], symbol = arg[2], ret = arg[3] }
-	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private),
+			name = arg[2], symbol = arg[2], ret = arg[3] }
+	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
+	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printCallable( node, descr, context)
 end
-function typesystem.procdef( node, context)
+function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2], symbol = arg[2], ret = nil }
-	descr.param = utils.traverseRange( typedb, node, {3,3}, context, nil, 1)[3]
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private),
+			name = arg[2], symbol = arg[2], ret = nil }
+	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, nil, 2)[3] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printCallable( node, descr, context)
 end
 function typesystem.operatordecl( node, opr)
@@ -1488,47 +1494,54 @@ function typesystem.operatordecl( node, opr)
 end
 function typesystem.operator_funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2].name, symbol = arg[2].symbol, ret = arg[3] }
-	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private),
+			name = arg[2].name, symbol = arg[2].symbol, ret = arg[3] }
+	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
+	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printCallable( node, descr, context)
-	defineOperatorAttributes( context, context.const, arg[1].name == "private", descr.name, descr.ret, descr.param)
+	defineOperatorAttributes( context, descr.thisType, descr.name, descr.ret, descr.param)
 end
 function typesystem.operator_procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2].name, symbol = arg[2].symbol, ret = nil }
-	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 1)[3]
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private),
+			name = arg[2].name, symbol = arg[2].symbol, ret = nil }
+	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 2)[3]
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3]
 	printCallable( node, descr, context)
-	defineOperatorAttributes( context, context.const, arg[1].name == "private", descr.name, descr.ret, descr.param)
+	defineOperatorAttributes( context, descr.thisType, descr.name, descr.ret, descr.param)
 end
 function typesystem.constructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], ret = nil, name = ":=", symbol = "__ctor" }
-	descr.param = utils.traverseRange( typedb, node, {2,2}, context, nil, 1)[2]
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private),
+			name = ":=", symbol = "__ctor", ret = nil}
+	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, false, context.qualitype.rval) else descr.thisType = 0 end
+	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, nil, 2)[2] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printCallable( node, descr, context)
 end
 function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], ret = nil, name = ":~", symbol = "__dtor" }
-	descr.param = utils.traverseRange( typedb, node, {2,2}, context, nil, 1)[2]
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private),
+	               thisType = context.qualitype.rval,
+	               ret = nil, name = ":~", symbol = "__dtor" }
+	if context and context.qualitype then descr.thisType = context.qualitype.rval else descr.thisType = 0 end
+	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineCallable( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, nil, 2)[2] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printCallable( node, descr, context)
 end
-function typesystem.callablebody( node, qualifier, context, rtype, select)
+function typesystem.callablebody( node, context, descr, select)
 	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
-	if context then context.const = (qualifier == "const&") end
 	if select == 1 then
-		if context and context.qualitype then
-			local thisType; if context.const then thisType = context.qualitype.priv_c_rval else thisType = context.qualitype.priv_rval end
-			defineMethodContext( node, thisType, rtype)
+		if context and context.thisType then
+			defineMethodContext( node, context.thisType, descr.ret)
 		else
-			defineCallableBodyContext( node, rtype)
+			defineCallableBodyContext( node, descr.ret)
 		end
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		return arg[1]

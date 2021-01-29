@@ -98,18 +98,22 @@ inheritlist		= typepath "," inheritlist							(>>inheritdef 1)
 classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
 			| "class" IDENT ":" inheritlist "{" class_definitionlist "}"			(>>classdef)
 			;
-linkage			= "private"									(linkage {name="private", linkage="internal"})
-			| "public"									(linkage {name="public", linkage="external"})
-			|										(linkage {name="private", linkage="internal"})
+linkage			= "private"									(linkage {private=true, linkage="internal"})
+			| "public"									(linkage {private=false, linkage="external"})
+			|										(linkage {private=true, linkage="internal"})
 			;
-functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef)
-			| linkage "procedure" IDENT callablebody					(procdef)
+functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef {const=false})
+			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})
+			| linkage "procedure" IDENT callablebody					(procdef {const=false})
+			| linkage "procedure" IDENT callablebody_const					(procdef {const=true})
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
 			| "destructor" "{" codeblock "}"						(destructordef)
 			;
-operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_procdef)
-			| linkage "operator" operatordecl callablebody					(operator_funcdef)
+operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_procdef {const=false})
+			| linkage "operator" operatordecl typespec callablebody_const			(operator_procdef {const=true})
+			| linkage "operator" operatordecl callablebody					(operator_funcdef {const=false})
+			| linkage "operator" operatordecl callablebody_const				(operator_funcdef {const=true})
 			;
 operatordecl		= "->"										(operatordecl {name="->", symbol="__arrow"})
 			| "="										(operatordecl {name="=", symbol="__assign"})
@@ -135,8 +139,9 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="__arrow"})
 			| ">"										(operatordecl {name=">", symbol="__gt"})
 			| "<"										(operatordecl {name="<", symbol="__lt"})
 			;
-callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody "&")
-			|  "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody "const&")
+callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody)
+			;
+callablebody_const	=  "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody)
 			;
 main_procedure		= "main" "{" codeblock "}"							({}main_procdef)
 			| ε
