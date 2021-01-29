@@ -29,6 +29,7 @@ local controlFalseType = nil	-- type implementing a boolean not represented as v
 local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
 local referenceTypeMap = {}	-- maps any defined type id to its reference type
 local constTypeMap = {}		-- maps any defined type id to its const type
+local privateTypeMap = {}	-- maps any defined type id to its private type
 local pointerTypeMap = {}	-- maps any defined type id to its pointer type
 local typeQualiSepMap = {}	-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
 local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
@@ -304,6 +305,11 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	constTypeMap[ priv_rval] = priv_c_rval
 	constTypeMap[ priv_pval] = priv_c_pval
 
+	privateTypeMap[ qualitype.rval] = priv_rval
+	privateTypeMap[ qualitype.c_rval] = priv_c_rval
+	privateTypeMap[ qualitype.pval] = priv_pval
+	privateTypeMap[ qualitype.c_pval] = priv_c_pval
+
 	pointerTypeMap[ priv_rval] = priv_pval
 	pointerTypeMap[ priv_c_rval] = priv_c_pval
 
@@ -529,6 +535,28 @@ function defineClassConstructors( node, qualitype, descr, context)
 	instantCallable = nil
 end
 
+function defineOperatorAttributes( context, const, private, opr, returnType, param)
+	local oprThisType = context.qualitype.lval;
+	if const == true then oprThisType = constTypeMap[ oprThisType] end
+	if private == true then oprThisType = privateTypeMap[ oprThisType] end
+	local def = context.operators[ opr]
+	if def then
+		if #param > def.maxNofArguments then def.maxNofArguments = #param end
+		if def.thisType ~= oprThisType or def.returnType ~= returnType then def.hasStructArgument = false end
+	else
+		context.operators[ opr] = {returnType = returnType, thisType = oprThisType, hasStructArgument = true, maxNofArguments = #param}
+	end
+end
+function defineOperatorsWithStructArgument( context)
+	for opr,def in pairs( context.operators) do
+		if def.hasStructArgument == true then
+			defineCall( def.returnType, def.thisType, opr, {constexprStructureType}, recursiveResolveConstructor( node, def.thisType, opr))
+		elseif def.maxNofArguments > 1 then
+			utils.errorMessage( node.line, "Operator '%s' defined different instances with more than one argument, but with varying signature", opr)
+		end
+	end
+end
+
 function defineIndexOperators( element_qualitype, pointer_descr)
 	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
 		defineCall( element_qualitype.rval, element_qualitype.pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
@@ -725,7 +753,7 @@ end
 function defineVariableMember( node, context, typeId, name, private)
 	local descr = typeDescriptionMap[ typeId]
 	local qualisep = typeQualiSepMap[ typeId]
-	local memberpos = context.structsize or 0
+	local memberpos = context.structsize
 	local load_ref = utils.template_format( context.descr.loadref, {index=#context.members, type=descr.llvmtype})
 	local load_val = utils.template_format( context.descr.load, {index=#context.members, type=descr.llvmtype})
 
@@ -741,12 +769,7 @@ function defineVariableMember( node, context, typeId, name, private)
 		load = load_val
 	}
 	table.insert( context.members, member)
-	if context.llvmtype then
-		context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype
-	else
-		context.llvmtype = descr.llvmtype
-	end
-
+	if context.llvmtype ~= "" then context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype else context.llvmtype = descr.llvmtype end
 	local dx; if private == true then
 		dx = {rval=context.qualitype.priv_rval, c_rval=context.qualitype.priv_c_rval}
 	else
@@ -796,7 +819,7 @@ function defineParameter( node, type, name, callable)
 	return {type=type, llvmtype=descr.llvmtype, reg=paramreg}
 end
 
-function initControlTypes()
+function initControlBooleanTypes()
 	controlTrueType = typedb:def_type( 0, " controlTrueType")
 	controlFalseType = typedb:def_type( 0, " controlFalseType")
 
@@ -931,7 +954,7 @@ function initBuiltInTypes()
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
 	defineConstExprArithmetics()
-	initControlTypes()
+	initControlBooleanTypes()
 end
 
 function applyConversionConstructor( node, conv, arg)
@@ -1170,7 +1193,7 @@ function defineCallableType( node, descr, contextTypeId)
 end
 function defineCallable( node, descr, context)
 	descr.paramstr = getParameterString( descr.param)
-	descr.symbolname = getSignatureString( descr.name, descr.param, context)
+	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
 	defineCallableType( node, descr, getCallableContextTypeId( node, context))
 end
 function printCallable( node, descr, context)
@@ -1317,12 +1340,16 @@ function typesystem.vardef_array_assign( node, context)
 	return defineVariable( node, context, arrayTypeId, arg[2], arg[4])
 end
 function typesystem.typedef( node, context)
+	local typnam = node.arg[2].value
 	local arg = utils.traverse( typedb, node)
-	if not context or context.typeId == 0 then
-		local type = typedb:def_type( 0, arg[2].value, typedb:type_constructor( arg[1]))
-		typedb:def_reduction( arg[1], type, nil, tag_typeDeclaration)
-	else
-		utils.errorMessage( node.line, "Member variables not implemented yet")
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local descr = typeDescriptionMap[ arg[1]]
+	local orig_qualitype = qualiTypeMap[ arg[1]]
+	local this_qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local convlist = {"lval","c_lval","c_rval"}
+	for ci,conv in ipairs(convlist) do
+		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_TypeConversion, 0.125 / 32)
+		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_TypeConversion, 0.125 / 64)
 	end
 end
 
@@ -1442,7 +1469,7 @@ function typesystem.linkage( node, llvm_linkage)
 end
 function typesystem.funcdef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, name = arg[2], ret = arg[3] }
+	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2], symbol = arg[2], ret = arg[3] }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
@@ -1450,7 +1477,7 @@ function typesystem.funcdef( node, context)
 end
 function typesystem.procdef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = nil, name = arg[2] }
+	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2], symbol = arg[2], ret = nil }
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, nil, 1)[3]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, nil, 2)[3] .. "ret void\n"
@@ -1459,17 +1486,39 @@ end
 function typesystem.operatordecl( node, opr)
 	return opr
 end
-function typesystem.operatordef( node, decl, context)
+function typesystem.operator_funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {lnk = arg[1].linkage, attr = arg[1].attributes, ret = arg[3], name = arg[2] }
+	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2].name, symbol = arg[2].symbol, ret = arg[3] }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr.ret, 2)[4]
 	printCallable( node, descr, context)
+	defineOperatorAttributes( context, context.const, arg[1].name == "private", descr.name, descr.ret, descr.param)
+end
+function typesystem.operator_procdef( node, decl, context)
+	local arg = utils.traverseRange( typedb, node, {1,2}, context)
+	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], name = arg[2].name, symbol = arg[2].symbol, ret = nil }
+	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 1)[3]
+	defineCallable( node, descr, context)
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr.ret, 2)[3]
+	printCallable( node, descr, context)
+	defineOperatorAttributes( context, context.const, arg[1].name == "private", descr.name, descr.ret, descr.param)
 end
 function typesystem.constructordef( node, context)
+	local arg = utils.traverseRange( typedb, node, {1,1}, context)
+	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], ret = nil, name = ":=", symbol = "__ctor" }
+	descr.param = utils.traverseRange( typedb, node, {2,2}, context, nil, 1)[2]
+	defineCallable( node, descr, context)
+	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, nil, 2)[2] .. "ret void\n"
+	printCallable( node, descr, context)
 end
 function typesystem.destructordef( node, context)
+	local arg = utils.traverseRange( typedb, node, {1,1}, context)
+	local descr = {lnk = arg[1].linkage, attr = llvmir.control.functionAttribute[ arg[1].name], ret = nil, name = ":~", symbol = "__dtor" }
+	descr.param = utils.traverseRange( typedb, node, {2,2}, context, nil, 1)[2]
+	defineCallable( node, descr, context)
+	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, nil, 2)[2] .. "ret void\n"
+	printCallable( node, descr, context)
 end
 function typesystem.callablebody( node, qualifier, context, rtype, select)
 	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
@@ -1498,35 +1547,39 @@ function typesystem.extern_paramdeflist( node)
 end
 function typesystem.extern_funcdef( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {externtype = arg[1], ret = arg[3], name = arg[2], param = arg[4], vararg=false}
+	local descr = {externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=false}
 	defineExternCallable( node, descr)
 end
 function typesystem.extern_procdef( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {externtype = arg[1], name = arg[2], param = arg[3], vararg=false}
+	local descr = {externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=false}
 	defineExternCallable( node, descr)
 end
 function typesystem.extern_funcdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {externtype = arg[1], ret = arg[2], name = arg[3], param = arg[4], vararg=true}
+	local descr = {externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=true}
 	defineExternCallable( node, descr)
 end
 function typesystem.extern_procdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {externtype = arg[1], name = arg[2], param = arg[3], vararg=true}
+	local descr = {externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=true}
 	defineExternCallable( node, descr)
 end
 function typesystem.interface_funcdef( node, qualifier, context)
 	local arg = utils.traverse( typedb, node)
-	local descr = {name = arg[1], ret = arg[2], param = arg[3]}
+	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3]}
 end
 function typesystem.interface_procdef( node, qualifier, context)
 	local arg = utils.traverse( typedb, node)
-	local descr = {name = arg[1], param = arg[2]}
+	local descr = {name = arg[1], symbol = arg[1], param = arg[2]}
 end
-function typesystem.interface_operatordef( node, qualifier, context)
+function typesystem.interface_operator_funcdef( node, qualifier, context)
 	local arg = utils.traverse( typedb, node)
-	local descr = {name = arg[1], ret = arg[2], param = arg[3]}
+	local descr = {name = arg[1].name, symbol = arg[1].symbol, ret = arg[2], param = arg[3]}
+end
+function typesystem.interface_operator_procdef( node, qualifier, context)
+	local arg = utils.traverse( typedb, node)
+	local descr = {name = arg[1].name, symbol = arg[1].symbol, param = arg[2]}
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
@@ -1535,9 +1588,9 @@ function typesystem.structdef( node, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}}
+	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype=""}
 	local arg = utils.traverse( typedb, node, context)
-	descr.size = context.structsize or 0
+	descr.size = context.structsize
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineStructConstructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
@@ -1552,13 +1605,15 @@ function typesystem.classdef( node, context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, c_thisref=qualitype.priv_c_rval, thisref=qualitype.c_rval}
+	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, structsize=0, llvmtype="", operators={},
+	                 c_thisref=qualitype.priv_c_rval, thisref=qualitype.c_rval}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverse( typedb, node, context, 1)
 	utils.traverse( typedb, node, context, 2)
-	descr.size = context.structsize or 0
+	descr.size = context.structsize
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
+	defineOperatorsWithStructArgument( context)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=classname,llvmtype=context.llvmtype}))
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)

@@ -13,6 +13,12 @@ class Point
 		m_y = y_;
 	}
 
+	public operator = ( int x_, int y_)
+	{
+		m_x = x_;
+		m_y = y_;
+	}
+
 	public function x int() const
 	{
 		return m_x;

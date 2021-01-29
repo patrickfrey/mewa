@@ -152,7 +152,11 @@ llvmir.control = {
 				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
 	structdef = "%{structname} = type { {llvmtype} }\n",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
-	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
+	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n",
+	functionAttribute = {
+		private = "#0 nounwind",
+		public ="#0 noinline nounwind"
+	}
 }
 
 local pointerDescrMap = {}

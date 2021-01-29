@@ -121,7 +121,7 @@ ret i8* %r2
 }
 
 
-define internal void @freemem__i8__p( i8* %r1 ) #0 nounwind {
+define internal void @freemem__i8$( i8* %r1 ) #0 nounwind {
 entry:
 call void @free( i8* %r1)
 ret void
@@ -179,7 +179,7 @@ ret void
 }
 
 
-define internal void @deleteTree____cTree1__p( %Tree1* %r1 ) #0 nounwind {
+define internal void @deleteTree__Tree1$( %Tree1* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 1
 %r3 = load %Tree1*, %Tree1** %r2
@@ -188,7 +188,7 @@ br i1 %r4, label %L2, label %L1
 L2:
 %r5 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 1
 %r6 = load %Tree1*, %Tree1** %r5
-call void @deleteTree____cTree1__p( %Tree1* %r6)
+call void @deleteTree__Tree1$( %Tree1* %r6)
 br label %L1
 L1:
 %r8 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 2
@@ -198,12 +198,12 @@ br i1 %r10, label %L4, label %L3
 L4:
 %r11 = getelementptr inbounds %Tree1, %Tree1* %r1, i32 0, i32 2
 %r12 = load %Tree1*, %Tree1** %r11
-call void @deleteTree____cTree1__p( %Tree1* %r12)
+call void @deleteTree__Tree1$( %Tree1* %r12)
 br label %L3
 L3:
 call void @__dtor_Tree1( %Tree1* %r1)
 %r14 = bitcast %Tree1* %r1 to i8*
-call void @freemem__i8__p( i8* %r14)
+call void @freemem__i8$( i8* %r14)
 ret void
 }
 
@@ -263,7 +263,7 @@ call void(i8*, ...) @printf( i8* %r26, i32 %r30)
 %r32 = load %Tree1*, %Tree1** %r25
 call void @printTree_i32( %Tree1* %r32, i32 0)
 %r34 = load %Tree1*, %Tree1** %r25
-call void @deleteTree____cTree1__p( %Tree1* %r34)
+call void @deleteTree__Tree1$( %Tree1* %r34)
 %r36 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
 call void(i8*, ...) @printf( i8* %r36)
 br label %exit
