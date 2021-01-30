@@ -16946,9 +16946,9 @@ expressionlist = expression
 	callablebody = . "(" parameterlist ")" "{" codeblock "}", FOLLOW [174] -> SHIFT '(' GOTO 100
 	callablebody_const = . "(" parameterlist ")" "const" "{" codeblock "}", FOLLOW [174] -> SHIFT '(' GOTO 100
 [320]
-	operatordefinition = linkage "operator" operatordecl callablebody . (44), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_funcdef {const=false}
+	operatordefinition = linkage "operator" operatordecl callablebody . (44), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_procdef {const=false}
 [321]
-	operatordefinition = linkage "operator" operatordecl callablebody_const . (45), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_funcdef {const=true}
+	operatordefinition = linkage "operator" operatordecl callablebody_const . (45), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_procdef {const=true}
 [322]
 	callablebody = "(" parameterlist . ")" "{" codeblock "}", FOLLOW [174] -> SHIFT ')' GOTO 342
 [323]
@@ -17267,9 +17267,9 @@ expressionlist = expression
 	interface_definition = "operator" operatordecl "(" parameterlist ")" . ";", FOLLOW [171] -> SHIFT ';' GOTO 355
 	interface_definition = "operator" operatordecl "(" parameterlist ")" . "const" ";", FOLLOW [171] -> SHIFT "const" GOTO 356
 [340]
-	operatordefinition = linkage "operator" operatordecl typespec callablebody . (42), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_procdef {const=false}
+	operatordefinition = linkage "operator" operatordecl typespec callablebody . (42), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_funcdef {const=false}
 [341]
-	operatordefinition = linkage "operator" operatordecl typespec callablebody_const . (43), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_procdef {const=true}
+	operatordefinition = linkage "operator" operatordecl typespec callablebody_const . (43), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_funcdef {const=true}
 [342]
 	callablebody = "(" parameterlist ")" . "{" codeblock "}", FOLLOW [174] -> SHIFT '{' GOTO 313
 [343]
@@ -17458,10 +17458,10 @@ expressionlist = expression
 (39) procdef, {const=true}
 (40) constructordef
 (41) destructordef
-(42) operator_procdef, {const=false}
-(43) operator_procdef, {const=true}
-(44) operator_funcdef, {const=false}
-(45) operator_funcdef, {const=true}
+(42) operator_funcdef, {const=false}
+(43) operator_funcdef, {const=true}
+(44) operator_procdef, {const=false}
+(45) operator_procdef, {const=true}
 (46) operatordecl, {name="->",symbol="__arrow"}
 (47) operatordecl, {name="=",symbol="__assign"}
 (48) operatordecl, {name="+",symbol="__plus"}
@@ -22687,37 +22687,37 @@ expressionlist = expression
 [319]
 	'(' => Shift goto 100
 [320]
-	$ => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	IDENT => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"function" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"procedure" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"const" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"operator" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"typedef" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"struct" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	'}' => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"interface" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"class" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"private" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"public" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"constructor" => Reduce #4 operatordefinition call operator_funcdef {const=false}
-	"destructor" => Reduce #4 operatordefinition call operator_funcdef {const=false}
+	$ => Reduce #4 operatordefinition call operator_procdef {const=false}
+	IDENT => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"function" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"procedure" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"const" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"operator" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"typedef" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"struct" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	'}' => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"interface" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"class" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"private" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"public" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"constructor" => Reduce #4 operatordefinition call operator_procdef {const=false}
+	"destructor" => Reduce #4 operatordefinition call operator_procdef {const=false}
 [321]
-	$ => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	IDENT => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"function" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"procedure" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"const" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"operator" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"typedef" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"struct" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	'}' => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"interface" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"class" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"private" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"public" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"constructor" => Reduce #4 operatordefinition call operator_funcdef {const=true}
-	"destructor" => Reduce #4 operatordefinition call operator_funcdef {const=true}
+	$ => Reduce #4 operatordefinition call operator_procdef {const=true}
+	IDENT => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"function" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"procedure" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"const" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"operator" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"typedef" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"struct" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	'}' => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"interface" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"class" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"private" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"public" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"constructor" => Reduce #4 operatordefinition call operator_procdef {const=true}
+	"destructor" => Reduce #4 operatordefinition call operator_procdef {const=true}
 [322]
 	')' => Shift goto 342
 [323]
@@ -22957,37 +22957,37 @@ expressionlist = expression
 	';' => Shift goto 355
 	"const" => Shift goto 356
 [340]
-	$ => Reduce #5 operatordefinition call operator_procdef {const=false}
-	IDENT => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"function" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"procedure" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"const" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"operator" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"typedef" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"struct" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	'}' => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"interface" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"class" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"private" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"public" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"constructor" => Reduce #5 operatordefinition call operator_procdef {const=false}
-	"destructor" => Reduce #5 operatordefinition call operator_procdef {const=false}
+	$ => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	IDENT => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"function" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"procedure" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"const" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"operator" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"typedef" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"struct" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	'}' => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"interface" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"class" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"private" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"public" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"constructor" => Reduce #5 operatordefinition call operator_funcdef {const=false}
+	"destructor" => Reduce #5 operatordefinition call operator_funcdef {const=false}
 [341]
-	$ => Reduce #5 operatordefinition call operator_procdef {const=true}
-	IDENT => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"function" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"procedure" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"const" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"operator" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"typedef" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"struct" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	'}' => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"interface" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"class" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"private" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"public" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"constructor" => Reduce #5 operatordefinition call operator_procdef {const=true}
-	"destructor" => Reduce #5 operatordefinition call operator_procdef {const=true}
+	$ => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	IDENT => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"function" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"procedure" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"const" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"operator" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"typedef" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"struct" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	'}' => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"interface" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"class" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"private" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"public" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"constructor" => Reduce #5 operatordefinition call operator_funcdef {const=true}
+	"destructor" => Reduce #5 operatordefinition call operator_funcdef {const=true}
 [342]
 	'{' => Shift goto 313
 [343]

@@ -1169,14 +1169,6 @@ end
 function getTypeDeclContextTypeId( context)
 	if context.qualitype then return context.qualitype.lval else return 0 end
 end
-function getCallableContextTypeId( node, context)
-	if not context then return 0 end
-	if context.qualitype then
-		if context.const == true then return context.qualitype.c_rval else return context.qualitype.rval end
-	else
-		if context.const == true then utils.errorMessage( node.line, "Callable const declaration undefined for free function") else return 0 end
-	end
-end
 function defineCallableType( node, descr, contextTypeId)
 	local callable = typedb:get_type( contextTypeId, descr.name)
 	if not callable then callable = typedb:def_type( contextTypeId, descr.name) end
@@ -1196,7 +1188,7 @@ end
 function defineCallable( node, descr, context)
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
-	defineCallableType( node, descr, getCallableContextTypeId( node, context))
+	defineCallableType( node, descr, descr.thisType)
 end
 function printCallable( node, descr, context)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -1229,9 +1221,10 @@ function defineMainProcContext( node)
 end
 function defineMethodContext( node, classTypeId, rtype)
 	local prev_scope = typedb:scope( node.scope)
-	local classPointerTypeId = pointerTypeMap[ classTypeId]
-	defineVariableHardcoded( node, classPointerTypeId, "this", "%ths")
-	local classvar = defineVariableHardcoded( node, classTypeId, "*this", "%ths")
+	local privateClassTypeId = privateTypeMap[ classTypeId] or classTypeId
+	local privateClassPointerTypeId = pointerTypeMap[ privateClassTypeId]
+	defineVariableHardcoded( node, privateClassPointerTypeId, "this", "%ths")
+	local classvar = defineVariableHardcoded( node, privateClassTypeId, "*this", "%ths")
 	defineCallableInstance( node.scope, rtype)
 	addContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
 	typedb:scope( prev_scope)
@@ -1523,6 +1516,7 @@ function typesystem.constructordef( node, context)
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printCallable( node, descr, context)
+	defineOperatorAttributes( context, descr.thisType, ":=", nil, descr.param)
 end
 function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
@@ -1538,8 +1532,8 @@ end
 function typesystem.callablebody( node, context, descr, select)
 	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
 	if select == 1 then
-		if context and context.thisType then
-			defineMethodContext( node, context.thisType, descr.ret)
+		if descr.thisType ~= 0 then
+			defineMethodContext( node, descr.thisType, descr.ret)
 		else
 			defineCallableBodyContext( node, descr.ret)
 		end
@@ -1596,7 +1590,7 @@ function typesystem.interface_operator_procdef( node, qualifier, context)
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
-	local structname = utils.uniqueName( typnam)
+	local structname = utils.uniqueName( typnam .. "__")
 	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
@@ -1612,7 +1606,7 @@ function typesystem.interfacedef( node, context)
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
-	local classname = utils.uniqueName( typnam)
+	local classname = utils.uniqueName( typnam .. "__")
 	local descr = utils.template_format( llvmir.classTemplate, {classname=classname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)

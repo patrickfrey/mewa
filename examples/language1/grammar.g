@@ -110,10 +110,10 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef 
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
 			| "destructor" "{" codeblock "}"						(destructordef)
 			;
-operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_procdef {const=false})
-			| linkage "operator" operatordecl typespec callablebody_const			(operator_procdef {const=true})
-			| linkage "operator" operatordecl callablebody					(operator_funcdef {const=false})
-			| linkage "operator" operatordecl callablebody_const				(operator_funcdef {const=true})
+operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef {const=false})
+			| linkage "operator" operatordecl typespec callablebody_const			(operator_funcdef {const=true})
+			| linkage "operator" operatordecl callablebody					(operator_procdef {const=false})
+			| linkage "operator" operatordecl callablebody_const				(operator_procdef {const=true})
 			;
 operatordecl		= "->"										(operatordecl {name="->", symbol="__arrow"})
 			| "="										(operatordecl {name="=", symbol="__assign"})
