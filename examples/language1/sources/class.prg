@@ -37,12 +37,12 @@ class Line :Point
 {
 	public constructor( int x_, int y_)
 	{
-		Point = {x_,y_};
+		this->Point = {x_,y_};
 	}
 
 	public procedure move( int x_, int y_)
 	{
-		Point = {x_,y_};
+		this->Point = {x_,y_};
 	}
 }
 

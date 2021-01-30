@@ -1,219 +1,326 @@
 Reduce #0 to extern_definitionlist by token "interface" at line 2 in state 1, goto 2
 Shift token "interface" at line 2 in state 2, goto 21
-Shift token IDENT = "Point" at line 2 in state 21, goto 41
-Shift token '{' at line 3 in state 41, goto 57
-Shift token "function" at line 4 in state 57, goto 104
-Shift token IDENT = "int" at line 4 in state 104, goto 17
-Reduce #1 to typename by token IDENT = "x" at line 4 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "x" at line 4 in state 8, call typespec "", goto 187
-Shift token IDENT = "x" at line 4 in state 187, goto 249
-Shift token '(' at line 4 in state 249, goto 269
-Reduce #0 to parameterlist by token ')' at line 4 in state 269, goto 282
-Shift token ')' at line 4 in state 282, goto 291
-Shift token "const" at line 4 in state 291, goto 299
-Shift token ';' at line 4 in state 299, goto 302
-Reduce #8 to interface_definition by token "function" at line 5 in state 302, call interface_funcdef "const&", goto 103
-Shift token "function" at line 5 in state 103, goto 104
-Shift token IDENT = "int" at line 5 in state 104, goto 17
-Reduce #1 to typename by token IDENT = "y" at line 5 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "y" at line 5 in state 8, call typespec "", goto 187
-Shift token IDENT = "y" at line 5 in state 187, goto 249
-Shift token '(' at line 5 in state 249, goto 269
-Reduce #0 to parameterlist by token ')' at line 5 in state 269, goto 282
-Shift token ')' at line 5 in state 282, goto 291
-Shift token "const" at line 5 in state 291, goto 299
-Shift token ';' at line 5 in state 299, goto 302
-Reduce #8 to interface_definition by token '}' at line 6 in state 302, call interface_funcdef "const&", goto 103
-Reduce #0 to interface_definitionlist by token '}' at line 6 in state 103, goto 186
-Reduce #2 to interface_definitionlist by token '}' at line 6 in state 186, goto 186
-Reduce #2 to interface_definitionlist by token '}' at line 6 in state 186, goto 102
-Shift token '}' at line 6 in state 102, goto 185
-Reduce #5 to interfacedefinition by token "class" at line 8 in state 185, call interfacedef, goto 12
-Reduce #1 to free_definition by token "class" at line 8 in state 12, call definition, goto 7
+Shift token IDENT = "Object" at line 2 in state 21, goto 42
+Shift token '{' at line 3 in state 42, goto 58
+Shift token "function" at line 4 in state 58, goto 107
+Shift token IDENT = "x" at line 4 in state 107, goto 197
+Shift token IDENT = "int" at line 4 in state 197, goto 17
+Reduce #1 to typename by token '(' at line 4 in state 17, goto 8
+Reduce #1 to typespec by token '(' at line 4 in state 8, call typespec "", goto 288
+Shift token '(' at line 4 in state 288, goto 315
+Reduce #0 to parameterlist by token ')' at line 4 in state 315, call paramdeflist, goto 336
+Shift token ')' at line 4 in state 336, goto 351
+Shift token "const" at line 4 in state 351, goto 362
+Shift token ';' at line 4 in state 362, goto 368
+Reduce #8 to interface_definition by token "function" at line 5 in state 368, call interface_funcdef "const&", goto 106
+Shift token "function" at line 5 in state 106, goto 107
+Shift token IDENT = "y" at line 5 in state 107, goto 197
+Shift token IDENT = "int" at line 5 in state 197, goto 17
+Reduce #1 to typename by token '(' at line 5 in state 17, goto 8
+Reduce #1 to typespec by token '(' at line 5 in state 8, call typespec "", goto 288
+Shift token '(' at line 5 in state 288, goto 315
+Reduce #0 to parameterlist by token ')' at line 5 in state 315, call paramdeflist, goto 336
+Shift token ')' at line 5 in state 336, goto 351
+Shift token "const" at line 5 in state 351, goto 362
+Shift token ';' at line 5 in state 362, goto 368
+Reduce #8 to interface_definition by token '}' at line 6 in state 368, call interface_funcdef "const&", goto 106
+Reduce #0 to interface_definitionlist by token '}' at line 6 in state 106, goto 196
+Reduce #2 to interface_definitionlist by token '}' at line 6 in state 196, goto 196
+Reduce #2 to interface_definitionlist by token '}' at line 6 in state 196, goto 105
+Shift token '}' at line 6 in state 105, goto 195
+Reduce #5 to interfacedefinition by token "class" at line 8 in state 195, call interfacedef, goto 12
+Reduce #1 to free_definition by token "class" at line 8 in state 12, call definition 1, goto 7
 Shift token "class" at line 8 in state 7, goto 22
-Shift token IDENT = "Line" at line 8 in state 22, goto 42
-Shift token ':' at line 8 in state 42, goto 59
-Shift token IDENT = "Point" at line 8 in state 59, goto 17
-Reduce #1 to typename by token '{' at line 9 in state 17, goto 115
-Reduce #1 to inheritlist by token '{' at line 9 in state 115, call inheritdef, goto 116
-Shift token '{' at line 9 in state 116, goto 194
-Shift token "public" at line 10 in state 194, goto 24
-Reduce #1 to linkage by token "constructor" at line 10 in state 24, call linkage {linkage="external",attributes="#0 noinline nounwind"}, goto 111
-Shift token "constructor" at line 10 in state 111, goto 191
-Shift token '(' at line 10 in state 191, goto 97
-Shift token IDENT = "int" at line 10 in state 97, goto 17
+Shift token IDENT = "Point" at line 8 in state 22, goto 43
+Shift token '{' at line 9 in state 43, goto 59
+Shift token "public" at line 10 in state 59, goto 24
+Reduce #1 to linkage by token "constructor" at line 10 in state 24, call linkage {private=false,linkage="external"}, goto 116
+Shift token "constructor" at line 10 in state 116, goto 227
+Shift token '(' at line 10 in state 227, goto 296
+Shift token IDENT = "int" at line 10 in state 296, goto 17
 Reduce #1 to typename by token IDENT = "x_" at line 10 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "x_" at line 10 in state 8, call typespec "", goto 178
-Shift token IDENT = "x_" at line 10 in state 178, goto 246
-Reduce #2 to paramdecl by token ',' at line 10 in state 246, call paramdef, goto 181
-Shift token ',' at line 10 in state 181, goto 248
-Shift token IDENT = "int" at line 10 in state 248, goto 17
+Reduce #1 to typespec by token IDENT = "x_" at line 10 in state 8, call typespec "", goto 188
+Shift token IDENT = "x_" at line 10 in state 188, goto 285
+Reduce #2 to paramdecl by token ',' at line 10 in state 285, call paramdef, goto 191
+Shift token ',' at line 10 in state 191, goto 287
+Shift token IDENT = "int" at line 10 in state 287, goto 17
 Reduce #1 to typename by token IDENT = "y_" at line 10 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "y_" at line 10 in state 8, call typespec "", goto 178
-Shift token IDENT = "y_" at line 10 in state 178, goto 246
-Reduce #2 to paramdecl by token ')' at line 10 in state 246, call paramdef, goto 181
-Reduce #1 to parameters by token ')' at line 10 in state 181, goto 268
-Reduce #3 to parameters by token ')' at line 10 in state 268, goto 180
-Reduce #1 to parameterlist by token ')' at line 10 in state 180, call paramdeflist, goto 179
-Shift token ')' at line 10 in state 179, goto 247
-Shift token '{' at line 11 in state 247, goto 267
-Shift token IDENT = "m_x" at line 12 in state 267, goto 70
-Reduce #1 to expression by token '=' at line 12 in state 70, call variable, goto 67
-Shift token '=' at line 12 in state 67, goto 127
-Shift token IDENT = "x_" at line 12 in state 127, goto 70
-Reduce #1 to expression by token ';' at line 12 in state 70, call variable, goto 204
-Reduce #3 to expression by token ';' at line 12 in state 204, call operator "=", goto 67
-Shift token ';' at line 12 in state 67, goto 124
-Reduce #2 to statement by token IDENT = "m_y" at line 13 in state 124, call free_expression, goto 66
-Shift token IDENT = "m_y" at line 13 in state 66, goto 70
-Reduce #1 to expression by token '=' at line 13 in state 70, call variable, goto 67
-Shift token '=' at line 13 in state 67, goto 127
-Shift token IDENT = "y_" at line 13 in state 127, goto 70
-Reduce #1 to expression by token ';' at line 13 in state 70, call variable, goto 204
-Reduce #3 to expression by token ';' at line 13 in state 204, call operator "=", goto 67
-Shift token ';' at line 13 in state 67, goto 124
-Reduce #2 to statement by token '}' at line 14 in state 124, call free_expression, goto 66
-Reduce #0 to statementlist by token '}' at line 14 in state 66, goto 121
-Reduce #2 to statementlist by token '}' at line 14 in state 121, goto 121
-Reduce #2 to statementlist by token '}' at line 14 in state 121, goto 65
-Reduce #1 to codeblock by token '}' at line 14 in state 65, call codeblock, goto 281
-Shift token '}' at line 14 in state 281, goto 290
-Reduce #6 to callablebody by token "public" at line 16 in state 290, call callablebody "&", goto 251
-Reduce #3 to constructordefinition by token "public" at line 16 in state 251, call constructordef, goto 113
-Reduce #1 to class_definition by token "public" at line 16 in state 113, goto 108
-Shift token "public" at line 16 in state 108, goto 24
-Reduce #1 to linkage by token "function" at line 16 in state 24, call linkage {linkage="external",attributes="#0 noinline nounwind"}, goto 111
-Shift token "function" at line 16 in state 111, goto 34
-Shift token IDENT = "int" at line 16 in state 34, goto 17
-Reduce #1 to typename by token IDENT = "x" at line 16 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "x" at line 16 in state 8, call typespec "", goto 50
-Shift token IDENT = "x" at line 16 in state 50, goto 95
-Shift token '(' at line 16 in state 95, goto 97
-Reduce #0 to parameterlist by token ')' at line 16 in state 97, goto 179
-Shift token ')' at line 16 in state 179, goto 247
-Shift token "const" at line 16 in state 247, goto 266
-Shift token '{' at line 17 in state 266, goto 280
-Shift token "return" at line 18 in state 280, goto 80
-Shift token IDENT = "m_x" at line 18 in state 80, goto 70
-Reduce #1 to expression by token ';' at line 18 in state 70, call variable, goto 165
-Shift token ';' at line 18 in state 165, goto 240
-Reduce #3 to statement by token '}' at line 19 in state 240, call return_value, goto 66
-Reduce #0 to statementlist by token '}' at line 19 in state 66, goto 121
-Reduce #2 to statementlist by token '}' at line 19 in state 121, goto 65
-Reduce #1 to codeblock by token '}' at line 19 in state 65, call codeblock, goto 289
-Shift token '}' at line 19 in state 289, goto 297
-Reduce #7 to callablebody by token "public" at line 21 in state 297, call callablebody "const&", goto 177
-Reduce #5 to functiondefinition by token "public" at line 21 in state 177, call funcdef, goto 112
-Reduce #1 to class_definition by token "public" at line 21 in state 112, call definition, goto 108
-Shift token "public" at line 21 in state 108, goto 24
-Reduce #1 to linkage by token "function" at line 21 in state 24, call linkage {linkage="external",attributes="#0 noinline nounwind"}, goto 111
-Shift token "function" at line 21 in state 111, goto 34
-Shift token IDENT = "int" at line 21 in state 34, goto 17
-Reduce #1 to typename by token IDENT = "y" at line 21 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "y" at line 21 in state 8, call typespec "", goto 50
-Shift token IDENT = "y" at line 21 in state 50, goto 95
-Shift token '(' at line 21 in state 95, goto 97
-Reduce #0 to parameterlist by token ')' at line 21 in state 97, goto 179
-Shift token ')' at line 21 in state 179, goto 247
-Shift token "const" at line 21 in state 247, goto 266
-Shift token '{' at line 22 in state 266, goto 280
-Shift token "return" at line 23 in state 280, goto 80
-Shift token IDENT = "m_y" at line 23 in state 80, goto 70
-Reduce #1 to expression by token ';' at line 23 in state 70, call variable, goto 165
-Shift token ';' at line 23 in state 165, goto 240
-Reduce #3 to statement by token '}' at line 24 in state 240, call return_value, goto 66
-Reduce #0 to statementlist by token '}' at line 24 in state 66, goto 121
-Reduce #2 to statementlist by token '}' at line 24 in state 121, goto 65
-Reduce #1 to codeblock by token '}' at line 24 in state 65, call codeblock, goto 289
-Shift token '}' at line 24 in state 289, goto 297
-Reduce #7 to callablebody by token "public" at line 26 in state 297, call callablebody "const&", goto 177
-Reduce #5 to functiondefinition by token "public" at line 26 in state 177, call funcdef, goto 112
-Reduce #1 to class_definition by token "public" at line 26 in state 112, call definition, goto 108
-Shift token "public" at line 26 in state 108, goto 24
-Reduce #1 to linkage by token "procedure" at line 26 in state 24, call linkage {linkage="external",attributes="#0 noinline nounwind"}, goto 111
-Shift token "procedure" at line 26 in state 111, goto 35
-Shift token IDENT = "move" at line 26 in state 35, goto 51
-Shift token '(' at line 26 in state 51, goto 97
-Shift token IDENT = "int" at line 26 in state 97, goto 17
-Reduce #1 to typename by token IDENT = "x_" at line 26 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "x_" at line 26 in state 8, call typespec "", goto 178
-Shift token IDENT = "x_" at line 26 in state 178, goto 246
-Reduce #2 to paramdecl by token ',' at line 26 in state 246, call paramdef, goto 181
-Shift token ',' at line 26 in state 181, goto 248
-Shift token IDENT = "int" at line 26 in state 248, goto 17
-Reduce #1 to typename by token IDENT = "y_" at line 26 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "y_" at line 26 in state 8, call typespec "", goto 178
-Shift token IDENT = "y_" at line 26 in state 178, goto 246
-Reduce #2 to paramdecl by token ')' at line 26 in state 246, call paramdef, goto 181
-Reduce #1 to parameters by token ')' at line 26 in state 181, goto 268
-Reduce #3 to parameters by token ')' at line 26 in state 268, goto 180
-Reduce #1 to parameterlist by token ')' at line 26 in state 180, call paramdeflist, goto 179
-Shift token ')' at line 26 in state 179, goto 247
-Shift token '{' at line 27 in state 247, goto 267
-Shift token IDENT = "m_x" at line 28 in state 267, goto 70
-Reduce #1 to expression by token '=' at line 28 in state 70, call variable, goto 67
-Shift token '=' at line 28 in state 67, goto 127
-Shift token IDENT = "x_" at line 28 in state 127, goto 70
-Reduce #1 to expression by token ';' at line 28 in state 70, call variable, goto 204
-Reduce #3 to expression by token ';' at line 28 in state 204, call operator "=", goto 67
-Shift token ';' at line 28 in state 67, goto 124
-Reduce #2 to statement by token IDENT = "m_y" at line 29 in state 124, call free_expression, goto 66
-Shift token IDENT = "m_y" at line 29 in state 66, goto 70
-Reduce #1 to expression by token '=' at line 29 in state 70, call variable, goto 67
-Shift token '=' at line 29 in state 67, goto 127
-Shift token IDENT = "y_" at line 29 in state 127, goto 70
-Reduce #1 to expression by token ';' at line 29 in state 70, call variable, goto 204
-Reduce #3 to expression by token ';' at line 29 in state 204, call operator "=", goto 67
-Shift token ';' at line 29 in state 67, goto 124
-Reduce #2 to statement by token '}' at line 30 in state 124, call free_expression, goto 66
-Reduce #0 to statementlist by token '}' at line 30 in state 66, goto 121
-Reduce #2 to statementlist by token '}' at line 30 in state 121, goto 121
-Reduce #2 to statementlist by token '}' at line 30 in state 121, goto 65
-Reduce #1 to codeblock by token '}' at line 30 in state 65, call codeblock, goto 281
-Shift token '}' at line 30 in state 281, goto 290
-Reduce #6 to callablebody by token IDENT = "int" at line 32 in state 290, call callablebody "&", goto 96
-Reduce #4 to functiondefinition by token IDENT = "int" at line 32 in state 96, call procdef, goto 112
-Reduce #1 to class_definition by token IDENT = "int" at line 32 in state 112, call definition, goto 108
-Shift token IDENT = "int" at line 32 in state 108, goto 17
+Reduce #1 to typespec by token IDENT = "y_" at line 10 in state 8, call typespec "", goto 188
+Shift token IDENT = "y_" at line 10 in state 188, goto 285
+Reduce #2 to paramdecl by token ')' at line 10 in state 285, call paramdef, goto 191
+Reduce #1 to parameters by token ')' at line 10 in state 191, goto 314
+Reduce #3 to parameters by token ')' at line 10 in state 314, goto 190
+Reduce #1 to parameterlist by token ')' at line 10 in state 190, call paramdeflist, goto 322
+Shift token ')' at line 10 in state 322, goto 342
+Shift token '{' at line 11 in state 342, goto 313
+Shift token IDENT = "m_x" at line 12 in state 313, goto 71
+Reduce #1 to expression by token '=' at line 12 in state 71, call variable, goto 68
+Shift token '=' at line 12 in state 68, goto 135
+Shift token IDENT = "x_" at line 12 in state 135, goto 71
+Reduce #1 to expression by token ';' at line 12 in state 71, call variable, goto 242
+Reduce #3 to expression by token ';' at line 12 in state 242, call operator "=", goto 68
+Shift token ';' at line 12 in state 68, goto 131
+Reduce #2 to statement by token IDENT = "m_y" at line 13 in state 131, call free_expression, goto 67
+Shift token IDENT = "m_y" at line 13 in state 67, goto 71
+Reduce #1 to expression by token '=' at line 13 in state 71, call variable, goto 68
+Shift token '=' at line 13 in state 68, goto 135
+Shift token IDENT = "y_" at line 13 in state 135, goto 71
+Reduce #1 to expression by token ';' at line 13 in state 71, call variable, goto 242
+Reduce #3 to expression by token ';' at line 13 in state 242, call operator "=", goto 68
+Shift token ';' at line 13 in state 68, goto 131
+Reduce #2 to statement by token '}' at line 14 in state 131, call free_expression, goto 67
+Reduce #0 to statementlist by token '}' at line 14 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 14 in state 128, goto 128
+Reduce #2 to statementlist by token '}' at line 14 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 14 in state 66, call codeblock, goto 335
+Shift token '}' at line 14 in state 335, goto 350
+Reduce #6 to callablebody by token "public" at line 16 in state 350, call callablebody, goto 295
+Reduce #3 to constructordefinition by token "public" at line 16 in state 295, call constructordef, goto 118
+Reduce #1 to class_definition by token "public" at line 16 in state 118, call definition 2, goto 111
+Shift token "public" at line 16 in state 111, goto 24
+Reduce #1 to linkage by token "operator" at line 16 in state 24, call linkage {private=false,linkage="external"}, goto 116
+Shift token "operator" at line 16 in state 116, goto 226
+Shift token '=' at line 16 in state 226, goto 203
+Reduce #1 to operatordecl by token '(' at line 16 in state 203, call operatordecl {name="=",symbol="__assign"}, goto 294
+Shift token '(' at line 16 in state 294, goto 100
+Shift token IDENT = "int" at line 16 in state 100, goto 17
+Reduce #1 to typename by token IDENT = "x_" at line 16 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "x_" at line 16 in state 8, call typespec "", goto 188
+Shift token IDENT = "x_" at line 16 in state 188, goto 285
+Reduce #2 to paramdecl by token ',' at line 16 in state 285, call paramdef, goto 191
+Shift token ',' at line 16 in state 191, goto 287
+Shift token IDENT = "int" at line 16 in state 287, goto 17
+Reduce #1 to typename by token IDENT = "y_" at line 16 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "y_" at line 16 in state 8, call typespec "", goto 188
+Shift token IDENT = "y_" at line 16 in state 188, goto 285
+Reduce #2 to paramdecl by token ')' at line 16 in state 285, call paramdef, goto 191
+Reduce #1 to parameters by token ')' at line 16 in state 191, goto 314
+Reduce #3 to parameters by token ')' at line 16 in state 314, goto 190
+Reduce #1 to parameterlist by token ')' at line 16 in state 190, call paramdeflist, goto 189
+Shift token ')' at line 16 in state 189, goto 286
+Shift token '{' at line 17 in state 286, goto 313
+Shift token IDENT = "m_x" at line 18 in state 313, goto 71
+Reduce #1 to expression by token '=' at line 18 in state 71, call variable, goto 68
+Shift token '=' at line 18 in state 68, goto 135
+Shift token IDENT = "x_" at line 18 in state 135, goto 71
+Reduce #1 to expression by token ';' at line 18 in state 71, call variable, goto 242
+Reduce #3 to expression by token ';' at line 18 in state 242, call operator "=", goto 68
+Shift token ';' at line 18 in state 68, goto 131
+Reduce #2 to statement by token IDENT = "m_y" at line 19 in state 131, call free_expression, goto 67
+Shift token IDENT = "m_y" at line 19 in state 67, goto 71
+Reduce #1 to expression by token '=' at line 19 in state 71, call variable, goto 68
+Shift token '=' at line 19 in state 68, goto 135
+Shift token IDENT = "y_" at line 19 in state 135, goto 71
+Reduce #1 to expression by token ';' at line 19 in state 71, call variable, goto 242
+Reduce #3 to expression by token ';' at line 19 in state 242, call operator "=", goto 68
+Shift token ';' at line 19 in state 68, goto 131
+Reduce #2 to statement by token '}' at line 20 in state 131, call free_expression, goto 67
+Reduce #0 to statementlist by token '}' at line 20 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 20 in state 128, goto 128
+Reduce #2 to statementlist by token '}' at line 20 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 20 in state 66, call codeblock, goto 335
+Shift token '}' at line 20 in state 335, goto 350
+Reduce #6 to callablebody by token "public" at line 22 in state 350, call callablebody, goto 320
+Reduce #4 to operatordefinition by token "public" at line 22 in state 320, call operator_procdef {const=false}, goto 119
+Reduce #1 to class_definition by token "public" at line 22 in state 119, call definition 2, goto 111
+Shift token "public" at line 22 in state 111, goto 24
+Reduce #1 to linkage by token "function" at line 22 in state 24, call linkage {private=false,linkage="external"}, goto 116
+Shift token "function" at line 22 in state 116, goto 34
+Shift token IDENT = "x" at line 22 in state 34, goto 51
+Shift token IDENT = "int" at line 22 in state 51, goto 17
+Reduce #1 to typename by token '(' at line 22 in state 17, goto 8
+Reduce #1 to typespec by token '(' at line 22 in state 8, call typespec "", goto 97
+Shift token '(' at line 22 in state 97, goto 100
+Reduce #0 to parameterlist by token ')' at line 22 in state 100, call paramdeflist, goto 189
+Shift token ')' at line 22 in state 189, goto 286
+Shift token "const" at line 22 in state 286, goto 312
+Shift token '{' at line 23 in state 312, goto 334
+Shift token "return" at line 24 in state 334, goto 86
+Shift token IDENT = "m_x" at line 24 in state 86, goto 71
+Reduce #1 to expression by token ';' at line 24 in state 71, call variable, goto 178
+Shift token ';' at line 24 in state 178, goto 278
+Reduce #3 to statement by token '}' at line 25 in state 278, call return_value, goto 67
+Reduce #0 to statementlist by token '}' at line 25 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 25 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 25 in state 66, call codeblock, goto 349
+Shift token '}' at line 25 in state 349, goto 360
+Reduce #7 to callablebody_const by token "public" at line 27 in state 360, call callablebody, goto 187
+Reduce #5 to functiondefinition by token "public" at line 27 in state 187, call funcdef {const=true}, goto 117
+Reduce #1 to class_definition by token "public" at line 27 in state 117, call definition 2, goto 111
+Shift token "public" at line 27 in state 111, goto 24
+Reduce #1 to linkage by token "function" at line 27 in state 24, call linkage {private=false,linkage="external"}, goto 116
+Shift token "function" at line 27 in state 116, goto 34
+Shift token IDENT = "y" at line 27 in state 34, goto 51
+Shift token IDENT = "int" at line 27 in state 51, goto 17
+Reduce #1 to typename by token '(' at line 27 in state 17, goto 8
+Reduce #1 to typespec by token '(' at line 27 in state 8, call typespec "", goto 97
+Shift token '(' at line 27 in state 97, goto 100
+Reduce #0 to parameterlist by token ')' at line 27 in state 100, call paramdeflist, goto 189
+Shift token ')' at line 27 in state 189, goto 286
+Shift token "const" at line 27 in state 286, goto 312
+Shift token '{' at line 28 in state 312, goto 334
+Shift token "return" at line 29 in state 334, goto 86
+Shift token IDENT = "m_y" at line 29 in state 86, goto 71
+Reduce #1 to expression by token ';' at line 29 in state 71, call variable, goto 178
+Shift token ';' at line 29 in state 178, goto 278
+Reduce #3 to statement by token '}' at line 30 in state 278, call return_value, goto 67
+Reduce #0 to statementlist by token '}' at line 30 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 30 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 30 in state 66, call codeblock, goto 349
+Shift token '}' at line 30 in state 349, goto 360
+Reduce #7 to callablebody_const by token IDENT = "int" at line 32 in state 360, call callablebody, goto 187
+Reduce #5 to functiondefinition by token IDENT = "int" at line 32 in state 187, call funcdef {const=true}, goto 117
+Reduce #1 to class_definition by token IDENT = "int" at line 32 in state 117, call definition 2, goto 111
+Shift token IDENT = "int" at line 32 in state 111, goto 17
 Reduce #1 to typename by token IDENT = "m_x" at line 32 in state 17, goto 8
 Reduce #1 to typespec by token IDENT = "m_x" at line 32 in state 8, call typespec "", goto 9
 Shift token IDENT = "m_x" at line 32 in state 9, goto 32
-Reduce #2 to variabledefinition by token ';' at line 32 in state 32, call vardef, goto 16
-Shift token ';' at line 32 in state 16, goto 36
-Reduce #2 to struct_definition by token IDENT = "int" at line 33 in state 36, call definition, goto 107
-Reduce #1 to class_definition by token IDENT = "int" at line 33 in state 107, goto 108
-Shift token IDENT = "int" at line 33 in state 108, goto 17
+Reduce #2 to variabledefinition by token ';' at line 32 in state 32, call vardef, goto 120
+Shift token ';' at line 32 in state 120, goto 228
+Reduce #2 to class_definition by token IDENT = "int" at line 33 in state 228, call definition 1, goto 111
+Shift token IDENT = "int" at line 33 in state 111, goto 17
 Reduce #1 to typename by token IDENT = "m_y" at line 33 in state 17, goto 8
 Reduce #1 to typespec by token IDENT = "m_y" at line 33 in state 8, call typespec "", goto 9
 Shift token IDENT = "m_y" at line 33 in state 9, goto 32
-Reduce #2 to variabledefinition by token ';' at line 33 in state 32, call vardef, goto 16
-Shift token ';' at line 33 in state 16, goto 36
-Reduce #2 to struct_definition by token '}' at line 34 in state 36, call definition, goto 107
-Reduce #1 to class_definition by token '}' at line 34 in state 107, goto 108
-Reduce #0 to class_definitionlist by token '}' at line 34 in state 108, goto 190
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 190, goto 190
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 190, goto 190
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 190, goto 190
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 190, goto 190
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 190, goto 190
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 190, goto 254
-Shift token '}' at line 34 in state 254, goto 272
-Reduce #7 to classdefinition by token "main" at line 36 in state 272, call classdef_inherit, goto 13
-Reduce #1 to free_definition by token "main" at line 36 in state 13, call definition, goto 7
-Reduce #0 to free_definitionlist by token "main" at line 36 in state 7, goto 29
-Reduce #2 to free_definitionlist by token "main" at line 36 in state 29, goto 29
-Reduce #2 to free_definitionlist by token "main" at line 36 in state 29, goto 5
-Shift token "main" at line 36 in state 5, goto 28
-Shift token '{' at line 36 in state 28, goto 45
-Shift token "return" at line 37 in state 45, goto 80
-Shift token CARDINAL = "0" at line 37 in state 80, goto 73
-Reduce #1 to expression by token ';' at line 37 in state 73, call constant "constexpr uint", goto 165
-Shift token ';' at line 37 in state 165, goto 240
-Reduce #3 to statement by token '}' at line 38 in state 240, call return_value, goto 66
-Reduce #0 to statementlist by token '}' at line 38 in state 66, goto 121
-Reduce #2 to statementlist by token '}' at line 38 in state 121, goto 65
-Reduce #1 to codeblock by token '}' at line 38 in state 65, call codeblock, goto 64
-Shift token '}' at line 38 in state 64, goto 120
+Reduce #2 to variabledefinition by token ';' at line 33 in state 32, call vardef, goto 120
+Shift token ';' at line 33 in state 120, goto 228
+Reduce #2 to class_definition by token '}' at line 34 in state 228, call definition 1, goto 111
+Reduce #0 to class_definitionlist by token '}' at line 34 in state 111, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 110
+Shift token '}' at line 34 in state 110, goto 223
+Reduce #5 to classdefinition by token "class" at line 36 in state 223, call classdef, goto 13
+Reduce #1 to free_definition by token "class" at line 36 in state 13, call definition 1, goto 7
+Shift token "class" at line 36 in state 7, goto 22
+Shift token IDENT = "Line" at line 36 in state 22, goto 43
+Shift token ':' at line 36 in state 43, goto 60
+Shift token IDENT = "Point" at line 36 in state 60, goto 17
+Reduce #1 to typename by token '{' at line 37 in state 17, goto 39
+Reduce #1 to typepath by token '{' at line 37 in state 39, call typespec "", goto 122
+Reduce #1 to inheritlist by token '{' at line 37 in state 122, call inheritdef 1, goto 123
+Shift token '{' at line 37 in state 123, goto 231
+Shift token "public" at line 38 in state 231, goto 24
+Reduce #1 to linkage by token "constructor" at line 38 in state 24, call linkage {private=false,linkage="external"}, goto 116
+Shift token "constructor" at line 38 in state 116, goto 227
+Shift token '(' at line 38 in state 227, goto 296
+Shift token IDENT = "int" at line 38 in state 296, goto 17
+Reduce #1 to typename by token IDENT = "x_" at line 38 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "x_" at line 38 in state 8, call typespec "", goto 188
+Shift token IDENT = "x_" at line 38 in state 188, goto 285
+Reduce #2 to paramdecl by token ',' at line 38 in state 285, call paramdef, goto 191
+Shift token ',' at line 38 in state 191, goto 287
+Shift token IDENT = "int" at line 38 in state 287, goto 17
+Reduce #1 to typename by token IDENT = "y_" at line 38 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "y_" at line 38 in state 8, call typespec "", goto 188
+Shift token IDENT = "y_" at line 38 in state 188, goto 285
+Reduce #2 to paramdecl by token ')' at line 38 in state 285, call paramdef, goto 191
+Reduce #1 to parameters by token ')' at line 38 in state 191, goto 314
+Reduce #3 to parameters by token ')' at line 38 in state 314, goto 190
+Reduce #1 to parameterlist by token ')' at line 38 in state 190, call paramdeflist, goto 322
+Shift token ')' at line 38 in state 322, goto 342
+Shift token '{' at line 39 in state 342, goto 313
+Shift token IDENT = "this" at line 40 in state 313, goto 71
+Reduce #1 to expression by token "->" at line 40 in state 71, call variable, goto 68
+Shift token "->" at line 40 in state 68, goto 134
+Reduce #1 to indirection by token IDENT = "Point" at line 40 in state 134, call count, goto 129
+Shift token IDENT = "Point" at line 40 in state 129, goto 236
+Reduce #3 to iexpression by token '=' at line 40 in state 236, call rep_operator "->", goto 69
+Reduce #1 to expression by token '=' at line 40 in state 69, goto 68
+Shift token '=' at line 40 in state 68, goto 135
+Shift token '{' at line 40 in state 135, goto 95
+Shift token IDENT = "x_" at line 40 in state 95, goto 71
+Reduce #1 to expression by token ',' at line 40 in state 71, call variable, goto 184
+Shift token ',' at line 40 in state 184, goto 275
+Shift token IDENT = "y_" at line 40 in state 275, goto 71
+Reduce #1 to expression by token '}' at line 40 in state 71, call variable, goto 184
+Reduce #1 to expressionlist by token '}' at line 40 in state 184, goto 306
+Reduce #3 to expressionlist by token '}' at line 40 in state 306, goto 170
+Shift token '}' at line 40 in state 170, goto 276
+Reduce #3 to expression by token ';' at line 40 in state 276, call structure, goto 242
+Reduce #3 to expression by token ';' at line 40 in state 242, call operator "=", goto 68
+Shift token ';' at line 40 in state 68, goto 131
+Reduce #2 to statement by token '}' at line 41 in state 131, call free_expression, goto 67
+Reduce #0 to statementlist by token '}' at line 41 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 41 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 41 in state 66, call codeblock, goto 335
+Shift token '}' at line 41 in state 335, goto 350
+Reduce #6 to callablebody by token "public" at line 43 in state 350, call callablebody, goto 295
+Reduce #3 to constructordefinition by token "public" at line 43 in state 295, call constructordef, goto 118
+Reduce #1 to class_definition by token "public" at line 43 in state 118, call definition 2, goto 111
+Shift token "public" at line 43 in state 111, goto 24
+Reduce #1 to linkage by token "procedure" at line 43 in state 24, call linkage {private=false,linkage="external"}, goto 116
+Shift token "procedure" at line 43 in state 116, goto 35
+Shift token IDENT = "move" at line 43 in state 35, goto 52
+Shift token '(' at line 43 in state 52, goto 100
+Shift token IDENT = "int" at line 43 in state 100, goto 17
+Reduce #1 to typename by token IDENT = "x_" at line 43 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "x_" at line 43 in state 8, call typespec "", goto 188
+Shift token IDENT = "x_" at line 43 in state 188, goto 285
+Reduce #2 to paramdecl by token ',' at line 43 in state 285, call paramdef, goto 191
+Shift token ',' at line 43 in state 191, goto 287
+Shift token IDENT = "int" at line 43 in state 287, goto 17
+Reduce #1 to typename by token IDENT = "y_" at line 43 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "y_" at line 43 in state 8, call typespec "", goto 188
+Shift token IDENT = "y_" at line 43 in state 188, goto 285
+Reduce #2 to paramdecl by token ')' at line 43 in state 285, call paramdef, goto 191
+Reduce #1 to parameters by token ')' at line 43 in state 191, goto 314
+Reduce #3 to parameters by token ')' at line 43 in state 314, goto 190
+Reduce #1 to parameterlist by token ')' at line 43 in state 190, call paramdeflist, goto 189
+Shift token ')' at line 43 in state 189, goto 286
+Shift token '{' at line 44 in state 286, goto 313
+Shift token IDENT = "this" at line 45 in state 313, goto 71
+Reduce #1 to expression by token "->" at line 45 in state 71, call variable, goto 68
+Shift token "->" at line 45 in state 68, goto 134
+Reduce #1 to indirection by token IDENT = "Point" at line 45 in state 134, call count, goto 129
+Shift token IDENT = "Point" at line 45 in state 129, goto 236
+Reduce #3 to iexpression by token '=' at line 45 in state 236, call rep_operator "->", goto 69
+Reduce #1 to expression by token '=' at line 45 in state 69, goto 68
+Shift token '=' at line 45 in state 68, goto 135
+Shift token '{' at line 45 in state 135, goto 95
+Shift token IDENT = "x_" at line 45 in state 95, goto 71
+Reduce #1 to expression by token ',' at line 45 in state 71, call variable, goto 184
+Shift token ',' at line 45 in state 184, goto 275
+Shift token IDENT = "y_" at line 45 in state 275, goto 71
+Reduce #1 to expression by token '}' at line 45 in state 71, call variable, goto 184
+Reduce #1 to expressionlist by token '}' at line 45 in state 184, goto 306
+Reduce #3 to expressionlist by token '}' at line 45 in state 306, goto 170
+Shift token '}' at line 45 in state 170, goto 276
+Reduce #3 to expression by token ';' at line 45 in state 276, call structure, goto 242
+Reduce #3 to expression by token ';' at line 45 in state 242, call operator "=", goto 68
+Shift token ';' at line 45 in state 68, goto 131
+Reduce #2 to statement by token '}' at line 46 in state 131, call free_expression, goto 67
+Reduce #0 to statementlist by token '}' at line 46 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 46 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 46 in state 66, call codeblock, goto 335
+Shift token '}' at line 46 in state 335, goto 350
+Reduce #6 to callablebody by token '}' at line 47 in state 350, call callablebody, goto 98
+Reduce #4 to functiondefinition by token '}' at line 47 in state 98, call procdef {const=false}, goto 117
+Reduce #1 to class_definition by token '}' at line 47 in state 117, call definition 2, goto 111
+Reduce #0 to class_definitionlist by token '}' at line 47 in state 111, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 47 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 47 in state 224, goto 299
+Shift token '}' at line 47 in state 299, goto 324
+Reduce #7 to classdefinition by token "main" at line 49 in state 324, call classdef, goto 13
+Reduce #1 to free_definition by token "main" at line 49 in state 13, call definition 1, goto 7
+Reduce #0 to free_definitionlist by token "main" at line 49 in state 7, goto 29
+Reduce #2 to free_definitionlist by token "main" at line 49 in state 29, goto 29
+Reduce #2 to free_definitionlist by token "main" at line 49 in state 29, goto 29
+Reduce #2 to free_definitionlist by token "main" at line 49 in state 29, goto 5
+Shift token "main" at line 49 in state 5, goto 28
+Shift token '{' at line 49 in state 28, goto 46
+Shift token "return" at line 50 in state 46, goto 86
+Shift token CARDINAL = "0" at line 50 in state 86, goto 74
+Reduce #1 to expression by token ';' at line 50 in state 74, call constant "constexpr uint", goto 178
+Shift token ';' at line 50 in state 178, goto 278
+Reduce #3 to statement by token '}' at line 51 in state 278, call return_value, goto 67
+Reduce #0 to statementlist by token '}' at line 51 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 51 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 51 in state 66, call codeblock, goto 65
+Shift token '}' at line 51 in state 65, goto 127
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -226,9 +333,13 @@ Lua call result [1]
             {
               line = 2,
               name = "IDENT",
-              value = "Point"},
+              value = "Object"},
             {
               arg = {
+                {
+                  line = 4,
+                  name = "IDENT",
+                  value = "x"},
                 {
                   arg = {
                     {
@@ -242,9 +353,12 @@ Lua call result [1]
                   line = 4,
                   step = 0},
                 {
+                  arg = {},
+                  call = {
+                    name = "paramdeflist",
+                    proc = <function>},
                   line = 4,
-                  name = "IDENT",
-                  value = "x"}},
+                  step = 0}},
               call = {
                 name = "interface_funcdef const&",
                 obj = "const&",
@@ -253,6 +367,10 @@ Lua call result [1]
               step = 0},
             {
               arg = {
+                {
+                  line = 5,
+                  name = "IDENT",
+                  value = "y"},
                 {
                   arg = {
                     {
@@ -266,9 +384,12 @@ Lua call result [1]
                   line = 5,
                   step = 0},
                 {
+                  arg = {},
+                  call = {
+                    name = "paramdeflist",
+                    proc = <function>},
                   line = 5,
-                  name = "IDENT",
-                  value = "y"}},
+                  step = 0}},
               call = {
                 name = "interface_funcdef const&",
                 obj = "const&",
@@ -281,7 +402,8 @@ Lua call result [1]
           line = 5,
           step = 1}},
       call = {
-        name = "definition",
+        name = "definition 1",
+        obj = 1,
         proc = <function>},
       line = 5,
       step = 1},
@@ -292,32 +414,21 @@ Lua call result [1]
             {
               line = 8,
               name = "IDENT",
-              value = "Line"},
+              value = "Point"},
             {
               arg = {
-                {
-                  line = 8,
-                  name = "IDENT",
-                  value = "Point"}},
-              call = {
-                name = "inheritdef",
-                proc = <function>},
-              line = 8,
-              step = 2},
-            {
-              arg = {
-                {
-                  arg = {},
-                  call = {
-                    name = "linkage {linkage="external",attributes="#0 noinline nounwind"}",
-                    obj = {
-                      attributes = "#0 noinline nounwind",
-                      linkage = "external"},
-                    proc = <function>},
-                  line = 8,
-                  step = 2},
                 {
                   arg = {
+                    {
+                      arg = {},
+                      call = {
+                        name = "linkage {private=false,linkage="external"}",
+                        obj = {
+                          linkage = "external",
+                          private = false},
+                        proc = <function>},
+                      line = 8,
+                      step = 1},
                     {
                       arg = {
                         {
@@ -325,51 +436,176 @@ Lua call result [1]
                             {
                               arg = {
                                 {
+                                  arg = {
+                                    {
+                                      line = 10,
+                                      name = "IDENT",
+                                      value = "int"}},
+                                  call = {
+                                    name = "typespec ",
+                                    obj = "",
+                                    proc = <function>},
+                                  line = 10,
+                                  step = 1},
+                                {
                                   line = 10,
                                   name = "IDENT",
-                                  value = "int"}},
+                                  value = "x_"}},
                               call = {
-                                name = "typespec ",
-                                obj = "",
+                                name = "paramdef",
                                 proc = <function>},
                               line = 10,
-                              step = 2},
+                              step = 1},
                             {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      line = 10,
+                                      name = "IDENT",
+                                      value = "int"}},
+                                  call = {
+                                    name = "typespec ",
+                                    obj = "",
+                                    proc = <function>},
+                                  line = 10,
+                                  step = 1},
+                                {
+                                  line = 10,
+                                  name = "IDENT",
+                                  value = "y_"}},
+                              call = {
+                                name = "paramdef",
+                                proc = <function>},
                               line = 10,
-                              name = "IDENT",
-                              value = "x_"}},
+                              step = 1}},
                           call = {
-                            name = "paramdef",
+                            name = "paramdeflist",
                             proc = <function>},
                           line = 10,
-                          step = 2},
+                          step = 1},
                         {
                           arg = {
                             {
                               arg = {
                                 {
-                                  line = 10,
-                                  name = "IDENT",
-                                  value = "int"}},
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          line = 12,
+                                          name = "IDENT",
+                                          value = "m_x"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 12,
+                                      step = 1},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 12,
+                                          name = "IDENT",
+                                          value = "x_"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 12,
+                                      step = 1}},
+                                  call = {
+                                    name = "operator =",
+                                    obj = "=",
+                                    proc = <function>},
+                                  line = 12,
+                                  step = 1}},
                               call = {
-                                name = "typespec ",
-                                obj = "",
+                                name = "free_expression",
                                 proc = <function>},
-                              line = 10,
-                              step = 2},
+                              line = 12,
+                              step = 1},
                             {
-                              line = 10,
-                              name = "IDENT",
-                              value = "y_"}},
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          line = 13,
+                                          name = "IDENT",
+                                          value = "m_y"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 13,
+                                      step = 1},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 13,
+                                          name = "IDENT",
+                                          value = "y_"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 13,
+                                      step = 1}},
+                                  call = {
+                                    name = "operator =",
+                                    obj = "=",
+                                    proc = <function>},
+                                  line = 13,
+                                  step = 1}},
+                              call = {
+                                name = "free_expression",
+                                proc = <function>},
+                              line = 13,
+                              step = 1}},
                           call = {
-                            name = "paramdef",
+                            name = "codeblock",
                             proc = <function>},
-                          line = 10,
-                          step = 2}},
+                          line = 13,
+                          step = 1}},
                       call = {
-                        name = "paramdeflist",
+                        name = "callablebody",
                         proc = <function>},
-                      line = 10,
+                      line = 13,
+                      scope = {
+                        1,
+                        2}}},
+                  call = {
+                    name = "constructordef",
+                    proc = <function>},
+                  line = 13,
+                  step = 2}},
+              call = {
+                name = "definition 2",
+                obj = 2,
+                proc = <function>},
+              line = 13,
+              step = 2},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {},
+                      call = {
+                        name = "linkage {private=false,linkage="external"}",
+                        obj = {
+                          linkage = "external",
+                          private = false},
+                        proc = <function>},
+                      line = 13,
+                      step = 2},
+                    {
+                      arg = {},
+                      call = {
+                        name = "operatordecl {name="=",symbol="__assign"}",
+                        obj = {
+                          name = "=",
+                          symbol = "__assign"},
+                        proc = <function>},
+                      line = 13,
                       step = 2},
                     {
                       arg = {
@@ -380,35 +616,51 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      line = 12,
+                                      line = 16,
                                       name = "IDENT",
-                                      value = "m_x"}},
+                                      value = "int"}},
                                   call = {
-                                    name = "variable",
+                                    name = "typespec ",
+                                    obj = "",
                                     proc = <function>},
-                                  line = 12,
+                                  line = 16,
                                   step = 2},
+                                {
+                                  line = 16,
+                                  name = "IDENT",
+                                  value = "x_"}},
+                              call = {
+                                name = "paramdef",
+                                proc = <function>},
+                              line = 16,
+                              step = 2},
+                            {
+                              arg = {
                                 {
                                   arg = {
                                     {
-                                      line = 12,
+                                      line = 16,
                                       name = "IDENT",
-                                      value = "x_"}},
+                                      value = "int"}},
                                   call = {
-                                    name = "variable",
+                                    name = "typespec ",
+                                    obj = "",
                                     proc = <function>},
-                                  line = 12,
-                                  step = 2}},
+                                  line = 16,
+                                  step = 2},
+                                {
+                                  line = 16,
+                                  name = "IDENT",
+                                  value = "y_"}},
                               call = {
-                                name = "operator =",
-                                obj = "=",
+                                name = "paramdef",
                                 proc = <function>},
-                              line = 12,
+                              line = 16,
                               step = 2}},
                           call = {
-                            name = "free_expression",
+                            name = "paramdeflist",
                             proc = <function>},
-                          line = 12,
+                          line = 16,
                           step = 2},
                         {
                           arg = {
@@ -417,53 +669,99 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      line = 13,
-                                      name = "IDENT",
-                                      value = "m_y"}},
+                                      arg = {
+                                        {
+                                          line = 18,
+                                          name = "IDENT",
+                                          value = "m_x"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 18,
+                                      step = 2},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 18,
+                                          name = "IDENT",
+                                          value = "x_"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 18,
+                                      step = 2}},
                                   call = {
-                                    name = "variable",
+                                    name = "operator =",
+                                    obj = "=",
                                     proc = <function>},
-                                  line = 13,
-                                  step = 2},
+                                  line = 18,
+                                  step = 2}},
+                              call = {
+                                name = "free_expression",
+                                proc = <function>},
+                              line = 18,
+                              step = 2},
+                            {
+                              arg = {
                                 {
                                   arg = {
                                     {
-                                      line = 13,
-                                      name = "IDENT",
-                                      value = "y_"}},
+                                      arg = {
+                                        {
+                                          line = 19,
+                                          name = "IDENT",
+                                          value = "m_y"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 19,
+                                      step = 2},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 19,
+                                          name = "IDENT",
+                                          value = "y_"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 19,
+                                      step = 2}},
                                   call = {
-                                    name = "variable",
+                                    name = "operator =",
+                                    obj = "=",
                                     proc = <function>},
-                                  line = 13,
+                                  line = 19,
                                   step = 2}},
                               call = {
-                                name = "operator =",
-                                obj = "=",
+                                name = "free_expression",
                                 proc = <function>},
-                              line = 13,
+                              line = 19,
                               step = 2}},
                           call = {
-                            name = "free_expression",
+                            name = "codeblock",
                             proc = <function>},
-                          line = 13,
+                          line = 19,
                           step = 2}},
                       call = {
-                        name = "codeblock",
+                        name = "callablebody",
                         proc = <function>},
-                      line = 13,
-                      step = 2}},
+                      line = 19,
+                      scope = {
+                        2,
+                        3}}},
                   call = {
-                    name = "callablebody &",
-                    obj = "&",
+                    name = "operator_procdef {const=false}",
+                    obj = {
+                      const = false},
                     proc = <function>},
-                  line = 13,
-                  scope = {
-                    2,
-                    3}}},
+                  line = 19,
+                  step = 3}},
               call = {
-                name = "constructordef",
+                name = "definition 2",
+                obj = 2,
                 proc = <function>},
-              line = 13,
+              line = 19,
               step = 3},
             {
               arg = {
@@ -472,31 +770,38 @@ Lua call result [1]
                     {
                       arg = {},
                       call = {
-                        name = "linkage {linkage="external",attributes="#0 noinline nounwind"}",
+                        name = "linkage {private=false,linkage="external"}",
                         obj = {
-                          attributes = "#0 noinline nounwind",
-                          linkage = "external"},
+                          linkage = "external",
+                          private = false},
                         proc = <function>},
-                      line = 13,
+                      line = 19,
                       step = 3},
+                    {
+                      line = 22,
+                      name = "IDENT",
+                      value = "x"},
                     {
                       arg = {
                         {
-                          line = 16,
+                          line = 22,
                           name = "IDENT",
                           value = "int"}},
                       call = {
                         name = "typespec ",
                         obj = "",
                         proc = <function>},
-                      line = 16,
+                      line = 22,
                       step = 3},
                     {
-                      line = 16,
-                      name = "IDENT",
-                      value = "x"},
-                    {
                       arg = {
+                        {
+                          arg = {},
+                          call = {
+                            name = "paramdeflist",
+                            proc = <function>},
+                          line = 22,
+                          step = 3},
                         {
                           arg = {
                             {
@@ -504,41 +809,43 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      line = 18,
+                                      line = 24,
                                       name = "IDENT",
                                       value = "m_x"}},
                                   call = {
                                     name = "variable",
                                     proc = <function>},
-                                  line = 18,
+                                  line = 24,
                                   step = 3}},
                               call = {
                                 name = "return_value",
                                 proc = <function>},
-                              line = 18,
+                              line = 24,
                               step = 4}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
-                          line = 18,
+                          line = 24,
                           step = 4}},
                       call = {
-                        name = "callablebody const&",
-                        obj = "const&",
+                        name = "callablebody",
                         proc = <function>},
-                      line = 18,
+                      line = 24,
                       scope = {
                         3,
                         5}}},
                   call = {
-                    name = "funcdef",
+                    name = "funcdef {const=true}",
+                    obj = {
+                      const = true},
                     proc = <function>},
-                  line = 18,
+                  line = 24,
                   step = 5}},
               call = {
-                name = "definition",
+                name = "definition 2",
+                obj = 2,
                 proc = <function>},
-              line = 18,
+              line = 24,
               step = 5},
             {
               arg = {
@@ -547,31 +854,38 @@ Lua call result [1]
                     {
                       arg = {},
                       call = {
-                        name = "linkage {linkage="external",attributes="#0 noinline nounwind"}",
+                        name = "linkage {private=false,linkage="external"}",
                         obj = {
-                          attributes = "#0 noinline nounwind",
-                          linkage = "external"},
+                          linkage = "external",
+                          private = false},
                         proc = <function>},
-                      line = 18,
+                      line = 24,
                       step = 5},
+                    {
+                      line = 27,
+                      name = "IDENT",
+                      value = "y"},
                     {
                       arg = {
                         {
-                          line = 21,
+                          line = 27,
                           name = "IDENT",
                           value = "int"}},
                       call = {
                         name = "typespec ",
                         obj = "",
                         proc = <function>},
-                      line = 21,
+                      line = 27,
                       step = 5},
                     {
-                      line = 21,
-                      name = "IDENT",
-                      value = "y"},
-                    {
                       arg = {
+                        {
+                          arg = {},
+                          call = {
+                            name = "paramdeflist",
+                            proc = <function>},
+                          line = 27,
+                          step = 5},
                         {
                           arg = {
                             {
@@ -579,214 +893,44 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      line = 23,
+                                      line = 29,
                                       name = "IDENT",
                                       value = "m_y"}},
                                   call = {
                                     name = "variable",
                                     proc = <function>},
-                                  line = 23,
+                                  line = 29,
                                   step = 5}},
                               call = {
                                 name = "return_value",
                                 proc = <function>},
-                              line = 23,
+                              line = 29,
                               step = 6}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
-                          line = 23,
+                          line = 29,
                           step = 6}},
                       call = {
-                        name = "callablebody const&",
-                        obj = "const&",
+                        name = "callablebody",
                         proc = <function>},
-                      line = 23,
+                      line = 29,
                       scope = {
                         5,
                         7}}},
                   call = {
-                    name = "funcdef",
-                    proc = <function>},
-                  line = 23,
-                  step = 7}},
-              call = {
-                name = "definition",
-                proc = <function>},
-              line = 23,
-              step = 7},
-            {
-              arg = {
-                {
-                  arg = {
-                    {
-                      arg = {},
-                      call = {
-                        name = "linkage {linkage="external",attributes="#0 noinline nounwind"}",
-                        obj = {
-                          attributes = "#0 noinline nounwind",
-                          linkage = "external"},
-                        proc = <function>},
-                      line = 23,
-                      step = 7},
-                    {
-                      line = 26,
-                      name = "IDENT",
-                      value = "move"},
-                    {
-                      arg = {
-                        {
-                          arg = {
-                            {
-                              arg = {
-                                {
-                                  arg = {
-                                    {
-                                      line = 26,
-                                      name = "IDENT",
-                                      value = "int"}},
-                                  call = {
-                                    name = "typespec ",
-                                    obj = "",
-                                    proc = <function>},
-                                  line = 26,
-                                  step = 7},
-                                {
-                                  line = 26,
-                                  name = "IDENT",
-                                  value = "x_"}},
-                              call = {
-                                name = "paramdef",
-                                proc = <function>},
-                              line = 26,
-                              step = 7},
-                            {
-                              arg = {
-                                {
-                                  arg = {
-                                    {
-                                      line = 26,
-                                      name = "IDENT",
-                                      value = "int"}},
-                                  call = {
-                                    name = "typespec ",
-                                    obj = "",
-                                    proc = <function>},
-                                  line = 26,
-                                  step = 7},
-                                {
-                                  line = 26,
-                                  name = "IDENT",
-                                  value = "y_"}},
-                              call = {
-                                name = "paramdef",
-                                proc = <function>},
-                              line = 26,
-                              step = 7}},
-                          call = {
-                            name = "paramdeflist",
-                            proc = <function>},
-                          line = 26,
-                          step = 7},
-                        {
-                          arg = {
-                            {
-                              arg = {
-                                {
-                                  arg = {
-                                    {
-                                      arg = {
-                                        {
-                                          line = 28,
-                                          name = "IDENT",
-                                          value = "m_x"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 28,
-                                      step = 7},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 28,
-                                          name = "IDENT",
-                                          value = "x_"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 28,
-                                      step = 7}},
-                                  call = {
-                                    name = "operator =",
-                                    obj = "=",
-                                    proc = <function>},
-                                  line = 28,
-                                  step = 7}},
-                              call = {
-                                name = "free_expression",
-                                proc = <function>},
-                              line = 28,
-                              step = 7},
-                            {
-                              arg = {
-                                {
-                                  arg = {
-                                    {
-                                      arg = {
-                                        {
-                                          line = 29,
-                                          name = "IDENT",
-                                          value = "m_y"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 29,
-                                      step = 7},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 29,
-                                          name = "IDENT",
-                                          value = "y_"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 29,
-                                      step = 7}},
-                                  call = {
-                                    name = "operator =",
-                                    obj = "=",
-                                    proc = <function>},
-                                  line = 29,
-                                  step = 7}},
-                              call = {
-                                name = "free_expression",
-                                proc = <function>},
-                              line = 29,
-                              step = 7}},
-                          call = {
-                            name = "codeblock",
-                            proc = <function>},
-                          line = 29,
-                          step = 7}},
-                      call = {
-                        name = "callablebody &",
-                        obj = "&",
-                        proc = <function>},
-                      line = 29,
-                      scope = {
-                        7,
-                        8}}},
-                  call = {
-                    name = "procdef",
+                    name = "funcdef {const=true}",
+                    obj = {
+                      const = true},
                     proc = <function>},
                   line = 29,
-                  step = 8}},
+                  step = 7}},
               call = {
-                name = "definition",
+                name = "definition 2",
+                obj = 2,
                 proc = <function>},
               line = 29,
-              step = 8},
+              step = 7},
             {
               arg = {
                 {
@@ -802,7 +946,7 @@ Lua call result [1]
                         obj = "",
                         proc = <function>},
                       line = 32,
-                      step = 8},
+                      step = 7},
                     {
                       line = 32,
                       name = "IDENT",
@@ -811,12 +955,13 @@ Lua call result [1]
                     name = "vardef",
                     proc = <function>},
                   line = 32,
-                  step = 9}},
+                  step = 8}},
               call = {
-                name = "definition",
+                name = "definition 1",
+                obj = 1,
                 proc = <function>},
               line = 32,
-              step = 9},
+              step = 8},
             {
               arg = {
                 {
@@ -832,7 +977,7 @@ Lua call result [1]
                         obj = "",
                         proc = <function>},
                       line = 33,
-                      step = 9},
+                      step = 8},
                     {
                       line = 33,
                       name = "IDENT",
@@ -841,22 +986,405 @@ Lua call result [1]
                     name = "vardef",
                     proc = <function>},
                   line = 33,
-                  step = 10}},
+                  step = 9}},
               call = {
-                name = "definition",
+                name = "definition 1",
+                obj = 1,
                 proc = <function>},
               line = 33,
-              step = 10}},
+              step = 9}},
           call = {
-            name = "classdef_inherit",
+            name = "classdef",
             proc = <function>},
           line = 33,
-          step = 11}},
+          step = 10}},
       call = {
-        name = "definition",
+        name = "definition 1",
+        obj = 1,
         proc = <function>},
       line = 33,
-      step = 11},
+      step = 10},
+    {
+      arg = {
+        {
+          arg = {
+            {
+              line = 36,
+              name = "IDENT",
+              value = "Line"},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      line = 36,
+                      name = "IDENT",
+                      value = "Point"}},
+                  call = {
+                    name = "typespec ",
+                    obj = "",
+                    proc = <function>},
+                  line = 36,
+                  step = 10}},
+              call = {
+                name = "inheritdef 1",
+                obj = 1,
+                proc = <function>},
+              line = 36,
+              step = 11},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {},
+                      call = {
+                        name = "linkage {private=false,linkage="external"}",
+                        obj = {
+                          linkage = "external",
+                          private = false},
+                        proc = <function>},
+                      line = 36,
+                      step = 11},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      line = 38,
+                                      name = "IDENT",
+                                      value = "int"}},
+                                  call = {
+                                    name = "typespec ",
+                                    obj = "",
+                                    proc = <function>},
+                                  line = 38,
+                                  step = 11},
+                                {
+                                  line = 38,
+                                  name = "IDENT",
+                                  value = "x_"}},
+                              call = {
+                                name = "paramdef",
+                                proc = <function>},
+                              line = 38,
+                              step = 11},
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      line = 38,
+                                      name = "IDENT",
+                                      value = "int"}},
+                                  call = {
+                                    name = "typespec ",
+                                    obj = "",
+                                    proc = <function>},
+                                  line = 38,
+                                  step = 11},
+                                {
+                                  line = 38,
+                                  name = "IDENT",
+                                  value = "y_"}},
+                              call = {
+                                name = "paramdef",
+                                proc = <function>},
+                              line = 38,
+                              step = 11}},
+                          call = {
+                            name = "paramdeflist",
+                            proc = <function>},
+                          line = 38,
+                          step = 11},
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          arg = {
+                                            {
+                                              line = 40,
+                                              name = "IDENT",
+                                              value = "this"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 40,
+                                          step = 11},
+                                        {
+                                          arg = {},
+                                          call = {
+                                            name = "count",
+                                            proc = <function>},
+                                          line = 40,
+                                          step = 11},
+                                        {
+                                          line = 40,
+                                          name = "IDENT",
+                                          value = "Point"}},
+                                      call = {
+                                        name = "rep_operator ->",
+                                        obj = "->",
+                                        proc = <function>},
+                                      line = 40,
+                                      step = 11},
+                                    {
+                                      arg = {
+                                        {
+                                          arg = {
+                                            {
+                                              line = 40,
+                                              name = "IDENT",
+                                              value = "x_"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 40,
+                                          step = 11},
+                                        {
+                                          arg = {
+                                            {
+                                              line = 40,
+                                              name = "IDENT",
+                                              value = "y_"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 40,
+                                          step = 11}},
+                                      call = {
+                                        name = "structure",
+                                        proc = <function>},
+                                      line = 40,
+                                      step = 11}},
+                                  call = {
+                                    name = "operator =",
+                                    obj = "=",
+                                    proc = <function>},
+                                  line = 40,
+                                  step = 11}},
+                              call = {
+                                name = "free_expression",
+                                proc = <function>},
+                              line = 40,
+                              step = 11}},
+                          call = {
+                            name = "codeblock",
+                            proc = <function>},
+                          line = 40,
+                          step = 11}},
+                      call = {
+                        name = "callablebody",
+                        proc = <function>},
+                      line = 40,
+                      scope = {
+                        11,
+                        12}}},
+                  call = {
+                    name = "constructordef",
+                    proc = <function>},
+                  line = 40,
+                  step = 12}},
+              call = {
+                name = "definition 2",
+                obj = 2,
+                proc = <function>},
+              line = 40,
+              step = 12},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {},
+                      call = {
+                        name = "linkage {private=false,linkage="external"}",
+                        obj = {
+                          linkage = "external",
+                          private = false},
+                        proc = <function>},
+                      line = 40,
+                      step = 12},
+                    {
+                      line = 43,
+                      name = "IDENT",
+                      value = "move"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      line = 43,
+                                      name = "IDENT",
+                                      value = "int"}},
+                                  call = {
+                                    name = "typespec ",
+                                    obj = "",
+                                    proc = <function>},
+                                  line = 43,
+                                  step = 12},
+                                {
+                                  line = 43,
+                                  name = "IDENT",
+                                  value = "x_"}},
+                              call = {
+                                name = "paramdef",
+                                proc = <function>},
+                              line = 43,
+                              step = 12},
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      line = 43,
+                                      name = "IDENT",
+                                      value = "int"}},
+                                  call = {
+                                    name = "typespec ",
+                                    obj = "",
+                                    proc = <function>},
+                                  line = 43,
+                                  step = 12},
+                                {
+                                  line = 43,
+                                  name = "IDENT",
+                                  value = "y_"}},
+                              call = {
+                                name = "paramdef",
+                                proc = <function>},
+                              line = 43,
+                              step = 12}},
+                          call = {
+                            name = "paramdeflist",
+                            proc = <function>},
+                          line = 43,
+                          step = 12},
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          arg = {
+                                            {
+                                              line = 45,
+                                              name = "IDENT",
+                                              value = "this"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 45,
+                                          step = 12},
+                                        {
+                                          arg = {},
+                                          call = {
+                                            name = "count",
+                                            proc = <function>},
+                                          line = 45,
+                                          step = 12},
+                                        {
+                                          line = 45,
+                                          name = "IDENT",
+                                          value = "Point"}},
+                                      call = {
+                                        name = "rep_operator ->",
+                                        obj = "->",
+                                        proc = <function>},
+                                      line = 45,
+                                      step = 12},
+                                    {
+                                      arg = {
+                                        {
+                                          arg = {
+                                            {
+                                              line = 45,
+                                              name = "IDENT",
+                                              value = "x_"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 45,
+                                          step = 12},
+                                        {
+                                          arg = {
+                                            {
+                                              line = 45,
+                                              name = "IDENT",
+                                              value = "y_"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 45,
+                                          step = 12}},
+                                      call = {
+                                        name = "structure",
+                                        proc = <function>},
+                                      line = 45,
+                                      step = 12}},
+                                  call = {
+                                    name = "operator =",
+                                    obj = "=",
+                                    proc = <function>},
+                                  line = 45,
+                                  step = 12}},
+                              call = {
+                                name = "free_expression",
+                                proc = <function>},
+                              line = 45,
+                              step = 12}},
+                          call = {
+                            name = "codeblock",
+                            proc = <function>},
+                          line = 45,
+                          step = 12}},
+                      call = {
+                        name = "callablebody",
+                        proc = <function>},
+                      line = 45,
+                      scope = {
+                        12,
+                        13}}},
+                  call = {
+                    name = "procdef {const=false}",
+                    obj = {
+                      const = false},
+                    proc = <function>},
+                  line = 45,
+                  step = 13}},
+              call = {
+                name = "definition 2",
+                obj = 2,
+                proc = <function>},
+              line = 45,
+              step = 13}},
+          call = {
+            name = "classdef",
+            proc = <function>},
+          line = 45,
+          step = 14}},
+      call = {
+        name = "definition 1",
+        obj = 1,
+        proc = <function>},
+      line = 45,
+      step = 14},
     {
       arg = {
         {
@@ -866,34 +1394,34 @@ Lua call result [1]
                 {
                   arg = {
                     {
-                      line = 37,
+                      line = 50,
                       name = "CARDINAL",
                       value = "0"}},
                   call = {
                     name = "constant constexpr uint",
                     obj = "constexpr uint",
                     proc = <function>},
-                  line = 37,
-                  step = 11}},
+                  line = 50,
+                  step = 14}},
               call = {
                 name = "return_value",
                 proc = <function>},
-              line = 37,
-              step = 12}},
+              line = 50,
+              step = 15}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 37,
-          step = 12}},
+          line = 50,
+          step = 15}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 37,
+      line = 50,
       scope = {
-        11,
-        13}}},
+        14,
+        16}}},
   call = {
     name = "program",
     proc = <function>},
-  line = 37,
-  step = 13}
+  line = 50,
+  step = 16}
