@@ -118,10 +118,10 @@ Test Error(): Code=0, Line=0, File="", Arg=[], What=[]
 Test Error( errno): Code=12, Line=0, File="", Arg=[], What=[#12 "Cannot allocate memory"]
 Test Error( code): Code=431, Line=0, File="", Arg=[], What=[#431 "Bad character in a regular expression passed to the lexer"]
 Test Error( code, line): Code=449, Line=345, File="", Arg=[], What=[#449 "Incompatible mewa major version. You need a higher version of the mewa Lua module" at line 345]
-Test Error( code, Location( filename, line)): Code=411, Line=345, File="file.txt", Arg=[], What=[#411 "Expected table as argument" at line 345 in file "file.txt"]
+Test Error( code, Location( filename, line)): Code=412, Line=345, File="file.txt", Arg=[], What=[#412 "Expected table as argument" at line 345 in file "file.txt"]
 Test Error( code, param): Code=447, Line=0, File="", Arg=[13.45], What=[#447 "Bad mewa version": 13.45]
 Test Error( code, param, line): Code=431, Line=123, File="", Arg=[int, float], What=[#431 "Bad character in a regular expression passed to the lexer" at line 123: int, float]
-Test Error( code, param, Location( filename, line)): Code=418, Line=123, File="source.txt", Arg=[int, float], What=[#418 "Too few arguments" at line 123 in file "source.txt": int, float]
+Test Error( code, param, Location( filename, line)): Code=419, Line=123, File="source.txt", Arg=[int, float], What=[#419 "Too few arguments" at line 123 in file "source.txt": int, float]
 Test Error( RuntimeException): Code=402, Line=0, File="", Arg=[], What=[#402 "Runtime error exception"]
 Test Error( RuntimeException, param): Code=402, Line=0, File="", Arg=[a runtime error with msg], What=[#402 "Runtime error exception": a runtime error with msg]
 Test Error( RuntimeException, param, line): Code=402, Line=234, File="", Arg=[a runtime error with msg and line info], What=[#402 "Runtime error exception" at line 234: a runtime error with msg and line info]
@@ -129,7 +129,7 @@ Test Error( RuntimeException, param, line): Code=402, Line=234, File="input.txt"
 Test runtime error: Code=402, Line=0, File="", Arg=[Message from outer space!], What=[#402 "Runtime error exception": Message from outer space!]
 Test runtime error with line info: Code=402, Line=91, File="", Arg=[Message from outer space with line info!], What=[#402 "Runtime error exception" at line 91: Message from outer space with line info!]
 Test runtime error with location info: Code=402, Line=91, File="program.txt", Arg=[Message from outer space with location info!], What=[#402 "Runtime error exception" at line 91 in file "program.txt": Message from outer space with location info!]
-Test compile error with line info: Code=420, Line=612, File="", Arg=[This is a compilation error!], What=[Error at line 612: This is a compilation error!]
+Test compile error with line info: Code=421, Line=612, File="", Arg=[This is a compilation error!], What=[Error at line 612: This is a compilation error!]
 
 )"};
 		std::ostringstream outputbuf;

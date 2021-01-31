@@ -46,6 +46,8 @@ long getArgumentAsCardinal( const char* functionName, lua_State* ls, int li);
 
 long getArgumentAsNonNegativeInteger( const char* functionName, lua_State* ls, int li);
 
+bool getArgumentAsBoolean( const char* functionName, lua_State* ls, int li);
+
 float getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li);
 
 void checkArgumentAsTable( const char* functionName, lua_State* ls, int li);

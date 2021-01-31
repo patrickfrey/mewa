@@ -9,8 +9,8 @@ class Point
 {
 	public constructor( int x_, int y_)
 	{
-		m_x = x_;
-		m_y = y_;
+		this->m_x = x_;
+		this->m_y = y_;
 	}
 
 	public operator = ( int x_, int y_)

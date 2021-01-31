@@ -214,6 +214,7 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedIntegerArgument: return "Expected integer as argument";
 		case ExpectedNonNegativeIntegerArgument: return "Expected non negative integer as argument";
 		case ExpectedCardinalArgument: return "Expected positive integer as argument";
+		case ExpectedBooleanArgument: return "Expected boolean value as argument";
 		case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
 		case ExpectedTableArgument: return "Expected table as argument";
 		case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";

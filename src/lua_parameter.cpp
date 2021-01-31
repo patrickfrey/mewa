@@ -111,6 +111,15 @@ long mewa::lua::getArgumentAsNonNegativeInteger( const char* functionName, lua_S
 	return rt;
 }
 
+bool mewa::lua::getArgumentAsBoolean( const char* functionName, lua_State* ls, int li)
+{
+	if (!mewa::lua::isArgumentType( functionName, ls, li, (1 << LUA_TBOOLEAN)|(1 << LUA_TNIL)))
+	{
+		mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedBooleanArgument);
+	}
+	return lua_toboolean( ls, li);
+}
+
 float mewa::lua::getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li)
 {
 	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))

@@ -14688,49 +14688,49 @@ expressionlist = expression
 [200]
 	operatordecl = "(" . ")", FOLLOW [185] -> SHIFT ')' GOTO 292
 [201]
-	operatordecl = "&" . (55), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&",symbol="__bitand"}
+	operatordecl = "&" . (55), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&",symbol="bitand"}
 [202]
-	operatordecl = "->" . (46), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="->",symbol="__arrow"}
+	operatordecl = "->" . (46), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="->",symbol="arrow"}
 [203]
-	operatordecl = "=" . (47), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="=",symbol="__assign"}
+	operatordecl = "=" . (47), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="=",symbol="assign"}
 [204]
-	operatordecl = "+" . (48), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="+",symbol="__plus"}
+	operatordecl = "+" . (48), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="+",symbol="plus"}
 [205]
-	operatordecl = "-" . (49), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="-",symbol="__minus"}
+	operatordecl = "-" . (49), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="-",symbol="minus"}
 [206]
-	operatordecl = "*" . (50), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="*",symbol="__mul"}
+	operatordecl = "*" . (50), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="*",symbol="mul"}
 [207]
-	operatordecl = "/" . (51), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="/",symbol="__div"}
+	operatordecl = "/" . (51), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="/",symbol="div"}
 [208]
-	operatordecl = "%" . (52), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="%",symbol="__mod"}
+	operatordecl = "%" . (52), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="%",symbol="mod"}
 [209]
-	operatordecl = "&&" . (53), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&&",symbol="__and"}
+	operatordecl = "&&" . (53), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&&",symbol="and"}
 [210]
-	operatordecl = "||" . (54), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="||",symbol="__or"}
+	operatordecl = "||" . (54), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="||",symbol="or"}
 [211]
-	operatordecl = "|" . (56), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="|",symbol="__bitor"}
+	operatordecl = "|" . (56), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="|",symbol="bitor"}
 [212]
-	operatordecl = "<<" . (57), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<<",symbol="__lsh"}
+	operatordecl = "<<" . (57), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<<",symbol="lsh"}
 [213]
-	operatordecl = ">>" . (58), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">>",symbol="__rsh"}
+	operatordecl = ">>" . (58), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">>",symbol="rsh"}
 [214]
-	operatordecl = "~" . (59), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="~",symbol="__lneg"}
+	operatordecl = "~" . (59), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="~",symbol="lneg"}
 [215]
-	operatordecl = "!" . (60), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!",symbol="__not"}
+	operatordecl = "!" . (60), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!",symbol="not"}
 [216]
 	operatordecl = "[" . "]", FOLLOW [185] -> SHIFT ']' GOTO 293
 [217]
-	operatordecl = "==" . (63), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="==",symbol="__eq"}
+	operatordecl = "==" . (63), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="==",symbol="eq"}
 [218]
-	operatordecl = "!=" . (64), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!=",symbol="__ne"}
+	operatordecl = "!=" . (64), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!=",symbol="ne"}
 [219]
-	operatordecl = ">=" . (65), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">=",symbol="__ge"}
+	operatordecl = ">=" . (65), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">=",symbol="ge"}
 [220]
-	operatordecl = "<=" . (66), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<=",symbol="__le"}
+	operatordecl = "<=" . (66), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<=",symbol="le"}
 [221]
-	operatordecl = ">" . (67), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">",symbol="__gt"}
+	operatordecl = ">" . (67), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">",symbol="gt"}
 [222]
-	operatordecl = "<" . (68), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<",symbol="__lt"}
+	operatordecl = "<" . (68), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<",symbol="lt"}
 [223]
 	classdefinition = "class" IDENT "{" class_definitionlist "}" . (step:33), FOLLOW [175] -> REDUCE classdefinition #5 CALL classdef
 [224]
@@ -16573,9 +16573,9 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [17] -> SHIFT "const" GOTO 18
 	parameterlist = . (71), FOLLOW [10] -> REDUCE parameterlist #0 CALL paramdeflist
 [292]
-	operatordecl = "(" ")" . (61), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="()",symbol="__call"}
+	operatordecl = "(" ")" . (61), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="()",symbol="call"}
 [293]
-	operatordecl = "[" "]" . (62), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="[]",symbol="__get"}
+	operatordecl = "[" "]" . (62), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="[]",symbol="get"}
 [294]
 	typespec/L1 = . typename, FOLLOW [9] -> GOTO 8
 	typespec/L1 = . typename "&", FOLLOW [9] -> GOTO 8
@@ -17462,29 +17462,29 @@ expressionlist = expression
 (43) operator_funcdef, {const=true}
 (44) operator_procdef, {const=false}
 (45) operator_procdef, {const=true}
-(46) operatordecl, {name="->",symbol="__arrow"}
-(47) operatordecl, {name="=",symbol="__assign"}
-(48) operatordecl, {name="+",symbol="__plus"}
-(49) operatordecl, {name="-",symbol="__minus"}
-(50) operatordecl, {name="*",symbol="__mul"}
-(51) operatordecl, {name="/",symbol="__div"}
-(52) operatordecl, {name="%",symbol="__mod"}
-(53) operatordecl, {name="&&",symbol="__and"}
-(54) operatordecl, {name="||",symbol="__or"}
-(55) operatordecl, {name="&",symbol="__bitand"}
-(56) operatordecl, {name="|",symbol="__bitor"}
-(57) operatordecl, {name="<<",symbol="__lsh"}
-(58) operatordecl, {name=">>",symbol="__rsh"}
-(59) operatordecl, {name="~",symbol="__lneg"}
-(60) operatordecl, {name="!",symbol="__not"}
-(61) operatordecl, {name="()",symbol="__call"}
-(62) operatordecl, {name="[]",symbol="__get"}
-(63) operatordecl, {name="==",symbol="__eq"}
-(64) operatordecl, {name="!=",symbol="__ne"}
-(65) operatordecl, {name=">=",symbol="__ge"}
-(66) operatordecl, {name="<=",symbol="__le"}
-(67) operatordecl, {name=">",symbol="__gt"}
-(68) operatordecl, {name="<",symbol="__lt"}
+(46) operatordecl, {name="->",symbol="arrow"}
+(47) operatordecl, {name="=",symbol="assign"}
+(48) operatordecl, {name="+",symbol="plus"}
+(49) operatordecl, {name="-",symbol="minus"}
+(50) operatordecl, {name="*",symbol="mul"}
+(51) operatordecl, {name="/",symbol="div"}
+(52) operatordecl, {name="%",symbol="mod"}
+(53) operatordecl, {name="&&",symbol="and"}
+(54) operatordecl, {name="||",symbol="or"}
+(55) operatordecl, {name="&",symbol="bitand"}
+(56) operatordecl, {name="|",symbol="bitor"}
+(57) operatordecl, {name="<<",symbol="lsh"}
+(58) operatordecl, {name=">>",symbol="rsh"}
+(59) operatordecl, {name="~",symbol="lneg"}
+(60) operatordecl, {name="!",symbol="not"}
+(61) operatordecl, {name="()",symbol="call"}
+(62) operatordecl, {name="[]",symbol="get"}
+(63) operatordecl, {name="==",symbol="eq"}
+(64) operatordecl, {name="!=",symbol="ne"}
+(65) operatordecl, {name=">=",symbol="ge"}
+(66) operatordecl, {name="<=",symbol="le"}
+(67) operatordecl, {name=">",symbol="gt"}
+(68) operatordecl, {name="<",symbol="lt"}
 (69) callablebody
 (70) main_procdef
 (71) paramdeflist
@@ -20418,91 +20418,91 @@ expressionlist = expression
 [200]
 	')' => Shift goto 292
 [201]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="&",symbol="__bitand"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="&",symbol="__bitand"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="&",symbol="__bitand"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="&",symbol="bitand"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="&",symbol="bitand"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="&",symbol="bitand"}
 [202]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="->",symbol="__arrow"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="->",symbol="__arrow"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="->",symbol="__arrow"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="->",symbol="arrow"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="->",symbol="arrow"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="->",symbol="arrow"}
 [203]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="=",symbol="__assign"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="=",symbol="__assign"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="=",symbol="__assign"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="=",symbol="assign"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="=",symbol="assign"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="=",symbol="assign"}
 [204]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="+",symbol="__plus"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="+",symbol="__plus"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="+",symbol="__plus"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="+",symbol="plus"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="+",symbol="plus"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="+",symbol="plus"}
 [205]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="-",symbol="__minus"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="-",symbol="__minus"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="-",symbol="__minus"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="-",symbol="minus"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="-",symbol="minus"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="-",symbol="minus"}
 [206]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="*",symbol="__mul"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="*",symbol="__mul"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="*",symbol="__mul"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="*",symbol="mul"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="*",symbol="mul"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="*",symbol="mul"}
 [207]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="/",symbol="__div"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="/",symbol="__div"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="/",symbol="__div"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="/",symbol="div"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="/",symbol="div"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="/",symbol="div"}
 [208]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="%",symbol="__mod"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="%",symbol="__mod"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="%",symbol="__mod"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="%",symbol="mod"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="%",symbol="mod"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="%",symbol="mod"}
 [209]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="&&",symbol="__and"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="&&",symbol="__and"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="&&",symbol="__and"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="&&",symbol="and"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="&&",symbol="and"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="&&",symbol="and"}
 [210]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="||",symbol="__or"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="||",symbol="__or"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="||",symbol="__or"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="||",symbol="or"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="||",symbol="or"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="||",symbol="or"}
 [211]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="|",symbol="__bitor"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="|",symbol="__bitor"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="|",symbol="__bitor"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="|",symbol="bitor"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="|",symbol="bitor"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="|",symbol="bitor"}
 [212]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="<<",symbol="__lsh"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="<<",symbol="__lsh"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="<<",symbol="__lsh"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="<<",symbol="lsh"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="<<",symbol="lsh"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="<<",symbol="lsh"}
 [213]
-	IDENT => Reduce #1 operatordecl call operatordecl {name=">>",symbol="__rsh"}
-	'(' => Reduce #1 operatordecl call operatordecl {name=">>",symbol="__rsh"}
-	"const" => Reduce #1 operatordecl call operatordecl {name=">>",symbol="__rsh"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name=">>",symbol="rsh"}
+	'(' => Reduce #1 operatordecl call operatordecl {name=">>",symbol="rsh"}
+	"const" => Reduce #1 operatordecl call operatordecl {name=">>",symbol="rsh"}
 [214]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="~",symbol="__lneg"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="~",symbol="__lneg"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="~",symbol="__lneg"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="~",symbol="lneg"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="~",symbol="lneg"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="~",symbol="lneg"}
 [215]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="!",symbol="__not"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="!",symbol="__not"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="!",symbol="__not"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="!",symbol="not"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="!",symbol="not"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="!",symbol="not"}
 [216]
 	']' => Shift goto 293
 [217]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="==",symbol="__eq"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="==",symbol="__eq"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="==",symbol="__eq"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="==",symbol="eq"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="==",symbol="eq"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="==",symbol="eq"}
 [218]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="!=",symbol="__ne"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="!=",symbol="__ne"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="!=",symbol="__ne"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="!=",symbol="ne"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="!=",symbol="ne"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="!=",symbol="ne"}
 [219]
-	IDENT => Reduce #1 operatordecl call operatordecl {name=">=",symbol="__ge"}
-	'(' => Reduce #1 operatordecl call operatordecl {name=">=",symbol="__ge"}
-	"const" => Reduce #1 operatordecl call operatordecl {name=">=",symbol="__ge"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name=">=",symbol="ge"}
+	'(' => Reduce #1 operatordecl call operatordecl {name=">=",symbol="ge"}
+	"const" => Reduce #1 operatordecl call operatordecl {name=">=",symbol="ge"}
 [220]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="<=",symbol="__le"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="<=",symbol="__le"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="<=",symbol="__le"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="<=",symbol="le"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="<=",symbol="le"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="<=",symbol="le"}
 [221]
-	IDENT => Reduce #1 operatordecl call operatordecl {name=">",symbol="__gt"}
-	'(' => Reduce #1 operatordecl call operatordecl {name=">",symbol="__gt"}
-	"const" => Reduce #1 operatordecl call operatordecl {name=">",symbol="__gt"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name=">",symbol="gt"}
+	'(' => Reduce #1 operatordecl call operatordecl {name=">",symbol="gt"}
+	"const" => Reduce #1 operatordecl call operatordecl {name=">",symbol="gt"}
 [222]
-	IDENT => Reduce #1 operatordecl call operatordecl {name="<",symbol="__lt"}
-	'(' => Reduce #1 operatordecl call operatordecl {name="<",symbol="__lt"}
-	"const" => Reduce #1 operatordecl call operatordecl {name="<",symbol="__lt"}
+	IDENT => Reduce #1 operatordecl call operatordecl {name="<",symbol="lt"}
+	'(' => Reduce #1 operatordecl call operatordecl {name="<",symbol="lt"}
+	"const" => Reduce #1 operatordecl call operatordecl {name="<",symbol="lt"}
 [223]
 	$ => Reduce #5 classdefinition call classdef
 	IDENT => Reduce #5 classdefinition call classdef
@@ -22403,13 +22403,13 @@ expressionlist = expression
 	')' => Reduce #0 parameterlist call paramdeflist
 	"const" => Shift goto 18
 [292]
-	IDENT => Reduce #2 operatordecl call operatordecl {name="()",symbol="__call"}
-	'(' => Reduce #2 operatordecl call operatordecl {name="()",symbol="__call"}
-	"const" => Reduce #2 operatordecl call operatordecl {name="()",symbol="__call"}
+	IDENT => Reduce #2 operatordecl call operatordecl {name="()",symbol="call"}
+	'(' => Reduce #2 operatordecl call operatordecl {name="()",symbol="call"}
+	"const" => Reduce #2 operatordecl call operatordecl {name="()",symbol="call"}
 [293]
-	IDENT => Reduce #2 operatordecl call operatordecl {name="[]",symbol="__get"}
-	'(' => Reduce #2 operatordecl call operatordecl {name="[]",symbol="__get"}
-	"const" => Reduce #2 operatordecl call operatordecl {name="[]",symbol="__get"}
+	IDENT => Reduce #2 operatordecl call operatordecl {name="[]",symbol="get"}
+	'(' => Reduce #2 operatordecl call operatordecl {name="[]",symbol="get"}
+	"const" => Reduce #2 operatordecl call operatordecl {name="[]",symbol="get"}
 [294]
 	IDENT => Shift goto 17
 	'(' => Shift goto 100

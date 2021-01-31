@@ -547,19 +547,20 @@ function getFunctionThisType( private, const, thisType)
 	if const == true then thisType = constTypeMap[ thisType] end
 	return thisType
 end
-function defineOperatorAttributes( context, thisType, opr, returnType, param)
-	local def = context.operators[ opr]
+function defineOperatorAttributes( context, descr)
+	local contextType = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	local def = context.operators[ descr.name]
 	if def then
-		if #param > def.maxNofArguments then def.maxNofArguments = #param end
-		if def.thisType ~= thisType or def.returnType ~= returnType then def.hasStructArgument = false end
+		if #descr.param > def.maxNofArguments then def.maxNofArguments = #descr.param end
+		if def.contextType ~= contextType or def.ret ~= descr.ret then def.hasStructArgument = false end
 	else
-		context.operators[ opr] = {thisType = thisType, returnType = returnType, hasStructArgument = true, maxNofArguments = #param}
+		context.operators[ descr.name] = {contextType = contextType, ret = descr.ret, hasStructArgument = true, maxNofArguments = #descr.param}
 	end
 end
 function defineOperatorsWithStructArgument( node, context)
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
-			defineCall( def.returnType, def.thisType, opr, {constexprStructureType}, recursiveResolveConstructor( node, def.thisType, opr))
+			defineCall( def.returnType, def.contextType, opr, {constexprStructureType}, recursiveResolveConstructor( node, def.contextType, opr))
 		elseif def.maxNofArguments > 1 then
 			utils.errorMessage( node.line, "Operator '%s' defined different instances with more than one argument, but with varying signature", opr)
 		end
@@ -715,11 +716,9 @@ function getFrameCodeBlock( code)
 		return code
 	end
 end
-function defineVariableHardcoded( node, typeId, name, reg)
-	local prev_scope = typedb:scope( node.scope)
+function defineVariableHardcoded( typeId, name, reg)
 	local var = typedb:def_type( 0, name, reg)
-	typedb:def_reduction( referenceTypeMap[ typeId] or typeId, var, nil, tag_typeDeclaration)
-	typedb:scope( prev_scope)
+	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
 	return var
 end
 function defineVariable( node, context, typeId, name, initVal)
@@ -1138,17 +1137,22 @@ function getSignatureString( name, args, context)
 	if not context then
 		return utils.uniqueName( name .. "__")
 	else
-		local pstr = ""
-		if context.qualitype then
-			pstr = pstr .. "__C_" .. typedb:type_string( context.qualitype.lval, "__") .. "__"
-		end
-		for ai,arg in ipairs(args) do if pstr == "" then pstr = pstr .. "__" .. arg.llvmtype else pstr = "_" .. arg.llvmtype end end
-		return utils.encodeName( name .. pstr)
+		local pstr; if context.symbol then pstr = "__C_" .. context.symbol .. "__" .. name else pstr = name end
+		for ai,arg in ipairs(args) do pstr = pstr .. "__" .. arg.llvmtype end
+		return utils.encodeName(  pstr)
 	end
 end
 function getParameterString( args)
 	local rt = ""
 	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype .. " " .. arg.reg else rt = rt .. ", " .. arg.llvmtype .. " " .. arg.reg end end
+	return rt
+end
+function getThisParameterString( context, args)
+	local rt = ""
+	if context and context.qualitype then
+		rt = typeDescriptionMap[ context.qualitype.pval].llvmtype .. " %ths"
+		if #args >= 1 then rt = rt .. ", " end
+	end
 	return rt
 end
 function getParameterLlvmTypeString( args)
@@ -1164,43 +1168,46 @@ end
 function getTypeDeclContextTypeId( context)
 	if context.qualitype then return context.qualitype.lval else return 0 end
 end
-function defineCallableType( node, descr, contextTypeId)
+function getTypeDeclUniqueName( contextTypeId, typnam)
+	if contextTypeId == 0 then 
+		return utils.uniqueName( typnam .. "__")
+	else		
+		return utils.uniqueName( typedb:type_string(contextTypeId) .. "__" .. typnam .. "__")
+	end
+end
+function defineFunctionCall( contextTypeId, opr, descr)
+	local callfmt
+	if descr.ret then
+		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
+		callfmt = utils.template_format( llvmir.control.functionCall, descr)
+	else
+		descr.rtype = "void"
+		callfmt = utils.template_format( llvmir.control.procedureCall, descr)
+	end
+	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
+	if descr.vararg then varargFuncMap[ functype] = true end
+end
+function defineCallableType( node, descr, context)
+	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
 	local callable = typedb:get_type( contextTypeId, descr.name)
 	if not callable then callable = typedb:def_type( contextTypeId, descr.name) end
-	local functype
-	if descr.ret then
-		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
-		local callfmt = utils.template_format( llvmir.control.functionCall, descr)
-		functype = defineCall( descr.ret, callable, "()", descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
-	else
-		descr.rtype = "void"
-		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
-		functype = defineCall( nil, callable, "()", descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
-	end
-	if descr.vararg then varargFuncMap[ functype] = true end
+	defineFunctionCall( callable, "()", descr)
 end
 function defineCallable( node, descr, context)
+	descr.thisstr = getThisParameterString( context, descr.param)
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
-	defineCallableType( node, descr, descr.thisType)
+	defineCallableType( node, descr, context)
 end
-function defineOperatorType( node, descr, contextTypeId)
-	local functype
-	if descr.ret then
-		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
-		local callfmt = utils.template_format( llvmir.control.functionCall, descr)
-		functype = defineCall( descr.ret, contextTypeId, descr.name, descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
-	else
-		descr.rtype = "void"
-		local callfmt = utils.template_format( llvmir.control.procedureCall, descr)
-		functype = defineCall( nil, contextTypeId, descr.name, descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
-	end
-	if descr.vararg then varargFuncMap[ functype] = true end
+function defineOperatorType( node, descr, context)
+	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
+	defineFunctionCall( contextTypeId, descr.name, descr)
 end
 function defineOperator( node, descr, context)
+	descr.thisstr = getThisParameterString( context, descr.param)
 	descr.paramstr = getParameterString( descr.param)
 	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
-	defineOperatorType( node, descr, descr.thisType)
+	defineOperatorType( node, descr, context)
 end
 function printFunction( node, descr, context)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -1215,30 +1222,27 @@ function defineExternCallable( node, descr)
 	if descr.vararg then
 		descr.signature = "(" .. descr.argstr .. ", ...)"
 	end
-	defineCallableType( node, descr, 0)
+	defineCallableType( node, descr, nil)
 	local declfmt; if descr.vararg then declfmt = llvmir.control.extern_functionDeclaration_vararg else declfmt = llvmir.control.extern_functionDeclaration end
 	print( "\n" .. utils.constructor_format( declfmt, descr))
 end
-function defineCallableBodyContext( node, rtype)
+function defineCallableBodyContext( node, context, descr)
 	local prev_scope = typedb:scope( node.scope)
-	defineCallableInstance( node.scope, rtype)
+	if context and context.qualitype then
+		local privateThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
+		local privateThisPointerType = getFunctionThisType( true, descr.const, context.qualitype.pval)
+		defineVariableHardcoded( privateThisPointerType, "this", "%ths")
+		local classvar = defineVariableHardcoded( privateThisReferenceType, "*this", "%ths")
+		addContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
+	end
+	defineCallableInstance( node.scope, descr.ret)
 	typedb:scope( prev_scope)
 end
 function defineMainProcContext( node)
 	local prev_scope = typedb:scope( node.scope)
-	defineVariableHardcoded( node, stringPointerType, "argc", "%argc")
-	defineVariableHardcoded( node, scalarIntegerType, "argv", "%argv")
+	defineVariableHardcoded( stringPointerType, "argc", "%argc")
+	defineVariableHardcoded( scalarIntegerType, "argv", "%argv")
 	defineCallableInstance( node.scope, scalarIntegerType)
-	typedb:scope( prev_scope)
-end
-function defineMethodContext( node, classTypeId, rtype)
-	local prev_scope = typedb:scope( node.scope)
-	local privateClassTypeId = privateTypeMap[ classTypeId] or classTypeId
-	local privateClassPointerTypeId = pointerTypeMap[ privateClassTypeId]
-	defineVariableHardcoded( node, privateClassPointerTypeId, "this", "%ths")
-	local classvar = defineVariableHardcoded( node, privateClassTypeId, "*this", "%ths")
-	defineCallableInstance( node.scope, rtype)
-	addContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
 	typedb:scope( prev_scope)
 end
 function getStringConstant( value)
@@ -1474,8 +1478,7 @@ end
 function typesystem.funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], ret = arg[3] }
-	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
@@ -1484,8 +1487,7 @@ end
 function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], ret = nil }
-	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+			name = arg[2], symbol = arg[2], ret = nil, private=arg[1].private, const=decl.const }
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
@@ -1497,42 +1499,37 @@ end
 function typesystem.operator_funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2].name, symbol = arg[2].symbol, ret = arg[3] }
-	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const }
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printFunction( node, descr, context)
-	defineOperatorAttributes( context, descr.thisType, descr.name, descr.ret, descr.param)
+	defineOperatorAttributes( context, descr)
 end
 function typesystem.operator_procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2].name, symbol = arg[2].symbol, ret = nil }
-	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, decl.const, context.qualitype.rval) else descr.thisType = 0 end
+			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const }
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	defineOperator( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3]
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunction( node, descr, context)
-	defineOperatorAttributes( context, descr.thisType, descr.name, descr.ret, descr.param)
+	defineOperatorAttributes( context, descr)
 end
 function typesystem.constructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = ":=", symbol = "__ctor", ret = nil}
-	if context and context.qualitype then descr.thisType = getFunctionThisType( arg[1].private, false, context.qualitype.rval) else descr.thisType = 0 end
+			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false}
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printFunction( node, descr, context)
-	defineOperatorAttributes( context, descr.thisType, ":=", nil, descr.param)
+	defineOperatorAttributes( context, descr)
 end
 function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-	               thisType = context.qualitype.rval,
-	               ret = nil, name = ":~", symbol = "__dtor" }
-	if context and context.qualitype then descr.thisType = context.qualitype.rval else descr.thisType = 0 end
+	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false }
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
@@ -1541,11 +1538,7 @@ end
 function typesystem.callablebody( node, context, descr, select)
 	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
 	if select == 1 then
-		if descr.thisType ~= 0 then
-			defineMethodContext( node, descr.thisType, descr.ret)
-		else
-			defineCallableBodyContext( node, descr.ret)
-		end
+		defineCallableBodyContext( node, context, descr)
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		return arg[1]
 	else
@@ -1599,12 +1592,12 @@ function typesystem.interface_operator_procdef( node, qualifier, context)
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
-	local structname = utils.uniqueName( typnam .. "__")
-	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local structname = getTypeDeclUniqueName( declContextTypeId, typnam)
+	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype=""}
+	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=structname}
 	local arg = utils.traverse( typedb, node, context)
 	descr.size = context.structsize
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
@@ -1615,14 +1608,13 @@ function typesystem.interfacedef( node, context)
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
-	local classname = utils.uniqueName( typnam .. "__")
-	local descr = utils.template_format( llvmir.classTemplate, {classname=classname})
 	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local classname = getTypeDeclUniqueName( declContextTypeId, typnam)
+	local descr = utils.template_format( llvmir.classTemplate, {classname=classname})
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, structsize=0, llvmtype="", operators={},
-	                 c_thisref=qualitype.priv_c_rval, thisref=qualitype.c_rval}
+	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, structsize=0, llvmtype="", operators={}, symbol=classname}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverse( typedb, node, context, 1)
 	utils.traverse( typedb, node, context, 2)

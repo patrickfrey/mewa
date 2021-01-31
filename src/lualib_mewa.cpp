@@ -244,11 +244,7 @@ static int mewa_tostring( lua_State* ls)
 	try
 	{
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
-		bool use_indent = false;
-		if (nargs == 2 && lua_isboolean( ls, 2))
-		{
-			use_indent = lua_toboolean( ls, 2);
-		}
+		bool use_indent = (nargs >= 2) ? mewa::lua::getArgumentAsBoolean( functionName, ls, 2) : false;
 		std::string rt = mewa::luaToString( ls, 1, use_indent);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
