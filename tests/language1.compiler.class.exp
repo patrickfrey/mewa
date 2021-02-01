@@ -75,13 +75,7 @@ ret i32 %r2
 define external void @__C_Line__1__$ctor__i32__i32( %Line__1* %ths, i32 %r1, i32 %r2 ) #0 noinline nounwind {
 entry:
 %r3 = getelementptr inbounds %Line__1, %Line__1* %ths, i32 0, i32 0
-%r4 = alloca i32, align 4
-store i32 %r1, i32* %r4
-%r6 = load i32, i32* %r4
-%r5 = alloca i32, align 4
-store i32 %r2, i32* %r5
-%r7 = load i32, i32* %r5
-call void @__C_Point__1__$ctor__i32__i32( %Point__1* %r3, i32 %r6, i32 %r7)
+call void @__C_Point__1__$ctor__i32__i32( %Point__1* %r3, i32 %r1, i32 %r2)
 ret void
 }
 
@@ -89,13 +83,7 @@ ret void
 define external void @__C_Line__1__move__i32__i32( %Line__1* %ths, i32 %r1, i32 %r2 ) #0 noinline nounwind {
 entry:
 %r3 = getelementptr inbounds %Line__1, %Line__1* %ths, i32 0, i32 0
-%r4 = alloca i32, align 4
-store i32 %r1, i32* %r4
-%r6 = load i32, i32* %r4
-%r5 = alloca i32, align 4
-store i32 %r2, i32* %r5
-%r7 = load i32, i32* %r5
-call void @__C_Point__1__$ctor__i32__i32( %Point__1* %r3, i32 %r6, i32 %r7)
+call void @__C_Point__1__$ctor__i32__i32( %Point__1* %r3, i32 %r1, i32 %r2)
 ret void
 }
 

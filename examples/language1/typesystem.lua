@@ -140,12 +140,17 @@ function assignStructureConstructor( node, thisTypeId, members)
 	end
 end
 function tryCreateParameter( node, callable, typeId, arg)
-	local derefTypeId = dereferenceTypeMap[ typeId] or typeId
-	local refTypeId = referenceTypeMap[ typeId] or typeId
-	local descr = typeDescriptionMap[ derefTypeId]
-	local out = callable.register()
-	local code = utils.constructor_format( descr.def_local, {out=out}, callable.register)
-	return tryApplyCallable( node, {type=refTypeId,constructor={out=out,code=code}}, ":=", {arg})
+	local constructor,llvmtype,weight = getParameterConstructor( node, typeId, arg)
+	if weight then
+		return {type=typeId,constructor=constructor}
+	else
+		local derefTypeId = dereferenceTypeMap[ typeId] or typeId
+		local refTypeId = referenceTypeMap[ typeId] or typeId
+		local descr = typeDescriptionMap[ derefTypeId]
+		local out = callable.register()
+		local code = utils.constructor_format( descr.def_local, {out=out}, callable.register)
+		return tryApplyCallable( node, {type=refTypeId,constructor={out=out,code=code}}, ":=", {arg})
+	end
 end
 function recursiveResolveConstructor( node, thisTypeId, opr)
 	return function( this, args)
