@@ -1611,6 +1611,16 @@ function typesystem.structdef( node, context)
 	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=structname,llvmtype=context.llvmtype}))
 end
 function typesystem.interfacedef( node, context)
+	local typnam = node.arg[1].value
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local interfacename = getTypeDeclUniqueName( declContextTypeId, typnam)
+	local descr = utils.template_format( llvmir.interfaceTemplate, {interfacename=interfacename})
+	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local context = {qualitype=qualitype, descr=descr, index=0, methods={}, llvmtype=llvmir.control.interfaceheaderdef, symbol=interfacename}
+	local arg = utils.traverse( typedb, node, context)
+	descr.size = context.index
+	descr.methods = context.methods
+	print_section( "Typedefs", utils.template_format( llvmir.control.structdef, {structname=interfacename,llvmtype=context.llvmtype}))
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value

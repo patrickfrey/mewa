@@ -6,9 +6,7 @@ target triple = "x86_64-pc-linux-gnu"
 @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
 
 %Tree__Data__1 = type { i32 }
-
 %Tree__1 = type { %Tree__Data__1, %Tree__1*, %Tree__1* }
-
 define private dso_local void @__ctor_Tree__Data__1( %Tree__Data__1* %ptr) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
@@ -17,7 +15,6 @@ br label %end
 end:
 ret void
 }
-
 define private dso_local void @__ctor_copy_Tree__Data__1( %Tree__Data__1* %ptr, %Tree__Data__1* %oth) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
@@ -28,7 +25,6 @@ br label %end
 end:
 ret void
 }
-
 define private dso_local void @__ctor_assign_Tree__Data__1( %Tree__Data__1* %ptr, %Tree__Data__1* %oth) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
@@ -39,7 +35,6 @@ br label %end
 end:
 ret void
 }
-
 define private dso_local void @__ctor_elements_Tree__Data__1( %Tree__Data__1* %ptr, i32 %p1) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
@@ -48,14 +43,12 @@ br label %end
 end:
 ret void
 }
-
 define private dso_local void @__dtor_Tree__Data__1( %Tree__Data__1* %ptr) alwaysinline {
 enter:
 br label %end
 end:
 ret void
 }
-
 define private dso_local void @__ctor_Tree__1( %Tree__1* %ptr) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 0
@@ -68,7 +61,6 @@ br label %end
 end:
 ret void
 }
-
 define private dso_local void @__ctor_elements_Tree__1( %Tree__1* %ptr, %Tree__Data__1 %p1, %Tree__1* %p2, %Tree__1* %p3) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 0
@@ -81,7 +73,6 @@ br label %end
 end:
 ret void
 }
-
 define private dso_local void @__dtor_Tree__1( %Tree__1* %ptr) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 0
@@ -90,7 +81,6 @@ br label %end
 end:
 ret void
 }
-
 
 
 define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {
@@ -104,15 +94,11 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
 
 declare external void @printf( i8*, ... ) #1 nounwind
 
-
 declare external void @putchar( i8 ) #1 nounwind
-
 
 declare external i8* @malloc( i64 ) #1 nounwind
 
-
 declare external void @free( i8* ) #1 nounwind
-
 
 define internal i8* @allocmem__i64( i64 %r1 ) #0 nounwind {
 entry:
@@ -120,17 +106,13 @@ entry:
 ret i8* %r2
 }
 
-
 define internal void @freemem__i8$( i8* %r1 ) #0 nounwind {
 entry:
 call void @free( i8* %r1)
 ret void
 }
-
 @g_tree = internal global %Tree__1 zeroinitializer, align 8
-
 @string1 = private unnamed_addr constant [10 x i8] c"Node: %d\0A\00"
-
 
 define internal void @printTree__Tree__1$__i32( %Tree__1* %r1, i32 %r2 ) #0 nounwind {
 entry:
@@ -178,7 +160,6 @@ L6:
 ret void
 }
 
-
 define internal void @deleteTree__Tree__1$( %Tree__1* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
@@ -206,11 +187,8 @@ call void @__dtor_Tree__1( %Tree__1* %r1)
 call void @freemem__i8$( i8* %r14)
 ret void
 }
-
 @string2 = private unnamed_addr constant [8 x i8] c"VAL %d\0A\00"
-
 @string3 = private unnamed_addr constant [6 x i8] c"Done\0A\00"
-
 
 declare dso_local i32 @__gxx_personality_v0(...)
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
@@ -270,7 +248,6 @@ br label %exit
 exit:
 ret i32 0
 }
-
 
 
 attributes #0 = {

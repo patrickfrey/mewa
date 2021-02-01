@@ -129,6 +129,17 @@ llvmir.classTemplate = {
 	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n"
 }
 
+llvmir.interfaceTemplate = {
+	interfacename = "{interfacename}",
+	def_local = "{out} = alloca %{interfacename}, align 8\n",
+	def_global = "{out} = internal global %{interfacename} zeroinitializer, align 8\n",
+	llvmtype = "%{interfacename}",
+	scalar = false,
+	class = "class",
+	align = 8,
+	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n"
+}
+
 llvmir.control = {
 	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
 	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
@@ -150,6 +161,7 @@ llvmir.control = {
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
 				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
 	structdef = "%{structname} = type { {llvmtype} }\n",
+	interfaceheaderdef = "i8*, void(i8*)*",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }

@@ -181,7 +181,6 @@ static void append_printbuffer( lua_State* ls, int ai, int ae, std::string& buff
 		}
 		buffer.append( str, len);
 	}
-	buffer.push_back( '\n');
 }
 
 static int lua_print_section_redirected( lua_State* ls)
