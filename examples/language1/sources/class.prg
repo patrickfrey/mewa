@@ -9,13 +9,13 @@ class Point
 {
 	public constructor( int x_, int y_)
 	{
-		this->m_x = x_;
+		m_x = x_;
 		this->m_y = y_;
 	}
 
 	public operator = ( int x_, int y_)
 	{
-		m_x = x_;
+		this->m_x = x_;
 		m_y = y_;
 	}
 
@@ -26,7 +26,7 @@ class Point
 
 	public function y int() const
 	{
-		return m_y;
+		return this->m_y;
 	}
 
 	int m_x;

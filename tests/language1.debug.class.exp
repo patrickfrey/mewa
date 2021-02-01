@@ -53,13 +53,8 @@ Reduce #3 to parameters by token ')' at line 10 in state 314, goto 190
 Reduce #1 to parameterlist by token ')' at line 10 in state 190, call paramdeflist, goto 322
 Shift token ')' at line 10 in state 322, goto 342
 Shift token '{' at line 11 in state 342, goto 313
-Shift token IDENT = "this" at line 12 in state 313, goto 71
-Reduce #1 to expression by token "->" at line 12 in state 71, call variable, goto 68
-Shift token "->" at line 12 in state 68, goto 134
-Reduce #1 to indirection by token IDENT = "m_x" at line 12 in state 134, call count, goto 129
-Shift token IDENT = "m_x" at line 12 in state 129, goto 236
-Reduce #3 to iexpression by token '=' at line 12 in state 236, call rep_operator "->", goto 69
-Reduce #1 to expression by token '=' at line 12 in state 69, goto 68
+Shift token IDENT = "m_x" at line 12 in state 313, goto 71
+Reduce #1 to expression by token '=' at line 12 in state 71, call variable, goto 68
 Shift token '=' at line 12 in state 68, goto 135
 Shift token IDENT = "x_" at line 12 in state 135, goto 71
 Reduce #1 to expression by token ';' at line 12 in state 71, call variable, goto 242
@@ -109,8 +104,13 @@ Reduce #3 to parameters by token ')' at line 16 in state 314, goto 190
 Reduce #1 to parameterlist by token ')' at line 16 in state 190, call paramdeflist, goto 189
 Shift token ')' at line 16 in state 189, goto 286
 Shift token '{' at line 17 in state 286, goto 313
-Shift token IDENT = "m_x" at line 18 in state 313, goto 71
-Reduce #1 to expression by token '=' at line 18 in state 71, call variable, goto 68
+Shift token IDENT = "this" at line 18 in state 313, goto 71
+Reduce #1 to expression by token "->" at line 18 in state 71, call variable, goto 68
+Shift token "->" at line 18 in state 68, goto 134
+Reduce #1 to indirection by token IDENT = "m_x" at line 18 in state 134, call count, goto 129
+Shift token IDENT = "m_x" at line 18 in state 129, goto 236
+Reduce #3 to iexpression by token '=' at line 18 in state 236, call rep_operator "->", goto 69
+Reduce #1 to expression by token '=' at line 18 in state 69, goto 68
 Shift token '=' at line 18 in state 68, goto 135
 Shift token IDENT = "x_" at line 18 in state 135, goto 71
 Reduce #1 to expression by token ';' at line 18 in state 71, call variable, goto 242
@@ -170,8 +170,13 @@ Shift token ')' at line 27 in state 189, goto 286
 Shift token "const" at line 27 in state 286, goto 312
 Shift token '{' at line 28 in state 312, goto 334
 Shift token "return" at line 29 in state 334, goto 86
-Shift token IDENT = "m_y" at line 29 in state 86, goto 71
-Reduce #1 to expression by token ';' at line 29 in state 71, call variable, goto 178
+Shift token IDENT = "this" at line 29 in state 86, goto 71
+Reduce #1 to expression by token "->" at line 29 in state 71, call variable, goto 178
+Shift token "->" at line 29 in state 178, goto 134
+Reduce #1 to indirection by token IDENT = "m_y" at line 29 in state 134, call count, goto 129
+Shift token IDENT = "m_y" at line 29 in state 129, goto 236
+Reduce #3 to iexpression by token ';' at line 29 in state 236, call rep_operator "->", goto 69
+Reduce #1 to expression by token ';' at line 29 in state 69, goto 178
 Shift token ';' at line 29 in state 178, goto 278
 Reduce #3 to statement by token '}' at line 30 in state 278, call return_value, goto 67
 Reduce #0 to statementlist by token '}' at line 30 in state 67, goto 128
@@ -503,30 +508,11 @@ Lua call result [1]
                                     {
                                       arg = {
                                         {
-                                          arg = {
-                                            {
-                                              line = 12,
-                                              name = "IDENT",
-                                              value = "this"}},
-                                          call = {
-                                            name = "variable",
-                                            proc = <function>},
-                                          line = 12,
-                                          step = 1},
-                                        {
-                                          arg = {},
-                                          call = {
-                                            name = "count",
-                                            proc = <function>},
-                                          line = 12,
-                                          step = 1},
-                                        {
                                           line = 12,
                                           name = "IDENT",
                                           value = "m_x"}},
                                       call = {
-                                        name = "rep_operator ->",
-                                        obj = "->",
+                                        name = "variable",
                                         proc = <function>},
                                       line = 12,
                                       step = 1},
@@ -719,11 +705,30 @@ Lua call result [1]
                                     {
                                       arg = {
                                         {
+                                          arg = {
+                                            {
+                                              line = 18,
+                                              name = "IDENT",
+                                              value = "this"}},
+                                          call = {
+                                            name = "variable",
+                                            proc = <function>},
+                                          line = 18,
+                                          step = 2},
+                                        {
+                                          arg = {},
+                                          call = {
+                                            name = "count",
+                                            proc = <function>},
+                                          line = 18,
+                                          step = 2},
+                                        {
                                           line = 18,
                                           name = "IDENT",
                                           value = "m_x"}},
                                       call = {
-                                        name = "variable",
+                                        name = "rep_operator ->",
+                                        obj = "->",
                                         proc = <function>},
                                       line = 18,
                                       step = 2},
@@ -941,11 +946,30 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
+                                      arg = {
+                                        {
+                                          line = 29,
+                                          name = "IDENT",
+                                          value = "this"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 29,
+                                      step = 5},
+                                    {
+                                      arg = {},
+                                      call = {
+                                        name = "count",
+                                        proc = <function>},
+                                      line = 29,
+                                      step = 5},
+                                    {
                                       line = 29,
                                       name = "IDENT",
                                       value = "m_y"}},
                                   call = {
-                                    name = "variable",
+                                    name = "rep_operator ->",
+                                    obj = "->",
                                     proc = <function>},
                                   line = 29,
                                   step = 5}},
