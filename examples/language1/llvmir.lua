@@ -107,7 +107,8 @@ llvmir.structTemplate = {
 	ctor_elements = "call void @__ctor_elements_{structname}( %{structname}* {this}{args})\n",
 	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
 	loadref = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n",
-	load = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n"
+	load = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	typedef = "%{structname} = type { {llvmtype} }\n"
 }
 
 llvmir.classTemplate = {
@@ -126,7 +127,8 @@ llvmir.classTemplate = {
 	ctor = "call void @__ctor_{classname}( %{classname}* {this})\n",
 	dtor = "call void @__dtor_{classname}( %{classname}* {this})\n",
 	loadref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
-	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n"
+	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	typedef = "%{classname} = type { {llvmtype} }\n"
 }
 
 llvmir.interfaceTemplate = {
@@ -137,7 +139,9 @@ llvmir.interfaceTemplate = {
 	scalar = false,
 	class = "class",
 	align = 8,
-	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n"
+	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n",
+	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
+	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n"
 }
 
 llvmir.control = {
@@ -153,6 +157,12 @@ llvmir.control = {
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
+	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
+				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 0\n"
+				.. "{3} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
+				.. "!!!!!",
+	interfaceFunctionCall = "{1} = {out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
+	interfaceProcedureCall = "!!!!! call void{signature} @{symbolname}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
@@ -160,8 +170,6 @@ llvmir.control = {
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
 				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
-	structdef = "%{structname} = type { {llvmtype} }\n",
-	interfaceheaderdef = "i8*, void(i8*)*",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }

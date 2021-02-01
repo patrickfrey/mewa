@@ -3,11 +3,11 @@ extern "C" procedure putchar( const byte);
 extern "C" function malloc byte^( long);
 extern "C" procedure free( byte^);
 
-function allocmem byte^( long bytes)
+private function allocmem byte^( long bytes)
 {
 	return malloc( bytes);
 }
-procedure freemem( byte^ ptr)
+private procedure freemem( byte^ ptr)
 {
 	free( ptr);
 }
@@ -25,7 +25,7 @@ struct Tree
 
 Tree g_tree;
 
-procedure printTree( const Tree^ node, int indent)
+private procedure printTree( const Tree^ node, int indent)
 {
 	var int ii = 0; 
 	while (ii < indent) 
@@ -38,7 +38,7 @@ procedure printTree( const Tree^ node, int indent)
 	if (node->right != null) {printTree( node->right, indent+1);}
 }
 
-procedure deleteTree( Tree^ node)
+private procedure deleteTree( Tree^ node)
 {
 	if (node->left != null) {deleteTree( node->left);}
 	if (node->right != null) {deleteTree( node->right);}

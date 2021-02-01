@@ -36,19 +36,21 @@ extern_definition	= "extern" DQSTRING "function" IDENT typespec "(" extern_param
 			| "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";"	(extern_procdef_vararg)
 			;
 extern_parameters 	= typespec "," extern_parameters
+			| typespec IDENT "," extern_parameters
 			| typespec
+			| typespec IDENT
 			;
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε										(extern_paramdeflist)
 			;
-interface_definition 	= "function" IDENT typespec "(" parameterlist ")" ";"				(interface_funcdef "&")
-			| "function" IDENT typespec "(" parameterlist ")" "const" ";"			(interface_funcdef "const&")
-			| "procedure" IDENT "(" parameterlist ")" ";"					(interface_procdef "&")
-			| "procedure" IDENT "(" parameterlist ")" "const" ";"				(interface_procdef "const&")
-			| "operator" operatordecl typespec "(" parameterlist ")" ";"			(interface_operator_funcdef "&")
-			| "operator" operatordecl typespec "(" parameterlist ")" "const" ";"		(interface_operator_funcdef "const&")
-			| "operator" operatordecl "(" parameterlist ")" ";"				(interface_operator_procdef "&")
-			| "operator" operatordecl "(" parameterlist ")" "const" ";"			(interface_operator_procdef "const&")
+interface_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"			(interface_funcdef {const=false})
+			| "function" IDENT typespec "(" extern_paramlist ")" "const" ";"		(interface_funcdef {const=true})
+			| "procedure" IDENT "(" extern_paramlist ")" ";"				(interface_procdef {const=false})
+			| "procedure" IDENT "(" extern_paramlist ")" "const" ";"			(interface_procdef {const=true})
+			| "operator" operatordecl typespec "(" extern_paramlist ")" ";"			(interface_operator_funcdef {const=false})
+			| "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";"		(interface_operator_funcdef {const=true})
+			| "operator" operatordecl "(" extern_paramlist ")" ";"				(interface_operator_procdef {const=false})
+			| "operator" operatordecl "(" extern_paramlist ")" "const" ";"			(interface_operator_procdef {const=true})
 			;
 struct_definition	= typedefinition ";"								(definition 1)
 			| variabledefinition ";"							(definition 1)
@@ -100,7 +102,7 @@ classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
 			;
 linkage			= "private"									(linkage {private=true, linkage="internal"})
 			| "public"									(linkage {private=false, linkage="external"})
-			|										(linkage {private=true, linkage="internal"})
+			|										(linkage {private=false, linkage="external"})
 			;
 functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef {const=false})
 			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})

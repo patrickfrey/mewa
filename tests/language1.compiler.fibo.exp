@@ -18,7 +18,7 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
 
 declare external void @printf( i8*, i32 ) #1 nounwind
 
-define internal void @swap__1( i32* %r1, i32* %r2 ) #0 nounwind {
+define external void @swap__1( i32* %r1, i32* %r2 ) #0 noinline nounwind {
 entry:
 %r3 = alloca i32, align 4
 %r5 = load i32, i32* %r1
