@@ -95,13 +95,13 @@ function callConstructor( fmt)
 		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
 	end
 end
-function callableCallConstructor( fmt, sep, argvar)
+function callableCallConstructor( fmt, contextTypeId, sep, argvar)
 	return function( this, args, llvmtypes)
 		local callable = getCallableInstance()
 		local out = callable.register()
 		local this_code,this_inp = constructorParts( this)
 		local code = this_code
-		local argstr = ""
+		local argstr; if contextTypeId ~= 0 then argstr = typeDescriptionMap[ contextTypeId].llvmtype .. " " .. this_inp else argstr = "" end
 		for ii=1,#args do
 			local arg = args[ ii]
 			local llvmtype = llvmtypes[ ii]
@@ -113,7 +113,7 @@ function callableCallConstructor( fmt, sep, argvar)
 				if argstr == "" then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
 			end
 		end
-		local subst = {out = out, this = this_inp, [argvar] = argstr}
+		local subst = {out = out, [argvar] = argstr}
 		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
 	end
 end
@@ -1184,7 +1184,7 @@ function defineFunctionCall( contextTypeId, opr, descr)
 		descr.rtype = "void"
 		callfmt = utils.template_format( llvmir.control.procedureCall, descr)
 	end
-	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, ", ", "callargstr"))
+	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, contextTypeId, ", ", "callargstr"))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallableType( node, descr, context)
