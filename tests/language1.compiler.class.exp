@@ -81,7 +81,7 @@ store i32 %r1, i32* %r4
 %r5 = alloca i32, align 4
 store i32 %r2, i32* %r5
 %r7 = load i32, i32* %r5
-call void @__C_Point__1__$ctor__i32__i32( i32 %r6, i32 %r7)
+call void @__C_Point__1__$ctor__i32__i32( %Point__1* %r3, i32 %r6, i32 %r7)
 ret void
 }
 
@@ -95,7 +95,7 @@ store i32 %r1, i32* %r4
 %r5 = alloca i32, align 4
 store i32 %r2, i32* %r5
 %r7 = load i32, i32* %r5
-call void @__C_Point__1__$ctor__i32__i32( i32 %r6, i32 %r7)
+call void @__C_Point__1__$ctor__i32__i32( %Point__1* %r3, i32 %r6, i32 %r7)
 ret void
 }
 

@@ -95,13 +95,14 @@ function callConstructor( fmt)
 		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
 	end
 end
-function callableCallConstructor( fmt, contextTypeId, sep, argvar)
+function callableCallConstructor( fmt, thisTypeId, sep, argvar)
 	return function( this, args, llvmtypes)
 		local callable = getCallableInstance()
 		local out = callable.register()
 		local this_code,this_inp = constructorParts( this)
 		local code = this_code
-		local argstr; if contextTypeId ~= 0 then argstr = typeDescriptionMap[ contextTypeId].llvmtype .. " " .. this_inp else argstr = "" end
+		local argstr; if thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else argstr = ""
+		end
 		for ii=1,#args do
 			local arg = args[ ii]
 			local llvmtype = llvmtypes[ ii]
@@ -1175,7 +1176,7 @@ function getTypeDeclUniqueName( contextTypeId, typnam)
 		return utils.uniqueName( typedb:type_string(contextTypeId) .. "__" .. typnam .. "__")
 	end
 end
-function defineFunctionCall( contextTypeId, opr, descr)
+function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt
 	if descr.ret then
 		descr.rtype = typeDescriptionMap[ descr.ret].llvmtype
@@ -1184,14 +1185,14 @@ function defineFunctionCall( contextTypeId, opr, descr)
 		descr.rtype = "void"
 		callfmt = utils.template_format( llvmir.control.procedureCall, descr)
 	end
-	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, contextTypeId, ", ", "callargstr"))
+	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallableType( node, descr, context)
-	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
-	local callable = typedb:get_type( contextTypeId, descr.name)
-	if not callable then callable = typedb:def_type( contextTypeId, descr.name) end
-	defineFunctionCall( callable, "()", descr)
+	local thisTypeId = 0; if context and context.qualitype then thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
+	local callableContextTypeId = typedb:get_type( thisTypeId, descr.name)
+	if not callableContextTypeId then callableContextTypeId = typedb:def_type( thisTypeId, descr.name) end
+	defineFunctionCall( thisTypeId, callableContextTypeId, "()", descr)
 end
 function defineCallable( node, descr, context)
 	descr.thisstr = getThisParameterString( context, descr.param)
@@ -1201,7 +1202,7 @@ function defineCallable( node, descr, context)
 end
 function defineOperatorType( node, descr, context)
 	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
-	defineFunctionCall( contextTypeId, descr.name, descr)
+	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 end
 function defineOperator( node, descr, context)
 	descr.thisstr = getThisParameterString( context, descr.param)
