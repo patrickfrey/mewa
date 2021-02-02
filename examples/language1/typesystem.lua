@@ -162,10 +162,10 @@ function recursiveResolveConstructor( node, thisTypeId, opr)
 		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, opr)
 		if not contextTypeId then utils.errorMessage( node.line, "No operator '%s' found for '%s'", opr, typedb:type_string( thisTypeId)) end
 		for ci,item in ipairs( candidateFunctions) do
-			if typedb:type_nof_parameters( item.type) == #args then
+			if typedb:type_nof_parameters( item) == #args then
 				local param_ar = {}
 				if #args > 0 then
-					local parameters = typedb:type_parameters( item.type)
+					local parameters = typedb:type_parameters( item)
 					for ai,arg in ipairs(args) do
 						local maparg = tryCreateParameter( node, callable, parameters[ ai].type, args[ai])
 						if not maparg then break end
@@ -959,14 +959,14 @@ function initBuiltInTypes()
 	initControlBooleanTypes()
 end
 
-function applyConversionConstructor( node, conv, arg)
-	if conv.constructor then
-		if (type(conv.constructor) == "function") then
-			return conv.constructor( arg)
+function applyConversionConstructor( node, typeId, constructor, arg)	
+	if constructor then
+		if (type(constructor) == "function") then
+			return constructor( arg)
 		elseif arg then
-			utils.errorMessage( node.line, "reduction constructor overwriting previous constructor for '%s'", typedb:type_string(conv.type))
+			utils.errorMessage( node.line, "reduction constructor overwriting previous constructor for '%s'", typedb:type_string(typeId))
 		else
-			return conv.constructor
+			return constructor
 		end
 	else
 		return arg
@@ -977,17 +977,18 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, getContextTypes(), typeName)
 	end
 	for ii,item in ipairs(items) do
-		if typedb:type_nof_parameters( item.type) == 0 then
+		if typedb:type_nof_parameters( item) == 0 then
 			local constructor = nil
 			for ri,redu in ipairs(reductions) do
-				constructor = applyConversionConstructor( node, redu, constructor)
+				constructor = applyConversionConstructor( node, redu.type, redu.constructor, constructor)
 			end
-			constructor = applyConversionConstructor( node, item, constructor)
+			local item_constructor = typedb:type_constructor( item)
+			constructor = applyConversionConstructor( node, item, item_constructor, constructor)
 			if constructor then
 				local code,out = constructorParts( constructor)
-				return item.type,{code=code,out=out}
+				return item,{code=code,out=out}
 			else
-				return item.type
+				return item
 			end
 		end
 	end
@@ -1048,13 +1049,13 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 	local bestweight = nil
 	for ii,item in ipairs(items) do
 		local weight = 0.0
-		local nof_params = typedb:type_nof_parameters( item.type)
+		local nof_params = typedb:type_nof_parameters( item)
 		if nof_params <= #args then
 			local param_constructor_ar = {}
 			local param_llvmtype_ar = {}
 			if nof_params == #args then
 				if #args > 0 then
-					local parameters = typedb:type_parameters( item.type)
+					local parameters = typedb:type_parameters( item)
 					for pi=1,#parameters do
 						local param_constructor,param_llvmtype,param_weight = getParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
@@ -1063,9 +1064,9 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 						table.insert( param_llvmtype_ar, param_llvmtype)
 					end
 				end
-			elseif varargFuncMap[ item.type] then
+			elseif varargFuncMap[ item] then
 				if #args > 0 then
-					local parameters = typedb:type_parameters( item.type)
+					local parameters = typedb:type_parameters( item)
 					for pi=1,#parameters do
 						local param_constructor,param_llvmtype,param_weight = getParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
@@ -1086,12 +1087,13 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 			end
 			if #param_constructor_ar == #args then
 				if not bestweight or weight < bestweight + weightEpsilon then
-					local callable_constructor = item.constructor( this_constructor, param_constructor_ar, param_llvmtype_ar)
+					local item_constructor = typedb:type_constructor( item)
+					local callable_constructor = item_constructor( this_constructor, param_constructor_ar, param_llvmtype_ar)
 					if bestweight and weight >= bestweight - weightEpsilon then
-						table.insert( bestmatch, {type=item.type, constructor=callable_constructor})
+						table.insert( bestmatch, {type=item, constructor=callable_constructor})
 					else
 						bestweight = weight
-						bestmatch = {{type=item.type, constructor=callable_constructor}}
+						bestmatch = {{type=item, constructor=callable_constructor}}
 					end
 				end
 			end

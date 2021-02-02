@@ -163,7 +163,7 @@ function testDefineResolveType()
 				prev_type = reduction.type
 			end
 			for i,item in ipairs( items) do
-				result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item.type) .. " : " .. mewa.tostring( item.constructor, false)
+				result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item) .. " : " .. mewa.tostring( typedb:type_constructor( item), false)
 			end
 		else
 			error( "Failed to resolve type " .. typedb:type_string( qry[1]) .. qry[2])
@@ -238,7 +238,8 @@ function testResolveTypeContext()
 		rt = rt .. "REDU " .. (redures or "ORIG") .. "\n"
 		for ii,item in ipairs(items) do
 			local itemstr
-			if type(item.constructor) == "function" then itemstr = item.constructor(redures or "ORIG") else itemstr = item.constructor end
+			local item_constructor = typedb:type_constructor( item)
+			if type(item_constructor) == "function" then itemstr = item_constructor(redures or "ORIG") else itemstr = item_constructor end
 			rt = rt .. "ITEM " .. itemstr .. "\n"
 		end
 		return rt

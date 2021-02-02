@@ -306,11 +306,11 @@ static std::string resolveResultToString( TypeDatabase& typedb, TypeDatabaseCont
 	std::string rt = reductionsToString( typedb, ctx, res.reductions);
 	rt.append( rt.empty() ? "{":" {");
 	int iidx = 0;
-	for (auto const& item :res.items)
+	for (auto const item :res.items)
 	{
 		TypeDatabase::ResultBuffer resbuf;
 		if (iidx++) rt.append( ", ");
-		rt.append( typedb.typeToString( item.type, " ", resbuf));
+		rt.append( typedb.typeToString( item, " ", resbuf));
 	}
 	rt.append( "}");
 	return rt;

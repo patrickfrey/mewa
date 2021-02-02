@@ -324,7 +324,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No used reductions if not specified.   |
 | Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.         |
 | Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
-| Return 3rd |                 | table             | List of candidates found, differing in the parameters. The list has to be filtered by the caller (***).            |
+| Return 3rd |                 | table             | List of candidates types found, differing in the parameters. The list has to be filtered by the caller (***).      |
 
 #### Remark (*)
 The context-type 0 is reserved for types that are not a member of some other structure. 
@@ -334,12 +334,11 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 #### Remark (***)
 The reason why parameter matching of the results is left to the caller is because there are different ways how to do this depending on the language. 
 In fact, how parameters are matched is a core characteristic of the language and should therefore be implemented in the lua part of the type system.
-Implemeting it in the resolve_type method would expand the interface in an unhealthy way. We would end in classifying different ways of matching the parameters for the user.
 
 #### Note
 To inspect the result you first have to look if the 1st return value is *nil* (meaning that the type could not be resolved).
 Then you have to check if the first return value is a table (meaning that there are ambiguous results). The table contains two of the conflicting context types.
-Otherwise the first return value is the context-type of the resolved type and the 2nd and 3rd return value specify how the resolved type is built.
+Otherwise the first return value is the context-type of the resuls types and the 2nd and 3rd return value specify how the resolved types are built.
 
 
 <a name="typeAttributes"/>

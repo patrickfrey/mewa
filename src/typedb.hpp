@@ -185,16 +185,6 @@ public:
 		GetReductionsResult( GetReductionsResult&& o)
 			:reductions(std::move(o.reductions)){}
 	};
-	struct ResolveResultItem
-	{
-		int type;
-		int constructor;
-
-		ResolveResultItem( const ResolveResultItem& o) noexcept
-			:type(o.type),constructor(o.constructor){}
-		ResolveResultItem( int type_, int constructor_) noexcept
-			:type(type_),constructor(constructor_){}
-	};
 	struct DeriveResult
 	{
 		std::pmr::vector<TypeConstructorPair> reductions;
@@ -215,7 +205,7 @@ public:
 	struct ResolveResult
 	{
 		std::pmr::vector<TypeConstructorPair> reductions;
-		std::pmr::vector<ResolveResultItem> items;
+		std::pmr::vector<int> items;
 		int rootIndex;
 		int contextType;
 		int conflictType;
@@ -225,7 +215,7 @@ public:
 			:reductions(&resbuf.memrsc),items(&resbuf.memrsc),rootIndex(-1),contextType(-1),conflictType(-1),weightsum(0.0)
 		{
 			reductions.reserve( resbuf.buffersize() / 2 / sizeof(TypeConstructorPair));
-			items.reserve( resbuf.buffersize() / 2 / sizeof(ResolveResultItem));
+			items.reserve( resbuf.buffersize() / 2 / sizeof(int));
 		}
 		ResolveResult( const ResolveResult&) = delete;
 		ResolveResult( ResolveResult&& o)
@@ -416,7 +406,7 @@ private:
 	int findTypeWithSignature( int typerecidx, const TypeConstructorPairList& parameter, int& lastIndex) const noexcept;
 	bool compareParameterSignature( const TypeList& parameter, int param2, int paramlen2) const noexcept;
 	int findTypeWithSignature( int typerecidx, const TypeList& parameter) const noexcept;
-	void collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const;
+	void collectResultItems( std::pmr::vector<int>& items, int typerecidx) const;
 	std::string reductionsToString( const std::pmr::vector<TypeConstructorPair>& reductions) const;
 	std::string deriveResultToString( const DeriveResult& res) const;
 	std::string resolveResultToString( const ResolveResult& res) const;

@@ -178,7 +178,7 @@ static int getContextType( TypeDatabase const* typedb, const Scope::Step step, c
 		if (res.items.empty()) throw std::runtime_error( string_format( "Unresolvable type %s", item.data()));
 		if (res.items.size() > 1) throw std::runtime_error( string_format( "Ambiguous type %s", item.data()));
 
-		contextType = res.items[0].type;
+		contextType = res.items[0];
 	}
 	return contextType;
 }
@@ -362,13 +362,13 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 		int bestCandidate = -1;
 		std::vector<std::vector<ParameterOp> > popar;
 		int ii = 0;
-		for (auto const& item : result.items)
+		for (auto const item : result.items)
 		{
 			bool matched = false;
 			++ii;
 			int distance = 0;
-			out << "Candidate [" << ii << "]: " << tdbimpl.typeToString( item.type) << std::endl;
-			TypeDatabase::TypeConstructorPairList parameters = tdbimpl.typedb->typeParameters( item.type);
+			out << "Candidate [" << ii << "]: " << tdbimpl.typeToString( item) << std::endl;
+			TypeDatabase::TypeConstructorPairList parameters = tdbimpl.typedb->typeParameters( item);
 			int pi = 0;
 			if (fdef.parameter.size() != parameters.size())
 			{
@@ -419,8 +419,10 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 				}
 				else if (distance == minDistance)
 				{
-					std::string cstr1 = tdbimpl.getConstructorName( result.items[ bestCandidate].constructor);
-					std::string cstr2 = tdbimpl.getConstructorName( result.items[ ii-1].constructor);
+					int bestCandidateConstructor = tdbimpl.typedb->typeConstructor( result.items[ bestCandidate]);
+					int itemConstructor = tdbimpl.typedb->typeConstructor( item);
+					std::string cstr1 = tdbimpl.getConstructorName( bestCandidateConstructor);
+					std::string cstr2 = tdbimpl.getConstructorName( itemConstructor);
 					std::cerr << string_format( "ambiguous parameter signature (for '%s' dist %d and '%s' dist %d), can't resolve type",
 									cstr1.c_str(), minDistance, cstr2.c_str(), distance) << std::endl;
 				}
@@ -428,7 +430,8 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 		}
 		if (bestCandidate >= 0)
 		{
-			out << "Found match: " << tdbimpl.getConstructorName( result.items[ bestCandidate].constructor);
+			int bestCandidateConstructor = tdbimpl.typedb->typeConstructor( result.items[ bestCandidate]);
+			out << "Found match: " << tdbimpl.getConstructorName( bestCandidateConstructor);
 			if (!popar[ bestCandidate].empty())
 			{
 				out << "( ";

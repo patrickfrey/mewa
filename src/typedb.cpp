@@ -452,11 +452,11 @@ std::string TypeDatabase::resolveResultToString( const ResolveResult& res) const
 	rt.append( " {");
 
 	int iidx = 0;
-	for (auto const& item :res.items)
+	for (auto const item :res.items)
 	{
 		ResultBuffer resbuf;
 		if (iidx++) rt.append( ", ");
-		rt.append( typeToString( item.type, " ", resbuf));
+		rt.append( typeToString( item, " ", resbuf));
 	}
 	rt.append( "}");
 	return rt;
@@ -601,13 +601,12 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType(
 	return rt;
 }
 
-void TypeDatabase::collectResultItems( std::pmr::vector<ResolveResultItem>& items, int typerecidx) const
+void TypeDatabase::collectResultItems( std::pmr::vector<int>& items, int typerecidx) const
 {
 	while (typerecidx > 0)
 	{
-		const TypeRecord& rec = m_typerecMap[ typerecidx-1];
-		items.push_back( ResolveResultItem( typerecidx, rec.constructor));
-		typerecidx = rec.next;
+		items.push_back( typerecidx);
+		typerecidx = m_typerecMap[ typerecidx-1].next;
 	}
 }
 

@@ -490,36 +490,18 @@ void mewa::lua::pushWeightedReductions(
 }
 
 void mewa::lua::pushTypeList(
-		lua_State* ls, const char* functionName, const std::pmr::vector<int>& typepath)
+		lua_State* ls, const char* functionName, const std::pmr::vector<int>& typelist)
 {
 	checkStack( functionName, ls, 6);
 
-	lua_createtable( ls, typepath.size()/*narr*/, 0/*nrec*/);		// STK: [TYPETAB] 
+	lua_createtable( ls, typelist.size()/*narr*/, 0/*nrec*/);		// STK: [TYPETAB] 
 	int tidx = 0;
-	for (int tp : typepath)
+	for (int tp : typelist)
 	{
 		++tidx;
 		lua_pushinteger( ls, tp);					// STK: [TYPETAB] [TYPE]
 		lua_rawseti( ls, -2, tidx);					// STK: [TYPETAB]
 	}
-}
-
-void mewa::lua::pushResolveResultItems(
-		lua_State* ls, const char* functionName, const char* objTableName,
-		const std::pmr::vector<mewa::TypeDatabase::ResolveResultItem>& items)
-{
-	checkStack( functionName, ls, items.size()+6);
-
-	lua_getglobal( ls, objTableName);					// STK: [OBJTAB]
-	lua_createtable( ls, items.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [ITEMTAB]
-	int ridx = 0;
-	for (auto const& item : items)
-	{
-		++ridx;
-		pushTypeConstructorPair( ls, item.type, item.constructor);	// STK: [OBJTAB] [ITEMTAB] [ITEM]
-		lua_rawseti( ls, -2, ridx);					// STK: [OBJTAB] [ITEMTAB]
-	}
-	lua_replace( ls, -2);							// STK: [ITEMTAB]
 }
 
 void mewa::lua::pushTypeConstructorPairs(
@@ -634,14 +616,14 @@ int mewa::lua::pushResolveResult(
 				lua_pop( ls, 1);											// STK: [CTYPE]
 				mewa::lua::pushTypeConstructorPairs( ls, functionName, objTableName, resolveres.reductions);		// STK: [CTYPE] [REDUS]
 			}
-			mewa::lua::pushResolveResultItems( ls, functionName, objTableName, resolveres.items);		 		// STK: [CTYPE] [REDUS] [ITEMS]
+			mewa::lua::pushTypeList( ls, functionName, resolveres.items);		 					// STK: [CTYPE] [REDUS] [ITEMS]
 			return 3;
 		}
 		else
 		{
 			lua_pushinteger( ls, resolveres.contextType);
 			mewa::lua::pushTypeConstructorPairs( ls, functionName, objTableName, resolveres.reductions);
-			mewa::lua::pushResolveResultItems( ls, functionName, objTableName, resolveres.items);
+			mewa::lua::pushTypeList( ls, functionName, resolveres.items);
 			return 3;
 		}
 	}
