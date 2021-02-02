@@ -159,6 +159,19 @@ public:
 		WeightedReduction( int type_, int constructor_, float weight_) noexcept
 			:type(type_),constructor(constructor_),weight(weight_){}
 	};
+	struct GetTypesResult
+	{
+		std::pmr::vector<int> types;
+
+		GetTypesResult( ResultBuffer& resbuf) noexcept
+			:types(&resbuf.memrsc)
+		{
+			types.reserve( (resbuf.buffersize() / sizeof(int)));
+		}
+		GetTypesResult( const GetTypesResult&) = delete;
+		GetTypesResult( GetTypesResult&& o)
+			:types(std::move(o.types)){}
+	};
 	struct GetReductionsResult
 	{
 		std::pmr::vector<WeightedReduction> reductions;
@@ -266,7 +279,7 @@ public:
 
 	/// \brief Define a new type and get its handle
 	/// \param[in] scope the scope of this definition
-	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
+	/// \param[in] contextType the context of this type.
 	/// \param[in] name name of the type
 	/// \param[in] constructor handle for the constructor of the type or 0 if not defined
 	/// \param[in] parameter list of parameters as part of the function signature
@@ -278,11 +291,20 @@ public:
 
 	/// \brief Get a type with exact signature defined in a specified scope (does not search other valid definitions in enclosing scopes)
 	/// \param[in] scope the scope of this definition
-	/// \param[in] contextType the context (realm,namespace) of this type. A context is reachable via a path of type reductions.
+	/// \param[in] contextType the context of this type. The context type of the type definition retrieved is reachable via a path of type reductions.
 	/// \param[in] name name of the type
 	/// \param[in] parameter list of parameter types as part of the function signature
 	/// \return the type handle or 0 if not defined
 	int getType( const Scope& scope, int contextType, const std::string_view& name, const TypeList& parameter) const;
+
+	/// \brief Get the list of all types defined in a specified scope differing in the list of parameters
+	/// \remark does not search other valid definitions in enclosing scopes
+	/// \param[in] scope the scope of this definition
+	/// \param[in] contextType the context of this type. The context type of the type definitions retrieved is reachable via a path of type reductions.
+	/// \param[in] name name of the type
+	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
+	/// \return the list of types found
+	GetTypesResult getTypes( const Scope& scope, int contextType, const std::string_view& name, ResultBuffer& resbuf) const;
 
 	/// \brief Get the scope dependency tree of all types defined
 	/// \note Building the tree is an expensive operation. The purpose of this method is mainly for introspection for debugging
@@ -336,7 +358,7 @@ public:
 
 	/// \brief Resolve a type name in a context reducible from one of the contexts passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
-	/// \param[in] contextTypes the context (realm,namespace) of the candidate query types.
+	/// \param[in] contextTypes the context of the candidate query types.
 	/// 		The searched item has a context type that is reachable via a path of type reductions from an element of this list.
 	/// \param[in] name name of the type searched
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
@@ -347,7 +369,7 @@ public:
 
 	/// \brief Resolve a type name in a context reducible from the context passed
 	/// \param[in] step the scope step of the search defining what are valid reductions
-	/// \param[in] contextType the context (realm,namespace) of the candidate query type.
+	/// \param[in] contextType the context of the candidate query type.
 	/// 		The searched item has a context type that is reachable via a path of type reductions from this context type.
 	/// \param[in] name name of the type searched
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
@@ -508,7 +530,7 @@ private:
 	std::unique_ptr<TypeTable> m_typeTable;		//< table of types
 	std::unique_ptr<ReductionTable> m_reduTable;	//< table of reductions
 	std::unique_ptr<IdentMap> m_identMap;		//< identifier string to integer map
-	std::vector<TypeConstructorPair> m_parameterMap;		//< map cardinal to parameter arrays
+	std::vector<TypeConstructorPair> m_parameterMap;//< map cardinal to parameter arrays
 	std::vector<TypeRecord> m_typerecMap;		//< type definition structures
 };
 

@@ -489,7 +489,7 @@ void mewa::lua::pushWeightedReductions(
 	lua_replace( ls, -2);											// STK: [REDUTAB]
 }
 
-void mewa::lua::pushTypePath(
+void mewa::lua::pushTypeList(
 		lua_State* ls, const char* functionName, const std::pmr::vector<int>& typepath)
 {
 	checkStack( functionName, ls, 6);

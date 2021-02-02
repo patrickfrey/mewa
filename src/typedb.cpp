@@ -191,6 +191,21 @@ int TypeDatabase::getType( const Scope& scope, int contextType, const std::strin
 	return typerec ? findTypeWithSignature( typerec, parameter) : 0;
 }
 
+TypeDatabase::GetTypesResult TypeDatabase::getTypes( const Scope& scope, int contextType, const std::string_view& name, ResultBuffer& resbuf) const
+{
+	TypeDatabase::GetTypesResult rt( resbuf);
+	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
+	TypeDef typeDef( contextType, m_identMap->get( name));
+
+	int tri = m_typeTable->getDef( scope, typeDef);
+	while (tri)
+	{
+		rt.types.push_back( tri);
+		tri = m_typerecMap[ tri-1].next;
+	}
+	return rt;
+}
+
 int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter, int priority)
 {
 	if (parameter.size() >= MaxNofParameter) throw Error( Error::TooManyTypeArguments, string_format( "%zu", parameter.size()));

@@ -642,6 +642,27 @@ static int mewa_typedb_get_type( lua_State* ls)
 	return 1;
 }
 
+static int mewa_typedb_get_types( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:get_types";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+
+	int buffer_parameter[ 1024];
+	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 3/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 8);
+		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
+		mewa::TypeDatabase::ResultBuffer resbuf;
+		auto rt = td->impl->getTypes( td->curScope, contextType, name, resbuf);
+		mewa::lua::pushTypeList( ls, functionName, rt.types);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
 static int mewa_typedb_def_reduction( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:def_reduction";
@@ -732,7 +753,7 @@ static int mewa_typedb_derive_type( lua_State* ls)
 			}
 			else
 			{
-				mewa::lua::pushTypePath( ls, functionName, deriveres.conflictPath);
+				mewa::lua::pushTypeList( ls, functionName, deriveres.conflictPath);
 				return 3;
 			}
 		}
@@ -1148,6 +1169,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },
 	{ "get_type",		mewa_typedb_get_type },
+	{ "get_types",		mewa_typedb_get_types },
 	{ "def_reduction",	mewa_typedb_def_reduction },
 	{ "reduction_tagmask",	mewa_typedb_reduction_tagmask },
 	{ "derive_type",	mewa_typedb_derive_type },
