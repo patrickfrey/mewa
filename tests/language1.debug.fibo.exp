@@ -7,13 +7,15 @@ Shift token "const" at line 1 in state 125, goto 18
 Shift token IDENT = "byte" at line 1 in state 18, goto 17
 Reduce #1 to typename by token '^' at line 1 in state 17, goto 38
 Shift token '^' at line 1 in state 38, goto 55
-Reduce #3 to typespec by token ',' at line 1 in state 55, call typespec "const^", goto 235
-Shift token ',' at line 1 in state 235, goto 304
-Shift token IDENT = "int" at line 1 in state 304, goto 17
-Reduce #1 to typename by token ')' at line 1 in state 17, goto 8
-Reduce #1 to typespec by token ')' at line 1 in state 8, call typespec "", goto 235
-Reduce #1 to extern_parameters by token ')' at line 1 in state 235, goto 331
-Reduce #3 to extern_parameters by token ')' at line 1 in state 331, goto 233
+Reduce #3 to typespec by token IDENT = "fmt" at line 1 in state 55, call typespec "const^", goto 235
+Shift token IDENT = "fmt" at line 1 in state 235, goto 303
+Shift token ',' at line 1 in state 303, goto 330
+Shift token IDENT = "int" at line 1 in state 330, goto 17
+Reduce #1 to typename by token IDENT = "arg" at line 1 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "arg" at line 1 in state 8, call typespec "", goto 235
+Shift token IDENT = "arg" at line 1 in state 235, goto 303
+Reduce #2 to extern_parameters by token ')' at line 1 in state 303, call extern_paramdef, goto 348
+Reduce #4 to extern_parameters by token ')' at line 1 in state 348, call extern_paramdef, goto 233
 Reduce #1 to extern_paramlist by token ')' at line 1 in state 233, call extern_paramdeflist, goto 234
 Shift token ')' at line 1 in state 234, goto 301
 Shift token ';' at line 1 in state 301, goto 328
@@ -256,24 +258,46 @@ Lua call result [1]
             {
               arg = {
                 {
+                  arg = {
+                    {
+                      line = 1,
+                      name = "IDENT",
+                      value = "byte"}},
+                  call = {
+                    name = "typespec const^",
+                    obj = "const^",
+                    proc = <function>},
                   line = 1,
-                  name = "IDENT",
-                  value = "byte"}},
-              call = {
-                name = "typespec const^",
-                obj = "const^",
-                proc = <function>},
-              line = 1,
-              step = 0},
-            {
-              arg = {
+                  step = 0},
                 {
                   line = 1,
                   name = "IDENT",
-                  value = "int"}},
+                  value = "fmt"},
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 1,
+                          name = "IDENT",
+                          value = "int"}},
+                      call = {
+                        name = "typespec ",
+                        obj = "",
+                        proc = <function>},
+                      line = 1,
+                      step = 0},
+                    {
+                      line = 1,
+                      name = "IDENT",
+                      value = "arg"}},
+                  call = {
+                    name = "extern_paramdef",
+                    proc = <function>},
+                  line = 1,
+                  step = 0}},
               call = {
-                name = "typespec ",
-                obj = "",
+                name = "extern_paramdef",
                 proc = <function>},
               line = 1,
               step = 0}},

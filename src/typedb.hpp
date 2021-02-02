@@ -276,8 +276,16 @@ public:
 	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
 	///		or -1 if the type is already defined in the same scope with the same signature (duplicate definition)
-	///		or 0 if the type is already defined in the same scope with the same signature but with a highjer priority (second definition siletly discarded)
+	///		or 0 if the type is already defined in the same scope with the same signature but with a higher priority (second definition siletly discarded)
 	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter, int priority);
+
+	/// \brief Define a new type representing another type already defined (a kind of synonym)
+	/// \param[in] scope the scope of this definition
+	/// \param[in] contextType the context of this type.
+	/// \param[in] name name of the type
+	/// \param[in] type handle of the type defined
+	/// \return true in case of success, false in case of already defined (duplicate definition)
+	bool defineTypeAs( const Scope& scope, int contextType, const std::string_view& name, int type);
 
 	/// \brief Get a type with exact signature defined in a specified scope (does not search other valid definitions in enclosing scopes)
 	/// \param[in] scope the scope of this definition

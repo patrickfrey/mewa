@@ -619,6 +619,27 @@ static int mewa_typedb_def_type( lua_State* ls)
 	return 1;
 }
 
+static int mewa_typedb_def_type_as( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "typedb:def_type_as";
+	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
+
+	int buffer_parameter[ 1024];
+	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 4/*maxNofArgs*/);
+		mewa::lua::checkStack( functionName, ls, 8);
+		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
+		int asType = mewa::lua::getArgumentAsCardinal( functionName, ls, 4);
+		int rt = td->impl->defineTypeAs( td->curScope, contextType, name, asType);
+		lua_pushinteger( ls, rt);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
 static int mewa_typedb_get_type( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "typedb:get_type";
@@ -1168,6 +1189,7 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "get_instance",	mewa_typedb_get_instance },
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },
+	{ "def_type_as",	mewa_typedb_def_type_as },
 	{ "get_type",		mewa_typedb_get_type },
 	{ "get_types",		mewa_typedb_get_types },
 	{ "def_reduction",	mewa_typedb_def_reduction },

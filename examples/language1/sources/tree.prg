@@ -1,4 +1,4 @@
-extern "C" procedure printf( const byte^ ...);
+extern "C" procedure printf( const byte^ fmt ...);
 extern "C" procedure putchar( const byte);
 extern "C" function malloc byte^( long);
 extern "C" procedure free( byte^);

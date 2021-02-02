@@ -158,11 +158,13 @@ llvmir.control = {
 	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
 	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
-				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 0\n"
-				.. "{3} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
-				.. "!!!!!",
-	interfaceFunctionCall = "{1} = {out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
-	interfaceProcedureCall = "!!!!! call void{signature} @{symbolname}( {callargstr})\n",
+				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
+				.. "{3} = getelementptr inbounds {rtype}{signature}, {rtype}{signature}* {2}, i64 0, i64 0\n"
+				.. "{out} = call {rtype} {3}( {callargstr})\n",
+	interfaceProcedureCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
+				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
+				.. "{3} = getelementptr inbounds {rtype}{signature}, {rtype}{signature}* {2}, i64 0, i64 0\n"
+				.. "call void{signature} {3}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",

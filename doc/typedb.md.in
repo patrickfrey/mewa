@@ -13,6 +13,7 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
     * [typedb:this_instance](#this_instance)
 1. [Definition and Lookup of Types](#types)
     * [typedb:def_type](#def_type)
+    * [typedb:def_type_as](#def_type_as)
     * [typedb:get_type](#get_type)
     * [typedb:get_types](#get_types)
 1. [Reductions](#reductions)
@@ -59,6 +60,7 @@ Get or/and set the current scope. All methods defining objects dependent on a sc
  - [typedb:set_instance](#set_instance)
  - [typedb:this_instance](#this_instance)
  - [typedb:def_type](#def_type)
+ - [typedb:def_type_as](#def_type_as)
  - [typedb:get_type](#get_type)
  - [typedb:get_types](#get_types)
  - [typedb:def_reduction](#def_reduction)
@@ -182,6 +184,22 @@ Be aware of the pitfalls and try to separate the types that can have paramaters 
 The motivation here is to support default declarations that are complicated to implement without a mechanism of priorization.
 ##### Remark (***)
 A definition is siletly discarded it is a duplicate but with lower priority than the previous definition.
+
+
+<a name="def_type_as"/>
+
+### typedb:def_type_as
+Define a new type representing another type already defined.
+The newly defined type name can be used as a kind of synonym for the specified type in the current scope.
+The scope of the newly defined type has been set with the last call of the setter [typedb::scope](#scope). 
+
+#### Parameter
+| #      | Name         | Type             | Description                                                                                                   |
+| :----- | :----------- | :--------------- | :------------------------------------------------------------------------------------------------------------ |
+| 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure            |
+| 2nd    | name         | string           | Name of the type defined                                                                                      |
+| 3rd    | type         | any type         | Type handle of the type this type definition is a synonym for in the current scope                            |
+| Return |              | integer          | type handle passed as third argument or -1 if the definition is a duplicate                                   |
 
 
 <a name="get_type"/>

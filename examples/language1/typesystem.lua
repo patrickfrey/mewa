@@ -1183,9 +1183,40 @@ function getTypeDeclUniqueName( contextTypeId, typnam)
 		return utils.uniqueName( typedb:type_string(contextTypeId) .. "__" .. typnam .. "__")
 	end
 end
+function expandDescrCallTemplateParameter( descr, context)
+	descr.thisstr = getThisParameterString( context, descr.param)
+	descr.paramstr = getParameterString( descr.param)
+	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
+	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+end
+function expandDescrInterfaceCallTemplateParameter( descr, context)
+	expandDescrCallTemplateParameter( descr, context)
+	descr.argstr = getParameterLlvmTypeString( descr.param)
+	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
+	descr.signature = "(i8*" .. sep .. descr.argstr .. ")"
+	descr.llvmtype = descr.rtype .. descr.signature .. "*"
+end
+function expandDescrExternCallTemplateParameter( descr, context)
+	descr.argstr = getParameterLlvmTypeString( descr.param)
+	if descr.externtype == "C" then
+		descr.symbolname = descr.name
+	else
+		utils.errorMessage( node.line, "Unknown extern call type \"%s\" (must be one of {\"C\"})", descr.externtype)
+	end
+	if descr.vararg then
+		descr.signature = "(" .. descr.argstr .. ", ...)"
+	end
+	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+end
+function printFunctionDeclaration( node, descr)
+	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
+end
+function printExternFunctionDeclaration( node, descr)
+	local declfmt; if descr.vararg then declfmt = llvmir.control.extern_functionDeclaration_vararg else declfmt = llvmir.control.extern_functionDeclaration end
+	print( "\n" .. utils.constructor_format( declfmt, descr))
+end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt
-	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
 	callfmt = utils.template_format( descr.call, descr)
 	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
 	if descr.vararg then varargFuncMap[ functype] = true end
@@ -1197,9 +1228,7 @@ function defineCallableType( node, descr, context)
 	defineFunctionCall( thisTypeId, callableContextTypeId, "()", descr)
 end
 function defineCallable( node, descr, context)
-	descr.thisstr = getThisParameterString( context, descr.param)
-	descr.paramstr = getParameterString( descr.param)
-	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
+	expandDescrCallTemplateParameter( descr, context)
 	defineCallableType( node, descr, context)
 end
 function defineOperatorType( node, descr, context)
@@ -1207,32 +1236,17 @@ function defineOperatorType( node, descr, context)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 end
 function defineOperator( node, descr, context)
-	descr.thisstr = getThisParameterString( context, descr.param)
-	descr.paramstr = getParameterString( descr.param)
-	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
+	expandDescrCallTemplateParameter( descr, context)
 	defineOperatorType( node, descr, context)
 end
-function printFunction( node, descr, context)
-	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
-end
 function defineExternCallable( node, descr)
-	descr.argstr = getParameterLlvmTypeString( descr.param)
-	if descr.externtype == "C" then
-		descr.symbolname = descr.name
-	else
-		utils.errorMessage( node.line, "Unknown extern call type \"%s\" (must be one of {\"C\"})", descr.externtype)
-	end
-	if descr.vararg then
-		descr.signature = "(" .. descr.argstr .. ", ...)"
-	end
+	expandDescrExternCallTemplateParameter( descr, context)
 	defineCallableType( node, descr, nil)
-	local declfmt; if descr.vararg then declfmt = llvmir.control.extern_functionDeclaration_vararg else declfmt = llvmir.control.extern_functionDeclaration end
-	print( "\n" .. utils.constructor_format( declfmt, descr))
 end
 function defineInterfaceCallable( node, descr, context)
-	descr.argstr = getParameterLlvmTypeString( descr.param)
-	local sep; if descr.argstr ~= "" then sep = "" else sep = ", " end
-	descr.signature = "(i8*" .. sep .. descr.argstr .. ")"
+	expandDescrInterfaceCallTemplateParameter( descr, context)
+	table.insert( context.methods, {llvmtype=descr.llvmtype})
+	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype .. ", " .. descr.llvmtype end
 end
 function defineCallableBodyContext( node, context, descr)
 	local prev_scope = typedb:scope( node.scope)
@@ -1490,7 +1504,7 @@ function typesystem.funcdef( node, decl, context)
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
-	printFunction( node, descr, context)
+	printFunctionDeclaration( node, descr)
 end
 function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
@@ -1499,7 +1513,7 @@ function typesystem.procdef( node, decl, context)
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
-	printFunction( node, descr, context)
+	printFunctionDeclaration( node, descr)
 end
 function typesystem.operatordecl( node, opr)
 	return opr
@@ -1511,7 +1525,7 @@ function typesystem.operator_funcdef( node, decl, context)
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
-	printFunction( node, descr, context)
+	printFunctionDeclaration( node, descr)
 	defineOperatorAttributes( context, descr)
 end
 function typesystem.operator_procdef( node, decl, context)
@@ -1521,7 +1535,7 @@ function typesystem.operator_procdef( node, decl, context)
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
-	printFunction( node, descr, context)
+	printFunctionDeclaration( node, descr)
 	defineOperatorAttributes( context, descr)
 end
 function typesystem.constructordef( node, context)
@@ -1531,7 +1545,7 @@ function typesystem.constructordef( node, context)
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
-	printFunction( node, descr, context)
+	printFunctionDeclaration( node, descr)
 	defineOperatorAttributes( context, descr)
 end
 function typesystem.destructordef( node, context)
@@ -1541,7 +1555,7 @@ function typesystem.destructordef( node, context)
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
-	printFunction( node, descr, context)
+	printFunctionDeclaration( node, descr)
 end
 function typesystem.callablebody( node, context, descr, select)
 	-- HACK (PatrickFrey 1/20/2021): This function is called twice (select 1 or 2), once for parameter traversal, once for body traversal, to enable self reference
@@ -1554,8 +1568,13 @@ function typesystem.callablebody( node, context, descr, select)
 		return arg[2].code
 	end
 end
+function typesystem.extern_paramdef( node, args)
+	table.insert( args, utils.traverseRange( typedb, node, {1,1})[1])
+	utils.traverseRange( typedb, node, {#node.arg,#node.arg}, args)
+end
 function typesystem.extern_paramdeflist( node)
-	local args = utils.traverse( typedb, node)
+	local args = {}
+	utils.traverse( typedb, node, args)
 	local rt = {}; for ai,arg in ipairs(args) do
 		local llvmtype = typeDescriptionMap[ arg].llvmtype
 		table.insert( rt, {type=arg,llvmtype=llvmtype} )
@@ -1566,39 +1585,44 @@ function typesystem.extern_funcdef( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=false, signature=""}
 	defineExternCallable( node, descr)
+	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=false, signature=""}
 	defineExternCallable( node, descr)
+	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_funcdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=true, signature=""}
 	defineExternCallable( node, descr)
+	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=true, signature=""}
 	defineExternCallable( node, descr)
+	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.interface_funcdef( node, decl, context)
-	local arg = utils.traverse( typedb, node)
-	local descr = {call = llvmir.control.interfaceFunctionCall, name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", const=decl.const}
+	local arg = utils.traverse( typedb, node, context)
+	local descr = {call = llvmir.control.interfaceFunctionCall, name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], 
+			signature="", const=decl.const, index=#context.methods}
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
-	local arg = utils.traverse( typedb, node)
+	local arg = utils.traverse( typedb, node, context)
 	local descr = {call = llvmir.control.interfaceProcedureCall, name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", const=decl.const}
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
-	local arg = utils.traverse( typedb, node)
+	local arg = utils.traverse( typedb, node, context)
 	local descr = {call = llvmir.control.interfaceFunctionCall, name = arg[1].name, symbol = arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
-	local arg = utils.traverse( typedb, node)
+	local arg = utils.traverse( typedb, node, context)
 	local descr = {call = llvmir.control.interfaceProcedureCall, name = arg[1].name, symbol = arg[1].symbol, ret = nil, param = arg[2], signature="", const=decl.const}
 	defineInterfaceCallable( node, descr, context)
 end
@@ -1622,9 +1646,8 @@ function typesystem.interfacedef( node, context)
 	local interfacename = getTypeDeclUniqueName( declContextTypeId, typnam)
 	local descr = utils.template_format( llvmir.interfaceTemplate, {interfacename=interfacename})
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
-	local context = {qualitype=qualitype, descr=descr, index=0, methods={}, llvmtype="", symbol=interfacename}
+	local context = {qualitype=qualitype, descr=descr, methods={}, llvmtype="", symbol=interfacename}
 	local arg = utils.traverse( typedb, node, context)
-	descr.size = context.index
 	descr.methods = context.methods
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)

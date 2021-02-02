@@ -213,7 +213,7 @@ public:
 		return rt;
 	}
 
-	int insertUpValue( int& index, const Scope scope, const VALTYPE value, int uplink)
+	int insertUpValue( int& index, const Scope scope, const VALTYPE value, int uplink, VALTYPE* oldval)
 	{
 		int rt = -1;
 		int pred_ai = -1;
@@ -222,17 +222,27 @@ public:
 		{
 			UpValue& uv = m_ar[ ai];
 
-			if (uv.scope == scope)
+			if (scope.contains( uv.scope))
 			{
-				// ... already known, no insert, but overwrite
-				uv.value = value;
-				break;
-			}
-			else if (scope.contains( uv.scope))
-			{
-				//... The covering scope gets further up the list  {(A)..{(B)..{(C)..}}} ~ (C)-prev>(B)-prev->(A)
-				pred_ai = ai;
-				ai = uv.prev;
+				if (uv.scope == scope)
+				{
+					// ... already known
+					if (oldval)
+					{
+						*oldval = uv.value;
+					}
+					else
+					{
+						uv.value = value;
+					}
+					return -1;
+				}
+				else
+				{
+					//... The covering scope gets further up the list  {(A)..{(B)..{(C)..}}} ~ (C)-prev>(B)-prev->(A)
+					pred_ai = ai;
+					ai = uv.prev;
+				}
 			}
 			else if (!uv.scope.contains( scope))
 			{
@@ -429,7 +439,7 @@ public:
 		}
 		else
 		{
-			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink);
+			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink, nullptr);
 		}
 		if (newindex >= 0)
 		{
@@ -593,7 +603,7 @@ public:
 	ScopedMap( ScopedMap&& o) noexcept = default;
 	ScopedMap& operator=( ScopedMap&& o) noexcept = default;
 
-	void set( const Scope scope, const KEYTYPE& key, const VALTYPE& value)
+	bool set( const Scope scope, const KEYTYPE& key, const VALTYPE& value)
 	{
 		ScopedKey<KEYTYPE> sk( key, scope.end());
 		auto rightnode = m_map.upper_bound( sk);
@@ -609,7 +619,9 @@ public:
 		}
 		else
 		{
-			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink);
+			VALTYPE oldval;
+			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink, &oldval);
+			if (newindex < 0) return false;
 		}
 		if (newindex >= 0)
 		{
@@ -623,6 +635,7 @@ public:
 				m_invtree.linkLeftNeighbours( leftnode->second, scope, newindex);
 			}
 		}
+		return true;
 	};
 
 	VALTYPE getOrSet( const Scope scope, const KEYTYPE& key, const VALTYPE value)
@@ -642,10 +655,7 @@ public:
 		}
 		else
 		{
-			rt = m_invtree.findUpValue( ins.first->second, scope);
-			if (rt != m_invtree.nullval()) return rt;
-
-			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink);
+			newindex = m_invtree.insertUpValue( ins.first->second, scope, value, uplink, &rt);
 		}
 		if (newindex >= 0)
 		{

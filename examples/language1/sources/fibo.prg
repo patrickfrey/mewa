@@ -1,4 +1,4 @@
-extern "C" procedure printf( const byte^, int);
+extern "C" procedure printf( const byte^ fmt, int arg);
 
 private function fibonacci int( int n)
 {

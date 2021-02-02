@@ -262,9 +262,49 @@ ITEM contextual constructor 4 #  constructor fun D
 	checkTestResult( "testResolveTypeContext", result, expected)
 end
 
+-- Function that tests the typedb def_type_as
+function testDefineTypeAs()
+	typedb = mewa.typedb()
+	local tag_conv = 1
+	local mask_resolve = typedb.reduction_tagmask( tag_conv)
+	local ctx1 = typedb:def_type( 0, "ctx1", "constructor ctx1")
+	local type1 = typedb:def_type( ctx1, "type1", "constructor type1")
+	local ctx2 = 0
+	local type2 = typedb:def_type( ctx2, "type2", "constructor type2")
+	local syn1 = typedb:def_type_as( ctx1, "syn1", type2)
+	local syn2 = typedb:def_type_as( ctx2, "syn2", type1)
+	
+	local rctx1,reductions1,items1 = typedb:resolve_type( ctx1, "syn1", mask_resolve)
+	local rctx2,reductions2,items2 = typedb:resolve_type( ctx2, "syn2", mask_resolve)
+	if rctx1 then
+		if type(rctx1) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( ctx1) .. "syn1") end
+	else
+		error( "Failed to resolve type " .. typedb:type_string( ctx1) .. "syn1")
+	end
+	if rctx2 then
+		if type(rctx2) == "table" then error( "Ambiguous reference resolving type " .. typedb:type_string( ctx2) .. "syn2") end
+	else
+		error( "Failed to resolve type " .. typedb:type_string( ctx2) .. "syn2")
+	end
+	if #items1 ~= 1 then
+		error( "Expected only one resolved type for " .. typedb:type_string( ctx1) .. "syn1")
+	end
+	if #items2 ~= 1 then
+		error( "Expected only one resolved type for " .. typedb:type_string( ctx2) .. "syn2")
+	end
+	if items1[1] ~= type2 then
+		error( "Expected syn1 to be a synonym of type2")
+	end
+	if items2[1] ~= type1 then
+		error( "Expected syn2 to be a synonym of type1")
+	end
+	checkTestResult( "testDefineTypeAs", "", "")
+end
+
 testRegisterAllocator()
 testDefineResolveType()
 testResolveTypeContext()
+testDefineTypeAs()
 
 if errorCount > 0 then
 	error( "result of " .. errorCount .. " tests not as expected!")

@@ -138,179 +138,179 @@ extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_param
 extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist ")" ";" (3)
 extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";" (4)
 extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";" (5)
-extern_parameters = typespec "," extern_parameters
-extern_parameters = typespec IDENT "," extern_parameters
-extern_parameters = typespec
-extern_parameters = typespec IDENT
-extern_paramlist = extern_parameters (6)
-extern_paramlist =  (6)
-interface_definition = "function" IDENT typespec "(" extern_paramlist ")" ";" (7)
-interface_definition = "function" IDENT typespec "(" extern_paramlist ")" "const" ";" (8)
-interface_definition = "procedure" IDENT "(" extern_paramlist ")" ";" (9)
-interface_definition = "procedure" IDENT "(" extern_paramlist ")" "const" ";" (10)
-interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" ";" (11)
-interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";" (12)
-interface_definition = "operator" operatordecl "(" extern_paramlist ")" ";" (13)
-interface_definition = "operator" operatordecl "(" extern_paramlist ")" "const" ";" (14)
-struct_definition = typedefinition ";" (15)
-struct_definition = variabledefinition ";" (15)
-struct_definition = structdefinition (15)
-class_definition = typedefinition ";" (15)
-class_definition = variabledefinition ";" (15)
-class_definition = structdefinition (15)
-class_definition = classdefinition (15)
-class_definition = interfacedefinition (15)
-class_definition = constructordefinition (16)
-class_definition = functiondefinition (16)
-class_definition = operatordefinition (16)
+extern_parameters = typespec "," extern_parameters (6)
+extern_parameters = typespec IDENT "," extern_parameters (6)
+extern_parameters = typespec (6)
+extern_parameters = typespec IDENT (6)
+extern_paramlist = extern_parameters (7)
+extern_paramlist =  (7)
+interface_definition = "function" IDENT typespec "(" extern_paramlist ")" ";" (8)
+interface_definition = "function" IDENT typespec "(" extern_paramlist ")" "const" ";" (9)
+interface_definition = "procedure" IDENT "(" extern_paramlist ")" ";" (10)
+interface_definition = "procedure" IDENT "(" extern_paramlist ")" "const" ";" (11)
+interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" ";" (12)
+interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";" (13)
+interface_definition = "operator" operatordecl "(" extern_paramlist ")" ";" (14)
+interface_definition = "operator" operatordecl "(" extern_paramlist ")" "const" ";" (15)
+struct_definition = typedefinition ";" (16)
+struct_definition = variabledefinition ";" (16)
+struct_definition = structdefinition (16)
+class_definition = typedefinition ";" (16)
+class_definition = variabledefinition ";" (16)
+class_definition = structdefinition (16)
+class_definition = classdefinition (16)
+class_definition = interfacedefinition (16)
+class_definition = constructordefinition (17)
+class_definition = functiondefinition (17)
+class_definition = operatordefinition (17)
 free_definition = struct_definition
-free_definition = functiondefinition (15)
-free_definition = classdefinition (15)
-free_definition = interfacedefinition (15)
+free_definition = functiondefinition (16)
+free_definition = classdefinition (16)
+free_definition = interfacedefinition (16)
 typename/L1 = IDENT
 typename/L1 = IDENT "::" typename
-typespec/L1 = typename (17)
-typespec/L1 = "const" typename (18)
-typespec/L1 = typename "&" (19)
-typespec/L1 = "const" typename "&" (20)
-typespec/L1 = typename "^" (21)
-typespec/L1 = "const" typename "^" (22)
-typespec/L1 = typename "^" "&" (23)
-typespec/L1 = "const" typename "^" "&" (24)
-typespec/L1 = typename "^" "^" (25)
-typespec/L1 = "const" typename "^" "^" (26)
-typespec/L1 = typename "^" "^" "&" (27)
-typespec/L1 = "const" typename "^" "^" "&" (28)
-typepath/L1 = typename (17)
-typedefinition = "typedef" typepath IDENT (step:29)
-structdefinition = "struct" IDENT "{" struct_definitionlist "}" (step:30)
-interfacedefinition = "interface" IDENT "{" interface_definitionlist "}" (step:31)
-inheritlist = typepath "," inheritlist (step:32)
-inheritlist = typepath (step:32)
-classdefinition = "class" IDENT "{" class_definitionlist "}" (step:33)
-classdefinition = "class" IDENT ":" inheritlist "{" class_definitionlist "}" (step:33)
-linkage = "private" (34)
-linkage = "public" (35)
-linkage =  (35)
-functiondefinition = linkage "function" IDENT typespec callablebody (36)
-functiondefinition = linkage "function" IDENT typespec callablebody_const (37)
-functiondefinition = linkage "procedure" IDENT callablebody (38)
-functiondefinition = linkage "procedure" IDENT callablebody_const (39)
-constructordefinition = linkage "constructor" callablebody (40)
-constructordefinition = "destructor" "{" codeblock "}" (41)
-operatordefinition = linkage "operator" operatordecl typespec callablebody (42)
-operatordefinition = linkage "operator" operatordecl typespec callablebody_const (43)
-operatordefinition = linkage "operator" operatordecl callablebody (44)
-operatordefinition = linkage "operator" operatordecl callablebody_const (45)
-operatordecl = "->" (46)
-operatordecl = "=" (47)
-operatordecl = "+" (48)
-operatordecl = "-" (49)
-operatordecl = "*" (50)
-operatordecl = "/" (51)
-operatordecl = "%" (52)
-operatordecl = "&&" (53)
-operatordecl = "||" (54)
-operatordecl = "&" (55)
-operatordecl = "|" (56)
-operatordecl = "<<" (57)
-operatordecl = ">>" (58)
-operatordecl = "~" (59)
-operatordecl = "!" (60)
-operatordecl = "(" ")" (61)
-operatordecl = "[" "]" (62)
-operatordecl = "==" (63)
-operatordecl = "!=" (64)
-operatordecl = ">=" (65)
-operatordecl = "<=" (66)
-operatordecl = ">" (67)
-operatordecl = "<" (68)
-callablebody = "(" parameterlist ")" "{" codeblock "}" (scope:69)
-callablebody_const = "(" parameterlist ")" "const" "{" codeblock "}" (scope:69)
-main_procedure = "main" "{" codeblock "}" (scope:70)
+typespec/L1 = typename (18)
+typespec/L1 = "const" typename (19)
+typespec/L1 = typename "&" (20)
+typespec/L1 = "const" typename "&" (21)
+typespec/L1 = typename "^" (22)
+typespec/L1 = "const" typename "^" (23)
+typespec/L1 = typename "^" "&" (24)
+typespec/L1 = "const" typename "^" "&" (25)
+typespec/L1 = typename "^" "^" (26)
+typespec/L1 = "const" typename "^" "^" (27)
+typespec/L1 = typename "^" "^" "&" (28)
+typespec/L1 = "const" typename "^" "^" "&" (29)
+typepath/L1 = typename (18)
+typedefinition = "typedef" typepath IDENT (step:30)
+structdefinition = "struct" IDENT "{" struct_definitionlist "}" (step:31)
+interfacedefinition = "interface" IDENT "{" interface_definitionlist "}" (step:32)
+inheritlist = typepath "," inheritlist (step:33)
+inheritlist = typepath (step:33)
+classdefinition = "class" IDENT "{" class_definitionlist "}" (step:34)
+classdefinition = "class" IDENT ":" inheritlist "{" class_definitionlist "}" (step:34)
+linkage = "private" (35)
+linkage = "public" (36)
+linkage =  (36)
+functiondefinition = linkage "function" IDENT typespec callablebody (37)
+functiondefinition = linkage "function" IDENT typespec callablebody_const (38)
+functiondefinition = linkage "procedure" IDENT callablebody (39)
+functiondefinition = linkage "procedure" IDENT callablebody_const (40)
+constructordefinition = linkage "constructor" callablebody (41)
+constructordefinition = "destructor" "{" codeblock "}" (42)
+operatordefinition = linkage "operator" operatordecl typespec callablebody (43)
+operatordefinition = linkage "operator" operatordecl typespec callablebody_const (44)
+operatordefinition = linkage "operator" operatordecl callablebody (45)
+operatordefinition = linkage "operator" operatordecl callablebody_const (46)
+operatordecl = "->" (47)
+operatordecl = "=" (48)
+operatordecl = "+" (49)
+operatordecl = "-" (50)
+operatordecl = "*" (51)
+operatordecl = "/" (52)
+operatordecl = "%" (53)
+operatordecl = "&&" (54)
+operatordecl = "||" (55)
+operatordecl = "&" (56)
+operatordecl = "|" (57)
+operatordecl = "<<" (58)
+operatordecl = ">>" (59)
+operatordecl = "~" (60)
+operatordecl = "!" (61)
+operatordecl = "(" ")" (62)
+operatordecl = "[" "]" (63)
+operatordecl = "==" (64)
+operatordecl = "!=" (65)
+operatordecl = ">=" (66)
+operatordecl = "<=" (67)
+operatordecl = ">" (68)
+operatordecl = "<" (69)
+callablebody = "(" parameterlist ")" "{" codeblock "}" (scope:70)
+callablebody_const = "(" parameterlist ")" "const" "{" codeblock "}" (scope:70)
+main_procedure = "main" "{" codeblock "}" (scope:71)
 main_procedure = 
-parameterlist = parameters (71)
-parameterlist =  (71)
+parameterlist = parameters (72)
+parameterlist =  (72)
 parameters = paramdecl "," parameters
 parameters = paramdecl
-paramdecl = typespec IDENT (72)
-codeblock = statementlist (73)
+paramdecl = typespec IDENT (73)
+codeblock = statementlist (74)
 statementlist = statement statementlist (step)
 statementlist = 
-statement/L1 = functiondefinition (74)
-statement/L1 = typedefinition ";" (74)
-statement/L1 = "var" variabledefinition ";" (74)
-statement/L1 = expression ";" (75)
-statement/L1 = "return" expression ";" (step:76)
-statement/L1 = "delete" expression ";" (77)
-statement/L1 = "if" "(" expression ")" "{" codeblock "}" (scope:78)
-statement/L1 = "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock "}" (scope:79)
-statement/L1 = "while" "(" expression ")" "{" codeblock "}" (scope:80)
+statement/L1 = functiondefinition (75)
+statement/L1 = typedefinition ";" (75)
+statement/L1 = "var" variabledefinition ";" (75)
+statement/L1 = expression ";" (76)
+statement/L1 = "return" expression ";" (step:77)
+statement/L1 = "delete" expression ";" (78)
+statement/L1 = "if" "(" expression ")" "{" codeblock "}" (scope:79)
+statement/L1 = "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock "}" (scope:80)
+statement/L1 = "while" "(" expression ")" "{" codeblock "}" (scope:81)
 statement/L1 = "{" codeblock "}" (scope)
-variabledefinition = typespec IDENT (step:81)
-variabledefinition = typespec IDENT "=" expression (step:82)
-variabledefinition = typespec IDENT "[" expression "]" "=" expression (step:83)
-variabledefinition = typespec IDENT "[" expression "]" (step:84)
-expression/L1 = "{" expressionlist "}" (85)
-expression/L1 = "{" "}" (85)
-expression/L1 = "new" typespec ":" expression (86)
-expression/L1 = "cast" typespec ":" "{" expression "}" (87)
-expression/L1 = "cast" typespec ":" "{" "}" (87)
-expression/L2 = IDENT (88)
-expression/L2 = BOOLEAN (89)
-expression/L2 = CARDINAL (90)
-expression/L2 = INTEGER (91)
-expression/L2 = FLOAT (92)
-expression/L2 = "null" (93)
-expression/L2 = DQSTRING (94)
-expression/L2 = SQSTRING (95)
+variabledefinition = typespec IDENT (step:82)
+variabledefinition = typespec IDENT "=" expression (step:83)
+variabledefinition = typespec IDENT "[" expression "]" "=" expression (step:84)
+variabledefinition = typespec IDENT "[" expression "]" (step:85)
+expression/L1 = "{" expressionlist "}" (86)
+expression/L1 = "{" "}" (86)
+expression/L1 = "new" typespec ":" expression (87)
+expression/L1 = "cast" typespec ":" "{" expression "}" (88)
+expression/L1 = "cast" typespec ":" "{" "}" (88)
+expression/L2 = IDENT (89)
+expression/L2 = BOOLEAN (90)
+expression/L2 = CARDINAL (91)
+expression/L2 = INTEGER (92)
+expression/L2 = FLOAT (93)
+expression/L2 = "null" (94)
+expression/L2 = DQSTRING (95)
+expression/L2 = SQSTRING (96)
 expression/L2 = "(" expression ")"
-expression/L3 = expression "=" expression (96)
-expression/L3 = expression "+=" expression (97)
-expression/L3 = expression "-=" expression (98)
-expression/L3 = expression "*=" expression (99)
-expression/L3 = expression "/=" expression (100)
-expression/L3 = expression "^=" expression (101)
-expression/L3 = expression "&=" expression (102)
-expression/L3 = expression "%=" expression (103)
-expression/L3 = expression "&&=" expression (104)
-expression/L3 = expression "||=" expression (105)
-expression/L3 = expression "&=" expression (102)
-expression/L3 = expression "|=" expression (106)
-expression/L3 = expression "<<=" expression (107)
-expression/L3 = expression ">>=" expression (108)
-expression/L4 = expression "||" expression (109)
-expression/L5 = expression "&&" expression (110)
-expression/L6 = expression "|" expression (111)
-expression/L7 = expression "^" expression (112)
-expression/L7 = expression "&" expression (113)
-expression/L8 = expression "==" expression (114)
-expression/L8 = expression "!=" expression (115)
-expression/L8 = expression "<=" expression (116)
-expression/L8 = expression "<" expression (117)
-expression/L8 = expression ">=" expression (118)
-expression/L8 = expression ">" expression (119)
-expression/L9 = expression "+" expression (120)
-expression/L9 = expression "-" expression (121)
-expression/L9 = "&" expression (113)
-expression/L9 = "-" expression (121)
-expression/L9 = "+" expression (120)
-expression/L9 = "~" expression (122)
-expression/L9 = "!" expression (123)
-expression/L10 = expression "*" expression (124)
-expression/L10 = expression "/" expression (125)
-expression/L10 = expression "%" expression (126)
-expression/L11 = expression "<<" expression (127)
-expression/L11 = expression ">>" expression (128)
+expression/L3 = expression "=" expression (97)
+expression/L3 = expression "+=" expression (98)
+expression/L3 = expression "-=" expression (99)
+expression/L3 = expression "*=" expression (100)
+expression/L3 = expression "/=" expression (101)
+expression/L3 = expression "^=" expression (102)
+expression/L3 = expression "&=" expression (103)
+expression/L3 = expression "%=" expression (104)
+expression/L3 = expression "&&=" expression (105)
+expression/L3 = expression "||=" expression (106)
+expression/L3 = expression "&=" expression (103)
+expression/L3 = expression "|=" expression (107)
+expression/L3 = expression "<<=" expression (108)
+expression/L3 = expression ">>=" expression (109)
+expression/L4 = expression "||" expression (110)
+expression/L5 = expression "&&" expression (111)
+expression/L6 = expression "|" expression (112)
+expression/L7 = expression "^" expression (113)
+expression/L7 = expression "&" expression (114)
+expression/L8 = expression "==" expression (115)
+expression/L8 = expression "!=" expression (116)
+expression/L8 = expression "<=" expression (117)
+expression/L8 = expression "<" expression (118)
+expression/L8 = expression ">=" expression (119)
+expression/L8 = expression ">" expression (120)
+expression/L9 = expression "+" expression (121)
+expression/L9 = expression "-" expression (122)
+expression/L9 = "&" expression (114)
+expression/L9 = "-" expression (122)
+expression/L9 = "+" expression (121)
+expression/L9 = "~" expression (123)
+expression/L9 = "!" expression (124)
+expression/L10 = expression "*" expression (125)
+expression/L10 = expression "/" expression (126)
+expression/L10 = expression "%" expression (127)
+expression/L11 = expression "<<" expression (128)
+expression/L11 = expression ">>" expression (129)
 expression/L12 = iexpression
-expression/L12 = expression "." IDENT (129)
-expression/L12 = "*" expression (130)
-expression/L13 = expression "(" expressionlist ")" (131)
-expression/L13 = expression "(" ")" (131)
-expression/L13 = expression "[" expressionlist "]" (132)
-iexpression = expression indirection IDENT (133)
-indirection = "->" indirection (134)
-indirection = "->" (134)
+expression/L12 = expression "." IDENT (130)
+expression/L12 = "*" expression (131)
+expression/L13 = expression "(" expressionlist ")" (132)
+expression/L13 = expression "(" ")" (132)
+expression/L13 = expression "[" expressionlist "]" (133)
+iexpression = expression indirection IDENT (134)
+indirection = "->" indirection (135)
+indirection = "->" (135)
 expressionlist = expression "," expressionlist
 expressionlist = expression
 
@@ -10344,7 +10344,7 @@ expressionlist = expression
 	linkage = . "private", FOLLOW [61] -> SHIFT "private" GOTO 23
 	linkage = . "public", FOLLOW [61] -> SHIFT "public" GOTO 24
 	free_definitionlist = ., FOLLOW [2] -> REDUCE free_definitionlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [3]
 	extern_definitionlist = extern_definition . extern_definitionlist, FOLLOW [1] -> GOTO 25
 	extern_definitionlist = . extern_definition extern_definitionlist, FOLLOW [1] -> GOTO 3
@@ -10404,14 +10404,14 @@ expressionlist = expression
 	linkage = . "private", FOLLOW [61] -> SHIFT "private" GOTO 23
 	linkage = . "public", FOLLOW [61] -> SHIFT "public" GOTO 24
 	free_definitionlist = ., FOLLOW [2] -> REDUCE free_definitionlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [8]
 	typespec/L1 = typename . "&", FOLLOW [268] -> SHIFT '&' GOTO 30
 	typespec/L1 = typename . "^", FOLLOW [268] -> SHIFT '^' GOTO 31
 	typespec/L1 = typename . "^" "&", FOLLOW [268] -> SHIFT '^' GOTO 31
 	typespec/L1 = typename . "^" "^", FOLLOW [268] -> SHIFT '^' GOTO 31
 	typespec/L1 = typename . "^" "^" "&", FOLLOW [268] -> SHIFT '^' GOTO 31
-	typespec/L1 = typename . (17), FOLLOW [268] -> REDUCE typespec #1 CALL typespec ""
+	typespec/L1 = typename . (18), FOLLOW [268] -> REDUCE typespec #1 CALL typespec ""
 [9]
 	variabledefinition = typespec . IDENT, FOLLOW [15] -> SHIFT IDENT GOTO 32
 	variabledefinition = typespec . IDENT "=" expression, FOLLOW [15] -> SHIFT IDENT GOTO 32
@@ -10420,18 +10420,18 @@ expressionlist = expression
 [10]
 	struct_definition = typedefinition . ";", FOLLOW [170] -> SHIFT ';' GOTO 33
 [11]
-	struct_definition = structdefinition . (15), FOLLOW [170] -> REDUCE struct_definition #1 CALL definition 1
+	struct_definition = structdefinition . (16), FOLLOW [170] -> REDUCE struct_definition #1 CALL definition 1
 [12]
-	free_definition = interfacedefinition . (15), FOLLOW [1] -> REDUCE free_definition #1 CALL definition 1
+	free_definition = interfacedefinition . (16), FOLLOW [1] -> REDUCE free_definition #1 CALL definition 1
 [13]
-	free_definition = classdefinition . (15), FOLLOW [1] -> REDUCE free_definition #1 CALL definition 1
+	free_definition = classdefinition . (16), FOLLOW [1] -> REDUCE free_definition #1 CALL definition 1
 [14]
 	functiondefinition = linkage . "function" IDENT typespec callablebody, FOLLOW [247] -> SHIFT "function" GOTO 34
 	functiondefinition = linkage . "function" IDENT typespec callablebody_const, FOLLOW [247] -> SHIFT "function" GOTO 34
 	functiondefinition = linkage . "procedure" IDENT callablebody, FOLLOW [247] -> SHIFT "procedure" GOTO 35
 	functiondefinition = linkage . "procedure" IDENT callablebody_const, FOLLOW [247] -> SHIFT "procedure" GOTO 35
 [15]
-	free_definition = functiondefinition . (15), FOLLOW [1] -> REDUCE free_definition #1 CALL definition 1
+	free_definition = functiondefinition . (16), FOLLOW [1] -> REDUCE free_definition #1 CALL definition 1
 [16]
 	struct_definition = variabledefinition . ";", FOLLOW [170] -> SHIFT ';' GOTO 36
 [17]
@@ -10459,9 +10459,9 @@ expressionlist = expression
 	classdefinition = "class" . IDENT "{" class_definitionlist "}", FOLLOW [175] -> SHIFT IDENT GOTO 43
 	classdefinition = "class" . IDENT ":" inheritlist "{" class_definitionlist "}", FOLLOW [175] -> SHIFT IDENT GOTO 43
 [23]
-	linkage = "private" . (34), FOLLOW [173] -> REDUCE linkage #1 CALL linkage {private=true,linkage="internal"}
+	linkage = "private" . (35), FOLLOW [173] -> REDUCE linkage #1 CALL linkage {private=true,linkage="internal"}
 [24]
-	linkage = "public" . (35), FOLLOW [173] -> REDUCE linkage #1 CALL linkage {private=false,linkage="external"}
+	linkage = "public" . (36), FOLLOW [173] -> REDUCE linkage #1 CALL linkage {private=false,linkage="external"}
 [25]
 	extern_definitionlist = extern_definition extern_definitionlist ., FOLLOW [1] -> REDUCE extern_definitionlist #2
 [26]
@@ -10477,19 +10477,19 @@ expressionlist = expression
 [29]
 	free_definitionlist = free_definition free_definitionlist ., FOLLOW [2] -> REDUCE free_definitionlist #2
 [30]
-	typespec/L1 = typename "&" . (19), FOLLOW [268] -> REDUCE typespec #2 CALL typespec "&"
+	typespec/L1 = typename "&" . (20), FOLLOW [268] -> REDUCE typespec #2 CALL typespec "&"
 [31]
 	typespec/L1 = typename "^" . "&", FOLLOW [268] -> SHIFT '&' GOTO 47
 	typespec/L1 = typename "^" . "^", FOLLOW [268] -> SHIFT '^' GOTO 48
 	typespec/L1 = typename "^" . "^" "&", FOLLOW [268] -> SHIFT '^' GOTO 48
-	typespec/L1 = typename "^" . (21), FOLLOW [268] -> REDUCE typespec #2 CALL typespec "^"
+	typespec/L1 = typename "^" . (22), FOLLOW [268] -> REDUCE typespec #2 CALL typespec "^"
 [32]
 	variabledefinition = typespec IDENT . "=" expression, FOLLOW [15] -> SHIFT '=' GOTO 49
 	variabledefinition = typespec IDENT . "[" expression "]" "=" expression, FOLLOW [15] -> SHIFT '[' GOTO 50
 	variabledefinition = typespec IDENT . "[" expression "]", FOLLOW [15] -> SHIFT '[' GOTO 50
-	variabledefinition = typespec IDENT . (step:81), FOLLOW [15] -> REDUCE variabledefinition #2 CALL vardef
+	variabledefinition = typespec IDENT . (step:82), FOLLOW [15] -> REDUCE variabledefinition #2 CALL vardef
 [33]
-	struct_definition = typedefinition ";" . (15), FOLLOW [170] -> REDUCE struct_definition #2 CALL definition 1
+	struct_definition = typedefinition ";" . (16), FOLLOW [170] -> REDUCE struct_definition #2 CALL definition 1
 [34]
 	functiondefinition = linkage "function" . IDENT typespec callablebody, FOLLOW [252] -> SHIFT IDENT GOTO 51
 	functiondefinition = linkage "function" . IDENT typespec callablebody_const, FOLLOW [252] -> SHIFT IDENT GOTO 51
@@ -10497,7 +10497,7 @@ expressionlist = expression
 	functiondefinition = linkage "procedure" . IDENT callablebody, FOLLOW [252] -> SHIFT IDENT GOTO 52
 	functiondefinition = linkage "procedure" . IDENT callablebody_const, FOLLOW [252] -> SHIFT IDENT GOTO 52
 [36]
-	struct_definition = variabledefinition ";" . (15), FOLLOW [170] -> REDUCE struct_definition #2 CALL definition 1
+	struct_definition = variabledefinition ";" . (16), FOLLOW [170] -> REDUCE struct_definition #2 CALL definition 1
 [37]
 	typename/L1 = IDENT "::" . typename, FOLLOW [273] -> GOTO 53
 	typename/L1 = . IDENT, FOLLOW [273] -> SHIFT IDENT GOTO 17
@@ -10508,9 +10508,9 @@ expressionlist = expression
 	typespec/L1 = "const" typename . "^" "&", FOLLOW [268] -> SHIFT '^' GOTO 55
 	typespec/L1 = "const" typename . "^" "^", FOLLOW [268] -> SHIFT '^' GOTO 55
 	typespec/L1 = "const" typename . "^" "^" "&", FOLLOW [268] -> SHIFT '^' GOTO 55
-	typespec/L1 = "const" typename . (18), FOLLOW [268] -> REDUCE typespec #2 CALL typespec "const "
+	typespec/L1 = "const" typename . (19), FOLLOW [268] -> REDUCE typespec #2 CALL typespec "const "
 [39]
-	typepath/L1 = typename . (17), FOLLOW [274] -> REDUCE typepath #1 CALL typespec ""
+	typepath/L1 = typename . (18), FOLLOW [274] -> REDUCE typepath #1 CALL typespec ""
 [40]
 	typedefinition = "typedef" typepath . IDENT, FOLLOW [15] -> SHIFT IDENT GOTO 56
 [41]
@@ -10606,12 +10606,12 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [47]
-	typespec/L1 = typename "^" "&" . (23), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "^&"
+	typespec/L1 = typename "^" "&" . (24), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "^&"
 [48]
 	typespec/L1 = typename "^" "^" . "&", FOLLOW [268] -> SHIFT '&' GOTO 93
-	typespec/L1 = typename "^" "^" . (25), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "^^"
+	typespec/L1 = typename "^" "^" . (26), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "^^"
 [49]
 	variabledefinition = typespec IDENT "=" . expression, FOLLOW [15] -> GOTO 94
 	expression/L3 = . expression "=" expression, FOLLOW [97] -> GOTO 94
@@ -10758,14 +10758,14 @@ expressionlist = expression
 [53]
 	typename/L1 = IDENT "::" typename ., FOLLOW [273] -> REDUCE typename #3
 [54]
-	typespec/L1 = "const" typename "&" . (20), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "const&"
+	typespec/L1 = "const" typename "&" . (21), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "const&"
 [55]
 	typespec/L1 = "const" typename "^" . "&", FOLLOW [268] -> SHIFT '&' GOTO 101
 	typespec/L1 = "const" typename "^" . "^", FOLLOW [268] -> SHIFT '^' GOTO 102
 	typespec/L1 = "const" typename "^" . "^" "&", FOLLOW [268] -> SHIFT '^' GOTO 102
-	typespec/L1 = "const" typename "^" . (22), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "const^"
+	typespec/L1 = "const" typename "^" . (23), FOLLOW [268] -> REDUCE typespec #3 CALL typespec "const^"
 [56]
-	typedefinition = "typedef" typepath IDENT . (step:29), FOLLOW [15] -> REDUCE typedefinition #3 CALL typedef
+	typedefinition = "typedef" typepath IDENT . (step:30), FOLLOW [15] -> REDUCE typedefinition #3 CALL typedef
 [57]
 	structdefinition = "struct" IDENT "{" . struct_definitionlist "}", FOLLOW [175] -> GOTO 103
 	struct_definitionlist = . struct_definition struct_definitionlist, FOLLOW [18] -> GOTO 104
@@ -10852,7 +10852,7 @@ expressionlist = expression
 	linkage = . "public", FOLLOW [173] -> SHIFT "public" GOTO 24
 	constructordefinition = . "destructor" "{" codeblock "}", FOLLOW [174] -> SHIFT "destructor" GOTO 121
 	class_definitionlist = ., FOLLOW [18] -> REDUCE class_definitionlist #0
-	linkage = . (35), FOLLOW [173] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [173] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [60]
 	typepath/L1 = . typename, FOLLOW [176] -> GOTO 39
 	inheritlist = . typepath "," inheritlist, FOLLOW [19] -> GOTO 122
@@ -10883,11 +10883,11 @@ expressionlist = expression
 [63]
 	statement/L1 = typedefinition . ";", FOLLOW [98] -> SHIFT ';' GOTO 126
 [64]
-	statement/L1 = functiondefinition . (74), FOLLOW [98] -> REDUCE statement #1 CALL definition
+	statement/L1 = functiondefinition . (75), FOLLOW [98] -> REDUCE statement #1 CALL definition
 [65]
 	main_procedure = "main" "{" codeblock . "}", FOLLOW [0] -> SHIFT '}' GOTO 127
 [66]
-	codeblock = statementlist . (73), FOLLOW [18] -> REDUCE codeblock #1 CALL codeblock
+	codeblock = statementlist . (74), FOLLOW [18] -> REDUCE codeblock #1 CALL codeblock
 [67]
 	statement/L1 = . typedefinition ";", FOLLOW [98] -> GOTO 63
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [98] -> GOTO 14
@@ -10967,7 +10967,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [68]
 	iexpression = expression . indirection IDENT, FOLLOW [97] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [97] -> SHIFT '(' GOTO 130
@@ -11012,19 +11012,19 @@ expressionlist = expression
 [69]
 	expression/L12 = iexpression ., FOLLOW [239] -> REDUCE expression #1
 [70]
-	expression/L2 = BOOLEAN . (89), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr bool"
+	expression/L2 = BOOLEAN . (90), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr bool"
 [71]
-	expression/L2 = IDENT . (88), FOLLOW [239] -> REDUCE expression #1 CALL variable
+	expression/L2 = IDENT . (89), FOLLOW [239] -> REDUCE expression #1 CALL variable
 [72]
-	expression/L2 = DQSTRING . (94), FOLLOW [239] -> REDUCE expression #1 CALL string_constant "constexpr float"
+	expression/L2 = DQSTRING . (95), FOLLOW [239] -> REDUCE expression #1 CALL string_constant "constexpr float"
 [73]
-	expression/L2 = SQSTRING . (95), FOLLOW [239] -> REDUCE expression #1 CALL char_constant "constexpr float"
+	expression/L2 = SQSTRING . (96), FOLLOW [239] -> REDUCE expression #1 CALL char_constant "constexpr float"
 [74]
-	expression/L2 = CARDINAL . (90), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr uint"
+	expression/L2 = CARDINAL . (91), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr uint"
 [75]
-	expression/L2 = INTEGER . (91), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr int"
+	expression/L2 = INTEGER . (92), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr int"
 [76]
-	expression/L2 = FLOAT . (92), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr float"
+	expression/L2 = FLOAT . (93), FOLLOW [239] -> REDUCE expression #1 CALL constant "constexpr float"
 [77]
 	expression/L2 = "(" . expression ")", FOLLOW [239] -> GOTO 166
 	expression/L3 = . expression "=" expression, FOLLOW [239] -> GOTO 166
@@ -11229,7 +11229,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [179] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [179] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [80]
 	expression/L3 = . expression "=" expression, FOLLOW [239] -> GOTO 172
 	expression/L3 = . expression "+=" expression, FOLLOW [239] -> GOTO 172
@@ -11709,9 +11709,9 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [26] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [26] -> SHIFT "const" GOTO 18
 [92]
-	expression/L2 = "null" . (93), FOLLOW [239] -> REDUCE expression #1 CALL null "constexpr float"
+	expression/L2 = "null" . (94), FOLLOW [239] -> REDUCE expression #1 CALL null "constexpr float"
 [93]
-	typespec/L1 = typename "^" "^" "&" . (27), FOLLOW [268] -> REDUCE typespec #4 CALL typespec "^^&"
+	typespec/L1 = typename "^" "^" "&" . (28), FOLLOW [268] -> REDUCE typespec #4 CALL typespec "^^&"
 [94]
 	iexpression = expression . indirection IDENT, FOLLOW [97] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [97] -> SHIFT '(' GOTO 130
@@ -11752,7 +11752,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [97] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [97] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 165
-	variabledefinition = typespec IDENT "=" expression . (step:82), FOLLOW [15] -> REDUCE variabledefinition #4 CALL vardef_assign
+	variabledefinition = typespec IDENT "=" expression . (step:83), FOLLOW [15] -> REDUCE variabledefinition #4 CALL vardef_assign
 [95]
 	expression/L3 = . expression "=" expression, FOLLOW [239] -> GOTO 184
 	expression/L3 = . expression "+=" expression, FOLLOW [239] -> GOTO 184
@@ -11864,9 +11864,9 @@ expressionlist = expression
 	callablebody = . "(" parameterlist ")" "{" codeblock "}", FOLLOW [252] -> SHIFT '(' GOTO 100
 	callablebody_const = . "(" parameterlist ")" "const" "{" codeblock "}", FOLLOW [252] -> SHIFT '(' GOTO 100
 [98]
-	functiondefinition = linkage "procedure" IDENT callablebody . (38), FOLLOW [252] -> REDUCE functiondefinition #4 CALL procdef {const=false}
+	functiondefinition = linkage "procedure" IDENT callablebody . (39), FOLLOW [252] -> REDUCE functiondefinition #4 CALL procdef {const=false}
 [99]
-	functiondefinition = linkage "procedure" IDENT callablebody_const . (39), FOLLOW [252] -> REDUCE functiondefinition #4 CALL procdef {const=true}
+	functiondefinition = linkage "procedure" IDENT callablebody_const . (40), FOLLOW [252] -> REDUCE functiondefinition #4 CALL procdef {const=true}
 [100]
 	typespec/L1 = . typename, FOLLOW [13] -> GOTO 8
 	typespec/L1 = . typename "&", FOLLOW [13] -> GOTO 8
@@ -11888,12 +11888,12 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [13] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [13] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [13] -> SHIFT "const" GOTO 18
-	parameterlist = . (71), FOLLOW [10] -> REDUCE parameterlist #0 CALL paramdeflist
+	parameterlist = . (72), FOLLOW [10] -> REDUCE parameterlist #0 CALL paramdeflist
 [101]
-	typespec/L1 = "const" typename "^" "&" . (24), FOLLOW [268] -> REDUCE typespec #4 CALL typespec "const^&"
+	typespec/L1 = "const" typename "^" "&" . (25), FOLLOW [268] -> REDUCE typespec #4 CALL typespec "const^&"
 [102]
 	typespec/L1 = "const" typename "^" "^" . "&", FOLLOW [268] -> SHIFT '&' GOTO 192
-	typespec/L1 = "const" typename "^" "^" . (26), FOLLOW [268] -> REDUCE typespec #4 CALL typespec "const^^"
+	typespec/L1 = "const" typename "^" "^" . (27), FOLLOW [268] -> REDUCE typespec #4 CALL typespec "const^^"
 [103]
 	structdefinition = "struct" IDENT "{" struct_definitionlist . "}", FOLLOW [175] -> SHIFT '}' GOTO 193
 [104]
@@ -12020,15 +12020,15 @@ expressionlist = expression
 	linkage = . "public", FOLLOW [173] -> SHIFT "public" GOTO 24
 	constructordefinition = . "destructor" "{" codeblock "}", FOLLOW [174] -> SHIFT "destructor" GOTO 121
 	class_definitionlist = ., FOLLOW [18] -> REDUCE class_definitionlist #0
-	linkage = . (35), FOLLOW [173] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [173] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [112]
 	class_definition = typedefinition . ";", FOLLOW [174] -> SHIFT ';' GOTO 225
 [113]
-	class_definition = structdefinition . (15), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 1
+	class_definition = structdefinition . (16), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 1
 [114]
-	class_definition = interfacedefinition . (15), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 1
+	class_definition = interfacedefinition . (16), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 1
 [115]
-	class_definition = classdefinition . (15), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 1
+	class_definition = classdefinition . (16), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 1
 [116]
 	functiondefinition = linkage . "function" IDENT typespec callablebody, FOLLOW [174] -> SHIFT "function" GOTO 34
 	functiondefinition = linkage . "function" IDENT typespec callablebody_const, FOLLOW [174] -> SHIFT "function" GOTO 34
@@ -12040,18 +12040,18 @@ expressionlist = expression
 	operatordefinition = linkage . "operator" operatordecl callablebody_const, FOLLOW [174] -> SHIFT "operator" GOTO 226
 	constructordefinition = linkage . "constructor" callablebody, FOLLOW [174] -> SHIFT "constructor" GOTO 227
 [117]
-	class_definition = functiondefinition . (16), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 2
+	class_definition = functiondefinition . (17), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 2
 [118]
-	class_definition = constructordefinition . (16), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 2
+	class_definition = constructordefinition . (17), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 2
 [119]
-	class_definition = operatordefinition . (16), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 2
+	class_definition = operatordefinition . (17), FOLLOW [174] -> REDUCE class_definition #1 CALL definition 2
 [120]
 	class_definition = variabledefinition . ";", FOLLOW [174] -> SHIFT ';' GOTO 228
 [121]
 	constructordefinition = "destructor" . "{" codeblock "}", FOLLOW [174] -> SHIFT '{' GOTO 229
 [122]
 	inheritlist = typepath . "," inheritlist, FOLLOW [19] -> SHIFT ',' GOTO 230
-	inheritlist = typepath . (step:32), FOLLOW [19] -> REDUCE inheritlist #1 CALL inheritdef 1
+	inheritlist = typepath . (step:33), FOLLOW [19] -> REDUCE inheritlist #1 CALL inheritdef 1
 [123]
 	classdefinition = "class" IDENT ":" inheritlist . "{" class_definitionlist "}", FOLLOW [175] -> SHIFT '{' GOTO 231
 [124]
@@ -12079,11 +12079,11 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [189] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [189] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [189] -> SHIFT "const" GOTO 18
-	extern_paramlist = . (6), FOLLOW [186] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
+	extern_paramlist = . (7), FOLLOW [186] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [126]
-	statement/L1 = typedefinition ";" . (74), FOLLOW [98] -> REDUCE statement #2 CALL definition
+	statement/L1 = typedefinition ";" . (75), FOLLOW [98] -> REDUCE statement #2 CALL definition
 [127]
-	main_procedure = "main" "{" codeblock "}" . (scope:70), FOLLOW [0] -> REDUCE main_procedure #4 CALL main_procdef
+	main_procedure = "main" "{" codeblock "}" . (scope:71), FOLLOW [0] -> REDUCE main_procedure #4 CALL main_procdef
 [128]
 	statementlist = statement statementlist . (step), FOLLOW [18] -> REDUCE statementlist #2
 [129]
@@ -12152,7 +12152,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [239] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [239] -> SHIFT "null" GOTO 92
 [131]
-	statement/L1 = expression ";" . (75), FOLLOW [98] -> REDUCE statement #2 CALL free_expression
+	statement/L1 = expression ";" . (76), FOLLOW [98] -> REDUCE statement #2 CALL free_expression
 [132]
 	expression/L3 = . expression "=" expression, FOLLOW [239] -> GOTO 239
 	expression/L3 = . expression "+=" expression, FOLLOW [239] -> GOTO 239
@@ -12277,7 +12277,7 @@ expressionlist = expression
 	indirection = "->" . indirection, FOLLOW [13] -> GOTO 241
 	indirection = . "->" indirection, FOLLOW [13] -> SHIFT "->" GOTO 134
 	indirection = . "->", FOLLOW [13] -> SHIFT "->" GOTO 134
-	indirection = "->" . (134), FOLLOW [13] -> REDUCE indirection #1 CALL count
+	indirection = "->" . (135), FOLLOW [13] -> REDUCE indirection #1 CALL count
 [135]
 	expression/L3 = . expression "=" expression, FOLLOW [239] -> GOTO 242
 	expression/L3 = expression "=" . expression, FOLLOW [239] -> GOTO 242
@@ -14164,7 +14164,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = "&" expression . (113), FOLLOW [239] -> REDUCE expression #2 CALL operator "&"
+	expression/L9 = "&" expression . (114), FOLLOW [239] -> REDUCE expression #2 CALL operator "&"
 [168]
 	statement/L1 = "{" codeblock . "}", FOLLOW [98] -> SHIFT '}' GOTO 274
 [169]
@@ -14213,7 +14213,7 @@ expressionlist = expression
 [170]
 	expression/L1 = "{" expressionlist . "}", FOLLOW [239] -> SHIFT '}' GOTO 276
 [171]
-	expression/L1 = "{" "}" . (85), FOLLOW [239] -> REDUCE expression #2 CALL structure
+	expression/L1 = "{" "}" . (86), FOLLOW [239] -> REDUCE expression #2 CALL structure
 [172]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -14254,7 +14254,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = "+" expression . (120), FOLLOW [239] -> REDUCE expression #2 CALL operator "+"
+	expression/L9 = "+" expression . (121), FOLLOW [239] -> REDUCE expression #2 CALL operator "+"
 [173]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -14295,7 +14295,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = "-" expression . (121), FOLLOW [239] -> REDUCE expression #2 CALL operator "-"
+	expression/L9 = "-" expression . (122), FOLLOW [239] -> REDUCE expression #2 CALL operator "-"
 [174]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -14336,7 +14336,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L12 = "*" expression . (130), FOLLOW [239] -> REDUCE expression #2 CALL operator "->"
+	expression/L12 = "*" expression . (131), FOLLOW [239] -> REDUCE expression #2 CALL operator "->"
 [175]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -14377,7 +14377,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = "~" expression . (122), FOLLOW [239] -> REDUCE expression #2 CALL operator "~"
+	expression/L9 = "~" expression . (123), FOLLOW [239] -> REDUCE expression #2 CALL operator "~"
 [176]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -14418,7 +14418,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = "!" expression . (123), FOLLOW [239] -> REDUCE expression #2 CALL operator "!"
+	expression/L9 = "!" expression . (124), FOLLOW [239] -> REDUCE expression #2 CALL operator "!"
 [177]
 	statement/L1 = "var" variabledefinition . ";", FOLLOW [98] -> SHIFT ';' GOTO 277
 [178]
@@ -14673,29 +14673,29 @@ expressionlist = expression
 	expressionlist = expression ., FOLLOW [263] -> REDUCE expressionlist #1
 [185]
 	variabledefinition = typespec IDENT "[" expression "]" . "=" expression, FOLLOW [15] -> SHIFT '=' GOTO 284
-	variabledefinition = typespec IDENT "[" expression "]" . (step:84), FOLLOW [15] -> REDUCE variabledefinition #5 CALL vardef_array
+	variabledefinition = typespec IDENT "[" expression "]" . (step:85), FOLLOW [15] -> REDUCE variabledefinition #5 CALL vardef_array
 [186]
-	functiondefinition = linkage "function" IDENT typespec callablebody . (36), FOLLOW [252] -> REDUCE functiondefinition #5 CALL funcdef {const=false}
+	functiondefinition = linkage "function" IDENT typespec callablebody . (37), FOLLOW [252] -> REDUCE functiondefinition #5 CALL funcdef {const=false}
 [187]
-	functiondefinition = linkage "function" IDENT typespec callablebody_const . (37), FOLLOW [252] -> REDUCE functiondefinition #5 CALL funcdef {const=true}
+	functiondefinition = linkage "function" IDENT typespec callablebody_const . (38), FOLLOW [252] -> REDUCE functiondefinition #5 CALL funcdef {const=true}
 [188]
 	paramdecl = typespec . IDENT, FOLLOW [184] -> SHIFT IDENT GOTO 285
 [189]
 	callablebody = "(" parameterlist . ")" "{" codeblock "}", FOLLOW [252] -> SHIFT ')' GOTO 286
 	callablebody_const = "(" parameterlist . ")" "const" "{" codeblock "}", FOLLOW [252] -> SHIFT ')' GOTO 286
 [190]
-	parameterlist = parameters . (71), FOLLOW [10] -> REDUCE parameterlist #1 CALL paramdeflist
+	parameterlist = parameters . (72), FOLLOW [10] -> REDUCE parameterlist #1 CALL paramdeflist
 [191]
 	parameters = paramdecl . "," parameters, FOLLOW [10] -> SHIFT ',' GOTO 287
 	parameters = paramdecl ., FOLLOW [10] -> REDUCE parameters #1
 [192]
-	typespec/L1 = "const" typename "^" "^" "&" . (28), FOLLOW [268] -> REDUCE typespec #5 CALL typespec "const^^&"
+	typespec/L1 = "const" typename "^" "^" "&" . (29), FOLLOW [268] -> REDUCE typespec #5 CALL typespec "const^^&"
 [193]
-	structdefinition = "struct" IDENT "{" struct_definitionlist "}" . (step:30), FOLLOW [175] -> REDUCE structdefinition #5 CALL structdef
+	structdefinition = "struct" IDENT "{" struct_definitionlist "}" . (step:31), FOLLOW [175] -> REDUCE structdefinition #5 CALL structdef
 [194]
 	struct_definitionlist = struct_definition struct_definitionlist ., FOLLOW [18] -> REDUCE struct_definitionlist #2
 [195]
-	interfacedefinition = "interface" IDENT "{" interface_definitionlist "}" . (step:31), FOLLOW [175] -> REDUCE interfacedefinition #5 CALL interfacedef
+	interfacedefinition = "interface" IDENT "{" interface_definitionlist "}" . (step:32), FOLLOW [175] -> REDUCE interfacedefinition #5 CALL interfacedef
 [196]
 	interface_definitionlist = interface_definition interface_definitionlist ., FOLLOW [18] -> REDUCE interface_definitionlist #2
 [197]
@@ -14740,55 +14740,55 @@ expressionlist = expression
 [200]
 	operatordecl = "(" . ")", FOLLOW [185] -> SHIFT ')' GOTO 292
 [201]
-	operatordecl = "&" . (55), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&",symbol="bitand"}
+	operatordecl = "&" . (56), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&",symbol="bitand"}
 [202]
-	operatordecl = "->" . (46), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="->",symbol="arrow"}
+	operatordecl = "->" . (47), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="->",symbol="arrow"}
 [203]
-	operatordecl = "=" . (47), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="=",symbol="assign"}
+	operatordecl = "=" . (48), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="=",symbol="assign"}
 [204]
-	operatordecl = "+" . (48), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="+",symbol="plus"}
+	operatordecl = "+" . (49), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="+",symbol="plus"}
 [205]
-	operatordecl = "-" . (49), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="-",symbol="minus"}
+	operatordecl = "-" . (50), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="-",symbol="minus"}
 [206]
-	operatordecl = "*" . (50), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="*",symbol="mul"}
+	operatordecl = "*" . (51), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="*",symbol="mul"}
 [207]
-	operatordecl = "/" . (51), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="/",symbol="div"}
+	operatordecl = "/" . (52), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="/",symbol="div"}
 [208]
-	operatordecl = "%" . (52), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="%",symbol="mod"}
+	operatordecl = "%" . (53), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="%",symbol="mod"}
 [209]
-	operatordecl = "&&" . (53), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&&",symbol="and"}
+	operatordecl = "&&" . (54), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="&&",symbol="and"}
 [210]
-	operatordecl = "||" . (54), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="||",symbol="or"}
+	operatordecl = "||" . (55), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="||",symbol="or"}
 [211]
-	operatordecl = "|" . (56), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="|",symbol="bitor"}
+	operatordecl = "|" . (57), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="|",symbol="bitor"}
 [212]
-	operatordecl = "<<" . (57), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<<",symbol="lsh"}
+	operatordecl = "<<" . (58), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<<",symbol="lsh"}
 [213]
-	operatordecl = ">>" . (58), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">>",symbol="rsh"}
+	operatordecl = ">>" . (59), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">>",symbol="rsh"}
 [214]
-	operatordecl = "~" . (59), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="~",symbol="lneg"}
+	operatordecl = "~" . (60), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="~",symbol="lneg"}
 [215]
-	operatordecl = "!" . (60), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!",symbol="not"}
+	operatordecl = "!" . (61), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!",symbol="not"}
 [216]
 	operatordecl = "[" . "]", FOLLOW [185] -> SHIFT ']' GOTO 293
 [217]
-	operatordecl = "==" . (63), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="==",symbol="eq"}
+	operatordecl = "==" . (64), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="==",symbol="eq"}
 [218]
-	operatordecl = "!=" . (64), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!=",symbol="ne"}
+	operatordecl = "!=" . (65), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="!=",symbol="ne"}
 [219]
-	operatordecl = ">=" . (65), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">=",symbol="ge"}
+	operatordecl = ">=" . (66), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">=",symbol="ge"}
 [220]
-	operatordecl = "<=" . (66), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<=",symbol="le"}
+	operatordecl = "<=" . (67), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<=",symbol="le"}
 [221]
-	operatordecl = ">" . (67), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">",symbol="gt"}
+	operatordecl = ">" . (68), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name=">",symbol="gt"}
 [222]
-	operatordecl = "<" . (68), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<",symbol="lt"}
+	operatordecl = "<" . (69), FOLLOW [185] -> REDUCE operatordecl #1 CALL operatordecl {name="<",symbol="lt"}
 [223]
-	classdefinition = "class" IDENT "{" class_definitionlist "}" . (step:33), FOLLOW [175] -> REDUCE classdefinition #5 CALL classdef
+	classdefinition = "class" IDENT "{" class_definitionlist "}" . (step:34), FOLLOW [175] -> REDUCE classdefinition #5 CALL classdef
 [224]
 	class_definitionlist = class_definition class_definitionlist ., FOLLOW [18] -> REDUCE class_definitionlist #2
 [225]
-	class_definition = typedefinition ";" . (15), FOLLOW [174] -> REDUCE class_definition #2 CALL definition 1
+	class_definition = typedefinition ";" . (16), FOLLOW [174] -> REDUCE class_definition #2 CALL definition 1
 [226]
 	operatordefinition = linkage "operator" . operatordecl typespec callablebody, FOLLOW [174] -> GOTO 294
 	operatordefinition = linkage "operator" . operatordecl typespec callablebody_const, FOLLOW [174] -> GOTO 294
@@ -14821,7 +14821,7 @@ expressionlist = expression
 	constructordefinition = linkage "constructor" . callablebody, FOLLOW [174] -> GOTO 295
 	callablebody = . "(" parameterlist ")" "{" codeblock "}", FOLLOW [174] -> SHIFT '(' GOTO 296
 [228]
-	class_definition = variabledefinition ";" . (15), FOLLOW [174] -> REDUCE class_definition #2 CALL definition 1
+	class_definition = variabledefinition ";" . (16), FOLLOW [174] -> REDUCE class_definition #2 CALL definition 1
 [229]
 	statement/L1 = . typedefinition ";", FOLLOW [98] -> GOTO 63
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [98] -> GOTO 14
@@ -14902,7 +14902,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [230]
 	typepath/L1 = . typename, FOLLOW [176] -> GOTO 39
 	inheritlist = . typepath "," inheritlist, FOLLOW [19] -> GOTO 122
@@ -14957,7 +14957,7 @@ expressionlist = expression
 	linkage = . "public", FOLLOW [173] -> SHIFT "public" GOTO 24
 	constructordefinition = . "destructor" "{" codeblock "}", FOLLOW [174] -> SHIFT "destructor" GOTO 121
 	class_definitionlist = ., FOLLOW [18] -> REDUCE class_definitionlist #0
-	linkage = . (35), FOLLOW [173] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [173] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [232]
 	extern_paramlist = . extern_parameters, FOLLOW [186] -> GOTO 233
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" . extern_paramlist ")" ";", FOLLOW [59] -> GOTO 300
@@ -14980,9 +14980,9 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [189] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [189] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [189] -> SHIFT "const" GOTO 18
-	extern_paramlist = . (6), FOLLOW [186] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
+	extern_paramlist = . (7), FOLLOW [186] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [233]
-	extern_paramlist = extern_parameters . (6), FOLLOW [186] -> REDUCE extern_paramlist #1 CALL extern_paramdeflist
+	extern_paramlist = extern_parameters . (7), FOLLOW [186] -> REDUCE extern_paramlist #1 CALL extern_paramdeflist
 [234]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist . ")" ";", FOLLOW [59] -> SHIFT ')' GOTO 301
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist . "..." ")" ";", FOLLOW [59] -> SHIFT "..." GOTO 302
@@ -14990,13 +14990,13 @@ expressionlist = expression
 	extern_parameters = typespec . IDENT "," extern_parameters, FOLLOW [186] -> SHIFT IDENT GOTO 303
 	extern_parameters = typespec . IDENT, FOLLOW [186] -> SHIFT IDENT GOTO 303
 	extern_parameters = typespec . "," extern_parameters, FOLLOW [186] -> SHIFT ',' GOTO 304
-	extern_parameters = typespec ., FOLLOW [186] -> REDUCE extern_parameters #1
+	extern_parameters = typespec . (6), FOLLOW [186] -> REDUCE extern_parameters #1 CALL extern_paramdef
 [236]
-	iexpression = expression indirection IDENT . (133), FOLLOW [239] -> REDUCE iexpression #3 CALL rep_operator "->"
+	iexpression = expression indirection IDENT . (134), FOLLOW [239] -> REDUCE iexpression #3 CALL rep_operator "->"
 [237]
 	expression/L13 = expression "(" expressionlist . ")", FOLLOW [239] -> SHIFT ')' GOTO 305
 [238]
-	expression/L13 = expression "(" ")" . (131), FOLLOW [239] -> REDUCE expression #3 CALL operator "()"
+	expression/L13 = expression "(" ")" . (132), FOLLOW [239] -> REDUCE expression #3 CALL operator "()"
 [239]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15037,7 +15037,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L7 = expression "&" expression . (113), FOLLOW [239] -> REDUCE expression #3 CALL operator "&"
+	expression/L7 = expression "&" expression . (114), FOLLOW [239] -> REDUCE expression #3 CALL operator "&"
 [240]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15078,9 +15078,9 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L7 = expression "^" expression . (112), FOLLOW [239] -> REDUCE expression #3 CALL operator "^"
+	expression/L7 = expression "^" expression . (113), FOLLOW [239] -> REDUCE expression #3 CALL operator "^"
 [241]
-	indirection = "->" indirection . (134), FOLLOW [13] -> REDUCE indirection #2 CALL count
+	indirection = "->" indirection . (135), FOLLOW [13] -> REDUCE indirection #2 CALL count
 [242]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15121,7 +15121,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "=" expression . (96), FOLLOW [239] -> REDUCE expression #3 CALL operator "="
+	expression/L3 = expression "=" expression . (97), FOLLOW [239] -> REDUCE expression #3 CALL operator "="
 [243]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15162,7 +15162,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = expression "+" expression . (120), FOLLOW [239] -> REDUCE expression #3 CALL operator "+"
+	expression/L9 = expression "+" expression . (121), FOLLOW [239] -> REDUCE expression #3 CALL operator "+"
 [244]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15203,7 +15203,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L9 = expression "-" expression . (121), FOLLOW [239] -> REDUCE expression #3 CALL operator "-"
+	expression/L9 = expression "-" expression . (122), FOLLOW [239] -> REDUCE expression #3 CALL operator "-"
 [245]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15244,7 +15244,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L10 = expression "*" expression . (124), FOLLOW [239] -> REDUCE expression #3 CALL operator "*"
+	expression/L10 = expression "*" expression . (125), FOLLOW [239] -> REDUCE expression #3 CALL operator "*"
 [246]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15285,7 +15285,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L10 = expression "/" expression . (125), FOLLOW [239] -> REDUCE expression #3 CALL operator "/"
+	expression/L10 = expression "/" expression . (126), FOLLOW [239] -> REDUCE expression #3 CALL operator "/"
 [247]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15326,7 +15326,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L10 = expression "%" expression . (126), FOLLOW [239] -> REDUCE expression #3 CALL operator "%"
+	expression/L10 = expression "%" expression . (127), FOLLOW [239] -> REDUCE expression #3 CALL operator "%"
 [248]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15367,7 +15367,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L5 = expression "&&" expression . (110), FOLLOW [239] -> REDUCE expression #3 CALL operator "&&"
+	expression/L5 = expression "&&" expression . (111), FOLLOW [239] -> REDUCE expression #3 CALL operator "&&"
 [249]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15408,7 +15408,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L4 = expression "||" expression . (109), FOLLOW [239] -> REDUCE expression #3 CALL operator "||"
+	expression/L4 = expression "||" expression . (110), FOLLOW [239] -> REDUCE expression #3 CALL operator "||"
 [250]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15449,7 +15449,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L6 = expression "|" expression . (111), FOLLOW [239] -> REDUCE expression #3 CALL operator "|"
+	expression/L6 = expression "|" expression . (112), FOLLOW [239] -> REDUCE expression #3 CALL operator "|"
 [251]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15490,7 +15490,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L11 = expression "<<" expression . (127), FOLLOW [239] -> REDUCE expression #3 CALL operator "<<"
+	expression/L11 = expression "<<" expression . (128), FOLLOW [239] -> REDUCE expression #3 CALL operator "<<"
 [252]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15531,7 +15531,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L11 = expression ">>" expression . (128), FOLLOW [239] -> REDUCE expression #3 CALL operator ">>"
+	expression/L11 = expression ">>" expression . (129), FOLLOW [239] -> REDUCE expression #3 CALL operator ">>"
 [253]
 	expression/L13 = expression "[" expressionlist . "]", FOLLOW [239] -> SHIFT ']' GOTO 306
 [254]
@@ -15574,7 +15574,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L8 = expression "==" expression . (114), FOLLOW [239] -> REDUCE expression #3 CALL operator "=="
+	expression/L8 = expression "==" expression . (115), FOLLOW [239] -> REDUCE expression #3 CALL operator "=="
 [255]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15615,7 +15615,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L8 = expression "!=" expression . (115), FOLLOW [239] -> REDUCE expression #3 CALL operator "!="
+	expression/L8 = expression "!=" expression . (116), FOLLOW [239] -> REDUCE expression #3 CALL operator "!="
 [256]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15656,7 +15656,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L8 = expression ">=" expression . (118), FOLLOW [239] -> REDUCE expression #3 CALL operator ">="
+	expression/L8 = expression ">=" expression . (119), FOLLOW [239] -> REDUCE expression #3 CALL operator ">="
 [257]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15697,7 +15697,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L8 = expression "<=" expression . (116), FOLLOW [239] -> REDUCE expression #3 CALL operator "<="
+	expression/L8 = expression "<=" expression . (117), FOLLOW [239] -> REDUCE expression #3 CALL operator "<="
 [258]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15738,7 +15738,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L8 = expression ">" expression . (119), FOLLOW [239] -> REDUCE expression #3 CALL operator ">"
+	expression/L8 = expression ">" expression . (120), FOLLOW [239] -> REDUCE expression #3 CALL operator ">"
 [259]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15779,7 +15779,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L8 = expression "<" expression . (117), FOLLOW [239] -> REDUCE expression #3 CALL operator "<"
+	expression/L8 = expression "<" expression . (118), FOLLOW [239] -> REDUCE expression #3 CALL operator "<"
 [260]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15820,7 +15820,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "+=" expression . (97), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "+"
+	expression/L3 = expression "+=" expression . (98), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "+"
 [261]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15861,7 +15861,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "-=" expression . (98), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "-"
+	expression/L3 = expression "-=" expression . (99), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "-"
 [262]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15902,7 +15902,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "*=" expression . (99), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "*"
+	expression/L3 = expression "*=" expression . (100), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "*"
 [263]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15943,7 +15943,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "/=" expression . (100), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "/"
+	expression/L3 = expression "/=" expression . (101), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "/"
 [264]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -15984,7 +15984,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "^=" expression . (101), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "^"
+	expression/L3 = expression "^=" expression . (102), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "^"
 [265]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16025,7 +16025,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "&=" expression . (102), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "&"
+	expression/L3 = expression "&=" expression . (103), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "&"
 [266]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16066,7 +16066,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "%=" expression . (103), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "%"
+	expression/L3 = expression "%=" expression . (104), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "%"
 [267]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16107,7 +16107,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "&&=" expression . (104), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "&&"
+	expression/L3 = expression "&&=" expression . (105), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "&&"
 [268]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16148,7 +16148,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "||=" expression . (105), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "||"
+	expression/L3 = expression "||=" expression . (106), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "||"
 [269]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16189,7 +16189,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "|=" expression . (106), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "|"
+	expression/L3 = expression "|=" expression . (107), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "|"
 [270]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16230,7 +16230,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression "<<=" expression . (107), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "<<"
+	expression/L3 = expression "<<=" expression . (108), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator "<<"
 [271]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -16271,9 +16271,9 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L3 = expression ">>=" expression . (108), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator ">>"
+	expression/L3 = expression ">>=" expression . (109), FOLLOW [239] -> REDUCE expression #3 CALL assign_operator ">>"
 [272]
-	expression/L12 = expression "." IDENT . (129), FOLLOW [239] -> REDUCE expression #3 CALL member
+	expression/L12 = expression "." IDENT . (130), FOLLOW [239] -> REDUCE expression #3 CALL member
 [273]
 	expression/L2 = "(" expression ")" ., FOLLOW [239] -> REDUCE expression #3
 [274]
@@ -16341,13 +16341,13 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [230] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [230] -> SHIFT "null" GOTO 92
 [276]
-	expression/L1 = "{" expressionlist "}" . (85), FOLLOW [239] -> REDUCE expression #3 CALL structure
+	expression/L1 = "{" expressionlist "}" . (86), FOLLOW [239] -> REDUCE expression #3 CALL structure
 [277]
-	statement/L1 = "var" variabledefinition ";" . (74), FOLLOW [98] -> REDUCE statement #3 CALL definition
+	statement/L1 = "var" variabledefinition ";" . (75), FOLLOW [98] -> REDUCE statement #3 CALL definition
 [278]
-	statement/L1 = "return" expression ";" . (step:76), FOLLOW [98] -> REDUCE statement #3 CALL return_value
+	statement/L1 = "return" expression ";" . (step:77), FOLLOW [98] -> REDUCE statement #3 CALL return_value
 [279]
-	statement/L1 = "delete" expression ";" . (77), FOLLOW [98] -> REDUCE statement #3 CALL delete
+	statement/L1 = "delete" expression ";" . (78), FOLLOW [98] -> REDUCE statement #3 CALL delete
 [280]
 	iexpression = expression . indirection IDENT, FOLLOW [228] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [228] -> SHIFT '(' GOTO 130
@@ -16555,7 +16555,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 [285]
-	paramdecl = typespec IDENT . (72), FOLLOW [184] -> REDUCE paramdecl #2 CALL paramdef
+	paramdecl = typespec IDENT . (73), FOLLOW [184] -> REDUCE paramdecl #2 CALL paramdef
 [286]
 	callablebody_const = "(" parameterlist ")" . "const" "{" codeblock "}", FOLLOW [252] -> SHIFT "const" GOTO 313
 	callablebody = "(" parameterlist ")" . "{" codeblock "}", FOLLOW [252] -> SHIFT '{' GOTO 314
@@ -16603,7 +16603,7 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
-	extern_paramlist = . (6), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
+	extern_paramlist = . (7), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [290]
 	interface_definition = "operator" operatordecl typespec . "(" extern_paramlist ")" ";", FOLLOW [171] -> SHIFT '(' GOTO 318
 	interface_definition = "operator" operatordecl typespec . "(" extern_paramlist ")" "const" ";", FOLLOW [171] -> SHIFT '(' GOTO 318
@@ -16629,11 +16629,11 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
-	extern_paramlist = . (6), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
+	extern_paramlist = . (7), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [292]
-	operatordecl = "(" ")" . (61), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="()",symbol="call"}
+	operatordecl = "(" ")" . (62), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="()",symbol="call"}
 [293]
-	operatordecl = "[" "]" . (62), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="[]",symbol="get"}
+	operatordecl = "[" "]" . (63), FOLLOW [185] -> REDUCE operatordecl #2 CALL operatordecl {name="[]",symbol="get"}
 [294]
 	typespec/L1 = . typename, FOLLOW [9] -> GOTO 8
 	typespec/L1 = . typename "&", FOLLOW [9] -> GOTO 8
@@ -16656,7 +16656,7 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [9] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [9] -> SHIFT "const" GOTO 18
 [295]
-	constructordefinition = linkage "constructor" callablebody . (40), FOLLOW [174] -> REDUCE constructordefinition #3 CALL constructordef
+	constructordefinition = linkage "constructor" callablebody . (41), FOLLOW [174] -> REDUCE constructordefinition #3 CALL constructordef
 [296]
 	typespec/L1 = . typename, FOLLOW [13] -> GOTO 8
 	typespec/L1 = . typename "&", FOLLOW [13] -> GOTO 8
@@ -16677,11 +16677,11 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [13] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [13] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [13] -> SHIFT "const" GOTO 18
-	parameterlist = . (71), FOLLOW [10] -> REDUCE parameterlist #0 CALL paramdeflist
+	parameterlist = . (72), FOLLOW [10] -> REDUCE parameterlist #0 CALL paramdeflist
 [297]
 	constructordefinition = "destructor" "{" codeblock . "}", FOLLOW [174] -> SHIFT '}' GOTO 324
 [298]
-	inheritlist = typepath "," inheritlist . (step:32), FOLLOW [19] -> REDUCE inheritlist #3 CALL inheritdef 1
+	inheritlist = typepath "," inheritlist . (step:33), FOLLOW [19] -> REDUCE inheritlist #3 CALL inheritdef 1
 [299]
 	classdefinition = "class" IDENT ":" inheritlist "{" class_definitionlist . "}", FOLLOW [175] -> SHIFT '}' GOTO 325
 [300]
@@ -16693,7 +16693,7 @@ expressionlist = expression
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." . ")" ";", FOLLOW [59] -> SHIFT ')' GOTO 329
 [303]
 	extern_parameters = typespec IDENT . "," extern_parameters, FOLLOW [186] -> SHIFT ',' GOTO 330
-	extern_parameters = typespec IDENT ., FOLLOW [186] -> REDUCE extern_parameters #2
+	extern_parameters = typespec IDENT . (6), FOLLOW [186] -> REDUCE extern_parameters #2 CALL extern_paramdef
 [304]
 	extern_parameters = typespec "," . extern_parameters, FOLLOW [186] -> GOTO 331
 	typespec/L1 = . typename, FOLLOW [189] -> GOTO 8
@@ -16715,9 +16715,9 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [189] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [189] -> SHIFT "const" GOTO 18
 [305]
-	expression/L13 = expression "(" expressionlist ")" . (131), FOLLOW [239] -> REDUCE expression #4 CALL operator "()"
+	expression/L13 = expression "(" expressionlist ")" . (132), FOLLOW [239] -> REDUCE expression #4 CALL operator "()"
 [306]
-	expression/L13 = expression "[" expressionlist "]" . (132), FOLLOW [239] -> REDUCE expression #4 CALL operator "[]"
+	expression/L13 = expression "[" expressionlist "]" . (133), FOLLOW [239] -> REDUCE expression #4 CALL operator "[]"
 [307]
 	expressionlist = expression "," expressionlist ., FOLLOW [263] -> REDUCE expressionlist #3
 [308]
@@ -16765,7 +16765,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [239] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
-	expression/L1 = "new" typespec ":" expression . (86), FOLLOW [239] -> REDUCE expression #4 CALL allocate
+	expression/L1 = "new" typespec ":" expression . (87), FOLLOW [239] -> REDUCE expression #4 CALL allocate
 [311]
 	expression/L1 = "cast" typespec ":" "{" . expression "}", FOLLOW [239] -> GOTO 334
 	expression/L3 = . expression "=" expression, FOLLOW [239] -> GOTO 334
@@ -16867,7 +16867,7 @@ expressionlist = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [97] -> SHIFT "<<=" GOTO 163
 	expression/L3 = expression . ">>=" expression, FOLLOW [97] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [97] -> SHIFT '.' GOTO 165
-	variabledefinition = typespec IDENT "[" expression "]" "=" expression . (step:83), FOLLOW [15] -> REDUCE variabledefinition #7 CALL vardef_array_assign
+	variabledefinition = typespec IDENT "[" expression "]" "=" expression . (step:84), FOLLOW [15] -> REDUCE variabledefinition #7 CALL vardef_array_assign
 [313]
 	callablebody_const = "(" parameterlist ")" "const" . "{" codeblock "}", FOLLOW [252] -> SHIFT '{' GOTO 336
 [314]
@@ -16950,7 +16950,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [315]
 	parameters = paramdecl "," parameters ., FOLLOW [10] -> REDUCE parameters #3
 [316]
@@ -16975,7 +16975,7 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
-	extern_paramlist = . (6), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
+	extern_paramlist = . (7), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [317]
 	interface_definition = "procedure" IDENT "(" extern_paramlist . ")" ";", FOLLOW [171] -> SHIFT ')' GOTO 339
 	interface_definition = "procedure" IDENT "(" extern_paramlist . ")" "const" ";", FOLLOW [171] -> SHIFT ')' GOTO 339
@@ -17001,7 +17001,7 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [237] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [237] -> SHIFT "const" GOTO 18
-	extern_paramlist = . (6), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
+	extern_paramlist = . (7), FOLLOW [10] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [319]
 	interface_definition = "operator" operatordecl "(" extern_paramlist . ")" ";", FOLLOW [171] -> SHIFT ')' GOTO 341
 	interface_definition = "operator" operatordecl "(" extern_paramlist . ")" "const" ";", FOLLOW [171] -> SHIFT ')' GOTO 341
@@ -17011,15 +17011,15 @@ expressionlist = expression
 	callablebody = . "(" parameterlist ")" "{" codeblock "}", FOLLOW [174] -> SHIFT '(' GOTO 100
 	callablebody_const = . "(" parameterlist ")" "const" "{" codeblock "}", FOLLOW [174] -> SHIFT '(' GOTO 100
 [321]
-	operatordefinition = linkage "operator" operatordecl callablebody . (44), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_procdef {const=false}
+	operatordefinition = linkage "operator" operatordecl callablebody . (45), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_procdef {const=false}
 [322]
-	operatordefinition = linkage "operator" operatordecl callablebody_const . (45), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_procdef {const=true}
+	operatordefinition = linkage "operator" operatordecl callablebody_const . (46), FOLLOW [174] -> REDUCE operatordefinition #4 CALL operator_procdef {const=true}
 [323]
 	callablebody = "(" parameterlist . ")" "{" codeblock "}", FOLLOW [174] -> SHIFT ')' GOTO 344
 [324]
-	constructordefinition = "destructor" "{" codeblock "}" . (41), FOLLOW [174] -> REDUCE constructordefinition #4 CALL destructordef
+	constructordefinition = "destructor" "{" codeblock "}" . (42), FOLLOW [174] -> REDUCE constructordefinition #4 CALL destructordef
 [325]
-	classdefinition = "class" IDENT ":" inheritlist "{" class_definitionlist "}" . (step:33), FOLLOW [175] -> REDUCE classdefinition #7 CALL classdef
+	classdefinition = "class" IDENT ":" inheritlist "{" class_definitionlist "}" . (step:34), FOLLOW [175] -> REDUCE classdefinition #7 CALL classdef
 [326]
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist ")" . ";", FOLLOW [59] -> SHIFT ';' GOTO 345
 [327]
@@ -17049,7 +17049,7 @@ expressionlist = expression
 	typespec/L1 = . "const" typename "^" "^", FOLLOW [189] -> SHIFT "const" GOTO 18
 	typespec/L1 = . "const" typename "^" "^" "&", FOLLOW [189] -> SHIFT "const" GOTO 18
 [331]
-	extern_parameters = typespec "," extern_parameters ., FOLLOW [186] -> REDUCE extern_parameters #3
+	extern_parameters = typespec "," extern_parameters . (6), FOLLOW [186] -> REDUCE extern_parameters #3 CALL extern_paramdef
 [332]
 	statement/L1 = . typedefinition ";", FOLLOW [98] -> GOTO 63
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [98] -> GOTO 14
@@ -17131,7 +17131,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [333]
 	statement/L1 = . typedefinition ";", FOLLOW [98] -> GOTO 63
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [98] -> GOTO 14
@@ -17212,7 +17212,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [334]
 	iexpression = expression . indirection IDENT, FOLLOW [239] -> GOTO 129
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [239] -> SHIFT '(' GOTO 130
@@ -17255,7 +17255,7 @@ expressionlist = expression
 	expression/L3 = expression . ">>=" expression, FOLLOW [239] -> SHIFT ">>=" GOTO 164
 	expression/L12 = expression . "." IDENT, FOLLOW [239] -> SHIFT '.' GOTO 165
 [335]
-	expression/L1 = "cast" typespec ":" "{" "}" . (87), FOLLOW [239] -> REDUCE expression #5 CALL typecast
+	expression/L1 = "cast" typespec ":" "{" "}" . (88), FOLLOW [239] -> REDUCE expression #5 CALL typecast
 [336]
 	statement/L1 = . typedefinition ";", FOLLOW [98] -> GOTO 63
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [98] -> GOTO 14
@@ -17336,7 +17336,7 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [337]
 	callablebody = "(" parameterlist ")" "{" codeblock . "}", FOLLOW [252] -> SHIFT '}' GOTO 353
 [338]
@@ -17352,9 +17352,9 @@ expressionlist = expression
 	interface_definition = "operator" operatordecl "(" extern_paramlist ")" . ";", FOLLOW [171] -> SHIFT ';' GOTO 358
 	interface_definition = "operator" operatordecl "(" extern_paramlist ")" . "const" ";", FOLLOW [171] -> SHIFT "const" GOTO 359
 [342]
-	operatordefinition = linkage "operator" operatordecl typespec callablebody . (42), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_funcdef {const=false}
+	operatordefinition = linkage "operator" operatordecl typespec callablebody . (43), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_funcdef {const=false}
 [343]
-	operatordefinition = linkage "operator" operatordecl typespec callablebody_const . (43), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_funcdef {const=true}
+	operatordefinition = linkage "operator" operatordecl typespec callablebody_const . (44), FOLLOW [174] -> REDUCE operatordefinition #5 CALL operator_funcdef {const=true}
 [344]
 	callablebody = "(" parameterlist ")" . "{" codeblock "}", FOLLOW [174] -> SHIFT '{' GOTO 314
 [345]
@@ -17364,59 +17364,59 @@ expressionlist = expression
 [347]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";" . (5), FOLLOW [59] -> REDUCE extern_definition #9 CALL extern_procdef_vararg
 [348]
-	extern_parameters = typespec IDENT "," extern_parameters ., FOLLOW [186] -> REDUCE extern_parameters #4
+	extern_parameters = typespec IDENT "," extern_parameters . (6), FOLLOW [186] -> REDUCE extern_parameters #4 CALL extern_paramdef
 [349]
 	statement/L1 = "if" "(" expression ")" "{" codeblock . "}", FOLLOW [98] -> SHIFT '}' GOTO 361
 	statement/L1 = "if" "(" expression ")" "{" codeblock . "}" "else" "{" codeblock "}", FOLLOW [98] -> SHIFT '}' GOTO 361
 [350]
 	statement/L1 = "while" "(" expression ")" "{" codeblock . "}", FOLLOW [98] -> SHIFT '}' GOTO 362
 [351]
-	expression/L1 = "cast" typespec ":" "{" expression "}" . (87), FOLLOW [239] -> REDUCE expression #6 CALL typecast
+	expression/L1 = "cast" typespec ":" "{" expression "}" . (88), FOLLOW [239] -> REDUCE expression #6 CALL typecast
 [352]
 	callablebody_const = "(" parameterlist ")" "const" "{" codeblock . "}", FOLLOW [252] -> SHIFT '}' GOTO 363
 [353]
-	callablebody = "(" parameterlist ")" "{" codeblock "}" . (scope:69), FOLLOW [252] -> REDUCE callablebody #6 CALL callablebody
+	callablebody = "(" parameterlist ")" "{" codeblock "}" . (scope:70), FOLLOW [252] -> REDUCE callablebody #6 CALL callablebody
 [354]
 	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" . ";", FOLLOW [171] -> SHIFT ';' GOTO 364
 	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" . "const" ";", FOLLOW [171] -> SHIFT "const" GOTO 365
 [355]
-	interface_definition = "procedure" IDENT "(" extern_paramlist ")" ";" . (9), FOLLOW [171] -> REDUCE interface_definition #6 CALL interface_procdef {const=false}
+	interface_definition = "procedure" IDENT "(" extern_paramlist ")" ";" . (10), FOLLOW [171] -> REDUCE interface_definition #6 CALL interface_procdef {const=false}
 [356]
 	interface_definition = "procedure" IDENT "(" extern_paramlist ")" "const" . ";", FOLLOW [171] -> SHIFT ';' GOTO 366
 [357]
 	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" . ";", FOLLOW [171] -> SHIFT ';' GOTO 367
 	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" . "const" ";", FOLLOW [171] -> SHIFT "const" GOTO 368
 [358]
-	interface_definition = "operator" operatordecl "(" extern_paramlist ")" ";" . (13), FOLLOW [171] -> REDUCE interface_definition #6 CALL interface_operator_procdef {const=false}
+	interface_definition = "operator" operatordecl "(" extern_paramlist ")" ";" . (14), FOLLOW [171] -> REDUCE interface_definition #6 CALL interface_operator_procdef {const=false}
 [359]
 	interface_definition = "operator" operatordecl "(" extern_paramlist ")" "const" . ";", FOLLOW [171] -> SHIFT ';' GOTO 369
 [360]
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";" . (4), FOLLOW [59] -> REDUCE extern_definition #10 CALL extern_funcdef_vararg
 [361]
 	statement/L1 = "if" "(" expression ")" "{" codeblock "}" . "else" "{" codeblock "}", FOLLOW [98] -> SHIFT "else" GOTO 370
-	statement/L1 = "if" "(" expression ")" "{" codeblock "}" . (scope:78), FOLLOW [98] -> REDUCE statement #7 CALL conditional_if
+	statement/L1 = "if" "(" expression ")" "{" codeblock "}" . (scope:79), FOLLOW [98] -> REDUCE statement #7 CALL conditional_if
 [362]
-	statement/L1 = "while" "(" expression ")" "{" codeblock "}" . (scope:80), FOLLOW [98] -> REDUCE statement #7 CALL conditional_while
+	statement/L1 = "while" "(" expression ")" "{" codeblock "}" . (scope:81), FOLLOW [98] -> REDUCE statement #7 CALL conditional_while
 [363]
-	callablebody_const = "(" parameterlist ")" "const" "{" codeblock "}" . (scope:69), FOLLOW [252] -> REDUCE callablebody_const #7 CALL callablebody
+	callablebody_const = "(" parameterlist ")" "const" "{" codeblock "}" . (scope:70), FOLLOW [252] -> REDUCE callablebody_const #7 CALL callablebody
 [364]
-	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" ";" . (7), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_funcdef {const=false}
+	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" ";" . (8), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_funcdef {const=false}
 [365]
 	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" "const" . ";", FOLLOW [171] -> SHIFT ';' GOTO 371
 [366]
-	interface_definition = "procedure" IDENT "(" extern_paramlist ")" "const" ";" . (10), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_procdef {const=true}
+	interface_definition = "procedure" IDENT "(" extern_paramlist ")" "const" ";" . (11), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_procdef {const=true}
 [367]
-	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" ";" . (11), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_operator_funcdef {const=false}
+	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" ";" . (12), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_operator_funcdef {const=false}
 [368]
 	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" "const" . ";", FOLLOW [171] -> SHIFT ';' GOTO 372
 [369]
-	interface_definition = "operator" operatordecl "(" extern_paramlist ")" "const" ";" . (14), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_operator_procdef {const=true}
+	interface_definition = "operator" operatordecl "(" extern_paramlist ")" "const" ";" . (15), FOLLOW [171] -> REDUCE interface_definition #7 CALL interface_operator_procdef {const=true}
 [370]
 	statement/L1 = "if" "(" expression ")" "{" codeblock "}" "else" . "{" codeblock "}", FOLLOW [98] -> SHIFT '{' GOTO 373
 [371]
-	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" "const" ";" . (8), FOLLOW [171] -> REDUCE interface_definition #8 CALL interface_funcdef {const=true}
+	interface_definition = "function" IDENT typespec "(" extern_paramlist ")" "const" ";" . (9), FOLLOW [171] -> REDUCE interface_definition #8 CALL interface_funcdef {const=true}
 [372]
-	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";" . (12), FOLLOW [171] -> REDUCE interface_definition #8 CALL interface_operator_funcdef {const=true}
+	interface_definition = "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";" . (13), FOLLOW [171] -> REDUCE interface_definition #8 CALL interface_operator_funcdef {const=true}
 [373]
 	statement/L1 = . typedefinition ";", FOLLOW [98] -> GOTO 63
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [98] -> GOTO 14
@@ -17497,11 +17497,11 @@ expressionlist = expression
 	expression/L1 = . "cast" typespec ":" "{" "}", FOLLOW [97] -> SHIFT "cast" GOTO 91
 	expression/L2 = . "null", FOLLOW [97] -> SHIFT "null" GOTO 92
 	statementlist = ., FOLLOW [18] -> REDUCE statementlist #0
-	linkage = . (35), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
+	linkage = . (36), FOLLOW [61] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external"}
 [374]
 	statement/L1 = "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock . "}", FOLLOW [98] -> SHIFT '}' GOTO 375
 [375]
-	statement/L1 = "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock "}" . (scope:79), FOLLOW [98] -> REDUCE statement #11 CALL conditional_if_else
+	statement/L1 = "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock "}" . (scope:80), FOLLOW [98] -> REDUCE statement #11 CALL conditional_if_else
 
 -- Function calls:
 (1) program
@@ -17509,135 +17509,136 @@ expressionlist = expression
 (3) extern_procdef
 (4) extern_funcdef_vararg
 (5) extern_procdef_vararg
-(6) extern_paramdeflist
-(7) interface_funcdef, {const=false}
-(8) interface_funcdef, {const=true}
-(9) interface_procdef, {const=false}
-(10) interface_procdef, {const=true}
-(11) interface_operator_funcdef, {const=false}
-(12) interface_operator_funcdef, {const=true}
-(13) interface_operator_procdef, {const=false}
-(14) interface_operator_procdef, {const=true}
-(15) definition, 1
-(16) definition, 2
-(17) typespec, ""
-(18) typespec, "const "
-(19) typespec, "&"
-(20) typespec, "const&"
-(21) typespec, "^"
-(22) typespec, "const^"
-(23) typespec, "^&"
-(24) typespec, "const^&"
-(25) typespec, "^^"
-(26) typespec, "const^^"
-(27) typespec, "^^&"
-(28) typespec, "const^^&"
-(29) typedef
-(30) structdef
-(31) interfacedef
-(32) inheritdef, 1
-(33) classdef
-(34) linkage, {private=true,linkage="internal"}
-(35) linkage, {private=false,linkage="external"}
-(36) funcdef, {const=false}
-(37) funcdef, {const=true}
-(38) procdef, {const=false}
-(39) procdef, {const=true}
-(40) constructordef
-(41) destructordef
-(42) operator_funcdef, {const=false}
-(43) operator_funcdef, {const=true}
-(44) operator_procdef, {const=false}
-(45) operator_procdef, {const=true}
-(46) operatordecl, {name="->",symbol="arrow"}
-(47) operatordecl, {name="=",symbol="assign"}
-(48) operatordecl, {name="+",symbol="plus"}
-(49) operatordecl, {name="-",symbol="minus"}
-(50) operatordecl, {name="*",symbol="mul"}
-(51) operatordecl, {name="/",symbol="div"}
-(52) operatordecl, {name="%",symbol="mod"}
-(53) operatordecl, {name="&&",symbol="and"}
-(54) operatordecl, {name="||",symbol="or"}
-(55) operatordecl, {name="&",symbol="bitand"}
-(56) operatordecl, {name="|",symbol="bitor"}
-(57) operatordecl, {name="<<",symbol="lsh"}
-(58) operatordecl, {name=">>",symbol="rsh"}
-(59) operatordecl, {name="~",symbol="lneg"}
-(60) operatordecl, {name="!",symbol="not"}
-(61) operatordecl, {name="()",symbol="call"}
-(62) operatordecl, {name="[]",symbol="get"}
-(63) operatordecl, {name="==",symbol="eq"}
-(64) operatordecl, {name="!=",symbol="ne"}
-(65) operatordecl, {name=">=",symbol="ge"}
-(66) operatordecl, {name="<=",symbol="le"}
-(67) operatordecl, {name=">",symbol="gt"}
-(68) operatordecl, {name="<",symbol="lt"}
-(69) callablebody
-(70) main_procdef
-(71) paramdeflist
-(72) paramdef
-(73) codeblock
-(74) definition
-(75) free_expression
-(76) return_value
-(77) delete
-(78) conditional_if
-(79) conditional_if_else
-(80) conditional_while
-(81) vardef
-(82) vardef_assign
-(83) vardef_array_assign
-(84) vardef_array
-(85) structure
-(86) allocate
-(87) typecast
-(88) variable
-(89) constant, "constexpr bool"
-(90) constant, "constexpr uint"
-(91) constant, "constexpr int"
-(92) constant, "constexpr float"
-(93) null, "constexpr float"
-(94) string_constant, "constexpr float"
-(95) char_constant, "constexpr float"
-(96) operator, "="
-(97) assign_operator, "+"
-(98) assign_operator, "-"
-(99) assign_operator, "*"
-(100) assign_operator, "/"
-(101) assign_operator, "^"
-(102) assign_operator, "&"
-(103) assign_operator, "%"
-(104) assign_operator, "&&"
-(105) assign_operator, "||"
-(106) assign_operator, "|"
-(107) assign_operator, "<<"
-(108) assign_operator, ">>"
-(109) operator, "||"
-(110) operator, "&&"
-(111) operator, "|"
-(112) operator, "^"
-(113) operator, "&"
-(114) operator, "=="
-(115) operator, "!="
-(116) operator, "<="
-(117) operator, "<"
-(118) operator, ">="
-(119) operator, ">"
-(120) operator, "+"
-(121) operator, "-"
-(122) operator, "~"
-(123) operator, "!"
-(124) operator, "*"
-(125) operator, "/"
-(126) operator, "%"
-(127) operator, "<<"
-(128) operator, ">>"
-(129) member
-(130) operator, "->"
-(131) operator, "()"
-(132) operator, "[]"
-(133) rep_operator, "->"
-(134) count
+(6) extern_paramdef
+(7) extern_paramdeflist
+(8) interface_funcdef, {const=false}
+(9) interface_funcdef, {const=true}
+(10) interface_procdef, {const=false}
+(11) interface_procdef, {const=true}
+(12) interface_operator_funcdef, {const=false}
+(13) interface_operator_funcdef, {const=true}
+(14) interface_operator_procdef, {const=false}
+(15) interface_operator_procdef, {const=true}
+(16) definition, 1
+(17) definition, 2
+(18) typespec, ""
+(19) typespec, "const "
+(20) typespec, "&"
+(21) typespec, "const&"
+(22) typespec, "^"
+(23) typespec, "const^"
+(24) typespec, "^&"
+(25) typespec, "const^&"
+(26) typespec, "^^"
+(27) typespec, "const^^"
+(28) typespec, "^^&"
+(29) typespec, "const^^&"
+(30) typedef
+(31) structdef
+(32) interfacedef
+(33) inheritdef, 1
+(34) classdef
+(35) linkage, {private=true,linkage="internal"}
+(36) linkage, {private=false,linkage="external"}
+(37) funcdef, {const=false}
+(38) funcdef, {const=true}
+(39) procdef, {const=false}
+(40) procdef, {const=true}
+(41) constructordef
+(42) destructordef
+(43) operator_funcdef, {const=false}
+(44) operator_funcdef, {const=true}
+(45) operator_procdef, {const=false}
+(46) operator_procdef, {const=true}
+(47) operatordecl, {name="->",symbol="arrow"}
+(48) operatordecl, {name="=",symbol="assign"}
+(49) operatordecl, {name="+",symbol="plus"}
+(50) operatordecl, {name="-",symbol="minus"}
+(51) operatordecl, {name="*",symbol="mul"}
+(52) operatordecl, {name="/",symbol="div"}
+(53) operatordecl, {name="%",symbol="mod"}
+(54) operatordecl, {name="&&",symbol="and"}
+(55) operatordecl, {name="||",symbol="or"}
+(56) operatordecl, {name="&",symbol="bitand"}
+(57) operatordecl, {name="|",symbol="bitor"}
+(58) operatordecl, {name="<<",symbol="lsh"}
+(59) operatordecl, {name=">>",symbol="rsh"}
+(60) operatordecl, {name="~",symbol="lneg"}
+(61) operatordecl, {name="!",symbol="not"}
+(62) operatordecl, {name="()",symbol="call"}
+(63) operatordecl, {name="[]",symbol="get"}
+(64) operatordecl, {name="==",symbol="eq"}
+(65) operatordecl, {name="!=",symbol="ne"}
+(66) operatordecl, {name=">=",symbol="ge"}
+(67) operatordecl, {name="<=",symbol="le"}
+(68) operatordecl, {name=">",symbol="gt"}
+(69) operatordecl, {name="<",symbol="lt"}
+(70) callablebody
+(71) main_procdef
+(72) paramdeflist
+(73) paramdef
+(74) codeblock
+(75) definition
+(76) free_expression
+(77) return_value
+(78) delete
+(79) conditional_if
+(80) conditional_if_else
+(81) conditional_while
+(82) vardef
+(83) vardef_assign
+(84) vardef_array_assign
+(85) vardef_array
+(86) structure
+(87) allocate
+(88) typecast
+(89) variable
+(90) constant, "constexpr bool"
+(91) constant, "constexpr uint"
+(92) constant, "constexpr int"
+(93) constant, "constexpr float"
+(94) null, "constexpr float"
+(95) string_constant, "constexpr float"
+(96) char_constant, "constexpr float"
+(97) operator, "="
+(98) assign_operator, "+"
+(99) assign_operator, "-"
+(100) assign_operator, "*"
+(101) assign_operator, "/"
+(102) assign_operator, "^"
+(103) assign_operator, "&"
+(104) assign_operator, "%"
+(105) assign_operator, "&&"
+(106) assign_operator, "||"
+(107) assign_operator, "|"
+(108) assign_operator, "<<"
+(109) assign_operator, ">>"
+(110) operator, "||"
+(111) operator, "&&"
+(112) operator, "|"
+(113) operator, "^"
+(114) operator, "&"
+(115) operator, "=="
+(116) operator, "!="
+(117) operator, "<="
+(118) operator, "<"
+(119) operator, ">="
+(120) operator, ">"
+(121) operator, "+"
+(122) operator, "-"
+(123) operator, "~"
+(124) operator, "!"
+(125) operator, "*"
+(126) operator, "/"
+(127) operator, "%"
+(128) operator, "<<"
+(129) operator, ">>"
+(130) member
+(131) operator, "->"
+(132) operator, "()"
+(133) operator, "[]"
+(134) rep_operator, "->"
+(135) count
 
 -- Action table:
 [1]
@@ -20727,8 +20728,8 @@ expressionlist = expression
 	"..." => Shift goto 302
 [235]
 	IDENT => Shift goto 303
-	')' => Reduce #1 extern_parameters
-	"..." => Reduce #1 extern_parameters
+	')' => Reduce #1 extern_parameters call extern_paramdef
+	"..." => Reduce #1 extern_parameters call extern_paramdef
 	',' => Shift goto 304
 [236]
 	'(' => Reduce #3 iexpression call rep_operator "->"
@@ -22536,8 +22537,8 @@ expressionlist = expression
 [302]
 	')' => Shift goto 329
 [303]
-	')' => Reduce #2 extern_parameters
-	"..." => Reduce #2 extern_parameters
+	')' => Reduce #2 extern_parameters call extern_paramdef
+	"..." => Reduce #2 extern_parameters call extern_paramdef
 	',' => Shift goto 330
 [304]
 	IDENT => Shift goto 17
@@ -22869,8 +22870,8 @@ expressionlist = expression
 	IDENT => Shift goto 17
 	"const" => Shift goto 18
 [331]
-	')' => Reduce #3 extern_parameters
-	"..." => Reduce #3 extern_parameters
+	')' => Reduce #3 extern_parameters call extern_paramdef
+	"..." => Reduce #3 extern_parameters call extern_paramdef
 [332]
 	BOOLEAN => Shift goto 70
 	IDENT => Shift goto 71
@@ -23116,8 +23117,8 @@ expressionlist = expression
 	"public" => Reduce #9 extern_definition call extern_procdef_vararg
 	"main" => Reduce #9 extern_definition call extern_procdef_vararg
 [348]
-	')' => Reduce #4 extern_parameters
-	"..." => Reduce #4 extern_parameters
+	')' => Reduce #4 extern_parameters call extern_paramdef
+	"..." => Reduce #4 extern_parameters call extern_paramdef
 [349]
 	'}' => Shift goto 361
 [350]

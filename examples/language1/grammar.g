@@ -35,10 +35,10 @@ extern_definition	= "extern" DQSTRING "function" IDENT typespec "(" extern_param
 			| "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";"(extern_funcdef_vararg)
 			| "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";"	(extern_procdef_vararg)
 			;
-extern_parameters 	= typespec "," extern_parameters
-			| typespec IDENT "," extern_parameters
-			| typespec
-			| typespec IDENT
+extern_parameters 	= typespec "," extern_parameters						(extern_paramdef)
+			| typespec IDENT "," extern_parameters						(extern_paramdef)
+			| typespec									(extern_paramdef)
+			| typespec IDENT								(extern_paramdef)
 			;
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε										(extern_paramdeflist)
