@@ -306,7 +306,11 @@ Exception handling and especially zero-cost exception handling is a subject of f
 
 ### How to implement generic programming with templates?
 
-Templates are a subject of further investigation in _Mewa_. I have the vague idea to define a type ```TPL<ARG1,...>``` and reductions ```TPL<ARG1,...> -> ARG1``` and for all template arguments ARGi respectively. The resulting type of the reduction is the template parameter passed. The sub with the template definition is then evaluated with these reductions in the template scope defined. Templates are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and assoziate it with a type instead of directly evaluating it.
+Templates are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and assoziate it with a type instead of directly evaluating it.
+If a template type ```TPL<A1,A2,...>``` is referenced we define a type ```T = TPL<t1,t2,...>``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
+For each template argument Ai we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. With ```T``` as context type we then call the traversal of the template class or structure.
+For functions we do not have a clear idea yet. Especially for automatic template type deduction. But as we can declare a type with the name of the template function we can do the deduction in the procedure matching the arguments to the parameters.
+
 
 <a name="cLibraryCalls"/>
 
