@@ -547,8 +547,28 @@ function defineClassConstructors( node, qualitype, descr, context)
 	end
 	instantCallable = nil
 end
-function defineInheritedInterfaces( node, context)
-	
+function defineInheritedInterfaces( node, context, contextTypeId)
+	for ii,iTypeId in ipairs(context.interfaces) do
+		local idescr = typeDescriptionMap[ iTypeId]
+		local cdescr = context.descr
+		local vmtstr = ""
+		local sep = ""
+		for mi,imethod in ipairs(idescr.methods) do
+			local mk = context.methodmap[ method.methodid]
+			if mk then
+				cmethod = context.methods[ mk]
+				vmtstr = vmtstr .. sep
+					.. utils.template_format( llvmir.control.vtableElement,
+								{interface_signature=imethod.llvmtype, class_signature=cmethod.llvmtype, symbolname=cmethod.symbol})
+				sep = ",\n\t"
+			else
+				utils.errorMessage( node.line, "Method '%s' of class '%s' not implemented as required by interface '%s'", 
+							imethod.methodname, typedb:type_name(contextTypeId), typedb:type_name(iTypeId))
+			end
+		end
+		print_section( "Auto", utils.template_format( llvmir.control.vtable,
+					{classname=cdescr.classname, interfacename=idescr.interfacename, llvmtype=vmtstr}))
+	end
 end
 function getFunctionThisType( private, const, thisType)
 	if private == true then thisType = privateTypeMap[ thisType] end
@@ -1237,7 +1257,8 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
 end
 function expandContextMethodList( descr, context)
-	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname})
+	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname, symbol=descr.symbolname})
+	context.methodmap[ descr.methodid] = #context.methods
 end
 function printFunctionDeclaration( node, descr)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -1684,7 +1705,7 @@ function typesystem.interfacedef( node, context)
 	local interfacename = getTypeDeclUniqueName( declContextTypeId, typnam)
 	local descr = utils.template_format( llvmir.interfaceTemplate, {interfacename=interfacename})
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
-	local context = {qualitype=qualitype, descr=descr, methods={}, llvmtype="", symbol=interfacename}
+	local context = {qualitype=qualitype, descr=descr, methods={}, methodmap={}, llvmtype="", symbol=interfacename}
 	local arg = utils.traverse( typedb, node, context)
 	descr.methods = context.methods
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
@@ -1698,7 +1719,7 @@ function typesystem.classdef( node, context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={},
+	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
 	                 structsize=0, llvmtype="", symbol=classname, interfaces={}}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverse( typedb, node, context, 1)
@@ -1707,7 +1728,7 @@ function typesystem.classdef( node, context)
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
-	defineInheritedInterfaces( node, context)
+	defineInheritedInterfaces( node, context, declContextTypeId)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)

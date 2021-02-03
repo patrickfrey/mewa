@@ -133,6 +133,7 @@ llvmir.classTemplate = {
 
 llvmir.interfaceTemplate = {
 	interfacename = "{interfacename}",
+	vmtname = "%{interfacename}__VMT",
 	def_local = "{out} = alloca %{interfacename}, align 8\n",
 	def_global = "{out} = internal global %{interfacename} zeroinitializer, align 8\n",
 	llvmtype = "%{interfacename}",
@@ -172,8 +173,8 @@ llvmir.control = {
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
 				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
-	vtableElement = "{interface_llvmtype} bitcast ({class_llvmtype} @{symbolname} to {interface_llvmtype})\n",
-	vtable = "{out} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT  { {llvmtype} }, comdat, align 8\n",
+	vtableElement = "{interface_signature} bitcast ({class_signature} @{symbolname} to {interface_signature})",
+	vtable = "@{classname}__VMT__{interfacename} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT { {llvmtype} }, comdat, align 8\n",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }
