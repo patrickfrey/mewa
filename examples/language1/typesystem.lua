@@ -548,13 +548,14 @@ function defineClassConstructors( node, qualitype, descr, context)
 	instantCallable = nil
 end
 function defineInheritedInterfaces( node, context, contextTypeId)
+	io.stderr:write("++++ CALL defineInheritedInterfaces " .. typedb:type_string(contextTypeId) .. "\n")
 	for ii,iTypeId in ipairs(context.interfaces) do
 		local idescr = typeDescriptionMap[ iTypeId]
 		local cdescr = context.descr
 		local vmtstr = ""
-		local sep = ""
+		local sep = "\n\t"
 		for mi,imethod in ipairs(idescr.methods) do
-			local mk = context.methodmap[ method.methodid]
+			local mk = context.methodmap[ imethod.methodid]
 			if mk then
 				cmethod = context.methods[ mk]
 				vmtstr = vmtstr .. sep
@@ -1256,9 +1257,12 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	end
 	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
 end
-function expandContextMethodList( descr, context)
+function expandContextMethodList( node, descr, context)
 	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname, symbol=descr.symbolname})
-	context.methodmap[ descr.methodid] = #context.methods
+	if not descr.private then
+		if context.methodmap[ descr.methodid] then utils.errorMessage( node.line, "Duplicate definition of method '%s'", descr.methodname) end
+		context.methodmap[ descr.methodid] = #context.methods
+	end
 end
 function printFunctionDeclaration( node, descr)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -1282,7 +1286,7 @@ function defineCallable( node, descr, context)
 	if context and context.qualitype then
 		local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 		expandDescrClassCallTemplateParameter( descr, context)
-		expandContextMethodList( descr, context)
+		expandContextMethodList( node, descr, context)
 		defineCallableType( node, descr, thisTypeId, context)
 	else
 		expandDescrFreeCallTemplateParameter( descr, context)
@@ -1295,7 +1299,7 @@ function defineOperatorType( node, descr, context)
 end
 function defineOperator( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
-	expandContextMethodList( descr, context)
+	expandContextMethodList( node, descr, context)
 	defineOperatorType( node, descr, context)
 end
 function defineExternCallable( node, descr)
@@ -1304,7 +1308,7 @@ function defineExternCallable( node, descr)
 end
 function defineInterfaceCallable( node, descr, context)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
-	expandContextMethodList( descr, context)
+	expandContextMethodList( node, descr, context)
 	expandContextLlvmMember( descr, context)
 end
 function defineCallableBodyContext( node, context, descr)

@@ -32,8 +32,13 @@ Reduce #5 to interfacedefinition by token "class" at line 8 in state 195, call i
 Reduce #1 to free_definition by token "class" at line 8 in state 12, call definition 1, goto 7
 Shift token "class" at line 8 in state 7, goto 22
 Shift token IDENT = "Point" at line 8 in state 22, goto 43
-Shift token '{' at line 9 in state 43, goto 59
-Shift token "public" at line 10 in state 59, goto 24
+Shift token ':' at line 8 in state 43, goto 60
+Shift token IDENT = "Object" at line 8 in state 60, goto 17
+Reduce #1 to typename by token '{' at line 9 in state 17, goto 39
+Reduce #1 to typepath by token '{' at line 9 in state 39, call typespec "", goto 122
+Reduce #1 to inheritlist by token '{' at line 9 in state 122, call inheritdef 1, goto 123
+Shift token '{' at line 9 in state 123, goto 231
+Shift token "public" at line 10 in state 231, goto 24
 Reduce #1 to linkage by token "constructor" at line 10 in state 24, call linkage {private=false,linkage="external"}, goto 116
 Shift token "constructor" at line 10 in state 116, goto 227
 Shift token '(' at line 10 in state 227, goto 296
@@ -206,9 +211,9 @@ Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
 Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
 Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
 Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 224
-Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 110
-Shift token '}' at line 34 in state 110, goto 223
-Reduce #5 to classdefinition by token "class" at line 36 in state 223, call classdef, goto 13
+Reduce #2 to class_definitionlist by token '}' at line 34 in state 224, goto 299
+Shift token '}' at line 34 in state 299, goto 325
+Reduce #7 to classdefinition by token "class" at line 36 in state 325, call classdef, goto 13
 Reduce #1 to free_definition by token "class" at line 36 in state 13, call definition 1, goto 7
 Shift token "class" at line 36 in state 7, goto 22
 Shift token IDENT = "Line" at line 36 in state 22, goto 43
@@ -437,6 +442,26 @@ Lua call result [1]
                 {
                   arg = {
                     {
+                      line = 8,
+                      name = "IDENT",
+                      value = "Object"}},
+                  call = {
+                    name = "typespec ",
+                    obj = "",
+                    proc = <function>},
+                  line = 8,
+                  step = 1}},
+              call = {
+                name = "inheritdef 1",
+                obj = 1,
+                proc = <function>},
+              line = 8,
+              step = 2},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
                       arg = {},
                       call = {
                         name = "linkage {private=false,linkage="external"}",
@@ -445,7 +470,7 @@ Lua call result [1]
                           private = false},
                         proc = <function>},
                       line = 8,
-                      step = 1},
+                      step = 2},
                     {
                       arg = {
                         {
@@ -463,7 +488,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 10,
-                                  step = 1},
+                                  step = 2},
                                 {
                                   line = 10,
                                   name = "IDENT",
@@ -472,7 +497,7 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 10,
-                              step = 1},
+                              step = 2},
                             {
                               arg = {
                                 {
@@ -486,7 +511,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 10,
-                                  step = 1},
+                                  step = 2},
                                 {
                                   line = 10,
                                   name = "IDENT",
@@ -495,12 +520,12 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 10,
-                              step = 1}},
+                              step = 2}},
                           call = {
                             name = "paramdeflist",
                             proc = <function>},
                           line = 10,
-                          step = 1},
+                          step = 2},
                         {
                           arg = {
                             {
@@ -517,7 +542,7 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 12,
-                                      step = 1},
+                                      step = 2},
                                     {
                                       arg = {
                                         {
@@ -528,18 +553,18 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 12,
-                                      step = 1}},
+                                      step = 2}},
                                   call = {
                                     name = "operator =",
                                     obj = "=",
                                     proc = <function>},
                                   line = 12,
-                                  step = 1}},
+                                  step = 2}},
                               call = {
                                 name = "free_expression",
                                 proc = <function>},
                               line = 12,
-                              step = 1},
+                              step = 2},
                             {
                               arg = {
                                 {
@@ -556,14 +581,14 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 13,
-                                          step = 1},
+                                          step = 2},
                                         {
                                           arg = {},
                                           call = {
                                             name = "count",
                                             proc = <function>},
                                           line = 13,
-                                          step = 1},
+                                          step = 2},
                                         {
                                           line = 13,
                                           name = "IDENT",
@@ -573,7 +598,7 @@ Lua call result [1]
                                         obj = "->",
                                         proc = <function>},
                                       line = 13,
-                                      step = 1},
+                                      step = 2},
                                     {
                                       arg = {
                                         {
@@ -584,41 +609,41 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 13,
-                                      step = 1}},
+                                      step = 2}},
                                   call = {
                                     name = "operator =",
                                     obj = "=",
                                     proc = <function>},
                                   line = 13,
-                                  step = 1}},
+                                  step = 2}},
                               call = {
                                 name = "free_expression",
                                 proc = <function>},
                               line = 13,
-                              step = 1}},
+                              step = 2}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
                           line = 13,
-                          step = 1}},
+                          step = 2}},
                       call = {
                         name = "callablebody",
                         proc = <function>},
                       line = 13,
                       scope = {
-                        1,
-                        2}}},
+                        2,
+                        3}}},
                   call = {
                     name = "constructordef",
                     proc = <function>},
                   line = 13,
-                  step = 2}},
+                  step = 3}},
               call = {
                 name = "definition 2",
                 obj = 2,
                 proc = <function>},
               line = 13,
-              step = 2},
+              step = 3},
             {
               arg = {
                 {
@@ -632,7 +657,7 @@ Lua call result [1]
                           private = false},
                         proc = <function>},
                       line = 13,
-                      step = 2},
+                      step = 3},
                     {
                       arg = {},
                       call = {
@@ -642,7 +667,7 @@ Lua call result [1]
                           symbol = "assign"},
                         proc = <function>},
                       line = 13,
-                      step = 2},
+                      step = 3},
                     {
                       arg = {
                         {
@@ -660,7 +685,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 16,
-                                  step = 2},
+                                  step = 3},
                                 {
                                   line = 16,
                                   name = "IDENT",
@@ -669,7 +694,7 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 16,
-                              step = 2},
+                              step = 3},
                             {
                               arg = {
                                 {
@@ -683,7 +708,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 16,
-                                  step = 2},
+                                  step = 3},
                                 {
                                   line = 16,
                                   name = "IDENT",
@@ -692,12 +717,12 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 16,
-                              step = 2}},
+                              step = 3}},
                           call = {
                             name = "paramdeflist",
                             proc = <function>},
                           line = 16,
-                          step = 2},
+                          step = 3},
                         {
                           arg = {
                             {
@@ -716,14 +741,14 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 18,
-                                          step = 2},
+                                          step = 3},
                                         {
                                           arg = {},
                                           call = {
                                             name = "count",
                                             proc = <function>},
                                           line = 18,
-                                          step = 2},
+                                          step = 3},
                                         {
                                           line = 18,
                                           name = "IDENT",
@@ -733,7 +758,7 @@ Lua call result [1]
                                         obj = "->",
                                         proc = <function>},
                                       line = 18,
-                                      step = 2},
+                                      step = 3},
                                     {
                                       arg = {
                                         {
@@ -744,18 +769,18 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 18,
-                                      step = 2}},
+                                      step = 3}},
                                   call = {
                                     name = "operator =",
                                     obj = "=",
                                     proc = <function>},
                                   line = 18,
-                                  step = 2}},
+                                  step = 3}},
                               call = {
                                 name = "free_expression",
                                 proc = <function>},
                               line = 18,
-                              step = 2},
+                              step = 3},
                             {
                               arg = {
                                 {
@@ -770,7 +795,7 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 19,
-                                      step = 2},
+                                      step = 3},
                                     {
                                       arg = {
                                         {
@@ -781,43 +806,43 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 19,
-                                      step = 2}},
+                                      step = 3}},
                                   call = {
                                     name = "operator =",
                                     obj = "=",
                                     proc = <function>},
                                   line = 19,
-                                  step = 2}},
+                                  step = 3}},
                               call = {
                                 name = "free_expression",
                                 proc = <function>},
                               line = 19,
-                              step = 2}},
+                              step = 3}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
                           line = 19,
-                          step = 2}},
+                          step = 3}},
                       call = {
                         name = "callablebody",
                         proc = <function>},
                       line = 19,
                       scope = {
-                        2,
-                        3}}},
+                        3,
+                        4}}},
                   call = {
                     name = "operator_procdef {const=false}",
                     obj = {
                       const = false},
                     proc = <function>},
                   line = 19,
-                  step = 3}},
+                  step = 4}},
               call = {
                 name = "definition 2",
                 obj = 2,
                 proc = <function>},
               line = 19,
-              step = 3},
+              step = 4},
             {
               arg = {
                 {
@@ -831,7 +856,7 @@ Lua call result [1]
                           private = false},
                         proc = <function>},
                       line = 19,
-                      step = 3},
+                      step = 4},
                     {
                       line = 22,
                       name = "IDENT",
@@ -847,7 +872,7 @@ Lua call result [1]
                         obj = "",
                         proc = <function>},
                       line = 22,
-                      step = 3},
+                      step = 4},
                     {
                       arg = {
                         {
@@ -856,7 +881,7 @@ Lua call result [1]
                             name = "paramdeflist",
                             proc = <function>},
                           line = 22,
-                          step = 3},
+                          step = 4},
                         {
                           arg = {
                             {
@@ -871,37 +896,37 @@ Lua call result [1]
                                     name = "variable",
                                     proc = <function>},
                                   line = 24,
-                                  step = 3}},
+                                  step = 4}},
                               call = {
                                 name = "return_value",
                                 proc = <function>},
                               line = 24,
-                              step = 4}},
+                              step = 5}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
                           line = 24,
-                          step = 4}},
+                          step = 5}},
                       call = {
                         name = "callablebody",
                         proc = <function>},
                       line = 24,
                       scope = {
-                        3,
-                        5}}},
+                        4,
+                        6}}},
                   call = {
                     name = "funcdef {const=true}",
                     obj = {
                       const = true},
                     proc = <function>},
                   line = 24,
-                  step = 5}},
+                  step = 6}},
               call = {
                 name = "definition 2",
                 obj = 2,
                 proc = <function>},
               line = 24,
-              step = 5},
+              step = 6},
             {
               arg = {
                 {
@@ -915,7 +940,7 @@ Lua call result [1]
                           private = false},
                         proc = <function>},
                       line = 24,
-                      step = 5},
+                      step = 6},
                     {
                       line = 27,
                       name = "IDENT",
@@ -931,7 +956,7 @@ Lua call result [1]
                         obj = "",
                         proc = <function>},
                       line = 27,
-                      step = 5},
+                      step = 6},
                     {
                       arg = {
                         {
@@ -940,7 +965,7 @@ Lua call result [1]
                             name = "paramdeflist",
                             proc = <function>},
                           line = 27,
-                          step = 5},
+                          step = 6},
                         {
                           arg = {
                             {
@@ -957,14 +982,14 @@ Lua call result [1]
                                         name = "variable",
                                         proc = <function>},
                                       line = 29,
-                                      step = 5},
+                                      step = 6},
                                     {
                                       arg = {},
                                       call = {
                                         name = "count",
                                         proc = <function>},
                                       line = 29,
-                                      step = 5},
+                                      step = 6},
                                     {
                                       line = 29,
                                       name = "IDENT",
@@ -974,37 +999,37 @@ Lua call result [1]
                                     obj = "->",
                                     proc = <function>},
                                   line = 29,
-                                  step = 5}},
+                                  step = 6}},
                               call = {
                                 name = "return_value",
                                 proc = <function>},
                               line = 29,
-                              step = 6}},
+                              step = 7}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
                           line = 29,
-                          step = 6}},
+                          step = 7}},
                       call = {
                         name = "callablebody",
                         proc = <function>},
                       line = 29,
                       scope = {
-                        5,
-                        7}}},
+                        6,
+                        8}}},
                   call = {
                     name = "funcdef {const=true}",
                     obj = {
                       const = true},
                     proc = <function>},
                   line = 29,
-                  step = 7}},
+                  step = 8}},
               call = {
                 name = "definition 2",
                 obj = 2,
                 proc = <function>},
               line = 29,
-              step = 7},
+              step = 8},
             {
               arg = {
                 {
@@ -1020,7 +1045,7 @@ Lua call result [1]
                         obj = "",
                         proc = <function>},
                       line = 32,
-                      step = 7},
+                      step = 8},
                     {
                       line = 32,
                       name = "IDENT",
@@ -1029,13 +1054,13 @@ Lua call result [1]
                     name = "vardef",
                     proc = <function>},
                   line = 32,
-                  step = 8}},
+                  step = 9}},
               call = {
                 name = "definition 1",
                 obj = 1,
                 proc = <function>},
               line = 32,
-              step = 8},
+              step = 9},
             {
               arg = {
                 {
@@ -1051,7 +1076,7 @@ Lua call result [1]
                         obj = "",
                         proc = <function>},
                       line = 33,
-                      step = 8},
+                      step = 9},
                     {
                       line = 33,
                       name = "IDENT",
@@ -1060,24 +1085,24 @@ Lua call result [1]
                     name = "vardef",
                     proc = <function>},
                   line = 33,
-                  step = 9}},
+                  step = 10}},
               call = {
                 name = "definition 1",
                 obj = 1,
                 proc = <function>},
               line = 33,
-              step = 9}},
+              step = 10}},
           call = {
             name = "classdef",
             proc = <function>},
           line = 33,
-          step = 10}},
+          step = 11}},
       call = {
         name = "definition 1",
         obj = 1,
         proc = <function>},
       line = 33,
-      step = 10},
+      step = 11},
     {
       arg = {
         {
@@ -1099,13 +1124,13 @@ Lua call result [1]
                     obj = "",
                     proc = <function>},
                   line = 36,
-                  step = 10}},
+                  step = 11}},
               call = {
                 name = "inheritdef 1",
                 obj = 1,
                 proc = <function>},
               line = 36,
-              step = 11},
+              step = 12},
             {
               arg = {
                 {
@@ -1119,7 +1144,7 @@ Lua call result [1]
                           private = false},
                         proc = <function>},
                       line = 36,
-                      step = 11},
+                      step = 12},
                     {
                       arg = {
                         {
@@ -1137,7 +1162,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 38,
-                                  step = 11},
+                                  step = 12},
                                 {
                                   line = 38,
                                   name = "IDENT",
@@ -1146,7 +1171,7 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 38,
-                              step = 11},
+                              step = 12},
                             {
                               arg = {
                                 {
@@ -1160,7 +1185,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 38,
-                                  step = 11},
+                                  step = 12},
                                 {
                                   line = 38,
                                   name = "IDENT",
@@ -1169,12 +1194,12 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 38,
-                              step = 11}},
+                              step = 12}},
                           call = {
                             name = "paramdeflist",
                             proc = <function>},
                           line = 38,
-                          step = 11},
+                          step = 12},
                         {
                           arg = {
                             {
@@ -1193,14 +1218,14 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 40,
-                                          step = 11},
+                                          step = 12},
                                         {
                                           arg = {},
                                           call = {
                                             name = "count",
                                             proc = <function>},
                                           line = 40,
-                                          step = 11},
+                                          step = 12},
                                         {
                                           line = 40,
                                           name = "IDENT",
@@ -1210,7 +1235,7 @@ Lua call result [1]
                                         obj = "->",
                                         proc = <function>},
                                       line = 40,
-                                      step = 11},
+                                      step = 12},
                                     {
                                       arg = {
                                         {
@@ -1223,7 +1248,7 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 40,
-                                          step = 11},
+                                          step = 12},
                                         {
                                           arg = {
                                             {
@@ -1234,46 +1259,46 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 40,
-                                          step = 11}},
+                                          step = 12}},
                                       call = {
                                         name = "structure",
                                         proc = <function>},
                                       line = 40,
-                                      step = 11}},
+                                      step = 12}},
                                   call = {
                                     name = "operator =",
                                     obj = "=",
                                     proc = <function>},
                                   line = 40,
-                                  step = 11}},
+                                  step = 12}},
                               call = {
                                 name = "free_expression",
                                 proc = <function>},
                               line = 40,
-                              step = 11}},
+                              step = 12}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
                           line = 40,
-                          step = 11}},
+                          step = 12}},
                       call = {
                         name = "callablebody",
                         proc = <function>},
                       line = 40,
                       scope = {
-                        11,
-                        12}}},
+                        12,
+                        13}}},
                   call = {
                     name = "constructordef",
                     proc = <function>},
                   line = 40,
-                  step = 12}},
+                  step = 13}},
               call = {
                 name = "definition 2",
                 obj = 2,
                 proc = <function>},
               line = 40,
-              step = 12},
+              step = 13},
             {
               arg = {
                 {
@@ -1287,7 +1312,7 @@ Lua call result [1]
                           private = false},
                         proc = <function>},
                       line = 40,
-                      step = 12},
+                      step = 13},
                     {
                       line = 43,
                       name = "IDENT",
@@ -1309,7 +1334,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 43,
-                                  step = 12},
+                                  step = 13},
                                 {
                                   line = 43,
                                   name = "IDENT",
@@ -1318,7 +1343,7 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 43,
-                              step = 12},
+                              step = 13},
                             {
                               arg = {
                                 {
@@ -1332,7 +1357,7 @@ Lua call result [1]
                                     obj = "",
                                     proc = <function>},
                                   line = 43,
-                                  step = 12},
+                                  step = 13},
                                 {
                                   line = 43,
                                   name = "IDENT",
@@ -1341,12 +1366,12 @@ Lua call result [1]
                                 name = "paramdef",
                                 proc = <function>},
                               line = 43,
-                              step = 12}},
+                              step = 13}},
                           call = {
                             name = "paramdeflist",
                             proc = <function>},
                           line = 43,
-                          step = 12},
+                          step = 13},
                         {
                           arg = {
                             {
@@ -1365,14 +1390,14 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 45,
-                                          step = 12},
+                                          step = 13},
                                         {
                                           arg = {},
                                           call = {
                                             name = "count",
                                             proc = <function>},
                                           line = 45,
-                                          step = 12},
+                                          step = 13},
                                         {
                                           line = 45,
                                           name = "IDENT",
@@ -1382,7 +1407,7 @@ Lua call result [1]
                                         obj = "->",
                                         proc = <function>},
                                       line = 45,
-                                      step = 12},
+                                      step = 13},
                                     {
                                       arg = {
                                         {
@@ -1395,7 +1420,7 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 45,
-                                          step = 12},
+                                          step = 13},
                                         {
                                           arg = {
                                             {
@@ -1406,59 +1431,59 @@ Lua call result [1]
                                             name = "variable",
                                             proc = <function>},
                                           line = 45,
-                                          step = 12}},
+                                          step = 13}},
                                       call = {
                                         name = "structure",
                                         proc = <function>},
                                       line = 45,
-                                      step = 12}},
+                                      step = 13}},
                                   call = {
                                     name = "operator =",
                                     obj = "=",
                                     proc = <function>},
                                   line = 45,
-                                  step = 12}},
+                                  step = 13}},
                               call = {
                                 name = "free_expression",
                                 proc = <function>},
                               line = 45,
-                              step = 12}},
+                              step = 13}},
                           call = {
                             name = "codeblock",
                             proc = <function>},
                           line = 45,
-                          step = 12}},
+                          step = 13}},
                       call = {
                         name = "callablebody",
                         proc = <function>},
                       line = 45,
                       scope = {
-                        12,
-                        13}}},
+                        13,
+                        14}}},
                   call = {
                     name = "procdef {const=false}",
                     obj = {
                       const = false},
                     proc = <function>},
                   line = 45,
-                  step = 13}},
+                  step = 14}},
               call = {
                 name = "definition 2",
                 obj = 2,
                 proc = <function>},
               line = 45,
-              step = 13}},
+              step = 14}},
           call = {
             name = "classdef",
             proc = <function>},
           line = 45,
-          step = 14}},
+          step = 15}},
       call = {
         name = "definition 1",
         obj = 1,
         proc = <function>},
       line = 45,
-      step = 14},
+      step = 15},
     {
       arg = {
         {
@@ -1476,26 +1501,26 @@ Lua call result [1]
                     obj = "constexpr uint",
                     proc = <function>},
                   line = 50,
-                  step = 14}},
+                  step = 15}},
               call = {
                 name = "return_value",
                 proc = <function>},
               line = 50,
-              step = 15}},
+              step = 16}},
           call = {
             name = "codeblock",
             proc = <function>},
           line = 50,
-          step = 15}},
+          step = 16}},
       call = {
         name = "main_procdef",
         proc = <function>},
       line = 50,
       scope = {
-        14,
-        16}}},
+        15,
+        17}}},
   call = {
     name = "program",
     proc = <function>},
   line = 50,
-  step = 16}
+  step = 17}

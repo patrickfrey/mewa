@@ -174,7 +174,8 @@ llvmir.control = {
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
 				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
 	vtableElement = "{interface_signature} bitcast ({class_signature} @{symbolname} to {interface_signature})",
-	vtable = "@{classname}__VMT__{interfacename} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT { {llvmtype} }, comdat, align 8\n",
+	vtable = "${classname}__VMT__{interfacename} = comdat any\n"
+		.. "@{classname}__VMT__{interfacename} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT { {llvmtype} }, comdat, align 8\n",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }
