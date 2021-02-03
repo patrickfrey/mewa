@@ -15,6 +15,10 @@ br label %end
 end:
 ret void
 }
+$Point__1__VMT__Object__1 = comdat any
+@Point__1__VMT__Object__1 = linkonce_odr dso_local unnamed_addr constant %Object__1__VMT { 
+	i32(i8*)* bitcast (i32(%Point__1*)* @__C_Point__1__x to i32(i8*)*),
+	i32(i8*)* bitcast (i32(%Point__1*)* @__C_Point__1__y to i32(i8*)*) }, comdat, align 8
 define private dso_local void @__dtor_Line__1( %Line__1* %ptr) alwaysinline {
 enter:
 %r1 = getelementptr inbounds %Line__1, %Line__1* %ptr, i32 0, i32 0
