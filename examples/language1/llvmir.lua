@@ -137,7 +137,7 @@ llvmir.interfaceTemplate = {
 	def_global = "{out} = internal global %{interfacename} zeroinitializer, align 8\n",
 	llvmtype = "%{interfacename}",
 	scalar = false,
-	class = "class",
+	class = "interface",
 	align = 8,
 	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
@@ -159,12 +159,12 @@ llvmir.control = {
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
 	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
-				.. "{3} = getelementptr inbounds {rtype}{signature}, {rtype}{signature}* {2}, i64 0, i64 0\n"
-				.. "{out} = call {rtype} {3}( {callargstr})\n",
+				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
+				.. "{out} = {llvmtype} {3}( {callargstr})\n",
 	interfaceProcedureCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
-				.. "{3} = getelementptr inbounds {rtype}{signature}, {rtype}{signature}* {2}, i64 0, i64 0\n"
-				.. "call void{signature} {3}( {callargstr})\n",
+				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
+				.. "call {rtype} {3}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
@@ -172,6 +172,8 @@ llvmir.control = {
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
 				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
+	vtableElement = "{interface_llvmtype} bitcast ({class_llvmtype} @{symbolname} to {interface_llvmtype})\n",
+	vtable = "{out} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT  { {llvmtype} }, comdat, align 8\n",
 	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
 	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
 }

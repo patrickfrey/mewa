@@ -547,7 +547,9 @@ function defineClassConstructors( node, qualitype, descr, context)
 	end
 	instantCallable = nil
 end
-
+function defineInheritedInterfaces( node, context)
+	
+end
 function getFunctionThisType( private, const, thisType)
 	if private == true then thisType = privateTypeMap[ thisType] end
 	if const == true then thisType = constTypeMap[ thisType] end
@@ -766,6 +768,9 @@ function defineVariable( node, context, typeId, name, initVal)
 		defineVariableMember( node, context, typeId, name, context.private)
 	end
 end
+function expandContextLlvmMember( descr, context)
+	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
+end
 function defineVariableMember( node, context, typeId, name, private)
 	local descr = typeDescriptionMap[ typeId]
 	local qualisep = typeQualiSepMap[ typeId]
@@ -785,7 +790,7 @@ function defineVariableMember( node, context, typeId, name, private)
 		load = load_val
 	}
 	table.insert( context.members, member)
-	if context.llvmtype ~= "" then context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype else context.llvmtype = descr.llvmtype end
+	expandContextLlvmMember( descr, context)
 	local r_typeId = referenceTypeMap[ typeId]
 	local c_r_typeId = constTypeMap[ r_typeId]
 	if private == true then
@@ -801,7 +806,7 @@ function defineReductionToMember( objTypeId, name)
 	memberTypeId = typedb:get_type( objTypeId, name)
 	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, 0.125/32)
 end
-function defineInheritance( context, name, private)
+function defineClassInheritanceReductions( context, name, private)
 	if private == true then
 		defineReductionToMember( context.qualitype.priv_rval, name)
 		defineReductionToMember( context.qualitype.priv_c_rval, name)
@@ -1141,7 +1146,7 @@ function tryApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) else return nil end
 end
-function getSignatureString( name, args, context)
+function getTargetFunctionIdentifierString( name, args, context)
 	if not context then
 		return utils.uniqueName( name .. "__")
 	else
@@ -1150,9 +1155,24 @@ function getSignatureString( name, args, context)
 		return utils.encodeName(  pstr)
 	end
 end
-function getParameterString( args)
+function getInterfaceMethodIdentifierString( symbol, args)
+	local pstr = symbol
+	for ai,arg in ipairs(args) do pstr = pstr .. "__" .. arg.llvmtype end
+	return utils.encodeName(  pstr)
+end
+function getInterfaceMethodNameString( name, args)
+	local pstr = name
+	for ai,arg in ipairs(args) do local sep; if ai == 1 then sep = "(" else sep = ", " end; pstr = pstr .. sep .. typedb:type_string(arg.type) end
+	return pstr .. ")"
+end
+function getDeclarationLlvmParameterString( args)
 	local rt = ""
 	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype .. " " .. arg.reg else rt = rt .. ", " .. arg.llvmtype .. " " .. arg.reg end end
+	return rt
+end
+function getDeclarationLlvmParameterTypeString( args)
+	local rt = ""
+	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype else rt = rt .. ", " .. arg.llvmtype end end
 	return rt
 end
 function getThisParameterString( context, args)
@@ -1161,11 +1181,6 @@ function getThisParameterString( context, args)
 		rt = typeDescriptionMap[ context.qualitype.pval].llvmtype .. " %ths"
 		if #args >= 1 then rt = rt .. ", " end
 	end
-	return rt
-end
-function getParameterLlvmTypeString( args)
-	local rt = ""
-	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype else rt = rt .. ", " .. arg.llvmtype end end
 	return rt
 end
 function getParameterTypeList( args)
@@ -1185,28 +1200,44 @@ function getTypeDeclUniqueName( contextTypeId, typnam)
 end
 function expandDescrCallTemplateParameter( descr, context)
 	descr.thisstr = getThisParameterString( context, descr.param)
-	descr.paramstr = getParameterString( descr.param)
-	descr.symbolname = getSignatureString( descr.symbol, descr.param, context)
+	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
+	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
+	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, context)
 	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+end
+function expandDescrClassCallTemplateParameter( descr, context)
+	expandDescrCallTemplateParameter( descr, context)
+	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
+	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param)
+	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
+	descr.llvmtype = descr.rtype .. "(%" .. context.symbol .. "*" .. sep .. descr.argstr .. ")*"
 end
 function expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.argstr = getParameterLlvmTypeString( descr.param)
+	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
+	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.signature = "(i8*" .. sep .. descr.argstr .. ")"
-	descr.llvmtype = descr.rtype .. descr.signature .. "*"
+	descr.llvmtype = descr.rtype .. "(i8*" .. sep .. descr.argstr .. ")*"
+end
+function expandDescrFreeCallTemplateParameter( descr, context)
+	expandDescrCallTemplateParameter( descr, context)
+	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
 end
 function expandDescrExternCallTemplateParameter( descr, context)
-	descr.argstr = getParameterLlvmTypeString( descr.param)
+	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
 	if descr.externtype == "C" then
 		descr.symbolname = descr.name
 	else
 		utils.errorMessage( node.line, "Unknown extern call type \"%s\" (must be one of {\"C\"})", descr.externtype)
 	end
+	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
 	if descr.vararg then
 		descr.signature = "(" .. descr.argstr .. ", ...)"
 	end
-	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
+end
+function expandContextMethodList( descr, context)
+	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname})
 end
 function printFunctionDeclaration( node, descr)
 	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
@@ -1216,37 +1247,44 @@ function printExternFunctionDeclaration( node, descr)
 	print( "\n" .. utils.constructor_format( declfmt, descr))
 end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
-	local callfmt
+	local callfmt	
 	callfmt = utils.template_format( descr.call, descr)
 	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
-function defineCallableType( node, descr, context)
-	local thisTypeId = 0; if context and context.qualitype then thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
+function defineCallableType( node, descr, thisTypeId, context)
 	local callableContextTypeId = typedb:get_type( thisTypeId, descr.name)
 	if not callableContextTypeId then callableContextTypeId = typedb:def_type( thisTypeId, descr.name) end
 	defineFunctionCall( thisTypeId, callableContextTypeId, "()", descr)
 end
 function defineCallable( node, descr, context)
-	expandDescrCallTemplateParameter( descr, context)
-	defineCallableType( node, descr, context)
+	if context and context.qualitype then
+		local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+		expandDescrClassCallTemplateParameter( descr, context)
+		expandContextMethodList( descr, context)
+		defineCallableType( node, descr, thisTypeId, context)
+	else
+		expandDescrFreeCallTemplateParameter( descr, context)
+		defineCallableType( node, descr, 0, context)
+	end
 end
 function defineOperatorType( node, descr, context)
 	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 end
 function defineOperator( node, descr, context)
-	expandDescrCallTemplateParameter( descr, context)
+	expandDescrClassCallTemplateParameter( descr, context)
+	expandContextMethodList( descr, context)
 	defineOperatorType( node, descr, context)
 end
 function defineExternCallable( node, descr)
 	expandDescrExternCallTemplateParameter( descr, context)
-	defineCallableType( node, descr, nil)
+	defineCallableType( node, descr, 0, nil)
 end
 function defineInterfaceCallable( node, descr, context)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
-	table.insert( context.methods, {llvmtype=descr.llvmtype})
-	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype .. ", " .. descr.llvmtype end
+	expandContextMethodList( descr, context)
+	expandContextLlvmMember( descr, context)
 end
 function defineCallableBodyContext( node, context, descr)
 	local prev_scope = typedb:scope( node.scope)
@@ -1660,7 +1698,8 @@ function typesystem.classdef( node, context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, structsize=0, llvmtype="", operators={}, symbol=classname}
+	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={},
+	                 structsize=0, llvmtype="", symbol=classname, interfaces={}}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverse( typedb, node, context, 1)
 	utils.traverse( typedb, node, context, 2)
@@ -1668,22 +1707,25 @@ function typesystem.classdef( node, context)
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
+	defineInheritedInterfaces( node, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		local typeId = arg[1]
-		local typnam = typedb:type_name(typeId)
-		local private = false
-		defineVariableMember( node, context, typeId, typnam, private)
-		defineInheritance( context, typnam, private)
-		if #node.arg > 1 then
-			local next = utils.traverseRange( typedb, node, {2,2}, context)
-			return {typeId, next[2]}
+		local descr = typeDescriptionMap[ typeId]
+		if descr.class == "class" then
+			local typnam = typedb:type_name(typeId)
+			local private = false
+			defineVariableMember( node, context, typeId, typnam, private)
+			defineClassInheritanceReductions( context, typnam, private)
+		elseif descr.class == "interface" then
+			table.insert( context.interfaces, typeId)
 		else
-			return {typeId}
+			utils.errorMessage( node.line, "Inheritance only allowed from class or interface, not from '%s'", descr.class)
 		end
+		if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, pass_selected) end
 	end
 end
 function typesystem.main_procdef( node)

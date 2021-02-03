@@ -26,6 +26,10 @@ public:
 	{
 		m_ptr = o.m_ptr;
 	}
+	virtual float xxx( int p1, float p2) const
+	{
+		return p1 + p2;
+	}
 	~A()
 	{
 		freeptr( m_ptr);
