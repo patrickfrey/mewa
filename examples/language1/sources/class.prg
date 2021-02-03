@@ -5,7 +5,7 @@ interface Object
 	function y int() const;
 }
 
-class Point
+class Point :Object
 {
 	public constructor( int x_, int y_)
 	{
