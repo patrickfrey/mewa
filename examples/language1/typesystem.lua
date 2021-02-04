@@ -54,7 +54,7 @@ function getCallableInstance()
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.out,constructor.code,(constructor.alloc or "") else return tostring(constructor),"","" end
+	if type(constructor) == "table" then return constructor.out,(constructor.code or ""),(constructor.alloc or "") else return tostring(constructor),"","" end
 end
 function constructorStruct( out, code, alloc)
 	return {out=out, code=code, alloc=alloc}
@@ -101,7 +101,8 @@ end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
 function callConstructor( fmt)
 	local function buildArguments( out, this_code, this_inp, args)
-		local code, subst = this_code, {out = out, this = this_inp}
+		local code = this_code
+		local subst = {out = out, this = this_inp}
 		if args then
 			for ii=1,#args do
 				local arg_inp,arg_code = constructorParts( args[ ii])
@@ -109,7 +110,7 @@ function callConstructor( fmt)
 				subst[ "arg" .. ii] = arg_inp
 			end
 		end
-		return code, subst
+		return code,subst
 	end
 	return function( this, args)
 		local callable = getCallableInstance()
