@@ -54,22 +54,36 @@ function getCallableInstance()
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.code or "",constructor.out else return "",tostring(constructor) end
+	if type(constructor) == "table" then return constructor.out,constructor.code,constructor.alloc or "" else return tostring(constructor),"","" end
+end
+function constructorStruct( out, code, alloc)
+	return {out=out, code=code, alloc=alloc}
+end
+function constructorStructEmpty()
+	return {code=""}
+end
+function typeConstructorStruct( type, out, code, alloc)
+	return {type=type, constructor=constructorStruct( out, code, alloc)}
+end
+-- Constructor of a single constant value without code
+function constConstructor( val)
+	return function() return {out=val} end
 end
 -- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
 function convConstructor( fmt)
 	return function( constructor)
 		local callable = getCallableInstance()
 		local out = callable.register()
-		local code,inp = constructorParts( constructor)
-		return {code = code .. utils.constructor_format( fmt, {inp = inp, out = out}, callable.register), out = out}
+		local inp,code = constructorParts( constructor)
+		local convCode = utils.constructor_format( fmt, {inp = inp, out = out}, callable.register)
+		return constructorStruct( out, code .. convCode)
 	end
 end
 -- Constructor implementing some sort of manipulation of an object without output
 function manipConstructor( fmt)
 	return function( this)
-		local code,inp = constructorParts( this)
-		return {code = code .. utils.constructor_format( fmt, {this=inp})}
+		local inp,code = constructorParts( this)
+		return constructorStruct( inp, code .. utils.constructor_format( fmt, {this=inp}))
 	end
 end
 -- Constructor implementing an assignment of a single argument to an object
@@ -77,11 +91,11 @@ function assignConstructor( fmt)
 	return function( this, arg)
 		local callable = getCallableInstance()
 		local code = ""
-		local this_code,this_inp = constructorParts( this)
-		local arg_code,arg_inp = constructorParts( arg[1])
+		local this_inp,this_code = constructorParts( this)
+		local arg_inp,arg_code = constructorParts( arg[1])
 		local subst = {arg1 = arg_inp, this = this_inp}
 		code = code .. this_code .. arg_code
-		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = this_inp}
+		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
@@ -90,7 +104,7 @@ function callConstructor( fmt)
 		local code, subst = this_code, {out = out, this = this_inp}
 		if args then
 			for ii=1,#args do
-				local arg_code,arg_inp = constructorParts( args[ ii])
+				local arg_inp,arg_code = constructorParts( args[ ii])
 				code = code .. arg_code
 				subst[ "arg" .. ii] = arg_inp
 			end
@@ -100,9 +114,9 @@ function callConstructor( fmt)
 	return function( this, args)
 		local callable = getCallableInstance()
 		local out = callable.register()
-		local this_code,this_inp = constructorParts( this)
+		local this_inp,this_code = constructorParts( this)
 		local code,subst = buildArguments( out, this_code, this_inp, args)
-		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
+		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Constructor implementing a call of a callable with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
@@ -113,7 +127,7 @@ function callableCallConstructor( fmt, thisTypeId, sep, argvar)
 		for ii=1,#args do
 			local arg = args[ ii]
 			local llvmtype = llvmtypes[ ii]
-			local arg_code,arg_inp = constructorParts( arg)
+			local arg_inp,arg_code = constructorParts( arg)
 			code = code .. arg_code
 			if llvmtype then
 				if argstr == "" then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
@@ -126,10 +140,10 @@ function callableCallConstructor( fmt, thisTypeId, sep, argvar)
 	return function( this, args, llvmtypes)
 		local callable = getCallableInstance()
 		local out = callable.register()
-		local this_code,this_inp = constructorParts( this)
+		local this_inp,this_code = constructorParts( this)
 		local code,argstr = buildArguments( this_code, this_inp, args, llvmtypes)
 		local subst = {out = out, [argvar] = argstr}
-		return {code = code .. utils.constructor_format( fmt, subst, callable.register), out = out}
+		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Constructor for a recursive memberwise assignment of a tree structure (initializing a "struct")
@@ -142,13 +156,13 @@ function assignStructureConstructor( node, thisTypeId, members)
 		local qualitype = qualiTypeMap[ thisTypeId]
 		local descr = typeDescriptionMap[ thisTypeId]
 		local callable = getCallableInstance()
-		local this_code,this_inp = constructorParts( this)
-		local rt = {code=this_code,out=this_inp}
+		local this_inp,this_code = constructorParts( this)
+		local rt = constructorStruct( this_inp, this_code)
 		for mi,member in ipairs( members) do
 			local out = callable.register()
 			local code = utils.constructor_format( member.loadref, {out = out, this = this_inp}, callable.register)
 			local reftype = referenceTypeMap[ member.type]
-			local maparg = applyCallable( node, {type=reftype,constructor={out=out,code=code}}, ":=", {args[mi]})
+			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[mi]})
 			rt.code = rt.code .. maparg.constructor.code
 		end
 		return rt
@@ -165,7 +179,7 @@ function tryCreateParameter( node, callable, typeId, arg)
 		local descr = typeDescriptionMap[ derefTypeId]
 		local out = callable.register()
 		local code = utils.constructor_format( descr.def_local, {out=out}, callable.register)
-		return tryApplyCallable( node, {type=refTypeId,constructor={out=out,code=code}}, ":=", {arg})
+		return tryApplyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", {arg})
 	end
 end
 -- Constructor for a recursive application of an operator with a tree structure as argument (initializing a "class" or a multiargument operator application)
@@ -175,7 +189,7 @@ function recursiveResolveConstructor( node, thisTypeId, opr)
 		if #args == 1 and args[1].type == constexprStructureType then args = args[1] end
 		local callable = getCallableInstance()
 		local descr = typeDescriptionMap[ thisTypeId]
-		local this_code,this_inp = constructorParts( this)
+		local this_inp,this_code = constructorParts( this)
 		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, opr)
 		if not contextTypeId then utils.errorMessage( node.line, "No operator '%s' found for '%s'", opr, typedb:type_string( thisTypeId)) end
 		for ci,item in ipairs( candidateFunctions) do
@@ -190,7 +204,7 @@ function recursiveResolveConstructor( node, thisTypeId, opr)
 					end
 				end
 				if #param_ar == #args then
-					table.insert( rt, applyCallable( node, {type=thisTypeId, constructor={code=this_code,out=this_inp}}, ":=", param_ar))
+					table.insert( rt, applyCallable( node, typeConstructorStruct( thisTypeId, this_inp, this_code), ":=", param_ar))
 				end
 			end
 		end
@@ -370,7 +384,7 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	typeQualiSepMap[ rpval]   = {lval=lval,qualifier="^&"}
 	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
 
-	typedb:def_reduction( c_pval, constexprNullType, function() return {code="",out="null"} end, tag_TypeConversion, 0.03125)
+	typedb:def_reduction( c_pval, constexprNullType, constConstructor("null"), tag_TypeConversion, 0.03125)
  	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction, 0.25)
 	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, 0.125)
 	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, 0.0625)
@@ -470,11 +484,11 @@ function definePointerConstructors( qualitype, descr)
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_copy))
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {}, manipConstructor( pointer_descr.ctor))
-	defineCall( 0, qualitype.rpval, ":~", {}, function() return {code=""} end)
+	defineCall( 0, qualitype.rpval, ":~", {}, constructorStructEmpty)
 end
 function defineScalarDestructors( qualitype, descr)
-	defineCall( 0, qualitype.pval, " delete", {}, function() return {code=""} end)
-	defineCall( 0, qualitype.rval, ":~", {}, function() return {code=""} end)
+	defineCall( 0, qualitype.pval, " delete", {}, constructorStructEmpty)
+	defineCall( 0, qualitype.rval, ":~", {}, constructorStructEmpty)
 end
 function defineScalarConstructors( qualitype, descr)
 	defineCall( qualitype.rval, qualitype.rval, "=",  {qualitype.c_lval}, assignConstructor( descr.assign))
@@ -1074,7 +1088,7 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 			local item_constructor = typedb:type_constructor( item)
 			constructor = applyConversionConstructor( node, item, item_constructor, constructor)
 			if constructor then
-				local code,out = constructorParts( constructor)
+				local out,code = constructorParts( constructor)
 				return item,{code=code,out=out}
 			else
 				return item
@@ -1477,7 +1491,7 @@ function typesystem.delete( node, context)
 	local callable = getCallableInstance()
 	local args = utils.traverse( typedb, node, context)
 	local typeId = args[1].type
-	local code,out = constructorParts( args[1].constructor)
+	local out,code = constructorParts( args[1].constructor)
 	local res = applyCallable( node, {type=typeId,constructor={code=code,out=out}}, " delete")
 	local pointerType = typedb:type_context( res.type)
 	local lval = typeQualiSepMap[ pointerType].lval
