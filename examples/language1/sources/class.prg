@@ -44,6 +44,12 @@ class Line :Point
 	{
 		this->Point = {x_,y_};
 	}
+/*
+	public function object Object() const
+	{
+		return this->Object;
+	}
+*/
 }
 
 main {

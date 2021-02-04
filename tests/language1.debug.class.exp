@@ -317,30 +317,30 @@ Reduce #0 to statementlist by token '}' at line 46 in state 67, goto 128
 Reduce #2 to statementlist by token '}' at line 46 in state 128, goto 66
 Reduce #1 to codeblock by token '}' at line 46 in state 66, call codeblock, goto 337
 Shift token '}' at line 46 in state 337, goto 353
-Reduce #6 to callablebody by token '}' at line 47 in state 353, call callablebody, goto 98
-Reduce #4 to functiondefinition by token '}' at line 47 in state 98, call procdef {const=false}, goto 117
-Reduce #1 to class_definition by token '}' at line 47 in state 117, call definition 2, goto 111
-Reduce #0 to class_definitionlist by token '}' at line 47 in state 111, goto 224
-Reduce #2 to class_definitionlist by token '}' at line 47 in state 224, goto 224
-Reduce #2 to class_definitionlist by token '}' at line 47 in state 224, goto 299
-Shift token '}' at line 47 in state 299, goto 325
-Reduce #7 to classdefinition by token "main" at line 49 in state 325, call classdef, goto 13
-Reduce #1 to free_definition by token "main" at line 49 in state 13, call definition 1, goto 7
-Reduce #0 to free_definitionlist by token "main" at line 49 in state 7, goto 29
-Reduce #2 to free_definitionlist by token "main" at line 49 in state 29, goto 29
-Reduce #2 to free_definitionlist by token "main" at line 49 in state 29, goto 29
-Reduce #2 to free_definitionlist by token "main" at line 49 in state 29, goto 5
-Shift token "main" at line 49 in state 5, goto 28
-Shift token '{' at line 49 in state 28, goto 46
-Shift token "return" at line 50 in state 46, goto 86
-Shift token CARDINAL = "0" at line 50 in state 86, goto 74
-Reduce #1 to expression by token ';' at line 50 in state 74, call constant "constexpr uint", goto 178
-Shift token ';' at line 50 in state 178, goto 278
-Reduce #3 to statement by token '}' at line 51 in state 278, call return_value, goto 67
-Reduce #0 to statementlist by token '}' at line 51 in state 67, goto 128
-Reduce #2 to statementlist by token '}' at line 51 in state 128, goto 66
-Reduce #1 to codeblock by token '}' at line 51 in state 66, call codeblock, goto 65
-Shift token '}' at line 51 in state 65, goto 127
+Reduce #6 to callablebody by token '}' at line 53 in state 353, call callablebody, goto 98
+Reduce #4 to functiondefinition by token '}' at line 53 in state 98, call procdef {const=false}, goto 117
+Reduce #1 to class_definition by token '}' at line 53 in state 117, call definition 2, goto 111
+Reduce #0 to class_definitionlist by token '}' at line 53 in state 111, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 53 in state 224, goto 224
+Reduce #2 to class_definitionlist by token '}' at line 53 in state 224, goto 299
+Shift token '}' at line 53 in state 299, goto 325
+Reduce #7 to classdefinition by token "main" at line 55 in state 325, call classdef, goto 13
+Reduce #1 to free_definition by token "main" at line 55 in state 13, call definition 1, goto 7
+Reduce #0 to free_definitionlist by token "main" at line 55 in state 7, goto 29
+Reduce #2 to free_definitionlist by token "main" at line 55 in state 29, goto 29
+Reduce #2 to free_definitionlist by token "main" at line 55 in state 29, goto 29
+Reduce #2 to free_definitionlist by token "main" at line 55 in state 29, goto 5
+Shift token "main" at line 55 in state 5, goto 28
+Shift token '{' at line 55 in state 28, goto 46
+Shift token "return" at line 56 in state 46, goto 86
+Shift token CARDINAL = "0" at line 56 in state 86, goto 74
+Reduce #1 to expression by token ';' at line 56 in state 74, call constant "constexpr uint", goto 178
+Shift token ';' at line 56 in state 178, goto 278
+Reduce #3 to statement by token '}' at line 57 in state 278, call return_value, goto 67
+Reduce #0 to statementlist by token '}' at line 57 in state 67, goto 128
+Reduce #2 to statementlist by token '}' at line 57 in state 128, goto 66
+Reduce #1 to codeblock by token '}' at line 57 in state 66, call codeblock, goto 65
+Shift token '}' at line 57 in state 65, goto 127
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -1493,34 +1493,34 @@ Lua call result [1]
                 {
                   arg = {
                     {
-                      line = 50,
+                      line = 56,
                       name = "CARDINAL",
                       value = "0"}},
                   call = {
                     name = "constant constexpr uint",
                     obj = "constexpr uint",
                     proc = <function>},
-                  line = 50,
+                  line = 56,
                   step = 15}},
               call = {
                 name = "return_value",
                 proc = <function>},
-              line = 50,
+              line = 56,
               step = 16}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 50,
+          line = 56,
           step = 16}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 50,
+      line = 56,
       scope = {
         15,
         17}}},
   call = {
     name = "program",
     proc = <function>},
-  line = 50,
+  line = 56,
   step = 17}

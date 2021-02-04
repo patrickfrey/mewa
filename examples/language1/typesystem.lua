@@ -1740,13 +1740,15 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		local typeId = arg[1]
 		local descr = typeDescriptionMap[ typeId]
+		local typnam = typedb:type_name(typeId)
+		local private = false
 		if descr.class == "class" then
-			local typnam = typedb:type_name(typeId)
-			local private = false
 			defineVariableMember( node, context, typeId, typnam, private)
 			defineClassInheritanceReductions( context, typnam, private)
 		elseif descr.class == "interface" then
 			table.insert( context.interfaces, typeId)
+			-- defineCall( constTypeMap[typeId], context.qualitype.c_rval, typnam, {}, callConstructor( load_ref))
+			-- defineClassInheritanceReductions( context, typnam, private)
 		else
 			utils.errorMessage( node.line, "Inheritance only allowed from class or interface, not from '%s'", descr.class)
 		end
