@@ -54,7 +54,7 @@ function getCallableInstance()
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.out,constructor.code,constructor.alloc or "" else return tostring(constructor),"","" end
+	if type(constructor) == "table" then return constructor.out,constructor.code,(constructor.alloc or "") else return tostring(constructor),"","" end
 end
 function constructorStruct( out, code, alloc)
 	return {out=out, code=code, alloc=alloc}
@@ -67,7 +67,7 @@ function typeConstructorStruct( type, out, code, alloc)
 end
 -- Constructor of a single constant value without code
 function constConstructor( val)
-	return function() return {out=val} end
+	return function() return {out=val,code=""} end
 end
 -- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
 function convConstructor( fmt)
