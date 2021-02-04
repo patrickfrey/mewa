@@ -120,8 +120,8 @@ function callConstructor( fmt)
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
--- Constructor implementing a call of a callable with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
-function callableCallConstructor( fmt, thisTypeId, sep, argvar)
+-- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
+function functionCallConstructor( fmt, thisTypeId, sep, argvar)
 	local function buildArguments( this_code, this_inp, args, llvmtypes)
 		local code = this_code
 		local argstr; if thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else argstr = "" end
@@ -1358,7 +1358,7 @@ end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt	
 	callfmt = utils.template_format( descr.call, descr)
-	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, callableCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
+	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallableType( node, descr, thisTypeId, context)

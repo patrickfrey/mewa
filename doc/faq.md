@@ -19,6 +19,7 @@
     * [How to implement constants and constant expressions?](#constants)
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
     * [How to implement return in a function?](#functionReturn)
+    * [How to implement return of a non scalar type from a function?](#functionReturnComplexData)
     * [How to implement hierarchical data structures?](#hierarchicalDataStructures)
     * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
     * [How to implement object oriented polymorphism?](#virtualMethodTables)
@@ -185,6 +186,20 @@ That is why the whole thing is quirky here. See function typesystem.callablebody
 
 For every function a structure named ```callable``` is defined an attached to the scope of the function. In this structure we define the type of the returned value as member ```callable.returntype```. A return reduces the argument to the type specified as return value type and returns it.
 
+<a name="functionReturnComplexData"/>
+
+### How to implement return of a non scalar type from a function?
+
+LLVM has the attribute ```sret``` for structure pointers passed to functions for storing the return value for non scalar values.
+In the example language I defined the types
+
+ * rval_ref with the qualifier "&&" representing an R-value reference.
+ * c_rval_ref with the qualifier "const&&" representing a constant R-value reference.
+ 
+ and an own kind of constructors for these types. The ```out``` member of the constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allowes to inject the destination address later in the process, after the constructor code has been built. It allows to implement copy elision and to instantiate the target of the constructor in the assignment of the R-value reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the R-value reference is reduced to a value reference instead.
+ 
+ This mechanism allows to treat return value references passed as parameters uniformly with scalar return values, just using different constructors representing these types.
+ 
 <a name="hierarchicalDataStructures"/>
 
 ### How to implement hierarchical data structures?
@@ -253,6 +268,16 @@ end
 <a name="visibilityRules"/>
 
 ### How to implement visibility rules, e.g. private,public,protected?
+
+Visibility is also best expressed with types. In the example language I define the types 
+
+ * priv_rval with the qualifier "private &" with the reduction to rval with the qualifier "&"
+ * priv_c_rval with the qualifier "private const&" with the reduction to c_rval with the qualifier "const&"
+ * priv_pval with the qualifier "private ^" with the reduction to pval with the qualifier "^"
+ * priv_c_pval with the qualifier  "private const^" with the reduction to c_pval with the qualifier "const^"
+
+for each class type. In the body of a private method the this pointer is set to be reducible to the private pointer type.
+So is the implicit reference "*this" added as private reference to the context used for resolving types there.
 
 <a name="localFunctionCaptureRules"/>
 
