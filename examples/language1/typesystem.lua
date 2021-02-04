@@ -148,7 +148,7 @@ function callableCallConstructor( fmt, thisTypeId, sep, argvar)
 	end
 end
 -- Constructor for a recursive memberwise assignment of a tree structure (initializing a "struct")
-function assignStructureConstructor( node, thisTypeId, members)
+function memberwiseAssignStructureConstructor( node, thisTypeId, members)
 	return function( this, args)
 		args = args[1] -- args contains one list node
 		if #args ~= #members then 
@@ -184,7 +184,7 @@ function tryCreateParameter( node, callable, typeId, arg)
 	end
 end
 -- Constructor for a recursive application of an operator with a tree structure as argument (initializing a "class" or a multiargument operator application)
-function recursiveResolveConstructor( node, thisTypeId, opr)
+function resolveOperatorConstructor( node, thisTypeId, opr)
 	return function( this, args)
 		local rt = {}
 		if #args == 1 and args[1].type == constexprStructureType then args = args[1] end
@@ -218,10 +218,6 @@ function recursiveResolveConstructor( node, thisTypeId, opr)
 			return rt[1].constructor
 		end
 	end
-end
--- Constructor for a recursive assignment of a tree structure to a class
-function assignClassConstructor( node, thisTypeId)
-	return recursiveResolveConstructor( node, thisTypeId, ":=")
 end
 -- Constructor for a promote call (implementing int + float by promoting the first argument int to float and do a float + float to get the result)
 function promoteCallConstructor( call_constructor, promote_constructor)
@@ -585,7 +581,7 @@ function defineStructConstructors( node, qualitype, descr, context)
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
-	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, assignStructureConstructor( node, qualitype.lval, context.members))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseAssignStructureConstructor( node, qualitype.lval, context.members))
 	instantCallable = nil
 end
 -- Define constructors for 'class' types
@@ -656,7 +652,7 @@ end
 function defineOperatorsWithStructArgument( node, context)
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
-			defineCall( def.returnType, def.contextType, opr, {constexprStructureType}, recursiveResolveConstructor( node, def.contextType, opr))
+			defineCall( def.returnType, def.contextType, opr, {constexprStructureType}, resolveOperatorConstructor( node, def.contextType, opr))
 		elseif def.maxNofArguments > 1 then
 			utils.errorMessage( node.line, "Operator '%s' defined different instances with more than one argument, but with varying signature", opr)
 		end
