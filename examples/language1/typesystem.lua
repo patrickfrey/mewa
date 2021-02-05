@@ -44,19 +44,19 @@ local stringConstantMap = {}    	-- maps string constant values to a structure w
 local arrayTypeMap = {}			-- maps the pair lval,size to the array type lval for an array size 
 local varargFuncMap = {}		-- maps types to true for vararg functions/procedures
 local varargParameterMap = {}		-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to in a function call
-local instantCallable = nil		-- callable structure temporarily assigned for implicitely generated code (constructors,destructors,assignments,etc.)
+local instantCallableContext = nil		-- callable structure temporarily assigned for implicitely generated code (constructors,destructors,assignments,etc.)
 
 -- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
-function createCallableInstance( scope, rtype)
+function createCallableContext( scope, rtype)
 	return {scope=scope, register=utils.register_allocator(), label=utils.label_allocator(), returntype=rtype}
 end
 -- Attach a newly created data structure for a callable to its scope
-function defineCallableInstance( scope, rtype)
-	typedb:set_instance( "callable", createCallableInstance( scope, rtype))
+function defineCallableContext( scope, rtype)
+	typedb:set_instance( "callable", createCallableContext( scope, rtype))
 end
 -- Get the active callable instance
-function getCallableInstance()
-	return instantCallable or typedb:get_instance( "callable")
+function getCallableContext()
+	return instantCallableContext or typedb:get_instance( "callable")
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
@@ -78,7 +78,7 @@ end
 -- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
 function convConstructor( fmt)
 	return function( constructor)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.register()
 		local inp,code = constructorParts( constructor)
 		local convCode = utils.constructor_format( fmt, {inp = inp, out = out}, callable.register)
@@ -95,7 +95,7 @@ end
 -- Constructor implementing an assignment of a single argument to an object
 function assignConstructor( fmt)
 	return function( this, arg)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local code = ""
 		local this_inp,this_code = constructorParts( this)
 		local arg_inp,arg_code = constructorParts( arg[1])
@@ -119,7 +119,7 @@ function callConstructor( fmt)
 		return code,subst
 	end
 	return function( this, args)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.register()
 		local this_inp,this_code = constructorParts( this)
 		local code,subst = buildArguments( out, this_code, this_inp, args)
@@ -145,7 +145,7 @@ function functionCallConstructor( fmt, thisTypeId, sep, argvar)
 		return code,argstr
 	end
 	return function( this, args, llvmtypes)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.register()
 		local this_inp,this_code = constructorParts( this)
 		local code,argstr = buildArguments( this_code, this_inp, args, llvmtypes)
@@ -162,7 +162,7 @@ function memberwiseAssignStructureConstructor( node, thisTypeId, members)
 		end
 		local qualitype = qualiTypeMap[ thisTypeId]
 		local descr = typeDescriptionMap[ thisTypeId]
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local this_inp,this_code = constructorParts( this)
 		local rt = constructorStruct( this_inp, this_code)
 		for mi,member in ipairs( members) do
@@ -194,7 +194,7 @@ function resolveOperatorConstructor( node, thisTypeId, opr)
 	return function( this, args)
 		local rt = {}
 		if #args == 1 and args[1].type == constexprStructureType then args = args[1] end
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local descr = typeDescriptionMap[ thisTypeId]
 		local this_inp,this_code = constructorParts( this)
 		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, opr)
@@ -505,7 +505,7 @@ end
 function defineArrayConstructors( node, qualitype, descr, memberTypeId)
 	definePointerConstructors( qualitype, descr)
 
-	instantCallable = createCallableInstance( node.scope, nil)
+	instantCallableContext = createCallableContext( node.scope, nil)
 	local c_memberTypeId = constTypeMap[memberTypeId] or memberTypeId
 	local ths = {type=memberTypeId, constructor={out="%ths"}}
 	local oth = {type=c_memberTypeId, constructor={out="%oth"}}
@@ -530,13 +530,13 @@ function defineArrayConstructors( node, qualitype, descr, memberTypeId)
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
-	instantCallable = nil
+	instantCallableContext = nil
 end
 -- Define constructors for 'struct' types
 function defineStructConstructors( node, qualitype, descr, context)
 	definePointerConstructors( qualitype, descr)
 
-	instantCallable = createCallableInstance( node.scope, nil)
+	instantCallableContext = createCallableContext( node.scope, nil)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
 
 	for mi,member in ipairs(context.members) do
@@ -544,8 +544,8 @@ function defineStructConstructors( node, qualitype, descr, context)
 		paramstr = paramstr .. ", " .. typeDescriptionMap[ member.type].llvmtype .. " %p" .. mi
 		argstr = argstr .. ", " .. typeDescriptionMap[ member.type].llvmtype .. " {arg" .. mi .. "}"
 
-		local out = instantCallable.register()
-		local inp = instantCallable.register()
+		local out = instantCallableContext.register()
+		local inp = instantCallableContext.register()
 		local llvmtype = member.descr.llvmtype
 		local c_member_type = constTypeMap[ member.type] or member.type
 		local member_reftype = referenceTypeMap[ member.type]
@@ -592,16 +592,16 @@ function defineStructConstructors( node, qualitype, descr, context)
 	typedb:def_reduction( anyConstStructPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.pval, anyStructPointerType, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.c_pval, anyConstStructPointerType, nil, tag_pointerReinterpretCast)
-	instantCallable = nil
+	instantCallableContext = nil
 end
 -- Define constructors for 'class' types
 function defineClassConstructors( node, qualitype, descr, context)
 	definePointerConstructors( qualitype, descr)
 
-	instantCallable = createCallableInstance( node.scope, nil)
+	instantCallableContext = createCallableContext( node.scope, nil)
 	local dtors = ""
 	for mi,member in ipairs(context.members) do
-		local out = instantCallable.register()
+		local out = instantCallableContext.register()
 		local llvmtype = member.descr.llvmtype
 		local member_reftype = referenceTypeMap[ member.type]
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(context.descr.loadref,{out=out,this="%ptr",index=mi-1, type=llvmtype}),out=out}}
@@ -619,7 +619,7 @@ function defineClassConstructors( node, qualitype, descr, context)
 	typedb:def_reduction( anyConstClassPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.pval, anyClassPointerType, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.c_pval, anyConstClassPointerType, nil, tag_pointerReinterpretCast)
-	instantCallable = nil
+	instantCallableContext = nil
 end
 -- Iterate through all interfaces defined and build the VMT tables of these interfaces related to this class defined
 function defineInheritedInterfaces( node, context, contextTypeId)
@@ -836,7 +836,7 @@ end
 -- Define a free variable or a member variable (depending on the context)
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local refTypeId = referenceTypeMap[ typeId]
 	if not refTypeId then utils.errorMessage( node.line, "References not allowed in variable declarations, use pointer instead") end
 	if not context then
@@ -939,12 +939,12 @@ function initControlBooleanTypes()
 	controlFalseType = typedb:def_type( 0, " controlFalseType")
 
 	local function falseExitToBoolean( constructor)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.register()
 		return {code = constructor.code .. utils.constructor_format(llvmir.control.falseExitToBoolean,{falseExit=constructor.out,out=out},callable.label),out=out}
 	end
 	local function trueExitToBoolean( constructor)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.register()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.trueExitToBoolean,{trueExit=constructor.out,out=out},callable.label),out=out}
 	end
@@ -952,12 +952,12 @@ function initControlBooleanTypes()
 	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, 0.1)
 
 	local function booleanToFalseExit( constructor)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.label()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, callable.label),out=out}
 	end
 	local function booleanToTrueExit( constructor)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = callable.label()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, callable.label),out=out}
 	end
@@ -970,12 +970,12 @@ function initControlBooleanTypes()
 
 	local function joinControlTrueTypeWithBool( this, arg)
 		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, getCallableInstance().label())
+		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, getCallableContext().label())
 		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	local function joinControlFalseTypeWithBool( this, arg)
 		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, getCallableInstance().label())
+		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, getCallableContext().label())
 		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
@@ -987,7 +987,7 @@ function initControlBooleanTypes()
 		if arg == false then
 			return this
 		else 
-			local callable = getCallableInstance()
+			local callable = getCallableContext()
 			return {code= this.code .. utils.constructor_format( llvmir.control.terminateTrueExit,{out=this.out},callable.label), out=this.out}
 		end
 	end
@@ -995,7 +995,7 @@ function initControlBooleanTypes()
 		if arg == true then
 			return this
 		else 
-			local callable = getCallableInstance()
+			local callable = getCallableContext()
 			return {code= this.code .. utils.constructor_format( llvmir.control.terminateFalseExit,{out=this.out},callable.label), out=this.out}
 		end
 	end
@@ -1003,13 +1003,13 @@ function initControlBooleanTypes()
 	defineCall( controlFalseType, controlFalseType, "||", {constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
 
 	local function constexprBooleanToControlTrueType( value)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = label()
 		local code; if value == true then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, callable.label) end
 		return {code=code, out=out}
 	end
 	local function constexprBooleanToControlFalseType( value)
-		local callable = getCallableInstance()
+		local callable = getCallableContext()
 		local out = label()
 		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, callable.label) end
 		return {code=code, out=out}
@@ -1018,7 +1018,7 @@ function initControlBooleanTypes()
 	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction, 0.1)
 
 	local function invertControlBooleanType( this)
-		local out = getCallableInstance().label()
+		local out = getCallableContext().label()
 		return {code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out}), out = out}
 	end
 	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, 0.1)
@@ -1339,6 +1339,7 @@ function getTypeDeclUniqueName( contextTypeId, typnam)
 		return utils.uniqueName( typedb:type_string(contextTypeId) .. "__" .. typnam .. "__")
 	end
 end
+-- Function shared by all expansions of the structure used for mapping the LLVM template for a function call
 function expandDescrCallTemplateParameter( descr, context)
 	descr.thisstr = getThisParameterString( context, descr.param)
 	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
@@ -1346,6 +1347,7 @@ function expandDescrCallTemplateParameter( descr, context)
 	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, context)
 	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
 end
+-- Expand the structure used for mapping the LLVM template for a class method call with keys derived from the call description
 function expandDescrClassCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
@@ -1353,6 +1355,7 @@ function expandDescrClassCallTemplateParameter( descr, context)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
 	descr.llvmtype = descr.rtype .. "(%" .. context.symbol .. "*" .. sep .. descr.argstr .. ")*"
 end
+-- Expand the structure used for mapping the LLVM template for an interface method call with keys derived from the call description
 function expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
@@ -1360,10 +1363,12 @@ function expandDescrInterfaceCallTemplateParameter( descr, context)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
 	descr.llvmtype = descr.rtype .. "(i8*" .. sep .. descr.argstr .. ")*"
 end
+-- Expand the structure used for mapping the LLVM template for an free function call with keys derived from the call description
 function expandDescrFreeCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
 	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
 end
+-- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
 function expandDescrExternCallTemplateParameter( descr, context)
 	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
 	if descr.externtype == "C" then
@@ -1377,6 +1382,7 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	end
 	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
 end
+-- Add a descriptor to the list of methods that helps to link interfaces with classes
 function expandContextMethodList( node, descr, context)
 	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname, symbol=descr.symbolname})
 	if not descr.private then
@@ -1402,6 +1408,7 @@ function defineCallableType( node, descr, thisTypeId, context)
 	if not callableContextTypeId then callableContextTypeId = typedb:def_type( thisTypeId, descr.name) end
 	defineFunctionCall( thisTypeId, callableContextTypeId, "()", descr)
 end
+-- Define a virtual object identified by name and an operator "()" with the function arguments (unifying the semantics of objects with "()" operator and function calls)
 function defineCallable( node, descr, context)
 	if context and context.qualitype then
 		local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
@@ -1417,20 +1424,24 @@ function defineOperatorType( node, descr, context)
 	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 end
+-- Define a callable operator with its arguments
 function defineOperator( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
 	defineOperatorType( node, descr, context)
 end
+-- Define an extern function as callable with "()" operator similar to 'defineCallable'
 function defineExternCallable( node, descr)
 	expandDescrExternCallTemplateParameter( descr, context)
 	defineCallableType( node, descr, 0, nil)
 end
+-- Define an interface method call as callable with "()" operator similar to 'defineCallable'
 function defineInterfaceCallable( node, descr, context)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
 	expandContextLlvmMember( descr, context)
 end
+-- Define the context of the body of any function/procedure/operator except the main function
 function defineCallableBodyContext( node, context, descr)
 	local prev_scope = typedb:scope( node.scope)
 	if context and context.qualitype then
@@ -1440,16 +1451,18 @@ function defineCallableBodyContext( node, context, descr)
 		local classvar = defineVariableHardcoded( privateThisReferenceType, "*this", "%ths")
 		addContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
 	end
-	defineCallableInstance( node.scope, descr.ret)
+	defineCallableContext( node.scope, descr.ret)
 	typedb:scope( prev_scope)
 end
+-- Define the context of the body of the main function
 function defineMainProcContext( node)
 	local prev_scope = typedb:scope( node.scope)
 	defineVariableHardcoded( stringPointerType, "argc", "%argc")
 	defineVariableHardcoded( scalarIntegerType, "argv", "%argv")
-	defineCallableInstance( node.scope, scalarIntegerType)
+	defineCallableContext( node.scope, scalarIntegerType)
 	typedb:scope( prev_scope)
 end
+-- Create a string constant pointer type/constructor
 function getStringConstant( value)
 	if not stringConstantMap[ value] then
 		local encval,enclen = utils.encodeLexemLlvm(value)
@@ -1457,7 +1470,7 @@ function getStringConstant( value)
 		stringConstantMap[ value] = {fmt=utils.template_format( llvmir.control.stringConstConstructor, {name=name,size=enclen+1}),name=name,size=enclen+1}
 		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {out="@" .. name, size=enclen+1, value=encval}) .. "\n")
 	end
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	if not callable then
 		return {type=stringAddressType,constructor=stringConstantMap[ value]}
 	else
@@ -1475,7 +1488,7 @@ function typesystem.definition( node, pass, context, pass_selected)
 end
 function typesystem.paramdef( node) 
 	local arg = utils.traverse( typedb, node)
-	return defineParameter( node, arg[1], arg[2], getCallableInstance())
+	return defineParameter( node, arg[1], arg[2], getCallableContext())
 end
 
 function typesystem.paramdeflist( node)
@@ -1487,7 +1500,7 @@ function typesystem.structure( node, context)
 	return {type=constexprStructureType, constructor=arg}
 end
 function typesystem.allocate( node, context)
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local args = utils.traverse( typedb, node, context)
 	local typeId = args[1]
 	local pointerTypeId = pointerTypeMap[typeId]
@@ -1507,7 +1520,7 @@ function typesystem.allocate( node, context)
 	return rt
 end
 function typesystem.typecast( node, context)
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local args = utils.traverse( typedb, node, context)
 	local typeId = args[1]
 	local operand = args[2]
@@ -1521,7 +1534,7 @@ function typesystem.typecast( node, context)
 	end
 end
 function typesystem.delete( node, context)
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local args = utils.traverse( typedb, node, context)
 	local typeId = args[1].type
 	local out,code = constructorParts( args[1].constructor)
@@ -1597,7 +1610,7 @@ function typesystem.codeblock( node)
 end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local rtype = callable.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
 	local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
@@ -1615,7 +1628,7 @@ function typesystem.conditional_if_else( node)
 	local arg = utils.traverse( typedb, node)
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local exit = callable.label()
 	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=cond_constructor.out, out=exit})
 	return {code = cond_constructor.code .. arg[2].code .. elsecode .. arg[3].code .. utils.constructor_format( llvmir.control.label, {inp=exit})}
@@ -1624,7 +1637,7 @@ function typesystem.conditional_while( node)
 	local arg = utils.traverse( typedb, node)
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local start = callable.label()
 	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
 	return {code = startcode .. cond_constructor.code .. arg[2].code 
@@ -1670,7 +1683,7 @@ function typesystem.char_constant( node)
 end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
-	local callable = getCallableInstance()
+	local callable = getCallableContext()
 	local typeId,constructor = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_resolveType))
 	local variableScope = typedb:type_scope( typeId)
 	if variableScope[1] == 0 or callable.scope[1] <= variableScope[1] then
