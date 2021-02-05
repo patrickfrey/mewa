@@ -85,6 +85,10 @@ typespec/L1		= typename									(typespec "")
 			| "const" typename "^" "^"							(typespec "const^^")
 			| typename "^" "^" "&"								(typespec "^^&")
 			| "const" typename  "^" "^" "&"							(typespec "const^^&")
+			| "any" "class" "^"								(typespec_key "class^")
+			| "any" "const" "class" "^"							(typespec_key "const struct^")
+			| "any" "struct" "^"								(typespec_key "class^")
+			| "any" "const" "struct" "^"							(typespec_key "const struct^")
 			;
 typepath/L1		= typename									(typespec "")
 			;
@@ -102,7 +106,7 @@ classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
 			;
 linkage			= "private"									(linkage {private=true, linkage="internal"})
 			| "public"									(linkage {private=false, linkage="external"})
-			|										(linkage {private=false, linkage="external"})
+			| ε										(linkage {private=false, linkage="external"})
 			;
 functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef {const=false})
 			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})

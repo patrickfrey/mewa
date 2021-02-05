@@ -343,7 +343,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 2nd        | src-type        | integer  | Start type of the reduction path leading to the result type.                                                              |
 | 3rd        | tagmask         | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions to use (select all if undefined).                        |
 | 3rd        | tagmask_pathlen | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions contributing to the path length count of a result. (**)  |
-| 4th        | maxpathlen      | integer  | (optional) maximum length count (number of reductions selected by tagmask_pathlen) of a path accepted as a result.        |
+| 4th        | max_pathlen     | integer  | (optional) maximum length count (number of reductions selected by tagmask_pathlen) of a path accepted as a result. (***)  |
 | Return 1st |                 | table    | List of type/constructor pairs as tables with named members or *nil* if no result path found.                             |
 | Return 2nd |                 | number   | Weight sum of best path found                                                                                             |
 | Return 3rd |                 | table    | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*.                       |
@@ -352,6 +352,10 @@ The scope step of the search that defines the valid reduction candidates has bee
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
 #### Remark (**)
 Select none if undefined
+#### Remark (***)
+The tagmask_pathlen, max_pathlen parameters allow to define restrictions on the number of reductions that are implicit value conversions. 
+Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions. 
+Usually the max_pathlen value is 1 if implicit type conversions are allowed at all.
 
 <a name="resolve_type"/>
 

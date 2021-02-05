@@ -10,35 +10,41 @@ local tag_typeDeduction = 1
 local tag_typeDeclaration = 2
 local tag_TypeConversion = 3
 local tag_typeNamespace = 4
+local tag_pointerReinterpretCast = 5
 local tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
 local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion)
 local tagmask_typeConversion = typedb.reduction_tagmask( tag_TypeConversion)
 local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
+local tagmask_typeCast = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion, tag_pointerReinterpretCast)
 
-local weightEpsilon = 1E-5	-- epsilon used for comparing weights for equality
-local scalarQualiTypeMap = {}	-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
-local scalarIndexTypeMap = {}	-- maps scalar type names usable as index without qualifiers to the const type id used as index for [] operators or pointer arithmetics
-local scalarBooleanType = nil	-- type id of the boolean type, result of cmpop binary operators
-local scalarIntegerType = nil	-- type id of the main integer type, result of main function
-local stringPointerType = nil	-- type id of the string constant type used for free string litterals
-local memPointerType = nil	-- type id of the type used for result of allocmem and argument of freemem
-local stringAddressType = nil	-- type id of the string constant type used string constants outsize a function scope
-local controlTrueType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
-local controlFalseType = nil	-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
-local qualiTypeMap = {}		-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
-local referenceTypeMap = {}	-- maps any defined type id to its reference type
-local dereferenceTypeMap = {}	-- maps any defined type id to its type with the reference qualifier stripped away
-local constTypeMap = {}		-- maps any defined type id to its const type
-local privateTypeMap = {}	-- maps any defined type id to its private type
-local pointerTypeMap = {}	-- maps any defined type id to its pointer type
-local typeQualiSepMap = {}	-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
-local typeDescriptionMap = {}	-- maps any defined type id to its llvmir template structure
-local stringConstantMap = {}    -- maps string constant values to a structure with its attributes {fmt,name,size}
-local arrayTypeMap = {}		-- maps the pair lval,size to the array type lval for an array size 
-local varargFuncMap = {}	-- maps types to true for vararg functions/procedures
-local varargParameterMap = {}	-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to in a function call
-local instantCallable = nil	-- callable structure temporarily assigned for implicitely generated code (constructors,destructors,assignments,etc.)
+local weightEpsilon = 1E-5		-- epsilon used for comparing weights for equality
+local scalarQualiTypeMap = {}		-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
+local scalarIndexTypeMap = {}		-- maps scalar type names usable as index without qualifiers to the const type id used as index for [] or pointer arithmetics
+local scalarBooleanType = nil		-- type id of the boolean type, result of cmpop binary operators
+local scalarIntegerType = nil		-- type id of the main integer type, result of main function
+local stringPointerType = nil		-- type id of the string constant type used for free string litterals
+local memPointerType = nil		-- type id of the type used for result of allocmem and argument of freemem
+local stringAddressType = nil		-- type id of the string constant type used string constants outsize a function scope
+local anyClassPointerType = nil		-- type id of the "class^" type
+local anyConstClassPointerType = nil 	-- type id of the "class^" type
+local anyStructPointerType = nil	-- type id of the "struct^" type
+local anyConstStructPointerType = nil	-- type id of the "struct^" type
+local controlTrueType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
+local controlFalseType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
+local qualiTypeMap = {}			-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
+local referenceTypeMap = {}		-- maps any defined type id to its reference type
+local dereferenceTypeMap = {}		-- maps any defined type id to its type with the reference qualifier stripped away
+local constTypeMap = {}			-- maps any defined type id to its const type
+local privateTypeMap = {}		-- maps any defined type id to its private type
+local pointerTypeMap = {}		-- maps any defined type id to its pointer type
+local typeQualiSepMap = {}		-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
+local typeDescriptionMap = {}		-- maps any defined type id to its llvmir template structure
+local stringConstantMap = {}    	-- maps string constant values to a structure with its attributes {fmt,name,size}
+local arrayTypeMap = {}			-- maps the pair lval,size to the array type lval for an array size 
+local varargFuncMap = {}		-- maps types to true for vararg functions/procedures
+local varargParameterMap = {}		-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to in a function call
+local instantCallable = nil		-- callable structure temporarily assigned for implicitely generated code (constructors,destructors,assignments,etc.)
 
 -- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
 function createCallableInstance( scope, rtype)
@@ -171,7 +177,7 @@ function memberwiseAssignStructureConstructor( node, thisTypeId, members)
 end
 -- Map an argument to a requested parameter type, creating a local variable if not possible otherwise
 function tryCreateParameter( node, callable, typeId, arg)
-	local constructor,llvmtype,weight = getParameterConstructor( node, typeId, arg)
+	local constructor,llvmtype,weight = tryGetParameterConstructor( node, typeId, arg)
 	if weight then
 		return {type=typeId,constructor=constructor}
 	else
@@ -582,6 +588,10 @@ function defineStructConstructors( node, qualitype, descr, context)
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
 	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseAssignStructureConstructor( node, qualitype.lval, context.members))
+	typedb:def_reduction( anyStructPointerType, qualitype.pval, nil, tag_pointerReinterpretCast)
+	typedb:def_reduction( anyConstStructPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
+	typedb:def_reduction( qualitype.pval, anyStructPointerType, nil, tag_pointerReinterpretCast)
+	typedb:def_reduction( qualitype.c_pval, anyConstStructPointerType, nil, tag_pointerReinterpretCast)
 	instantCallable = nil
 end
 -- Define constructors for 'class' types
@@ -605,6 +615,10 @@ function defineClassConstructors( node, qualitype, descr, context)
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor), -1)
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor), -1)
 	end
+	typedb:def_reduction( anyClassPointerType, qualitype.pval, nil, tag_pointerReinterpretCast)
+	typedb:def_reduction( anyConstClassPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
+	typedb:def_reduction( qualitype.pval, anyClassPointerType, nil, tag_pointerReinterpretCast)
+	typedb:def_reduction( qualitype.c_pval, anyConstClassPointerType, nil, tag_pointerReinterpretCast)
 	instantCallable = nil
 end
 -- Iterate through all interfaces defined and build the VMT tables of these interfaces related to this class defined
@@ -1016,6 +1030,11 @@ end
 -- Initialize all built-in types
 function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
+	anyClassPointerType = typedb:def_type( 0, "class^")
+	anyConstClassPointerType = typedb:def_type( 0, "const class^")
+	anyStructPointerType = typedb:def_type( 0, "struct^")
+	anyConstStructPointerType = typedb:def_type( 0, "const struct^")
+
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( 0, typnam, scalar_descr)
 		defineScalarConstructors( qualitype, scalar_descr)
@@ -1107,33 +1126,39 @@ function callFunction( node, contextTypes, name, args)
 	return applyCallable( node, this, "()", args)
 end
 -- Get the constructor of a reduction to a specified type or nil if not possible for the operand type
-function getReductionConstructor( node, redu_type, operand)
-	local redu_constructor,weight = operand.constructor,0.0
-	if redu_type ~= operand.type then
-		local redulist,altpath
-		redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
-		if not redulist then
-			return nil
-		elseif altpath then
-			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
-			                    typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
-		end
-		for ri,redu in ipairs(redulist) do
-			if redu.constructor then
-				redu_constructor = redu.constructor( redu_constructor)
-			end
+function getDeriveTypeReductionConstructor( redulist, weight, altpath, redu_constructor)
+	if not redulist then
+		return nil
+	elseif altpath then
+		utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
+					typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
+	end
+	for ri,redu in ipairs(redulist) do
+		if redu.constructor then
+			redu_constructor = redu.constructor( redu_constructor)
 		end
 	end
 	return redu_constructor,weight
 end
-function getParameterConstructor( node, redu_type, operand)
-	local constructor,weight = getReductionConstructor( node, redu_type, operand)
+-- Try to get the constructor and weight of an explicitely specified parameter type
+function tryGetParameterReductionConstructor( node, redu_type, operand)
+	if redu_type ~= operand.type then
+		local redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
+		return getDeriveTypeReductionConstructor( redulist, weight, altpath, operand.constructor)
+	else
+		return operand.constructor,0.0
+	end
+end
+-- Try to get the constructor,llvm type and weight of an explicitely specified parameter type
+function tryGetParameterConstructor( node, redu_type, operand)
+	local constructor,weight = tryGetParameterReductionConstructor( node, redu_type, operand)
 	if weight then
 		local vp = typeDescriptionMap[ redu_type]
 		if vp then return constructor,vp.llvmtype,weight else return constructor,nil,weight end
 	end
 end
-function getVarargConstructor( node, operand)
+-- Try to get the constructor,llvm type and weight of a vararg parameter type
+function tryGetVarargParameterConstructor( node, operand)
 	local vp = varargParameterMap[ operand.type]
 	if not vp then
 		local redulist = typedb:get_reductions( operand.type, tagmask_declaration)
@@ -1143,8 +1168,19 @@ function getVarargConstructor( node, operand)
 		end
 	end
 	if vp then
-		local constructor,weight = getReductionConstructor( node, vp.type, operand)
+		local constructor,weight = tryGetParameterReductionConstructor( node, vp.type, operand)
 		return constructor,vp.llvmtype,weight
+	end
+end
+-- Get the constructor of an implicitly required type with the deduction tagmask passed as argument
+function getRequiredTypeConstructor( node, redu_type, operand, tagmask)
+	if redu_type ~= operand.type then
+		local redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask or tagmask_matchParameter, tagmask_typeConversion, 1)
+		local rt = getDeriveTypeReductionConstructor( redulist, weight, altpath, operand.constructor)
+		if not rt then utils.errorMessage( node.line, "Type mismatch, required type '%s'", typedb:type_string(redu_type)) end
+		return rt
+	else
+		return operand.constructor
 	end
 end
 -- Get the best matching item from a list of items by weighting the matching of the arguments to the item parameter types
@@ -1161,7 +1197,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 				if #args > 0 then
 					local parameters = typedb:type_parameters( item)
 					for pi=1,#parameters do
-						local param_constructor,param_llvmtype,param_weight = getParameterConstructor( node, parameters[ pi].type, args[ pi])
+						local param_constructor,param_llvmtype,param_weight = tryGetParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
 						weight = weight + param_weight
 						table.insert( param_constructor_ar, param_constructor)
@@ -1172,7 +1208,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 				if #args > 0 then
 					local parameters = typedb:type_parameters( item)
 					for pi=1,#parameters do
-						local param_constructor,param_llvmtype,param_weight = getParameterConstructor( node, parameters[ pi].type, args[ pi])
+						local param_constructor,param_llvmtype,param_weight = tryGetParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
 						weight = weight + param_weight
 						table.insert( param_constructor_ar, param_constructor)
@@ -1180,7 +1216,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 					end
 					if #parameters == #param_constructor_ar then
 						for ai=#parameters+1,#args do
-							local param_constructor,param_llvmtype,param_weight = getVarargConstructor( node, args[ai])
+							local param_constructor,param_llvmtype,param_weight = tryGetVarargParameterConstructor( node, args[ai])
 							if not param_weight then break end
 							weight = weight + param_weight
 							table.insert( param_constructor_ar, param_constructor)
@@ -1477,7 +1513,7 @@ function typesystem.typecast( node, context)
 	local operand = args[2]
 	local descr = typeDescriptionMap[ typeId]
 	if operand then
-		return getReductionConstructor( node, typeId, operand)
+		return getRequiredTypeConstructor( node, typeId, operand, tagmask_typeCast)
 	else
 		local out = callable.register()
 		local code = utils.constructor_format( descr.def_local, {out=out}, callable.register)
@@ -1564,20 +1600,20 @@ function typesystem.return_value( node)
 	local callable = getCallableInstance()
 	local rtype = callable.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
-	local constructor = getReductionConstructor( node, rtype, arg[1])
+	local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
 	if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
 	local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, inp=constructor.out})
 	return {code = constructor.code .. code}
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
-	local cond_constructor = getReductionConstructor( node, controlTrueType, arg[1])
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
 	return {code = cond_constructor.code .. arg[2].code .. utils.constructor_format( llvmir.control.label, {inp=cond_constructor.out})}
 end
 function typesystem.conditional_if_else( node)
 	local arg = utils.traverse( typedb, node)
-	local cond_constructor = getReductionConstructor( node, controlTrueType, arg[1])
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
 	local callable = getCallableInstance()
 	local exit = callable.label()
@@ -1586,7 +1622,7 @@ function typesystem.conditional_if_else( node)
 end
 function typesystem.conditional_while( node)
 	local arg = utils.traverse( typedb, node)
-	local cond_constructor = getReductionConstructor( node, controlTrueType, arg[1])
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
 	local callable = getCallableInstance()
 	local start = callable.label()
@@ -1611,6 +1647,9 @@ function typesystem.typespec( node, qualifier)
 		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
 	end
 	return typeId
+end
+function typesystem.typespec_key( node, qualifier)
+	return typedb:get_type( 0, qualifier)
 end
 function typesystem.constant( node, typeName)
 	local typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
