@@ -24,6 +24,7 @@
     * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
     * [How to implement object oriented polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private,public,protected?](#visibilityRules)
+        * [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
     * [How to implement multi pass traversal?](#multipassTraversal)
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
     * [How to implement access of types declared later in the source?](#orderOfDefinition)
@@ -269,15 +270,27 @@ end
 
 ### How to implement visibility rules, e.g. private,public,protected?
 
-Visibility is also best expressed with types. In the example language I define the types 
+Visibility is also best expressed with type qualifiers of the structure types with members having privileged access. In the example **language1** I define the types 
 
- * priv_rval with the qualifier "private &" with the reduction to rval with the qualifier "&"
- * priv_c_rval with the qualifier "private const&" with the reduction to c_rval with the qualifier "const&"
- * priv_pval with the qualifier "private ^" with the reduction to pval with the qualifier "^"
- * priv_c_pval with the qualifier  "private const^" with the reduction to c_pval with the qualifier "const^"
+ * ```priv_rval``` with the qualifier "private &" with the reduction to ```rval``` with the qualifier "&"
+ * ```priv_c_rval``` with the qualifier "private const&" with the reduction to ```c_rval``` with the qualifier "const&"
+ * ```priv_pval``` with the qualifier "private ^" with the reduction to ```pval``` with the qualifier "^"
+ * ```priv_c_pval``` with the qualifier  "private const^" with the reduction to ```c_pval``` with the qualifier "const^"
 
-for each class type. In the body of a private method the this pointer is set to be reducible to the private pointer type.
-So is the implicit reference "*this" added as private reference to the context used for resolving types there.
+for each class type.
+
+Private methods are then defined in the context of ```priv_rval``` or ```priv_c_rval``` if they are const. 
+Public methods in the contrary are then defined in the context of ```rval``` or ```c_rval``` if they are const. 
+
+In the body of a method the implicitely defined ```this``` pointer is set to be reducible to its private pointer type.
+So is the implicit reference ```*this``` added as private reference to the context used for resolving types there.
+If defined like this then private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exist no reduction from the public context type to the private context type.
+
+<a name="visibilityRuleErrors"/>
+
+#### How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
+
+If visibility rules are implemented with privilege levels represented as types with reductions from the inner (private) layer to the next outer layer, then you can also define the reductions in the other direction, from the outer to the inner layer. The constructors of there reductions could be implemented as functions throwing an error if applied. Define an own tag for these kind of reductions and use these tags as part of the mask when resolving types.
 
 <a name="localFunctionCaptureRules"/>
 
