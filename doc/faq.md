@@ -288,7 +288,7 @@ If defined like this then private members are accessible from the private contex
 
 <a name="visibilityRuleErrors"/>
 
-#### How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
+#### How to report error on violation of visibility rules implemented as types?
 
 If visibility rules are implemented with privilege levels represented as types with reductions from the inner (private) layer to the next outer layer, then you can also define the reductions in the other direction, from the outer to the inner layer. The constructors of there reductions could be implemented as functions throwing an error if applied. Define an own tag for these kind of reductions and use these tags as part of the mask when resolving types.
 
