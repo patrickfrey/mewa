@@ -26,6 +26,7 @@
     * [How to implement visibility rules, e.g. private,public,protected?](#visibilityRules)
         * [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
     * [How to implement multi pass traversal?](#multipassTraversal)
+    * [How to handle dependencies between branches of a node in the AST?](#branchDpendencies)
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
     * [How to implement access of types declared later in the source?](#orderOfDefinition)
     * [How to implement exception handling?](#exceptions)
@@ -265,6 +266,18 @@ function typesystem.classdef( node, context)
 	...
 end
 ```
+
+<a name="branchDpendencies"/>
+
+### How to handle dependencies between AST branches of a node in the AST?
+
+As you have the tree traversal in your hands (a nice saying of having to do it on your own), you can partially traverse the subnodes of an AST node. You can also combine a partial traversal with a multipass traversal to get some info out of the AST subnodes before doing the real job. 
+
+There are no limitations, but the model of _Mewa_ punishes partial traversal and multipass traversal with bad readability. So you should avoid to use it extensively. 
+Use it selectively and only if there is no other possibility and try to document it well.
+
+In the example **language1** of _Mewa_ I use partial traversal (utils.traverseRange) in callable definitions to make the declaration available in the body to allow self reference. Furthermore I use it in the declaration of inheritance. 
+Multipass traversal is used in **language1** to parse class and structure members, subclasses and substructures before method declarations in order to make them accessible in the methods independent from the order or definition.
 
 <a name="visibilityRules"/>
 

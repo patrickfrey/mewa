@@ -452,9 +452,6 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	referenceTypeMap[ priv_pval] = qualitype.rpval
 	referenceTypeMap[ priv_c_pval] = qualitype.c_rpval
 
-	dereferenceTypeMap[ qualitype.rpval] = priv_pval
-	dereferenceTypeMap[ qualitype.c_rpval] = priv_c_pval
-
 	constTypeMap[ priv_rval] = priv_c_rval
 	constTypeMap[ priv_pval] = priv_c_pval
 
@@ -1398,6 +1395,7 @@ function printExternFunctionDeclaration( node, descr)
 	print( "\n" .. utils.constructor_format( declfmt, descr))
 end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
+	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
 	local callfmt	
 	callfmt = utils.template_format( descr.call, descr)
 	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
@@ -1749,7 +1747,7 @@ function typesystem.constructordef( node, context)
 end
 function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
-	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
+	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false }
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineOperator( node, descr, context)

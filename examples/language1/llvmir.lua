@@ -158,6 +158,7 @@ llvmir.control = {
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
+	sretFunctionCall = "call void{signature} @{symbolname}( {rtype}* sret {rvalref} {callargstr})\n",
 	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
 				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
