@@ -134,7 +134,7 @@ L1:
 %r15 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 0
 %r16 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r15, i32 0, i32 0
 %r17 = load i32, i32* %r16
-call void(i8*, ...) @printf( i8* %r14, i32 %r17)
+call void(i8*,  ...) @printf( i8* %r14, i32 %r17)
 %r19 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
 %r20 = load %Tree__1*, %Tree__1** %r19
 %r21 = icmp ne %Tree__1* %r20, null
@@ -237,13 +237,13 @@ store %Tree__1* %r20, %Tree__1** %r25
 %r28 = getelementptr inbounds %Tree__1, %Tree__1* %r27, i32 0, i32 0
 %r29 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r28, i32 0, i32 0
 %r30 = load i32, i32* %r29
-call void(i8*, ...) @printf( i8* %r26, i32 %r30)
+call void(i8*,  ...) @printf( i8* %r26, i32 %r30)
 %r32 = load %Tree__1*, %Tree__1** %r25
 call void @printTree__Tree__1$__i32( %Tree__1* %r32, i32 0)
 %r34 = load %Tree__1*, %Tree__1** %r25
 call void @deleteTree__Tree__1$( %Tree__1* %r34)
 %r36 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-call void(i8*, ...) @printf( i8* %r36)
+call void(i8*,  ...) @printf( i8* %r36)
 br label %exit
 exit:
 ret i32 0

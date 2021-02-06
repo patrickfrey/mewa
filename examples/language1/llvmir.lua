@@ -128,7 +128,8 @@ llvmir.classTemplate = {
 	dtor = "call void @__dtor_{classname}( %{classname}* {this})\n",
 	loadref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
 	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
-	typedef = "%{classname} = type { {llvmtype} }\n"
+	typedef = "%{classname} = type { {llvmtype} }\n",
+	methodCallType = "{rtype} (%{classname}*{argstr})*"
 }
 
 llvmir.interfaceTemplate = {
@@ -142,7 +143,12 @@ llvmir.interfaceTemplate = {
 	align = 8,
 	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
-	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n"
+	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
+	methodCallType = "{rtype} (i8*{argstr})*"
+}
+
+llvmir.callableDescr = {
+	class = "callable"
 }
 
 llvmir.control = {
@@ -169,6 +175,8 @@ llvmir.control = {
 				.. "call {rtype} {3}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
+	freeFunctionCallType = "{rtype} ({argstr})*",
+	freeFunctionVarargSignature = "({argstr} ...)",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 

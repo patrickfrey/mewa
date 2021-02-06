@@ -126,6 +126,22 @@ function callConstructor( fmt)
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
+-- Move constructor of a reference type from an RValue reference type
+function rvalueReferenceMoveConstructor( this, args)
+	local this_inp,this_code = constructorParts( this)
+	local arg_inp,arg_code = constructorParts( args[1])
+	return {code = this_code .. utils.template_format( arg_code, {[arg_inp] = this_inp}), out=this_inp}
+end
+-- Constructor of a contant reference value from a RValue reference type, creating a temporary on the stack for it
+function constReferenceFromRvalueReferenceConstructor( descr)
+	return function( constructor)
+		local callable = getCallableContext()
+		local out = callable.register()
+		local inp,code = constructorParts( constructor)
+		code = utils.constructor_format( descr.def_local, {out = out}, callable.register) .. utils.template_format( code, {[inp] = out} )
+		return {code = code, out = out}
+	end
+end
 -- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
 function functionCallConstructor( fmt, thisTypeId, sep, argvar)
 	local function buildArguments( this_code, this_inp, args, llvmtypes)
@@ -424,6 +440,12 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 
 	typeQualiSepMap[ rval_ref]   = {lval=lval,qualifier="&&"}
 	typeQualiSepMap[ c_rval_ref] = {lval=lval,qualifier="const&&"}
+
+	typedb:def_reduction( c_rval_ref, rval_ref, nil, tag_typeDeduction, 0.125/4)
+	typedb:def_reduction( qualitype.c_rval, c_rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, 0.125/4)
+	typedb:def_reduction( qualitype.c_rval, rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, 0.125/4)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {rval_ref}, rvalueReferenceMoveConstructor)
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {c_rval_ref}, rvalueReferenceMoveConstructor)
 end
 -- Define public/private types for implementing visibility/accessibility in different contexts
 function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
@@ -1350,7 +1372,7 @@ function expandDescrClassCallTemplateParameter( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
 	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.llvmtype = descr.rtype .. "(%" .. context.symbol .. "*" .. sep .. descr.argstr .. ")*"
+	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for an interface method call with keys derived from the call description
 function expandDescrInterfaceCallTemplateParameter( descr, context)
@@ -1358,12 +1380,12 @@ function expandDescrInterfaceCallTemplateParameter( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
 	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.llvmtype = descr.rtype .. "(i8*" .. sep .. descr.argstr .. ")*"
+	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for an free function call with keys derived from the call description
 function expandDescrFreeCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
+	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtype = descr.rtype, argstr = descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
 function expandDescrExternCallTemplateParameter( descr, context)
@@ -1375,9 +1397,10 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	end
 	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
 	if descr.vararg then
-		descr.signature = "(" .. descr.argstr .. ", ...)"
+		local sep; if descr.argstr == "" then sep = "" else sep = ", " end
+		descr.signature = utils.template_format( llvmir.control.freeFunctionVarargSignature,  {argstr = descr.argstr .. sep})
 	end
-	descr.llvmtype = descr.rtype .. "(" .. descr.argstr .. ")*"
+	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtype = descr.rtype, argstr = descr.argstr})
 end
 -- Add a descriptor to the list of methods that helps to link interfaces with classes
 function expandContextMethodList( node, descr, context)
@@ -1403,7 +1426,10 @@ function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 end
 function defineCallableType( node, descr, thisTypeId, context)
 	local callableContextTypeId = typedb:get_type( thisTypeId, descr.name)
-	if not callableContextTypeId then callableContextTypeId = typedb:def_type( thisTypeId, descr.name) end
+	if not callableContextTypeId then
+		callableContextTypeId = typedb:def_type( thisTypeId, descr.name)
+		typeDescriptionMap[ callableContextTypeId] = llvmir.callableDescr
+	end
 	defineFunctionCall( thisTypeId, callableContextTypeId, "()", descr)
 end
 -- Define a virtual object identified by name and an operator "()" with the function arguments (unifying the semantics of objects with "()" operator and function calls)
