@@ -32,12 +32,13 @@ local anyStructPointerType = nil	-- type id of the "struct^" type
 local anyConstStructPointerType = nil	-- type id of the "struct^" type
 local controlTrueType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
-local qualiTypeMap = {}			-- maps any defined type id without qualifier to the table of type ids for all qualifiers possible
-local referenceTypeMap = {}		-- maps any defined type id to its reference type
-local dereferenceTypeMap = {}		-- maps any defined type id to its type with the reference qualifier stripped away
-local constTypeMap = {}			-- maps any defined type id to its const type
-local privateTypeMap = {}		-- maps any defined type id to its private type
-local pointerTypeMap = {}		-- maps any defined type id to its pointer type
+local qualiTypeMap = {}			-- maps any defined type without qualifier to the table of type ids for all qualifiers possible
+local referenceTypeMap = {}		-- maps non reference types to their reference types
+local dereferenceTypeMap = {}		-- maps reference types to their type with the reference qualifier stripped away
+local constTypeMap = {}			-- maps non const types to their const type
+local privateTypeMap = {}		-- maps non private types to their private type
+local pointerTypeMap = {}		-- maps non pointer types to their pointer type
+local rvalueTypeMap = {}		-- maps value types with an rvalue reference type defined to their rvalue reference type
 local typeQualiSepMap = {}		-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
 local typeDescriptionMap = {}		-- maps any defined type id to its llvmir template structure
 local stringConstantMap = {}    	-- maps string constant values to a structure with its attributes {fmt,name,size}
@@ -143,7 +144,7 @@ function constReferenceFromRvalueReferenceConstructor( descr)
 	end
 end
 -- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
-function functionCallConstructor( fmt, thisTypeId, sep, argvar)
+function functionCallConstructor( fmt, thisTypeId, sep, argvar, rtype)
 	local function buildArguments( this_code, this_inp, args, llvmtypes)
 		local code = this_code
 		local argstr; if thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else argstr = "" end
@@ -162,10 +163,18 @@ function functionCallConstructor( fmt, thisTypeId, sep, argvar)
 	end
 	return function( this, args, llvmtypes)
 		local callable = getCallableContext()
-		local out = callable.register()
 		local this_inp,this_code = constructorParts( this)
 		local code,argstr = buildArguments( this_code, this_inp, args, llvmtypes)
-		local subst = {out = out, [argvar] = argstr}
+		local out,subst
+		if not rtype then
+			subst = {[argvar] = argstr}
+		elseif rvalueTypeMap[ rtype] then
+			out = "RVAL"
+			subst = {[argvar] = argstr, rvalref = "{RVAL}"}
+		else
+			out = callable.register()
+			subst = {out = out, [argvar] = argstr}
+		end
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
@@ -441,9 +450,13 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 	typeQualiSepMap[ rval_ref]   = {lval=lval,qualifier="&&"}
 	typeQualiSepMap[ c_rval_ref] = {lval=lval,qualifier="const&&"}
 
+	rvalueTypeMap[ qualitype.lval] = rval_ref;
+	rvalueTypeMap[ qualitype.c_lval] = c_rval_ref;
+
 	typedb:def_reduction( c_rval_ref, rval_ref, nil, tag_typeDeduction, 0.125/4)
 	typedb:def_reduction( qualitype.c_rval, c_rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, 0.125/4)
 	typedb:def_reduction( qualitype.c_rval, rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, 0.125/4)
+
 	defineCall( qualitype.rval, qualitype.rval, ":=", {rval_ref}, rvalueReferenceMoveConstructor)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {c_rval_ref}, rvalueReferenceMoveConstructor)
 end
@@ -804,6 +817,7 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
 		local qualitype = defineQualifiedTypes( element_sep.lval, typnam, descr)
+		defineRValueReferenceTypes( element_sep.lval, typnam, descr, qualitype)
 		defineArrayConstructors( node, qualitype, descr, elementTypeId)
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
 		typedb:scope( scopebk)
@@ -1421,7 +1435,8 @@ function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
 	local callfmt	
 	callfmt = utils.template_format( descr.call, descr)
-	local functype = defineCall( descr.ret, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr"))
+	local functype = defineCall( rvalueTypeMap[ descr.ret] or descr.ret, contextTypeId, opr, descr.param, 
+					functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr", descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallableType( node, descr, thisTypeId, context)
@@ -1456,6 +1471,7 @@ function defineOperator( node, descr, context)
 end
 -- Define an extern function as callable with "()" operator similar to 'defineCallable'
 function defineExternCallable( node, descr)
+	if descr.ret and rvalueTypeMap[ descr.ret] then utils.errorMessage( node.line, "Non scalar or non pointer type not allowed as extern function return value") end
 	expandDescrExternCallTemplateParameter( descr, context)
 	defineCallableType( node, descr, 0, nil)
 end
@@ -1606,7 +1622,6 @@ function typesystem.typedef( node, context)
 		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_TypeConversion, 0.125 / 64)
 	end
 end
-
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
 	return applyCallable( node, arg[1], "=", {applyCallable( node, arg[1], operator, {arg[2]})})
@@ -1722,8 +1737,9 @@ function typesystem.linkage( node, llvm_linkage)
 end
 function typesystem.funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {call = llvmir.control.functionCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const }
+	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
@@ -1743,8 +1759,9 @@ function typesystem.operatordecl( node, opr)
 end
 function typesystem.operator_funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	local descr = {call = llvmir.control.functionCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const}
+	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
@@ -1829,8 +1846,8 @@ function typesystem.extern_procdef_vararg( node)
 end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.interfaceFunctionCall, name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], 
-			signature="", const=decl.const, index=#context.methods}
+	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", const=decl.const, index=#context.methods}
+	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretInterfaceFunctionCall else descr.call = llvmir.control.interfaceFunctionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
@@ -1840,7 +1857,8 @@ function typesystem.interface_procdef( node, decl, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.interfaceFunctionCall, name = arg[1].name, symbol = arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
+	local descr = {name = arg[1].name, symbol = arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
+	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretInterfaceFunctionCall else descr.call = llvmir.control.interfaceFunctionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)

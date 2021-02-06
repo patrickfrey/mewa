@@ -129,7 +129,8 @@ llvmir.classTemplate = {
 	loadref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
 	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	typedef = "%{classname} = type { {llvmtype} }\n",
-	methodCallType = "{rtype} (%{classname}*{argstr})*"
+	methodCallType = "{rtype} (%{classname}*{argstr})*",
+	sretMethodCallType = "void ({rtype}* sret, %{classname}*{argstr})*"
 }
 
 llvmir.interfaceTemplate = {
@@ -144,7 +145,8 @@ llvmir.interfaceTemplate = {
 	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
 	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
-	methodCallType = "{rtype} (i8*{argstr})*"
+	methodCallType = "{rtype} (i8*{argstr})*",
+	sretMethodCallType = "void ({rtype}* sret, i8*{argstr})*"
 }
 
 llvmir.callableDescr = {
@@ -164,11 +166,15 @@ llvmir.control = {
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
-	sretFunctionCall = "call void{signature} @{symbolname}( {rtype}* sret {rvalref} {callargstr})\n",
+	sretFunctionCall = "call void{signature} @{symbolname}( {rtype}* sret {rvalref}{callargstr})\n",
 	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
 				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
-				.. "{out} = {llvmtype} {3}( {callargstr})\n",
+				.. "{out} = call {llvmtype} {3}( {callargstr})\n",
+	sretInterfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
+				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
+				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
+				.. "call {llvmtype} {3}( {rtype}* sret {rvalref}{callargstr})\n",
 	interfaceProcedureCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
 				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
