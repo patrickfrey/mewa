@@ -143,10 +143,20 @@ llvmir.interfaceTemplate = {
 	class = "interface",
 	align = 8,
 	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n",
+	ctor = "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 0\n"
+			.. "store i8* null, i8** {2}, align 8\n"
+			.. "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
+			.. "store %{interfacename}__VMT* null, %{interfacename}__VMT** {3}, align 8\n",
+	ctor_copy = "{1} = load %{interfacename}, %{interfacename}* {arg1}\nstore %{interfacename} {1}, %{interfacename}* {this}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
 	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
 	methodCallType = "{rtype} (i8*{argstr})*",
-	sretMethodCallType = "void ({rtype}* sret, i8*{argstr})*"
+	sretMethodCallType = "void ({rtype}* sret, i8*{argstr})*",
+	getClassInterface = "{1} = bitcast %{classname}* {this} to i8*\n"
+			..  "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {rt}, i32 0, i32 0\n"
+			..  "store i8* {1}, i8** {2}, align 8\n"
+			..  "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {rt}, i32 0, i32 1\n"
+			..  "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n"
 }
 
 llvmir.callableDescr = {

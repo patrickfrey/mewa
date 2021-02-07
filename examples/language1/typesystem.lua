@@ -551,11 +551,11 @@ function defineArrayConstructors( node, qualitype, descr, memberTypeId)
 	end
 	if initcopy then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=initcopy.constructor.code}))
-		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, manipConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
+		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
 	if assign then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="assign",ctors=assign.constructor.code}))
-		defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_rval}, manipConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
+		defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
 	end
 	if destroy then
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=destroy.constructor.code}))
@@ -604,11 +604,11 @@ function defineStructConstructors( node, qualitype, descr, context)
 	end
 	if ctors_copy then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=ctors_copy}))
-		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.rval}, manipConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
+		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
 	if ctors_assign then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="assign",ctors=ctors_assign}))
-		defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.rval}, manipConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
+		defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
 	end
 	if ctors_elements then
 		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {procname="assign",ctors=ctors_elements,paramstr=paramstr}))
@@ -625,6 +625,14 @@ function defineStructConstructors( node, qualitype, descr, context)
 	typedb:def_reduction( qualitype.pval, anyStructPointerType, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.c_pval, anyConstStructPointerType, nil, tag_pointerReinterpretCast)
 	instantCallableContext = nil
+end
+-- Define constructors for 'interface' types
+function defineInterfaceConstructors( node, qualitype, descr, context)
+	definePointerConstructors( qualitype, descr)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
+	defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
 end
 -- Define constructors for 'class' types
 function defineClassConstructors( node, qualitype, descr, context)
@@ -1328,16 +1336,16 @@ function getTargetFunctionIdentifierString( name, args, context)
 	end
 end
 -- Get the identifier of a method for matching interface/implementation
-function getInterfaceMethodIdentifierString( symbol, args)
+function getInterfaceMethodIdentifierString( symbol, args, const)
 	local pstr = symbol
 	for ai,arg in ipairs(args) do pstr = pstr .. "__" .. arg.llvmtype end
-	return utils.encodeName(  pstr)
+	if const == true then return utils.encodeName(  pstr) .. " const" else return utils.encodeName(  pstr) end
 end
 -- Get the identifier of a method for displaying interface/implementation matching
 function getInterfaceMethodNameString( name, args)
 	local pstr = name
 	for ai,arg in ipairs(args) do local sep; if ai == 1 then sep = "(" else sep = ", " end; pstr = pstr .. sep .. typedb:type_string(arg.type) end
-	return pstr .. ")"
+	if const == true then return pstr .. ") const" else return pstr .. ")" end
 end
 function getDeclarationLlvmParameterString( args)
 	local rt = ""
@@ -1383,18 +1391,19 @@ end
 -- Expand the structure used for mapping the LLVM template for a class method call with keys derived from the call description
 function expandDescrClassCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
-	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param)
+	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
+	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
 	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for an interface method call with keys derived from the call description
 function expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param)
-	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param)
+	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
+	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
 	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
+	if not descr.const then context.const = false end
 end
 -- Expand the structure used for mapping the LLVM template for an free function call with keys derived from the call description
 function expandDescrFreeCallTemplateParameter( descr, context)
@@ -1888,9 +1897,12 @@ function typesystem.interfacedef( node, context)
 	local descr = utils.template_format( llvmir.interfaceTemplate, {interfacename=interfacename})
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {qualitype=qualitype, descr=descr, methods={}, methodmap={}, llvmtype="", symbol=interfacename}
+	local context = {qualitype=qualitype, descr=descr, methods={}, methodmap={}, llvmtype="", symbol=interfacename, const=true}
 	local arg = utils.traverse( typedb, node, context)
 	descr.methods = context.methods
+	descr.const = context.const
+	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	defineInterfaceConstructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
 end
@@ -1927,6 +1939,9 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 			defineClassInheritanceReductions( context, typnam, private)
 		elseif descr.class == "interface" then
 			table.insert( context.interfaces, typeId)
+			local itype = rvalueTypeMap[ typeId]
+			local interface = {code=utils.template_format( descr.getClassInterface, {classname=context.descr.classname, rt="{RVAL}"}),type=itype}
+
 			-- defineCall( constTypeMap[typeId], context.qualitype.c_rval, typnam, {}, callConstructor( load_ref))
 			-- defineClassInheritanceReductions( context, typnam, private)
 		else

@@ -59,11 +59,38 @@ private:
 	A m_2;
 };
 
+int funcA( int x) {return x;}
+struct VMT
+{
+	int(*afunc)( int);
+};
+static VMT g_vmt = {funcA};
+
+struct VMTImpl
+{
+	void* ths;
+	VMT* vmt;
+};
+
+class X
+{
+public:
+	VMTImpl getVmt()
+	{
+		VMTImpl rt;
+		rt.ths = this;
+		rt.vmt = &g_vmt;
+		return rt;
+	}
+};
+
 int main( int argc, char const* argv[])
 {
 	do_throw_flag = argc > 3;
 	B b( "blabla", argv[1]);
 	A rr = b.getNewA( "gu");
+	X xx;
+	VMTImpl vv = xx.getVmt();
 	return 0;
 }
 
