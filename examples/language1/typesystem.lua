@@ -76,16 +76,6 @@ end
 function constConstructor( val)
 	return function() return {out=val,code=""} end
 end
--- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
-function convConstructor( fmt)
-	return function( constructor)
-		local callable = getCallableContext()
-		local out = callable.register()
-		local inp,code = constructorParts( constructor)
-		local convCode = utils.constructor_format( fmt, {inp = inp, out = out}, callable.register)
-		return constructorStruct( out, code .. convCode)
-	end
-end
 -- Constructor implementing some sort of manipulation of an object without output
 function manipConstructor( fmt)
 	return function( this)
@@ -105,10 +95,22 @@ function assignConstructor( fmt)
 		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
+-- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
+-- param[in] fmt format string, param[in] outRValueRef output variable in case of an rvalue reference constructor
+function convConstructor( fmt, outRValueRef)
+	return function( constructor)
+		local callable = getCallableContext()
+		local out,outsubst; if outRValueRef then out,outsubst = outRValueRef,("{"..outRValueRef.."}") else out = callable.register(); outsubst = out end
+		local inp,code = constructorParts( constructor)
+		local convCode = utils.constructor_format( fmt, {this = inp, out = outsubst}, callable.register)
+		return constructorStruct( out, code .. convCode)
+	end
+end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
-function callConstructor( fmt)
-	local function buildArguments( out, this_code, this_inp, args)
-		local code = this_code
+-- param[in] fmt format string, param[in] outRValueRef output variable in case of an rvalue reference constructor
+function callConstructor( fmt, outRValueRef)
+	local function buildArguments( out, this_inp, args)
+		local code = ""
 		local subst = {out = out, this = this_inp}
 		if args then
 			for ii=1,#args do
@@ -121,10 +123,10 @@ function callConstructor( fmt)
 	end
 	return function( this, args)
 		local callable = getCallableContext()
-		local out = callable.register()
+		local out,outsubst; if outRValueRef then out,outsubst = outRValueRef,("{"..outRValueRef.."}") else out = callable.register(); outsubst = out end
 		local this_inp,this_code = constructorParts( this)
-		local code,subst = buildArguments( out, this_code, this_inp, args)
-		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
+		local code,subst = buildArguments( outsubst, this_inp, args)
+		return constructorStruct( out, this_code .. code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Move constructor of a reference type from an RValue reference type
@@ -192,7 +194,7 @@ function memberwiseAssignStructureConstructor( node, thisTypeId, members)
 		local rt = constructorStruct( this_inp, this_code)
 		for mi,member in ipairs( members) do
 			local out = callable.register()
-			local code = utils.constructor_format( member.loadref, {out = out, this = this_inp}, callable.register)
+			local code = utils.constructor_format( member.loadref, {out = out, this = this_inp, index=mi-1}, callable.register)
 			local reftype = referenceTypeMap[ member.type]
 			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[mi]})
 			rt.code = rt.code .. maparg.constructor.code
@@ -582,7 +584,7 @@ function defineStructConstructors( node, qualitype, descr, context)
 		local c_member_type = constTypeMap[ member.type] or member.type
 		local member_reftype = referenceTypeMap[ member.type]
 		local c_member_reftype = constTypeMap[ member_reftype] or member_reftype
-		local loadref = context.descr.loadref
+		local loadref = context.descr.loadelemref
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ptr",index=mi-1, type=llvmtype}),out=out}}
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
@@ -644,7 +646,8 @@ function defineClassConstructors( node, qualitype, descr, context)
 		local out = instantCallableContext.register()
 		local llvmtype = member.descr.llvmtype
 		local member_reftype = referenceTypeMap[ member.type]
-		local ths = {type=member_reftype,constructor={code=utils.constructor_format(context.descr.loadref,{out=out,this="%ptr",index=mi-1, type=llvmtype}),out=out}}
+		local loadref = context.descr.loadelemref
+		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ptr",index=mi-1, type=llvmtype}),out=out}}
 
 		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
 
@@ -662,7 +665,7 @@ function defineClassConstructors( node, qualitype, descr, context)
 	instantCallableContext = nil
 end
 -- Iterate through all interfaces defined and build the VMT tables of these interfaces related to this class defined
-function defineInheritedInterfaces( node, context, contextTypeId)
+function defineInheritedInterfaces( node, context, classTypeId)
 	for ii,iTypeId in ipairs(context.interfaces) do
 		local idescr = typeDescriptionMap[ iTypeId]
 		local cdescr = context.descr
@@ -678,7 +681,7 @@ function defineInheritedInterfaces( node, context, contextTypeId)
 				sep = ",\n\t"
 			else
 				utils.errorMessage( node.line, "Method '%s' of class '%s' not implemented as required by interface '%s'",
-							imethod.methodname, typedb:type_name(contextTypeId), typedb:type_name(iTypeId))
+							imethod.methodname, typedb:type_name(classTypeId), typedb:type_name(iTypeId))
 			end
 		end
 		print_section( "Auto", utils.template_format( llvmir.control.vtable,
@@ -743,7 +746,8 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 	for i,promote_typnam in ipairs( descr.promote) do
 		local promote_qualitype = scalarQualiTypeMap[ promote_typnam]
 		local promote_descr = typeDescriptionMap[ promote_qualitype.lval]
-		local promote_conv = convConstructor( promote_descr.conv[ typnam].fmt)
+		local promote_conv_fmt = promote_descr.conv[ typnam].fmt
+		local promote_conv; if promote_conv_fmt then promote_conv = convConstructor( promote_conv_fmt) else promote_conv = nil end
 		if promote_descr.binop then
 			for operator,operator_fmt in pairs( promote_descr.binop) do
 				definePromoteCall( promote_qualitype.lval, qualitype.c_lval, promote_qualitype.c_lval, operator, {promote_qualitype.c_lval}, promote_conv)
@@ -897,7 +901,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		if type(initVal) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
 		if descr.scalar == true and initVal then
-			print( utils.constructor_format( descr.def_global_val, {out = out, inp = initVal}))
+			print( utils.constructor_format( descr.def_global_val, {out = out, val = initVal}))
 		else
 			print( utils.constructor_format( descr.def_global, {out = out}))
 			if initVal then
@@ -922,8 +926,8 @@ function defineVariableMember( node, context, typeId, name, private)
 	local descr = typeDescriptionMap[ typeId]
 	local qualisep = typeQualiSepMap[ typeId]
 	local memberpos = context.structsize
-	local load_ref = utils.template_format( context.descr.loadref, {index=#context.members, type=descr.llvmtype})
-	local load_val = utils.template_format( context.descr.load, {index=#context.members, type=descr.llvmtype})
+	local load_ref = utils.template_format( context.descr.loadelemref, {index=#context.members, type=descr.llvmtype})
+	local load_val = utils.template_format( context.descr.loadelem, {index=#context.members, type=descr.llvmtype})
 
 	while math.fmod( memberpos, descr.align) ~= 0 do memberpos = memberpos + 1 end
 	context.structsize = memberpos + descr.size
@@ -949,21 +953,28 @@ function defineVariableMember( node, context, typeId, name, private)
 		defineCall( typeId, context.qualitype.c_lval, name, {}, callConstructor( load_val))
 	end
 end
+function defineInterfaceMember( node, context, typeId, typnam, private)
+	local descr = typeDescriptionMap[ typeId]
+	table.insert( context.interfaces, typeId)
+	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.classname})
+	local thisType = getFunctionThisType( false, descr.const == true, context.qualitype.rval)
+	defineCall( rvalueTypeMap[ typeId], thisType, typnam, {}, convConstructor( fmt, "RVAL"))
+end
 -- Define a reduction to a member variable to implement class/interface inheritance
 function defineReductionToMember( objTypeId, name)
 	memberTypeId = typedb:get_type( objTypeId, name)
 	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, 0.125/32)
 end
--- Define the reductions implementing class/interface inheritance
-function defineClassInheritanceReductions( context, name, private)
-	if private == true then
-		defineReductionToMember( context.qualitype.priv_rval, name)
-		defineReductionToMember( context.qualitype.priv_c_rval, name)
-	else
-		defineReductionToMember( context.qualitype.rval, name)
-		defineReductionToMember( context.qualitype.c_rval, name)
-		defineReductionToMember( context.qualitype.c_lval, name)
-	end
+-- Define the reductions implementing class inheritance
+function defineClassInheritanceReductions( context, name, private, const)
+	local contextType = getFunctionThisType( private, const, context.qualitype.rval)
+	defineReductionToMember( contextType, name)
+	if private == false and const == true then defineReductionToMember( context.qualitype.c_lval, name) end
+end
+-- Define the reductions implementing interface inheritance
+function defineInterfaceInheritanceReductions( context, name, private, const)
+	local contextType = getFunctionThisType( private, const, context.qualitype.rval)
+	defineReductionToMember( contextType, name)
 end
 -- Make a function/procedure/operator parameter addressable by name in the callable body
 function defineParameter( node, type, name, callable)
@@ -1384,30 +1395,31 @@ end
 function expandDescrCallTemplateParameter( descr, context)
 	descr.thisstr = getThisParameterString( context, descr.param)
 	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
-	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
 	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, context)
 	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+end
+function expandDescrMethod( descr, context)
+	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
+	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
+	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
+	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for a class method call with keys derived from the call description
 function expandDescrClassCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
-	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
-	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
+	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
+	expandDescrMethod( descr, context)
 end
 -- Expand the structure used for mapping the LLVM template for an interface method call with keys derived from the call description
 function expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
-	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
-	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
+	expandDescrMethod( descr, context)
 	if not descr.const then context.const = false end
 end
 -- Expand the structure used for mapping the LLVM template for an free function call with keys derived from the call description
 function expandDescrFreeCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
+	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
 	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtype = descr.rtype, argstr = descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
@@ -1563,7 +1575,7 @@ function typesystem.allocate( node, context)
 	                                                          typedb:type_string(memblk.type), typedb:type_string(memPointerType)) end
 	if ptr_constructor then memblk.constructor = ptr_constructor( memblk.constructor) end
 	local out = callable.register()
-	local cast = utils.constructor_format( llvmir.control.memPointerCast, {llvmtype=descr.llvmtype, out=out,inp=memblk.constructor.out}, callable.register)
+	local cast = utils.constructor_format( llvmir.control.memPointerCast, {llvmtype=descr.llvmtype, out=out,this=memblk.constructor.out}, callable.register)
 	local rt = applyCallable( node, {type=refTypeId,constructor={out=out, code=memblk.constructor.code .. cast}}, ":=", {args[2]})
 	rt.type = pointerTypeId
 	return rt
@@ -1592,7 +1604,7 @@ function typesystem.delete( node, context)
 	local lval = typeQualiSepMap[ pointerType].lval
 	local descr = typeDescriptionMap[ lval]
 	local cast_out = callable.register()
-	local cast = utils.constructor_format( llvmir.control.bytePointerCast, {llvmtype=descr.llvmtype, out=cast_out, inp=out}, callable.register)
+	local cast = utils.constructor_format( llvmir.control.bytePointerCast, {llvmtype=descr.llvmtype, out=cast_out, this=out}, callable.register)
 	local memblk = callFunction( node, {0}, "freemem", {{type=memPointerType, constructor={code=res.constructor.code .. cast,out=cast_out}}})
 	return {code=memblk.constructor.code}
 end
@@ -1663,7 +1675,7 @@ function typesystem.return_value( node)
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
 	local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
 	if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
-	local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, inp=constructor.out})
+	local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out})
 	return {code = constructor.code .. code}
 end
 function typesystem.conditional_if( node)
@@ -1866,13 +1878,14 @@ function typesystem.interface_procdef( node, decl, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1].name, symbol = arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
+	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
 	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretInterfaceFunctionCall else descr.call = llvmir.control.interfaceFunctionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.interfaceProcedureCall, name = arg[1].name, symbol = arg[1].symbol, ret = nil, param = arg[2], signature="", const=decl.const}
+	local descr = {call = llvmir.control.interfaceProcedureCall, name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2],
+	               signature = "", const = decl.const}
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.structdef( node, context)
@@ -1924,7 +1937,7 @@ function typesystem.classdef( node, context)
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
-	defineInheritedInterfaces( node, context, declContextTypeId)
+	defineInheritedInterfaces( node, context, qualitype.lval)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)
@@ -1936,14 +1949,10 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 		local private = false
 		if descr.class == "class" then
 			defineVariableMember( node, context, typeId, typnam, private)
-			defineClassInheritanceReductions( context, typnam, private)
+			defineClassInheritanceReductions( context, typnam, private, false)
 		elseif descr.class == "interface" then
-			table.insert( context.interfaces, typeId)
-			local itype = rvalueTypeMap[ typeId]
-			local interface = {code=utils.template_format( descr.getClassInterface, {classname=context.descr.classname, rt="{RVAL}"}),type=itype}
-
-			-- defineCall( constTypeMap[typeId], context.qualitype.c_rval, typnam, {}, callConstructor( load_ref))
-			-- defineClassInheritanceReductions( context, typnam, private)
+			defineInterfaceMember( node, context, typeId, typnam, private)
+			defineInterfaceInheritanceReductions( context, typnam, private, descr.const)
 		else
 			utils.errorMessage( node.line, "Inheritance only allowed from class or interface, not from '%s'", descr.class)
 		end

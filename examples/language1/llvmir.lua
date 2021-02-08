@@ -7,7 +7,7 @@ llvmir.scalar = require "language1/llvmir_scalar"
 local pointerTemplate = {
 	def_local = "{out} = alloca {pointee}*\n",
 	def_global = "{out} = internal global {pointee}* null\n",
-	def_global_val = "{out} = internal global {pointee}* {inp}\n",
+	def_global_val = "{out} = internal global {pointee}* {val}, align 8\n",
 	default = "null",
 	llvmtype = "{pointee}*",
 	class = "pointer",
@@ -15,7 +15,7 @@ local pointerTemplate = {
 	size = 8,
 	assign = "store {pointee}* {arg1}, {pointee}** {this}\n",
 	ctor_copy = "{1} = load {pointee}*, {pointee}** {arg1}\nstore {pointee}* {1}, {pointee}** {this}\n",
-	load = "{out} = load {pointee}*, {pointee}** {inp}\n",
+	load = "{out} = load {pointee}*, {pointee}** {this}\n",
 	ctor = "store {pointee}* null, {pointee}** {this}\n",
 	scalar = true,
 
@@ -74,6 +74,7 @@ local arrayTemplate = {
 	ctor = "call void @__ctor_{size}__{element}( {element}* {this})\n",
 	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( {element}* {this}, {element}* {arg1})\n",
 	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
+	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
 	index = {
 		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
 		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
@@ -106,8 +107,9 @@ llvmir.structTemplate = {
 	ctor_copy = "call void @__ctor_{procname}_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
 	ctor_elements = "call void @__ctor_elements_{structname}( %{structname}* {this}{args})\n",
 	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
-	loadref = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n",
-	load = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	load = "{out} = load %{classname}, %{structname}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	typedef = "%{structname} = type { {llvmtype} }\n"
 }
 
@@ -126,8 +128,9 @@ llvmir.classTemplate = {
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor = "call void @__ctor_{classname}( %{classname}* {this})\n",
 	dtor = "call void @__dtor_{classname}( %{classname}* {this})\n",
-	loadref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
-	load = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	load = "{out} = load %{classname}, %{classname}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	typedef = "%{classname} = type { {llvmtype} }\n",
 	methodCallType = "{rtype} (%{classname}*{argstr})*",
 	sretMethodCallType = "void ({rtype}* sret, %{classname}*{argstr})*"
@@ -148,14 +151,17 @@ llvmir.interfaceTemplate = {
 			.. "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
 			.. "store %{interfacename}__VMT* null, %{interfacename}__VMT** {3}, align 8\n",
 	ctor_copy = "{1} = load %{interfacename}, %{interfacename}* {arg1}\nstore %{interfacename} {1}, %{interfacename}* {this}\n",
+	load = "{out} = load %{interfacename}, %{interfacename}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
 	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
 	methodCallType = "{rtype} (i8*{argstr})*",
 	sretMethodCallType = "void ({rtype}* sret, i8*{argstr})*",
 	getClassInterface = "{1} = bitcast %{classname}* {this} to i8*\n"
-			..  "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {rt}, i32 0, i32 0\n"
+			..  "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 0\n"
 			..  "store i8* {1}, i8** {2}, align 8\n"
-			..  "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {rt}, i32 0, i32 1\n"
+			..  "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 1\n"
 			..  "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n"
 }
 
@@ -172,7 +178,7 @@ llvmir.control = {
 	terminateFalseExit = "br label %{out}\n{1}:\n",
 	terminateTrueExit = "br label %{out}\n{1}:\n",
 	label = "br label %{inp}\n{inp}:\n",
-	returnStatement = "ret {type} {inp}\n",
+	returnStatement = "ret {type} {this}\n",
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
@@ -201,8 +207,8 @@ llvmir.control = {
 	vtableElement = "{interface_signature} bitcast ({class_signature} @{symbolname} to {interface_signature})",
 	vtable = "${classname}__VMT__{interfacename} = comdat any\n"
 		.. "@{classname}__VMT__{interfacename} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT { {llvmtype} }, comdat, align 8\n",
-	memPointerCast = "{out} = bitcast i8* {inp} to {llvmtype}*\n",
-	bytePointerCast = "{out} = bitcast {llvmtype}* {inp} to i8*\n"
+	memPointerCast = "{out} = bitcast i8* {this} to {llvmtype}*\n",
+	bytePointerCast = "{out} = bitcast {llvmtype}* {this} to i8*\n"
 }
 
 function llvmir.functionAttribute( isPrivate)

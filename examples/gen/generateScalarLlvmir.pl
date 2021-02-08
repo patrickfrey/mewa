@@ -98,11 +98,11 @@ sub load_constructor {
 	my $llvmtype = $_[0];
 	if ($llvmtype eq "i1")
 	{
-		return "{1} = load i8, i8* {inp}\\n{out} = trunc i8 {1} to i1\\n";
+		return "{1} = load i8, i8* {this}\\n{out} = trunc i8 {1} to i1\\n";
 	}
 	else
 	{
-		return "{out} = load $llvmtype, $llvmtype* {inp}\\n";
+		return "{out} = load $llvmtype, $llvmtype* {this}\\n";
 	}
 }
 
@@ -149,7 +149,7 @@ sub conv_constructor {
 		my $rt = "";
 		if ($sgn_in eq "bool")
 		{
-			return    "{1} = trunc i8 {inp} to i1\\n"
+			return    "{1} = trunc i8 {this} to i1\\n"
 				. "{2} = zext i1 {1} to i32\\n"
 				. "{out} = sitofp i32 {2} to $llvmtype_out\\n";
 		}
@@ -162,14 +162,14 @@ sub conv_constructor {
 	{
 		if ($sgn_out eq "bool")
 		{
-			return "{out} = fcmp une $llvmtype_in {inp}, 0.000000e+00\\n";
+			return "{out} = fcmp une $llvmtype_in {this}, 0.000000e+00\\n";
 		}
 		if ($sgn_out eq "signed") {$convop = "fptosi";}
 		elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
 	}
 	elsif ($sgn_out eq "bool")
 	{
-		return "{out} = cmp ne $llvmtype_in {inp}, 0\\n";
+		return "{out} = cmp ne $llvmtype_in {this}, 0\\n";
 	}
 	else
 	{
@@ -186,7 +186,7 @@ sub conv_constructor {
 	}
 	if ($convop)
 	{
-		return "{out} = $convop $llvmtype_in {inp} to $llvmtype_out\\n";
+		return "{out} = $convop $llvmtype_in {this} to $llvmtype_out\\n";
 	}
 	else
 	{
@@ -212,7 +212,7 @@ foreach my $line (@content)
 	}
 	print "\t\tdef_local = \"{out} = alloca $llvmtype_storage, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdef_global = \"{out} = internal global $llvmtype_storage $defaultmap{ $llvmtype}, align $alignmap{$llvmtype}\\n\",\n";
-	print "\t\tdef_global_val = \"{out} = internal global $llvmtype_storage {inp}, align $alignmap{$llvmtype}\\n\",\n";
+	print "\t\tdef_global_val = \"{out} = internal global $llvmtype_storage {val}, align $alignmap{$llvmtype}\\n\",\n";
 	print "\t\tdefault = \"" . $defaultmap{ $llvmtype} . "\",\n";
 	print "\t\tllvmtype = \"$llvmtype\",\n";
 	print "\t\tscalar = true,\n";
@@ -302,19 +302,19 @@ foreach my $line (@content)
 	print "\t\tunop = {\n";
 	if ($sgn eq "bool")
 	{
-		print "\t\t\t[\"\!\"] = \"{out} = xor $llvmtype {inp}, true\\n\"";
+		print "\t\t\t[\"\!\"] = \"{out} = xor $llvmtype {this}, true\\n\"";
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		print "\t\t\t[\"\~\"] = \"{out} = xor $llvmtype {inp}, -1\\n\"";
+		print "\t\t\t[\"\~\"] = \"{out} = xor $llvmtype {this}, -1\\n\"";
 	}
 	elsif ($sgn eq "signed")
 	{
-		print "\t\t\t[\"-\"] = \"{out} = sub $llvmtype 0, {inp}\\n\"";
+		print "\t\t\t[\"-\"] = \"{out} = sub $llvmtype 0, {this}\\n\"";
 	}
 	elsif ($sgn eq "fp")
 	{
-		print "\t\t\t[\"-\"] = \"{out} = fneg $llvmtype {inp}\\n\"";
+		print "\t\t\t[\"-\"] = \"{out} = fneg $llvmtype {this}\\n\"";
 	}
 	else
 	{
