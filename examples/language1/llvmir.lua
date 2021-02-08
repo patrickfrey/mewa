@@ -180,6 +180,7 @@ llvmir.control = {
 	label = "br label %{inp}\n{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
 	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
+	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {rtparamstr}{thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
 	sretFunctionCall = "call void{signature} @{symbolname}( {rtype}* sret {rvalref}{callargstr})\n",

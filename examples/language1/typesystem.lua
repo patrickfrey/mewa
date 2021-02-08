@@ -145,6 +145,10 @@ function constReferenceFromRvalueReferenceConstructor( descr)
 		return {code = code, out = out}
 	end
 end
+-- Function that decides wheter a function (in the LLVM code output) should return the return value as value or via an 'sret' pointer passed as argument
+function doReturnValueAsReferenceParameter( typeId)
+	if typeId and rvalueTypeMap[ typeId] then return true else return false end
+end
 -- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
 function functionCallConstructor( fmt, thisTypeId, sep, argvar, rtype)
 	local function buildArguments( this_code, this_inp, args, llvmtypes)
@@ -170,7 +174,7 @@ function functionCallConstructor( fmt, thisTypeId, sep, argvar, rtype)
 		local out,subst
 		if not rtype then
 			subst = {[argvar] = argstr}
-		elseif rvalueTypeMap[ rtype] then
+		elseif doReturnValueAsReferenceParameter( rtype) then
 			out = "RVAL"
 			subst = {[argvar] = argstr, rvalref = "{RVAL}"}
 		else
@@ -1368,6 +1372,14 @@ function getDeclarationLlvmParameterTypeString( args)
 	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype else rt = rt .. ", " .. arg.llvmtype end end
 	return rt
 end
+function getReturnParameterString( context, descr)
+	local rt = ""
+	if doReturnValueAsReferenceParameter( descr.ret) then
+		rt = descr.rtype .. "* sret %rt"
+		if (#descr.param > 1 or (context and context.qualitype)) then rt = rt .. ", " end
+	end
+	return rt
+end
 function getThisParameterString( context, args)
 	local rt = ""
 	if context and context.qualitype then
@@ -1393,10 +1405,11 @@ function getTypeDeclUniqueName( contextTypeId, typnam)
 end
 -- Function shared by all expansions of the structure used for mapping the LLVM template for a function call
 function expandDescrCallTemplateParameter( descr, context)
+	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+	descr.rtparamstr = getReturnParameterString( context, descr)
 	descr.thisstr = getThisParameterString( context, descr.param)
 	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
 	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, context)
-	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
 end
 function expandDescrMethod( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
@@ -1446,18 +1459,19 @@ function expandContextMethodList( node, descr, context)
 	end
 end
 function printFunctionDeclaration( node, descr)
-	print( "\n" .. utils.constructor_format( llvmir.control.functionDeclaration, descr))
+	local fmt; if doReturnValueAsReferenceParameter( descr.ret) then fmt = llvmir.control.sretFunctionDeclaration else fmt = llvmir.control.functionDeclaration end
+	print( "\n" .. utils.constructor_format( fmt, descr))
 end
 function printExternFunctionDeclaration( node, descr)
-	local declfmt; if descr.vararg then declfmt = llvmir.control.extern_functionDeclaration_vararg else declfmt = llvmir.control.extern_functionDeclaration end
-	print( "\n" .. utils.constructor_format( declfmt, descr))
+	local fmt; if descr.vararg then fmt = llvmir.control.extern_functionDeclaration_vararg else fmt = llvmir.control.extern_functionDeclaration end
+	print( "\n" .. utils.constructor_format( fmt, descr))
 end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
 	local callfmt	
 	callfmt = utils.template_format( descr.call, descr)
-	local functype = defineCall( rvalueTypeMap[ descr.ret] or descr.ret, contextTypeId, opr, descr.param, 
-					functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr", descr.ret))
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr", descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallableType( node, descr, thisTypeId, context)
@@ -1492,7 +1506,7 @@ function defineOperator( node, descr, context)
 end
 -- Define an extern function as callable with "()" operator similar to 'defineCallable'
 function defineExternCallable( node, descr)
-	if descr.ret and rvalueTypeMap[ descr.ret] then utils.errorMessage( node.line, "Non scalar or non pointer type not allowed as extern function return value") end
+	if doReturnValueAsReferenceParameter( descr.ret) then utils.errorMessage( node.line, "Type not allowed as extern function return value") end
 	expandDescrExternCallTemplateParameter( descr, context)
 	defineCallableType( node, descr, 0, nil)
 end
@@ -1760,7 +1774,7 @@ function typesystem.funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const }
-	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineCallable( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
@@ -1782,7 +1796,7 @@ function typesystem.operator_funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const}
-	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 	defineOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
@@ -1868,7 +1882,7 @@ end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", const=decl.const, index=#context.methods}
-	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretInterfaceFunctionCall else descr.call = llvmir.control.interfaceFunctionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretInterfaceFunctionCall else descr.call=llvmir.control.interfaceFunctionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
@@ -1879,7 +1893,7 @@ end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
-	if rvalueTypeMap[ descr.ret] then descr.call = llvmir.control.sretInterfaceFunctionCall else descr.call = llvmir.control.interfaceFunctionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretInterfaceFunctionCall else descr.call=llvmir.control.interfaceFunctionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
