@@ -70,16 +70,14 @@ entry:
 ret i32 %r2
 }
 
-define external %Object__1 @__C_Point__1__object( %Point__1* %ths ) #0 noinline nounwind {
+define external void @__C_Point__1__object( %Object__1* sret %rt, %Point__1* %ths ) #0 noinline nounwind {
 entry:
-%r4 = alloca %Object__1, align 8
 %r1 = bitcast %Point__1* %ths to i8*
-%r2 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r2 = getelementptr inbounds %Object__1, %Object__1* %rt, i32 0, i32 0
 store i8* %r1, i8** %r2, align 8
-%r3 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r3 = getelementptr inbounds %Object__1, %Object__1* %rt, i32 0, i32 1
 store %Object__1__VMT* @Point__1__VMT__Object__1, %Object__1__VMT** %r3, align 8
-%r5 = load %Object__1, %Object__1* %r4
-ret %Object__1 %r5
+ret void
 }
 
 define external void @__C_Line__1__$ctor__i32__i32( %Line__1* %ths, i32 %r1, i32 %r2 ) #0 noinline nounwind {

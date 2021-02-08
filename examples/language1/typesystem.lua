@@ -1375,7 +1375,7 @@ end
 function getReturnParameterString( context, descr)
 	local rt = ""
 	if doReturnValueAsReferenceParameter( descr.ret) then
-		rt = descr.rtype .. "* sret %rt"
+		rt = descr.rtllvmtype .. "* sret %rt"
 		if (#descr.param > 1 or (context and context.qualitype)) then rt = rt .. ", " end
 	end
 	return rt
@@ -1405,7 +1405,7 @@ function getTypeDeclUniqueName( contextTypeId, typnam)
 end
 -- Function shared by all expansions of the structure used for mapping the LLVM template for a function call
 function expandDescrCallTemplateParameter( descr, context)
-	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	descr.rtparamstr = getReturnParameterString( context, descr)
 	descr.thisstr = getThisParameterString( context, descr.param)
 	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
@@ -1415,7 +1415,7 @@ function expandDescrMethod( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
 	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
 	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtype = descr.rtype, argstr = sep .. descr.argstr})
+	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtllvmtype = descr.rtllvmtype, argstr = sep .. descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for a class method call with keys derived from the call description
 function expandDescrClassCallTemplateParameter( descr, context)
@@ -1433,7 +1433,7 @@ end
 function expandDescrFreeCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
 	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
-	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtype = descr.rtype, argstr = descr.argstr})
+	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtllvmtype = descr.rtllvmtype, argstr = descr.argstr})
 end
 -- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
 function expandDescrExternCallTemplateParameter( descr, context)
@@ -1443,12 +1443,12 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	else
 		utils.errorMessage( node.line, "Unknown extern call type \"%s\" (must be one of {\"C\"})", descr.externtype)
 	end
-	if descr.ret then descr.rtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtype = "void" end
+	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	if descr.vararg then
 		local sep; if descr.argstr == "" then sep = "" else sep = ", " end
 		descr.signature = utils.template_format( llvmir.control.freeFunctionVarargSignature,  {argstr = descr.argstr .. sep})
 	end
-	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtype = descr.rtype, argstr = descr.argstr})
+	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtllvmtype = descr.rtllvmtype, argstr = descr.argstr})
 end
 -- Add a descriptor to the list of methods that helps to link interfaces with classes
 function expandContextMethodList( node, descr, context)
@@ -1687,10 +1687,16 @@ function typesystem.return_value( node)
 	local callable = getCallableContext()
 	local rtype = callable.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
-	local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
-	if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
-	local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out})
-	return {code = constructor.code .. code}
+	if doReturnValueAsReferenceParameter( rtype) then
+		local reftype = referenceTypeMap[ rtype]
+		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {arg[1]})
+		return {code = rt.constructor.code .. "ret void\n"}
+	else
+		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
+		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
+		local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out})
+		return {code = constructor.code .. code}
+	end
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)

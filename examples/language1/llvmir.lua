@@ -132,8 +132,8 @@ llvmir.classTemplate = {
 	loadelemref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	typedef = "%{classname} = type { {llvmtype} }\n",
-	methodCallType = "{rtype} (%{classname}*{argstr})*",
-	sretMethodCallType = "void ({rtype}* sret, %{classname}*{argstr})*"
+	methodCallType = "{rtllvmtype} (%{classname}*{argstr})*",
+	sretMethodCallType = "void ({rtllvmtype}* sret, %{classname}*{argstr})*"
 }
 
 llvmir.interfaceTemplate = {
@@ -156,8 +156,8 @@ llvmir.interfaceTemplate = {
 	loadelem = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
 	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
-	methodCallType = "{rtype} (i8*{argstr})*",
-	sretMethodCallType = "void ({rtype}* sret, i8*{argstr})*",
+	methodCallType = "{rtllvmtype} (i8*{argstr})*",
+	sretMethodCallType = "void ({rtllvmtype}* sret, i8*{argstr})*",
 	getClassInterface = "{1} = bitcast %{classname}* {this} to i8*\n"
 			..  "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 0\n"
 			..  "store i8* {1}, i8** {2}, align 8\n"
@@ -179,11 +179,11 @@ llvmir.control = {
 	terminateTrueExit = "br label %{out}\n{1}:\n",
 	label = "br label %{inp}\n{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
-	functionDeclaration = "define {lnk} {rtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
+	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
 	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {rtparamstr}{thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
-	functionCall = "{out} = call {rtype}{signature} @{symbolname}( {callargstr})\n",
+	functionCall = "{out} = call {rtllvmtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
-	sretFunctionCall = "call void{signature} @{symbolname}( {rtype}* sret {rvalref}{callargstr})\n",
+	sretFunctionCall = "call void{signature} @{symbolname}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
 	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
 				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
@@ -191,14 +191,14 @@ llvmir.control = {
 	sretInterfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
 				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
-				.. "call {llvmtype} {3}( {rtype}* sret {rvalref}{callargstr})\n",
+				.. "call {llvmtype} {3}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
 	interfaceProcedureCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
 				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
 				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
-				.. "call {rtype} {3}( {callargstr})\n",
-	extern_functionDeclaration = "declare external {rtype} @{symbolname}( {argstr} ) #1 nounwind\n",
-	extern_functionDeclaration_vararg = "declare external {rtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
-	freeFunctionCallType = "{rtype} ({argstr})*",
+				.. "call {rtllvmtype} {3}( {callargstr})\n",
+	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) #1 nounwind\n",
+	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
+	freeFunctionCallType = "{rtllvmtype} ({argstr})*",
 	freeFunctionVarargSignature = "({argstr} ...)",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
