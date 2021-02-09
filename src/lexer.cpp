@@ -33,7 +33,7 @@ static std::string_view parseChar( char const*& si)
 
 static char parseFirstChar( char const*& si, bool allowNonAscii)
 {
-	if ((unsigned char)*si <= 32U)
+	if ((unsigned char)*si < 32U)
 	{
 		throw Error( Error::IllegalFirstCharacterInLexer, parseChar(si));
 	}
@@ -171,18 +171,19 @@ std::string LexemDef::activation( const std::string& source_)
 				inverse = true;
 				++si;
 			}
-			empty &= !extractFirstCharacters( rt, si, ']');
-			empty &= !skipMultiplicator( si);
+			bool hasCharacters = extractFirstCharacters( rt, si, ']');
+			bool potentiallyIgnored = (skipMultiplicator( si) == false);
+			empty = !hasCharacters || potentiallyIgnored;
 			if (inverse) rt = inverseCharset( rt);
-			if (empty) rt.append( activation( std::string( si)));
 		}
 		else if (*si == '(')
 		{
 			for (;;)
 			{
 				char const* start = si+1;
-				empty &= !skipBrackets( si, ')');
-				empty &= !skipMultiplicator( si);
+				bool hasCharacters = skipBrackets( si, ')');
+				bool potentiallyIgnored = (skipMultiplicator( si) == false);
+				empty = !hasCharacters || potentiallyIgnored;
 				rt.append( activation( std::string( start, si-start-1)));
 				if (*si != '|') break;
 				++si;

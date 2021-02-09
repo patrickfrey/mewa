@@ -24,6 +24,21 @@
 
 using namespace mewa;
 
+void testActivation( const char* rxstr, const char* expected, bool verbose)
+{
+	LexemDef lxdef( ""/*name*/, rxstr, 0/*id*/, false/*keyword*/, 0/*select*/);
+	std::string output = lxdef.activation();
+	if (verbose)
+	{
+		std::cerr << "TEST LEXEM " << rxstr << " ACTIVATION " << output << std::endl;
+	}
+	if (output != expected)
+	{
+		std::cerr << "EXPECTED " << expected << std::endl;
+		throw std::runtime_error( "lexem activation not as expected");
+	}
+}
+
 int main( int argc, const char* argv[] )
 {
 	try
@@ -61,6 +76,16 @@ int main( int argc, const char* argv[] )
 			std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
 			throw std::runtime_error( "no arguments except options expected");
 		}
+		testActivation( "0123456789", "0", verbose);
+		testActivation( "[0123456789]", "0123456789", verbose);
+		testActivation( "[0-9]", "0123456789", verbose);
+		testActivation( "[0-9]*([.][0-9]*){0,1}", "0123456789.", verbose);
+		testActivation( "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}", "0123456789. Ee", verbose);
+		testActivation( "[-]{0,1}[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}", "-0123456789. Ee", verbose);
+		testActivation( "((true)|(false))", "tf", verbose);
+		testActivation( "[a-zA-Z_]+[a-zA-Z_0-9]*", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", verbose);
+		testActivation( "[\"]((([^\\\"\n]+)|([\\][^\"\n]))*)[\"]", "\"", verbose);
+		testActivation( "[']((([^\\'\n]+)|([\\][^'\n]))*)[']", "'", verbose);
 
 		Lexer lexer;
 		lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");

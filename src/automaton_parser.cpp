@@ -65,7 +65,7 @@ public:
 		defineLexem( ":");
 		defineLexem( ";");
 		defineLexem( "ε");
-		defineLexem( "CALL", "[-]{0,1}[a-zA-Z_][:.a-zA-Z_0-9]*");
+		defineLexem( "CALL", "[-]{0,1}[a-zA-Z_][.a-zA-Z_0-9]*");
 		defineLexem( "{");
 		defineLexem( "}");
 		defineLexem( ",");

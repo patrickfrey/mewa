@@ -52,6 +52,9 @@ class Line :Point
 }
 
 main {
+	var float x = 1.23;
+	var Line ab = {1.23, 4.23};
+	var Object obj = ab.object();
 	return 0;
 }
 
