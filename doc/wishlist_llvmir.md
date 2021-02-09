@@ -25,4 +25,15 @@
 	attributes #extern_function = {
 		"no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" }
 	```
+2. Floating point constants
+	The following code leads to an error:
+	```LLVM
+		store float 1.21, float* %r1
+	```
+	while
+	```LLVM
+		store float 1.25, float* %r1
+	```
+	is correct. I understand that the first is not representable with accurancy. 
+	But still, I would like to configure the mapping as part of the backend.
 

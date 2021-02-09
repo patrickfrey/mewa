@@ -76,20 +76,20 @@ end
 function testDefineResolveType()
 	typedb = mewa.typedb()
 
-	function pushParameter( constructor)
+	local function pushParameter( constructor)
 		return "param " .. constructor.type
 	end
-	function typeReduction( stu_)
+	local function typeReduction( stu_)
 		local stu = stu_
 		return function ( type)
 			return "#" .. stu .. "(" .. type .. ")"
 		end
 	end
 
-	function reduceType( constructor)
+	local function reduceType( constructor)
 		return "param " .. constructor.type
 	end
-	function typeTreeToString( node, indent)
+	local function typeTreeToString( node, indent)
 		rt = ""
 		for chld in node:chld() do
 			local scope = chld:scope()
@@ -133,10 +133,10 @@ function testDefineResolveType()
 	typedb:scope( scope_bk)
 	typedb:step( 34)
 	local types = {short_type, int_type, float_type}
-	for i,type in ipairs( types) do
-		for i,reduction in ipairs( typedb:get_reductions( type, mask_resolve)) do
-			result = result .. "\nREDU " .. typedb:type_string( type) .. " -> " .. typedb:type_string( reduction.type)
-					.. " : " .. reduction.constructor( typedb:type_string( type))
+	for i,typeid in ipairs( types) do
+		for i,reduction in ipairs( typedb:get_reductions( typeid, mask_resolve)) do
+			result = result .. "\nREDU " .. typedb:type_string( typeid) .. " -> " .. typedb:type_string( reduction.type)
+					.. " : " .. reduction.constructor( typedb:type_string( typeid))
 		end
 	end
 	typedb:step( 99)
@@ -301,10 +301,39 @@ function testDefineTypeAs()
 	checkTestResult( "testDefineTypeAs", "", "")
 end
 
+function testLlvmFloatAndDoubleToHex()
+	local result = "";
+	local input_float = {4.21, 3.01, 9.012e-7, 1.11711e+10, 5.9125e-4, 0.1111111111, 4.25}
+	local input_double = {4.212121212121, 3.010101010101, 9.01212121212e-7, 1.117111111e+34, 5.9125555e-41, 0.1111111111, 4.2555555555}
+	for ii,val in ipairs(input_float) do
+		result = result .. "0x" .. mewa.llvm_float_tohex( val) .. "\n"
+	end
+	for ii,val in ipairs(input_double) do
+		result = result .. "0x" .. mewa.llvm_double_tohex( val) .. "\n"
+	end
+	local expected = [[0x4010D70A40000000
+0x4008147AE0000000
+0x3EAE3D3FC0000000
+0x4204CECBA0000000
+0x3F435FC3C0000000
+0x3FBC71C720000000
+0x4011000000000000
+0x4010D9364D9363EA
+0x400814AFD6A052A9
+0x3EAE3D5A69A8B55A
+0x47013639F616F11E
+0x37949A2CFDC32C37
+0x3FBC71C71C658F9D
+0x401105B05B04BC05
+]]
+	checkTestResult( "testLlvmFloatAndDoubleToHex", result, expected)
+end
+
 testRegisterAllocator()
 testDefineResolveType()
 testResolveTypeContext()
 testDefineTypeAs()
+testLlvmFloatAndDoubleToHex()
 
 if errorCount > 0 then
 	error( "result of " .. errorCount .. " tests not as expected!")

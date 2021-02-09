@@ -899,7 +899,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		else
 			rt = applyCallable( node, rt, ":=", {})
 		end
-		if descr.dtor then setCleanupCode( descr, rt.constructor.out) end
+		if descr.dtor then setCleanupCode( descr, out) end
 		return rt
 	elseif not context.qualitype then
 		if type(initVal) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
@@ -1284,12 +1284,17 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 			if #param_constructor_ar == #args then
 				if not bestweight or weight < bestweight + weightEpsilon then
 					local item_constructor = typedb:type_constructor( item)
-					local callable_constructor = item_constructor( this_constructor, param_constructor_ar, param_llvmtype_ar)
+					local call_constructor
+					if not item_constructor and #args == 0 then
+						call_constructor = this_constructor
+					else
+						call_constructor = item_constructor( this_constructor, param_constructor_ar, param_llvmtype_ar)
+					end
 					if bestweight and weight >= bestweight - weightEpsilon then
-						table.insert( bestmatch, {type=item, constructor=callable_constructor})
+						table.insert( bestmatch, {type=item, constructor=call_constructor})
 					else
 						bestweight = weight
-						bestmatch = {{type=item, constructor=callable_constructor}}
+						bestmatch = {{type=item, constructor=call_constructor}}
 					end
 				end
 			end

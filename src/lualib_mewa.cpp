@@ -251,6 +251,46 @@ static int mewa_tostring( lua_State* ls)
 	return 1;
 }
 
+static int mewa_llvm_float_tohex( lua_State* ls)
+{
+	/// PF:HACK This function should not be here but in an external library
+	[[maybe_unused]] static const char* functionName = "mewa.llvm_float_tohex";
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+		double num = lua_tonumber( ls, 1);
+		char buf[ 64];
+		int64_t encnum = (*(int64_t*)&num >> 28);
+		bool doinc = (encnum & 1);
+		if (doinc) ++encnum;
+		encnum = (encnum >> 1);
+		encnum = (encnum << 29);
+		std::snprintf( buf, sizeof(buf), "%lx", encnum);
+		for (char* bi = buf; *bi; ++bi) if (*bi >= 'a' && *bi <= 'z') {*bi -= 32;}
+		lua_pushstring( ls, buf);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
+static int mewa_llvm_double_tohex( lua_State* ls)
+{
+	/// PF:HACK This function should not be here but in an external library
+	[[maybe_unused]] static const char* functionName = "mewa.llvm_double_tohex";
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
+		double num = lua_tonumber( ls, 1);
+		char buf[ 64];
+		int64_t encnum = *(int64_t*)&num;
+		std::snprintf( buf, sizeof(buf), "%lx", encnum);
+		for (char* bi = buf; *bi; ++bi) if (*bi >= 'a' && *bi <= 'z') {*bi -= 32;}
+		lua_pushstring( ls, buf);
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 1;
+}
+
 static int mewa_stacktrace( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "mewa.stacktrace";
@@ -1239,6 +1279,8 @@ static const struct luaL_Reg mewa_functions[] = {
 	{ "compiler",		mewa_new_compiler },
 	{ "typedb",		mewa_new_typedb },
 	{ "tostring",		mewa_tostring },
+	{ "llvm_float_tohex",	mewa_llvm_float_tohex },
+	{ "llvm_double_tohex",	mewa_llvm_double_tohex },
 	{ "stacktrace",		mewa_stacktrace },
 	{ nullptr,  		nullptr }
 };
