@@ -1,11 +1,10 @@
-double	double	fp
-float	float	fp
-ulong	i64	unsigned
-long	i64	signed
-uint	i32	unsigned
-int	i32	signed
-ushort	i16	unsigned
-short	i16	signed
-byte	i8	unsigned
-bool	i1	bool
-
+double;double;fp
+float;float;fp
+ulong;i64;unsigned
+long;i64;signed
+uint;i32;unsigned
+int;i32;signed
+ushort;i16;unsigned
+short;i16;signed
+byte;i8;unsigned
+bool;i1;bool

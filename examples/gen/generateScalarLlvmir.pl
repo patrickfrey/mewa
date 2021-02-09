@@ -204,7 +204,7 @@ my $linecnt = 0;
 foreach my $line (@content)
 {
 	if ($linecnt++ > 0) {print ",\n";}
-	my ($typename, $llvmtype, $sgn) = split( /\t/, $line);
+	my ($typename, $llvmtype, $sgn) = split( /;/, $line);
 	print "\t$typename = {\n";
 	my $llvmtype_storage = $llvmtype;
 	if ($sgn eq "bool") {
@@ -229,7 +229,7 @@ foreach my $line (@content)
 	my $oi = 0;
 	foreach my $operand (@content)
 	{
-		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
+		my ($op_typename, $op_llvmtype, $op_sgn) = split( /;/, $operand);
 		if ($typename ne $op_typename)
 		{
 			if ($alignmap{$op_llvmtype} >= $alignmap{$llvmtype})
@@ -268,7 +268,7 @@ foreach my $line (@content)
 	$oi = 0;
 	foreach my $operand (@content)
 	{
-		my ($op_typename, $op_llvmtype, $op_sgn) = split( /\t/, $operand);
+		my ($op_typename, $op_llvmtype, $op_sgn) = split( /;/, $operand);
 		if ($op_typename ne $typename)
 		{
 			if ($oi++ > 0) {print ",\n";} else {print "\n";}
