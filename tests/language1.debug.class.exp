@@ -362,15 +362,65 @@ Reduce #2 to free_definitionlist by token "main" at line 54 in state 30, goto 30
 Reduce #2 to free_definitionlist by token "main" at line 54 in state 30, goto 5
 Shift token "main" at line 54 in state 5, goto 29
 Shift token '{' at line 54 in state 29, goto 50
-Shift token "return" at line 55 in state 50, goto 94
-Shift token CARDINAL = "0" at line 55 in state 94, goto 82
-Reduce #1 to expression by token ';' at line 55 in state 82, call constant "constexpr uint", goto 188
-Shift token ';' at line 55 in state 188, goto 288
-Reduce #3 to statement by token '}' at line 56 in state 288, call return_value, goto 75
-Reduce #0 to statementlist by token '}' at line 56 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 56 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 56 in state 74, call codeblock, goto 73
-Shift token '}' at line 56 in state 73, goto 137
+Shift token "var" at line 55 in state 50, goto 93
+Shift token IDENT = "float" at line 55 in state 93, goto 17
+Reduce #1 to typename by token IDENT = "x" at line 55 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "x" at line 55 in state 8, call typespec "", goto 9
+Shift token IDENT = "x" at line 55 in state 9, goto 33
+Shift token '=' at line 55 in state 33, goto 53
+Shift token FLOAT = "1.23" at line 55 in state 53, goto 84
+Reduce #1 to expression by token ';' at line 55 in state 84, call constant "constexpr float", goto 102
+Reduce #4 to variabledefinition by token ';' at line 55 in state 102, call vardef_assign, goto 187
+Shift token ';' at line 55 in state 187, goto 287
+Reduce #3 to statement by token "var" at line 56 in state 287, call definition, goto 75
+Shift token "var" at line 56 in state 75, goto 93
+Shift token IDENT = "Line" at line 56 in state 93, goto 17
+Reduce #1 to typename by token IDENT = "ab" at line 56 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "ab" at line 56 in state 8, call typespec "", goto 9
+Shift token IDENT = "ab" at line 56 in state 9, goto 33
+Shift token '=' at line 56 in state 33, goto 53
+Shift token '{' at line 56 in state 53, goto 103
+Shift token FLOAT = "1.23" at line 56 in state 103, goto 84
+Reduce #1 to expression by token ',' at line 56 in state 84, call constant "constexpr float", goto 194
+Shift token ',' at line 56 in state 194, goto 285
+Shift token FLOAT = "4.23" at line 56 in state 285, goto 84
+Reduce #1 to expression by token '}' at line 56 in state 84, call constant "constexpr float", goto 194
+Reduce #1 to expressionlist by token '}' at line 56 in state 194, goto 317
+Reduce #3 to expressionlist by token '}' at line 56 in state 317, goto 180
+Shift token '}' at line 56 in state 180, goto 286
+Reduce #3 to expression by token ';' at line 56 in state 286, call structure, goto 102
+Reduce #4 to variabledefinition by token ';' at line 56 in state 102, call vardef_assign, goto 187
+Shift token ';' at line 56 in state 187, goto 287
+Reduce #3 to statement by token "var" at line 57 in state 287, call definition, goto 75
+Shift token "var" at line 57 in state 75, goto 93
+Shift token IDENT = "Object" at line 57 in state 93, goto 17
+Reduce #1 to typename by token IDENT = "obj" at line 57 in state 17, goto 8
+Reduce #1 to typespec by token IDENT = "obj" at line 57 in state 8, call typespec "", goto 9
+Shift token IDENT = "obj" at line 57 in state 9, goto 33
+Shift token '=' at line 57 in state 33, goto 53
+Shift token IDENT = "ab" at line 57 in state 53, goto 79
+Reduce #1 to expression by token '.' at line 57 in state 79, call variable, goto 102
+Shift token '.' at line 57 in state 102, goto 175
+Shift token IDENT = "object" at line 57 in state 175, goto 282
+Reduce #3 to expression by token '(' at line 57 in state 282, call member, goto 102
+Shift token '(' at line 57 in state 102, goto 140
+Shift token ')' at line 57 in state 140, goto 248
+Reduce #3 to expression by token ';' at line 57 in state 248, call operator "()", goto 102
+Reduce #4 to variabledefinition by token ';' at line 57 in state 102, call vardef_assign, goto 187
+Shift token ';' at line 57 in state 187, goto 287
+Reduce #3 to statement by token "return" at line 58 in state 287, call definition, goto 75
+Shift token "return" at line 58 in state 75, goto 94
+Shift token CARDINAL = "0" at line 58 in state 94, goto 82
+Reduce #1 to expression by token ';' at line 58 in state 82, call constant "constexpr uint", goto 188
+Shift token ';' at line 58 in state 188, goto 288
+Reduce #3 to statement by token '}' at line 59 in state 288, call return_value, goto 75
+Reduce #0 to statementlist by token '}' at line 59 in state 75, goto 138
+Reduce #2 to statementlist by token '}' at line 59 in state 138, goto 138
+Reduce #2 to statementlist by token '}' at line 59 in state 138, goto 138
+Reduce #2 to statementlist by token '}' at line 59 in state 138, goto 138
+Reduce #2 to statementlist by token '}' at line 59 in state 138, goto 74
+Reduce #1 to codeblock by token '}' at line 59 in state 74, call codeblock, goto 73
+Shift token '}' at line 59 in state 73, goto 137
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -1626,34 +1676,197 @@ Lua call result [1]
                 {
                   arg = {
                     {
+                      arg = {
+                        {
+                          line = 55,
+                          name = "IDENT",
+                          value = "float"}},
+                      call = {
+                        name = "typespec ",
+                        obj = "",
+                        proc = <function>},
                       line = 55,
+                      step = 17},
+                    {
+                      line = 55,
+                      name = "IDENT",
+                      value = "x"},
+                    {
+                      arg = {
+                        {
+                          line = 55,
+                          name = "FLOAT",
+                          value = "1.23"}},
+                      call = {
+                        name = "constant constexpr float",
+                        obj = "constexpr float",
+                        proc = <function>},
+                      line = 55,
+                      step = 17}},
+                  call = {
+                    name = "vardef_assign",
+                    proc = <function>},
+                  line = 55,
+                  step = 18}},
+              call = {
+                name = "definition",
+                proc = <function>},
+              line = 55,
+              step = 18},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 56,
+                          name = "IDENT",
+                          value = "Line"}},
+                      call = {
+                        name = "typespec ",
+                        obj = "",
+                        proc = <function>},
+                      line = 56,
+                      step = 18},
+                    {
+                      line = 56,
+                      name = "IDENT",
+                      value = "ab"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              line = 56,
+                              name = "FLOAT",
+                              value = "1.23"}},
+                          call = {
+                            name = "constant constexpr float",
+                            obj = "constexpr float",
+                            proc = <function>},
+                          line = 56,
+                          step = 18},
+                        {
+                          arg = {
+                            {
+                              line = 56,
+                              name = "FLOAT",
+                              value = "4.23"}},
+                          call = {
+                            name = "constant constexpr float",
+                            obj = "constexpr float",
+                            proc = <function>},
+                          line = 56,
+                          step = 18}},
+                      call = {
+                        name = "structure",
+                        proc = <function>},
+                      line = 56,
+                      step = 18}},
+                  call = {
+                    name = "vardef_assign",
+                    proc = <function>},
+                  line = 56,
+                  step = 19}},
+              call = {
+                name = "definition",
+                proc = <function>},
+              line = 56,
+              step = 19},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 57,
+                          name = "IDENT",
+                          value = "Object"}},
+                      call = {
+                        name = "typespec ",
+                        obj = "",
+                        proc = <function>},
+                      line = 57,
+                      step = 19},
+                    {
+                      line = 57,
+                      name = "IDENT",
+                      value = "obj"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 57,
+                                  name = "IDENT",
+                                  value = "ab"}},
+                              call = {
+                                name = "variable",
+                                proc = <function>},
+                              line = 57,
+                              step = 19},
+                            {
+                              line = 57,
+                              name = "IDENT",
+                              value = "object"}},
+                          call = {
+                            name = "member",
+                            proc = <function>},
+                          line = 57,
+                          step = 19}},
+                      call = {
+                        name = "operator ()",
+                        obj = "()",
+                        proc = <function>},
+                      line = 57,
+                      step = 19}},
+                  call = {
+                    name = "vardef_assign",
+                    proc = <function>},
+                  line = 57,
+                  step = 20}},
+              call = {
+                name = "definition",
+                proc = <function>},
+              line = 57,
+              step = 20},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      line = 58,
                       name = "CARDINAL",
                       value = "0"}},
                   call = {
                     name = "constant constexpr uint",
                     obj = "constexpr uint",
                     proc = <function>},
-                  line = 55,
-                  step = 17}},
+                  line = 58,
+                  step = 20}},
               call = {
                 name = "return_value",
                 proc = <function>},
-              line = 55,
-              step = 18}},
+              line = 58,
+              step = 21}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 55,
-          step = 18}},
+          line = 58,
+          step = 21}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 55,
+      line = 58,
       scope = {
         17,
-        19}}},
+        22}}},
   call = {
     name = "program",
     proc = <function>},
-  line = 55,
-  step = 19}
+  line = 58,
+  step = 22}

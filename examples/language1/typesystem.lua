@@ -61,16 +61,16 @@ function getCallableContext()
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.out,(constructor.code or ""),(constructor.alloc or "") else return tostring(constructor),"","" end
+	if type(constructor) == "table" then return constructor.out,(constructor.code or ""),(constructor.alloc or "") else return constructor,"","" end
 end
-function constructorStruct( out, code, alloc)
-	return {out=out, code=code, alloc=alloc}
+function constructorStruct( out, code)
+	return {out=out, code=code or ""}
 end
 function constructorStructEmpty()
 	return {code=""}
 end
-function typeConstructorStruct( type, out, code, alloc)
-	return {type=type, constructor=constructorStruct( out, code, alloc)}
+function typeConstructorStruct( type, out, code)
+	return {type=type, constructor=constructorStruct( out, code)}
 end
 -- Constructor of a single constant value without code
 function constConstructor( val)
@@ -93,6 +93,19 @@ function assignConstructor( fmt)
 		local subst = {arg1 = arg_inp, this = this_inp}
 		code = code .. this_code .. arg_code
 		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, callable.register))
+	end
+end
+-- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
+function binopArgConversionConstructor( fmt, argconv)
+	return function( this, arg)
+		local callable = getCallableContext()
+		local out = callable.register()
+		local code = ""
+		local this_inp,this_code = constructorParts( this)
+		local arg_inp,arg_code = constructorParts( arg[1])
+		local subst = {out = out, this = this_inp, arg1 = argconv(arg_inp)}
+		code = code .. this_code .. arg_code
+		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
@@ -176,7 +189,7 @@ function functionCallConstructor( fmt, thisTypeId, sep, argvar, rtype)
 			subst = {[argvar] = argstr}
 		elseif doReturnValueAsReferenceParameter( rtype) then
 			out = "RVAL"
-			subst = {[argvar] = argstr, rvalref = "{RVAL}"}
+			if argstr == "" then subst = {[argvar] = argstr, rvalref = "{RVAL}"} else subst = {[argvar] = argstr, rvalref = "{RVAL}, "} end
 		else
 			out = callable.register()
 			subst = {out = out, [argvar] = argstr}
@@ -276,18 +289,30 @@ function defineCall( returnType, thisType, opr, argTypes, constructor, priority)
 	return callType
 end
 
+-- Conversion of constexpr constant to representation in LLVM IR
+function constexprLlvmConversion( typeid)
+	if typeDescriptionMap[ typeid].class == "fp" then
+		if typeDescriptionMap[ typeid].llvmtype == "float" then
+			return function( val) return "0x" .. mewa.llvm_float_tohex( val) end
+		elseif typeDescriptionMap[ typeid].llvmtype == "double" then
+			return function( val) return "0x" .. mewa.llvm_double_tohex( val) end
+		end
+	end
+	return function(arg) return tostring(arg) end
+end
+-- Constant expression/value types
 local constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- const expression integers implemented as arbitrary precision BCD numbers
 local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")		-- const expression cardinals implemented as arbitrary precision BCD numbers
 local constexprFloatType = typedb:def_type( 0, "constexpr float")		-- const expression floating point numbers implemented as 'double'
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- const expression boolean implemented as Lua boolean
 local constexprNullType = typedb:def_type( 0, "constexpr null")			-- const expression null value implemented as nil
 local constexprStructureType = typedb:def_type( 0, "constexpr struct")		-- const expression tree structure implemented as a list of type/constructor pairs
-
+-- Mapping of constant expression types if used as variable argument parameter where no explicit parameter type defined for the callee
 varargParameterMap[ constexprIntegerType] = {llvmtype="i64",type=constexprIntegerType}
 varargParameterMap[ constexprUIntegerType] = {llvmtype="i64",type=constexprUIntegerType}
-varargParameterMap[ constexprFloatType] = {llvmtype="double",type=constexprFloatType}
+varargParameterMap[ constexprFloatType] = {llvmtype="double",type=constexprFloatType, conv=mewa.llvm_double_tohex}
 varargParameterMap[ constexprBooleanType] = {llvmtype="i1",type=constexprBooleanType}
-
+-- Table listing the accepted constant expression/value types for each scalar type class 
 local typeClassToConstExprTypesMap = {
 	fp = {constexprFloatType,constexprIntegerType,constexprUIntegerType}, 
 	bool = {constexprBooleanType},
@@ -777,7 +802,8 @@ function defineBuiltInTypeOperators( typnam, descr)
 		for operator,operator_fmt in pairs( descr.binop) do
 			defineCall( qualitype.lval, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
 			for i,constexprType in ipairs(constexprTypes) do
-				defineCall( qualitype.lval, qualitype.c_lval, operator, {constexprType}, callConstructor( operator_fmt))
+				local valueconv = constexprLlvmConversion( qualitype.lval)
+				defineCall( qualitype.lval, qualitype.c_lval, operator, {constexprType}, binopArgConversionConstructor( operator_fmt, valueconv))
 			end
 		end
 	end
@@ -785,7 +811,8 @@ function defineBuiltInTypeOperators( typnam, descr)
 		for operator,operator_fmt in pairs( descr.cmpop) do
 			defineCall( scalarBooleanType, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
 			for i,constexprType in ipairs(constexprTypes) do
-				defineCall( scalarBooleanType, qualitype.c_lval, operator, {constexprType}, callConstructor( operator_fmt))
+				local valueconv = constexprLlvmConversion( qualitype.lval)
+				defineCall( scalarBooleanType, qualitype.c_lval, operator, {constexprType}, binopArgConversionConstructor( operator_fmt, valueconv))
 			end
 		end
 	end
@@ -1114,7 +1141,8 @@ function initBuiltInTypes()
 		end
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
 			local weight = 0.25*(1.0-scalar_descr.sizeweight)
-			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return {code="",out=tostring(arg)} end, tag_typeDeduction, weight)
+			local valueconv = constexprLlvmConversion( qualitype.lval)
+			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return constructorStruct(valueconv(arg)) end, tag_typeDeduction, weight)
 		end
 	end
 	if not scalarBooleanType then utils.errorMessage( 0, "No boolean type defined in built-in scalar types") end
@@ -1381,7 +1409,8 @@ function getReturnParameterString( context, descr)
 	local rt = ""
 	if doReturnValueAsReferenceParameter( descr.ret) then
 		rt = descr.rtllvmtype .. "* sret %rt"
-		if (#descr.param > 1 or (context and context.qualitype)) then rt = rt .. ", " end
+		if (#descr.param >= 1 or (context and context.qualitype)) then rt = rt .. ", " end
+		io.stderr:write("++++ SRET " .. descr.symbol .. " " .. mewa.tostring(rt) .. "\n")
 	end
 	return rt
 end

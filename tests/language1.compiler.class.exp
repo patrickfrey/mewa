@@ -98,7 +98,17 @@ declare dso_local i32 @__gxx_personality_v0(...)
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
 entry:
+%r1 = alloca float, align 4
+store float 0x3FF3AE1480000000, float* %r1
+%r2 = alloca %Line__1, align 8
+call void @__C_Line__1__$ctor__i32__i32( %Line__1* %r2, i32 1, i32 4)
+%r4 = alloca %Object__1, align 8
+%r3 = getelementptr inbounds %Line__1, %Line__1* %r2, i32 0, i32 0
+call void @__C_Point__1__object( %Object__1* sret %r4, %Point__1* %r3)
 ret i32 0
+br label %L1
+L1:
+call void @__dtor_Line__1( %Line__1* %r2)
 br label %exit
 exit:
 ret i32 0
