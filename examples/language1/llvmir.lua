@@ -159,10 +159,31 @@ llvmir.interfaceTemplate = {
 	methodCallType = "{rtllvmtype} (i8*{argstr})*",
 	sretMethodCallType = "void ({rtllvmtype}* sret, i8*{argstr})*",
 	getClassInterface = "{1} = bitcast %{classname}* {this} to i8*\n"
-			..  "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 0\n"
-			..  "store i8* {1}, i8** {2}, align 8\n"
-			..  "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 1\n"
-			..  "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n"
+			.. "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 0\n"
+			.. "store i8* {1}, i8** {2}, align 8\n"
+			.. "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 1\n"
+			.. "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n",
+	functionCall = "{1} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 1\n"
+			.. "{2} = load %Object__1__VMT*, %Object__1__VMT** {1}\n"
+			.. "{3} = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* {2}, i32 0, i32 1\n"
+			.. "{4} = load {rtllvmtype} (i8*{argstr})*, {rtllvmtype} (i8*{argstr})** {3}, align 8\n"
+			.. "{5} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 0\n"
+			.. "{6} = load i8*, i8** {5}\n"
+			.. "{out} = call {rtllvmtype} {4}( i8* {6}{callargstr})\n",
+	sretFunctionCall = "{1} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 1\n"
+			.. "{2} = load %Object__1__VMT*, %Object__1__VMT** {1}\n"
+			.. "{3} = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* {2}, i32 0, i32 1\n"
+			.. "{4} = load void ({rtllvmtype}* sret, i8*{argstr})*, void ({rtllvmtype}* sret, i8*{argstr})** {3}, align 8\n"
+			.. "{5} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 0\n"
+			.. "{6} = load i8*, i8** {5}\n"
+			.. "{out} = call void {4}( {rtllvmtype}* sret {rvalref}, i8* {6}{callargstr})\n",
+	procedureCall = "{1} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 1\n"
+			.. "{2} = load %Object__1__VMT*, %Object__1__VMT** {1}\n"
+			.. "{3} = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* {2}, i32 0, i32 1\n"
+			.. "{4} = load void (i8*{argstr})*, void (i8*{argstr})** {3}, align 8\n"
+			.. "{5} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 0\n"
+			.. "{6} = load i8*, i8** {5}\n"
+			.. "{out} = call void {4}( i8* {6}{callargstr})\n"
 }
 
 llvmir.callableDescr = {
@@ -184,18 +205,6 @@ llvmir.control = {
 	functionCall = "{out} = call {rtllvmtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
 	sretFunctionCall = "call void{signature} @{symbolname}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
-	interfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
-				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
-				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
-				.. "{out} = call {llvmtype} {3}( {callargstr})\n",
-	sretInterfaceFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
-				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
-				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
-				.. "call {llvmtype} {3}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
-	interfaceProcedureCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* @{symbolname}, i64 0, i64 1\n" 
-				.. "{2} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {1}, i64 0, i64 {index}\n"
-				.. "{3} = getelementptr inbounds {llvmtype}, {llvmtype}* {2}, i64 0, i64 0\n"
-				.. "call {rtllvmtype} {3}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	freeFunctionCallType = "{rtllvmtype} ({argstr})*",

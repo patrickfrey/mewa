@@ -5,7 +5,12 @@ interface Object
 	function y int() const;
 }
 
-class Point :Object
+interface ObjectUpdater
+{
+	operator = ( int x_, int y_);
+}
+
+class Point :Object,ObjectUpdater
 {
 	public constructor( int x_, int y_)
 	{
@@ -33,6 +38,10 @@ class Point :Object
 	{
 		return this->Object;
 	}
+	public function updater ObjectUpdater()
+	{
+		return this->ObjectUpdater;
+	}
 
 	int m_x;
 	int m_y;
@@ -55,6 +64,8 @@ main {
 	var float x = 1.23;
 	var Line ab = {1.23, 4.23};
 	var Object obj = ab.object();
+	var ObjectUpdater updater = ab.updater();
+	var int xx = obj.y();
 	return 0;
 }
 

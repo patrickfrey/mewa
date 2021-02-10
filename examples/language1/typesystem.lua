@@ -6,11 +6,11 @@ local bcd = require "bcd"
 local typedb = mewa.typedb()
 local typesystem = {}
 
-local tag_typeDeduction = 1
-local tag_typeDeclaration = 2
-local tag_TypeConversion = 3
-local tag_typeNamespace = 4
-local tag_pointerReinterpretCast = 5
+local tag_typeDeduction = 1		-- Inheritance relation
+local tag_typeDeclaration = 2		-- Type declaration relation (e.g. variable to data type)
+local tag_TypeConversion = 3		-- Type conversion of parameters
+local tag_typeNamespace = 4		-- Type deduction for data types (e.g. namespaces)
+local tag_pointerReinterpretCast = 5 	-- Type deduction only allowed in an explicit "cast" operation
 local tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
 local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion)
@@ -1371,7 +1371,7 @@ end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not
 function tryApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
-	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) else return nil end
+	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end
 -- Get the symbol name for a function in the LLVM output
 function getTargetFunctionIdentifierString( name, args, context)
@@ -1410,7 +1410,6 @@ function getReturnParameterString( context, descr)
 	if doReturnValueAsReferenceParameter( descr.ret) then
 		rt = descr.rtllvmtype .. "* sret %rt"
 		if (#descr.param >= 1 or (context and context.qualitype)) then rt = rt .. ", " end
-		io.stderr:write("++++ SRET " .. descr.symbol .. " " .. mewa.tostring(rt) .. "\n")
 	end
 	return rt
 end
@@ -1546,9 +1545,11 @@ function defineExternCallable( node, descr)
 end
 -- Define an interface method call as callable with "()" operator similar to 'defineCallable'
 function defineInterfaceCallable( node, descr, context)
+	local thisTypeId = getFunctionThisType( false, descr.const, context.qualitype.rval)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
 	expandContextLlvmMember( descr, context)
+	defineCallableType( node, descr, thisTypeId, context)
 end
 -- Define the context of the body of any function/procedure/operator except the main function
 function defineCallableBodyContext( node, context, descr)
@@ -1922,23 +1923,23 @@ end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", const=decl.const, index=#context.methods}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretInterfaceFunctionCall else descr.call=llvmir.control.interfaceFunctionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.interfaceProcedureCall, name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", const=decl.const}
+	local descr = {call = context.descr.procedureCall, name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", const=decl.const}
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretInterfaceFunctionCall else descr.call=llvmir.control.interfaceFunctionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceCallable( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.interfaceProcedureCall, name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2],
+	local descr = {call = context.descr.procedureCall, name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2],
 	               signature = "", const = decl.const}
 	defineInterfaceCallable( node, descr, context)
 end

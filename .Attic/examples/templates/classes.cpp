@@ -15,7 +15,14 @@ private:
 	const char* m_msg;
 };
 
-class A
+
+class VV
+{
+public:
+	virtual float xxx( int p1, float p2) = 0;
+};
+
+class A :public VV
 {
 public:
 	A( const char* ptr_)
@@ -63,6 +70,7 @@ int funcA( int x) {return x;}
 struct VMT
 {
 	int(*afunc)( int);
+	int(*bfunc)( int);
 };
 static VMT g_vmt = {funcA};
 
@@ -86,12 +94,10 @@ public:
 
 int main( int argc, char const* argv[])
 {
-	do_throw_flag = argc > 3;
-	B b( "blabla", argv[1]);
-	A rr = b.getNewA( "gu");
-	X xx;
-	VMTImpl vv = xx.getVmt();
-	return 0;
+	int (*func)(int) = &funcA;
+	int (**funcptr)(int) = &func;
+	func = *funcptr;
+	return func( 12);
 }
 
 

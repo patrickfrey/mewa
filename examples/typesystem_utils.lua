@@ -273,15 +273,17 @@ end
 -- Debug function that returns the tree with all resolve type paths
 function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 	function getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, indentstr, visited, weightsum)
-		local typeid = typedb:get_type( contextType, typeName)
-		if typeid then
-			return " " .. typeName .. " MATCH"
-		else
+		local typeid = typedb:resolve_type( contextType, typeName, tagmask)
+		if typeid and typeid == contextType then
 			local rt = ""; if indentstr ~= "" then rt = rt .. "\n" end
-			table.insert( visited, typeid)
+			rt = rt .. indentstr .. "MATCH " .. typedb:type_string(contextType) .. " " .. typeName .. "\n"
+			return rt
+		elseif contextType ~= 0 then
+			local rt = ""; if indentstr ~= "" then rt = rt .. "\n" end
+			table.insert( visited, contextType)
 			local rdlist = typedb:get_reductions( contextType, tagmask)
 			for ri,rd in ipairs(rdlist) do
-				local in_visited = nil; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; break end end
+				local in_visited = false; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; end end
 				if not in_visited then
 					rt = rt .. indentstr .. "[" .. weightsum+rd.weight .."] ".. typedb:type_string(contextType) .." -> ".. typedb:type_string(rd.type)
 					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, tagmask, indentstr .. "  ", visited, weightsum+rd.weight)
@@ -289,9 +291,23 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 			end
 			table.remove( visited, #visited)
 			return rt
+		else
+			return ""
 		end
 	end
-	return getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, "", {}, 0.0)
+	if type(contextType) == "table" then
+		if contextType.type then
+			return getResolveTypeTree_rec( typedb, contextType.type, typeName, tagmask, "", {}, 0.0)
+		else
+			local rt = ""
+			for ci,ct in ipairs(contextType) do
+				rt = rt .. utils.getResolveTypeTreeDump( typedb, ct, typeName, tagmask) .. "\n"
+			end
+			return rt
+		end
+	else
+		return getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, "", {}, 0.0)
+	end
 end
 
 function treeToString( typedb, node, indentstr, node_tostring)
