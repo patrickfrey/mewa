@@ -1,8 +1,7 @@
 # TODO List
 
  * Implement a typedb function 'typedb:check_derive_type' that checks unique reduction path for all type pairs defined in all scopes.
- * Class implements interface member as RValue reference, also the implicit reduction to it
- * function with sret use %rt := <return value>, instead of return <return value>, %rt being the sret return value reference
+ * Remove parameter list from typedb, represent it in Lua table instead including vararg flag
  * Implement function pointer and reference type of it for variables, With ref and assignment of callable
  * Generics
  * Report error on statements after return and similar cases, mark statements without follow statement allowed
