@@ -183,7 +183,7 @@ llvmir.interfaceTemplate = {
 			.. "{4} = load void (i8*{argstr})*, void (i8*{argstr})** {3}, align 8\n"
 			.. "{5} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 0\n"
 			.. "{6} = load i8*, i8** {5}\n"
-			.. "{out} = call void {4}( i8* {6}{callargstr})\n"
+			.. "call void {4}( i8* {6}{callargstr})\n"
 }
 
 llvmir.callableDescr = {

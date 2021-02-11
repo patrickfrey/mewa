@@ -271,7 +271,7 @@ function resolveOperatorConstructor( node, thisTypeId, opr)
 					end
 				end
 				if #param_ar == #args then
-					table.insert( rt, applyCallable( node, typeConstructorStruct( thisTypeId, this_inp, this_code), ":=", param_ar))
+					table.insert( rt, applyCallable( node, typeConstructorStruct( thisTypeId, this_inp, this_code), opr, param_ar))
 				end
 			end
 		end
@@ -752,7 +752,6 @@ function defineOperatorAttributes( context, descr)
 end
 -- Iterate through operator declarations and implement them with a recursive structure as argument (e.g. a + {3,24, 5.13}) if possible
 function defineOperatorsWithStructArgument( node, context)
-	if context.descr.interfacename then io.stderr:write("++++ INTERFACE OPR " .. mewa.tostring(context.operators) .. "\n") end
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
 			defineCall( def.returnType, def.contextType, opr, {constexprStructureType}, resolveOperatorConstructor( node, def.contextType, opr))
