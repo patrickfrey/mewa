@@ -162,38 +162,55 @@ end
 function doReturnValueAsReferenceParameter( typeId)
 	if typeId and rvalueTypeMap[ typeId] then return true else return false end
 end
--- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
-function functionCallConstructor( fmt, thisTypeId, sep, argvar, rtype)
-	local function buildArguments( this_code, this_inp, args, llvmtypes)
-		local code = this_code
-		local argstr; if thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else argstr = "" end
-		for ii=1,#args do
-			local arg = args[ ii]
-			local llvmtype = llvmtypes[ ii]
-			local arg_inp,arg_code = constructorParts( arg)
-			code = code .. arg_code
-			if llvmtype then
-				if argstr == "" then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
-			else
-				if argstr == "" then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
-			end
+-- Builds the argument string and the argument build-up code for a function call or interface method call constructor
+function buildFunctionCallArguments( code, argstr, sep, args, llvmtypes)
+	for ii=1,#args do
+		local arg = args[ ii]
+		local llvmtype = llvmtypes[ ii]
+		local arg_inp,arg_code = constructorParts( arg)
+		code = code .. arg_code
+		if llvmtype then
+			if argstr == "" then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
+		else
+			if argstr == "" then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
 		end
-		return code,argstr
 	end
+	return code,argstr
+end
+-- Builds the table with the variables to substitute in a function call template
+function buildFunctionCallSubst( callable, rtype, argstr)
+	if not rtype then
+		return nil,{callargstr = argstr}
+	elseif doReturnValueAsReferenceParameter( rtype) then
+		local out = "RVAL"
+		local rvalsubst; if argstr == "" then rvalsubst = "{RVAL}" else rvalsubst = "{RVAL}, " end			
+		return out,{callargstr = argstr, rvalref = rvalsubst}
+	else
+		local out = callable.register()
+		subst = {out = out, callargstr = argstr}
+		return out,subst
+	end
+end
+-- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
+function functionCallConstructor( fmt, thisTypeId, sep, rtype)
 	return function( this, args, llvmtypes)
 		local callable = getCallableContext()
 		local this_inp,this_code = constructorParts( this)
-		local code,argstr = buildArguments( this_code, this_inp, args, llvmtypes)
-		local out,subst
-		if not rtype then
-			subst = {[argvar] = argstr}
-		elseif doReturnValueAsReferenceParameter( rtype) then
-			out = "RVAL"
-			if argstr == "" then subst = {[argvar] = argstr, rvalref = "{RVAL}"} else subst = {[argvar] = argstr, rvalref = "{RVAL}, "} end
-		else
-			out = callable.register()
-			subst = {out = out, [argvar] = argstr}
-		end
+		local this_argstr; if thisTypeId ~= 0 then this_argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else this_argstr = "" end
+		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, sep, args, llvmtypes)
+		local out,subst = buildFunctionCallSubst( callable, rtype, argstr)
+		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
+	end
+end
+-- Constructor implementing a call of a method of an interface
+function interfaceMethodCallConstructor( fmt, index, sep, rtype)
+	return function( this, args, llvmtypes)
+		local callable = getCallableContext()
+		local this_inp,this_code = constructorParts( this)
+		local code,argstr = buildFunctionCallArguments( this_code, "", sep, args, llvmtypes)
+		local out,subst = buildFunctionCallSubst( callable, rtype, argstr)
+		subst.index = index
+		subst.this = this_inp
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
@@ -1504,7 +1521,7 @@ function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt	
 	callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
-	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", "callargstr", descr.ret))
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineCallableType( node, descr, thisTypeId, context)

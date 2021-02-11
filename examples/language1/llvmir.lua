@@ -165,7 +165,7 @@ llvmir.interfaceTemplate = {
 			.. "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n",
 	functionCall = "{1} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 1\n"
 			.. "{2} = load %Object__1__VMT*, %Object__1__VMT** {1}\n"
-			.. "{3} = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* {2}, i32 0, i32 1\n"
+			.. "{3} = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* {2}, i32 0, i32 {index}\n"
 			.. "{4} = load {rtllvmtype} (i8*{argstr})*, {rtllvmtype} (i8*{argstr})** {3}, align 8\n"
 			.. "{5} = getelementptr inbounds %Object__1, %Object__1* {this}, i32 0, i32 0\n"
 			.. "{6} = load i8*, i8** {5}\n"
