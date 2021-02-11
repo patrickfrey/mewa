@@ -203,19 +203,18 @@ function functionCallConstructor( fmt, thisTypeId, sep, rtype)
 	end
 end
 -- Constructor implementing a call of a method of an interface
-function interfaceMethodCallConstructor( fmt, index, sep, rtype)
+function interfaceMethodCallConstructor( fmt, sep, rtype)
 	return function( this, args, llvmtypes)
 		local callable = getCallableContext()
 		local this_inp,this_code = constructorParts( this)
 		local code,argstr = buildFunctionCallArguments( this_code, "", sep, args, llvmtypes)
 		local out,subst = buildFunctionCallSubst( callable, rtype, argstr)
-		subst.index = index
 		subst.this = this_inp
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Constructor for a recursive memberwise assignment of a tree structure (initializing a "struct")
-function memberwiseAssignStructureConstructor( node, thisTypeId, members)
+function memberwiseInitStructureConstructor( node, thisTypeId, members)
 	return function( this, args)
 		args = args[1] -- args contains one list node
 		if #args ~= #members then 
@@ -667,7 +666,7 @@ function defineStructConstructors( node, qualitype, descr, context)
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
-	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseAssignStructureConstructor( node, qualitype.lval, context.members))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseInitStructureConstructor( node, qualitype.lval, context.members))
 	typedb:def_reduction( anyStructPointerType, qualitype.pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( anyConstStructPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.pval, anyStructPointerType, nil, tag_pointerReinterpretCast)
@@ -753,6 +752,7 @@ function defineOperatorAttributes( context, descr)
 end
 -- Iterate through operator declarations and implement them with a recursive structure as argument (e.g. a + {3,24, 5.13}) if possible
 function defineOperatorsWithStructArgument( node, context)
+	if context.descr.interfacename then io.stderr:write("++++ INTERFACE OPR " .. mewa.tostring(context.operators) .. "\n") end
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
 			defineCall( def.returnType, def.contextType, opr, {constexprStructureType}, resolveOperatorConstructor( node, def.contextType, opr))
@@ -1005,7 +1005,7 @@ function defineInterfaceMember( node, context, typeId, typnam, private)
 	local descr = typeDescriptionMap[ typeId]
 	table.insert( context.interfaces, typeId)
 	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.classname})
-	local thisType = getFunctionThisType( false, descr.const == true, context.qualitype.rval)
+	local thisType = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineCall( rvalueTypeMap[ typeId], thisType, typnam, {}, convConstructor( fmt, "RVAL"))
 end
 -- Define a reduction to a member variable to implement class/interface inheritance
@@ -1518,57 +1518,70 @@ function printExternFunctionDeclaration( node, descr)
 end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
-	local callfmt	
-	callfmt = utils.template_format( descr.call, descr)
+	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
-function defineCallableType( node, descr, thisTypeId, context)
-	local callableContextTypeId = typedb:get_type( thisTypeId, descr.name)
-	if not callableContextTypeId then
-		callableContextTypeId = typedb:def_type( thisTypeId, descr.name)
-		typeDescriptionMap[ callableContextTypeId] = llvmir.callableDescr
+function defineInterfaceMethodCall( contextTypeId, opr, descr)
+	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
+	local callfmt = utils.template_format( descr.call, descr)
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( callfmt, ", ", descr.ret))
+	if descr.vararg then varargFuncMap[ functype] = true end
+end
+function getOrCreateCallableContextTypeId( thisTypeId, name)
+	local rt = typedb:get_type( thisTypeId, name)
+	if not rt then
+		rt = typedb:def_type( thisTypeId, name)
+		typeDescriptionMap[ rt] = llvmir.callableDescr
 	end
-	defineFunctionCall( thisTypeId, callableContextTypeId, "()", descr)
+	return rt
 end
--- Define a virtual object identified by name and an operator "()" with the function arguments (unifying the semantics of objects with "()" operator and function calls)
-function defineCallable( node, descr, context)
-	if context and context.qualitype then
-		local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
-		expandDescrClassCallTemplateParameter( descr, context)
-		expandContextMethodList( node, descr, context)
-		defineCallableType( node, descr, thisTypeId, context)
-	else
-		expandDescrFreeCallTemplateParameter( descr, context)
-		defineCallableType( node, descr, 0, context)
-	end
+-- Define a free function as callable object with "()" operator implementing the call
+function defineFreeFunction( node, descr, context)
+	expandDescrFreeCallTemplateParameter( descr, context)
+	defineFunctionCall( 0, getOrCreateCallableContextTypeId( 0, descr.name), "()", descr)
 end
-function defineOperatorType( node, descr, context)
-	local contextTypeId = 0; if context and context.qualitype then contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval) end
-	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
-end
--- Define a callable operator with its arguments
-function defineOperator( node, descr, context)
+-- Define a class method as callable object with "()" operator implementing the call
+function defineClassMethod( node, descr, context)
+	local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	expandDescrClassCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
-	defineOperatorType( node, descr, context)
+	defineFunctionCall( thisTypeId, getOrCreateCallableContextTypeId( thisTypeId, descr.name), "()", descr)
 end
--- Define an extern function as callable with "()" operator similar to 'defineCallable'
-function defineExternCallable( node, descr)
+-- Define an operator on the class with its arguments
+function defineClassOperator( node, descr, context)
+	expandDescrClassCallTemplateParameter( descr, context)
+	expandContextMethodList( node, descr, context)
+	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
+	defineOperatorAttributes( context, descr)
+end
+-- Define an extern function as callable object with "()" operator implementing the call
+function defineExternFunction( node, descr)
 	if doReturnValueAsReferenceParameter( descr.ret) then utils.errorMessage( node.line, "Type not allowed as extern function return value") end
 	expandDescrExternCallTemplateParameter( descr, context)
-	defineCallableType( node, descr, 0, nil)
+	defineFunctionCall( 0, getOrCreateCallableContextTypeId( 0, descr.name), "()", descr)
 end
--- Define an interface method call as callable with "()" operator similar to 'defineCallable'
-function defineInterfaceCallable( node, descr, context)
-	local thisTypeId = getFunctionThisType( false, descr.const, context.qualitype.rval)
+-- Define an interface method call as callable object with "()" operator implementing the call
+function defineInterfaceMethod( node, descr, context)
+	local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
 	expandContextLlvmMember( descr, context)
-	defineCallableType( node, descr, thisTypeId, context)
+	defineInterfaceMethodCall( getOrCreateCallableContextTypeId( thisTypeId, descr.name), "()", descr)
 end
--- Define the context of the body of any function/procedure/operator except the main function
+-- Define an operator on the interface with its arguments
+function defineInterfaceOperator( node, descr, context)
+	expandDescrInterfaceCallTemplateParameter( descr, context)
+	expandContextMethodList( node, descr, context)
+	expandContextLlvmMember( descr, context)
+	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	defineInterfaceMethodCall( contextTypeId, descr.name, descr)
+	defineOperatorAttributes( context, descr)
+end
+-- Define the execution context of the body of any function/procedure/operator except the main function
 function defineCallableBodyContext( node, context, descr)
 	local prev_scope = typedb:scope( node.scope)
 	if context and context.qualitype then
@@ -1581,7 +1594,7 @@ function defineCallableBodyContext( node, context, descr)
 	defineCallableContext( node.scope, descr.ret)
 	typedb:scope( prev_scope)
 end
--- Define the context of the body of the main function
+-- Define the execution context of the body of the main function
 function defineMainProcContext( node)
 	local prev_scope = typedb:scope( node.scope)
 	defineVariableHardcoded( stringPointerType, "argc", "%argc")
@@ -1834,7 +1847,7 @@ function typesystem.funcdef( node, decl, context)
 			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const }
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
-	defineCallable( node, descr, context)
+	if context and context.qualitype then defineClassMethod( node, descr, context) else defineFreeFunction( node, descr, context) end
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printFunctionDeclaration( node, descr)
 end
@@ -1843,7 +1856,7 @@ function typesystem.procdef( node, decl, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2], symbol = arg[2], ret = nil, private=arg[1].private, const=decl.const }
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
-	defineCallable( node, descr, context)
+	if context and context.qualitype then defineClassMethod( node, descr, context) else defineFreeFunction( node, descr, context) end
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
 end
@@ -1856,37 +1869,34 @@ function typesystem.operator_funcdef( node, decl, context)
 			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
-	defineOperator( node, descr, context)
+	defineClassOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printFunctionDeclaration( node, descr)
-	defineOperatorAttributes( context, descr)
 end
 function typesystem.operator_procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const}
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
-	defineOperator( node, descr, context)
+	defineClassOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
-	defineOperatorAttributes( context, descr)
 end
 function typesystem.constructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false}
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
-	defineOperator( node, descr, context)
+	defineClassOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
-	defineOperatorAttributes( context, descr)
 end
 function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false }
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
-	defineOperator( node, descr, context)
+	defineClassOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
 end
@@ -1916,49 +1926,52 @@ end
 function typesystem.extern_funcdef( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=false, signature=""}
-	defineExternCallable( node, descr)
+	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=false, signature=""}
-	defineExternCallable( node, descr)
+	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_funcdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=true, signature=""}
-	defineExternCallable( node, descr)
+	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
 	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=true, signature=""}
-	defineExternCallable( node, descr)
+	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", const=decl.const, index=#context.methods}
+	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", private=false, const=decl.const,
+	               index=#context.methods}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
-	defineInterfaceCallable( node, descr, context)
+	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = context.descr.procedureCall, name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", const=decl.const}
-	defineInterfaceCallable( node, descr, context)
+	local descr = {name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", private=false, const=decl.const,
+	               index=#context.methods, call = context.descr.procedureCall}
+	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", const=decl.const}
+	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", private=false, const=decl.const,
+			index=#context.methods}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
-	defineInterfaceCallable( node, descr, context)
+	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = context.descr.procedureCall, name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2],
-	               signature = "", const = decl.const}
-	defineInterfaceCallable( node, descr, context)
+	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2], signature = "", private=false, const=decl.const,
+	               index=#context.methods, call = context.descr.procedureCall}
+	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
@@ -1982,12 +1995,13 @@ function typesystem.interfacedef( node, context)
 	local descr = utils.template_format( llvmir.interfaceTemplate, {interfacename=interfacename})
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {qualitype=qualitype, descr=descr, methods={}, methodmap={}, llvmtype="", symbol=interfacename, const=true}
+	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=interfacename, const=true}
 	local arg = utils.traverse( typedb, node, context)
 	descr.methods = context.methods
 	descr.const = context.const
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineInterfaceConstructors( node, qualitype, descr, context)
+	defineOperatorsWithStructArgument( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
 end
