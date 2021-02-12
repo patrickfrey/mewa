@@ -285,7 +285,8 @@ static int mewa_llvm_double_tohex( lua_State* ls)
 		double num = lua_tonumber( ls, 1);
 		char buf[ 64];
 		int64_t encnum = *(int64_t*)&num;
-		std::snprintf( buf, sizeof(buf), "%lx", encnum);
+		const char* fmt64 = sizeof(long) == 8 ? "%lx" : "%llx";
+		std::snprintf( buf, sizeof(buf), fmt64, encnum);
 		for (char* bi = buf; *bi; ++bi) if (*bi >= 'a' && *bi <= 'z') {*bi -= 32;}
 		lua_pushstring( ls, buf);
 	}
