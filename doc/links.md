@@ -1,6 +1,14 @@
 # Collection of Links
 
 ## LLVM
+### Howto
+The main source of documentation about how to use _LLVM IR_ was the _Clang_ C++ front-end:
+```sh
+clang -S -emit-llvm -o example.llr example.cpp
+cat example.llr
+```
+C++ example translations with _Clang_ unravel how to map specific constructs into LLVM IR.
+
 ### Presentation & Slides
 * [Modern Intermediate Representations (IR) - LLVM](https://llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf)
 * [Tutorial for LLVM Intermediate Representation](http://swtv.kaist.ac.kr/courses/cs453-fall14/lec10-llvm-ir.pptx)

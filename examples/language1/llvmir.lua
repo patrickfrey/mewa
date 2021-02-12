@@ -131,9 +131,7 @@ llvmir.classTemplate = {
 	load = "{out} = load %{classname}, %{classname}* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
-	typedef = "%{classname} = type { {llvmtype} }\n",
-	methodCallType = "{rtllvmtype} (%{classname}*{argstr})*",
-	sretMethodCallType = "void ({rtllvmtype}* sret, %{classname}*{argstr})*"
+	typedef = "%{classname} = type { {llvmtype} }\n"
 }
 
 llvmir.interfaceTemplate = {
@@ -156,34 +154,20 @@ llvmir.interfaceTemplate = {
 	loadelem = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
 	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
-	methodCallType = "{rtllvmtype} (i8*{argstr})*",
-	sretMethodCallType = "void ({rtllvmtype}* sret, i8*{argstr})*",
 	getClassInterface = "{1} = bitcast %{classname}* {this} to i8*\n"
 			.. "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 0\n"
 			.. "store i8* {1}, i8** {2}, align 8\n"
 			.. "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 1\n"
 			.. "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n",
-	functionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
+	loadVmtMethod = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
 			.. "{2} = load %{interfacename}__VMT*, %{interfacename}__VMT** {1}\n"
 			.. "{3} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {2}, i32 0, i32 {index}\n"
-			.. "{4} = load {rtllvmtype} (i8*{argstr})*, {rtllvmtype} (i8*{argstr})** {3}, align 8\n"
+			.. "{out_func} = load {llvmtype}, {llvmtype}* {3}, align 8\n"
 			.. "{5} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 0\n"
-			.. "{6} = load i8*, i8** {5}\n"
-			.. "{out} = call {rtllvmtype} {4}( i8* {6}{callargstr})\n",
-	sretFunctionCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
-			.. "{2} = load %{interfacename}__VMT*, %{interfacename}__VMT** {1}\n"
-			.. "{3} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {2}, i32 0, i32 {index}\n"
-			.. "{4} = load void ({rtllvmtype}* sret, i8*{argstr})*, void ({rtllvmtype}* sret, i8*{argstr})** {3}, align 8\n"
-			.. "{5} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 0\n"
-			.. "{6} = load i8*, i8** {5}\n"
-			.. "{out} = call void {4}( {rtllvmtype}* sret {rvalref}, i8* {6}{callargstr})\n",
-	procedureCall = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
-			.. "{2} = load %{interfacename}__VMT*, %{interfacename}__VMT** {1}\n"
-			.. "{3} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {2}, i32 0, i32 {index}\n"
-			.. "{4} = load void (i8*{argstr})*, void (i8*{argstr})** {3}, align 8\n"
-			.. "{5} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 0\n"
-			.. "{6} = load i8*, i8** {5}\n"
-			.. "call void {4}( i8* {6}{callargstr})\n"
+			.. "{out_this} = load i8*, i8** {5}\n",
+	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
+	procedureCall = "call void{signature} {func}( {callargstr})\n",
+	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
 }
 
 llvmir.callableDescr = {
@@ -200,15 +184,16 @@ llvmir.control = {
 	terminateTrueExit = "br label %{out}\n{1}:\n",
 	label = "br label %{inp}\n{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
-	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
-	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {rtparamstr}{thisstr}{paramstr} ) {attr} {\nentry:\n{body}}\n",
+	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
+	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtllvmtype}{signature} @{symbolname}( {callargstr})\n",
 	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
 	sretFunctionCall = "call void{signature} @{symbolname}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
-	freeFunctionCallType = "{rtllvmtype} ({argstr})*",
-	freeFunctionVarargSignature = "({argstr} ...)",
+	functionCallType = "{rtllvmtype} ({argstr})*",
+	functionVarargSignature = "({argstr} ...)",
+	sretFunctionCallType = "void ({argstr})*",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 

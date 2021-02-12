@@ -163,19 +163,21 @@ function doReturnValueAsReferenceParameter( typeId)
 	if typeId and rvalueTypeMap[ typeId] then return true else return false end
 end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructor
-function buildFunctionCallArguments( code, argstr, sep, args, llvmtypes)
+function buildFunctionCallArguments( code, argstr, args, llvmtypes)
+	local rt = argstr; if argstr ~= "" then rt = rt .. ", " end
 	for ii=1,#args do
 		local arg = args[ ii]
 		local llvmtype = llvmtypes[ ii]
 		local arg_inp,arg_code = constructorParts( arg)
 		code = code .. arg_code
 		if llvmtype then
-			if argstr == "" then argstr = llvmtype .. " " .. arg_inp else argstr = argstr .. sep .. llvmtype .. " " .. arg_inp end
+			rt = rt .. llvmtype .. " " .. arg_inp .. ", "
 		else
-			if argstr == "" then argstr = "i32 0" else argstr = argstr .. sep .. "i32 0" end
+			rt = rt .. "i32 0, "
 		end
 	end
-	return code,argstr
+	if #args > 0 or argstr ~= "" then rt = rt:sub(1, -3) end
+	return code,rt
 end
 -- Builds the table with the variables to substitute in a function call template
 function buildFunctionCallSubst( callable, rtype, argstr)
@@ -183,7 +185,7 @@ function buildFunctionCallSubst( callable, rtype, argstr)
 		return nil,{callargstr = argstr}
 	elseif doReturnValueAsReferenceParameter( rtype) then
 		local out = "RVAL"
-		local rvalsubst; if argstr == "" then rvalsubst = "{RVAL}" else rvalsubst = "{RVAL}, " end			
+		local rvalsubst; if argstr == "" then rvalsubst = "{RVAL}" else rvalsubst = "{RVAL}, " end
 		return out,{callargstr = argstr, rvalref = rvalsubst}
 	else
 		local out = callable.register()
@@ -192,25 +194,29 @@ function buildFunctionCallSubst( callable, rtype, argstr)
 	end
 end
 -- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
-function functionCallConstructor( fmt, thisTypeId, sep, rtype)
+function functionCallConstructor( fmt, thisTypeId, rtype)
 	return function( this, args, llvmtypes)
 		local callable = getCallableContext()
 		local this_inp,this_code = constructorParts( this)
 		local this_argstr; if thisTypeId ~= 0 then this_argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else this_argstr = "" end
-		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, sep, args, llvmtypes)
+		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, args, llvmtypes)
 		local out,subst = buildFunctionCallSubst( callable, rtype, argstr)
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Constructor implementing a call of a method of an interface
-function interfaceMethodCallConstructor( fmt, sep, rtype)
+function interfaceMethodCallConstructor( loadfmt, callfmt, rtype)
 	return function( this, args, llvmtypes)
 		local callable = getCallableContext()
 		local this_inp,this_code = constructorParts( this)
-		local code,argstr = buildFunctionCallArguments( this_code, "", sep, args, llvmtypes)
+		local intr_func = callable.register()
+		local intr_this = callable.register()
+		this_code = this_code .. utils.constructor_format( loadfmt, {this=this_inp, out_func=intr_func, out_this=intr_this}, callable.register)
+		local this_argstr = "i8* " .. intr_this
+		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, args, llvmtypes)
 		local out,subst = buildFunctionCallSubst( callable, rtype, argstr)
-		subst.this = this_inp
-		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
+		subst.func = intr_func
+		return constructorStruct( out, code .. utils.constructor_format( callfmt, subst, callable.register))
 	end
 end
 -- Constructor for a recursive memberwise assignment of a tree structure (initializing a "struct")
@@ -1411,65 +1417,50 @@ function getInterfaceMethodNameString( name, args)
 	for ai,arg in ipairs(args) do local sep; if ai == 1 then sep = "(" else sep = ", " end; pstr = pstr .. sep .. typedb:type_string(arg.type) end
 	if const == true then return pstr .. ") const" else return pstr .. ")" end
 end
-function getDeclarationLlvmParameterString( args)
+-- Get the parameter string of a function declaration
+function getDeclarationLlvmTypeRegParameterString( descr, context)
 	local rt = ""
-	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype .. " " .. arg.reg else rt = rt .. ", " .. arg.llvmtype .. " " .. arg.reg end end
+	if doReturnValueAsReferenceParameter( descr.ret) then rt = descr.rtllvmtype .. "* sret %rt, " end
+	if context and context.qualitype then rt = rt .. typeDescriptionMap[ context.qualitype.pval].llvmtype .. " %ths, " end
+	for ai,arg in ipairs(descr.param) do rt = rt .. arg.llvmtype .. " " .. arg.reg .. ", " end
+	if rt ~= "" then rt = rt:sub(1, -3) end
 	return rt
 end
-function getDeclarationLlvmParameterTypeString( args)
+-- Get the parameter string of a function typedef
+function getDeclarationLlvmTypedefParameterString( descr, context)
 	local rt = ""
-	for ai,arg in ipairs(args) do if rt == "" then rt = rt .. arg.llvmtype else rt = rt .. ", " .. arg.llvmtype end end
-	return rt
-end
-function getReturnParameterString( context, descr)
-	local rt = ""
-	if doReturnValueAsReferenceParameter( descr.ret) then
-		rt = descr.rtllvmtype .. "* sret %rt"
-		if (#descr.param >= 1 or (context and context.qualitype)) then rt = rt .. ", " end
-	end
-	return rt
-end
-function getThisParameterString( context, args)
-	local rt = ""
-	if context and context.qualitype then
-		rt = typeDescriptionMap[ context.qualitype.pval].llvmtype .. " %ths"
-		if #args >= 1 then rt = rt .. ", " end
-	end
-	return rt
-end
-function getParameterTypeList( args)
-	rt = {}
-	for ai,arg in ipairs(args) do table.insert(rt,arg.type) end
+	if doReturnValueAsReferenceParameter( descr.ret) then rt = descr.rtllvmtype .. "* sret, " end
+	if context and context.qualitype then rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, " end
+	for ai,arg in ipairs(descr.param) do rt = rt .. arg.llvmtype .. ", " end
+	if rt ~= "" then rt = rt:sub(1, -3) end
 	return rt
 end
 function getTypeDeclContextTypeId( context)
 	if context.qualitype then return context.qualitype.lval else return 0 end
 end
+-- Symbol name for type in target LLVM output
 function getTypeDeclUniqueName( contextTypeId, typnam)
 	if contextTypeId == 0 then 
 		return utils.uniqueName( typnam .. "__")
 	else		
-		return utils.uniqueName( typedb:type_string(contextTypeId) .. "__" .. typnam .. "__")
+		return utils.uniqueName( typedb:type_string(contextTypeId, "__") .. "__" .. typnam .. "__")
 	end
 end
 -- Function shared by all expansions of the structure used for mapping the LLVM template for a function call
 function expandDescrCallTemplateParameter( descr, context)
 	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
-	descr.rtparamstr = getReturnParameterString( context, descr)
-	descr.thisstr = getThisParameterString( context, descr.param)
-	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
+	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
 	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, context)
 end
 function expandDescrMethod( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
 	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
-	local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-	descr.llvmtype = utils.template_format( context.descr.methodCallType, {rtllvmtype = descr.rtllvmtype, argstr = sep .. descr.argstr})
+	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
 end
 -- Expand the structure used for mapping the LLVM template for a class method call with keys derived from the call description
 function expandDescrClassCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
+	descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
 	expandDescrMethod( descr, context)
 end
 -- Expand the structure used for mapping the LLVM template for an interface method call with keys derived from the call description
@@ -1481,12 +1472,12 @@ end
 -- Expand the structure used for mapping the LLVM template for an free function call with keys derived from the call description
 function expandDescrFreeCallTemplateParameter( descr, context)
 	expandDescrCallTemplateParameter( descr, context)
-	descr.paramstr = getDeclarationLlvmParameterString( descr.param)
-	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtllvmtype = descr.rtllvmtype, argstr = descr.argstr})
+	descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
+	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
 end
 -- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
 function expandDescrExternCallTemplateParameter( descr, context)
-	descr.argstr = getDeclarationLlvmParameterTypeString( descr.param)
+	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
 	if descr.externtype == "C" then
 		descr.symbolname = descr.name
 	else
@@ -1495,9 +1486,9 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	if descr.vararg then
 		local sep; if descr.argstr == "" then sep = "" else sep = ", " end
-		descr.signature = utils.template_format( llvmir.control.freeFunctionVarargSignature,  {argstr = descr.argstr .. sep})
+		descr.signature = utils.template_format( llvmir.control.functionVarargSignature,  {argstr = descr.argstr .. sep})
 	end
-	descr.llvmtype = utils.template_format( llvmir.control.freeFunctionCallType, {rtllvmtype = descr.rtllvmtype, argstr = descr.argstr})
+	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
 end
 -- Add a descriptor to the list of methods that helps to link interfaces with classes
 function expandContextMethodList( node, descr, context)
@@ -1519,14 +1510,15 @@ function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
 	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
-	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, ", ", descr.ret))
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
 	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
+	local loadfmt = utils.template_format( descr.load, descr)
 	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
-	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( callfmt, ", ", descr.ret))
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( loadfmt, callfmt, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function getOrCreateCallableContextTypeId( thisTypeId, name)
@@ -1949,27 +1941,27 @@ end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", private=false, const=decl.const,
-	               index=#context.methods}
+	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", private=false, const=decl.const,
-	               index=#context.methods, call = context.descr.procedureCall}
+	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", private=false, const=decl.const,
-			index=#context.methods}
+			index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
 	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2], signature = "", private=false, const=decl.const,
-	               index=#context.methods, call = context.descr.procedureCall}
+	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.structdef( node, context)
