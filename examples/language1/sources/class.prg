@@ -86,6 +86,10 @@ main {
 	updater = {71,511};
 	printf("RESULT[3] x = %d\n", obj.ofs_x( -13));
 	printf("RESULT[3] y = %d\n", obj.ofs_y( 1));
+	var ObjectUpdater updater2 = updater;
+	updater2 = {32,412};
+	printf("RESULT[4] x = %d\n", obj.ofs_x( -11));
+	printf("RESULT[4] y = %d\n", obj.y());
 	return 0;
 }
 
