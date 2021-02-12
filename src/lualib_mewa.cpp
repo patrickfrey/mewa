@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <inttypes.h>
 
 extern "C" {
 #include <lua.h>
@@ -265,7 +266,8 @@ static int mewa_llvm_float_tohex( lua_State* ls)
 		if (doinc) ++encnum;
 		encnum = (encnum >> 1);
 		encnum = (encnum << 29);
-		std::snprintf( buf, sizeof(buf), "%lx", encnum);
+		const char* fmt64 = sizeof(long) == 8 ? "%lx" : "%llx";
+		std::snprintf( buf, sizeof(buf), fmt64, encnum);
 		for (char* bi = buf; *bi; ++bi) if (*bi >= 'a' && *bi <= 'z') {*bi -= 32;}
 		lua_pushstring( ls, buf);
 	}
