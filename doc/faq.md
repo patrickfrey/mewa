@@ -42,7 +42,7 @@ This section of the FAQ answers some broader questions about what one can do wit
 <a name="WTF"/>
 
 ### What is _Mewa_?
-_Mewa_ is a tool for the rapid prototyping of compiler frontends for strongly typed languages.
+_Mewa_ is a tool for the prototyping of compiler frontends for strongly typed languages.
 It aims to support the mapping of a programming language to a intermediate representation in the simplest way leaving all analytical optimization steps to the backend. 
 
 <a name="targetAudience"/>
@@ -90,7 +90,7 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 ### How to process the AST structure?
 The compiler builds an Abstract Syntax Tree (AST) with the lexems explicitely declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the AST. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in [typesystem_utils.lua](examples/typesystem_utils.lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope step if defined in the AST and calls the function defined for the AST node.
 
-Unlike in most other compiler frontend frameworks the tree is meant to be traversed once. This means that at specific places it gets ugly. But the hacks needed are describable. It probably depends on the environment if this is justifiable or not. In my opinion it is for rapid prototyping.
+Unlike in most other compiler frontend frameworks the tree is meant to be traversed once. This means that at specific places it gets ugly. But the hacks needed are describable. It probably depends on the environment if this is justifiable or not.
 
 <a name="astTraversalAndScope"/>
 

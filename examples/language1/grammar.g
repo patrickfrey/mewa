@@ -21,13 +21,16 @@ extern_definitionlist	= extern_definition extern_definitionlist
 free_definitionlist	= free_definition free_definitionlist
 			| ε
 			;
-struct_definitionlist	= struct_definition struct_definitionlist
+namespace_definitionlist= namespace_definition namespace_definitionlist
 			| ε
 			;
-class_definitionlist	= class_definition class_definitionlist
+instruct_definitionlist	= instruct_definition instruct_definitionlist
 			| ε
 			;
-interface_definitionlist= interface_definition interface_definitionlist
+inclass_definitionlist	= inclass_definition inclass_definitionlist
+			| ε
+			;
+ininterf_definitionlist	= ininterf_definition ininterf_definitionlist
 			| ε
 			;
 extern_definition	= "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist ")" ";"	(extern_funcdef)
@@ -43,7 +46,7 @@ extern_parameters 	= typespec "," extern_parameters						(extern_paramdef)
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε										(extern_paramdeflist)
 			;
-interface_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"			(interface_funcdef {const=false})
+ininterf_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"			(interface_funcdef {const=false})
 			| "function" IDENT typespec "(" extern_paramlist ")" "const" ";"		(interface_funcdef {const=true})
 			| "procedure" IDENT "(" extern_paramlist ")" ";"				(interface_procdef {const=false})
 			| "procedure" IDENT "(" extern_paramlist ")" "const" ";"			(interface_procdef {const=true})
@@ -52,57 +55,76 @@ interface_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"		
 			| "operator" operatordecl "(" extern_paramlist ")" ";"				(interface_operator_procdef {const=false})
 			| "operator" operatordecl "(" extern_paramlist ")" "const" ";"			(interface_operator_procdef {const=true})
 			;
-struct_definition	= typedefinition ";"								(definition 1)
+instruct_definition	= typedefinition ";"								(definition 1)
 			| variabledefinition ";"							(definition 1)
 			| structdefinition								(definition 1)
 			;
-class_definition	= typedefinition ";"								(definition 1)
+inclass_definition	= typedefinition ";"								(definition 1)
 			| variabledefinition ";"							(definition 1)
 			| structdefinition								(definition 1)
 			| classdefinition 								(definition 1)
 			| interfacedefinition								(definition 1)
-			| constructordefinition								(definition 2)
 			| functiondefinition								(definition 2)
 			| operatordefinition								(definition 2)
+			| constructordefinition								(definition 2)
 			;
-free_definition		= struct_definition
-			| functiondefinition								(definition 1)
+free_definition		= namespacedefinition								
+			| typedefinition ";"								(definition 1)
+			| variabledefinition ";"							(definition 1)
+			| structdefinition								(definition 1)
 			| classdefinition 								(definition 1)
 			| interfacedefinition								(definition 1)
+			| functiondefinition								(definition 1)
+			;
+namespace_definition	= namespacedefinition								(definition 1)
+			| typedefinition ";"								(definition 1)
+			| structdefinition								(definition 1)
+			| classdefinition 								(definition 1)
+			| interfacedefinition								(definition 1)
+			| functiondefinition								(definition 1)
 			;
 typename/L1		= IDENT
 			| IDENT "::" typename
 			;
-typespec/L1		= typename									(typespec "")
-			| "const" typename								(typespec "const ")
-			| typename "&"									(typespec "&")
-			| "const" typename "&"								(typespec "const&")
-			| typename "^"									(typespec "^")
-			| "const" typename "^"								(typespec "const^")
-			| typename "^" "&"								(typespec "^&")
-			| "const" typename "^" "&"							(typespec "const^&")
-			| typename "^" "^"								(typespec "^^")
-			| "const" typename "^" "^"							(typespec "const^^")
-			| typename "^" "^" "&"								(typespec "^^&")
-			| "const" typename  "^" "^" "&"							(typespec "const^^&")
+generic_typename/L1	= typename 
+			| typename "<" generic_instancelist ">"
+			;
+typespec/L1		= generic_typename								(typespec "")
+			| "const" generic_typename							(typespec "const ")
+			| generic_typename "&"								(typespec "&")
+			| "const" generic_typename "&"							(typespec "const&")
+			| generic_typename "^"								(typespec "^")
+			| "const" generic_typename "^"							(typespec "const^")
+			| generic_typename "^" "&"							(typespec "^&")
+			| "const" generic_typename "^" "&"						(typespec "const^&")
 			| "any" "class" "^"								(typespec_key "class^")
 			| "any" "const" "class" "^"							(typespec_key "const struct^")
 			| "any" "struct" "^"								(typespec_key "class^")
 			| "any" "const" "struct" "^"							(typespec_key "const struct^")
 			;
-typepath/L1		= typename									(typespec "")
+typepath/L1		= generic_typename								(typespec "")
 			;
 typedefinition		= "typedef" typepath IDENT							(>>typedef)
+			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype)
+			| "typedef" "procedure" IDENT "(" extern_paramlist ")" 				(>>typedef_proctype)
 			;
-structdefinition	= "struct" IDENT "{" struct_definitionlist "}"					(>>structdef)
+structdefinition	= "struct" IDENT "{" instruct_definitionlist "}"				(>>structdef)
+			| "generic" "struct" IDENT "<" generic_header ">"
+				"{" instruct_definitionlist "}"						(>>generic_structdef)
 			;
-interfacedefinition	= "interface" IDENT "{" interface_definitionlist "}"				(>>interfacedef)
+interfacedefinition	= "interface" IDENT "{" ininterf_definitionlist "}"				(>>interfacedef)
 			;
 inheritlist		= typepath "," inheritlist							(>>inheritdef 1)
 			| typepath									(>>inheritdef 1)
 			;
-classdefinition		= "class" IDENT "{" class_definitionlist "}"					(>>classdef)
-			| "class" IDENT ":" inheritlist "{" class_definitionlist "}"			(>>classdef)
+namespacedefinition	= "namespace" IDENT  "{" namespace_definitionlist "}"				(>>namespacedef)
+			;
+classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(>>classdef)
+			| "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"			(>>classdef)
+			| "generic" "class" IDENT "<" generic_header ">"
+				"{" inclass_definitionlist "}"						(>>generic_classdef)
+			| "generic" "class" IDENT "<" generic_header ">" 
+				":" inheritlist "{" inclass_definitionlist "}"				(>>generic_classdef)
 			;
 linkage			= "private"									(linkage {private=true, linkage="internal"})
 			| "public"									(linkage {private=false, linkage="external"})
@@ -145,6 +167,21 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 			| ">"										(operatordecl {name=">", symbol="gt"})
 			| "<"										(operatordecl {name="<", symbol="lt"})
 			;
+generic_instance	= typepath
+			| typepath "," generic_instance
+			;
+generic_instancelist	= generic_instance								(generic_instancelist)
+			;
+generic_defaultlist	= IDENT "=" typepath "," generic_defaultlist					(generic_ident_type)
+			| IDENT "=" typepath								(generic_ident_type)
+			;
+generic_identlist	= IDENT "," generic_identlist							(generic_ident)
+			| IDENT "," generic_defaultlist							(generic_ident)
+			| IDENT										(generic_ident)
+			;
+generic_header		= generic_identlist								(generic_header)
+			| generic_defaultlist								(generic_header)
+			;
 callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody)
 			;
 callablebody_const	=  "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody)
@@ -174,6 +211,7 @@ statement/L1		= functiondefinition								(definition)
 			| "if" "(" expression ")" "{" codeblock "}"					({}conditional_if)
 			| "if" "(" expression ")" "{" codeblock "}" "else" "{" codeblock "}"		({}conditional_if_else)
 			| "while" "(" expression ")" "{" codeblock "}"					({}conditional_while)
+			| "with" "(" expression ")" "{" codeblock "}"					(>>with_do)
 			| "{" codeblock "}"								({})
 			;
 variabledefinition	= typespec IDENT								(>>vardef)

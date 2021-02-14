@@ -18,6 +18,26 @@ local tagmask_typeConversion = typedb.reduction_tagmask( tag_TypeConversion)
 local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
 local tagmask_typeCast = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion, tag_pointerReinterpretCast)
 
+-- Centralized list of reduction preference rules:
+local rdw_conv = 1.0			-- Reduction weight of conversion
+local rdw_strip_rvref = 0.75		-- Reduction weight of instantiating rvalue reference 
+local rdw_strip_v_1 = 0.5 / (1)		-- Reduction weight of stripping private/public from type with 1 qualifier 
+local rdw_strip_v_2 = 0.5 / (2*2)	-- Reduction weight of stripping private/public from type with 2 qualifiers
+local rdw_strip_v_3 = 0.5 / (3*3)	-- Reduction weight of stripping private/public from type with 3 qualifiers
+local rdw_swap_r_p = 0.375 / (1)	-- Reduction weight of swapping reference with pointer on a type with 1 qualifier
+local rdw_swap_r_p = 0.375 / (2*2)	-- Reduction weight of swapping reference with pointer on a type with 2 qualifiers
+local rdw_swap_r_p = 0.375 / (3*3)	-- Reduction weight of swapping reference with pointer on a type with 3 qualifiers
+local rdw_strip_r_1 = 0.25 / (1)	-- Reduction weight of stripping reference (fetch value) from type with 1 qualifier 
+local rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type with 2 qualifiers
+local rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type with 3 qualifiers
+local rdw_strip_c_1 = 0.125 / (1)	-- Reduction weight of changing constant qualifier in type with 1 qualifier
+local rdw_strip_c_2 = 0.125 / (2*2)	-- Reduction weight of changing constant qualifier in type with 2 qualifiers
+local rdw_strip_c_3 = 0.125 / (3*3)	-- Reduction weight of changing constant qualifier in type with 3 qualifiers
+local rwd_inheritance = 0.125 / 16	-- Reduction weight of class inheritance
+local rwd_boolean = 0.125 / 16		-- Reduction weight of boolean type (control/value type) conversions
+function combineWeight( w1, w2) return w1 + w2 * 0.9921875 end -- Combining two reductions slightly less weight compared with applying both singularily
+function scalarDeductionWeight( sizeweight) return 0.25*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
+
 local weightEpsilon = 1E-5		-- epsilon used for comparing weights for equality
 local scalarQualiTypeMap = {}		-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
 local scalarIndexTypeMap = {}		-- maps scalar type names usable as index without qualifiers to the const type id used as index for [] or pointer arithmetics
@@ -394,15 +414,15 @@ function defineConstExprArithmetics()
 			definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
 		end
 	end
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, 0.25)
-	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion, 0.25)
-	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion, 0.25)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion, 0.25)
-	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_TypeConversion, 0.125)
-	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_TypeConversion, 0.125)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_TypeConversion, rdw_conv)
 
 	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, 0.25)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, rdw_conv)
 end
 -- Define all basic types associated with a type name
 function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
@@ -465,15 +485,15 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	typeQualiSepMap[ rpval]   = {lval=lval,qualifier="^&"}
 	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
 
-	typedb:def_reduction( c_pval, constexprNullType, constConstructor("null"), tag_TypeConversion, 0.03125)
- 	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction, 0.25)
-	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, 0.125)
-	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, 0.0625)
+	typedb:def_reduction( c_pval, constexprNullType, constConstructor("null"), tag_TypeConversion, rdw_conv)
+ 	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
+	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, rdw_strip_r_2)
+	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, rdw_strip_r_3)
 
-	typedb:def_reduction( c_lval, lval, nil, tag_typeDeduction, 0.125)
-	typedb:def_reduction( c_rval, rval, nil, tag_typeDeduction, 0.125)
-	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction, 0.125)
-	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction, 0.125)
+	typedb:def_reduction( c_lval, lval, nil, tag_typeDeduction, rdw_strip_c_1)
+	typedb:def_reduction( c_rval, rval, nil, tag_typeDeduction, rdw_strip_c_1)
+	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction, rdw_strip_c_1)
+	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction, rdw_strip_c_2)
 
 	defineCall( pval, rval, "&", {}, function(this) return this end)
 	defineCall( rval, pval, "->", {}, function(this) return this end)
@@ -506,9 +526,9 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 	rvalueTypeMap[ qualitype.lval] = rval_ref;
 	rvalueTypeMap[ qualitype.c_lval] = c_rval_ref;
 
-	typedb:def_reduction( c_rval_ref, rval_ref, nil, tag_typeDeduction, 0.125/4)
-	typedb:def_reduction( qualitype.c_rval, c_rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, 0.125/4)
-	typedb:def_reduction( qualitype.c_rval, rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, 0.125/4)
+	typedb:def_reduction( c_rval_ref, rval_ref, nil, tag_typeDeduction, rdw_strip_c_3)
+	typedb:def_reduction( qualitype.c_rval, c_rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, rdw_strip_rvref)
+	typedb:def_reduction( qualitype.c_rval, rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, rdw_strip_rvref)
 
 	defineCall( qualitype.rval, qualitype.rval, ":=", {rval_ref}, rvalueReferenceMoveConstructor)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {c_rval_ref}, rvalueReferenceMoveConstructor)
@@ -556,10 +576,10 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	typeQualiSepMap[ priv_pval] = {lval=qualitype.lval,qualifier="private ^"}
 	typeQualiSepMap[ priv_c_pval] = {lval=qualitype.lval,qualifier="private const^"}
 
-	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, 0.125/16)
-	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, 0.125/16)
-	typedb:def_reduction( qualitype.pval, priv_pval, nil, tag_typeDeduction, 0.125/16)
-	typedb:def_reduction( qualitype.c_pval, priv_c_pval, nil, tag_typeDeduction, 0.125/16)
+	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, rdw_strip_v_2)
+	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, rdw_strip_v_3)
+	typedb:def_reduction( qualitype.pval, priv_pval, nil, tag_typeDeduction, rdw_strip_v_2)
+	typedb:def_reduction( qualitype.c_pval, priv_c_pval, nil, tag_typeDeduction, rdw_strip_v_3)
 
 	defineCall( priv_pval, priv_rval, "&", {}, function(this) return this end)
 	defineCall( priv_rval, priv_pval, "->", {}, function(this) return this end)
@@ -787,7 +807,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 		for oth_typenam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typenam]
 			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
-			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_TypeConversion, conv.weight)
+			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_TypeConversion, rdw_conv)
 		end
 	end
 end
@@ -1016,7 +1036,7 @@ end
 -- Define a reduction to a member variable to implement class/interface inheritance
 function defineReductionToMember( objTypeId, name)
 	memberTypeId = typedb:get_type( objTypeId, name)
-	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, 0.125/32)
+	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, rwd_inheritance)
 end
 -- Define the reductions implementing class inheritance
 function defineClassInheritanceReductions( context, name, private, const)
@@ -1053,8 +1073,8 @@ function initControlBooleanTypes()
 		local out = callable.register()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.trueExitToBoolean,{trueExit=constructor.out,out=out},callable.label),out=out}
 	end
-	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction, 0.1)
-	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, 0.1)
+	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, rwd_boolean)
 
 	local function booleanToFalseExit( constructor)
 		local callable = getCallableContext()
@@ -1067,8 +1087,8 @@ function initControlBooleanTypes()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, callable.label),out=out}
 	end
 
-	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction, 0.1)
-	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction, 0.1)
+	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction, rwd_boolean)
 
 	local function negateControlTrueType( this) return {type=controlFalseType, constructor=this.constructor} end
 	local function negateControlFalseType( this) return {type=controlTrueType, constructor=this.constructor} end
@@ -1119,15 +1139,15 @@ function initControlBooleanTypes()
 		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, callable.label) end
 		return {code=code, out=out}
 	end
-	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, 0.1)
-	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction, 0.1)
+	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction, rwd_boolean)
 
 	local function invertControlBooleanType( this)
 		local out = getCallableContext().label()
 		return {code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out}), out = out}
 	end
-	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, 0.1)
-	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, 0.1)
+	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, rwd_boolean)
 
 	definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType, "&&", {scalarBooleanType}, constexprBooleanToControlTrueType)
 	definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType, "||", {scalarBooleanType}, constexprBooleanToControlFalseType)
@@ -1162,7 +1182,7 @@ function initBuiltInTypes()
 			scalarIndexTypeMap[ typnam] = c_lval
 		end
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
-			local weight = 0.25*(1.0-scalar_descr.sizeweight)
+			local weight = scalarDeductionWeight( scalar_descr.sizeweight)
 			local valueconv = constexprLlvmConversion( qualitype.lval)
 			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return constructorStruct(valueconv(arg)) end, tag_typeDeduction, weight)
 		end
@@ -1709,9 +1729,15 @@ function typesystem.typedef( node, context)
 	local this_qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	local convlist = {"lval","c_lval","c_rval"}
 	for ci,conv in ipairs(convlist) do
-		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_TypeConversion, 0.125 / 32)
-		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_TypeConversion, 0.125 / 64)
+		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_TypeConversion, rdw_conv)
+		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_TypeConversion, rdw_conv)
 	end
+end
+function typesystem.typedef_functype( node)
+	return nil -- TODO Implenment 
+end
+function typesystem.typedef_proctype( node)
+	return nil -- TODO Implenment
 end
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
@@ -1723,7 +1749,6 @@ function typesystem.operator( node, operator)
 	table.remove( args, 1)
 	return applyCallable( node, this, operator, args)
 end
-
 function typesystem.free_expression( node)
 	local arg = utils.traverse( typedb, node)
 	if arg[1].type == controlTrueType or arg[1].type == controlFalseType then
@@ -1778,6 +1803,9 @@ function typesystem.conditional_while( node)
 	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
 	return {code = startcode .. cond_constructor.code .. arg[2].code 
 			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
+end
+function typesystem.with_do( node, context)
+	return nil -- TODO Implement
 end
 function typesystem.typespec( node, qualifier)
 	local typeName = qualifier .. node.arg[ #node.arg].value
@@ -1964,6 +1992,9 @@ function typesystem.interface_operator_procdef( node, decl, context)
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
 	defineInterfaceOperator( node, descr, context)
 end
+function typesystem.namespacedef( node, context)
+	return nil -- TODO Implement
+end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
@@ -1973,11 +2004,14 @@ function typesystem.structdef( node, context)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=structname}
-	local arg = utils.traverse( typedb, node, context)
+	utils.traverseRange( typedb, node, {2,#node.arg}, context)
 	descr.size = context.structsize
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineStructConstructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
+end
+function typesystem.generic_structdef( node, context)
+	return nil -- TODO Implement !!! STORE CLASS NODE IN TABLE (lazy evaluation)
 end
 function typesystem.interfacedef( node, context)
 	local typnam = node.arg[1].value
@@ -1987,7 +2021,7 @@ function typesystem.interfacedef( node, context)
 	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=interfacename, const=true}
-	local arg = utils.traverse( typedb, node, context)
+	utils.traverseRange( typedb, node, {2,#node.arg}, context)
 	descr.methods = context.methods
 	descr.const = context.const
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
@@ -1995,6 +2029,23 @@ function typesystem.interfacedef( node, context)
 	defineOperatorsWithStructArgument( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
+end
+function typesystem.generic_instancelist( node, context)
+	return utils.traverse( typedb, node, context)
+end
+function typesystem.generic_ident_type( node, context, genericparam)
+	local arg = utils.traverseRange( typedb, node, {1,2}, context)
+	table.insert( genericparam, {name=arg[1], type=arg[2]} )
+	if #arg > 2 then utils.traverseRange( typedb, node, {3,3}, context, genericparam) end
+end
+function typesystem.generic_ident( node, context, genericparam)
+	table.insert( genericparam, {name=node.arg[1].value} )
+	if #arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, genericparam) end
+end
+function typesystem.generic_header( node, context)
+	local genericparam = {}
+	utils.traverse( typedb, node, context, genericparam)
+	return genericparam
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
@@ -2008,14 +2059,17 @@ function typesystem.classdef( node, context)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
 	                 structsize=0, llvmtype="", symbol=classname, interfaces={}}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
-	utils.traverse( typedb, node, context, 1)
-	utils.traverse( typedb, node, context, 2)
+	utils.traverseRange( typedb, node, {2,#node.arg}, context, 1)
+	utils.traverseRange( typedb, node, {2,#node.arg}, context, 2)
 	descr.size = context.structsize
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
 	defineInheritedInterfaces( node, context, qualitype.lval)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
+end
+function typesystem.generic_classdef( node, context)
+	return nil -- TODO Implement !!! STORE CLASS NODE IN TABLE (lazy evaluation)
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then

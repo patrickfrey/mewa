@@ -1,655 +1,675 @@
 Shift token "extern" at line 1 in state 1, goto 4
-Shift token DQSTRING = "C" at line 1 in state 4, goto 27
-Shift token "procedure" at line 1 in state 27, goto 49
-Shift token IDENT = "printf" at line 1 in state 49, goto 70
-Shift token '(' at line 1 in state 70, goto 135
-Shift token "const" at line 1 in state 135, goto 18
-Shift token IDENT = "byte" at line 1 in state 18, goto 17
-Reduce #1 to typename by token '^' at line 1 in state 17, goto 39
-Shift token '^' at line 1 in state 39, goto 59
-Reduce #3 to typespec by token IDENT = "fmt" at line 1 in state 59, call typespec "const^", goto 245
-Shift token IDENT = "fmt" at line 1 in state 245, goto 313
-Reduce #2 to extern_parameters by token "..." at line 1 in state 313, call extern_paramdef, goto 243
-Reduce #1 to extern_paramlist by token "..." at line 1 in state 243, call extern_paramdeflist, goto 244
-Shift token "..." at line 1 in state 244, goto 312
-Shift token ')' at line 1 in state 312, goto 339
-Shift token ';' at line 1 in state 339, goto 357
-Reduce #9 to extern_definition by token "extern" at line 2 in state 357, call extern_procdef_vararg, goto 3
+Shift token DQSTRING = "C" at line 1 in state 4, goto 30
+Shift token "procedure" at line 1 in state 30, goto 58
+Shift token IDENT = "printf" at line 1 in state 58, goto 86
+Shift token '(' at line 1 in state 86, goto 168
+Shift token "const" at line 1 in state 168, goto 19
+Shift token IDENT = "byte" at line 1 in state 19, goto 18
+Reduce #1 to typename by token '^' at line 1 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 1 in state 7, goto 43
+Shift token '^' at line 1 in state 43, goto 70
+Reduce #3 to typespec by token IDENT = "fmt" at line 1 in state 70, call typespec "const^", goto 253
+Shift token IDENT = "fmt" at line 1 in state 253, goto 353
+Reduce #2 to extern_parameters by token "..." at line 1 in state 353, call extern_paramdef, goto 251
+Reduce #1 to extern_paramlist by token "..." at line 1 in state 251, call extern_paramdeflist, goto 291
+Shift token "..." at line 1 in state 291, goto 367
+Shift token ')' at line 1 in state 367, goto 402
+Shift token ';' at line 1 in state 402, goto 424
+Reduce #9 to extern_definition by token "extern" at line 2 in state 424, call extern_procdef_vararg, goto 3
 Shift token "extern" at line 2 in state 3, goto 4
-Shift token DQSTRING = "C" at line 2 in state 4, goto 27
-Shift token "procedure" at line 2 in state 27, goto 49
-Shift token IDENT = "putchar" at line 2 in state 49, goto 70
-Shift token '(' at line 2 in state 70, goto 135
-Shift token "const" at line 2 in state 135, goto 18
-Shift token IDENT = "byte" at line 2 in state 18, goto 17
-Reduce #1 to typename by token ')' at line 2 in state 17, goto 39
-Reduce #2 to typespec by token ')' at line 2 in state 39, call typespec "const ", goto 245
-Reduce #1 to extern_parameters by token ')' at line 2 in state 245, call extern_paramdef, goto 243
-Reduce #1 to extern_paramlist by token ')' at line 2 in state 243, call extern_paramdeflist, goto 244
-Shift token ')' at line 2 in state 244, goto 311
-Shift token ';' at line 2 in state 311, goto 338
-Reduce #8 to extern_definition by token "extern" at line 3 in state 338, call extern_procdef, goto 3
+Shift token DQSTRING = "C" at line 2 in state 4, goto 30
+Shift token "procedure" at line 2 in state 30, goto 58
+Shift token IDENT = "putchar" at line 2 in state 58, goto 86
+Shift token '(' at line 2 in state 86, goto 168
+Shift token "const" at line 2 in state 168, goto 19
+Shift token IDENT = "byte" at line 2 in state 19, goto 18
+Reduce #1 to typename by token ')' at line 2 in state 18, goto 7
+Reduce #1 to generic_typename by token ')' at line 2 in state 7, goto 43
+Reduce #2 to typespec by token ')' at line 2 in state 43, call typespec "const ", goto 253
+Reduce #1 to extern_parameters by token ')' at line 2 in state 253, call extern_paramdef, goto 251
+Reduce #1 to extern_paramlist by token ')' at line 2 in state 251, call extern_paramdeflist, goto 291
+Shift token ')' at line 2 in state 291, goto 366
+Shift token ';' at line 2 in state 366, goto 401
+Reduce #8 to extern_definition by token "extern" at line 3 in state 401, call extern_procdef, goto 3
 Shift token "extern" at line 3 in state 3, goto 4
-Shift token DQSTRING = "C" at line 3 in state 4, goto 27
-Shift token "function" at line 3 in state 27, goto 48
-Shift token IDENT = "malloc" at line 3 in state 48, goto 69
-Shift token IDENT = "byte" at line 3 in state 69, goto 17
-Reduce #1 to typename by token '^' at line 3 in state 17, goto 8
-Shift token '^' at line 3 in state 8, goto 32
-Reduce #2 to typespec by token '(' at line 3 in state 32, call typespec "^", goto 134
-Shift token '(' at line 3 in state 134, goto 242
-Shift token IDENT = "long" at line 3 in state 242, goto 17
-Reduce #1 to typename by token ')' at line 3 in state 17, goto 8
-Reduce #1 to typespec by token ')' at line 3 in state 8, call typespec "", goto 245
-Reduce #1 to extern_parameters by token ')' at line 3 in state 245, call extern_paramdef, goto 243
-Reduce #1 to extern_paramlist by token ')' at line 3 in state 243, call extern_paramdeflist, goto 310
-Shift token ')' at line 3 in state 310, goto 336
-Shift token ';' at line 3 in state 336, goto 355
-Reduce #9 to extern_definition by token "extern" at line 4 in state 355, call extern_funcdef, goto 3
+Shift token DQSTRING = "C" at line 3 in state 4, goto 30
+Shift token "function" at line 3 in state 30, goto 57
+Shift token IDENT = "malloc" at line 3 in state 57, goto 85
+Shift token IDENT = "byte" at line 3 in state 85, goto 18
+Reduce #1 to typename by token '^' at line 3 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 3 in state 7, goto 8
+Shift token '^' at line 3 in state 8, goto 36
+Reduce #2 to typespec by token '(' at line 3 in state 36, call typespec "^", goto 167
+Shift token '(' at line 3 in state 167, goto 290
+Shift token IDENT = "long" at line 3 in state 290, goto 18
+Reduce #1 to typename by token ')' at line 3 in state 18, goto 7
+Reduce #1 to generic_typename by token ')' at line 3 in state 7, goto 8
+Reduce #1 to typespec by token ')' at line 3 in state 8, call typespec "", goto 253
+Reduce #1 to extern_parameters by token ')' at line 3 in state 253, call extern_paramdef, goto 251
+Reduce #1 to extern_paramlist by token ')' at line 3 in state 251, call extern_paramdeflist, goto 365
+Shift token ')' at line 3 in state 365, goto 399
+Shift token ';' at line 3 in state 399, goto 422
+Reduce #9 to extern_definition by token "extern" at line 4 in state 422, call extern_funcdef, goto 3
 Shift token "extern" at line 4 in state 3, goto 4
-Shift token DQSTRING = "C" at line 4 in state 4, goto 27
-Shift token "procedure" at line 4 in state 27, goto 49
-Shift token IDENT = "free" at line 4 in state 49, goto 70
-Shift token '(' at line 4 in state 70, goto 135
-Shift token IDENT = "byte" at line 4 in state 135, goto 17
-Reduce #1 to typename by token '^' at line 4 in state 17, goto 8
-Shift token '^' at line 4 in state 8, goto 32
-Reduce #2 to typespec by token ')' at line 4 in state 32, call typespec "^", goto 245
-Reduce #1 to extern_parameters by token ')' at line 4 in state 245, call extern_paramdef, goto 243
-Reduce #1 to extern_paramlist by token ')' at line 4 in state 243, call extern_paramdeflist, goto 244
-Shift token ')' at line 4 in state 244, goto 311
-Shift token ';' at line 4 in state 311, goto 338
-Reduce #8 to extern_definition by token "private" at line 6 in state 338, call extern_procdef, goto 3
-Reduce #0 to extern_definitionlist by token "private" at line 6 in state 3, goto 26
-Reduce #2 to extern_definitionlist by token "private" at line 6 in state 26, goto 26
-Reduce #2 to extern_definitionlist by token "private" at line 6 in state 26, goto 26
-Reduce #2 to extern_definitionlist by token "private" at line 6 in state 26, goto 26
-Reduce #2 to extern_definitionlist by token "private" at line 6 in state 26, goto 2
-Shift token "private" at line 6 in state 2, goto 24
-Reduce #1 to linkage by token "function" at line 6 in state 24, call linkage {private=true,linkage="internal"}, goto 14
-Shift token "function" at line 6 in state 14, goto 35
-Shift token IDENT = "allocmem" at line 6 in state 35, goto 55
-Shift token IDENT = "byte" at line 6 in state 55, goto 17
-Reduce #1 to typename by token '^' at line 6 in state 17, goto 8
-Shift token '^' at line 6 in state 8, goto 32
-Reduce #2 to typespec by token '(' at line 6 in state 32, call typespec "^", goto 105
-Shift token '(' at line 6 in state 105, goto 108
-Shift token IDENT = "long" at line 6 in state 108, goto 17
-Reduce #1 to typename by token IDENT = "bytes" at line 6 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "bytes" at line 6 in state 8, call typespec "", goto 198
-Shift token IDENT = "bytes" at line 6 in state 198, goto 295
-Reduce #2 to paramdecl by token ')' at line 6 in state 295, call paramdef, goto 201
-Reduce #1 to parameters by token ')' at line 6 in state 201, goto 200
-Reduce #1 to parameterlist by token ')' at line 6 in state 200, call paramdeflist, goto 199
-Shift token ')' at line 6 in state 199, goto 296
-Shift token '{' at line 7 in state 296, goto 324
-Shift token "return" at line 8 in state 324, goto 94
-Shift token IDENT = "malloc" at line 8 in state 94, goto 79
-Reduce #1 to expression by token '(' at line 8 in state 79, call variable, goto 188
-Shift token '(' at line 8 in state 188, goto 140
-Shift token IDENT = "bytes" at line 8 in state 140, goto 79
-Reduce #1 to expression by token ')' at line 8 in state 79, call variable, goto 194
-Reduce #1 to expressionlist by token ')' at line 8 in state 194, goto 247
-Shift token ')' at line 8 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 8 in state 315, call operator "()", goto 188
-Shift token ';' at line 8 in state 188, goto 288
-Reduce #3 to statement by token '}' at line 9 in state 288, call return_value, goto 75
-Reduce #0 to statementlist by token '}' at line 9 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 9 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 9 in state 74, call codeblock, goto 347
-Shift token '}' at line 9 in state 347, goto 363
-Reduce #6 to callablebody by token "private" at line 10 in state 363, call callablebody, goto 196
-Reduce #5 to functiondefinition by token "private" at line 10 in state 196, call funcdef {const=false}, goto 15
-Reduce #1 to free_definition by token "private" at line 10 in state 15, call definition 1, goto 7
-Shift token "private" at line 10 in state 7, goto 24
-Reduce #1 to linkage by token "procedure" at line 10 in state 24, call linkage {private=true,linkage="internal"}, goto 14
-Shift token "procedure" at line 10 in state 14, goto 36
-Shift token IDENT = "freemem" at line 10 in state 36, goto 56
-Shift token '(' at line 10 in state 56, goto 108
-Shift token IDENT = "byte" at line 10 in state 108, goto 17
-Reduce #1 to typename by token '^' at line 10 in state 17, goto 8
-Shift token '^' at line 10 in state 8, goto 32
-Reduce #2 to typespec by token IDENT = "ptr" at line 10 in state 32, call typespec "^", goto 198
-Shift token IDENT = "ptr" at line 10 in state 198, goto 295
-Reduce #2 to paramdecl by token ')' at line 10 in state 295, call paramdef, goto 201
-Reduce #1 to parameters by token ')' at line 10 in state 201, goto 200
-Reduce #1 to parameterlist by token ')' at line 10 in state 200, call paramdeflist, goto 199
-Shift token ')' at line 10 in state 199, goto 296
-Shift token '{' at line 11 in state 296, goto 324
-Shift token IDENT = "free" at line 12 in state 324, goto 79
-Reduce #1 to expression by token '(' at line 12 in state 79, call variable, goto 76
-Shift token '(' at line 12 in state 76, goto 140
-Shift token IDENT = "ptr" at line 12 in state 140, goto 79
-Reduce #1 to expression by token ')' at line 12 in state 79, call variable, goto 194
-Reduce #1 to expressionlist by token ')' at line 12 in state 194, goto 247
-Shift token ')' at line 12 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 12 in state 315, call operator "()", goto 76
-Shift token ';' at line 12 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 13 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 13 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 13 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 13 in state 74, call codeblock, goto 347
-Shift token '}' at line 13 in state 347, goto 363
-Reduce #6 to callablebody by token "struct" at line 15 in state 363, call callablebody, goto 106
-Reduce #4 to functiondefinition by token "struct" at line 15 in state 106, call procdef {const=false}, goto 15
-Reduce #1 to free_definition by token "struct" at line 15 in state 15, call definition 1, goto 7
-Shift token "struct" at line 15 in state 7, goto 21
-Shift token IDENT = "Tree" at line 15 in state 21, goto 44
-Shift token '{' at line 16 in state 44, goto 66
-Shift token "struct" at line 17 in state 66, goto 21
-Shift token IDENT = "Data" at line 17 in state 21, goto 44
-Shift token '{' at line 18 in state 44, goto 66
-Shift token IDENT = "int" at line 19 in state 66, goto 17
-Reduce #1 to typename by token IDENT = "val" at line 19 in state 17, goto 8
+Shift token DQSTRING = "C" at line 4 in state 4, goto 30
+Shift token "procedure" at line 4 in state 30, goto 58
+Shift token IDENT = "free" at line 4 in state 58, goto 86
+Shift token '(' at line 4 in state 86, goto 168
+Shift token IDENT = "byte" at line 4 in state 168, goto 18
+Reduce #1 to typename by token '^' at line 4 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 4 in state 7, goto 8
+Shift token '^' at line 4 in state 8, goto 36
+Reduce #2 to typespec by token ')' at line 4 in state 36, call typespec "^", goto 253
+Reduce #1 to extern_parameters by token ')' at line 4 in state 253, call extern_paramdef, goto 251
+Reduce #1 to extern_paramlist by token ')' at line 4 in state 251, call extern_paramdeflist, goto 291
+Shift token ')' at line 4 in state 291, goto 366
+Shift token ';' at line 4 in state 366, goto 401
+Reduce #8 to extern_definition by token "private" at line 6 in state 401, call extern_procdef, goto 3
+Reduce #0 to extern_definitionlist by token "private" at line 6 in state 3, goto 29
+Reduce #2 to extern_definitionlist by token "private" at line 6 in state 29, goto 29
+Reduce #2 to extern_definitionlist by token "private" at line 6 in state 29, goto 29
+Reduce #2 to extern_definitionlist by token "private" at line 6 in state 29, goto 29
+Reduce #2 to extern_definitionlist by token "private" at line 6 in state 29, goto 2
+Shift token "private" at line 6 in state 2, goto 27
+Reduce #1 to linkage by token "function" at line 6 in state 27, call linkage {private=true,linkage="internal"}, goto 15
+Shift token "function" at line 6 in state 15, goto 39
+Shift token IDENT = "allocmem" at line 6 in state 39, goto 66
+Shift token IDENT = "byte" at line 6 in state 66, goto 18
+Reduce #1 to typename by token '^' at line 6 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 6 in state 7, goto 8
+Shift token '^' at line 6 in state 8, goto 36
+Reduce #2 to typespec by token '(' at line 6 in state 36, call typespec "^", goto 123
+Shift token '(' at line 6 in state 123, goto 126
+Shift token IDENT = "long" at line 6 in state 126, goto 18
+Reduce #1 to typename by token IDENT = "bytes" at line 6 in state 18, goto 7
+Reduce #1 to generic_typename by token IDENT = "bytes" at line 6 in state 7, goto 8
+Reduce #1 to typespec by token IDENT = "bytes" at line 6 in state 8, call typespec "", goto 233
+Shift token IDENT = "bytes" at line 6 in state 233, goto 342
+Reduce #2 to paramdecl by token ')' at line 6 in state 342, call paramdef, goto 236
+Reduce #1 to parameters by token ')' at line 6 in state 236, goto 235
+Reduce #1 to parameterlist by token ')' at line 6 in state 235, call paramdeflist, goto 234
+Shift token ')' at line 6 in state 234, goto 343
+Shift token '{' at line 7 in state 343, goto 378
+Shift token "return" at line 8 in state 378, goto 110
+Shift token IDENT = "malloc" at line 8 in state 110, goto 95
+Reduce #1 to expression by token '(' at line 8 in state 95, call variable, goto 221
+Shift token '(' at line 8 in state 221, goto 173
+Shift token IDENT = "bytes" at line 8 in state 173, goto 95
+Reduce #1 to expression by token ')' at line 8 in state 95, call variable, goto 229
+Reduce #1 to expressionlist by token ')' at line 8 in state 229, goto 293
+Shift token ')' at line 8 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 8 in state 368, call operator "()", goto 221
+Shift token ';' at line 8 in state 221, goto 334
+Reduce #3 to statement by token '}' at line 9 in state 334, call return_value, goto 91
+Reduce #0 to statementlist by token '}' at line 9 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 9 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 9 in state 90, call codeblock, goto 409
+Shift token '}' at line 9 in state 409, goto 430
+Reduce #6 to callablebody by token "private" at line 10 in state 430, call callablebody, goto 231
+Reduce #5 to functiondefinition by token "private" at line 10 in state 231, call funcdef {const=false}, goto 16
+Reduce #1 to free_definition by token "private" at line 10 in state 16, call definition 1, goto 6
+Shift token "private" at line 10 in state 6, goto 27
+Reduce #1 to linkage by token "procedure" at line 10 in state 27, call linkage {private=true,linkage="internal"}, goto 15
+Shift token "procedure" at line 10 in state 15, goto 40
+Shift token IDENT = "freemem" at line 10 in state 40, goto 67
+Shift token '(' at line 10 in state 67, goto 126
+Shift token IDENT = "byte" at line 10 in state 126, goto 18
+Reduce #1 to typename by token '^' at line 10 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 10 in state 7, goto 8
+Shift token '^' at line 10 in state 8, goto 36
+Reduce #2 to typespec by token IDENT = "ptr" at line 10 in state 36, call typespec "^", goto 233
+Shift token IDENT = "ptr" at line 10 in state 233, goto 342
+Reduce #2 to paramdecl by token ')' at line 10 in state 342, call paramdef, goto 236
+Reduce #1 to parameters by token ')' at line 10 in state 236, goto 235
+Reduce #1 to parameterlist by token ')' at line 10 in state 235, call paramdeflist, goto 234
+Shift token ')' at line 10 in state 234, goto 343
+Shift token '{' at line 11 in state 343, goto 378
+Shift token IDENT = "free" at line 12 in state 378, goto 95
+Reduce #1 to expression by token '(' at line 12 in state 95, call variable, goto 92
+Shift token '(' at line 12 in state 92, goto 173
+Shift token IDENT = "ptr" at line 12 in state 173, goto 95
+Reduce #1 to expression by token ')' at line 12 in state 95, call variable, goto 229
+Reduce #1 to expressionlist by token ')' at line 12 in state 229, goto 293
+Shift token ')' at line 12 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 12 in state 368, call operator "()", goto 92
+Shift token ';' at line 12 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 13 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 13 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 13 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 13 in state 90, call codeblock, goto 409
+Shift token '}' at line 13 in state 409, goto 430
+Reduce #6 to callablebody by token "struct" at line 15 in state 430, call callablebody, goto 124
+Reduce #4 to functiondefinition by token "struct" at line 15 in state 124, call procdef {const=false}, goto 16
+Reduce #1 to free_definition by token "struct" at line 15 in state 16, call definition 1, goto 6
+Shift token "struct" at line 15 in state 6, goto 22
+Shift token IDENT = "Tree" at line 15 in state 22, goto 48
+Shift token '{' at line 16 in state 48, goto 77
+Shift token "struct" at line 17 in state 77, goto 22
+Shift token IDENT = "Data" at line 17 in state 22, goto 48
+Shift token '{' at line 18 in state 48, goto 77
+Shift token IDENT = "int" at line 19 in state 77, goto 18
+Reduce #1 to typename by token IDENT = "val" at line 19 in state 18, goto 7
+Reduce #1 to generic_typename by token IDENT = "val" at line 19 in state 7, goto 8
 Reduce #1 to typespec by token IDENT = "val" at line 19 in state 8, call typespec "", goto 9
-Shift token IDENT = "val" at line 19 in state 9, goto 33
-Reduce #2 to variabledefinition by token ';' at line 19 in state 33, call vardef, goto 16
-Shift token ';' at line 19 in state 16, goto 37
-Reduce #2 to struct_definition by token '}' at line 20 in state 37, call definition 1, goto 128
-Reduce #0 to struct_definitionlist by token '}' at line 20 in state 128, goto 213
-Reduce #2 to struct_definitionlist by token '}' at line 20 in state 213, goto 127
-Shift token '}' at line 20 in state 127, goto 212
-Reduce #5 to structdefinition by token IDENT = "Data" at line 21 in state 212, call structdef, goto 11
-Reduce #1 to struct_definition by token IDENT = "Data" at line 21 in state 11, call definition 1, goto 128
-Shift token IDENT = "Data" at line 21 in state 128, goto 17
-Reduce #1 to typename by token IDENT = "data" at line 21 in state 17, goto 8
+Shift token IDENT = "val" at line 19 in state 9, goto 37
+Reduce #2 to variabledefinition by token ';' at line 19 in state 37, call vardef, goto 148
+Shift token ';' at line 19 in state 148, goto 249
+Reduce #2 to instruct_definition by token '}' at line 20 in state 249, call definition 1, goto 145
+Reduce #0 to instruct_definitionlist by token '}' at line 20 in state 145, goto 247
+Reduce #2 to instruct_definitionlist by token '}' at line 20 in state 247, goto 144
+Shift token '}' at line 20 in state 144, goto 246
+Reduce #5 to structdefinition by token IDENT = "Data" at line 21 in state 246, call structdef, goto 147
+Reduce #1 to instruct_definition by token IDENT = "Data" at line 21 in state 147, call definition 1, goto 145
+Shift token IDENT = "Data" at line 21 in state 145, goto 18
+Reduce #1 to typename by token IDENT = "data" at line 21 in state 18, goto 7
+Reduce #1 to generic_typename by token IDENT = "data" at line 21 in state 7, goto 8
 Reduce #1 to typespec by token IDENT = "data" at line 21 in state 8, call typespec "", goto 9
-Shift token IDENT = "data" at line 21 in state 9, goto 33
-Reduce #2 to variabledefinition by token ';' at line 21 in state 33, call vardef, goto 16
-Shift token ';' at line 21 in state 16, goto 37
-Reduce #2 to struct_definition by token IDENT = "Tree" at line 22 in state 37, call definition 1, goto 128
-Shift token IDENT = "Tree" at line 22 in state 128, goto 17
-Reduce #1 to typename by token '^' at line 22 in state 17, goto 8
-Shift token '^' at line 22 in state 8, goto 32
-Reduce #2 to typespec by token IDENT = "left" at line 22 in state 32, call typespec "^", goto 9
-Shift token IDENT = "left" at line 22 in state 9, goto 33
-Reduce #2 to variabledefinition by token ';' at line 22 in state 33, call vardef, goto 16
-Shift token ';' at line 22 in state 16, goto 37
-Reduce #2 to struct_definition by token IDENT = "Tree" at line 23 in state 37, call definition 1, goto 128
-Shift token IDENT = "Tree" at line 23 in state 128, goto 17
-Reduce #1 to typename by token '^' at line 23 in state 17, goto 8
-Shift token '^' at line 23 in state 8, goto 32
-Reduce #2 to typespec by token IDENT = "right" at line 23 in state 32, call typespec "^", goto 9
-Shift token IDENT = "right" at line 23 in state 9, goto 33
-Reduce #2 to variabledefinition by token ';' at line 23 in state 33, call vardef, goto 16
-Shift token ';' at line 23 in state 16, goto 37
-Reduce #2 to struct_definition by token '}' at line 24 in state 37, call definition 1, goto 128
-Reduce #0 to struct_definitionlist by token '}' at line 24 in state 128, goto 213
-Reduce #2 to struct_definitionlist by token '}' at line 24 in state 213, goto 213
-Reduce #2 to struct_definitionlist by token '}' at line 24 in state 213, goto 213
-Reduce #2 to struct_definitionlist by token '}' at line 24 in state 213, goto 213
-Reduce #2 to struct_definitionlist by token '}' at line 24 in state 213, goto 127
-Shift token '}' at line 24 in state 127, goto 212
-Reduce #5 to structdefinition by token IDENT = "Tree" at line 26 in state 212, call structdef, goto 11
-Reduce #1 to struct_definition by token IDENT = "Tree" at line 26 in state 11, call definition 1, goto 6
-Reduce #1 to free_definition by token IDENT = "Tree" at line 26 in state 6, goto 7
-Shift token IDENT = "Tree" at line 26 in state 7, goto 17
-Reduce #1 to typename by token IDENT = "g_tree" at line 26 in state 17, goto 8
+Shift token IDENT = "data" at line 21 in state 9, goto 37
+Reduce #2 to variabledefinition by token ';' at line 21 in state 37, call vardef, goto 148
+Shift token ';' at line 21 in state 148, goto 249
+Reduce #2 to instruct_definition by token IDENT = "Tree" at line 22 in state 249, call definition 1, goto 145
+Shift token IDENT = "Tree" at line 22 in state 145, goto 18
+Reduce #1 to typename by token '^' at line 22 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 22 in state 7, goto 8
+Shift token '^' at line 22 in state 8, goto 36
+Reduce #2 to typespec by token IDENT = "left" at line 22 in state 36, call typespec "^", goto 9
+Shift token IDENT = "left" at line 22 in state 9, goto 37
+Reduce #2 to variabledefinition by token ';' at line 22 in state 37, call vardef, goto 148
+Shift token ';' at line 22 in state 148, goto 249
+Reduce #2 to instruct_definition by token IDENT = "Tree" at line 23 in state 249, call definition 1, goto 145
+Shift token IDENT = "Tree" at line 23 in state 145, goto 18
+Reduce #1 to typename by token '^' at line 23 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 23 in state 7, goto 8
+Shift token '^' at line 23 in state 8, goto 36
+Reduce #2 to typespec by token IDENT = "right" at line 23 in state 36, call typespec "^", goto 9
+Shift token IDENT = "right" at line 23 in state 9, goto 37
+Reduce #2 to variabledefinition by token ';' at line 23 in state 37, call vardef, goto 148
+Shift token ';' at line 23 in state 148, goto 249
+Reduce #2 to instruct_definition by token '}' at line 24 in state 249, call definition 1, goto 145
+Reduce #0 to instruct_definitionlist by token '}' at line 24 in state 145, goto 247
+Reduce #2 to instruct_definitionlist by token '}' at line 24 in state 247, goto 247
+Reduce #2 to instruct_definitionlist by token '}' at line 24 in state 247, goto 247
+Reduce #2 to instruct_definitionlist by token '}' at line 24 in state 247, goto 247
+Reduce #2 to instruct_definitionlist by token '}' at line 24 in state 247, goto 144
+Shift token '}' at line 24 in state 144, goto 246
+Reduce #5 to structdefinition by token IDENT = "Tree" at line 26 in state 246, call structdef, goto 11
+Reduce #1 to free_definition by token IDENT = "Tree" at line 26 in state 11, call definition 1, goto 6
+Shift token IDENT = "Tree" at line 26 in state 6, goto 18
+Reduce #1 to typename by token IDENT = "g_tree" at line 26 in state 18, goto 7
+Reduce #1 to generic_typename by token IDENT = "g_tree" at line 26 in state 7, goto 8
 Reduce #1 to typespec by token IDENT = "g_tree" at line 26 in state 8, call typespec "", goto 9
-Shift token IDENT = "g_tree" at line 26 in state 9, goto 33
-Reduce #2 to variabledefinition by token ';' at line 26 in state 33, call vardef, goto 16
-Shift token ';' at line 26 in state 16, goto 37
-Reduce #2 to struct_definition by token "private" at line 28 in state 37, call definition 1, goto 6
-Reduce #1 to free_definition by token "private" at line 28 in state 6, goto 7
-Shift token "private" at line 28 in state 7, goto 24
-Reduce #1 to linkage by token "procedure" at line 28 in state 24, call linkage {private=true,linkage="internal"}, goto 14
-Shift token "procedure" at line 28 in state 14, goto 36
-Shift token IDENT = "printTree" at line 28 in state 36, goto 56
-Shift token '(' at line 28 in state 56, goto 108
-Shift token "const" at line 28 in state 108, goto 18
-Shift token IDENT = "Tree" at line 28 in state 18, goto 17
-Reduce #1 to typename by token '^' at line 28 in state 17, goto 39
-Shift token '^' at line 28 in state 39, goto 59
-Reduce #3 to typespec by token IDENT = "node" at line 28 in state 59, call typespec "const^", goto 198
-Shift token IDENT = "node" at line 28 in state 198, goto 295
-Reduce #2 to paramdecl by token ',' at line 28 in state 295, call paramdef, goto 201
-Shift token ',' at line 28 in state 201, goto 297
-Shift token IDENT = "int" at line 28 in state 297, goto 17
-Reduce #1 to typename by token IDENT = "indent" at line 28 in state 17, goto 8
-Reduce #1 to typespec by token IDENT = "indent" at line 28 in state 8, call typespec "", goto 198
-Shift token IDENT = "indent" at line 28 in state 198, goto 295
-Reduce #2 to paramdecl by token ')' at line 28 in state 295, call paramdef, goto 201
-Reduce #1 to parameters by token ')' at line 28 in state 201, goto 325
-Reduce #3 to parameters by token ')' at line 28 in state 325, goto 200
-Reduce #1 to parameterlist by token ')' at line 28 in state 200, call paramdeflist, goto 199
-Shift token ')' at line 28 in state 199, goto 296
-Shift token '{' at line 29 in state 296, goto 324
-Shift token "var" at line 30 in state 324, goto 93
-Shift token IDENT = "int" at line 30 in state 93, goto 17
-Reduce #1 to typename by token IDENT = "ii" at line 30 in state 17, goto 8
+Shift token IDENT = "g_tree" at line 26 in state 9, goto 37
+Reduce #2 to variabledefinition by token ';' at line 26 in state 37, call vardef, goto 17
+Shift token ';' at line 26 in state 17, goto 41
+Reduce #2 to free_definition by token "private" at line 28 in state 41, call definition 1, goto 6
+Shift token "private" at line 28 in state 6, goto 27
+Reduce #1 to linkage by token "procedure" at line 28 in state 27, call linkage {private=true,linkage="internal"}, goto 15
+Shift token "procedure" at line 28 in state 15, goto 40
+Shift token IDENT = "printTree" at line 28 in state 40, goto 67
+Shift token '(' at line 28 in state 67, goto 126
+Shift token "const" at line 28 in state 126, goto 19
+Shift token IDENT = "Tree" at line 28 in state 19, goto 18
+Reduce #1 to typename by token '^' at line 28 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 28 in state 7, goto 43
+Shift token '^' at line 28 in state 43, goto 70
+Reduce #3 to typespec by token IDENT = "node" at line 28 in state 70, call typespec "const^", goto 233
+Shift token IDENT = "node" at line 28 in state 233, goto 342
+Reduce #2 to paramdecl by token ',' at line 28 in state 342, call paramdef, goto 236
+Shift token ',' at line 28 in state 236, goto 344
+Shift token IDENT = "int" at line 28 in state 344, goto 18
+Reduce #1 to typename by token IDENT = "indent" at line 28 in state 18, goto 7
+Reduce #1 to generic_typename by token IDENT = "indent" at line 28 in state 7, goto 8
+Reduce #1 to typespec by token IDENT = "indent" at line 28 in state 8, call typespec "", goto 233
+Shift token IDENT = "indent" at line 28 in state 233, goto 342
+Reduce #2 to paramdecl by token ')' at line 28 in state 342, call paramdef, goto 236
+Reduce #1 to parameters by token ')' at line 28 in state 236, goto 379
+Reduce #3 to parameters by token ')' at line 28 in state 379, goto 235
+Reduce #1 to parameterlist by token ')' at line 28 in state 235, call paramdeflist, goto 234
+Shift token ')' at line 28 in state 234, goto 343
+Shift token '{' at line 29 in state 343, goto 378
+Shift token "var" at line 30 in state 378, goto 109
+Shift token IDENT = "int" at line 30 in state 109, goto 18
+Reduce #1 to typename by token IDENT = "ii" at line 30 in state 18, goto 7
+Reduce #1 to generic_typename by token IDENT = "ii" at line 30 in state 7, goto 8
 Reduce #1 to typespec by token IDENT = "ii" at line 30 in state 8, call typespec "", goto 9
-Shift token IDENT = "ii" at line 30 in state 9, goto 33
-Shift token '=' at line 30 in state 33, goto 53
-Shift token CARDINAL = "0" at line 30 in state 53, goto 82
-Reduce #1 to expression by token ';' at line 30 in state 82, call constant "constexpr uint", goto 102
-Reduce #4 to variabledefinition by token ';' at line 30 in state 102, call vardef_assign, goto 187
-Shift token ';' at line 30 in state 187, goto 287
-Reduce #3 to statement by token "while" at line 31 in state 287, call definition, goto 75
-Shift token "while" at line 31 in state 75, goto 97
-Shift token '(' at line 31 in state 97, goto 191
-Shift token IDENT = "ii" at line 31 in state 191, goto 79
-Reduce #1 to expression by token '<' at line 31 in state 79, call variable, goto 291
-Shift token '<' at line 31 in state 291, goto 162
-Shift token IDENT = "indent" at line 31 in state 162, goto 79
-Reduce #1 to expression by token ')' at line 31 in state 79, call variable, goto 269
-Reduce #3 to expression by token ')' at line 31 in state 269, call operator "<", goto 291
-Shift token ')' at line 31 in state 291, goto 319
-Shift token '{' at line 32 in state 319, goto 343
-Shift token IDENT = "putchar" at line 33 in state 343, goto 79
-Reduce #1 to expression by token '(' at line 33 in state 79, call variable, goto 76
-Shift token '(' at line 33 in state 76, goto 140
-Shift token SQSTRING = " " at line 33 in state 140, goto 81
-Reduce #1 to expression by token ')' at line 33 in state 81, call char_constant "constexpr float", goto 194
-Reduce #1 to expressionlist by token ')' at line 33 in state 194, goto 247
-Shift token ')' at line 33 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 33 in state 315, call operator "()", goto 76
-Shift token ';' at line 33 in state 76, goto 141
-Reduce #2 to statement by token IDENT = "ii" at line 34 in state 141, call free_expression, goto 75
-Shift token IDENT = "ii" at line 34 in state 75, goto 79
-Reduce #1 to expression by token "+=" at line 34 in state 79, call variable, goto 76
-Shift token "+=" at line 34 in state 76, goto 163
-Shift token CARDINAL = "1" at line 34 in state 163, goto 82
-Reduce #1 to expression by token ';' at line 34 in state 82, call constant "constexpr uint", goto 270
-Reduce #3 to expression by token ';' at line 34 in state 270, call assign_operator "+", goto 76
-Shift token ';' at line 34 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 35 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 35 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 35 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 35 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 35 in state 74, call codeblock, goto 360
-Shift token '}' at line 35 in state 360, goto 372
-Reduce #7 to statement by token IDENT = "printf" at line 36 in state 372, call conditional_while, goto 75
-Shift token IDENT = "printf" at line 36 in state 75, goto 79
-Reduce #1 to expression by token '(' at line 36 in state 79, call variable, goto 76
-Shift token '(' at line 36 in state 76, goto 140
-Shift token DQSTRING = "Node: %d\n" at line 36 in state 140, goto 80
-Reduce #1 to expression by token ',' at line 36 in state 80, call string_constant "constexpr float", goto 194
-Shift token ',' at line 36 in state 194, goto 285
-Shift token IDENT = "node" at line 36 in state 285, goto 79
-Reduce #1 to expression by token "->" at line 36 in state 79, call variable, goto 194
-Shift token "->" at line 36 in state 194, goto 144
-Reduce #1 to indirection by token IDENT = "data" at line 36 in state 144, call count, goto 139
-Shift token IDENT = "data" at line 36 in state 139, goto 246
-Reduce #3 to iexpression by token '.' at line 36 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token '.' at line 36 in state 77, goto 194
-Shift token '.' at line 36 in state 194, goto 175
-Shift token IDENT = "val" at line 36 in state 175, goto 282
-Reduce #3 to expression by token ')' at line 36 in state 282, call member, goto 194
-Reduce #1 to expressionlist by token ')' at line 36 in state 194, goto 317
-Reduce #3 to expressionlist by token ')' at line 36 in state 317, goto 247
-Shift token ')' at line 36 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 36 in state 315, call operator "()", goto 76
-Shift token ';' at line 36 in state 76, goto 141
-Reduce #2 to statement by token "if" at line 37 in state 141, call free_expression, goto 75
-Shift token "if" at line 37 in state 75, goto 96
-Shift token '(' at line 37 in state 96, goto 190
-Shift token IDENT = "node" at line 37 in state 190, goto 79
-Reduce #1 to expression by token "->" at line 37 in state 79, call variable, goto 290
-Shift token "->" at line 37 in state 290, goto 144
-Reduce #1 to indirection by token IDENT = "left" at line 37 in state 144, call count, goto 139
-Shift token IDENT = "left" at line 37 in state 139, goto 246
-Reduce #3 to iexpression by token "!=" at line 37 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token "!=" at line 37 in state 77, goto 290
-Shift token "!=" at line 37 in state 290, goto 158
-Shift token "null" at line 37 in state 158, goto 100
-Reduce #1 to expression by token ')' at line 37 in state 100, call null "constexpr float", goto 265
-Reduce #3 to expression by token ')' at line 37 in state 265, call operator "!=", goto 290
-Shift token ')' at line 37 in state 290, goto 318
-Shift token '{' at line 37 in state 318, goto 342
-Shift token IDENT = "printTree" at line 37 in state 342, goto 79
-Reduce #1 to expression by token '(' at line 37 in state 79, call variable, goto 76
-Shift token '(' at line 37 in state 76, goto 140
-Shift token IDENT = "node" at line 37 in state 140, goto 79
-Reduce #1 to expression by token "->" at line 37 in state 79, call variable, goto 194
-Shift token "->" at line 37 in state 194, goto 144
-Reduce #1 to indirection by token IDENT = "left" at line 37 in state 144, call count, goto 139
-Shift token IDENT = "left" at line 37 in state 139, goto 246
-Reduce #3 to iexpression by token ',' at line 37 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token ',' at line 37 in state 77, goto 194
-Shift token ',' at line 37 in state 194, goto 285
-Shift token IDENT = "indent" at line 37 in state 285, goto 79
-Reduce #1 to expression by token '+' at line 37 in state 79, call variable, goto 194
-Shift token '+' at line 37 in state 194, goto 146
-Shift token CARDINAL = "1" at line 37 in state 146, goto 82
-Reduce #1 to expression by token ')' at line 37 in state 82, call constant "constexpr uint", goto 253
-Reduce #3 to expression by token ')' at line 37 in state 253, call operator "+", goto 194
-Reduce #1 to expressionlist by token ')' at line 37 in state 194, goto 317
-Reduce #3 to expressionlist by token ')' at line 37 in state 317, goto 247
-Shift token ')' at line 37 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 37 in state 315, call operator "()", goto 76
-Shift token ';' at line 37 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 37 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 37 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 37 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 37 in state 74, call codeblock, goto 359
-Shift token '}' at line 37 in state 359, goto 371
-Reduce #7 to statement by token "if" at line 38 in state 371, call conditional_if, goto 75
-Shift token "if" at line 38 in state 75, goto 96
-Shift token '(' at line 38 in state 96, goto 190
-Shift token IDENT = "node" at line 38 in state 190, goto 79
-Reduce #1 to expression by token "->" at line 38 in state 79, call variable, goto 290
-Shift token "->" at line 38 in state 290, goto 144
-Reduce #1 to indirection by token IDENT = "right" at line 38 in state 144, call count, goto 139
-Shift token IDENT = "right" at line 38 in state 139, goto 246
-Reduce #3 to iexpression by token "!=" at line 38 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token "!=" at line 38 in state 77, goto 290
-Shift token "!=" at line 38 in state 290, goto 158
-Shift token "null" at line 38 in state 158, goto 100
-Reduce #1 to expression by token ')' at line 38 in state 100, call null "constexpr float", goto 265
-Reduce #3 to expression by token ')' at line 38 in state 265, call operator "!=", goto 290
-Shift token ')' at line 38 in state 290, goto 318
-Shift token '{' at line 38 in state 318, goto 342
-Shift token IDENT = "printTree" at line 38 in state 342, goto 79
-Reduce #1 to expression by token '(' at line 38 in state 79, call variable, goto 76
-Shift token '(' at line 38 in state 76, goto 140
-Shift token IDENT = "node" at line 38 in state 140, goto 79
-Reduce #1 to expression by token "->" at line 38 in state 79, call variable, goto 194
-Shift token "->" at line 38 in state 194, goto 144
-Reduce #1 to indirection by token IDENT = "right" at line 38 in state 144, call count, goto 139
-Shift token IDENT = "right" at line 38 in state 139, goto 246
-Reduce #3 to iexpression by token ',' at line 38 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token ',' at line 38 in state 77, goto 194
-Shift token ',' at line 38 in state 194, goto 285
-Shift token IDENT = "indent" at line 38 in state 285, goto 79
-Reduce #1 to expression by token '+' at line 38 in state 79, call variable, goto 194
-Shift token '+' at line 38 in state 194, goto 146
-Shift token CARDINAL = "1" at line 38 in state 146, goto 82
-Reduce #1 to expression by token ')' at line 38 in state 82, call constant "constexpr uint", goto 253
-Reduce #3 to expression by token ')' at line 38 in state 253, call operator "+", goto 194
-Reduce #1 to expressionlist by token ')' at line 38 in state 194, goto 317
-Reduce #3 to expressionlist by token ')' at line 38 in state 317, goto 247
-Shift token ')' at line 38 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 38 in state 315, call operator "()", goto 76
-Shift token ';' at line 38 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 38 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 38 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 38 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 38 in state 74, call codeblock, goto 359
-Shift token '}' at line 38 in state 359, goto 371
-Reduce #7 to statement by token '}' at line 39 in state 371, call conditional_if, goto 75
-Reduce #0 to statementlist by token '}' at line 39 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 39 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 39 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 39 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 39 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 39 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 39 in state 74, call codeblock, goto 347
-Shift token '}' at line 39 in state 347, goto 363
-Reduce #6 to callablebody by token "private" at line 41 in state 363, call callablebody, goto 106
-Reduce #4 to functiondefinition by token "private" at line 41 in state 106, call procdef {const=false}, goto 15
-Reduce #1 to free_definition by token "private" at line 41 in state 15, call definition 1, goto 7
-Shift token "private" at line 41 in state 7, goto 24
-Reduce #1 to linkage by token "procedure" at line 41 in state 24, call linkage {private=true,linkage="internal"}, goto 14
-Shift token "procedure" at line 41 in state 14, goto 36
-Shift token IDENT = "deleteTree" at line 41 in state 36, goto 56
-Shift token '(' at line 41 in state 56, goto 108
-Shift token IDENT = "Tree" at line 41 in state 108, goto 17
-Reduce #1 to typename by token '^' at line 41 in state 17, goto 8
-Shift token '^' at line 41 in state 8, goto 32
-Reduce #2 to typespec by token IDENT = "node" at line 41 in state 32, call typespec "^", goto 198
-Shift token IDENT = "node" at line 41 in state 198, goto 295
-Reduce #2 to paramdecl by token ')' at line 41 in state 295, call paramdef, goto 201
-Reduce #1 to parameters by token ')' at line 41 in state 201, goto 200
-Reduce #1 to parameterlist by token ')' at line 41 in state 200, call paramdeflist, goto 199
-Shift token ')' at line 41 in state 199, goto 296
-Shift token '{' at line 42 in state 296, goto 324
-Shift token "if" at line 43 in state 324, goto 96
-Shift token '(' at line 43 in state 96, goto 190
-Shift token IDENT = "node" at line 43 in state 190, goto 79
-Reduce #1 to expression by token "->" at line 43 in state 79, call variable, goto 290
-Shift token "->" at line 43 in state 290, goto 144
-Reduce #1 to indirection by token IDENT = "left" at line 43 in state 144, call count, goto 139
-Shift token IDENT = "left" at line 43 in state 139, goto 246
-Reduce #3 to iexpression by token "!=" at line 43 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token "!=" at line 43 in state 77, goto 290
-Shift token "!=" at line 43 in state 290, goto 158
-Shift token "null" at line 43 in state 158, goto 100
-Reduce #1 to expression by token ')' at line 43 in state 100, call null "constexpr float", goto 265
-Reduce #3 to expression by token ')' at line 43 in state 265, call operator "!=", goto 290
-Shift token ')' at line 43 in state 290, goto 318
-Shift token '{' at line 43 in state 318, goto 342
-Shift token IDENT = "deleteTree" at line 43 in state 342, goto 79
-Reduce #1 to expression by token '(' at line 43 in state 79, call variable, goto 76
-Shift token '(' at line 43 in state 76, goto 140
-Shift token IDENT = "node" at line 43 in state 140, goto 79
-Reduce #1 to expression by token "->" at line 43 in state 79, call variable, goto 194
-Shift token "->" at line 43 in state 194, goto 144
-Reduce #1 to indirection by token IDENT = "left" at line 43 in state 144, call count, goto 139
-Shift token IDENT = "left" at line 43 in state 139, goto 246
-Reduce #3 to iexpression by token ')' at line 43 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token ')' at line 43 in state 77, goto 194
-Reduce #1 to expressionlist by token ')' at line 43 in state 194, goto 247
-Shift token ')' at line 43 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 43 in state 315, call operator "()", goto 76
-Shift token ';' at line 43 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 43 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 43 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 43 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 43 in state 74, call codeblock, goto 359
-Shift token '}' at line 43 in state 359, goto 371
-Reduce #7 to statement by token "if" at line 44 in state 371, call conditional_if, goto 75
-Shift token "if" at line 44 in state 75, goto 96
-Shift token '(' at line 44 in state 96, goto 190
-Shift token IDENT = "node" at line 44 in state 190, goto 79
-Reduce #1 to expression by token "->" at line 44 in state 79, call variable, goto 290
-Shift token "->" at line 44 in state 290, goto 144
-Reduce #1 to indirection by token IDENT = "right" at line 44 in state 144, call count, goto 139
-Shift token IDENT = "right" at line 44 in state 139, goto 246
-Reduce #3 to iexpression by token "!=" at line 44 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token "!=" at line 44 in state 77, goto 290
-Shift token "!=" at line 44 in state 290, goto 158
-Shift token "null" at line 44 in state 158, goto 100
-Reduce #1 to expression by token ')' at line 44 in state 100, call null "constexpr float", goto 265
-Reduce #3 to expression by token ')' at line 44 in state 265, call operator "!=", goto 290
-Shift token ')' at line 44 in state 290, goto 318
-Shift token '{' at line 44 in state 318, goto 342
-Shift token IDENT = "deleteTree" at line 44 in state 342, goto 79
-Reduce #1 to expression by token '(' at line 44 in state 79, call variable, goto 76
-Shift token '(' at line 44 in state 76, goto 140
-Shift token IDENT = "node" at line 44 in state 140, goto 79
-Reduce #1 to expression by token "->" at line 44 in state 79, call variable, goto 194
-Shift token "->" at line 44 in state 194, goto 144
-Reduce #1 to indirection by token IDENT = "right" at line 44 in state 144, call count, goto 139
-Shift token IDENT = "right" at line 44 in state 139, goto 246
-Reduce #3 to iexpression by token ')' at line 44 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token ')' at line 44 in state 77, goto 194
-Reduce #1 to expressionlist by token ')' at line 44 in state 194, goto 247
-Shift token ')' at line 44 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 44 in state 315, call operator "()", goto 76
-Shift token ';' at line 44 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 44 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 44 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 44 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 44 in state 74, call codeblock, goto 359
-Shift token '}' at line 44 in state 359, goto 371
-Reduce #7 to statement by token "delete" at line 45 in state 371, call conditional_if, goto 75
-Shift token "delete" at line 45 in state 75, goto 95
-Shift token IDENT = "node" at line 45 in state 95, goto 79
-Reduce #1 to expression by token ';' at line 45 in state 79, call variable, goto 189
-Shift token ';' at line 45 in state 189, goto 289
-Reduce #3 to statement by token '}' at line 46 in state 289, call delete, goto 75
-Reduce #0 to statementlist by token '}' at line 46 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 46 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 46 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 46 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 46 in state 74, call codeblock, goto 347
-Shift token '}' at line 46 in state 347, goto 363
-Reduce #6 to callablebody by token "main" at line 48 in state 363, call callablebody, goto 106
-Reduce #4 to functiondefinition by token "main" at line 48 in state 106, call procdef {const=false}, goto 15
-Reduce #1 to free_definition by token "main" at line 48 in state 15, call definition 1, goto 7
-Reduce #0 to free_definitionlist by token "main" at line 48 in state 7, goto 30
-Reduce #2 to free_definitionlist by token "main" at line 48 in state 30, goto 30
-Reduce #2 to free_definitionlist by token "main" at line 48 in state 30, goto 30
-Reduce #2 to free_definitionlist by token "main" at line 48 in state 30, goto 30
-Reduce #2 to free_definitionlist by token "main" at line 48 in state 30, goto 30
-Reduce #2 to free_definitionlist by token "main" at line 48 in state 30, goto 30
-Reduce #2 to free_definitionlist by token "main" at line 48 in state 30, goto 5
-Shift token "main" at line 48 in state 5, goto 29
-Shift token '{' at line 49 in state 29, goto 50
-Shift token "var" at line 50 in state 50, goto 93
-Shift token IDENT = "Tree" at line 50 in state 93, goto 17
-Reduce #1 to typename by token '^' at line 50 in state 17, goto 8
-Shift token '^' at line 50 in state 8, goto 32
-Reduce #2 to typespec by token IDENT = "tree" at line 50 in state 32, call typespec "^", goto 9
-Shift token IDENT = "tree" at line 50 in state 9, goto 33
-Shift token '=' at line 50 in state 33, goto 53
-Shift token "new" at line 50 in state 53, goto 98
-Shift token IDENT = "Tree" at line 50 in state 98, goto 17
-Reduce #1 to typename by token ':' at line 50 in state 17, goto 8
-Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 192
-Shift token ':' at line 50 in state 192, goto 292
-Shift token '{' at line 50 in state 292, goto 103
-Shift token '{' at line 50 in state 103, goto 103
-Shift token CARDINAL = "11" at line 50 in state 103, goto 82
-Reduce #1 to expression by token '}' at line 50 in state 82, call constant "constexpr uint", goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token ',' at line 50 in state 286, call structure, goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "new" at line 50 in state 285, goto 98
-Shift token IDENT = "Tree" at line 50 in state 98, goto 17
-Reduce #1 to typename by token ':' at line 50 in state 17, goto 8
-Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 192
-Shift token ':' at line 50 in state 192, goto 292
-Shift token '{' at line 50 in state 292, goto 103
-Shift token '{' at line 50 in state 103, goto 103
-Shift token CARDINAL = "1" at line 50 in state 103, goto 82
-Reduce #1 to expression by token '}' at line 50 in state 82, call constant "constexpr uint", goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token ',' at line 50 in state 286, call structure, goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "null" at line 50 in state 285, goto 100
-Reduce #1 to expression by token ',' at line 50 in state 100, call null "constexpr float", goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "null" at line 50 in state 285, goto 100
-Reduce #1 to expression by token '}' at line 50 in state 100, call null "constexpr float", goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token ',' at line 50 in state 286, call structure, goto 320
-Reduce #4 to expression by token ',' at line 50 in state 320, call allocate, goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "new" at line 50 in state 285, goto 98
-Shift token IDENT = "Tree" at line 50 in state 98, goto 17
-Reduce #1 to typename by token ':' at line 50 in state 17, goto 8
-Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 192
-Shift token ':' at line 50 in state 192, goto 292
-Shift token '{' at line 50 in state 292, goto 103
-Shift token '{' at line 50 in state 103, goto 103
-Shift token CARDINAL = "2" at line 50 in state 103, goto 82
-Reduce #1 to expression by token '}' at line 50 in state 82, call constant "constexpr uint", goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token ',' at line 50 in state 286, call structure, goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "null" at line 50 in state 285, goto 100
-Reduce #1 to expression by token ',' at line 50 in state 100, call null "constexpr float", goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "new" at line 50 in state 285, goto 98
-Shift token IDENT = "Tree" at line 50 in state 98, goto 17
-Reduce #1 to typename by token ':' at line 50 in state 17, goto 8
-Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 192
-Shift token ':' at line 50 in state 192, goto 292
-Shift token '{' at line 50 in state 292, goto 103
-Shift token '{' at line 50 in state 103, goto 103
-Shift token CARDINAL = "22" at line 50 in state 103, goto 82
-Reduce #1 to expression by token '}' at line 50 in state 82, call constant "constexpr uint", goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token ',' at line 50 in state 286, call structure, goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "null" at line 50 in state 285, goto 100
-Reduce #1 to expression by token ',' at line 50 in state 100, call null "constexpr float", goto 194
-Shift token ',' at line 50 in state 194, goto 285
-Shift token "null" at line 50 in state 285, goto 100
-Reduce #1 to expression by token '}' at line 50 in state 100, call null "constexpr float", goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token '}' at line 50 in state 286, call structure, goto 320
-Reduce #4 to expression by token '}' at line 50 in state 320, call allocate, goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token '}' at line 50 in state 286, call structure, goto 320
-Reduce #4 to expression by token '}' at line 50 in state 320, call allocate, goto 194
-Reduce #1 to expressionlist by token '}' at line 50 in state 194, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 317
-Reduce #3 to expressionlist by token '}' at line 50 in state 317, goto 180
-Shift token '}' at line 50 in state 180, goto 286
-Reduce #3 to expression by token ';' at line 50 in state 286, call structure, goto 320
-Reduce #4 to expression by token ';' at line 50 in state 320, call allocate, goto 102
-Reduce #4 to variabledefinition by token ';' at line 50 in state 102, call vardef_assign, goto 187
-Shift token ';' at line 50 in state 187, goto 287
-Reduce #3 to statement by token IDENT = "printf" at line 51 in state 287, call definition, goto 75
-Shift token IDENT = "printf" at line 51 in state 75, goto 79
-Reduce #1 to expression by token '(' at line 51 in state 79, call variable, goto 76
-Shift token '(' at line 51 in state 76, goto 140
-Shift token DQSTRING = "VAL %d\n" at line 51 in state 140, goto 80
-Reduce #1 to expression by token ',' at line 51 in state 80, call string_constant "constexpr float", goto 194
-Shift token ',' at line 51 in state 194, goto 285
-Shift token IDENT = "tree" at line 51 in state 285, goto 79
-Reduce #1 to expression by token "->" at line 51 in state 79, call variable, goto 194
-Shift token "->" at line 51 in state 194, goto 144
-Reduce #1 to indirection by token IDENT = "data" at line 51 in state 144, call count, goto 139
-Shift token IDENT = "data" at line 51 in state 139, goto 246
-Reduce #3 to iexpression by token '.' at line 51 in state 246, call rep_operator "->", goto 77
-Reduce #1 to expression by token '.' at line 51 in state 77, goto 194
-Shift token '.' at line 51 in state 194, goto 175
-Shift token IDENT = "val" at line 51 in state 175, goto 282
-Reduce #3 to expression by token ')' at line 51 in state 282, call member, goto 194
-Reduce #1 to expressionlist by token ')' at line 51 in state 194, goto 317
-Reduce #3 to expressionlist by token ')' at line 51 in state 317, goto 247
-Shift token ')' at line 51 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 51 in state 315, call operator "()", goto 76
-Shift token ';' at line 51 in state 76, goto 141
-Reduce #2 to statement by token IDENT = "printTree" at line 52 in state 141, call free_expression, goto 75
-Shift token IDENT = "printTree" at line 52 in state 75, goto 79
-Reduce #1 to expression by token '(' at line 52 in state 79, call variable, goto 76
-Shift token '(' at line 52 in state 76, goto 140
-Shift token IDENT = "tree" at line 52 in state 140, goto 79
-Reduce #1 to expression by token ',' at line 52 in state 79, call variable, goto 194
-Shift token ',' at line 52 in state 194, goto 285
-Shift token CARDINAL = "0" at line 52 in state 285, goto 82
-Reduce #1 to expression by token ')' at line 52 in state 82, call constant "constexpr uint", goto 194
-Reduce #1 to expressionlist by token ')' at line 52 in state 194, goto 317
-Reduce #3 to expressionlist by token ')' at line 52 in state 317, goto 247
-Shift token ')' at line 52 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 52 in state 315, call operator "()", goto 76
-Shift token ';' at line 52 in state 76, goto 141
-Reduce #2 to statement by token IDENT = "deleteTree" at line 53 in state 141, call free_expression, goto 75
-Shift token IDENT = "deleteTree" at line 53 in state 75, goto 79
-Reduce #1 to expression by token '(' at line 53 in state 79, call variable, goto 76
-Shift token '(' at line 53 in state 76, goto 140
-Shift token IDENT = "tree" at line 53 in state 140, goto 79
-Reduce #1 to expression by token ')' at line 53 in state 79, call variable, goto 194
-Reduce #1 to expressionlist by token ')' at line 53 in state 194, goto 247
-Shift token ')' at line 53 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 53 in state 315, call operator "()", goto 76
-Shift token ';' at line 53 in state 76, goto 141
-Reduce #2 to statement by token IDENT = "printf" at line 54 in state 141, call free_expression, goto 75
-Shift token IDENT = "printf" at line 54 in state 75, goto 79
-Reduce #1 to expression by token '(' at line 54 in state 79, call variable, goto 76
-Shift token '(' at line 54 in state 76, goto 140
-Shift token DQSTRING = "Done\n" at line 54 in state 140, goto 80
-Reduce #1 to expression by token ')' at line 54 in state 80, call string_constant "constexpr float", goto 194
-Reduce #1 to expressionlist by token ')' at line 54 in state 194, goto 247
-Shift token ')' at line 54 in state 247, goto 315
-Reduce #4 to expression by token ';' at line 54 in state 315, call operator "()", goto 76
-Shift token ';' at line 54 in state 76, goto 141
-Reduce #2 to statement by token '}' at line 55 in state 141, call free_expression, goto 75
-Reduce #0 to statementlist by token '}' at line 55 in state 75, goto 138
-Reduce #2 to statementlist by token '}' at line 55 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 55 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 55 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 55 in state 138, goto 138
-Reduce #2 to statementlist by token '}' at line 55 in state 138, goto 74
-Reduce #1 to codeblock by token '}' at line 55 in state 74, call codeblock, goto 73
-Shift token '}' at line 55 in state 73, goto 137
+Shift token IDENT = "ii" at line 30 in state 9, goto 37
+Shift token '=' at line 30 in state 37, goto 64
+Shift token CARDINAL = "0" at line 30 in state 64, goto 98
+Reduce #1 to expression by token ';' at line 30 in state 98, call constant "constexpr uint", goto 120
+Reduce #4 to variabledefinition by token ';' at line 30 in state 120, call vardef_assign, goto 220
+Shift token ';' at line 30 in state 220, goto 333
+Reduce #3 to statement by token "while" at line 31 in state 333, call definition, goto 91
+Shift token "while" at line 31 in state 91, goto 113
+Shift token '(' at line 31 in state 113, goto 224
+Shift token IDENT = "ii" at line 31 in state 224, goto 95
+Reduce #1 to expression by token '<' at line 31 in state 95, call variable, goto 337
+Shift token '<' at line 31 in state 337, goto 175
+Shift token IDENT = "indent" at line 31 in state 175, goto 95
+Reduce #1 to expression by token ')' at line 31 in state 95, call variable, goto 295
+Reduce #3 to expression by token ')' at line 31 in state 295, call operator "<", goto 337
+Shift token ')' at line 31 in state 337, goto 372
+Shift token '{' at line 32 in state 372, goto 404
+Shift token IDENT = "putchar" at line 33 in state 404, goto 95
+Reduce #1 to expression by token '(' at line 33 in state 95, call variable, goto 92
+Shift token '(' at line 33 in state 92, goto 173
+Shift token SQSTRING = " " at line 33 in state 173, goto 97
+Reduce #1 to expression by token ')' at line 33 in state 97, call char_constant "constexpr float", goto 229
+Reduce #1 to expressionlist by token ')' at line 33 in state 229, goto 293
+Shift token ')' at line 33 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 33 in state 368, call operator "()", goto 92
+Shift token ';' at line 33 in state 92, goto 174
+Reduce #2 to statement by token IDENT = "ii" at line 34 in state 174, call free_expression, goto 91
+Shift token IDENT = "ii" at line 34 in state 91, goto 95
+Reduce #1 to expression by token "+=" at line 34 in state 95, call variable, goto 92
+Shift token "+=" at line 34 in state 92, goto 196
+Shift token CARDINAL = "1" at line 34 in state 196, goto 98
+Reduce #1 to expression by token ';' at line 34 in state 98, call constant "constexpr uint", goto 316
+Reduce #3 to expression by token ';' at line 34 in state 316, call assign_operator "+", goto 92
+Shift token ';' at line 34 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 35 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 35 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 35 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 35 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 35 in state 90, call codeblock, goto 426
+Shift token '}' at line 35 in state 426, goto 444
+Reduce #7 to statement by token IDENT = "printf" at line 36 in state 444, call conditional_while, goto 91
+Shift token IDENT = "printf" at line 36 in state 91, goto 95
+Reduce #1 to expression by token '(' at line 36 in state 95, call variable, goto 92
+Shift token '(' at line 36 in state 92, goto 173
+Shift token DQSTRING = "Node: %d\n" at line 36 in state 173, goto 96
+Reduce #1 to expression by token ',' at line 36 in state 96, call string_constant "constexpr float", goto 229
+Shift token ',' at line 36 in state 229, goto 331
+Shift token IDENT = "node" at line 36 in state 331, goto 95
+Reduce #1 to expression by token "->" at line 36 in state 95, call variable, goto 229
+Shift token "->" at line 36 in state 229, goto 179
+Reduce #1 to indirection by token IDENT = "data" at line 36 in state 179, call count, goto 172
+Shift token IDENT = "data" at line 36 in state 172, goto 292
+Reduce #3 to iexpression by token '.' at line 36 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token '.' at line 36 in state 93, goto 229
+Shift token '.' at line 36 in state 229, goto 208
+Shift token IDENT = "val" at line 36 in state 208, goto 328
+Reduce #3 to expression by token ')' at line 36 in state 328, call member, goto 229
+Reduce #1 to expressionlist by token ')' at line 36 in state 229, goto 370
+Reduce #3 to expressionlist by token ')' at line 36 in state 370, goto 293
+Shift token ')' at line 36 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 36 in state 368, call operator "()", goto 92
+Shift token ';' at line 36 in state 92, goto 174
+Reduce #2 to statement by token "if" at line 37 in state 174, call free_expression, goto 91
+Shift token "if" at line 37 in state 91, goto 112
+Shift token '(' at line 37 in state 112, goto 223
+Shift token IDENT = "node" at line 37 in state 223, goto 95
+Reduce #1 to expression by token "->" at line 37 in state 95, call variable, goto 336
+Shift token "->" at line 37 in state 336, goto 179
+Reduce #1 to indirection by token IDENT = "left" at line 37 in state 179, call count, goto 172
+Shift token IDENT = "left" at line 37 in state 172, goto 292
+Reduce #3 to iexpression by token "!=" at line 37 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token "!=" at line 37 in state 93, goto 336
+Shift token "!=" at line 37 in state 336, goto 193
+Shift token "null" at line 37 in state 193, goto 117
+Reduce #1 to expression by token ')' at line 37 in state 117, call null "constexpr float", goto 313
+Reduce #3 to expression by token ')' at line 37 in state 313, call operator "!=", goto 336
+Shift token ')' at line 37 in state 336, goto 371
+Shift token '{' at line 37 in state 371, goto 403
+Shift token IDENT = "printTree" at line 37 in state 403, goto 95
+Reduce #1 to expression by token '(' at line 37 in state 95, call variable, goto 92
+Shift token '(' at line 37 in state 92, goto 173
+Shift token IDENT = "node" at line 37 in state 173, goto 95
+Reduce #1 to expression by token "->" at line 37 in state 95, call variable, goto 229
+Shift token "->" at line 37 in state 229, goto 179
+Reduce #1 to indirection by token IDENT = "left" at line 37 in state 179, call count, goto 172
+Shift token IDENT = "left" at line 37 in state 172, goto 292
+Reduce #3 to iexpression by token ',' at line 37 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token ',' at line 37 in state 93, goto 229
+Shift token ',' at line 37 in state 229, goto 331
+Shift token IDENT = "indent" at line 37 in state 331, goto 95
+Reduce #1 to expression by token '+' at line 37 in state 95, call variable, goto 229
+Shift token '+' at line 37 in state 229, goto 181
+Shift token CARDINAL = "1" at line 37 in state 181, goto 98
+Reduce #1 to expression by token ')' at line 37 in state 98, call constant "constexpr uint", goto 301
+Reduce #3 to expression by token ')' at line 37 in state 301, call operator "+", goto 229
+Reduce #1 to expressionlist by token ')' at line 37 in state 229, goto 370
+Reduce #3 to expressionlist by token ')' at line 37 in state 370, goto 293
+Shift token ')' at line 37 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 37 in state 368, call operator "()", goto 92
+Shift token ';' at line 37 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 37 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 37 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 37 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 37 in state 90, call codeblock, goto 425
+Shift token '}' at line 37 in state 425, goto 443
+Reduce #7 to statement by token "if" at line 38 in state 443, call conditional_if, goto 91
+Shift token "if" at line 38 in state 91, goto 112
+Shift token '(' at line 38 in state 112, goto 223
+Shift token IDENT = "node" at line 38 in state 223, goto 95
+Reduce #1 to expression by token "->" at line 38 in state 95, call variable, goto 336
+Shift token "->" at line 38 in state 336, goto 179
+Reduce #1 to indirection by token IDENT = "right" at line 38 in state 179, call count, goto 172
+Shift token IDENT = "right" at line 38 in state 172, goto 292
+Reduce #3 to iexpression by token "!=" at line 38 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token "!=" at line 38 in state 93, goto 336
+Shift token "!=" at line 38 in state 336, goto 193
+Shift token "null" at line 38 in state 193, goto 117
+Reduce #1 to expression by token ')' at line 38 in state 117, call null "constexpr float", goto 313
+Reduce #3 to expression by token ')' at line 38 in state 313, call operator "!=", goto 336
+Shift token ')' at line 38 in state 336, goto 371
+Shift token '{' at line 38 in state 371, goto 403
+Shift token IDENT = "printTree" at line 38 in state 403, goto 95
+Reduce #1 to expression by token '(' at line 38 in state 95, call variable, goto 92
+Shift token '(' at line 38 in state 92, goto 173
+Shift token IDENT = "node" at line 38 in state 173, goto 95
+Reduce #1 to expression by token "->" at line 38 in state 95, call variable, goto 229
+Shift token "->" at line 38 in state 229, goto 179
+Reduce #1 to indirection by token IDENT = "right" at line 38 in state 179, call count, goto 172
+Shift token IDENT = "right" at line 38 in state 172, goto 292
+Reduce #3 to iexpression by token ',' at line 38 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token ',' at line 38 in state 93, goto 229
+Shift token ',' at line 38 in state 229, goto 331
+Shift token IDENT = "indent" at line 38 in state 331, goto 95
+Reduce #1 to expression by token '+' at line 38 in state 95, call variable, goto 229
+Shift token '+' at line 38 in state 229, goto 181
+Shift token CARDINAL = "1" at line 38 in state 181, goto 98
+Reduce #1 to expression by token ')' at line 38 in state 98, call constant "constexpr uint", goto 301
+Reduce #3 to expression by token ')' at line 38 in state 301, call operator "+", goto 229
+Reduce #1 to expressionlist by token ')' at line 38 in state 229, goto 370
+Reduce #3 to expressionlist by token ')' at line 38 in state 370, goto 293
+Shift token ')' at line 38 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 38 in state 368, call operator "()", goto 92
+Shift token ';' at line 38 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 38 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 38 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 38 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 38 in state 90, call codeblock, goto 425
+Shift token '}' at line 38 in state 425, goto 443
+Reduce #7 to statement by token '}' at line 39 in state 443, call conditional_if, goto 91
+Reduce #0 to statementlist by token '}' at line 39 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 39 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 39 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 39 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 39 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 39 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 39 in state 90, call codeblock, goto 409
+Shift token '}' at line 39 in state 409, goto 430
+Reduce #6 to callablebody by token "private" at line 41 in state 430, call callablebody, goto 124
+Reduce #4 to functiondefinition by token "private" at line 41 in state 124, call procdef {const=false}, goto 16
+Reduce #1 to free_definition by token "private" at line 41 in state 16, call definition 1, goto 6
+Shift token "private" at line 41 in state 6, goto 27
+Reduce #1 to linkage by token "procedure" at line 41 in state 27, call linkage {private=true,linkage="internal"}, goto 15
+Shift token "procedure" at line 41 in state 15, goto 40
+Shift token IDENT = "deleteTree" at line 41 in state 40, goto 67
+Shift token '(' at line 41 in state 67, goto 126
+Shift token IDENT = "Tree" at line 41 in state 126, goto 18
+Reduce #1 to typename by token '^' at line 41 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 41 in state 7, goto 8
+Shift token '^' at line 41 in state 8, goto 36
+Reduce #2 to typespec by token IDENT = "node" at line 41 in state 36, call typespec "^", goto 233
+Shift token IDENT = "node" at line 41 in state 233, goto 342
+Reduce #2 to paramdecl by token ')' at line 41 in state 342, call paramdef, goto 236
+Reduce #1 to parameters by token ')' at line 41 in state 236, goto 235
+Reduce #1 to parameterlist by token ')' at line 41 in state 235, call paramdeflist, goto 234
+Shift token ')' at line 41 in state 234, goto 343
+Shift token '{' at line 42 in state 343, goto 378
+Shift token "if" at line 43 in state 378, goto 112
+Shift token '(' at line 43 in state 112, goto 223
+Shift token IDENT = "node" at line 43 in state 223, goto 95
+Reduce #1 to expression by token "->" at line 43 in state 95, call variable, goto 336
+Shift token "->" at line 43 in state 336, goto 179
+Reduce #1 to indirection by token IDENT = "left" at line 43 in state 179, call count, goto 172
+Shift token IDENT = "left" at line 43 in state 172, goto 292
+Reduce #3 to iexpression by token "!=" at line 43 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token "!=" at line 43 in state 93, goto 336
+Shift token "!=" at line 43 in state 336, goto 193
+Shift token "null" at line 43 in state 193, goto 117
+Reduce #1 to expression by token ')' at line 43 in state 117, call null "constexpr float", goto 313
+Reduce #3 to expression by token ')' at line 43 in state 313, call operator "!=", goto 336
+Shift token ')' at line 43 in state 336, goto 371
+Shift token '{' at line 43 in state 371, goto 403
+Shift token IDENT = "deleteTree" at line 43 in state 403, goto 95
+Reduce #1 to expression by token '(' at line 43 in state 95, call variable, goto 92
+Shift token '(' at line 43 in state 92, goto 173
+Shift token IDENT = "node" at line 43 in state 173, goto 95
+Reduce #1 to expression by token "->" at line 43 in state 95, call variable, goto 229
+Shift token "->" at line 43 in state 229, goto 179
+Reduce #1 to indirection by token IDENT = "left" at line 43 in state 179, call count, goto 172
+Shift token IDENT = "left" at line 43 in state 172, goto 292
+Reduce #3 to iexpression by token ')' at line 43 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token ')' at line 43 in state 93, goto 229
+Reduce #1 to expressionlist by token ')' at line 43 in state 229, goto 293
+Shift token ')' at line 43 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 43 in state 368, call operator "()", goto 92
+Shift token ';' at line 43 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 43 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 43 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 43 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 43 in state 90, call codeblock, goto 425
+Shift token '}' at line 43 in state 425, goto 443
+Reduce #7 to statement by token "if" at line 44 in state 443, call conditional_if, goto 91
+Shift token "if" at line 44 in state 91, goto 112
+Shift token '(' at line 44 in state 112, goto 223
+Shift token IDENT = "node" at line 44 in state 223, goto 95
+Reduce #1 to expression by token "->" at line 44 in state 95, call variable, goto 336
+Shift token "->" at line 44 in state 336, goto 179
+Reduce #1 to indirection by token IDENT = "right" at line 44 in state 179, call count, goto 172
+Shift token IDENT = "right" at line 44 in state 172, goto 292
+Reduce #3 to iexpression by token "!=" at line 44 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token "!=" at line 44 in state 93, goto 336
+Shift token "!=" at line 44 in state 336, goto 193
+Shift token "null" at line 44 in state 193, goto 117
+Reduce #1 to expression by token ')' at line 44 in state 117, call null "constexpr float", goto 313
+Reduce #3 to expression by token ')' at line 44 in state 313, call operator "!=", goto 336
+Shift token ')' at line 44 in state 336, goto 371
+Shift token '{' at line 44 in state 371, goto 403
+Shift token IDENT = "deleteTree" at line 44 in state 403, goto 95
+Reduce #1 to expression by token '(' at line 44 in state 95, call variable, goto 92
+Shift token '(' at line 44 in state 92, goto 173
+Shift token IDENT = "node" at line 44 in state 173, goto 95
+Reduce #1 to expression by token "->" at line 44 in state 95, call variable, goto 229
+Shift token "->" at line 44 in state 229, goto 179
+Reduce #1 to indirection by token IDENT = "right" at line 44 in state 179, call count, goto 172
+Shift token IDENT = "right" at line 44 in state 172, goto 292
+Reduce #3 to iexpression by token ')' at line 44 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token ')' at line 44 in state 93, goto 229
+Reduce #1 to expressionlist by token ')' at line 44 in state 229, goto 293
+Shift token ')' at line 44 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 44 in state 368, call operator "()", goto 92
+Shift token ';' at line 44 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 44 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 44 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 44 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 44 in state 90, call codeblock, goto 425
+Shift token '}' at line 44 in state 425, goto 443
+Reduce #7 to statement by token "delete" at line 45 in state 443, call conditional_if, goto 91
+Shift token "delete" at line 45 in state 91, goto 111
+Shift token IDENT = "node" at line 45 in state 111, goto 95
+Reduce #1 to expression by token ';' at line 45 in state 95, call variable, goto 222
+Shift token ';' at line 45 in state 222, goto 335
+Reduce #3 to statement by token '}' at line 46 in state 335, call delete, goto 91
+Reduce #0 to statementlist by token '}' at line 46 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 46 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 46 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 46 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 46 in state 90, call codeblock, goto 409
+Shift token '}' at line 46 in state 409, goto 430
+Reduce #6 to callablebody by token "main" at line 48 in state 430, call callablebody, goto 124
+Reduce #4 to functiondefinition by token "main" at line 48 in state 124, call procdef {const=false}, goto 16
+Reduce #1 to free_definition by token "main" at line 48 in state 16, call definition 1, goto 6
+Reduce #0 to free_definitionlist by token "main" at line 48 in state 6, goto 33
+Reduce #2 to free_definitionlist by token "main" at line 48 in state 33, goto 33
+Reduce #2 to free_definitionlist by token "main" at line 48 in state 33, goto 33
+Reduce #2 to free_definitionlist by token "main" at line 48 in state 33, goto 33
+Reduce #2 to free_definitionlist by token "main" at line 48 in state 33, goto 33
+Reduce #2 to free_definitionlist by token "main" at line 48 in state 33, goto 33
+Reduce #2 to free_definitionlist by token "main" at line 48 in state 33, goto 5
+Shift token "main" at line 48 in state 5, goto 32
+Shift token '{' at line 49 in state 32, goto 59
+Shift token "var" at line 50 in state 59, goto 109
+Shift token IDENT = "Tree" at line 50 in state 109, goto 18
+Reduce #1 to typename by token '^' at line 50 in state 18, goto 7
+Reduce #1 to generic_typename by token '^' at line 50 in state 7, goto 8
+Shift token '^' at line 50 in state 8, goto 36
+Reduce #2 to typespec by token IDENT = "tree" at line 50 in state 36, call typespec "^", goto 9
+Shift token IDENT = "tree" at line 50 in state 9, goto 37
+Shift token '=' at line 50 in state 37, goto 64
+Shift token "new" at line 50 in state 64, goto 115
+Shift token IDENT = "Tree" at line 50 in state 115, goto 18
+Reduce #1 to typename by token ':' at line 50 in state 18, goto 7
+Reduce #1 to generic_typename by token ':' at line 50 in state 7, goto 8
+Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 226
+Shift token ':' at line 50 in state 226, goto 339
+Shift token '{' at line 50 in state 339, goto 121
+Shift token '{' at line 50 in state 121, goto 121
+Shift token CARDINAL = "11" at line 50 in state 121, goto 98
+Reduce #1 to expression by token '}' at line 50 in state 98, call constant "constexpr uint", goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token ',' at line 50 in state 332, call structure, goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "new" at line 50 in state 331, goto 115
+Shift token IDENT = "Tree" at line 50 in state 115, goto 18
+Reduce #1 to typename by token ':' at line 50 in state 18, goto 7
+Reduce #1 to generic_typename by token ':' at line 50 in state 7, goto 8
+Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 226
+Shift token ':' at line 50 in state 226, goto 339
+Shift token '{' at line 50 in state 339, goto 121
+Shift token '{' at line 50 in state 121, goto 121
+Shift token CARDINAL = "1" at line 50 in state 121, goto 98
+Reduce #1 to expression by token '}' at line 50 in state 98, call constant "constexpr uint", goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token ',' at line 50 in state 332, call structure, goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "null" at line 50 in state 331, goto 117
+Reduce #1 to expression by token ',' at line 50 in state 117, call null "constexpr float", goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "null" at line 50 in state 331, goto 117
+Reduce #1 to expression by token '}' at line 50 in state 117, call null "constexpr float", goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token ',' at line 50 in state 332, call structure, goto 374
+Reduce #4 to expression by token ',' at line 50 in state 374, call allocate, goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "new" at line 50 in state 331, goto 115
+Shift token IDENT = "Tree" at line 50 in state 115, goto 18
+Reduce #1 to typename by token ':' at line 50 in state 18, goto 7
+Reduce #1 to generic_typename by token ':' at line 50 in state 7, goto 8
+Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 226
+Shift token ':' at line 50 in state 226, goto 339
+Shift token '{' at line 50 in state 339, goto 121
+Shift token '{' at line 50 in state 121, goto 121
+Shift token CARDINAL = "2" at line 50 in state 121, goto 98
+Reduce #1 to expression by token '}' at line 50 in state 98, call constant "constexpr uint", goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token ',' at line 50 in state 332, call structure, goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "null" at line 50 in state 331, goto 117
+Reduce #1 to expression by token ',' at line 50 in state 117, call null "constexpr float", goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "new" at line 50 in state 331, goto 115
+Shift token IDENT = "Tree" at line 50 in state 115, goto 18
+Reduce #1 to typename by token ':' at line 50 in state 18, goto 7
+Reduce #1 to generic_typename by token ':' at line 50 in state 7, goto 8
+Reduce #1 to typespec by token ':' at line 50 in state 8, call typespec "", goto 226
+Shift token ':' at line 50 in state 226, goto 339
+Shift token '{' at line 50 in state 339, goto 121
+Shift token '{' at line 50 in state 121, goto 121
+Shift token CARDINAL = "22" at line 50 in state 121, goto 98
+Reduce #1 to expression by token '}' at line 50 in state 98, call constant "constexpr uint", goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token ',' at line 50 in state 332, call structure, goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "null" at line 50 in state 331, goto 117
+Reduce #1 to expression by token ',' at line 50 in state 117, call null "constexpr float", goto 229
+Shift token ',' at line 50 in state 229, goto 331
+Shift token "null" at line 50 in state 331, goto 117
+Reduce #1 to expression by token '}' at line 50 in state 117, call null "constexpr float", goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token '}' at line 50 in state 332, call structure, goto 374
+Reduce #4 to expression by token '}' at line 50 in state 374, call allocate, goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token '}' at line 50 in state 332, call structure, goto 374
+Reduce #4 to expression by token '}' at line 50 in state 374, call allocate, goto 229
+Reduce #1 to expressionlist by token '}' at line 50 in state 229, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 370
+Reduce #3 to expressionlist by token '}' at line 50 in state 370, goto 213
+Shift token '}' at line 50 in state 213, goto 332
+Reduce #3 to expression by token ';' at line 50 in state 332, call structure, goto 374
+Reduce #4 to expression by token ';' at line 50 in state 374, call allocate, goto 120
+Reduce #4 to variabledefinition by token ';' at line 50 in state 120, call vardef_assign, goto 220
+Shift token ';' at line 50 in state 220, goto 333
+Reduce #3 to statement by token IDENT = "printf" at line 51 in state 333, call definition, goto 91
+Shift token IDENT = "printf" at line 51 in state 91, goto 95
+Reduce #1 to expression by token '(' at line 51 in state 95, call variable, goto 92
+Shift token '(' at line 51 in state 92, goto 173
+Shift token DQSTRING = "VAL %d\n" at line 51 in state 173, goto 96
+Reduce #1 to expression by token ',' at line 51 in state 96, call string_constant "constexpr float", goto 229
+Shift token ',' at line 51 in state 229, goto 331
+Shift token IDENT = "tree" at line 51 in state 331, goto 95
+Reduce #1 to expression by token "->" at line 51 in state 95, call variable, goto 229
+Shift token "->" at line 51 in state 229, goto 179
+Reduce #1 to indirection by token IDENT = "data" at line 51 in state 179, call count, goto 172
+Shift token IDENT = "data" at line 51 in state 172, goto 292
+Reduce #3 to iexpression by token '.' at line 51 in state 292, call rep_operator "->", goto 93
+Reduce #1 to expression by token '.' at line 51 in state 93, goto 229
+Shift token '.' at line 51 in state 229, goto 208
+Shift token IDENT = "val" at line 51 in state 208, goto 328
+Reduce #3 to expression by token ')' at line 51 in state 328, call member, goto 229
+Reduce #1 to expressionlist by token ')' at line 51 in state 229, goto 370
+Reduce #3 to expressionlist by token ')' at line 51 in state 370, goto 293
+Shift token ')' at line 51 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 51 in state 368, call operator "()", goto 92
+Shift token ';' at line 51 in state 92, goto 174
+Reduce #2 to statement by token IDENT = "printTree" at line 52 in state 174, call free_expression, goto 91
+Shift token IDENT = "printTree" at line 52 in state 91, goto 95
+Reduce #1 to expression by token '(' at line 52 in state 95, call variable, goto 92
+Shift token '(' at line 52 in state 92, goto 173
+Shift token IDENT = "tree" at line 52 in state 173, goto 95
+Reduce #1 to expression by token ',' at line 52 in state 95, call variable, goto 229
+Shift token ',' at line 52 in state 229, goto 331
+Shift token CARDINAL = "0" at line 52 in state 331, goto 98
+Reduce #1 to expression by token ')' at line 52 in state 98, call constant "constexpr uint", goto 229
+Reduce #1 to expressionlist by token ')' at line 52 in state 229, goto 370
+Reduce #3 to expressionlist by token ')' at line 52 in state 370, goto 293
+Shift token ')' at line 52 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 52 in state 368, call operator "()", goto 92
+Shift token ';' at line 52 in state 92, goto 174
+Reduce #2 to statement by token IDENT = "deleteTree" at line 53 in state 174, call free_expression, goto 91
+Shift token IDENT = "deleteTree" at line 53 in state 91, goto 95
+Reduce #1 to expression by token '(' at line 53 in state 95, call variable, goto 92
+Shift token '(' at line 53 in state 92, goto 173
+Shift token IDENT = "tree" at line 53 in state 173, goto 95
+Reduce #1 to expression by token ')' at line 53 in state 95, call variable, goto 229
+Reduce #1 to expressionlist by token ')' at line 53 in state 229, goto 293
+Shift token ')' at line 53 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 53 in state 368, call operator "()", goto 92
+Shift token ';' at line 53 in state 92, goto 174
+Reduce #2 to statement by token IDENT = "printf" at line 54 in state 174, call free_expression, goto 91
+Shift token IDENT = "printf" at line 54 in state 91, goto 95
+Reduce #1 to expression by token '(' at line 54 in state 95, call variable, goto 92
+Shift token '(' at line 54 in state 92, goto 173
+Shift token DQSTRING = "Done\n" at line 54 in state 173, goto 96
+Reduce #1 to expression by token ')' at line 54 in state 96, call string_constant "constexpr float", goto 229
+Reduce #1 to expressionlist by token ')' at line 54 in state 229, goto 293
+Shift token ')' at line 54 in state 293, goto 368
+Reduce #4 to expression by token ';' at line 54 in state 368, call operator "()", goto 92
+Shift token ';' at line 54 in state 92, goto 174
+Reduce #2 to statement by token '}' at line 55 in state 174, call free_expression, goto 91
+Reduce #0 to statementlist by token '}' at line 55 in state 91, goto 171
+Reduce #2 to statementlist by token '}' at line 55 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 55 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 55 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 55 in state 171, goto 171
+Reduce #2 to statementlist by token '}' at line 55 in state 171, goto 90
+Reduce #1 to codeblock by token '}' at line 55 in state 90, call codeblock, goto 89
+Shift token '}' at line 55 in state 89, goto 170
 Accept
 Calling Lua function: program
 Lua call result [1]

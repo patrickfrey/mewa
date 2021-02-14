@@ -50,12 +50,12 @@ L2:
 store i32 %r12, i32* %r2
 call void @swap__1( i32* %r2, i32* %r3)
 %r19 = load i32, i32* %r4
-%r22 = add nsw i32 %r19, 1
-store i32 %r22, i32* %r4
+%r21 = add nsw i32 %r19, 1
+store i32 %r21, i32* %r4
 br label %L3
 L1:
-%r23 = load i32, i32* %r3
-ret i32 %r23
+%r22 = load i32, i32* %r3
+ret i32 %r22
 }
 @string1 = private unnamed_addr constant [12 x i8] c"Result: %d\0A\00"
 

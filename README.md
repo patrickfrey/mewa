@@ -7,7 +7,7 @@ A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides some as
  - _Mewa_'s approach is **naive**. It tries to get as far as possible with a **minimal** set of tools.
  - _Mewa_ is **not optimised for collaborative work** unlike many other compiler front-ends.
  - _Mewa_ provides no support for evaluation of different paths of code generation. The idea is to do a one to one mapping of program structures to code and to **leave all analytical optimization steps to the backend**.
- - _Mewa_ is not a framework. It is not instrumented with configuration or plug-ins. It provides a data structure, the [AST](doc/ast.md) and a library to store and retrieve scope related data. The program logic is entirely implemented by the compiler front-end author in _Lua_.
+ - _Mewa_ is not a framework. It is not instrumented with configuration or plug-ins. It provides a data structure, the [AST](doc/ast.md) and a library to store and retrieve scope related data. The program logic is entirely implemented by the compiler front-end author in _Lua_. 
 
 # LLVM IR
 The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/docs/LangRef.html) for code generation. 
@@ -15,6 +15,10 @@ For reading more see the [collected links](doc/links.md).
 
 # Status
 The project development is currently ongoing.
+
+# Portability
+Currently there is only GNU Makefile support. CMake support is not planned for this project. I would rather like to have Makefiles for platforms where GNU Makefile support is not available (e.g. Windows). 
+The tests currently use a LLVM IR target template file for x86_64. I was told that the LLVM interpreter ```lli``` segfaulted running it on a x86_32 platform. I will take a look at that. Contributions in for of template files like [examples/target/x86_64-pc-linux-gnu.tpl](examples/target/x86_64-pc-linux-gnu.tpl) for other platforms would be welcome.
 
 # Documentation
 * [Examples](doc/example_compiler.md)

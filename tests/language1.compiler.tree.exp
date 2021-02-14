@@ -126,35 +126,35 @@ br i1 %r5, label %L2, label %L1
 L2:
 call void @putchar( i8 32)
 %r9 = load i32, i32* %r3
-%r12 = add nsw i32 %r9, 1
-store i32 %r12, i32* %r3
+%r11 = add nsw i32 %r9, 1
+store i32 %r11, i32* %r3
 br label %L3
 L1:
-%r13 = getelementptr inbounds [10 x i8], [10 x i8]* @string1, i64 0, i64 0
-%r14 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 0
-%r15 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r14, i32 0, i32 0
-%r16 = load i32, i32* %r15
-call void(i8*,  ...) @printf( i8* %r13, i32 %r16)
-%r17 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
-%r18 = load %Tree__1*, %Tree__1** %r17
-%r19 = icmp ne %Tree__1* %r18, null
-br i1 %r19, label %L5, label %L4
+%r12 = getelementptr inbounds [10 x i8], [10 x i8]* @string1, i64 0, i64 0
+%r13 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 0
+%r14 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r13, i32 0, i32 0
+%r15 = load i32, i32* %r14
+call void(i8*,  ...) @printf( i8* %r12, i32 %r15)
+%r16 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
+%r17 = load %Tree__1*, %Tree__1** %r16
+%r18 = icmp ne %Tree__1* %r17, null
+br i1 %r18, label %L5, label %L4
 L5:
-%r20 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
-%r24 = load %Tree__1*, %Tree__1** %r20
-%r23 = add nsw i32 %r2, 1
-call void @printTree__Tree__1$__i32( %Tree__1* %r24, i32 %r23)
+%r19 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
+%r22 = load %Tree__1*, %Tree__1** %r19
+%r21 = add nsw i32 %r2, 1
+call void @printTree__Tree__1$__i32( %Tree__1* %r22, i32 %r21)
 br label %L4
 L4:
-%r25 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
-%r26 = load %Tree__1*, %Tree__1** %r25
-%r27 = icmp ne %Tree__1* %r26, null
-br i1 %r27, label %L7, label %L6
+%r23 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
+%r24 = load %Tree__1*, %Tree__1** %r23
+%r25 = icmp ne %Tree__1* %r24, null
+br i1 %r25, label %L7, label %L6
 L7:
-%r28 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
-%r32 = load %Tree__1*, %Tree__1** %r28
-%r31 = add nsw i32 %r2, 1
-call void @printTree__Tree__1$__i32( %Tree__1* %r32, i32 %r31)
+%r26 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
+%r29 = load %Tree__1*, %Tree__1** %r26
+%r28 = add nsw i32 %r2, 1
+call void @printTree__Tree__1$__i32( %Tree__1* %r29, i32 %r28)
 br label %L6
 L6:
 ret void
