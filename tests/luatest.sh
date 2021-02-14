@@ -70,5 +70,14 @@ lli build/language1.compiler.class.out > build/language1.run.class.out
 verify_test_result "Lua test (class run) output running program translated with language1 compiler"  build/language1.run.class.out tests/language1.run.class.exp
 fi
 
+if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xGENERIC" ] ; then
+echo "Lua test (generic) Compile and run program examples/language1/sources/generic.prg"
+build/language1.compiler.lua -d build/language1.debug.generic.out -o build/language1.compiler.generic.out examples/language1/sources/generic.prg
+verify_test_result "Lua test (generic debug) compiling example program with language1 compiler" build/language1.debug.generic.out tests/language1.debug.generic.exp
+verify_test_result "Lua test (generic output) compiling example program with language1 compiler"  build/language1.compiler.generic.out tests/language1.compiler.generic.exp
+
+lli build/language1.compiler.generic.out > build/language1.run.generic.out
+verify_test_result "Lua test (generic run) output running program translated with language1 compiler"  build/language1.run.generic.out tests/language1.run.generic.exp
+fi
 
 

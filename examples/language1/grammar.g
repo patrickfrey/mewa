@@ -167,8 +167,10 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 			| ">"										(operatordecl {name=">", symbol="gt"})
 			| "<"										(operatordecl {name="<", symbol="lt"})
 			;
-generic_instance	= typepath
-			| typepath "," generic_instance
+generic_instance	= typepath									(generic_instance)
+			| typepath "," generic_instance							(generic_instance)
+			| CARDINAL									(generic_dimension)
+			| CARDINAL "," generic_instance							(generic_dimension)
 			;
 generic_instancelist	= generic_instance								(generic_instancelist)
 			;

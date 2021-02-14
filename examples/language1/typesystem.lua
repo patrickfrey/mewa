@@ -2030,8 +2030,18 @@ function typesystem.interfacedef( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
 end
+function typesystem.generic_instance( node, context, generic_instancelist)
+	table.insert( generic_instancelist, utils.traverseRange( typedb, node, {1,1}, context)[1] )
+	if #arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
+end
+function typesystem.generic_dimension( node, context, generic_instancelist)
+	table.insert( generic_instancelist, {type=constexprUIntegerType, value=createConstExpr( node, constexprUIntegerType, node.arg[1].value)} )
+	if #arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
+end
 function typesystem.generic_instancelist( node, context)
-	return utils.traverse( typedb, node, context)
+	local rt = {}
+	utils.traverse( typedb, node, context, rt)
+	return rt
 end
 function typesystem.generic_ident_type( node, context, genericparam)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
