@@ -87,87 +87,95 @@ local arrayTemplate = {
 }
 
 llvmir.structTemplate = {
-	structname = "{structname}",
-	def_local = "{out} = alloca %{structname}, align 8\n",
-	def_global = "{out} = internal global %{structname} zeroinitializer, align 8\n",
-	llvmtype = "%{structname}",
+	symbol = "{symbol}",
+	def_local = "{out} = alloca %{symbol}, align 8\n",
+	def_global = "{out} = internal global %{symbol} zeroinitializer, align 8\n",
+	llvmtype = "%{symbol}",
 	scalar = false,
 	class = "struct",
 	align = 8,
-	assign = "store %{structname} {arg1}, %{structname}* {this}\n",
-	ctorproc = "define private dso_local void @__ctor_{structname}( %{structname}* %ptr) alwaysinline {\n"
+	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
+	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{structname}( %{structname}* %ptr, %{structname}* %oth) alwaysinline {\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{symbol}( %{symbol}* %ptr, %{symbol}* %oth) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_elements = "define private dso_local void @__ctor_elements_{structname}( %{structname}* %ptr{paramstr}) alwaysinline {\n"
+	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ptr{paramstr}) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{structname}( %{structname}* %ptr) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
-	ctor = "call void @__ctor_{structname}( %{structname}* {this})\n",
-	ctor_copy = "call void @__ctor_{procname}_{structname}( %{structname}* {this}, %{structname}* {arg1})\n",
-	ctor_elements = "call void @__ctor_elements_{structname}( %{structname}* {this}{args})\n",
-	dtor = "call void @__dtor_{structname}( %{structname}* {this})\n",
-	load = "{out} = load %{classname}, %{structname}* {this}\n",
-	loadelemref = "{out} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n",
-	loadelem = "{1} = getelementptr inbounds %{structname}, %{structname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
-	typedef = "%{structname} = type { {llvmtype} }\n"
+	ctor = "call void @__ctor_{symbol}( %{symbol}* {this})\n",
+	ctor_copy = "call void @__ctor_{procname}_{symbol}( %{symbol}* {this}, %{symbol}* {arg1})\n",
+	ctor_elements = "call void @__ctor_elements_{symbol}( %{symbol}* {this}{args})\n",
+	dtor = "call void @__dtor_{symbol}( %{symbol}* {this})\n",
+	load = "{out} = load %{classname}, %{symbol}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	typedef = "%{symbol} = type { {llvmtype} }\n"
 }
 
 llvmir.classTemplate = {
-	classname = "{classname}",
-	def_local = "{out} = alloca %{classname}, align 8\n",
-	def_global = "{out} = internal global %{classname} zeroinitializer, align 8\n",
-	llvmtype = "%{classname}",
+	symbol = "{symbol}",
+	def_local = "{out} = alloca %{symbol}, align 8\n",
+	def_global = "{out} = internal global %{symbol} zeroinitializer, align 8\n",
+	llvmtype = "%{symbol}",
 	scalar = false,
 	class = "class",
 	align = 8,
-	assign = "store %{classname} {arg1}, %{classname}* {this}\n",
-	ctorproc = "define private dso_local void @__ctor_{classname}( %{classname}* %ptr) alwaysinline {\n"
+	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
+	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{classname}( %{classname}* %ptr) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
-	ctor = "call void @__ctor_{classname}( %{classname}* {this})\n",
-	dtor = "call void @__dtor_{classname}( %{classname}* {this})\n",
-	load = "{out} = load %{classname}, %{classname}* {this}\n",
-	loadelemref = "{out} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n",
-	loadelem = "{1} = getelementptr inbounds %{classname}, %{classname}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
-	typedef = "%{classname} = type { {llvmtype} }\n"
+	ctor = "call void @__ctor_{symbol}( %{symbol}* {this})\n",
+	dtor = "call void @__dtor_{symbol}( %{symbol}* {this})\n",
+	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	typedef = "%{symbol} = type { {llvmtype} }\n"
 }
 
 llvmir.interfaceTemplate = {
-	interfacename = "{interfacename}",
-	vmtname = "%{interfacename}__VMT",
-	def_local = "{out} = alloca %{interfacename}, align 8\n",
-	def_global = "{out} = internal global %{interfacename} zeroinitializer, align 8\n",
-	llvmtype = "%{interfacename}",
+	symbol = "{symbol}",
+	vmtname = "%{symbol}__VMT",
+	def_local = "{out} = alloca %{symbol}, align 8\n",
+	def_global = "{out} = internal global %{symbol} zeroinitializer, align 8\n",
+	llvmtype = "%{symbol}",
 	scalar = false,
 	class = "interface",
 	align = 8,
-	assign = "store %{interfacename} {arg1}, %{interfacename}* {this}\n",
-	ctor = "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 0\n"
+	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
+	ctor = "{2} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 0\n"
 			.. "store i8* null, i8** {2}, align 8\n"
-			.. "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
-			.. "store %{interfacename}__VMT* null, %{interfacename}__VMT** {3}, align 8\n",
-	ctor_copy = "{1} = load %{interfacename}, %{interfacename}* {arg1}\nstore %{interfacename} {1}, %{interfacename}* {this}\n",
-	load = "{out} = load %{interfacename}, %{interfacename}* {this}\n",
-	loadelemref = "{out} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 {index}\n",
-	loadelem = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
-	vmtdef = "%{interfacename}__VMT = type { {llvmtype} }\n",
-	typedef = "%{interfacename} = type {i8*, %{interfacename}__VMT* }\n",
+			.. "{3} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 1\n"
+			.. "store %{symbol}__VMT* null, %{symbol}__VMT** {3}, align 8\n",
+	ctor_copy = "{1} = load %{symbol}, %{symbol}* {arg1}\nstore %{symbol} {1}, %{symbol}* {this}\n",
+	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	vmtdef = "%{symbol}__VMT = type { {llvmtype} }\n",
+	typedef = "%{symbol} = type {i8*, %{symbol}__VMT* }\n",
 	getClassInterface = "{1} = bitcast %{classname}* {this} to i8*\n"
-			.. "{2} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 0\n"
+			.. "{2} = getelementptr inbounds %{symbol}, %{symbol}* {out}, i32 0, i32 0\n"
 			.. "store i8* {1}, i8** {2}, align 8\n"
-			.. "{3} = getelementptr inbounds %{interfacename}, %{interfacename}* {out}, i32 0, i32 1\n"
-			.. "store %{interfacename}__VMT* @{classname}__VMT__{interfacename}, %{interfacename}__VMT** {3}, align 8\n",
-	loadVmtMethod = "{1} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 1\n"
-			.. "{2} = load %{interfacename}__VMT*, %{interfacename}__VMT** {1}\n"
-			.. "{3} = getelementptr inbounds %{interfacename}__VMT, %{interfacename}__VMT* {2}, i32 0, i32 {index}\n"
+			.. "{3} = getelementptr inbounds %{symbol}, %{symbol}* {out}, i32 0, i32 1\n"
+			.. "store %{symbol}__VMT* @{classname}__VMT__{symbol}, %{symbol}__VMT** {3}, align 8\n",
+	loadVmtMethod = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 1\n"
+			.. "{2} = load %{symbol}__VMT*, %{symbol}__VMT** {1}\n"
+			.. "{3} = getelementptr inbounds %{symbol}__VMT, %{symbol}__VMT* {2}, i32 0, i32 {index}\n"
 			.. "{out_func} = load {llvmtype}, {llvmtype}* {3}, align 8\n"
-			.. "{5} = getelementptr inbounds %{interfacename}, %{interfacename}* {this}, i32 0, i32 0\n"
+			.. "{5} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 0\n"
 			.. "{out_this} = load i8*, i8** {5}\n",
 	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
 	procedureCall = "call void{signature} {func}( {callargstr})\n",
 	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
+}
+
+llvmir.genericClassDescr = {
+	class = "generic_class"
+}
+
+llvmir.genericStructDescr = {
+	class = "generic_struct"
 }
 
 llvmir.callableDescr = {

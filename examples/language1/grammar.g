@@ -8,7 +8,7 @@ BOOLEAN : '((true)|(false))';
 IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
 DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
 SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1;
-CARDINAL: '[0123456789]+';
+UINTEGER: '[0123456789]+';
 INTEGER : '[-][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+';
 FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
@@ -86,23 +86,29 @@ namespace_definition	= namespacedefinition								(definition 1)
 typename/L1		= IDENT
 			| IDENT "::" typename
 			;
-generic_typename/L1	= typename 
-			| typename "<" generic_instancelist ">"
-			;
-typespec/L1		= generic_typename								(typespec "")
-			| "const" generic_typename							(typespec "const ")
-			| generic_typename "&"								(typespec "&")
-			| "const" generic_typename "&"							(typespec "const&")
-			| generic_typename "^"								(typespec "^")
-			| "const" generic_typename "^"							(typespec "const^")
-			| generic_typename "^" "&"							(typespec "^&")
-			| "const" generic_typename "^" "&"						(typespec "const^&")
+typespec/L1		= typename									(typespec "")
+			| typename "<" generic_instance ">"						(typespec_generic "")
+			| "const" typename								(typespec "const ")
+			| "const" typename "<" generic_instance ">"					(typespec_generic "const ")
+			| typename "&"									(typespec "&")
+			| typename "<" generic_instance ">" "&"						(typespec_generic "&")
+			| "const" typename "&"								(typespec "const&")
+			| "const" typename "<" generic_instance ">" "&"					(typespec_generic "const&")
+			| typename "^"									(typespec "^")
+			| typename "<" generic_instance ">" "^"						(typespec_generic "^")
+			| "const" typename "^"								(typespec "const^")
+			| "const" typename "<" generic_instance ">" "^"					(typespec_generic "const^")
+			| typename "^" "&"								(typespec "^&")
+			| typename "<" generic_instance ">" "^" "&"					(typespec_generic "^&")
+			| "const" typename "^" "&"							(typespec "const^&")
+			| "const" typename "<" generic_instance ">" "^" "&"				(typespec_generic "const^&")
 			| "any" "class" "^"								(typespec_key "class^")
-			| "any" "const" "class" "^"							(typespec_key "const struct^")
-			| "any" "struct" "^"								(typespec_key "class^")
+			| "any" "const" "class" "^"							(typespec_key "const class^")
+			| "any" "struct" "^"								(typespec_key "struct^")
 			| "any" "const" "struct" "^"							(typespec_key "const struct^")
 			;
-typepath/L1		= generic_typename								(typespec "")
+typepath/L1		= typename									(typespec "")
+			| typename "<" generic_instance ">"						(typespec_generic "")
 			;
 typedefinition		= "typedef" typepath IDENT							(>>typedef)
 			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype)
@@ -167,19 +173,19 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 			| ">"										(operatordecl {name=">", symbol="gt"})
 			| "<"										(operatordecl {name="<", symbol="lt"})
 			;
-generic_instance	= typepath									(generic_instance)
-			| typepath "," generic_instance							(generic_instance)
-			| CARDINAL									(generic_dimension)
-			| CARDINAL "," generic_instance							(generic_dimension)
+generic_instance_deflist= typepath									(generic_instance_type)
+			| typepath "," generic_instance_deflist						(generic_instance_type)
+			| UINTEGER									(generic_instance_dimension)
+			| UINTEGER "," generic_instance_deflist						(generic_instance_dimension)
 			;
-generic_instancelist	= generic_instance								(generic_instancelist)
+generic_instance	= generic_instance_deflist							(generic_instance)
 			;
-generic_defaultlist	= IDENT "=" typepath "," generic_defaultlist					(generic_ident_type)
-			| IDENT "=" typepath								(generic_ident_type)
+generic_defaultlist	= IDENT "=" typepath "," generic_defaultlist					(generic_header_ident_type)
+			| IDENT "=" typepath								(generic_header_ident_type)
 			;
-generic_identlist	= IDENT "," generic_identlist							(generic_ident)
-			| IDENT "," generic_defaultlist							(generic_ident)
-			| IDENT										(generic_ident)
+generic_identlist	= IDENT "," generic_identlist							(generic_header_ident)
+			| IDENT "," generic_defaultlist							(generic_header_ident)
+			| IDENT										(generic_header_ident)
 			;
 generic_header		= generic_identlist								(generic_header)
 			| generic_defaultlist								(generic_header)
@@ -204,7 +210,9 @@ codeblock		= statementlist									(codeblock)
 statementlist		= statement statementlist							(>>)
 			| ε
 			;
-statement/L1		= functiondefinition								(definition)
+statement/L1		= structdefinition								(definition)
+			| classdefinition 								(definition)
+			| functiondefinition								(definition)
 			| typedefinition ";"								(definition)
 			| "var" variabledefinition ";"							(definition)
 			| expression ";"								(free_expression)
@@ -229,7 +237,7 @@ expression/L1		= "{" expressionlist "}"							(structure)
 			;
 expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
-			| CARDINAL									(constant "constexpr uint")
+			| UINTEGER									(constant "constexpr uint")
 			| INTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
 			| "null"									(null)

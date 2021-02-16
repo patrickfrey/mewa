@@ -344,7 +344,7 @@ function constexprLlvmConversion( typeid)
 end
 -- Constant expression/value types
 local constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- const expression integers implemented as arbitrary precision BCD numbers
-local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")		-- const expression cardinals implemented as arbitrary precision BCD numbers
+local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")		-- const expression unsigned integer implemented as arbitrary precision BCD numbers
 local constexprFloatType = typedb:def_type( 0, "constexpr float")		-- const expression floating point numbers implemented as 'double'
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- const expression boolean implemented as Lua boolean
 local constexprNullType = typedb:def_type( 0, "constexpr null")			-- const expression null value implemented as nil
@@ -425,7 +425,7 @@ function defineConstExprArithmetics()
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, rdw_conv)
 end
 -- Define all basic types associated with a type name
-function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
+function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 	local pointerPointerTypeDescription = llvmir.pointerDescr( pointerTypeDescription)
 
@@ -437,6 +437,8 @@ function defineQualifiedTypes( contextTypeId, typnam, typeDescription)
 	local c_pval = typedb:def_type( contextTypeId, "const^" .. typnam)		-- const pointer
 	local rpval = typedb:def_type( contextTypeId, "^&" .. typnam)			-- pointer reference
 	local c_rpval = typedb:def_type( contextTypeId, "const^&" .. typnam)		-- const pointer reference
+
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(contextTypeId), typnam) end
 
 	varargParameterMap[ lval]    = {llvmtype=typeDescription.llvmtype,type=c_lval}
 	varargParameterMap[ c_lval]  = {llvmtype=typeDescription.llvmtype,type=c_lval}
@@ -756,7 +758,7 @@ function defineInheritedInterfaces( node, context, classTypeId)
 			end
 		end
 		print_section( "Auto", utils.template_format( llvmir.control.vtable,
-					{classname=cdescr.classname, interfacename=idescr.interfacename, llvmtype=vmtstr}))
+					{classname=cdescr.symbol, interfacename=idescr.symbol, llvmtype=vmtstr}))
 	end
 end
 -- Get the type assigned to the variable 'this' or implicitely added to the context of a method in its body
@@ -901,7 +903,7 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 		typedb:scope( scopebk)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
-		local qualitype = defineQualifiedTypes( element_sep.lval, typnam, descr)
+		local qualitype = defineQualifiedTypes( node, element_sep.lval, typnam, descr)
 		defineRValueReferenceTypes( element_sep.lval, typnam, descr, qualitype)
 		defineArrayConstructors( node, qualitype, descr, elementTypeId)
 		rt = typedb:get_type( element_sep.lval, qualitypenam)
@@ -1029,7 +1031,7 @@ end
 function defineInterfaceMember( node, context, typeId, typnam, private)
 	local descr = typeDescriptionMap[ typeId]
 	table.insert( context.interfaces, typeId)
-	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.classname})
+	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.symbol})
 	local thisType = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineCall( rvalueTypeMap[ typeId], thisType, typnam, {}, convConstructor( fmt, "RVAL"))
 end
@@ -1161,7 +1163,7 @@ function initBuiltInTypes()
 	anyConstStructPointerType = typedb:def_type( 0, "const struct^")
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
-		local qualitype = defineQualifiedTypes( 0, typnam, scalar_descr)
+		local qualitype = defineQualifiedTypes( {line=0}, 0, typnam, scalar_descr)
 		defineScalarConstructors( qualitype, scalar_descr)
 		local c_lval = qualitype.c_lval
 		scalarQualiTypeMap[ typnam] = qualitype
@@ -1243,6 +1245,34 @@ end
 function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
 	local rt,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
 	if constructor then utils.errorMessage( node.line, "No constructor type expected: %s", typeName) end
+	return rt
+end
+function resolveTypeFromNamePath( node, qualifier, arg)
+	local typeName = qualifier .. arg[ #arg]
+	local rt
+	if #arg == 1 then
+		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
+	else
+		local ctxTypeName = arg[ 1]
+		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), ctxTypeName, tagmask_typeNameSpace))
+		if #arg > 2 then
+			for ii = 2, #arg-1 do
+				ctxTypeName  = arg[ii]
+				ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( ctxTypeId, ctxTypeName, tagmask_typeNameSpace))
+			end
+		end
+		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
+	end
+	return rt
+end
+function matchGenericParameter( node, genericType, param, args)
+	local rt = {}
+	if #param < #args then utils.errorMessage( node.line, "Too many arguments (%d) passed to instantiate generic '%s'", #args, typedb:type_string(genericType)) end
+	for pi=1,#param do
+		local arg = args[ pi] or param[ pi].type
+		if not arg then utils.errorMessage( node.line, "Missing parameter '%s' of generic '%s'", param[ pi].name, typedb:type_string(genericType)) end
+		table.insert( rt, arg)
+	end
 	return rt
 end
 -- Call a function, meaning to apply operator "()" on a callable
@@ -1456,7 +1486,19 @@ function getDeclarationLlvmTypedefParameterString( descr, context)
 	return rt
 end
 function getTypeDeclContextTypeId( context)
-	if context.qualitype then return context.qualitype.lval else return 0 end
+	if context then if context.qualitype then return context.qualitype.lval else return context.namespace or 0 end else return 0 end
+end
+-- Symbol name for type in target LLVM output
+function getGenericParameterIdString( param)
+	local rt = ""
+	for pi,arg in ipairs(param) do if type(arg) == "table" then rt = rt .. "#" .. arg.value else rt = rt .. tostring(arg) .. ":" end end
+	return rt;
+end
+-- Synthezized typename for generic
+function getGenericTypeName( typeId, param)
+	local rt = typedb:type_string( typeId, "__")
+	for pi,arg in ipairs(param) do if type(arg) == "table" then rt = rt .. arg.value else rt = rt .. "__" .. typedb:type_string(arg, "__") end end
+	return rt
 end
 -- Symbol name for type in target LLVM output
 function getTypeDeclUniqueName( contextTypeId, typnam)
@@ -1527,14 +1569,12 @@ function printExternFunctionDeclaration( node, descr)
 	print( "\n" .. utils.constructor_format( fmt, descr))
 end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
-	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
 	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
-	if descr.ret and not referenceTypeMap[ descr.ret] then utils.errorMessage( node.line, "Reference type not allowed as function return value") end
 	local loadfmt = utils.template_format( descr.load, descr)
 	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
@@ -1628,6 +1668,29 @@ function getStringConstant( value)
 		out = callable.register()
 		return {type=stringPointerType,constructor={code=utils.constructor_format( stringConstantMap[ value].fmt, {out=out}), out=out}}
 	end
+end
+-- Basic structure type definition for class,struct,interface
+function defineStructureType( node, declContextTypeId, typnam, fmt)
+	local symbol = getTypeDeclUniqueName( declContextTypeId, typnam)
+	local descr = utils.template_format( fmt, {symbol=symbol})
+	local qualitype = defineQualifiedTypes( node, declContextTypeId, typnam, descr)
+	return descr,qualitype
+end
+-- Basic type definition for generic 
+function defineGenericType( node, declContextTypeId, typnam, fmt, generic)
+	local descr = utils.template_format( fmt, {})
+	descr.node = node
+	descr.generic = generic
+	descr.instancemap = {}
+	local lval = typedb:def_type( declContextTypeId, typnam)
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(declContextTypeId), typnam) end
+	typeDescriptionMap[ lval] = descr
+end
+-- Add a generic parameter to the generic parameter list
+function addGenericParameter( node, generic, name, typeId)
+	if generic.namemap[ name] then utils.errorMessage( node.line, "Duplicate definition of generic parameter '%s'", name) end
+	generic.namemap[ name] = #generic.param+1
+	table.insert( generic.param, {name=name, type=typeId} )
 end
 
 -- AST Callbacks:
@@ -1726,7 +1789,7 @@ function typesystem.typedef( node, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local descr = typeDescriptionMap[ arg[1]]
 	local orig_qualitype = qualiTypeMap[ arg[1]]
-	local this_qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local this_qualitype = defineQualifiedTypes( node, declContextTypeId, typnam, descr)
 	local convlist = {"lval","c_lval","c_rval"}
 	for ci,conv in ipairs(convlist) do
 		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_TypeConversion, rdw_conv)
@@ -1808,22 +1871,26 @@ function typesystem.with_do( node, context)
 	return nil -- TODO Implement
 end
 function typesystem.typespec( node, qualifier)
-	local typeName = qualifier .. node.arg[ #node.arg].value
-	local typeId
-	if #node.arg == 1 then
-		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
-	else
-		local ctxTypeName = node.arg[ 1].value
-		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), node.arg[1].value, tagmask_typeNameSpace))
-		if #node.arg > 2 then
-			for ii = 2, #node.arg-1 do
-				ctxTypeName  = node.arg[ii].value
-				ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( ctxTypeId, ctxTypeName, tagmask_typeNameSpace))
-			end
+	return resolveTypeFromNamePath( node, qualifier, utils.traverse( typedb, node))
+end
+function typesystem.typespec_generic( node, qualifier)
+	local arg = utils.traverse( typedb, node)
+	local inst_arg = arg[ #arg]
+	table.remove( arg, #arg)
+	local genericType = resolveTypeFromNamePath( node, "", arg)
+	local descr = typeDescriptionMap[ genericType]
+	if descr.class == "generic_class" then
+		local generic_arg = matchGenericParameter( node, genericType, descr.generic.param, inst_arg)
+		local instanceid = getGenericParameterIdString( generic_arg)
+		local instanceType = descr.instancemap[ instanceid]
+		if not instanceType then
+			local symbol = getGenericTypeName( genericType, generic_arg)
 		end
-		typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
+	elseif descr.class == "generic_struct" then
+		local generic_arg = matchGenericParameter( node, genericType, descr.generic.param, inst_arg)
+	else
+		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", type:type_string(genericType))
 	end
-	return typeId
 end
 function typesystem.typespec_key( node, qualifier)
 	return typedb:get_type( 0, qualifier)
@@ -1993,17 +2060,20 @@ function typesystem.interface_operator_procdef( node, decl, context)
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.namespacedef( node, context)
-	return nil -- TODO Implement
+	local typnam = node.arg[1].value
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local scope_bk = typedb:scope( {} ) -- set global scope
+	local namespace = typedb:get_type( declContextTypeId, typnam) or typedb:def_type( declContextTypeId, typnam)
+	typedb:scope( scope_bk)
+	utils.traverseRange( typedb, node, {2,2}, {namespace = namespace} )
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
-	local structname = getTypeDeclUniqueName( declContextTypeId, typnam)
-	local descr = utils.template_format( llvmir.structTemplate, {structname=structname})
-	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=structname}
+	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=descr.symbol}
 	utils.traverseRange( typedb, node, {2,#node.arg}, context)
 	descr.size = context.structsize
 	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
@@ -2011,16 +2081,17 @@ function typesystem.structdef( node, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 end
 function typesystem.generic_structdef( node, context)
-	return nil -- TODO Implement !!! STORE CLASS NODE IN TABLE (lazy evaluation)
+	local typnam = node.arg[1].value
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
+	defineGenericType( node, declContextTypeId, typnam, llvmir.llvmir.genericStructDescr, param)
 end
 function typesystem.interfacedef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
-	local interfacename = getTypeDeclUniqueName( declContextTypeId, typnam)
-	local descr = utils.template_format( llvmir.interfaceTemplate, {interfacename=interfacename})
-	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.interfaceTemplate)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=interfacename, const=true}
+	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=descr.symbol, const=true}
 	utils.traverseRange( typedb, node, {2,#node.arg}, context)
 	descr.methods = context.methods
 	descr.const = context.const
@@ -2030,44 +2101,42 @@ function typesystem.interfacedef( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
 end
-function typesystem.generic_instance( node, context, generic_instancelist)
+function typesystem.generic_instance_type( node, context, generic_instancelist)
 	table.insert( generic_instancelist, utils.traverseRange( typedb, node, {1,1}, context)[1] )
-	if #arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
+	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
 end
-function typesystem.generic_dimension( node, context, generic_instancelist)
-	table.insert( generic_instancelist, {type=constexprUIntegerType, value=createConstExpr( node, constexprUIntegerType, node.arg[1].value)} )
-	if #arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
+function typesystem.generic_instance_dimension( node, context, generic_instancelist)
+	table.insert( generic_instancelist, {type=constexprUIntegerType, value=node.arg[1].value} )
+	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
 end
-function typesystem.generic_instancelist( node, context)
+function typesystem.generic_instance( node, context)
 	local rt = {}
 	utils.traverse( typedb, node, context, rt)
 	return rt
 end
-function typesystem.generic_ident_type( node, context, genericparam)
+function typesystem.generic_header_ident_type( node, context, generic)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	table.insert( genericparam, {name=arg[1], type=arg[2]} )
-	if #arg > 2 then utils.traverseRange( typedb, node, {3,3}, context, genericparam) end
+	addGenericParameter( node, generic, arg[1], arg[2])
+	if #arg > 2 then utils.traverseRange( typedb, node, {3,3}, context, generic) end
 end
-function typesystem.generic_ident( node, context, genericparam)
-	table.insert( genericparam, {name=node.arg[1].value} )
-	if #arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, genericparam) end
+function typesystem.generic_header_ident( node, context, generic)
+	addGenericParameter( node, generic, node.arg[1].value)
+	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic) end
 end
 function typesystem.generic_header( node, context)
-	local genericparam = {}
-	utils.traverse( typedb, node, context, genericparam)
-	return genericparam
+	local generic = {param={}, namemap={}}
+	utils.traverse( typedb, node, context, generic)
+	return generic
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
-	local classname = getTypeDeclUniqueName( declContextTypeId, typnam)
-	local descr = utils.template_format( llvmir.classTemplate, {classname=classname})
-	local qualitype = defineQualifiedTypes( declContextTypeId, typnam, descr)
+	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
-	                 structsize=0, llvmtype="", symbol=classname, interfaces={}}
+	                 structsize=0, llvmtype="", symbol=descr.symbol, interfaces={}}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverseRange( typedb, node, {2,#node.arg}, context, 1)
 	utils.traverseRange( typedb, node, {2,#node.arg}, context, 2)
@@ -2079,7 +2148,10 @@ function typesystem.classdef( node, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 end
 function typesystem.generic_classdef( node, context)
-	return nil -- TODO Implement !!! STORE CLASS NODE IN TABLE (lazy evaluation)
+	local typnam = node.arg[1].value
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local generic = utils.traverseRange( typedb, node, {2,2}, context)[2]
+	defineGenericType( node, declContextTypeId, typnam, llvmir.genericClassDescr, generic)
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then

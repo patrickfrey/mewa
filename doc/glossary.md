@@ -4,10 +4,19 @@
 Polish name for seagull. It's difficult to find short memorizable names. I got stuck to names of birds in the polish language without non ASCII characters.
 
 ## Type System
-A set of term rewrite rules to reduce structures of types to types and in this process construct a program that represents this structure. 
+A set of term rewrite rules to build structures of types and to reduce them to types and in this process construct a program that represents the entire structure defined in the program source.
+
+## Type
+Any item addressable in a program is a **type**. In _Mewa_ types are represented by an unsigned integer number. Types are also used to decribe the context of definitions inside a structure. Every type is defined with a context type. The reserved value of 0 is used as context type for free definitions.
+
+## Reduction
+### In the context of the type system
+A rule to derive a **type** from another with a description how to construct the target type from the source type attached.
+### In the context of the parser
+A state transition occurring after the last item of a production has been parsed, replacing the right side of the production with the left side on the parser stack.
 
 ## Scope
-Pair of integer numbers (represented as integer numbers) that define an area the first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope step of the instruction that queries the definition.
+Pair of integer numbers that address a subtree of the AST. The first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope step of the instruction that queries the definition.
 
 ### Example
 1. Item 'ABC' defined in scope [1,123]
@@ -15,10 +24,13 @@ Pair of integer numbers (represented as integer numbers) that define an area the
 3. Item 'ABC' defined in scope [23,77]
 4. Item 'ABC' defined in scope [81,99]
 
-The Query for 'ABC' in an instruction with scope step 56 assigned, returns the 3rd definition.
+The Query for a type 'ABC' in an instruction with scope step 56 assigned, returns the 3rd definition.
+
+### Scope and Structures
+Some other compiler models represent hierarchies of data structures by lexical scoping. In _Mewa_ best practice is considered to represent visibility in hierarchies of data structures with context types and not by scope.
 
 ## Scope Step
-Counter that is incremented for every production in the grammar marked with the operators '>>' or '{}'. The scope step defines the start and the end of the scope assigned to productions by the scope operator '{}'. A scope starts with the scope step counter value when first entering a state with a production marked as '{}' and ends with one step after the value of the scope step when replacing the right side of the production with the left side on the parser stack (reduction).
+Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**. A **scope** starts with the scope step counter value when first entering a state with a production marked as **{}** and ends with one step after the value of the **scope step** after exit (**reduction** in the context of the parser).
 
 ## Constructor
 A constructor implements the constructon of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor result of the derived type.

@@ -6,13 +6,16 @@ local utils = {}
 -- Encode a name
 local encodeNameSubstMap = {
  	["*"]  = "$",
+	[" "]  = "",
+	["["]  = "$",
+	["]"]  = "",
 	["%"]  = ""
 }
 function utils.encodeName( name)
 	local subst = function( match)
 		return encodeNameSubstMap[ match] or ""
 	end
-	return (name:gsub("([*%%])", subst))
+	return (name:gsub("([%* %%])", subst))
 end
 
 -- Map Lexem values to strings encoded for LLVM IR output
