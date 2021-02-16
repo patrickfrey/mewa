@@ -87,9 +87,9 @@ int main( int argc, const char* argv[] )
 				break;
 			}
 		}
-		if (argi < argc) nofTests = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of tests");
-		if (argi < argc) maxKeyLength = ArgParser::getCardinalNumberArgument( argv[ argi++], "max key length");
-		if (argi < argc) nofInitBuckets = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of buckets on initialization");
+		if (argi < argc) nofTests = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "number of tests");
+		if (argi < argc) maxKeyLength = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "max key length");
+		if (argi < argc) nofInitBuckets = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "number of buckets on initialization");
 
 		if (argi < argc)
 		{

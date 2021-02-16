@@ -25,7 +25,7 @@ Lexem declarations start with an identifier followed by a colon '**:**', a patte
 The name _lexemname_ defines the identifier this lexem can be referred to in the grammar.
 The regular expression string _pattern_ quoted in single or double quotes defines the pattern that matches the lexem.
 You can have multiple declarations with the same name _lexemname_.
-The optional cardinal number _select_ defines the index of the subexpression of the regular expression match to select as the value of the lexem recognized. If _0_ or nothing is specified the whole expression match is taken as lexem value.
+The optional integer number _select_ defines the index of the subexpression of the regular expression match to select as the value of the lexem recognized. If _0_ or nothing is specified the whole expression match is taken as lexem value.
 If multiple patterns match at the same source position then the longest match is taken. If two matches have the same length, the first declaration is chosen.
 Keywords and operators of the the grammar do not have to be declared in the lexer section but can be directly referred to as strings in the rule section of the grammar.
 
@@ -41,7 +41,7 @@ Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **sco
 1. _name_ **=** _itemlist_ **;**
     * Simple grammar rule definition with _name_ as left hand _nonterminal_ and _itemlist_ as space separated list of identifiers (nonterminals or lexem names) and strings (keywords and operators as implicitely defiend lexems).
 2. _name_/_priority_ **=** _itemlist_ **;**
-    * Rule definition as 1. but with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a cardinal number. The **L** defines the rule to be left handed, meaning that _REDUCE_ is prefered in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right handed, meaning that _SHIFT_ is prefered in self including rules. The cardinal number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of SHIFT actions must be consistent for a state.
+    * Rule definition as 1. but with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a integer number. The **L** defines the rule to be left handed, meaning that _REDUCE_ is prefered in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right handed, meaning that _SHIFT_ is prefered in self including rules. The integer number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of SHIFT actions must be consistent for a state.
 3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
     * Rule definition as in (1. or 2.) but with _luafunction_ as a single identifier or an pair of identifiers referring to a function and an optional context argument defined in the typesystem Lua module. A rule defined with a function form a node in the resulting AST (abstract syntax tree). The result node has all non keyword/operator lexems or other nodes defined inside its right hand part of the rule that are not bound by other nodes as subnodes.
 4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
@@ -50,7 +50,7 @@ Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **sco
     * Rule definition as in (1. or 2.) but with a **scope** structure (start and end of the scope) defined for the result node
 
 ## Scope of AST Nodes and Definitions
-The **scope** of a node in the resulting AST is defined as a pair of cardinal numbers **[** _start_ , _end_ **]**.
+The **scope** of a node in the resulting AST is defined as a pair of integer numbers **[** _start_ , _end_ **]**.
 The definitions of types in the typesystem will include the scope structure to select the valid definition amongst definitions with the same name.
 A definition is valid if its **scope step** is inside the scope checked:
 * _step_ **>=** _start_

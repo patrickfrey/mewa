@@ -42,7 +42,7 @@ const char* getArgumentAsCString( const char* functionName, lua_State* ls, int l
 
 long getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec = mewa::Error::ExpectedIntegerArgument);
 
-long getArgumentAsCardinal( const char* functionName, lua_State* ls, int li);
+long getArgumentAsUnsignedInteger( const char* functionName, lua_State* ls, int li);
 
 long getArgumentAsNonNegativeInteger( const char* functionName, lua_State* ls, int li);
 

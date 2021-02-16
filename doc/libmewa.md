@@ -78,7 +78,7 @@ The serialization is not complete. Serialization is done only for raw tables, nu
 #### Parameter
 | #      | Name     | Type              | Description                                                               |
 | :----- | :------- | :---------------- | :------------------------------------------------------------------------ |
-| 1st    | depth    | cardinal          | (optional) number of steps to trace back. Default is no limit.            |
+| 1st    | depth    | integer           | (optional) number of steps to trace back. Default is no limit.            |
 | 2nd    | ignore   | array of strings  | (optional) List of substrings of functions ignored (*), Default is empty. |
 | Return |          | table             | Array of stack trace elements                                             |
 

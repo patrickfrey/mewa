@@ -2,11 +2,12 @@
 
  * Implement a typedb function 'typedb:check_derive_type' that checks unique reduction path for all type pairs defined in all scopes.
  * Implement function pointer and reference type of it for variables, With ref and assignment of callable
- * Generics
+ * Generics: Match generic function arguments as tree to distil out template arguments.
  * Report error on statements after return and similar cases, mark statements without follow statement allowed
  * More systematic weighting weight = function( reference +1/0/-1, const +1/0/-1, pointer +1/0/-1, private +1/0/-1, rvalue +1/0/-1, convSize +1/0/-1, nofQualifiers) 
  * Try to get into https://llvm.org/ProjectsWithLLVM
- * Implement namespaces and Pascal WITH 
+ * Implement namespaces: Instead of global scope 0, (context.namespace or 0). 
+ * Implement Pascal WITH 
  
 
 

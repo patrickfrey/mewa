@@ -97,7 +97,7 @@ struct ArgParser
 		return ch >= '0' && ch <= '9';
 	}
 
-	static int getCardinalNumberArgument( const char* arg, const char* what)
+	static int getUnsignedIntegerNumberArgument( const char* arg, const char* what)
 	{
 		char const* ai = arg;
 		int rt = 0;

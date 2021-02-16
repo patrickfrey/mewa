@@ -213,7 +213,7 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedStringArgument: return "Expected string as argument";
 		case ExpectedIntegerArgument: return "Expected integer as argument";
 		case ExpectedNonNegativeIntegerArgument: return "Expected non negative integer as argument";
-		case ExpectedCardinalArgument: return "Expected positive integer as argument";
+		case ExpectedUnsignedIntegerArgument: return "Expected positive integer as argument";
 		case ExpectedBooleanArgument: return "Expected boolean value as argument";
 		case ExpectedFloatingPointArgument: return "Expected floating point number as argument";
 		case ExpectedTableArgument: return "Expected table as argument";
@@ -245,8 +245,8 @@ const char* Error::code2String( int code_) noexcept
 		case PriorityOutOfRange: return "Priority value out of range";
 		case DuplicateDefinition: return "Duplicate definition";
 		case BadRelationWeight: return "Bad weight <= 0.0 given to relation";
-		case BadRelationTag: return "Bad value tor tag attached to relation, must be a cardinal number in {1..32}";
-		case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number";
+		case BadRelationTag: return "Bad value tor tag attached to relation, must be an unsigned integer number in {1..32}";
+		case InvalidHandle: return "Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative integer number";
 		case InvalidBoundary: return "Invalid processing boundary value. Expected to be a non negative number";
 
 		case AmbiguousReductionDefinitions: return "Ambiguous definitions of reductions";

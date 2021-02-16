@@ -97,10 +97,10 @@ long mewa::lua::getArgumentAsInteger( const char* functionName, lua_State* ls, i
 	}
 }
 
-long mewa::lua::getArgumentAsCardinal( const char* functionName, lua_State* ls, int li)
+long mewa::lua::getArgumentAsUnsignedInteger( const char* functionName, lua_State* ls, int li)
 {
-	long rt = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedCardinalArgument);
-	if (rt <= 0) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedCardinalArgument);
+	long rt = mewa::lua::getArgumentAsInteger( functionName, ls, li, mewa::Error::ExpectedUnsignedIntegerArgument);
+	if (rt <= 0) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedUnsignedIntegerArgument);
 	return rt;
 }
 
@@ -188,7 +188,7 @@ mewa::Scope mewa::lua::getArgumentAsScope( const char* functionName, lua_State* 
 		}
 		lua_pop( ls, 1);
 	}
-	if (rowcnt != 2 || start < 0 || end < 0 || start > end)
+	if (start < 0 || end < 0 || start > end)
 	{
 		mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentScopeStructure);
 	}

@@ -17,7 +17,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:ExpectedStringArgument**   _$ERRTEXT:ExpectedStringArgument_
 + **#$ERRCODE:ExpectedIntegerArgument**   _$ERRTEXT:ExpectedIntegerArgument_
 + **#$ERRCODE:ExpectedNonNegativeIntegerArgument**   _$ERRTEXT:ExpectedNonNegativeIntegerArgument_
-+ **#$ERRCODE:ExpectedCardinalArgument**   _$ERRTEXT:ExpectedCardinalArgument_
++ **#$ERRCODE:ExpectedUnsignedIntegerArgument**   _$ERRTEXT:ExpectedUnsignedIntegerArgument_
 + **#$ERRCODE:ExpectedBooleanArgument**   _$ERRTEXT:ExpectedBooleanArgument_
 + **#$ERRCODE:ExpectedFloatingPointArgument**   _$ERRTEXT:ExpectedFloatingPointArgument_
 + **#$ERRCODE:ExpectedTableArgument**   _$ERRTEXT:ExpectedTableArgument_

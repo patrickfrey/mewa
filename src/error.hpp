@@ -38,7 +38,7 @@ public:
 		ExpectedStringArgument=406,
 		ExpectedIntegerArgument=407,
 		ExpectedNonNegativeIntegerArgument=408,
-		ExpectedCardinalArgument=409,
+		ExpectedUnsignedIntegerArgument=409,
 		ExpectedBooleanArgument=410,
 		ExpectedFloatingPointArgument=411,
 		ExpectedTableArgument=412,

@@ -52,8 +52,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#451**   _Priority value out of range_
 + **#452**   _Duplicate definition_
 + **#453**   _Bad weight <= 0.0 given to relation_
-+ **#454**   _Bad value tor tag attached to relation, must be a cardinal number in {1..32}_
-+ **#455**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative cardinal number_
++ **#454**   _Bad value tor tag attached to relation, must be an unsigned integer number in {1..32}_
++ **#455**   _Invalid handle (constructor,type,object) assigned. Expected to be a positive/non negative integer number_
 + **#456**   _Invalid processing boundary value. Expected to be a non negative number_
 
 + **#462**   _Ambiguous definitions of reductions_

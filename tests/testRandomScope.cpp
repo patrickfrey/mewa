@@ -858,14 +858,14 @@ int main( int argc, const char* argv[] )
 				break;
 			}
 		}
-		if (argi < argc) nofTests = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of tests");
-		if (argi < argc) maxDepth = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum tree depth");
-		if (argi < argc) maxWidth = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum tree width");
-		if (argi < argc) maxNofNodes = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum number of nodes");
-		if (argi < argc) maxMembers = ArgParser::getCardinalNumberArgument( argv[ argi++], "maximum number of variable definitions per node");
-		if (argi < argc) alphabetSize = ArgParser::getCardinalNumberArgument( argv[ argi++], "alphabet size");
-		if (argi < argc) nofTags = ArgParser::getCardinalNumberArgument( argv[ argi++], "nof tags");
-		if (argi < argc) nofQueries = ArgParser::getCardinalNumberArgument( argv[ argi++], "number of queries per random tree");
+		if (argi < argc) nofTests = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "number of tests");
+		if (argi < argc) maxDepth = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "maximum tree depth");
+		if (argi < argc) maxWidth = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "maximum tree width");
+		if (argi < argc) maxNofNodes = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "maximum number of nodes");
+		if (argi < argc) maxMembers = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "maximum number of variable definitions per node");
+		if (argi < argc) alphabetSize = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "alphabet size");
+		if (argi < argc) nofTags = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "nof tags");
+		if (argi < argc) nofQueries = ArgParser::getUnsignedIntegerNumberArgument( argv[ argi++], "number of queries per random tree");
 
 		if (argi < argc)
 		{

@@ -246,7 +246,7 @@ public:
 	/// \brief Define an object retrievable by its name within a scope
 	/// \param[in] name the name of the object
 	/// \param[in] scope the scope of this definition
-	/// \param[in] handle the handle (non negative cardinal number, negative value -1 reserved by the getter for not found) for the object given by the caller
+	/// \param[in] handle the handle (non negative integer number, negative value -1 reserved by the getter for not found) for the object given by the caller
 	void setObjectInstance( const std::string_view& name, const Scope& scope, int handle);
 
 	/// \brief Retrieve an object by its name in the innermost scope covering the specified scope step
@@ -528,7 +528,7 @@ private:
 	std::unique_ptr<TypeTable> m_typeTable;		//< table of types
 	std::unique_ptr<ReductionTable> m_reduTable;	//< table of reductions
 	std::unique_ptr<IdentMap> m_identMap;		//< identifier string to integer map
-	std::vector<TypeConstructorPair> m_parameterMap;//< map cardinal to parameter arrays
+	std::vector<TypeConstructorPair> m_parameterMap;//< map index to parameter arrays
 	std::vector<TypeRecord> m_typerecMap;		//< type definition structures
 };
 

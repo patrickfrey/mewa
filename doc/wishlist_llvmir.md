@@ -1,6 +1,6 @@
 # Wishlist to LLVM IR
 
-1. Capability to use named labels for attribute lists instead of cardinals
+1. Capability to use named labels for attribute lists instead of integers
 	Instead of
 	```LLVM
 	attributes #0 = {

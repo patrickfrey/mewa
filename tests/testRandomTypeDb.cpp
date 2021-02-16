@@ -576,7 +576,7 @@ int main( int argc, const char* argv[] )
 				if (argi == argc || argv[argi][0] == '-' || argv[argi][0] < '0' || argv[argi][0] > '9')
 				{
 					std::cerr << "Usage: testRandomTypeDb [-h][-V][-n NOFTESTS]" << std::endl;
-					throw std::runtime_error( "Option -n expects argument cardinal (number of tests)");
+					throw std::runtime_error( "Option -n expects argument integer (number of tests)");
 				}
 				nofTests = atoi( argv[argi]);
 			}

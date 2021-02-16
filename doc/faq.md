@@ -10,7 +10,7 @@
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
     * [How to handle scopes?](#astTraversalAndScope)
-    * [How to store and access scope related data?](#scopeInstanceAndAllocators)
+    * [How to store and access scope bound data?](#scopeInstanceAndAllocators)
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
     * [How to implement pointers and arrays?](#pointersAndArrays)
     * [How to implement namespaces?](#namespaces)
@@ -96,13 +96,13 @@ Unlike in most other compiler frontend frameworks the tree is meant to be traver
 
 ### How to handle scopes?
 
-Scope is part of the type database and represented as pair of cardinal numbers, the first element specifying the start of the scope and the second the first element after the last element of the scope. Every definition has such a scope definition attached. Depending on the current scope step (a cardinal number) only the subset of definitions having a scope covering it are visible when resolving a type. The current scope and the current scope step are set by the tree traversal function before calling the function attached to a node. The current scope is set to its previous value after calling the function attached to a node.
+Scope is part of the type database and represented as pair of integer numbers, the first element specifying the start of the scope and the second the first element after the last element of the scope. Every definition has such a scope definition attached. Depending on the current scope step (a integer number) only the subset of definitions having a scope covering it are visible when resolving a type. The current scope and the current scope step are set by the tree traversal function before calling the function attached to a node. The current scope is set to its previous value after calling the function attached to a node.
 
 <a name="scopeInstanceAndAllocators"/>
 
-### How to store and access scope related data?
+### How to store and access scope bound data?
 
-Scope related data in form of a lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing scopes inherit an object from the parent scope) with [typedb:get_instance](#get_instance).
+Scope bound data in form of a lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing scopes inherit an object from the parent scope) with [typedb:get_instance](#get_instance).
 
 <a name="typeQualifiers"/>
 
