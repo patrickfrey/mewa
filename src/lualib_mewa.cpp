@@ -393,6 +393,7 @@ static int mewa_compiler_run( lua_State* ls)
 		std::string_view outputfn = "stdout";
 
 		std::string source = mewa::readFile( std::string(filename));
+		std::string targetstr = mewa::readFile( std::string(targetfn));
 		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));	// STK: [COMPILER] [INPUTFILE] [SOURCE]
 
 		if (nargs >= 4)
@@ -426,7 +427,6 @@ static int mewa_compiler_run( lua_State* ls)
 			// Map output with target template:
 			cp->outputSectionMap[ "Source"] = filename;
 			cp->outputSectionMap[ "Code"].append( cp->outputBuffer);
-			std::string targetstr = mewa::readFile( std::string(targetfn));
 			std::string output = mewa::template_format( targetstr, '{', '}', cp->outputSectionMap);
 			if (outputfn == "stderr")
 			{

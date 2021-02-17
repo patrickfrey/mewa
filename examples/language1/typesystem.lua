@@ -632,8 +632,10 @@ function defineArrayConstructors( node, qualitype, descr, memberTypeId)
 	definePointerConstructors( qualitype, descr)
 
 	instantCallableContext = createCallableContext( node.scope, nil)
-	local c_memberTypeId = constTypeMap[memberTypeId] or memberTypeId
-	local ths = {type=memberTypeId, constructor={out="%ths"}}
+	local c_memberTypeId = constTypeMap[ memberTypeId] or memberTypeId
+	local r_memberTypeId = referenceTypeMap[ memberTypeId]
+	if not r_memberTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
+	local ths = {type=r_memberTypeId, constructor={out="%ths"}}
 	local oth = {type=c_memberTypeId, constructor={out="%oth"}}
 	local init = tryApplyCallable( node, ths, ":=", {} )
 	local initcopy = tryApplyCallable( node, ths, ":=", {oth} )
@@ -809,7 +811,7 @@ function defineOperatorsWithStructArgument( node, context)
 end
 -- Define index operators for pointers to first class citizen scalar types
 function defineIndexOperators( element_qualitype, pointer_descr)
-	for index_typenam, index_type in pairs(scalarIndexTypeMap) do
+	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
 		defineCall( element_qualitype.rval, element_qualitype.pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
 		defineCall( element_qualitype.c_rval, element_qualitype.c_pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
 	end
@@ -825,8 +827,8 @@ end
 function defineBuiltInTypeConversions( typnam, descr)
 	local qualitype = scalarQualiTypeMap[ typnam]
 	if descr.conv then
-		for oth_typenam,conv in pairs( descr.conv) do
-			local oth_qualitype = scalarQualiTypeMap[ oth_typenam]
+		for oth_typnam,conv in pairs( descr.conv) do
+			local oth_qualitype = scalarQualiTypeMap[ oth_typnam]
 			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
 			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_typeConversion, rdw_conv)
 		end
@@ -911,23 +913,23 @@ end
 function implicitDefineArrayType( node, elementTypeId, arsize)
 	local element_sep = typeQualiSepMap[ elementTypeId]
 	local descr = llvmir.arrayDescr( typeDescriptionMap[ elementTypeId], arsize)
-	local typenam = "[" .. arsize .. "]"
-	local qualitypenam = element_sep.qualifier .. typenam
-	local typekey = element_sep.lval .. typenam
-	local lval = arrayTypeMap[ typekey]
+	local typnam = "[" .. arsize .. "]"
+	local qualitypnam = element_sep.qualifier .. typnam
+	local typkey = element_sep.lval .. typnam
+	local lval = arrayTypeMap[ typkey]
 	local rt
 	if lval then
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
-		rt = typedb:get_type( element_sep.lval, qualitypenam)
+		rt = typedb:get_type( element_sep.lval, qualitypnam)
 		typedb:scope( scopebk)
 	else
 		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
 		local qualitype = defineQualifiedTypes( node, element_sep.lval, typnam, descr)
 		defineRValueReferenceTypes( element_sep.lval, typnam, descr, qualitype)
 		defineArrayConstructors( node, qualitype, descr, elementTypeId)
-		rt = typedb:get_type( element_sep.lval, qualitypenam)
+		rt = typedb:get_type( element_sep.lval, qualitypnam)
 		typedb:scope( scopebk)
-		arrayTypeMap[ typekey] = qualitype.lval
+		arrayTypeMap[ typkey] = qualitype.lval
 		definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
 	end
 	return rt
@@ -1522,7 +1524,6 @@ end
 -- Symbol name for type in target LLVM output
 function getGenericParameterIdString( param)
 	local rt = ""
-	io.stderr:write("++++ CALL getGenericParameterIdString " .. mewa.tostring(param) .. "\n")
 	for pi,arg in ipairs(param) do if arg.value then rt = rt .. "#" .. arg.value .. "," else rt = rt .. tostring(arg.type) .. "," end end
 	return rt;
 end
