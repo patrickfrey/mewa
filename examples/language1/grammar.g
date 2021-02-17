@@ -226,8 +226,8 @@ statement/L1		= structdefinition								(definition)
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
 			| typespec IDENT "=" expression							(>>vardef_assign)
-			| typespec IDENT "[" expression "]" "=" expression				(>>vardef_array_assign)
 			| typespec IDENT "[" expression "]"						(>>vardef_array)
+			| typespec IDENT "[" expression "]" "=" expression				(>>vardef_array_assign)
 			;
 expression/L1		= "{" expressionlist "}"							(structure)
 			| "{" "}"									(structure)

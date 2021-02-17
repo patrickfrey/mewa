@@ -8,15 +8,17 @@ local typesystem = {}
 
 local tag_typeDeduction = 1		-- Inheritance relation
 local tag_typeDeclaration = 2		-- Type declaration relation (e.g. variable to data type)
-local tag_TypeConversion = 3		-- Type conversion of parameters
+local tag_typeConversion = 3		-- Type conversion of parameters
 local tag_typeNamespace = 4		-- Type deduction for data types (e.g. namespaces)
 local tag_pointerReinterpretCast = 5 	-- Type deduction only allowed in an explicit "cast" operation
-local tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
-local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
-local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion)
-local tagmask_typeConversion = typedb.reduction_tagmask( tag_TypeConversion)
-local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeNamespace)
-local tagmask_typeCast = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_TypeConversion, tag_pointerReinterpretCast)
+local tag_typeAlias = 6			-- Type that describes a substitution (as used for generic parameters)
+local tagmask_declaration = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeclaration)
+local tagmask_resolveType = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration)
+local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion)
+local tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
+local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeAlias, tag_typeNamespace)
+local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_pointerReinterpretCast)
+local tagmask_typeAlias = typedb.reduction_tagmask( tag_typeAlias)
 
 -- Centralized list of reduction preference rules:
 local rdw_conv = 1.0			-- Reduction weight of conversion
@@ -392,6 +394,23 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
 	end
 end
+-- Get the value of a const expression or the value of an alias of a const expression
+function getConstexprValue( constexpr_type, type, value)
+	if type == constexpr_type then
+		return value
+	else
+		local weight,redu_constructor = typedb:get_reduction( constexpr_type, type, tagmask_typeAlias)
+		if weight then
+			if not redu_constructor then
+				return typedb:get_constructor( type)
+			elseif type(redu_constructor) == "function" then 
+				return redu_constructor( typedb:get_constructor( type))
+			else 
+				return redu_constructor 
+			end
+		end
+	end
+end
 -- Define the exaluation of expressions with only const expression arguments
 function defineConstExprArithmetics()
 	for constexpr_type,oprlist in pairs(constexprTypeOperatorMap) do
@@ -414,15 +433,15 @@ function defineConstExprArithmetics()
 			definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
 		end
 	end
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_TypeConversion, rdw_conv)
-	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_TypeConversion, rdw_conv)
-	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_TypeConversion, rdw_conv)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_TypeConversion, rdw_conv)
-	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_TypeConversion, rdw_conv)
-	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_conv)
 
 	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_conv)
 end
 -- Define all basic types associated with a type name
 function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
@@ -487,7 +506,7 @@ function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
 	typeQualiSepMap[ rpval]   = {lval=lval,qualifier="^&"}
 	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
 
-	typedb:def_reduction( c_pval, constexprNullType, constConstructor("null"), tag_TypeConversion, rdw_conv)
+	typedb:def_reduction( c_pval, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
  	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
 	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, rdw_strip_r_2)
 	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, rdw_strip_r_3)
@@ -809,7 +828,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 		for oth_typenam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typenam]
 			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
-			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_TypeConversion, rdw_conv)
+			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_typeConversion, rdw_conv)
 		end
 	end
 end
@@ -1265,15 +1284,27 @@ function resolveTypeFromNamePath( node, qualifier, arg)
 	end
 	return rt
 end
+-- Get the list of generic arguments filled with the default parameters for the ones not specified explicitely
 function matchGenericParameter( node, genericType, param, args)
 	local rt = {}
 	if #param < #args then utils.errorMessage( node.line, "Too many arguments (%d) passed to instantiate generic '%s'", #args, typedb:type_string(genericType)) end
 	for pi=1,#param do
-		local arg = args[ pi] or param[ pi].type
+		local arg = args[pi] or param[pi]; -- argument or default parameter
 		if not arg then utils.errorMessage( node.line, "Missing parameter '%s' of generic '%s'", param[ pi].name, typedb:type_string(genericType)) end
 		table.insert( rt, arg)
 	end
 	return rt
+end
+-- For each generic argument, create an alias named as the parameter name as substitute for the generic argument specified
+function defineGenericParameterAliases( instanceType, generic_param, generic_arg)
+	for ii=1,#generic_arg do
+		if generic_arg[ ii].value then
+			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].value)
+			typedb:def_reduction( generic_arg[ ii].type, alias, nil, tag_typeAlias)
+		else
+			typedb:def_type_as( instanceType, generic_param[ ii].name, generic_arg[ ii].type)
+		end
+	end
 end
 -- Call a function, meaning to apply operator "()" on a callable
 function callFunction( node, contextTypes, name, args)
@@ -1491,13 +1522,14 @@ end
 -- Symbol name for type in target LLVM output
 function getGenericParameterIdString( param)
 	local rt = ""
-	for pi,arg in ipairs(param) do if type(arg) == "table" then rt = rt .. "#" .. arg.value else rt = rt .. tostring(arg) .. ":" end end
+	io.stderr:write("++++ CALL getGenericParameterIdString " .. mewa.tostring(param) .. "\n")
+	for pi,arg in ipairs(param) do if arg.value then rt = rt .. "#" .. arg.value .. "," else rt = rt .. tostring(arg.type) .. "," end end
 	return rt;
 end
 -- Synthezized typename for generic
 function getGenericTypeName( typeId, param)
 	local rt = typedb:type_string( typeId, "__")
-	for pi,arg in ipairs(param) do if type(arg) == "table" then rt = rt .. arg.value else rt = rt .. "__" .. typedb:type_string(arg, "__") end end
+	for pi,arg in ipairs(param) do if arg.value then rt = rt .. arg.value else rt = rt .. "__" .. typedb:type_string(arg.type, "__") end end
 	return rt
 end
 -- Symbol name for type in target LLVM output
@@ -1692,7 +1724,44 @@ function addGenericParameter( node, generic, name, typeId)
 	generic.namemap[ name] = #generic.param+1
 	table.insert( generic.param, {name=name, type=typeId} )
 end
-
+function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
+	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
+	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=descr.symbol, const=true}
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
+	descr.methods = context.methods
+	descr.const = context.const
+	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	defineInterfaceConstructors( node, qualitype, descr, context)
+	defineOperatorsWithStructArgument( node, context)
+	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
+	print_section( "Typedefs", descr.typedef)
+end
+function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
+	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
+	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
+	addContextTypeConstructorPair( qualitype.lval)
+	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
+	                 structsize=0, llvmtype="", symbol=descr.symbol, interfaces={}}
+	-- Traversal in two passes, first type and variable declarations, then method definitions
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
+	descr.size = context.structsize
+	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	defineClassConstructors( node, qualitype, descr, context)
+	defineOperatorsWithStructArgument( node, context)
+	defineInheritedInterfaces( node, context, qualitype.lval)
+	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
+end
+function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
+	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
+	addContextTypeConstructorPair( qualitype.lval)
+	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=descr.symbol}
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
+	descr.size = context.structsize
+	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	defineStructConstructors( node, qualitype, descr, context)
+	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
+end
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
@@ -1771,15 +1840,17 @@ function typesystem.vardef_assign( node, context)
 end
 function typesystem.vardef_array( node, context)
 	local arg = utils.traverse( typedb, node, context)
-	if arg[3].type ~= constexprUIntegerType then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
-	local arsize = arg[3].constructor:tonumber()
+	local constructor = getConstexprValue( constexprUIntegerType, arg[3].type, arg[3].constructor)
+	if not constructor then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
+	local arsize = constructor:tonumber()
 	local arrayTypeId = implicitDefineArrayType( node, arg[1], arsize)
 	return defineVariable( node, context, arrayTypeId, arg[2], nil)
 end
 function typesystem.vardef_array_assign( node, context)
 	local arg = utils.traverse( typedb, node, context)
-	if arg[3].type ~= constexprUIntegerType then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
-	local arsize = arg[3].constructor:tonumber()
+	local constructor = getConstexprValue( constexprUIntegerType, arg[3].type, arg[3].constructor)
+	if not constructor then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
+	local arsize = constructor:tonumber()
 	local arrayTypeId = implicitDefineArrayType( node, arg[1], arsize)
 	return defineVariable( node, context, arrayTypeId, arg[2], arg[4])
 end
@@ -1792,8 +1863,8 @@ function typesystem.typedef( node, context)
 	local this_qualitype = defineQualifiedTypes( node, declContextTypeId, typnam, descr)
 	local convlist = {"lval","c_lval","c_rval"}
 	for ci,conv in ipairs(convlist) do
-		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_TypeConversion, rdw_conv)
-		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_TypeConversion, rdw_conv)
+		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_typeConversion, rdw_conv)
+		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_typeConversion, rdw_conv)
 	end
 end
 function typesystem.typedef_functype( node)
@@ -1878,16 +1949,24 @@ function typesystem.typespec_generic( node, qualifier)
 	local inst_arg = arg[ #arg]
 	table.remove( arg, #arg)
 	local genericType = resolveTypeFromNamePath( node, "", arg)
-	local descr = typeDescriptionMap[ genericType]
-	if descr.class == "generic_class" then
-		local generic_arg = matchGenericParameter( node, genericType, descr.generic.param, inst_arg)
+	local generic_descr = typeDescriptionMap[ genericType]
+	if generic_descr.class == "generic_class" or descr.class == "generic_struct" then
+		local generic_arg = matchGenericParameter( node, genericType, generic_descr.generic.param, inst_arg)
 		local instanceid = getGenericParameterIdString( generic_arg)
-		local instanceType = descr.instancemap[ instanceid]
+		local instanceType = generic_descr.instancemap[ instanceid]
 		if not instanceType then
-			local symbol = getGenericTypeName( genericType, generic_arg)
+			local declContextTypeId = typedb:type_context( genericType)
+			local typnam = getGenericTypeName( genericType, generic_arg)
+			local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
+			instanceType = qualitype.lval
+			defineGenericParameterAliases( instanceType, generic_descr.generic.param, generic_arg)
+			if descr.class == "generic_class" then
+				traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, 3)
+			elseif descr.class == "generic_struct" then
+				traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, 3)
+			end
 		end
-	elseif descr.class == "generic_struct" then
-		local generic_arg = matchGenericParameter( node, genericType, descr.generic.param, inst_arg)
+		return instanceType
 	else
 		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", type:type_string(genericType))
 	end
@@ -2071,14 +2150,7 @@ function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
-	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=descr.symbol}
-	utils.traverseRange( typedb, node, {2,#node.arg}, context)
-	descr.size = context.structsize
-	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
-	defineStructConstructors( node, qualitype, descr, context)
-	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
+	traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
 function typesystem.generic_structdef( node, context)
 	local typnam = node.arg[1].value
@@ -2090,19 +2162,10 @@ function typesystem.interfacedef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.interfaceTemplate)
-	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=descr.symbol, const=true}
-	utils.traverseRange( typedb, node, {2,#node.arg}, context)
-	descr.methods = context.methods
-	descr.const = context.const
-	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
-	defineInterfaceConstructors( node, qualitype, descr, context)
-	defineOperatorsWithStructArgument( node, context)
-	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
-	print_section( "Typedefs", descr.typedef)
+	traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
 function typesystem.generic_instance_type( node, context, generic_instancelist)
-	table.insert( generic_instancelist, utils.traverseRange( typedb, node, {1,1}, context)[1] )
+	table.insert( generic_instancelist, {type=utils.traverseRange( typedb, node, {1,1}, context)[1]} )
 	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
 end
 function typesystem.generic_instance_dimension( node, context, generic_instancelist)
@@ -2132,20 +2195,7 @@ function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
-	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
-	addContextTypeConstructorPair( qualitype.lval)
-	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
-	                 structsize=0, llvmtype="", symbol=descr.symbol, interfaces={}}
-	-- Traversal in two passes, first type and variable declarations, then method definitions
-	utils.traverseRange( typedb, node, {2,#node.arg}, context, 1)
-	utils.traverseRange( typedb, node, {2,#node.arg}, context, 2)
-	descr.size = context.structsize
-	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
-	defineClassConstructors( node, qualitype, descr, context)
-	defineOperatorsWithStructArgument( node, context)
-	defineInheritedInterfaces( node, context, qualitype.lval)
-	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
+	traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
 function typesystem.generic_classdef( node, context)
 	local typnam = node.arg[1].value

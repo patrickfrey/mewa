@@ -8,7 +8,6 @@ private function fibonacci int( int n)
 		a = b;
 		b = tmp;
 	}
-	class A {}
 	var int i1 = 0;
         var int i2 = 1;
         var int i = 0;

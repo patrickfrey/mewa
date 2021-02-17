@@ -396,7 +396,7 @@ Otherwise the first return value is the context-type of the resuls types and the
 <a name="type_name"/>
 
 ### typedb:type_name
-Get the name of the type as it was specified as argument of 'typedb:def_type'.
+Get the name of the type as it was specified as name argument (second) of 'typedb:def_type'.
 
 #### Parameter
 | #          | Name   | Type              | Description                      |
