@@ -241,9 +241,10 @@ function interfaceMethodCallConstructor( loadfmt, callfmt, rtype)
 		return constructorStruct( out, code .. utils.constructor_format( callfmt, subst, callable.register))
 	end
 end
--- Constructor for a recursive memberwise assignment of a tree structure (initializing a "struct")
-function memberwiseInitStructureConstructor( node, thisTypeId, members)
+-- Constructor for a memberwise assignment of a tree structure (initializing a "struct")
+function memberwiseInitStructConstructor( node, thisTypeId, members)
 	return function( this, args)
+		io.stderr:write("++++ CALL memberwiseInitStructConstructor\n")
 		args = args[1] -- args contains one list node
 		if #args ~= #members then 
 			utils.errorMessage( node.line, "Number of elements %d in structure do not match for '%s' [%d]", #args, typedb:type_string( thisTypeId), #members)
@@ -263,6 +264,34 @@ function memberwiseInitStructureConstructor( node, thisTypeId, members)
 		return rt
 	end
 end
+-- Constructor for a memberwise assignment of a tree structure (initializing an "array")
+function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
+	return function( this, args)
+		io.stderr:write("++++ CALL memberwiseInitArrayConstructor\n")
+		args = args[1] -- args contains one list node
+		if #args > #members then 
+			utils.errorMessage( node.line, "Number of elements %d in structure is bigger than the number of elements in '%s' [%d]",
+						#args, typedb:type_string( thisTypeId), nofElements)
+		end
+		local qualitype = qualiTypeMap[ thisTypeId]
+		local descr = typeDescriptionMap[ thisTypeId]
+		local descr_element = typeDescriptionMap[ elementTypeId]
+		local callable = getCallableContext()
+		local this_inp,this_code = constructorParts( this)
+		local rt = constructorStruct( this_inp, this_code)
+		for ai=1,#args do
+			local out = callable.register()
+			local code = utils.constructor_format( descr.loadelemref, {out = out, this = this_inp, index=ai-1}, callable.register)
+			local reftype = referenceTypeMap[ elementTypeId]
+			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[ai]})
+			rt.code = rt.code .. maparg.constructor.code
+		end
+		if #args < #members then
+			local fmtdescr = {element = descr_element.llvmtype, enter=callable.label(), begin=callable.label(), ["end"]=callable.label(), index=#args}
+			rt.code = rt.code .. utils.constructor_format( descr.ctor_rest, fmtdescr, callable.register)
+		end
+	end
+end
 -- Map an argument to a requested parameter type, creating a local variable if not possible otherwise
 function tryCreateParameter( node, callable, typeId, arg)
 	local constructor,llvmtype,weight = tryGetParameterConstructor( node, typeId, arg)
@@ -277,7 +306,7 @@ function tryCreateParameter( node, callable, typeId, arg)
 		return tryApplyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", {arg})
 	end
 end
--- Constructor for a recursive application of an operator with a tree structure as argument (initializing a "class" or a multiargument operator application)
+-- Constructor for an application of an operator with a tree structure as argument (initializing a "class" or a applying a multiargument operator)
 function resolveOperatorConstructor( node, thisTypeId, opr)
 	return function( this, args)
 		local rt = {}
@@ -628,15 +657,15 @@ function defineScalarConstructors( qualitype, descr)
 	defineScalarDestructors( qualitype, descr)
 end
 -- Define constructors for implicitely defined array types (when declaring a variable int a[30], then a type int[30] is implicitely declared) 
-function defineArrayConstructors( node, qualitype, descr, memberTypeId)
+function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 	definePointerConstructors( qualitype, descr)
 
 	instantCallableContext = createCallableContext( node.scope, nil)
-	local c_memberTypeId = constTypeMap[ memberTypeId] or memberTypeId
-	local r_memberTypeId = referenceTypeMap[ memberTypeId]
-	if not r_memberTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
-	local ths = {type=r_memberTypeId, constructor={out="%ths"}}
-	local oth = {type=c_memberTypeId, constructor={out="%oth"}}
+	local c_elementTypeId = constTypeMap[ elementTypeId] or elementTypeId
+	local r_elementTypeId = referenceTypeMap[ elementTypeId]
+	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
+	local ths = {type=r_elementTypeId, constructor={out="%ths"}}
+	local oth = {type=c_elementTypeId, constructor={out="%oth"}}
 	local init = tryApplyCallable( node, ths, ":=", {} )
 	local initcopy = tryApplyCallable( node, ths, ":=", {oth} )
 	local assign = tryApplyCallable( node, ths, "=", {oth} )
@@ -646,6 +675,7 @@ function defineArrayConstructors( node, qualitype, descr, memberTypeId)
 		defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
 	end
 	if initcopy then
+		io.stderr:write("++++ CALL defineArrayConstructors INITCOPY " .. mewa.tostring({initcopy,typedb:type_string(qualitype.rval)}) .. "\n")
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=initcopy.constructor.code}))
 		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
@@ -657,6 +687,11 @@ function defineArrayConstructors( node, qualitype, descr, memberTypeId)
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=destroy.constructor.code}))
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
+	end
+	if init and assign then
+		io.stderr:write("++++ STEP init and assign" .. "\n")
+		local arconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, c_elementTypeId, arsize)
+		defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, arconstructor)
 	end
 	instantCallableContext = nil
 end
@@ -714,8 +749,8 @@ function defineStructConstructors( node, qualitype, descr, context)
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
-	end
-	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseInitStructureConstructor( node, qualitype.lval, context.members))
+	end	
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseInitStructConstructor( node, qualitype.lval, context.members))
 	typedb:def_reduction( anyStructPointerType, qualitype.pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( anyConstStructPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.pval, anyStructPointerType, nil, tag_pointerReinterpretCast)
@@ -810,17 +845,16 @@ function defineOperatorsWithStructArgument( node, context)
 	end
 end
 -- Define index operators for pointers to first class citizen scalar types
-function defineIndexOperators( element_qualitype, pointer_descr)
+function defineArrayIndexOperators( resTypeId, arTypeId, descr)
 	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
-		defineCall( element_qualitype.rval, element_qualitype.pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
-		defineCall( element_qualitype.c_rval, element_qualitype.c_pval, "[]", {index_type}, callConstructor( pointer_descr.index[ index_typnam]))
+		defineCall( resTypeId, arTypeId, "[]", {index_type}, callConstructor( descr.index[ index_typnam]))
 	end
 end
 -- Define pointer comparison operators if defined in the type description
-function definePointerOperators( priv_c_pval, c_pval, pointer_descr)
+function definePointerCompareOperators( qualitype, pointer_descr)
 	for operator,operator_fmt in pairs( pointer_descr.cmpop) do
-		defineCall( scalarBooleanType, c_pval, operator, {c_pval}, callConstructor( operator_fmt))
-		if priv_c_pval then defineCall( scalarBooleanType, priv_c_pval, operator, {c_pval}, callConstructor( operator_fmt)) end
+		defineCall( scalarBooleanType, qualitype.c_pval, operator, {qualitype.c_pval}, callConstructor( operator_fmt))
+		if qualitype.priv_c_pval then defineCall( scalarBooleanType, qualitype.priv_c_pval, operator, {qualitype.c_pval}, callConstructor( operator_fmt)) end
 	end
 end
 -- Define built-in type conversions for first class citizen scalar types
@@ -911,28 +945,27 @@ function addContextTypeConstructorPair( val)
 end
 -- This function checks if an array type defined by element type and size already exists and creates it implicitely if not, return the array type handle 
 function implicitDefineArrayType( node, elementTypeId, arsize)
-	local element_sep = typeQualiSepMap[ elementTypeId]
+	io.stderr:write("++++ CALL implicitDefineArrayType " .. typedb:type_string(elementTypeId) .. "[" .. arsize .. "]\n")
 	local descr = llvmir.arrayDescr( typeDescriptionMap[ elementTypeId], arsize)
 	local typnam = "[" .. arsize .. "]"
-	local qualitypnam = element_sep.qualifier .. typnam
-	local typkey = element_sep.lval .. typnam
-	local lval = arrayTypeMap[ typkey]
-	local rt
-	if lval then
-		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
-		rt = typedb:get_type( element_sep.lval, qualitypnam)
-		typedb:scope( scopebk)
+	local typkey = elementTypeId .. typnam
+	local arrayTypeId = arrayTypeMap[ typkey]
+	if arrayTypeId then
+		return arrayTypeId
 	else
-		local scopebk = typedb:scope( typedb:type_scope( element_sep.lval))
-		local qualitype = defineQualifiedTypes( node, element_sep.lval, typnam, descr)
-		defineRValueReferenceTypes( element_sep.lval, typnam, descr, qualitype)
-		defineArrayConstructors( node, qualitype, descr, elementTypeId)
-		rt = typedb:get_type( element_sep.lval, qualitypnam)
+		local scopebk = typedb:scope( typedb:type_scope( elementTypeId))
+		local qualitype = defineQualifiedTypes( node, elementTypeId, typnam, descr)
+		local qualitype_element = qualiTypeMap[ typeQualiSepMap[ elementTypeId].lval]
+		arrayTypeId = qualitype.lval
+		defineRValueReferenceTypes( elementTypeId, typnam, descr, qualitype)
+		defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
+		arrayTypeMap[ typkey] = arrayTypeId
+		definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
+		defineArrayIndexOperators( qualitype_element.rval, qualitype.rval, descr)
+		defineArrayIndexOperators( qualitype_element.c_rval, qualitype.c_rval, descr)
 		typedb:scope( scopebk)
-		arrayTypeMap[ typkey] = qualitype.lval
-		definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+		return arrayTypeId
 	end
-	return rt
 end
 function getFrame()
 	local rt = typedb:this_instance( "frame")
@@ -1215,7 +1248,9 @@ function initBuiltInTypes()
 	if not stringPointerType then utils.errorMessage( 0, "No i8 type defined suitable to be used for free string constants)") end
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
-		defineIndexOperators( scalarQualiTypeMap[ typnam], llvmir.pointerDescr( scalar_descr))
+		local scalar_pointerdescr = llvmir.pointerDescr( scalar_descr)
+		defineArrayIndexOperators( scalarQualiTypeMap[ typnam].rval, scalarQualiTypeMap[ typnam].pval, scalar_pointerdescr)
+		defineArrayIndexOperators( scalarQualiTypeMap[ typnam].c_rval, scalarQualiTypeMap[ typnam].c_pval, scalar_pointerdescr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
 		defineBuiltInTypeOperators( typnam, scalar_descr)
 	end
@@ -1340,6 +1375,7 @@ function tryGetParameterReductionConstructor( node, redu_type, operand)
 end
 -- Try to get the constructor,llvm type and weight of an explicitely specified parameter type
 function tryGetParameterConstructor( node, redu_type, operand)
+	io.stderr:write("++++ CALL tryGetParameterConstructor " .. typedb:type_string(redu_type) .. " <- " .. typedb:type_string(operand.type) .. "\n")
 	local constructor,weight = tryGetParameterReductionConstructor( node, redu_type, operand)
 	if weight then
 		local vp = typeDescriptionMap[ redu_type]
@@ -1374,6 +1410,10 @@ function getRequiredTypeConstructor( node, redu_type, operand, tagmask)
 end
 -- Get the best matching item from a list of items by weighting the matching of the arguments to the item parameter types
 function selectItemsMatchParameters( node, items, args, this_constructor)
+	io.stderr:write("++++ CALL selectItemsMatchParameters " .. mewa.tostring({items,args}) .. "\n")
+	for ii,item in ipairs(items) do
+		io.stderr:write("++++ CALL selectItemsMatchParameters ITEM " .. typedb:type_string(item) .. "\n")
+	end
 	local bestmatch = {}
 	local bestweight = nil
 	for ii,item in ipairs(items) do
@@ -1437,6 +1477,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 end
 -- Find a callable specified by name in the context of the 'this' operand
 function findApplyCallable( node, this, callable, args)
+	io.stderr:write("++++ CALL findApplyCallable " .. typedb:type_string(this.type) .. " " .. callable .. "( " .. utils.typeListString( typedb, args, " ,") .. ")\n")
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 
@@ -1731,7 +1772,7 @@ function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualit
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
 	descr.methods = context.methods
 	descr.const = context.const
-	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 	defineInterfaceConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
@@ -1747,7 +1788,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
 	descr.size = context.structsize
-	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
 	defineInheritedInterfaces( node, context, qualitype.lval)
@@ -1759,7 +1800,7 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=descr.symbol}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
 	descr.size = context.structsize
-	definePointerOperators( qualitype.priv_c_pval, qualitype.c_pval, typeDescriptionMap[ qualitype.c_pval])
+	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 	defineStructConstructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 end
@@ -1950,26 +1991,26 @@ function typesystem.typespec_generic( node, qualifier)
 	local inst_arg = arg[ #arg]
 	table.remove( arg, #arg)
 	local genericType = resolveTypeFromNamePath( node, "", arg)
-	local generic_descr = typeDescriptionMap[ genericType]
-	if generic_descr.class == "generic_class" or descr.class == "generic_struct" then
-		local generic_arg = matchGenericParameter( node, genericType, generic_descr.generic.param, inst_arg)
+	local genericDescr = typeDescriptionMap[ genericType]
+	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
+		local generic_arg = matchGenericParameter( node, genericType, genericDescr.generic.param, inst_arg)
 		local instanceid = getGenericParameterIdString( generic_arg)
-		local instanceType = generic_descr.instancemap[ instanceid]
+		local instanceType = genericDescr.instancemap[ instanceid]
 		if not instanceType then
 			local declContextTypeId = typedb:type_context( genericType)
 			local typnam = getGenericTypeName( genericType, generic_arg)
 			local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
 			instanceType = qualitype.lval
-			defineGenericParameterAliases( instanceType, generic_descr.generic.param, generic_arg)
-			if descr.class == "generic_class" then
+			defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
+			if genericDescr.class == "generic_class" then
 				traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, 3)
-			elseif descr.class == "generic_struct" then
+			elseif genericDescr.class == "generic_struct" then
 				traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, 3)
 			end
 		end
 		return instanceType
 	else
-		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", type:type_string(genericType))
+		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", typedb:type_string(genericType))
 	end
 end
 function typesystem.typespec_key( node, qualifier)

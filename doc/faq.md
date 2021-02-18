@@ -43,7 +43,7 @@ This section of the FAQ answers some broader questions about what one can do wit
 
 ### What is _Mewa_?
 _Mewa_ is a tool for the prototyping of compiler frontends for strongly typed languages.
-It aims to support the mapping of a programming language to a intermediate representation in the simplest way leaving all analytical optimization steps to the backend. 
+It aims to support the mapping of a programming language to an intermediate representation in the simplest way leaving all analytical optimization steps to the backend. 
 
 <a name="targetAudience"/>
 
@@ -96,7 +96,7 @@ Unlike in most other compiler frontend frameworks the tree is meant to be traver
 
 ### How to handle scopes?
 
-Scope is part of the type database and represented as pair of integer numbers, the first element specifying the start of the scope and the second the first element after the last element of the scope. Every definition has such a scope definition attached. Depending on the current scope step (a integer number) only the subset of definitions having a scope covering it are visible when resolving a type. The current scope and the current scope step are set by the tree traversal function before calling the function attached to a node. The current scope is set to its previous value after calling the function attached to a node.
+Scope is part of the type database and represented as pair of integer numbers, the first element specifying the start of the scope and the second the first element after the last element of the scope. Every definition has such a scope definition attached. Depending on the current scope step (an integer number) only the subset of definitions having a scope covering it are visible when resolving a type. The current scope and the current scope step are set by the tree traversal function before calling the function attached to a node. The current scope is set to its previous value after calling the function attached to a node.
 
 <a name="scopeInstanceAndAllocators"/>
 
@@ -180,7 +180,7 @@ The decision for data types used to implement constants is more complex as it ac
 ### How to implement callables like functions, procedures and methods?
 
 This is tricky because of issues around scope and visibility. There are two scopes involved the visibility of the function for callers and the scope of the codeblock that executed the callable. Furthermore we have to do some tricks to do the declaration in a predecessing pass of the code block traversal for enabling recursion (declare the function before its code, so it can be used in the code).
-That is why the whole thing is quirky here. See function typesystem.callablebody in typesystem.lua in example "language1".
+That is why the whole thing is quirky here. See function typesystem.callablebody in typesystem.lua of the example "language1".
 
 <a name="functionReturn"/>
 

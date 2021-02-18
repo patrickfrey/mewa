@@ -5,7 +5,7 @@ set -e
 
 . tests/luaenv.sh
 LUABIN=`which $1`
-TESTID=$2
+TESTID=`echo $2 | tr a-z A-Z`
 
 verify_test_result() {
 	TNAM=$1
@@ -40,44 +40,21 @@ if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xLANG1" ] ; then
 chmod +x build/language1.compiler.lua
 fi
 
-if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xFIBO" ] ; then
-echo "Lua test (fibo) Compile and run program examples/language1/sources/fibo.prg"
-build/language1.compiler.lua -d build/language1.debug.fibo.out -o build/language1.compiler.fibo.out examples/language1/sources/fibo.prg
-verify_test_result "Lua test (fibo debug) compiling example program with language1 compiler"  build/language1.debug.fibo.out tests/language1.debug.fibo.exp
-verify_test_result "Lua test (fibo output) compiling example program with language1 compiler"  build/language1.compiler.fibo.out tests/language1.compiler.fibo.exp
+for tst in fibo tree array class generic
+do
+	TST=`echo $tst | tr a-z A-Z`
+	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then
+		echo "* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`
+		echo "Compile and run program examples/language1/sources/$tst.prg"
+		build/language1.compiler.lua -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.out examples/language1/sources/$tst.prg
+		verify_test_result "Lua test ($tst debug) compiling example program with language1 compiler" \
+						build/language1.debug.$tst.out tests/language1.debug.$tst.exp
+		verify_test_result "Lua test ($tst output) compiling example program with language1 compiler" \
+						build/language1.compiler.$tst.out tests/language1.compiler.$tst.exp
 
-lli build/language1.compiler.fibo.out > build/language1.run.fibo.out
-verify_test_result "Lua test (fibo run) run program translated with language1 compiler"  build/language1.run.fibo.out tests/language1.run.fibo.exp
-fi
-
-if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xTREE" ] ; then
-echo "Lua test (tree) Compile and run program examples/language1/sources/tree.prg"
-build/language1.compiler.lua -d build/language1.debug.tree.out -o build/language1.compiler.tree.out examples/language1/sources/tree.prg
-verify_test_result "Lua test (tree debug) compiling example program with language1 compiler"  build/language1.debug.tree.out tests/language1.debug.tree.exp
-verify_test_result "Lua test (tree output) compiling example program with language1 compiler"  build/language1.compiler.tree.out tests/language1.compiler.tree.exp
-
-lli build/language1.compiler.tree.out > build/language1.run.tree.out
-verify_test_result "Lua test (tree run) output running program translated with language1 compiler"  build/language1.run.tree.out tests/language1.run.tree.exp
-fi
-
-if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xCLASS" ] ; then
-echo "Lua test (class) Compile and run program examples/language1/sources/class.prg"
-build/language1.compiler.lua -d build/language1.debug.class.out -o build/language1.compiler.class.out examples/language1/sources/class.prg
-verify_test_result "Lua test (class debug) compiling example program with language1 compiler" build/language1.debug.class.out tests/language1.debug.class.exp
-verify_test_result "Lua test (class output) compiling example program with language1 compiler"  build/language1.compiler.class.out tests/language1.compiler.class.exp
-
-lli build/language1.compiler.class.out > build/language1.run.class.out
-verify_test_result "Lua test (class run) output running program translated with language1 compiler"  build/language1.run.class.out tests/language1.run.class.exp
-fi
-
-if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xGENERIC" ] ; then
-echo "Lua test (generic) Compile and run program examples/language1/sources/generic.prg"
-build/language1.compiler.lua -d build/language1.debug.generic.out -o build/language1.compiler.generic.out examples/language1/sources/generic.prg
-verify_test_result "Lua test (generic debug) compiling example program with language1 compiler" build/language1.debug.generic.out tests/language1.debug.generic.exp
-verify_test_result "Lua test (generic output) compiling example program with language1 compiler"  build/language1.compiler.generic.out tests/language1.compiler.generic.exp
-
-lli build/language1.compiler.generic.out > build/language1.run.generic.out
-verify_test_result "Lua test (generic run) output running program translated with language1 compiler"  build/language1.run.generic.out tests/language1.run.generic.exp
-fi
+		lli build/language1.compiler.$tst.out > build/language1.run.$tst.out
+		verify_test_result "Lua test ($tst run) run program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
+	fi
+done
 
 

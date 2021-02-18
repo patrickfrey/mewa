@@ -1,3 +1,5 @@
+// Testing class construction and access and interface calls
+
 extern "C" procedure printf( const byte^ fmt ...);
 
 interface Object

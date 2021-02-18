@@ -1,3 +1,5 @@
+// Testing simple structures, recursive structures and recursive initialization
+
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" procedure putchar( const byte);
 extern "C" function malloc byte^( long);

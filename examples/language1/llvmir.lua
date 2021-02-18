@@ -53,6 +53,14 @@ local arrayTemplate = {
 			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size})\n"
 		.. "br i1 %r3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
+	ctor_rest = "{enter}:\nbr label %{begin}\n{begin}:\n"
+		.. "{1} = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}), %{enter}], [{2}, %{begin}]\n"
+		.. "{ctors}{2} = getelementptr inbounds {element}, {element}* {1}, i64 1\n"
+		.. "{3} = icmp eq {element}* {2}, "
+			.. "getelementptr inbounds ({element}, {element}*"
+			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 0), i64 {size})\n"
+		.. "br i1 {3}, label %{end}, label %{begin}\n"
+		.. "{end}:\n",
 	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{element}( {element}* %ths_ar, {element}* %oth_ar) alwaysinline {\n"
 		.. "enter:\nbr label %loop\nloop:\n"
 		.. "%ths = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
@@ -75,6 +83,8 @@ local arrayTemplate = {
 	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( {element}* {this}, {element}* {arg1})\n",
 	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	index = {
 		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
 		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
@@ -235,13 +245,10 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	local arrayDescrKey = llvmElementType .. "#" .. arraySize
 	local arrayDescr = arrayDescrMap[ arrayDescrKey]
 	if not arrayDescr then
-		local dtorElement = utils.template_format( elementDescr.dtor or "", {this="%ptr"})
-		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType,size=arraySize,dtors=dtorElement})
+		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType,size=arraySize})
 		arrayDescr.size = elementDescr.size * arraySize
 		arrayDescr.align = elementDescr.align
 		arrayDescrMap[ arrayDescrKey] = arrayDescr;
-		if elementDescr.ctor then print_section( "Auto", arrayDescr.ctorproc) else arrayDescr.ctor = nil end
-		if elementDescr.dtor then print_section( "Auto", arrayDescr.dtorproc) else arrayDescr.dtor = nil end
 	end
 	return arrayDescr
 end

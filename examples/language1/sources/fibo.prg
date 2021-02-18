@@ -1,3 +1,5 @@
+// Testing free functions, local functions, calculating the 20th fibonacci number
+
 extern "C" procedure printf( const byte^ fmt, int arg);
 
 private function fibonacci int( int n)
