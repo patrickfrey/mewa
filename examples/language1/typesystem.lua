@@ -67,7 +67,7 @@ local stringConstantMap = {}    	-- maps string constant values to a structure w
 local arrayTypeMap = {}			-- maps the pair lval,size to the array type lval for an array size 
 local varargFuncMap = {}		-- maps types to true for vararg functions/procedures
 local varargParameterMap = {}		-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to in a function call
-local instantCallableContext = nil		-- callable structure temporarily assigned for implicitely generated code (constructors,destructors,assignments,etc.)
+local instantCallableContext = nil		-- callable structure temporarily assigned for implicitly generated code (constructors,destructors,assignments,etc.)
 
 -- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
 function createCallableContext( scope, rtype)
@@ -656,7 +656,7 @@ function defineScalarConstructors( qualitype, descr)
 	definePointerConstructors( qualitype, descr)
 	defineScalarDestructors( qualitype, descr)
 end
--- Define constructors for implicitely defined array types (when declaring a variable int a[30], then a type int[30] is implicitely declared) 
+-- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 	definePointerConstructors( qualitype, descr)
 
@@ -817,7 +817,7 @@ function defineInheritedInterfaces( node, context, classTypeId)
 					{classname=cdescr.symbol, interfacename=idescr.symbol, llvmtype=vmtstr}))
 	end
 end
--- Get the type assigned to the variable 'this' or implicitely added to the context of a method in its body
+-- Get the type assigned to the variable 'this' or implicitly added to the context of a method in its body
 function getFunctionThisType( private, const, thisType)
 	if private == true then thisType = privateTypeMap[ thisType] end
 	if const == true then thisType = constTypeMap[ thisType] end
@@ -943,7 +943,7 @@ function addContextTypeConstructorPair( val)
 		end
 	end
 end
--- This function checks if an array type defined by element type and size already exists and creates it implicitely if not, return the array type handle 
+-- This function checks if an array type defined by element type and size already exists and creates it implicitly if not, return the array type handle 
 function implicitDefineArrayType( node, elementTypeId, arsize)
 	io.stderr:write("++++ CALL implicitDefineArrayType " .. typedb:type_string(elementTypeId) .. "[" .. arsize .. "]\n")
 	local descr = llvmir.arrayDescr( typeDescriptionMap[ elementTypeId], arsize)
@@ -1001,7 +1001,7 @@ function getFrameCodeBlock( code)
 		return code
 	end
 end
--- Hardcoded variable definition (variable not declared in source, but implicitely declared, for example the 'this' pointer in a method body context)
+-- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( typeId, name, reg)
 	local var = typedb:def_type( 0, name, reg)
 	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)

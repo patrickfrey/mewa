@@ -419,7 +419,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					else if (state == ParseProductionElement)
 					{
 						if (!rt.lexer.lexemId( lexem.value())) rt.lexer.defineLexem( lexem.value());
-						rt.prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), false/*not a symbol, raw string implicitely defined*/));
+						rt.prodlist.back().right.push_back( ProductionNodeDef( lexem.value(), false/*not a symbol, raw string implicitly defined*/));
 					}
 					else if (state == ParseCallArg)
 					{

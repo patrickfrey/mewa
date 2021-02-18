@@ -3,7 +3,7 @@
 ## Description
 This is a multiparadigm general purpose strongly typed programming language with the following features:
 
- * Structures (plain data stuctures without methods, implicitely defined assignment operator)
+ * Structures (plain data stuctures without methods, implicitly defined assignment operator)
  * Interfaces
  * Classes (custom defined constructors, destructors, operators, methods, inheritance of classes and interfaces)
  * Free procedures and functions

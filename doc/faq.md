@@ -295,7 +295,7 @@ for each class type.
 Private methods are then defined in the context of ```priv_rval``` or ```priv_c_rval``` if they are const. 
 Public methods in the contrary are then defined in the context of ```rval``` or ```c_rval``` if they are const. 
 
-In the body of a method the implicitely defined ```this``` pointer is set to be reducible to its private pointer type.
+In the body of a method the implicitly defined ```this``` pointer is set to be reducible to its private pointer type.
 So is the implicit reference ```*this``` added as private reference to the context used for resolving types there.
 If defined like this then private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exist no reduction from the public context type to the private context type.
 

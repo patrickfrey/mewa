@@ -102,7 +102,7 @@ This function was designed to support the mapping of AST nodes to scope steps in
 | Return |          | integer           | integer describing the (previously defined) current scope step |
 
 #### Remark
-The call of [typedb:scope](#scope) with parameter sets the scope step implicitely to the start of the scope.
+The call of [typedb:scope](#scope) with parameter sets the scope step implicitly to the start of the scope.
 _If you are not relying on a scope step different from that, you don't have to call scope step for every scope step value provided by the grammar description_.
 
 
@@ -457,7 +457,7 @@ Get the scope where a type has been defined.
 Exits with error if the type passed is not valid.
 #### Note
 Used to enforce some stricter rules for the visibility of certain objects, e.g. restrict access of variables in locally declared functions to a declared capture, the own stack frame and global variables. 
-Also used for binding implicitely defined types to the scope of the type they are bound to.
+Also used for binding implicitly defined types to the scope of the type they are bound to.
 
 
 <a name="introspection"/>
