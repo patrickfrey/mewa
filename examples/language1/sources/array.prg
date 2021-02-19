@@ -5,11 +5,10 @@ extern "C" procedure printf( const byte^ fmt ...);
 class Array
 {
 	constructor(){}
-	constructor( const float& ar_[ 5])
+	constructor( const float[ 5]& ar_)
 	{
 		m_ar = ar_;
 	}
-
 	public operator [] float& (uint idx)
 	{
 		return m_ar[ idx];
@@ -19,11 +18,11 @@ class Array
 		return m_ar[ idx];
 	}
 
-	float m_ar[ 5];
+	float[5] m_ar;
 }
 
 main {
-	var Array array = {1,2,3,4,5};
+	var Array array = {1.1,2.1,3.1,4.1,5.1};
 	array[ 1] = 42;
 	array[ 2] = -1.9;
 	array[ 3] = 3.124;

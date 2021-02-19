@@ -86,29 +86,27 @@ namespace_definition	= namespacedefinition								(definition 1)
 typename/L1		= IDENT
 			| IDENT "::" typename
 			;
-typespec/L1		= typename									(typespec "")
-			| typename "<" generic_instance ">"						(typespec_generic "")
-			| "const" typename								(typespec "const ")
-			| "const" typename "<" generic_instance ">"					(typespec_generic "const ")
-			| typename "&"									(typespec "&")
-			| typename "<" generic_instance ">" "&"						(typespec_generic "&")
-			| "const" typename "&"								(typespec "const&")
-			| "const" typename "<" generic_instance ">" "&"					(typespec_generic "const&")
-			| typename "^"									(typespec "^")
-			| typename "<" generic_instance ">" "^"						(typespec_generic "^")
-			| "const" typename "^"								(typespec "const^")
-			| "const" typename "<" generic_instance ">" "^"					(typespec_generic "const^")
-			| typename "^" "&"								(typespec "^&")
-			| typename "<" generic_instance ">" "^" "&"					(typespec_generic "^&")
-			| "const" typename "^" "&"							(typespec "const^&")
-			| "const" typename "<" generic_instance ">" "^" "&"				(typespec_generic "const^&")
-			| "any" "class" "^"								(typespec_key "class^")
-			| "any" "const" "class" "^"							(typespec_key "const class^")
-			| "any" "struct" "^"								(typespec_key "struct^")
-			| "any" "const" "struct" "^"							(typespec_key "const struct^")
+typehdr/L1		= typename									(typehdr "")
+			| typename "<" generic_instance ">"						(typehdr_generic "")
+			| "const" typename								(typehdr "const ")
+			| "const" typename "<" generic_instance ">"					(typehdr_generic "const ")
+			| typename "^"									(typehdr "^")
+			| typename "<" generic_instance ">" "^"						(typehdr_generic "^")
+			| "const" typename "^"								(typehdr "const^")
+			| "const" typename "<" generic_instance ">" "^"					(typehdr_generic "const^")
+			| "any" "class" "^"								(typehdr_any "any class^")
+			| "any" "const" "class" "^"							(typehdr_any "any const class^")
+			| "any" "struct" "^"								(typehdr_any "any struct^")
+			| "any" "const" "struct" "^"							(typehdr_any "any const struct^")
 			;
-typepath/L1		= typename									(typespec "")
-			| typename "<" generic_instance ">"						(typespec_generic "")
+typedim/L1		= typehdr
+			| typehdr "[" expression "]"							(typedim_array)
+			;
+typespec/L1		= typedim
+			| typedim "&"									(typespec_ref)
+			;
+typepath/L1		= typename									(typehdr "")
+			| typename "<" generic_instance ">"						(typehdr_generic "")
 			;
 typedefinition		= "typedef" typepath IDENT							(>>typedef)
 			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype)
@@ -226,8 +224,6 @@ statement/L1		= structdefinition								(definition)
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
 			| typespec IDENT "=" expression							(>>vardef_assign)
-			| typespec IDENT "[" expression "]"						(>>vardef_array)
-			| typespec IDENT "[" expression "]" "=" expression				(>>vardef_array_assign)
 			;
 expression/L1		= "{" expressionlist "}"							(structure)
 			| "{" "}"									(structure)

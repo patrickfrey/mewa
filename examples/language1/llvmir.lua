@@ -180,6 +180,18 @@ llvmir.interfaceTemplate = {
 	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
 }
 
+llvmir.anyClassDescr = {
+	llvmtype = "i8",
+	scalar = false,
+	class = "class"
+}
+
+llvmir.anyStructDescr = {
+	llvmtype = "i8",
+	scalar = false,
+	class = "struct"
+}
+
 llvmir.genericClassDescr = {
 	class = "generic_class"
 }

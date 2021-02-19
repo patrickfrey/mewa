@@ -6,12 +6,12 @@ local bcd = require "bcd"
 local typedb = mewa.typedb()
 local typesystem = {}
 
-local tag_typeDeduction = 1		-- Inheritance relation
-local tag_typeDeclaration = 2		-- Type declaration relation (e.g. variable to data type)
-local tag_typeConversion = 3		-- Type conversion of parameters
-local tag_typeNamespace = 4		-- Type deduction for data types (e.g. namespaces)
-local tag_pointerReinterpretCast = 5 	-- Type deduction only allowed in an explicit "cast" operation
-local tag_typeAlias = 6			-- Type that describes a substitution (as used for generic parameters)
+local tag_typeAlias = 1			-- Type that describes a substitution (as used for generic parameters)
+local tag_typeDeduction = 2		-- Inheritance relation
+local tag_typeDeclaration = 3		-- Type declaration relation (e.g. variable to data type)
+local tag_typeConversion = 4		-- Type conversion of parameters
+local tag_typeNamespace = 5		-- Type deduction for data types (e.g. namespaces)
+local tag_pointerReinterpretCast = 6	-- Type deduction only allowed in an explicit "cast" operation
 local tagmask_declaration = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeclaration)
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration)
 local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion)
@@ -67,7 +67,8 @@ local stringConstantMap = {}    	-- maps string constant values to a structure w
 local arrayTypeMap = {}			-- maps the pair lval,size to the array type lval for an array size 
 local varargFuncMap = {}		-- maps types to true for vararg functions/procedures
 local varargParameterMap = {}		-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to in a function call
-local instantCallableContext = nil		-- callable structure temporarily assigned for implicitly generated code (constructors,destructors,assignments,etc.)
+local instantCallableContext = nil	-- callable structure temporarily assigned for implicitly generated code (constructors,destructors,assignments,etc.)
+local hardcodedTypeMap = {}		-- maps some hardcoded type names to their id
 
 -- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
 function createCallableContext( scope, rtype)
@@ -114,7 +115,7 @@ function assignConstructor( fmt)
 		local arg_inp,arg_code = constructorParts( arg[1])
 		local subst = {arg1 = arg_inp, this = this_inp}
 		code = code .. this_code .. arg_code
-		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, callable.register))
+ 		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
 -- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
@@ -267,7 +268,7 @@ end
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( this, args)
 		args = args[1] -- args contains one list node
-		if #args > #members then 
+		if #args > nofElements then
 			utils.errorMessage( node.line, "Number of elements %d in structure is bigger than the number of elements in '%s' [%d]",
 						#args, typedb:type_string( thisTypeId), nofElements)
 		end
@@ -284,10 +285,12 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[ai]})
 			rt.code = rt.code .. maparg.constructor.code
 		end
-		if #args < #members then
-			local fmtdescr = {element = descr_element.llvmtype, enter=callable.label(), begin=callable.label(), ["end"]=callable.label(), index=#args}
+		if #args < nofElements then
+			local fmtdescr = {this=this_inp, element=descr_element.llvmtype,
+			                  enter=callable.label(), begin=callable.label(), ["end"]=callable.label(), index=#args}
 			rt.code = rt.code .. utils.constructor_format( descr.ctor_rest, fmtdescr, callable.register)
 		end
+		return rt
 	end
 end
 -- Map an argument to a requested parameter type, creating a local variable if not possible otherwise
@@ -331,8 +334,7 @@ function resolveOperatorConstructor( node, thisTypeId, opr)
 			end
 		end
 		if #rt == 0 then
-			local argstr = utils.typeListString( typedb, args, ", ")
-			utils.errorMessage( node.line, "No operator '%s' for arguments {%s} found for '%s'", opr, argstr, typedb:type_string( thisTypeId))
+			return nil
 		elseif #rt > 1 then
 			utils.errorMessage( node.line, "Ambiguus reference for constructor of '%s'", typedb:type_string( thisTypeId))
 		else
@@ -372,17 +374,22 @@ function constexprLlvmConversion( typeid)
 	return function(arg) return tostring(arg) end
 end
 -- Constant expression/value types
-local constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- const expression integers implemented as arbitrary precision BCD numbers
-local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")		-- const expression unsigned integer implemented as arbitrary precision BCD numbers
-local constexprFloatType = typedb:def_type( 0, "constexpr float")		-- const expression floating point numbers implemented as 'double'
-local constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- const expression boolean implemented as Lua boolean
-local constexprNullType = typedb:def_type( 0, "constexpr null")			-- const expression null value implemented as nil
-local constexprStructureType = typedb:def_type( 0, "constexpr struct")		-- const expression tree structure implemented as a list of type/constructor pairs
+local constexprIntegerType = typedb:def_type( 0, "constexpr int")	-- const expression integers implemented as arbitrary precision BCD numbers
+local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")	-- const expression unsigned integer implemented as arbitrary precision BCD numbers
+local constexprFloatType = typedb:def_type( 0, "constexpr float")	-- const expression floating point numbers implemented as 'double'
+local constexprBooleanType = typedb:def_type( 0, "constexpr bool")	-- const expression boolean implemented as Lua boolean
+local constexprNullType = typedb:def_type( 0, "constexpr null")		-- const expression null value implemented as nil
+local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- const expression tree structure implemented as a list of type/constructor pairs
 -- Mapping of constant expression types if used as variable argument parameter where no explicit parameter type defined for the callee
 varargParameterMap[ constexprIntegerType] = {llvmtype="i64",type=constexprIntegerType}
 varargParameterMap[ constexprUIntegerType] = {llvmtype="i64",type=constexprUIntegerType}
 varargParameterMap[ constexprFloatType] = {llvmtype="double",type=constexprFloatType, conv=mewa.llvm_double_tohex}
 varargParameterMap[ constexprBooleanType] = {llvmtype="i1",type=constexprBooleanType}
+-- Mapping of some constant expression type naming
+hardcodedTypeMap[ "constexpr bool"] = constexprBooleanType
+hardcodedTypeMap[ "constexpr uint"] = constexprUIntegerType
+hardcodedTypeMap[ "constexpr int"] = constexprIntegerType
+hardcodedTypeMap[ "constexpr float"] = constexprFloatType
 -- Table listing the accepted constant expression/value types for each scalar type class 
 local typeClassToConstExprTypesMap = {
 	fp = {constexprFloatType,constexprIntegerType,constexprUIntegerType}, 
@@ -640,6 +647,9 @@ function definePointerConstructors( qualitype, descr)
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_copy))
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {}, manipConstructor( pointer_descr.ctor))
+	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
+	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_copy))
+	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {}, manipConstructor( pointer_descr.ctor))
 	defineCall( 0, qualitype.rpval, ":~", {}, constructorStructEmpty)
 end
 function defineScalarDestructors( qualitype, descr)
@@ -651,8 +661,23 @@ function defineScalarConstructors( qualitype, descr)
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))	
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	definePointerConstructors( qualitype, descr)
 	defineScalarDestructors( qualitype, descr)
+end
+-- Define a conversion reduction as implicit const reference object allocation and reduction to it as initialization with the specified ":=" constructor
+function defineConstructionReduction( destType, sourceType, allocfmt, initconstructor)
+	function memberwiseInitConvConstructor( constructor)
+		local callable = getCallableContext()
+		out = callable.register()
+		local alloc = utils.constructor_format( allocfmt, {out=out}, callable.register)
+		local this = {code = alloc, out = out}
+		local args = {constructor}
+		return initconstructor( this, args)
+	end
+	typedb:def_reduction( destType, sourceType, memberwiseInitConvConstructor, tag_typeConversion, rdw_conv)
 end
 -- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
@@ -675,6 +700,7 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 	if initcopy then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=initcopy.constructor.code}))
 		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
+		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
 	if assign then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="assign",ctors=assign.constructor.code}))
@@ -685,9 +711,11 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
-	if init and assign then
-		local arconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, c_elementTypeId, arsize)
-		defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, arconstructor)
+	if init and initcopy then
+		local initconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, c_elementTypeId, arsize)
+		defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, initconstructor)
+		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {constexprStructureType}, initconstructor)
+		defineConstructionReduction( qualitype.c_rval, constexprStructureType, descr.def_local, initconstructor)
 	end
 	instantCallableContext = nil
 end
@@ -728,10 +756,12 @@ function defineStructConstructors( node, qualitype, descr, context)
 	if ctors then
 		print_section( "Auto", utils.template_format( descr.ctorproc, {ctors=ctors}))
 		defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
+		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	end
 	if ctors_copy then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=ctors_copy}))
 		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
+		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
 	if ctors_assign then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="assign",ctors=ctors_assign}))
@@ -740,13 +770,17 @@ function defineStructConstructors( node, qualitype, descr, context)
 	if ctors_elements then
 		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {procname="assign",ctors=ctors_elements,paramstr=paramstr}))
 		defineCall( qualitype.rval, qualitype.rval, ":=", elements, callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})))
+		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", elements, callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})))
 	end
 	if dtors then
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
-	end	
-	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, memberwiseInitStructConstructor( node, qualitype.lval, context.members))
+	end
+	local initconstructor = memberwiseInitStructConstructor( node, qualitype.lval, context.members)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, initconstructor)
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {constexprStructureType}, initconstructor)
+	defineConstructionReduction( qualitype.c_rval, constexprStructureType, descr.def_local, initconstructor)
 	typedb:def_reduction( anyStructPointerType, qualitype.pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( anyConstStructPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( qualitype.pval, anyStructPointerType, nil, tag_pointerReinterpretCast)
@@ -756,8 +790,11 @@ end
 -- Define constructors for 'interface' types
 function defineInterfaceConstructors( node, qualitype, descr, context)
 	definePointerConstructors( qualitype, descr)
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
 end
@@ -1206,10 +1243,6 @@ end
 -- Initialize all built-in types
 function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
-	anyClassPointerType = typedb:def_type( 0, "class^")
-	anyConstClassPointerType = typedb:def_type( 0, "const class^")
-	anyStructPointerType = typedb:def_type( 0, "struct^")
-	anyConstStructPointerType = typedb:def_type( 0, "const struct^")
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( {line=0}, 0, typnam, scalar_descr)
@@ -1234,7 +1267,7 @@ function initBuiltInTypes()
 		end
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
 			local weight = scalarDeductionWeight( scalar_descr.sizeweight)
-			local valueconv = constexprLlvmConversion( qualitype.lval)
+			local valueconv = constexprLlvmConversion( qualitype.c_lval)
 			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return constructorStruct(valueconv(arg)) end, tag_typeDeduction, weight)
 		end
 	end
@@ -1242,12 +1275,27 @@ function initBuiltInTypes()
 	if not scalarIntegerType then utils.errorMessage( 0, "No integer type mapping to i32 defined in built-in scalar types (return value of main)") end
 	if not stringPointerType then utils.errorMessage( 0, "No i8 type defined suitable to be used for free string constants)") end
 
+	local descr_anyclass = utils.template_format( fmt, {symbol="any class"})
+	local qualitype_anyclass = defineQualifiedTypes( {line=0}, 0, "any class", llvmir.anyClassDescr)
+	anyClassPointerType = qualitype_anyclass.pval;
+	anyConstClassPointerType = qualitype_anyclass.c_pval;
+	local qualitype_anystruct = defineQualifiedTypes( {line=0}, 0, "any struct", llvmir.anyStructDescr)
+	anyStructPointerType = qualitype_anystruct.pval;
+	anyConstStructPointerType = qualitype_anystruct.c_pval;
+
+	hardcodedTypeMap[ "any class^"] = anyClassPointerType
+	hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
+	hardcodedTypeMap[ "any struct^"] = anyStructPointerType
+	hardcodedTypeMap[ "any const struct^"] = anyConstStructPointerType
+
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local scalar_pointerdescr = llvmir.pointerDescr( scalar_descr)
-		defineArrayIndexOperators( scalarQualiTypeMap[ typnam].rval, scalarQualiTypeMap[ typnam].pval, scalar_pointerdescr)
-		defineArrayIndexOperators( scalarQualiTypeMap[ typnam].c_rval, scalarQualiTypeMap[ typnam].c_pval, scalar_pointerdescr)
+		local qualitype = scalarQualiTypeMap[ typnam]
+		defineArrayIndexOperators( qualitype.rval, qualitype.pval, scalar_pointerdescr)
+		defineArrayIndexOperators( qualitype.c_rval, qualitype.c_pval, scalar_pointerdescr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
 		defineBuiltInTypeOperators( typnam, scalar_descr)
+		definePointerCompareOperators( qualitype, scalar_pointerdescr)
 	end
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
@@ -1259,7 +1307,9 @@ end
 function applyConversionConstructor( node, typeId, constructor, arg)	
 	if constructor then
 		if (type(constructor) == "function") then
-			return constructor( arg)
+			local rt = constructor( arg)
+			if not rt then utils.errorMessage( node.line, "reduction constructor failed for '%s'", typedb:type_string(typeId)) end
+			return rt
 		elseif arg then
 			utils.errorMessage( node.line, "reduction constructor overwriting previous constructor for '%s'", typedb:type_string(typeId))
 		else
@@ -1355,6 +1405,7 @@ function getDeriveTypeReductionConstructor( redulist, weight, altpath, redu_cons
 	for ri,redu in ipairs(redulist) do
 		if redu.constructor then
 			redu_constructor = redu.constructor( redu_constructor)
+			if not redu_constructor then return nil end
 		end
 	end
 	return redu_constructor,weight
@@ -1415,7 +1466,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 			if nof_params == #args then
 				if #args > 0 then
 					local parameters = typedb:type_parameters( item)
-					for pi=1,#parameters do
+					for pi=1,#parameters do						
 						local param_constructor,param_llvmtype,param_weight = tryGetParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
 						weight = weight + param_weight
@@ -1452,6 +1503,9 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 						call_constructor = this_constructor
 					else
 						call_constructor = item_constructor( this_constructor, param_constructor_ar, param_llvmtype_ar)
+						if not call_constructor then
+							goto skip_to_next
+						end
 					end
 					if bestweight and weight >= bestweight - weightEpsilon then
 						table.insert( bestmatch, {type=item, constructor=call_constructor})
@@ -1462,6 +1516,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 				end
 			end
 		end
+		::skip_to_next::
 	end
 	return bestmatch,bestweight
 end
@@ -1474,6 +1529,7 @@ function findApplyCallable( node, this, callable, args)
 	for ri,redu in ipairs(reductions) do
 		if redu.constructor then
 			this_constructor = redu.constructor( this_constructor)
+			if not this_constructor then return nil end
 		end
 	end
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
@@ -1670,6 +1726,14 @@ function defineClassOperator( node, descr, context)
 	expandContextMethodList( node, descr, context)
 	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
+	defineOperatorAttributes( context, descr)
+end
+-- Define an constructor/destructor
+function defineConstructorDestructor( node, descr, context)
+	expandDescrClassCallTemplateParameter( descr, context)
+	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
+	if constTypeMap[ contextTypeId] then defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr) end
 	defineOperatorAttributes( context, descr)
 end
 -- Define an extern function as callable object with "()" operator implementing the call
@@ -1869,22 +1933,6 @@ function typesystem.vardef_assign( node, context)
 	local arg = utils.traverse( typedb, node, context)
 	return defineVariable( node, context, arg[1], arg[2], arg[3])
 end
-function typesystem.vardef_array( node, context)
-	local arg = utils.traverse( typedb, node, context)
-	local constructor = getConstexprValue( constexprUIntegerType, arg[3].type, arg[3].constructor)
-	if not constructor then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
-	local arsize = constructor:tonumber()
-	local arrayTypeId = implicitDefineArrayType( node, arg[1], arsize)
-	return defineVariable( node, context, arrayTypeId, arg[2], nil)
-end
-function typesystem.vardef_array_assign( node, context)
-	local arg = utils.traverse( typedb, node, context)
-	local constructor = getConstexprValue( constexprUIntegerType, arg[3].type, arg[3].constructor)
-	if not constructor then utils.errorMessage( node.line, "Size of array is not an unsigned integer const expression") end
-	local arsize = constructor:tonumber()
-	local arrayTypeId = implicitDefineArrayType( node, arg[1], arsize)
-	return defineVariable( node, context, arrayTypeId, arg[2], arg[4])
-end
 function typesystem.typedef( node, context)
 	local typnam = node.arg[2].value
 	local arg = utils.traverse( typedb, node)
@@ -1972,10 +2020,13 @@ end
 function typesystem.with_do( node, context)
 	return nil -- TODO Implement
 end
-function typesystem.typespec( node, qualifier)
+function typesystem.typehdr( node, qualifier)
 	return resolveTypeFromNamePath( node, qualifier, utils.traverse( typedb, node))
 end
-function typesystem.typespec_generic( node, qualifier)
+function typesystem.typehdr_any( node, typeName)
+	return hardcodedTypeMap[ typeName]
+end
+function typesystem.typehdr_generic( node, qualifier)
 	local arg = utils.traverse( typedb, node)
 	local inst_arg = arg[ #arg]
 	table.remove( arg, #arg)
@@ -1988,7 +2039,12 @@ function typesystem.typespec_generic( node, qualifier)
 		if not instanceType then
 			local declContextTypeId = typedb:type_context( genericType)
 			local typnam = getGenericTypeName( genericType, generic_arg)
-			local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
+			local fmt; if genericDescr.class == "generic_class" then
+				fmt = llvmir.classTemplate
+			elseif genericDescr.class == "generic_struct" then
+				fmt = llvmir.structTemplate
+			end
+			local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, fmt)
 			instanceType = qualitype.lval
 			defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
 			if genericDescr.class == "generic_class" then
@@ -2002,11 +2058,24 @@ function typesystem.typespec_generic( node, qualifier)
 		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", typedb:type_string(genericType))
 	end
 end
-function typesystem.typespec_key( node, qualifier)
-	return typedb:get_type( 0, qualifier)
+function typesystem.typedim_array( node, qualifier)
+	local arg = utils.traverse( typedb, node, context)
+	local dim = getConstexprValue( constexprUIntegerType, arg[2].type, arg[2].constructor)
+	if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
+	local arsize = dim:tonumber()
+	local elementTypeId = arg[1]
+	local qs = typeQualiSepMap[ elementTypeId]
+	local strippedElementTypeId; if typeDescriptionMap[ elementTypeId].class == "pointer" then strippedElementTypeId = qs.pval else strippedElementTypeId = qs.lval end
+	local arrayTypeId = implicitDefineArrayType( node, strippedElementTypeId, arsize)
+	if constTypeMap[ elementTypeId] then return arrayTypeId else return constTypeMap[ arrayTypeId] end
+		-- const qualifier stripped from element and transfered to array type
+end
+function typesystem.typespec_ref( node, qualifier)
+	local arg = utils.traverse( typedb, node)
+	return referenceTypeMap[ arg[1]] or utils.errorMessage( node.line, "Type '%s' has no reference", typedb:type_string(arg[1]))
 end
 function typesystem.constant( node, typeName)
-	local typeId = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( 0, typeName))
+	local typeId = hardcodedTypeMap[ typeName]
 	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
 end
 function typesystem.null( node)
@@ -2083,7 +2152,7 @@ function typesystem.constructordef( node, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false}
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
-	defineClassOperator( node, descr, context)
+	defineConstructorDestructor( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
 end
@@ -2092,7 +2161,7 @@ function typesystem.destructordef( node, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false }
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
-	defineClassOperator( node, descr, context)
+	defineConstructorDestructor( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
 end

@@ -275,7 +275,7 @@ end
 
 -- Debug function that returns the tree with all resolve type paths
 function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
-	function getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, indentstr, visited, weightsum)
+	function getResolveTypeTree_rec( typedb, contextType, typeName, indentstr, visited, weightsum)
 		local typeid = typedb:resolve_type( contextType, typeName, tagmask)
 		if typeid and typeid == contextType then
 			local rt = ""; if indentstr ~= "" then rt = rt .. "\n" end
@@ -289,7 +289,7 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 				local in_visited = false; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; end end
 				if not in_visited then
 					rt = rt .. indentstr .. "[" .. weightsum+rd.weight .."] ".. typedb:type_string(contextType) .." -> ".. typedb:type_string(rd.type)
-					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, tagmask, indentstr .. "  ", visited, weightsum+rd.weight)
+					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, indentstr .. "  ", visited, weightsum+rd.weight)
 				end
 			end
 			table.remove( visited, #visited)
@@ -300,7 +300,7 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 	end
 	if type(contextType) == "table" then
 		if contextType.type then
-			return getResolveTypeTree_rec( typedb, contextType.type, typeName, tagmask, "", {}, 0.0)
+			return getResolveTypeTree_rec( typedb, contextType.type, typeName, "", {}, 0.0)
 		else
 			local rt = ""
 			for ci,ct in ipairs(contextType) do
@@ -309,11 +309,11 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 			return rt
 		end
 	else
-		return getResolveTypeTree_rec( typedb, contextType, typeName, tagmask, "", {}, 0.0)
+		return getResolveTypeTree_rec( typedb, contextType, typeName, "", {}, 0.0)
 	end
 end
 
-function treeToString( typedb, node, indentstr, node_tostring)
+local function treeToString( typedb, node, indentstr, node_tostring)
 	rt = ""
 	local scope = node:scope()
 	rt = rt .. string.format( "%s[%d,%d]:", indentstr, scope[1], scope[2]) .. "\n"
@@ -325,7 +325,6 @@ function treeToString( typedb, node, indentstr, node_tostring)
 	end
 	return rt
 end
-
 function utils.getTypeTreeDump( typedb)
 	function node_tostring(nd)
 		return string.format( "%s : %s", typedb:type_string(nd), mewa.tostring(typedb:type_constructor(nd),false))
