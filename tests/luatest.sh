@@ -40,7 +40,7 @@ if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xLANG1" ] ; then
 chmod +x build/language1.compiler.lua
 fi
 
-for tst in fibo tree array class generic
+for tst in fibo tree class array generic 
 do
 	TST=`echo $tst | tr a-z A-Z`
 	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then

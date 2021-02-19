@@ -244,7 +244,6 @@ end
 -- Constructor for a memberwise assignment of a tree structure (initializing a "struct")
 function memberwiseInitStructConstructor( node, thisTypeId, members)
 	return function( this, args)
-		io.stderr:write("++++ CALL memberwiseInitStructConstructor\n")
 		args = args[1] -- args contains one list node
 		if #args ~= #members then 
 			utils.errorMessage( node.line, "Number of elements %d in structure do not match for '%s' [%d]", #args, typedb:type_string( thisTypeId), #members)
@@ -267,7 +266,6 @@ end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( this, args)
-		io.stderr:write("++++ CALL memberwiseInitArrayConstructor\n")
 		args = args[1] -- args contains one list node
 		if #args > #members then 
 			utils.errorMessage( node.line, "Number of elements %d in structure is bigger than the number of elements in '%s' [%d]",
@@ -675,7 +673,6 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 		defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
 	end
 	if initcopy then
-		io.stderr:write("++++ CALL defineArrayConstructors INITCOPY " .. mewa.tostring({initcopy,typedb:type_string(qualitype.rval)}) .. "\n")
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=initcopy.constructor.code}))
 		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
@@ -689,7 +686,6 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
 	if init and assign then
-		io.stderr:write("++++ STEP init and assign" .. "\n")
 		local arconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, c_elementTypeId, arsize)
 		defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, arconstructor)
 	end
@@ -945,7 +941,6 @@ function addContextTypeConstructorPair( val)
 end
 -- This function checks if an array type defined by element type and size already exists and creates it implicitly if not, return the array type handle 
 function implicitDefineArrayType( node, elementTypeId, arsize)
-	io.stderr:write("++++ CALL implicitDefineArrayType " .. typedb:type_string(elementTypeId) .. "[" .. arsize .. "]\n")
 	local descr = llvmir.arrayDescr( typeDescriptionMap[ elementTypeId], arsize)
 	local typnam = "[" .. arsize .. "]"
 	local typkey = elementTypeId .. typnam
@@ -1375,7 +1370,6 @@ function tryGetParameterReductionConstructor( node, redu_type, operand)
 end
 -- Try to get the constructor,llvm type and weight of an explicitely specified parameter type
 function tryGetParameterConstructor( node, redu_type, operand)
-	io.stderr:write("++++ CALL tryGetParameterConstructor " .. typedb:type_string(redu_type) .. " <- " .. typedb:type_string(operand.type) .. "\n")
 	local constructor,weight = tryGetParameterReductionConstructor( node, redu_type, operand)
 	if weight then
 		local vp = typeDescriptionMap[ redu_type]
@@ -1410,10 +1404,6 @@ function getRequiredTypeConstructor( node, redu_type, operand, tagmask)
 end
 -- Get the best matching item from a list of items by weighting the matching of the arguments to the item parameter types
 function selectItemsMatchParameters( node, items, args, this_constructor)
-	io.stderr:write("++++ CALL selectItemsMatchParameters " .. mewa.tostring({items,args}) .. "\n")
-	for ii,item in ipairs(items) do
-		io.stderr:write("++++ CALL selectItemsMatchParameters ITEM " .. typedb:type_string(item) .. "\n")
-	end
 	local bestmatch = {}
 	local bestweight = nil
 	for ii,item in ipairs(items) do
@@ -1477,7 +1467,6 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 end
 -- Find a callable specified by name in the context of the 'this' operand
 function findApplyCallable( node, this, callable, args)
-	io.stderr:write("++++ CALL findApplyCallable " .. typedb:type_string(this.type) .. " " .. callable .. "( " .. utils.typeListString( typedb, args, " ,") .. ")\n")
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 
