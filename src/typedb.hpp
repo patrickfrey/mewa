@@ -273,11 +273,9 @@ public:
 	/// \param[in] name name of the type
 	/// \param[in] constructor handle for the constructor of the type or 0 if not defined
 	/// \param[in] parameter list of parameters as part of the function signature
-	/// \param[in] priority the priority resolves conflicts of definitions with the same signature in the same scope. The higher priority value wins.
 	/// \return the handle assigned to the new created type
 	///		or -1 if the type is already defined in the same scope with the same signature (duplicate definition)
-	///		or 0 if the type is already defined in the same scope with the same signature but with a higher priority (second definition siletly discarded)
-	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter, int priority);
+	int defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter);
 
 	/// \brief Define a new type representing another type already defined (a kind of synonym)
 	/// \param[in] scope the scope of this definition
@@ -480,8 +478,7 @@ private:
 
 private:
 	enum {
-		MaxNofParameter = 1U<<15,
-		MaxPriority = 1U<<15
+		MaxNofParameter = 1U<<15
 	};
 	struct TypeDef
 	{
@@ -507,18 +504,15 @@ private:
 	{
 		Scope scope;
 		int constructor;
-		short priority;
 		short parameterlen;
 		int parameter;
 		int next;
 		TypeDef inv;
 
 		TypeRecord( const TypeRecord& o)
-			:scope(o.scope),constructor(o.constructor),priority(o.priority),parameterlen(o.parameterlen)
-			,parameter(o.parameter),next(o.next),inv(o.inv){}
-		TypeRecord( int constructor_, const Scope scope_, int parameter_, short parameterlen_, short priority_, const TypeDef& inv_)
-			:scope(scope_),constructor(constructor_),priority(priority_),parameterlen(parameterlen_)
-			,parameter(parameter_),next(0),inv(inv_){}
+			:scope(o.scope),constructor(o.constructor),parameterlen(o.parameterlen),parameter(o.parameter),next(o.next),inv(o.inv){}
+		TypeRecord( int constructor_, const Scope scope_, int parameter_, short parameterlen_, const TypeDef& inv_)
+			:scope(scope_),constructor(constructor_),parameterlen(parameterlen_),parameter(parameter_),next(0),inv(inv_){}
 	};
 
 	MemoryBlock m_memblock;				//< memory block used first by m_memory

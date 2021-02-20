@@ -87,7 +87,7 @@ local arrayTemplate = {
 		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
 	ctor = "call void @__ctor_{size}__{element}( [{size} x {element}]* {this})\n",
-	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( [{size} x {element}]* {this}, {element}* {arg1})\n",
+	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( [{size} x {element}]* {this}, [{size} x {element}]* {arg1})\n",
 	dtor = "call void @__dtor_{size}__{element}( [{size} x {element}]* {this})\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
@@ -96,7 +96,7 @@ local arrayTemplate = {
 		["long"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
 		["ulong"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {arg1}\n",
 		["int"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {arg1}\n",
-		["uint"] = "{1} = zext i32 {arg1} to i64\n{out} = inbounds getelementptr [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n",
+		["uint"] = "{1} = zext i32 {arg1} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n",
 		["short"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i16 0, i16 {arg1}\n",
 		["ushort"] = "{1} = zext i16 {arg1} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n",
 		["byte"] = "{1} = zext i8 {arg1} to i64\n{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i64 0, i64 {1}\n"

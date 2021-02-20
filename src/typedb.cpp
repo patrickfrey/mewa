@@ -206,11 +206,10 @@ TypeDatabase::GetTypesResult TypeDatabase::getTypes( const Scope& scope, int con
 	return rt;
 }
 
-int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter, int priority)
+int TypeDatabase::defineType( const Scope& scope, int contextType, const std::string_view& name, int constructor, const TypeConstructorPairList& parameter)
 {
 	if (parameter.size() >= MaxNofParameter) throw Error( Error::TooManyTypeArguments, string_format( "%zu", parameter.size()));
 	if ((int)(m_parameterMap.size() + parameter.size()) >= std::numeric_limits<int>::max()) throw Error( Error::CompiledSourceTooComplex);
-	if (priority > MaxPriority) throw Error( Error::PriorityOutOfRange, string_format( "%d", priority));
 	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
 	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
 
@@ -229,7 +228,7 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	}
 	int typerec = m_typerecMap.size()+1;
 	TypeDef typeDef( contextType, m_identMap->get( name));
-	m_typerecMap.push_back( TypeRecord( constructor, scope, parameteridx, parameterlen, priority, typeDef));
+	m_typerecMap.push_back( TypeRecord( constructor, scope, parameteridx, parameterlen, typeDef));
 
 	int prev_typerec = m_typeTable->getOrSet( scope, typeDef, typerec);
 	if (prev_typerec/*already exists*/)
@@ -237,37 +236,11 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 		// Check if there is a conflict, and find the end of the single linked list (-> lastListIndex):
 		int lastListIndex = 0;
 		int tri = findTypeWithSignature( prev_typerec, parameter, lastListIndex);
-		if (tri)
-		{
-			auto& tr = m_typerecMap[ tri-1];
-			if (priority > tr.priority)
-			{
-				// ... priority higher, overwrite old definition
-				tr.priority = priority;
-				tr.constructor = constructor;
-				m_typerecMap.pop_back();
-				m_parameterMap.resize( m_parameterMap.size()-parameter.size());
-				typerec = tri;
-			}
-			else if (priority == tr.priority)
-			{
-				// ... duplicate definition, indicate error
-				typerec = -1;
-			}
-			else
-			{
-				// .... ignore 2nd definition with lower priority, return nullval as no definition
-				m_typerecMap.pop_back();
-				m_parameterMap.resize( m_parameterMap.size()-parameter.size());
-				typerec = 0;
-			}
-		}
-		else
-		{
-			// ... the definition is new and we got the tail of the list in 'lastListIndex', we add the new created record:
-			if (!lastListIndex) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
-			m_typerecMap[ lastListIndex-1].next = typerec;
-		}
+		if (tri) return -1;
+
+		// ... the definition is new and we got the tail of the list in 'lastListIndex', we add the new created record:
+		if (!lastListIndex) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
+		m_typerecMap[ lastListIndex-1].next = typerec;
 	}
 	return typerec;
 }

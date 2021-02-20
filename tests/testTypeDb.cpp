@@ -33,7 +33,6 @@ struct TestTypeDef
 {
 	const char* resultType;
 	char const* ar[12];		//< nullptr terminated list of items
-	int priority;
 
 	std::string tostring() const
 	{
@@ -103,40 +102,40 @@ static TestDef testDef = {
 		{nullptr,nullptr}
 	},
 	{
-		{"", {"", "byte", nullptr}, 0},
-		{"", {"", "int", nullptr}, 0},
-		{"", {"", "uint", nullptr}, 0},
-		{"", {"", "long", nullptr}, 0},
-		{"", {"", "float", nullptr}, 0},
-		{"", {"", "double", nullptr}, 0},
-		{"", {"", "func", "int", "int", "int", nullptr}, 0},
-		{"", {"", "func", "uint", "int", "int", nullptr}, 0},
-		{"", {"", "func", "double", "int", "int", nullptr}, 0},
-		{"", {"", "func", "double", "byte", "uint", nullptr}, 0},
-		{"", {"", "func", "long", "uint", "uint", nullptr}, 0},
-		{"", {"", "func", "byte", "int", "int", nullptr}, 0},
-		{"int", {"", "func", "byte", "int", nullptr}, 0},
-		{"int", {"", "func", "int", "int", nullptr}, 0},
-		{"long", {"", "func", "int", "long", nullptr}, 0},
-		{"double", {"", "func", "int", "double", nullptr}, 0},
-		{"float", {"", "func", "float", "float", nullptr}, 0},
-		{"double", {"", "func", "double", "double", nullptr}, 0},
-		{"", {"", "myclass", nullptr}, 0},
-		{"", {"myclass", "constructor myclass", "int", nullptr}, 0},
-		{"", {"myclass", "constructor myclass", "float", "float", nullptr}, 0},
-		{"", {"myclass", "constructor myclass", "myclass", nullptr}, 0},
-		{"", {"myclass", "~myclass", nullptr}, 0},
-		{"", {"myclass", "member1", "myclass", nullptr}, 0},
-		{"", {"myclass", "member1", "int", nullptr}, 0},
-		{"", {"myclass", "member2", "int", nullptr}, 0},
-		{"", {"myclass", "member2", "float", nullptr}, 0},
-		{"", {"", "inhclass", nullptr}, 0},
-		{"", {"inhclass", "constructor inhclass", "float", "float", nullptr}, 0},
-		{"", {"inhclass", "constructor inhclass", "inhclass", nullptr}, 0},
-		{"", {"inhclass", "~inhclass", nullptr}, 0},
-		{"", {"inhclass", "member1", "myclass", nullptr}, 0},
-		{"", {"inhclass", "member1", "int", nullptr}, 0},
-		{nullptr, {nullptr}, 0}
+		{"", {"", "byte", nullptr}},
+		{"", {"", "int", nullptr}},
+		{"", {"", "uint", nullptr}},
+		{"", {"", "long", nullptr}},
+		{"", {"", "float", nullptr}},
+		{"", {"", "double", nullptr}},
+		{"", {"", "func", "int", "int", "int", nullptr}},
+		{"", {"", "func", "uint", "int", "int", nullptr}},
+		{"", {"", "func", "double", "int", "int", nullptr}},
+		{"", {"", "func", "double", "byte", "uint", nullptr}},
+		{"", {"", "func", "long", "uint", "uint", nullptr}},
+		{"", {"", "func", "byte", "int", "int", nullptr}},
+		{"int", {"", "func", "byte", "int", nullptr}},
+		{"int", {"", "func", "int", "int", nullptr}},
+		{"long", {"", "func", "int", "long", nullptr}},
+		{"double", {"", "func", "int", "double", nullptr}},
+		{"float", {"", "func", "float", "float", nullptr}},
+		{"double", {"", "func", "double", "double", nullptr}},
+		{"", {"", "myclass", nullptr}},
+		{"", {"myclass", "constructor myclass", "int", nullptr}},
+		{"", {"myclass", "constructor myclass", "float", "float", nullptr}},
+		{"", {"myclass", "constructor myclass", "myclass", nullptr}},
+		{"", {"myclass", "~myclass", nullptr}},
+		{"", {"myclass", "member1", "myclass", nullptr}},
+		{"", {"myclass", "member1", "int", nullptr}},
+		{"", {"myclass", "member2", "int", nullptr}},
+		{"", {"myclass", "member2", "float", nullptr}},
+		{"", {"", "inhclass", nullptr}},
+		{"", {"inhclass", "constructor inhclass", "float", "float", nullptr}},
+		{"", {"inhclass", "constructor inhclass", "inhclass", nullptr}},
+		{"", {"inhclass", "~inhclass", nullptr}},
+		{"", {"inhclass", "member1", "myclass", nullptr}},
+		{"", {"inhclass", "member1", "int", nullptr}},
+		{nullptr, {nullptr}}
 	}
 };
 
@@ -269,7 +268,7 @@ static void defineType( TypeDatabaseImpl& tdbimpl, const TestTypeDef& tpdef, con
 {
 	FunctionDef fdef( tdbimpl, tpdef.ar, scope.start());
 	int constructorId = tdbimpl.getConstructorFromName( std::string("#") + fdef.label);
-	int funcTypeId = tdbimpl.typedb->defineType( scope, fdef.contextType, fdef.name, constructorId, fdef.parameter, tpdef.priority);
+	int funcTypeId = tdbimpl.typedb->defineType( scope, fdef.contextType, fdef.name, constructorId, fdef.parameter);
 	if (funcTypeId < 0) throw Error( Error::DuplicateDefinition, fdef.name);
 	if (funcTypeId > 0 && tpdef.resultType[0])
 	{

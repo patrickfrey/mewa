@@ -645,7 +645,7 @@ static int mewa_typedb_def_type( lua_State* ls)
 	mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 6/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 5/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
@@ -653,9 +653,8 @@ static int mewa_typedb_def_type( lua_State* ls)
 		int constructor = (nargs >= 4) ? mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td) : 0;
 		std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> parameter;
 		if (nargs >= 5) parameter = mewa::lua::getArgumentAsTypeConstructorPairList( functionName, ls, 5, -1/*objtable*/, td, &memrsc_parameter);
-		int priority = (nargs >= 6 && !lua_isnil( ls, 6)) ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 0;
 		lua_pop( ls, 1); // ... obj table
-		int rt = td->impl->defineType( td->curScope, contextType, name, constructor, parameter, priority);
+		int rt = td->impl->defineType( td->curScope, contextType, name, constructor, parameter);
 		lua_pushinteger( ls, rt);
 	}
 	catch (...) { lippincottFunction( ls); }

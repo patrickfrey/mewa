@@ -200,16 +200,11 @@ The scope of the newly defined type has been set with the last call of the sette
 | 2nd    | name         | string           | Name of the type defined                                                                                      |
 | 3rd    | constructor  | any type         | (optional) Constructor describing how the type is built (*nil* if undefined)                                  |
 | 4th    | parameter    | table            | (optional) Array of type/constructor pair or type handles without constructor. (*)                            |
-| 5th    | priority     | integer          | (optional) Priority of the definition; a higher priority overwrites a lower priority definition. (**)         |
-| Return |              | integer          | identifier assigned to the type or -1 if the definition is a duplicate or 0 if it is silently discarded (***) |
+| Return |              | integer          | identifier assigned to the type or -1 if the definition is a duplicate                                        |
 
 ##### Remark (*)
 To put no parameters on the same level as an empty parameter list is as declaring *null* and *empty* as equivalent as we do here is dangerous in language design.
-Be aware of the pitfalls and try to separate the types that can have paramaters and the ones that don't by an appropriate naming scheme.
-##### Remark (**)
-The motivation here is to support default declarations that are complicated to implement without a mechanism of priorization.
-##### Remark (***)
-A definition is siletly discarded it is a duplicate but with lower priority than the previous definition.
+Be aware of the pitfalls and try to separate the types that can have parameters and the ones that don't by an appropriate naming scheme.
 
 
 <a name="def_type_as"/>
@@ -356,6 +351,7 @@ Select none if undefined
 The tagmask_pathlen, max_pathlen parameters allow to define restrictions on the number of reductions that are implicit value conversions. 
 Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions. 
 Usually the max_pathlen value is 1 if implicit type conversions are allowed at all.
+
 
 <a name="resolve_type"/>
 

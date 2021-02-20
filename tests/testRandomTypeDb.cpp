@@ -225,7 +225,7 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 	{
 		int constructor = ctx.constructors.size()+1;
 		ctx.constructors.push_back( string_format( "type %ld", nd->item.product));
-		type = typedb.defineType( scope, 0/*contextType*/, name, constructor, std::vector<TypeDatabase::TypeConstructorPair>(), 0/*priority*/);
+		type = typedb.defineType( scope, 0/*contextType*/, name, constructor, std::vector<TypeDatabase::TypeConstructorPair>());
 		if (type < 0) throw Error( Error::DuplicateDefinition, ctx.constructors.back());
 		if (type > 0)
 		{
@@ -235,7 +235,7 @@ static int defineTypeInfo( TypeDatabase& typedb, TypeDatabaseContext& ctx, const
 		std::string proc = string_format( "!%ld", nd->item.product);
 		constructor = ctx.constructors.size()+1;
 		ctx.constructors.push_back( string_format( "call %ld", nd->item.product));
-		int proctype = typedb.defineType( scope, type, proc, constructor, std::vector<TypeDatabase::TypeConstructorPair>(), 0/*priority*/);
+		int proctype = typedb.defineType( scope, type, proc, constructor, std::vector<TypeDatabase::TypeConstructorPair>());
 		if (proctype < 0) throw Error( Error::DuplicateDefinition, proc);
 		if (proctype > 0)
 		{

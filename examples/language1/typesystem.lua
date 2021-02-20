@@ -355,8 +355,8 @@ function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, pr
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
 -- Define an operation
-function defineCall( returnType, thisType, opr, argTypes, constructor, priority)
-	local callType = typedb:def_type( thisType, opr, constructor, argTypes, priority)
+function defineCall( returnType, thisType, opr, argTypes, constructor)
+	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
 	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of type '%s %s'", typedb:type_string(thisType), opr) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 	return callType
@@ -816,10 +816,10 @@ function defineClassConstructors( node, qualitype, descr, context)
 
 		if member_destroy and dtors then dtors = member_destroy.constructor.code .. dtors else dtors = nil end
 	end
-	if dtors then
+	if dtors and not context.properties.destructor then
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
-		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor), -1)
-		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor), -1)
+		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
+		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
 	typedb:def_reduction( anyClassPointerType, qualitype.pval, nil, tag_pointerReinterpretCast)
 	typedb:def_reduction( anyConstClassPointerType, qualitype.c_pval, nil, tag_pointerReinterpretCast)
@@ -1837,7 +1837,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	addContextTypeConstructorPair( qualitype.lval)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
-	                 structsize=0, llvmtype="", symbol=descr.symbol, interfaces={}}
+	                 structsize=0, llvmtype="", symbol=descr.symbol, interfaces={}, properties={}}
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
@@ -2154,6 +2154,7 @@ function typesystem.constructordef( node, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false}
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
+	context.properties.constructor = true
 	defineConstructorDestructor( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
@@ -2162,6 +2163,7 @@ function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false }
+	context.properties.destructor = true
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineConstructorDestructor( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
