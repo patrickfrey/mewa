@@ -243,8 +243,8 @@ llvmir.control = {
 	bytePointerCast = "{out} = bitcast {llvmtype}* {this} to i8*\n"
 }
 
-function llvmir.functionAttribute( isPrivate)
-	if isPrivate == true then return "#0 nounwind" else return "#0 noinline nounwind" end
+function llvmir.functionAttribute( isInterface)
+	if isInterface == true then return "#0 nounwind" else return "#0 noinline nounwind" end
 end
                                                                            
 local pointerDescrMap = {}

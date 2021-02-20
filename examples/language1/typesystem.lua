@@ -827,6 +827,14 @@ function defineClassConstructors( node, qualitype, descr, context)
 	typedb:def_reduction( qualitype.c_pval, anyConstClassPointerType, nil, tag_pointerReinterpretCast)
 	instantCallableContext = nil
 end
+-- Tell if a method identifier by id implements an inherited interface method, thus has to be noinline
+function isInterfaceMethod( context, methodid)
+	for ii,iTypeId in ipairs(context.interfaces) do
+		local idescr = typeDescriptionMap[ iTypeId]
+		if idescr.methodmap[ methodid] then return true end
+	end
+	return false
+end
 -- Iterate through all interfaces defined and build the VMT tables of these interfaces related to this class defined
 function defineInheritedInterfaces( node, context, classTypeId)
 	for ii,iTypeId in ipairs(context.interfaces) do
@@ -1566,12 +1574,13 @@ function tryApplyCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end
 -- Get the symbol name for a function in the LLVM output
-function getTargetFunctionIdentifierString( name, args, context)
+function getTargetFunctionIdentifierString( name, args, const, context)
 	if not context then
 		return utils.uniqueName( name .. "__")
 	else
 		local pstr; if context.symbol then pstr = "__C_" .. context.symbol .. "__" .. name else pstr = name end
 		for ai,arg in ipairs(args) do pstr = pstr .. "__" .. arg.llvmtype end
+		if const == true then pstr = pstr .. "__const" end
 		return utils.encodeName(  pstr)
 	end
 end
@@ -1632,7 +1641,7 @@ end
 function expandDescrCallTemplateParameter( descr, context)
 	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
-	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, context)
+	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, descr.const, context)
 end
 function expandDescrMethod( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
@@ -1825,6 +1834,7 @@ function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualit
 	local context = {qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={}, llvmtype="", symbol=descr.symbol, const=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
 	descr.methods = context.methods
+	descr.methodmap = context.methodmap
 	descr.const = context.const
 	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 	defineInterfaceConstructors( node, qualitype, descr, context)
@@ -2111,19 +2121,32 @@ end
 function typesystem.funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const }
+			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const, interface=false}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
-	if context and context.qualitype then defineClassMethod( node, descr, context) else defineFreeFunction( node, descr, context) end
+	local isInterface = false
+	if context and context.qualitype then 
+		defineClassMethod( node, descr, context)
+		descr.interface = isInterfaceMethod( context, descr.methodid)
+		descr.attr = llvmir.functionAttribute( descr.interface)
+	else
+		defineFreeFunction( node, descr, context)
+	end
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printFunctionDeclaration( node, descr)
 end
 function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], ret = nil, private=arg[1].private, const=decl.const }
+			name = arg[2], symbol = arg[2], ret = nil, private=arg[1].private, const=decl.const, interface=false}
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
-	if context and context.qualitype then defineClassMethod( node, descr, context) else defineFreeFunction( node, descr, context) end
+	if context and context.qualitype then
+		defineClassMethod( node, descr, context)
+		descr.interface = isInterfaceMethod( context, descr.methodid)
+		descr.attr = llvmir.functionAttribute( descr.interface)
+	else
+		defineFreeFunction( node, descr, context)
+	end
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
 end
@@ -2133,9 +2156,11 @@ end
 function typesystem.operator_funcdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const}
+			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const, interface=false}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
+	descr.interface = isInterfaceMethod( context, descr.methodid)
+	descr.attr = llvmir.functionAttribute( descr.interface)
 	defineClassOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printFunctionDeclaration( node, descr)
@@ -2143,8 +2168,10 @@ end
 function typesystem.operator_procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const}
+			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const, interface=false}
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
+	descr.interface = isInterfaceMethod( context, descr.methodid)
+	descr.attr = llvmir.functionAttribute( descr.interface)
 	defineClassOperator( node, descr, context)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
@@ -2152,7 +2179,7 @@ end
 function typesystem.constructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false}
+			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false, interface=false}
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	context.properties.constructor = true
 	defineConstructorDestructor( node, descr, context)
@@ -2162,7 +2189,7 @@ end
 function typesystem.destructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false }
+	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false, interface=false}
 	context.properties.destructor = true
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	defineConstructorDestructor( node, descr, context)
