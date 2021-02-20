@@ -121,12 +121,12 @@ function utils.name_allocator( prefix)
         end
 end
 
-function utils.label_allocator()
-	return utils.name_allocator( "L")
+function utils.label_allocator( prefix)
+	return utils.name_allocator( prefix or "L")
 end
 
-function utils.register_allocator()
-	return utils.name_allocator( "%r")
+function utils.register_allocator( prefix)
+	return utils.name_allocator( prefix or "%r")
 end
 
 -- Tree traversal:

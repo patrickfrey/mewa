@@ -3,21 +3,19 @@
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" function malloc byte^( long);
 
-//generic class Array<ELEMENT,SIZE>
-class Array
+generic class Array<ELEMENT,SIZE>
 {
 	constructor(){}
 
-	public operator [] float& (uint idx)
+	public operator [] ELEMENT& (uint idx)
 	{
 		return m_ar[ idx];
 	}
-	public operator [] const float& (uint idx) const
+	public operator [] const ELEMENT& (uint idx) const
 	{
 		return m_ar[ idx];
 	}
-
-	float m_ar[ 5];
+	ELEMENT[ SIZE] m_ar;
 }
 
 main {
