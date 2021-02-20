@@ -129,7 +129,8 @@ sub ctor_copy_constructor {
 
 sub default_constructor {
 	my $llvmtype = $_[0];
-	return "store $llvmtype 0, $llvmtype* {this}\\n";
+	my $default = $defaultmap{ $llvmtype};
+	return "store $llvmtype $default, $llvmtype* {this}\\n";
 }
 
 sub typeSize {
@@ -162,14 +163,14 @@ sub conv_constructor {
 	{
 		if ($sgn_out eq "bool")
 		{
-			return "{out} = fcmp une $llvmtype_in {this}, 0.000000e+00\\n";
+			return "{out} = fcmp une $llvmtype_in {this}, $defaultmap{$llvmtype_in}\\n";
 		}
 		if ($sgn_out eq "signed") {$convop = "fptosi";}
 		elsif ($sgn_out eq "unsigned") {$convop = "fptoui";}
 	}
 	elsif ($sgn_out eq "bool")
 	{
-		return "{out} = cmp ne $llvmtype_in {this}, 0\\n";
+		return "{out} = cmp ne $llvmtype_in {this}, $defaultmap{$llvmtype_in}\\n";
 	}
 	else
 	{

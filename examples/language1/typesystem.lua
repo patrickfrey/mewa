@@ -281,7 +281,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		for ai=1,#args do
 			local out = callable.register()
 			local code = utils.constructor_format( descr.loadelemref, {out = out, this = this_inp, index=ai-1}, callable.register)
-			local reftype = referenceTypeMap[ elementTypeId]
+			local reftype = referenceTypeMap[ elementTypeId] or elementTypeId
 			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[ai]})
 			rt.code = rt.code .. maparg.constructor.code
 		end
@@ -684,11 +684,12 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 	definePointerConstructors( qualitype, descr)
 
 	instantCallableContext = createCallableContext( node.scope, nil)
-	local c_elementTypeId = constTypeMap[ elementTypeId] or elementTypeId
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
+	local c_elementTypeId = constTypeMap[ elementTypeId]
 	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
+	local cr_elementTypeId = constTypeMap[ r_elementTypeId] or r_elementTypeId
 	local ths = {type=r_elementTypeId, constructor={out="%ths"}}
-	local oth = {type=c_elementTypeId, constructor={out="%oth"}}
+	local oth = {type=cr_elementTypeId, constructor={out="%oth"}}
 	local init = tryApplyCallable( node, ths, ":=", {} )
 	local initcopy = tryApplyCallable( node, ths, ":=", {oth} )
 	local assign = tryApplyCallable( node, ths, "=", {oth} )
@@ -712,7 +713,7 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 		defineCall( 0, qualitype.pval, " delete", {}, manipConstructor( descr.dtor))
 	end
 	if init and initcopy then
-		local initconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, c_elementTypeId, arsize)
+		local initconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, elementTypeId, arsize)
 		defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, initconstructor)
 		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {constexprStructureType}, initconstructor)
 		defineConstructionReduction( qualitype.c_rval, constexprStructureType, descr.def_local, initconstructor)
@@ -738,7 +739,7 @@ function defineStructConstructors( node, qualitype, descr, context)
 		local member_reftype = referenceTypeMap[ member.type]
 		local c_member_reftype = constTypeMap[ member_reftype] or member_reftype
 		local loadref = context.descr.loadelemref
-		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ptr",index=mi-1, type=llvmtype}),out=out}}
+		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
 		local member_init = tryApplyCallable( node, ths, ":=", {} )
@@ -751,7 +752,7 @@ function defineStructConstructors( node, qualitype, descr, context)
 		if member_initcopy and ctors_copy then ctors_copy = ctors_copy .. member_initcopy.constructor.code else ctors_copy = nil end
 		if member_assign and ctors_assign then ctors_assign = ctors_assign .. member_assign.constructor.code else ctors_assign = nil end
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
-		if member_destroy and dtors then dtors = dtors .. member_destroy.constructor.code else dtors = nil end
+		if member_destroy and dtors then dtors = member_destroy.constructor.code .. dtors else dtors = nil end
 	end
 	if ctors then
 		print_section( "Auto", utils.template_format( descr.ctorproc, {ctors=ctors}))
@@ -809,11 +810,11 @@ function defineClassConstructors( node, qualitype, descr, context)
 		local llvmtype = member.descr.llvmtype
 		local member_reftype = referenceTypeMap[ member.type]
 		local loadref = context.descr.loadelemref
-		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ptr",index=mi-1, type=llvmtype}),out=out}}
+		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
 
 		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
 
-		if member_destroy and dtors then dtors = dtors .. member_destroy.constructor.code else dtors = nil end
+		if member_destroy and dtors then dtors = member_destroy.constructor.code .. dtors else dtors = nil end
 	end
 	if dtors then
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
@@ -897,7 +898,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 		for oth_typnam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typnam]
 			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
-			typedb:def_reduction( qualitype.c_lval, oth_qualitype.c_lval, conv_constructor, tag_typeConversion, rdw_conv)
+			typedb:def_reduction( qualitype.lval, oth_qualitype.c_lval, conv_constructor, tag_typeConversion, rdw_conv)
 		end
 	end
 end
@@ -1268,7 +1269,7 @@ function initBuiltInTypes()
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
 			local weight = scalarDeductionWeight( scalar_descr.sizeweight)
 			local valueconv = constexprLlvmConversion( qualitype.c_lval)
-			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return constructorStruct(valueconv(arg)) end, tag_typeDeduction, weight)
+			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeDeduction, weight)
 		end
 	end
 	if not scalarBooleanType then utils.errorMessage( 0, "No boolean type defined in built-in scalar types") end
@@ -1466,7 +1467,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 			if nof_params == #args then
 				if #args > 0 then
 					local parameters = typedb:type_parameters( item)
-					for pi=1,#parameters do						
+					for pi=1,#parameters do
 						local param_constructor,param_llvmtype,param_weight = tryGetParameterConstructor( node, parameters[ pi].type, args[ pi])
 						if not param_weight then break end
 						weight = weight + param_weight
@@ -2063,6 +2064,7 @@ function typesystem.typedim_array( node, qualifier)
 	local dim = getConstexprValue( constexprUIntegerType, arg[2].type, arg[2].constructor)
 	if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
 	local arsize = dim:tonumber()
+	if arsize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
 	local elementTypeId = arg[1]
 	local qs = typeQualiSepMap[ elementTypeId]
 	local strippedElementTypeId; if typeDescriptionMap[ elementTypeId].class == "pointer" then strippedElementTypeId = qs.pval else strippedElementTypeId = qs.lval end

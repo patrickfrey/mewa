@@ -38,50 +38,57 @@ local pointerTemplate = {
 }
 
 local arrayTemplate = {
+	symbol = "[{size} x {element}]",
 	def_local = "{out} = alloca [{size} x {element}], align 8\n",
 	def_global = "{out} = internal global [{size} x {element}] zeroinitializer, align 8\n",
 	llvmtype = "[{size} x {element}]",
 	class = "array",
 	assign = "store [{size} x {element}] {arg1}, [{size} x {element}]* {this}\n",
 	scalar = false,
-	ctorproc = "define private dso_local void @__ctor_{size}__{element}( {element}* %ar) alwaysinline {\n"
-		.. "enter:\nbr label %loop\nloop:\n"
-		.. "%ptr = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
-		.. "{ctors}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 1\n"
-		.. "%r3 = icmp eq {element}* %r2, "
-			.. "getelementptr inbounds ({element}, {element}*"
-			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size})\n"
-		.. "br i1 %r3, label %end, label %loop\n"
+	ctorproc = "define private dso_local void @__ctor_{size}__{element}( [{size} x {element}]* %ar) alwaysinline {\n"
+		.. "enter:\n"
+		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0\n"
+		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
+		.. "br label %loop\nloop:\n"
+		.. "%ths = phi {element}* [%base, %enter], [%A2, %loop]\n"
+		.. "{ctors}%A2 = getelementptr inbounds {element}, {element}* %ths, i64 1\n"
+		.. "%A3 = icmp eq {element}* %A2, %top\n"
+		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctor_rest = "{enter}:\nbr label %{begin}\n{begin}:\n"
-		.. "{1} = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}), %{enter}], [{2}, %{begin}]\n"
+	ctor_rest = "{enter}:\n"
+		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {index}\n"
+		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
+		.. "br label %{begin}\n{begin}:\n"
+		.. "{1} = phi {element}* [%base, %{enter}], [{2}, %{begin}]\n"
 		.. "{ctors}{2} = getelementptr inbounds {element}, {element}* {1}, i64 1\n"
-		.. "{3} = icmp eq {element}* {2}, "
-			.. "getelementptr inbounds ({element}, {element}*"
-			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 0), i64 {size})\n"
+		.. "{3} = icmp eq {element}* {2}, %top\n"
 		.. "br i1 {3}, label %{end}, label %{begin}\n"
 		.. "{end}:\n",
-	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{element}( {element}* %ths_ar, {element}* %oth_ar) alwaysinline {\n"
-		.. "enter:\nbr label %loop\nloop:\n"
-		.. "%ths = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), %enter], [%r2, %loop]\n"
-		.. "%oth = phi {element}* [getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %oth_ar, i32 0, i32 0), %enter], [%r3, %loop]\n"
-		.. "{ctors}%r2 = getelementptr inbounds {element}, {element}* %ths, i64 1\n%r3 = getelementptr inbounds {element}, {element}* %oth, i64 1\n"
-		.. "%r4 = icmp eq {element}* %r2, "
-			.. "getelementptr inbounds ({element}, {element}*"
-			.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0), i64 {size})\n"
-		.. "br i1 %r4, label %end, label %loop\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{element}( [{size} x {element}]* %ths_ar, [{size} x {element}]* %oth_ar) alwaysinline {\n"
+		.. "enter:\n"
+		.. "%ths_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0\n"
+		.. "%ths_top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 {size}\n"
+		.. "%oth_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %oth_ar, i32 0, i32 0\n"
+		.. "br label %loop\nloop:\n"
+		.. "%ths = phi {element}* [%ths_base, %enter], [%A2, %loop]\n"
+		.. "%oth = phi {element}* [%oth_base, %enter], [%A3, %loop]\n"
+		.. "{ctors}%A2 = getelementptr inbounds {element}, {element}* %ths, i64 1\n%A3 = getelementptr inbounds {element}, {element}* %oth, i64 1\n"
+		.. "%A4 = icmp eq {element}* %A2, %ths_top\n"
+		.. "br i1 %A4, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{size}__{element}( {element}* %ar) alwaysinline {\n"
-		.. "enter:\nbr label %loop\nloop:\n"
-		.. "%ptr = phi {element}* [ getelementptr inbounds ({element}, {element}*"
-		.. " getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0), i64 {size}), %enter], [%r2, %loop]\n"
-		.. "{dtors}%r2 = getelementptr inbounds {element}, {element}* %ptr, i64 -1\n"
-		.. "%r3 = icmp eq {element}* %2, getelementptr inbounds ([{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0)\n"
-		.. "br i1 %r3, label %end, label %loop\n"
+	dtorproc = "define private dso_local void @__dtor_{size}__{element}( [{size} x {element}]* %ar) alwaysinline {\n"
+		.. "enter:\n"
+		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0\n"
+		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
+		.. "br label %loop\nloop:\n"
+		.. "%ths = phi {element}* [%top, %enter], [%A2, %loop]\n"
+		.. "%A2 = getelementptr inbounds {element}, {element}* %ths, i64 -1\n{dtors}"
+		.. "%A3 = icmp eq {element}* %A2, %base\n"
+		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctor = "call void @__ctor_{size}__{element}( {element}* {this})\n",
-	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( {element}* {this}, {element}* {arg1})\n",
-	dtor = "call void @__dtor_{size}__{element}( {element}* {this})\n",
+	ctor = "call void @__ctor_{size}__{element}( [{size} x {element}]* {this})\n",
+	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( [{size} x {element}]* {this}, {element}* {arg1})\n",
+	dtor = "call void @__dtor_{size}__{element}( [{size} x {element}]* {this})\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
@@ -105,13 +112,13 @@ llvmir.structTemplate = {
 	class = "struct",
 	align = 8,
 	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
-	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
+	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{symbol}( %{symbol}* %ptr, %{symbol}* %oth) alwaysinline {\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{symbol}( %{symbol}* %ths, %{symbol}* %oth) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ptr{paramstr}) alwaysinline {\n"
+	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ths{paramstr}) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor = "call void @__ctor_{symbol}( %{symbol}* {this})\n",
 	ctor_copy = "call void @__ctor_{procname}_{symbol}( %{symbol}* {this}, %{symbol}* {arg1})\n",
@@ -132,9 +139,9 @@ llvmir.classTemplate = {
 	class = "class",
 	align = 8,
 	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
-	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
+	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ptr) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor = "call void @__ctor_{symbol}( %{symbol}* {this})\n",
 	dtor = "call void @__dtor_{symbol}( %{symbol}* {this})\n",
