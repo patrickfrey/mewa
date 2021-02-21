@@ -197,7 +197,7 @@ function utils.typeListString( typedb, typeList, separator)
 	if not typeList or #typeList == 0 then return "" end
 	local rt = utils.typeString( typedb, typeList[ 1])
 	for ii=2,#typeList do
-		rt = rt .. separator .. utils.typeString( typedb, typeList[ ii])
+		rt = rt .. (separator or ", ") .. utils.typeString( typedb, typeList[ ii])
 	end
 	return rt
 end
@@ -222,8 +222,8 @@ function utils.resolveTypeString( typedb, contextType, typeName)
 end
 
 -- Stacktrace:
-function utils.stack( msg)
-	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( 7,{"traverse","utils.stack"}), true) .. "\n")
+function utils.stack( msg, lv)
+	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( lv or 7,{"traverse","utils.stack"}), true) .. "\n")
 end
 -- Error reporting:
 -- Exit with error message and line info

@@ -5,5 +5,7 @@
  * Try to get into https://llvm.org/ProjectsWithLLVM
  * Implement Pascal WITH 
  * Make deep copies of values passed as lval and shallow copies of structures passed as const lval. Define these parameter variables as references to their copies. 
-
+ * Use C++ rule of zero/five everywhere
+ 
+ 
 

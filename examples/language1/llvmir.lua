@@ -211,6 +211,37 @@ llvmir.callableDescr = {
 	class = "callable"
 }
 
+llvmir.constexprIntegerDescr = {
+	llvmtype = "i64",
+	scalar = true,
+	class = "constexpr"	
+}
+llvmir.constexprUIntegerDescr = {
+	llvmtype = "i64",
+	scalar = true,
+	class = "constexpr"	
+}
+llvmir.constexprFloatDescr = {
+	llvmtype = "double",
+	scalar = true,
+	class = "constexpr"	
+}
+llvmir.constexprBooleanDescr = {
+	llvmtype = "i1",
+	scalar = true,
+	class = "constexpr"	
+}
+llvmir.constexprNullDescr = {
+	llvmtype = "i8*",
+	scalar = false,
+	class = "constexpr"	
+}
+llvmir.constexprStructDescr = {
+	llvmtype = "void",
+	scalar = false,
+	class = "constexpr"	
+}
+
 llvmir.control = {
 	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
 	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
