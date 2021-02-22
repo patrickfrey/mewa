@@ -6,7 +6,10 @@ extern "C" function malloc byte^( long);
 generic class Array<ELEMENT,SIZE>
 {
 	constructor(){}
-
+	constructor( const ELEMENT[ SIZE]& ar_)
+	{
+		m_ar = ar_;
+	}
 	public operator [] ELEMENT& (uint idx)
 	{
 		return m_ar[ idx];
@@ -19,10 +22,7 @@ generic class Array<ELEMENT,SIZE>
 }
 
 main {
-	var Array<float,5> array;
-	array[ 1] = 42;
-	array[ 2] = -1.9;
-	array[ 3] = 3.124;
+	var Array<float,5> array = {1.1,2.2,3.3,4.4,5.5};
 
 	var int i=0; 
 	while (i<5) {

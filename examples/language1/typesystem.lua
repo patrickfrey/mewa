@@ -1405,7 +1405,20 @@ function resolveTypeFromNamePath( node, qualifier, arg)
 	local typeName = qualifier .. arg[ #arg]
 	local rt
 	if #arg == 1 then
-		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_namespace))
+		local resolveContextTypeId,reductions,items = typedb:resolve_type( getContextTypes(), typeName, tagmask_namespace)
+		if resolveContextTypeId then -- single type name defined
+			rt = selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+		else -- handle case of an alias from a generic parameter
+			resolveContextTypeId,reductions,items = typedb:resolve_type( getContextTypes(), arg[1], tagmask_namespace)
+			if items and #items == 1 and typedb:type_nof_parameters(items[1]) == 0 then
+				local alias = items[1]
+				typeName = qualifier .. typedb:type_name( alias)
+				local scopebk = typedb:scope( typedb:type_scope( alias))
+				local rt = typedb:get_type( typedb:type_context(alias), typeName)
+				typedb:scope( scopebk)
+				return rt
+			end
+		end
 	else
 		local ctxTypeName = arg[ 1]
 		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), ctxTypeName, tagmask_namespace))
