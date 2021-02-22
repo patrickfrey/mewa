@@ -36,9 +36,12 @@ The tests currently use a LLVM IR target template file for x86_64. I was told th
 * [Wishlist for LLVM IR](doc/wishlist_llvmir.md)
 * [TODO](doc/todo.md)
 
+# Mailing List
+* mewa at freelists
+
 # Website
 * [mewa.cc](mewa.cc)
 
 # Contact (E-Mail)
-mail (at) mewa .cc
+* mail at mewa cc
 
