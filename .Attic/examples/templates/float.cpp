@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-float  a1 = 4.21;
+float  a1 = 2.3;
 float  a2 = 3.01;
 float  a3 = 9.012e-7;
 float  a4 = 1.11711e+10;

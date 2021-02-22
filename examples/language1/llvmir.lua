@@ -239,7 +239,7 @@ llvmir.constexprNullDescr = {
 llvmir.constexprStructDescr = {
 	llvmtype = "void",
 	scalar = false,
-	class = "constexpr"	
+	class = "constexpr"
 }
 
 llvmir.control = {

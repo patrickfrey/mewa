@@ -10,15 +10,17 @@ local tag_typeAlias = 1			-- Type that describes a substitution (as used for gen
 local tag_typeDeduction = 2		-- Inheritance relation
 local tag_typeDeclaration = 3		-- Type declaration relation (e.g. variable to data type)
 local tag_typeConversion = 4		-- Type conversion of parameters
-local tag_typeNamespace = 5		-- Type deduction for data types (e.g. namespaces)
+local tag_namespace = 5			-- Type deduction for resolving namespaces
 local tag_pointerReinterpretCast = 6	-- Type deduction only allowed in an explicit "cast" operation
+local tag_pushVararg = 7		-- Type deduction for passing parameter as vararg argument
 local tagmask_declaration = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeclaration)
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration)
 local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion)
 local tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
-local tagmask_typeNameSpace = typedb.reduction_tagmask( tag_typeAlias, tag_typeNamespace)
+local tagmask_namespace = typedb.reduction_tagmask( tag_typeAlias, tag_namespace)
 local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_pointerReinterpretCast)
 local tagmask_typeAlias = typedb.reduction_tagmask( tag_typeAlias)
+local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_pushVararg)
 
 -- Centralized list of reduction preference rules:
 local rdw_conv = 1.0			-- Reduction weight of conversion
@@ -40,11 +42,13 @@ local rwd_boolean = 0.125 / 16		-- Reduction weight of boolean type (control/val
 function combineWeight( w1, w2) return w1 + w2 * 0.9921875 end -- Combining two reductions slightly less weight compared with applying both singularily
 function scalarDeductionWeight( sizeweight) return 0.25*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
 
-local weightEpsilon = 1E-5		-- epsilon used for comparing weights for equality
+local weightEpsilon = 1E-10		-- epsilon used for comparing weights for equality
 local scalarQualiTypeMap = {}		-- maps scalar type names without qualifiers to the table of type ids for all qualifiers possible
 local scalarIndexTypeMap = {}		-- maps scalar type names usable as index without qualifiers to the const type id used as index for [] or pointer arithmetics
 local scalarBooleanType = nil		-- type id of the boolean type, result of cmpop binary operators
 local scalarIntegerType = nil		-- type id of the main integer type, result of main function
+local scalarLongType = nil		-- type id of the main long integer type (64 bits), used for long integer vararg parameters
+local scalarFloatType = nil		-- type id of the main floating point number type (64 bits), used for floating point vararg parameters
 local stringPointerType = nil		-- type id of the string constant type used for free string litterals
 local memPointerType = nil		-- type id of the type used for result of allocmem and argument of freemem
 local stringAddressType = nil		-- type id of the string constant type used string constants outsize a function scope
@@ -66,7 +70,6 @@ local typeDescriptionMap = {}		-- maps any defined type id to its llvmir templat
 local stringConstantMap = {}    	-- maps string constant values to a structure with its attributes {fmt,name,size}
 local arrayTypeMap = {}			-- maps the pair lval,size to the array type lval for an array size 
 local varargFuncMap = {}		-- maps types to true for vararg functions/procedures
-local varargParameterMap = {}		-- maps any defined type id to the structure {llvmtype,type} where to map additional vararg types to in a function call
 local instantCallableEnvironment = nil	-- callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
 local mainCallableEnvironment = nil	-- callable environment for constructors/destructors of globals
 local hardcodedTypeMap = {}		-- maps some hardcoded type names to their id
@@ -248,7 +251,7 @@ function memberwiseInitStructConstructor( node, thisTypeId, members)
 	return function( this, args)
 		args = args[1] -- args contains one list node
 		if #args ~= #members then 
-			utils.errorMessage( node.line, "Number of elements %d in structure do not match for '%s' [%d]", #args, typedb:type_string( thisTypeId), #members)
+			utils.errorMessage( node.line, "Number of elements %d in init do not match for '%s' [%d]", #args, typedb:type_string(thisTypeId), #members)
 		end
 		local qualitype = qualiTypeMap[ thisTypeId]
 		local descr = typeDescriptionMap[ thisTypeId]
@@ -270,8 +273,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 	return function( this, args)
 		args = args[1] -- args contains one list node
 		if #args > nofElements then
-			utils.errorMessage( node.line, "Number of elements %d in structure is bigger than the number of elements in '%s' [%d]",
-						#args, typedb:type_string( thisTypeId), nofElements)
+			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
 		local qualitype = qualiTypeMap[ thisTypeId]
 		local descr = typeDescriptionMap[ thisTypeId]
@@ -387,11 +389,6 @@ local constexprFloatType = typedb:def_type( 0, "constexpr float")	-- const expre
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")	-- const expression boolean implemented as Lua boolean
 local constexprNullType = typedb:def_type( 0, "constexpr null")		-- const expression null value implemented as nil
 local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- const expression tree structure implemented as a list of type/constructor pairs
--- Mapping of constant expression types if used as variable argument parameter where no explicit parameter type defined for the callee
-varargParameterMap[ constexprIntegerType] = {llvmtype="i64",type=constexprIntegerType}
-varargParameterMap[ constexprUIntegerType] = {llvmtype="i64",type=constexprUIntegerType}
-varargParameterMap[ constexprFloatType] = {llvmtype="double",type=constexprFloatType, conv=mewa.llvm_double_tohex}
-varargParameterMap[ constexprBooleanType] = {llvmtype="i1",type=constexprBooleanType}
 -- Mapping of some constant expression type naming
 hardcodedTypeMap[ "constexpr bool"] = constexprBooleanType
 hardcodedTypeMap[ "constexpr uint"] = constexprUIntegerType
@@ -491,6 +488,38 @@ function defineConstExprArithmetics()
 	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_conv)
 end
+function isPointerType( typeId)
+	return not pointerTypeMap[ typeId]
+end
+-- Get the declaration type of a variable or data member of a structure or class
+function getDeclarationType( typeId)
+	local redulist = typedb:get_reductions( typeId, tagmask_declaration)
+	for ri,redu in ipairs( redulist) do return redu.type end
+end
+-- Return the raw type of a vararg argument to use for parameter passing
+function stripVarargType( typeId)
+	local qualitype = qualiTypeMap[ typeQualiSepMap[ typeId].lval]
+	if isPointerType(typeId) then return qualitype.c_pval else return qualitype.c_lval end
+end
+-- Map a type used as variable argument parameter (where no explicit parameter type defined for the callee) to its type used for parameter passing
+function getVarargArgumentType( typeId)
+	local descr = typeDescriptionMap[ typeId]
+	if not descr then
+		typeId = getDeclarationType( typeId)
+		if typeId then descr = typeDescriptionMap[ stripVarargType( typeId)] end
+	end
+	if descr then
+		if descr.class == "constexpr" then
+			return typeId
+		elseif descr.class == "pointer" then
+			return memPointerType
+		elseif descr.class == "signed" or descr.class == "unsigned" or descr.class == "bool" then
+			if descr.llvmtype == "i64" then return scalarLongType else return scalarIntegerType end
+		elseif descr.class == "fp" then
+			return scalarFloatType
+		end
+	end
+end
 -- Define all basic types associated with a type name
 function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
@@ -506,15 +535,6 @@ function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
 	local c_rpval = typedb:def_type( contextTypeId, "const^&" .. typnam)		-- const pointer reference
 
 	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(contextTypeId), typnam) end
-
-	varargParameterMap[ lval]    = {llvmtype=typeDescription.llvmtype,type=c_lval}
-	varargParameterMap[ c_lval]  = {llvmtype=typeDescription.llvmtype,type=c_lval}
-	varargParameterMap[ rval]    = {llvmtype=typeDescription.llvmtype,type=c_lval}
-	varargParameterMap[ c_rval]  = {llvmtype=typeDescription.llvmtype,type=c_lval}
-	varargParameterMap[ pval]    = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
-	varargParameterMap[ c_pval]  = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
-	varargParameterMap[ rpval]   = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
-	varargParameterMap[ c_rpval] = {llvmtype=pointerTypeDescription.llvmtype,type=c_pval}
 
 	typeDescriptionMap[ lval]    = typeDescription
 	typeDescriptionMap[ c_lval]  = typeDescription
@@ -581,9 +601,6 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 	qualitype.rval_ref = rval_ref
 	qualitype.c_rval_ref = c_rval_ref
 
-	varargParameterMap[ rval_ref]   = {llvmtype=typeDescription.llvmtype,type=c_lval}
-	varargParameterMap[ c_rval_ref] = {llvmtype=typeDescription.llvmtype,type=c_lval}
-
 	typeDescriptionMap[ rval_ref]   = pointerTypeDescription
 	typeDescriptionMap[ c_rval_ref] = pointerTypeDescription
 
@@ -615,11 +632,6 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	qualitype.priv_c_rval = priv_c_rval
 	qualitype.priv_pval = priv_pval
 	qualitype.priv_c_pval = priv_c_pval
-
-	varargParameterMap[ priv_rval] = {llvmtype=typeDescription.llvmtype,type=qualitype.c_lval}
-	varargParameterMap[ priv_c_rval] = {llvmtype=typeDescription.llvmtype,type=qualitype.c_lval}
-	varargParameterMap[ priv_pval] = {llvmtype=pointerTypeDescription.llvmtype,type=qualitype.c_pval}
-	varargParameterMap[ priv_c_pval] = {llvmtype=pointerTypeDescription.llvmtype,type=qualitype.c_pval}
 
 	typeDescriptionMap[ priv_rval] = pointerTypeDescription
 	typeDescriptionMap[ priv_c_rval] = pointerTypeDescription
@@ -654,8 +666,8 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	defineCall( priv_rval, priv_pval, "->", {}, function(this) return this end)
 	defineCall( priv_c_rval, priv_c_pval, "->", {}, function(this) return this end)
 end
--- Define constructurs and assignment operations for pointer types
-function definePointerConstructors( qualitype, descr)
+-- Define constructurs and assignment operations for pointer types and some type reductions bound to pointers only
+function definePointerOperations( qualitype, descr)
 	local pointer_descr = llvmir.pointerDescr( descr)
 	defineCall( qualitype.rpval, qualitype.rpval, "=",  {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
 	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
@@ -665,6 +677,8 @@ function definePointerConstructors( qualitype, descr)
 	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_copy))
 	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {}, manipConstructor( pointer_descr.ctor))
 	defineCall( 0, qualitype.rpval, ":~", {}, constructorStructEmpty)
+	local voidptr_cast_fmt = utils.template_format( llvmir.control.bytePointerCast, {llvmtype=pointer_descr.llvmtype})
+	typedb:def_reduction( memPointerType, qualitype.c_pval, convConstructor(voidptr_cast_fmt), tag_pushVararg)
 end
 function defineScalarDestructors( qualitype, descr)
 	defineCall( 0, qualitype.pval, " delete", {}, constructorStructEmpty)
@@ -678,7 +692,7 @@ function defineScalarConstructors( qualitype, descr)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
-	definePointerConstructors( qualitype, descr)
+	definePointerOperations( qualitype, descr)
 	defineScalarDestructors( qualitype, descr)
 end
 -- Define a conversion reduction as implicit const reference object allocation and reduction to it as initialization with the specified ":=" constructor
@@ -695,7 +709,7 @@ function defineConstructionReduction( destType, sourceType, allocfmt, initconstr
 end
 -- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
-	definePointerConstructors( qualitype, descr)
+	definePointerOperations( qualitype, descr)
 
 	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
@@ -736,7 +750,7 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 end
 -- Define constructors for 'struct' types
 function defineStructConstructors( node, qualitype, descr, context)
-	definePointerConstructors( qualitype, descr)
+	definePointerOperations( qualitype, descr)
 
 	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
@@ -804,7 +818,7 @@ function defineStructConstructors( node, qualitype, descr, context)
 end
 -- Define constructors for 'interface' types
 function defineInterfaceConstructors( node, qualitype, descr, context)
-	definePointerConstructors( qualitype, descr)
+	definePointerOperations( qualitype, descr)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
@@ -815,7 +829,7 @@ function defineInterfaceConstructors( node, qualitype, descr, context)
 end
 -- Define constructors for 'class' types
 function defineClassConstructors( node, qualitype, descr, context)
-	definePointerConstructors( qualitype, descr)
+	definePointerOperations( qualitype, descr)
 
 	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
 	local dtors = ""
@@ -1276,12 +1290,15 @@ function initBuiltInTypes()
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( {line=0}, 0, typnam, scalar_descr)
-		defineScalarConstructors( qualitype, scalar_descr)
 		local c_lval = qualitype.c_lval
 		scalarQualiTypeMap[ typnam] = qualitype
-		if scalar_descr.class == "bool" then
+		if scalar_descr.class == "fp" then
+			if scalar_descr.llvmtype == "double" then scalarFloatType = c_lval end -- LLVM needs a double to be passed as vararg argument
+		elseif scalar_descr.class == "bool" then
 			scalarBooleanType = c_lval
 		elseif scalar_descr.class == "unsigned" then
+			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then scalarIntegerType = qualitype.c_lval end
+			if scalar_descr.llvmtype == "i64" and not scalarLongType then scalarLongType = qualitype.c_lval end
 			if scalar_descr.llvmtype == "i8" then
 				stringPointerType = qualitype.c_pval
 				memPointerType = qualitype.pval
@@ -1289,6 +1306,9 @@ function initBuiltInTypes()
 			scalarIndexTypeMap[ typnam] = c_lval
 		elseif scalar_descr.class == "signed" then
 			if scalar_descr.llvmtype == "i32" then scalarIntegerType = qualitype.c_lval end
+			if scalar_descr.llvmtype == "i64" then scalarLongType = qualitype.c_lval end
+					local scalarFloatType = nil
+
 			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
 				stringPointerType = qualitype.c_pval
 				memPointerType = qualitype.pval
@@ -1321,6 +1341,7 @@ function initBuiltInTypes()
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local scalar_pointerdescr = llvmir.pointerDescr( scalar_descr)
 		local qualitype = scalarQualiTypeMap[ typnam]
+		defineScalarConstructors( qualitype, scalar_descr)
 		defineArrayIndexOperators( qualitype.rval, qualitype.pval, scalar_pointerdescr)
 		defineArrayIndexOperators( qualitype.c_rval, qualitype.c_pval, scalar_pointerdescr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
@@ -1384,17 +1405,17 @@ function resolveTypeFromNamePath( node, qualifier, arg)
 	local typeName = qualifier .. arg[ #arg]
 	local rt
 	if #arg == 1 then
-		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_typeNameSpace))
+		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_namespace))
 	else
 		local ctxTypeName = arg[ 1]
-		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), ctxTypeName, tagmask_typeNameSpace))
+		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), ctxTypeName, tagmask_namespace))
 		if #arg > 2 then
 			for ii = 2, #arg-1 do
 				ctxTypeName  = arg[ii]
-				ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( ctxTypeId, ctxTypeName, tagmask_typeNameSpace))
+				ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( ctxTypeId, ctxTypeName, tagmask_namespace))
 			end
 		end
-		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_typeNameSpace))
+		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( contextTypeId, typeName, tagmask_namespace))
 	end
 	return rt
 end
@@ -1426,10 +1447,10 @@ function callFunction( node, contextTypes, name, args)
 	local this = {type=typeId, constructor=constructor}
 	return applyCallable( node, this, "()", args)
 end
--- Try to get the constructor and weight of an explicitely specified parameter type
-function tryGetWeightedParameterReductionList( node, redu_type, operand)
-	if redu_type ~= operand.type then
-		local redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask_matchParameter, tagmask_typeConversion, 1)
+-- Try to get the constructor and weight of a parameter passed with the deduction tagmask optionally passed as an argument
+function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask)
+	if redutype ~= operand.type then
+		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask or tagmask_matchParameter, tagmask_typeConversion, 1)
 		if altpath then
 			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
 						typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
@@ -1439,42 +1460,35 @@ function tryGetWeightedParameterReductionList( node, redu_type, operand)
 		return {},0.0
 	end
 end
--- Try to get the constructor,llvm type and weight of a vararg parameter type
-function tryGetWeightedVarargParameterReduction( node, operand)
-	local vp = varargParameterMap[ operand.type]
-	if not vp then
-		local redulist = typedb:get_reductions( operand.type, tagmask_declaration)
-		for ri,redu in ipairs( redulist) do
-			vp = varargParameterMap[ redu.type]
-			if vp then 
-				local redulist,weight = tryGetWeightedParameterReductionList( node, vp.type, operand)
-				if redulist then return redulist,weight,vp.llvmtype end
-			end
-		end
-	end
-end
--- Get the constructor of an implicitly required type with the deduction tagmask passed as argument
-function getRequiredTypeConstructor( node, redu_type, operand, tagmask)
-	if redu_type ~= operand.type then
-		local redulist,weight,altpath = typedb:derive_type( redu_type, operand.type, tagmask or tagmask_matchParameter, tagmask_typeConversion, 1)
+-- Get the constructor of an implicitly required type with the deduction tagmask optionally passed as an argument
+function getRequiredTypeConstructor( node, redutype, operand, tagmask)
+	if redutype ~= operand.type then
+		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask or tagmask_matchParameter, tagmask_typeConversion, 1)
 		if not redulist then
-			utils.errorMessage( node.line, "Type mismatch, required type '%s'", typedb:type_string(redu_type))
+			utils.errorMessage( node.line, "Type mismatch, required type '%s'", typedb:type_string(redutype))
 		elseif altpath then
 			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
 						typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
 		end
 		local rt = applyReductionList( node, redulist, operand.constructor)
-		if not rt then utils.errorMessage( node.line, "Construction of '%s' <- '%s' failed", typedb:type_string(redu_type), typedb:type_string(operand.type)) end
+		if not rt then utils.errorMessage( node.line, "Construction of '%s' <- '%s' failed", typedb:type_string(redutype), typedb:type_string(operand.type)) end
 		return rt
 	else
 		return operand.constructor
 	end
 end
+-- For a callable item, create for each argument the lists of reductions needed to pass the arguments to it, with summation of the reduction weights
 function collectItemParameter( node, item, args, parameters)
 	local rt = {redulist={},llvmtypes={},weight=0.0}
-	for pi=1,#parameters do
-		local redutype = parameters[ pi].type
-		local redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi])
+	for pi=1,#args do
+		local redutype,redulist,weight
+		if pi <= #parameters then
+			redutype = parameters[ pi].type
+			redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi])
+		else
+			redutype = getVarargArgumentType( args[ pi].type)
+			if redutype then redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi], tagmask_pushVararg) end
+		end
 		if not weight then return nil end
 		rt.weight = rt.weight + weight
 		table.insert( rt.redulist, redulist)
@@ -1483,67 +1497,62 @@ function collectItemParameter( node, item, args, parameters)
 	end
 	return rt
 end
-function collectVarargItemParameter( node, item, args, parameters)
-	local rt = collectItemParameter( node, item, args, parameters)
-	if not rt then return nil end
-	for ai=#parameters+1,#args do
-		local redulist,weight,llvmtype = tryGetWeightedVarargParameterReduction( node, args[ ai])
-		if not weight then return nil end
-		rt.weight = rt.weight + weight
-		table.insert( rt.redulist, redulist)
-		table.insert( rt.llvmtypes, llvmtype)
-	end
-	return rt
-end
 -- Get the best matching item from a list of items by weighting the matching of the arguments to the item parameter types
 function selectItemsMatchParameters( node, items, args, this_constructor)
-	local item_candidates = {}
+	function selectCandidateItemsBestWeight( items, item_parameter_map, maxweight)
+		local candidates,bestweight = {},nil
+		for ii,item in ipairs(items) do
+			if item_parameter_map[ ii] then -- we have a match
+				local weight = item_parameter_map[ ii].weight
+				if not maxweight or maxweight > weight + weightEpsilon then -- we have a candidate not looked at yet
+					if not bestweight then
+						candidates = {ii}
+						bestweight = weight
+					elseif weight < bestweight + weightEpsilon then
+						if weight >= bestweight - weightEpsilon then -- they are equal
+							table.insert( candidates, ii)
+						else -- the new candidate is the single best match
+							candidates = {ii}
+							bestweight = weight
+						end
+					end
+				end
+			end
+		end
+		return candidates,bestweight
+	end
 	local item_parameter_map = {}
 	local bestmatch = {}
+	local candidates = {}
 	local bestweight = nil
+	local bestgroup = 0
 	for ii,item in ipairs(items) do
 		local nof_params = typedb:type_nof_parameters( item)
-		if nof_params <= #args then
-			if nof_params == #args then
-				item_parameter_map[ ii] = collectItemParameter( node, item, args, typedb:type_parameters( item))
-			elseif varargFuncMap[ item] then
-				item_parameter_map[ ii] = collectVarargItemParameter( node, item, args, typedb:type_parameters( item))
-			end
+		if nof_params == #args or (nof_params < #args and varargFuncMap[ item]) then
+			item_parameter_map[ ii] = collectItemParameter( node, item, args, typedb:type_parameters( item))
 		end
-		if item_parameter_map[ ii] then -- we have a candidate
-			local weight = item_parameter_map[ ii].weight
-			if not bestweight then
-				item_candidates = {ii}
-				bestweight = weight
-			elseif weight < bestweight + weightEpsilon then
-				if weight >= bestweight - weightEpsilon then -- they are equal
-					table.insert( item_candidates, ii)
-				else -- the new candidate is the single best match
-					item_candidates = {ii}
-					bestweight = weight
-				end
+	end
+	while next(item_parameter_map) ~= nil do -- until no candidate groups left
+		candidates,bestweight = selectCandidateItemsBestWeight( items, item_parameter_map, bestweight)
+		for _,ii in ipairs(candidates) do -- create the items from the item constructors passing
+			local item_constructor = typedb:type_constructor( items[ ii])
+			local call_constructor
+			if not item_constructor and #args == 0 then
+				call_constructor = this_constructor
 			else
-				item_parameter_map[ ii] = nil
+				local arg_constructors = {}
+				for ai=1,#args do
+					local ac = applyReductionList( node, item_parameter_map[ ii].redulist[ ai], args[ ai].constructor)
+					if not ac then utils.errorMessage( node.line, "Construction of arguments of '%s' failed", typedb:type_string(items[ii])) end
+					table.insert( arg_constructors, ac)
+				end
+				call_constructor = item_constructor( this_constructor, arg_constructors, item_parameter_map[ ii].llvmtypes)
 			end
-		end
-	end
-	for _,ii in ipairs(item_candidates) do -- create the items from the item constructors passing
-		local item_constructor = typedb:type_constructor( items[ ii])
-		local call_constructor 
-		if not item_constructor and #args == 0 then
-			call_constructor = this_constructor
-		else
-			local arg_constructors = {}
-			for ai=1,#args do
-				local ac = applyReductionList( node, item_parameter_map[ ii].redulist[ ai], args[ ai].constructor)
-				if not ac then utils.errorMessage( node.line, "Construction of arguments of '%s' failed", typedb:type_string(items[ii])) end
-				table.insert( arg_constructors, ac)
-			end
-			call_constructor = item_constructor( this_constructor, arg_constructors, item_parameter_map[ ii].llvmtypes)
 			if call_constructor then table.insert( bestmatch, {type=items[ ii], constructor=call_constructor}) end
+			item_parameter_map[ ii] = nil
 		end
+		if #bestmatch ~= 0 then return bestmatch,bestweight end
 	end
-	return bestmatch,bestweight
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of the 'this' operand
 function findApplyCallable( node, this, callable, args)
@@ -2102,7 +2111,7 @@ function typesystem.typedim_array( node, qualifier)
 	if arsize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
 	local elementTypeId = arg[1]
 	local qs = typeQualiSepMap[ elementTypeId]
-	local strippedElementTypeId; if typeDescriptionMap[ elementTypeId].class == "pointer" then strippedElementTypeId = qs.pval else strippedElementTypeId = qs.lval end
+	local strippedElementTypeId; if isPointerType(elementTypeId) then strippedElementTypeId = qs.pval else strippedElementTypeId = qs.lval end
 	local arrayTypeId = implicitDefineArrayType( node, strippedElementTypeId, arsize)
 	if constTypeMap[ elementTypeId] then return arrayTypeId else return constTypeMap[ arrayTypeId] end
 		-- const qualifier stripped from element and transfered to array type

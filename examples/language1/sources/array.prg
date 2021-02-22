@@ -24,6 +24,24 @@ class IntArray
 class FloatArray
 {
 	constructor(){}
+	constructor( const float[ 5]& ar_)
+	{
+		m_ar = ar_;
+	}
+	public operator [] float& (uint idx)
+	{
+		return m_ar[ idx];
+	}
+	public operator [] const float& (uint idx) const
+	{
+		return m_ar[ idx];
+	}
+	float[5] m_ar;
+}
+
+class DoubleArray
+{
+	constructor(){}
 	constructor( const double[ 5]& ar_)
 	{
 		m_ar = ar_;
@@ -51,7 +69,7 @@ procedure printIntArray()
 
 procedure printFloatArray()
 {
-	var double a = 3.2;
+	var float a = 2.3;
 	var double b = a;
 	printf("FL = %f %f\n", a, b);
 
@@ -63,8 +81,23 @@ procedure printFloatArray()
 	}
 }
 
+procedure printDoubleArray()
+{
+	var double a = 3.2;
+	var double b = a;
+	printf("DB = %f %f\n", a, b);
+
+	var DoubleArray array = { 9.11, 8.22, 7.33, 6.44, 5.55 };
+	var int i = 0;
+	while (i<5) {
+		printf("ARRAY[ %d] = %f\n", i, array[ i]);
+		i += 1;
+	}
+}
+
 main {
 	printIntArray();
 	printFloatArray();
+	printDoubleArray();
 }
 
