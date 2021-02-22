@@ -520,6 +520,18 @@ function getVarargArgumentType( typeId)
 		end
 	end
 end
+-- Define all variations of a type alias that can explicitly  specified
+function defineTypeAlias( contextTypeId, typnam, aliasTypeId)
+	local qualitype = qualiTypeMap[ aliasTypeId]
+	typedb:def_type_as( contextTypeId, typnam, qualitype.lval)			-- L-value | plain typedef
+	typedb:def_type_as( contextTypeId, "const " .. typnam, qualitype.c_lval)	-- const L-value
+	typedb:def_type_as( contextTypeId, "&" .. typnam, qualitype.rval)		-- reference
+	typedb:def_type_as( contextTypeId, "const&" .. typnam, qualitype.c_rval)	-- const reference
+	typedb:def_type_as( contextTypeId, "^" .. typnam, qualitype.pval)		-- pointer
+	typedb:def_type_as( contextTypeId, "const^" .. typnam, qualitype.c_pval)	-- const pointer
+	typedb:def_type_as( contextTypeId, "^&" .. typnam, qualitype.rpval)		-- pointer reference
+	typedb:def_type_as( contextTypeId, "const^&" .. typnam, qualitype.c_rpval)	-- const pointer reference
+end
 -- Define all basic types associated with a type name
 function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
@@ -1419,7 +1431,7 @@ function resolveTypeFromNamePath( node, qualifier, arg)
 	end
 	return rt
 end
--- Get the list of generic arguments filled with the default parameters for the ones not specified explicitely
+-- Get the list of generic arguments filled with the default parameters for the ones not specified explicitly
 function matchGenericParameter( node, genericType, param, args)
 	local rt = {}
 	if #param < #args then utils.errorMessage( node.line, "Too many arguments (%d) passed to instantiate generic '%s'", #args, typedb:type_string(genericType)) end
@@ -1437,7 +1449,7 @@ function defineGenericParameterAliases( instanceType, generic_param, generic_arg
 			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].value)
 			typedb:def_reduction( generic_arg[ ii].type, alias, nil, tag_typeAlias)
 		else
-			typedb:def_type_as( instanceType, generic_param[ ii].name, generic_arg[ ii].type)
+			defineTypeAlias( instanceType, generic_param[ ii].name, generic_arg[ ii].type)
 		end
 	end
 end
