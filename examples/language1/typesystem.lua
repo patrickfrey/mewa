@@ -1490,7 +1490,7 @@ function collectItemParameter( node, item, args, parameters)
 			if redutype then redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi], tagmask_pushVararg) end
 		end
 		if not weight then return nil end
-		rt.weight = rt.weight + weight
+		if rt.weight < weight then rt.weight = weight end -- use max(a,b) as weight accumulation function
 		table.insert( rt.redulist, redulist)
 		local descr = typeDescriptionMap[ redutype]
 		table.insert( rt.llvmtypes, typeDescriptionMap[ redutype].llvmtype)
