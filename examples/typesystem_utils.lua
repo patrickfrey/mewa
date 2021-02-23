@@ -1,5 +1,6 @@
 --- Utility functions for the typesystem module
-
+-- Use Lua5.2 bit manipulation library
+local bit32 = require "bit32"
 -- Module object with all functions exported
 local utils = {}
 
