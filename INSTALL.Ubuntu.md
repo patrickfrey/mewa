@@ -13,6 +13,7 @@ lua5.2 liblua5.2-dev luarocks llvm llvm-runtime
 
 #### Install required luarocks packages
 ```Bash
+luarocks install bit32
 luarocks install penlight 
 luarocks install LuaBcd
 ```
