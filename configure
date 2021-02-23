@@ -100,10 +100,12 @@ searchLuaVersionWithPkgConfig() {
 				>&2 echo "$PKGCONFIG --variable=libdir lua$VERSION => $LIBPATH"
 				>&2 echo "$PKGCONFIG --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
 				>&2 echo "$PKGCONFIG --variable=version lua$VERSION => $LUAVERSION"
-				>&2 echo "\nWrote file Lua.inc:"
+				>&2 echo ""
+				>&2 echo "Wrote file Lua.inc:"
 				>&2 cat Lua.inc
 				writePlatformInclude
-				>&2 echo "\nWrote file Platform.inc:"
+				>&2 echo ""
+				>&2 echo "Wrote file Platform.inc:"
 				>&2 cat Platform.inc
 				exit 0
 			fi
@@ -135,9 +137,11 @@ searchLuaVersionWithRawFind() {
 		>&2 echo "Lua binary path = $BINPATH"
 		>&2 echo "Lua version = $VERSION"
 		>&2 echo "Lua cmod install path = $CMODPATH"
+		>&2 echo ""
 		>&2 echo "Wrote file Lua.inc:"
 		>&2 cat Lua.inc
 		writePlatformInclude
+		>&2 echo ""
 		>&2 echo "Wrote file Platform.inc:"
 		>&2 cat Platform.inc
 		exit 0
