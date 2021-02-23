@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <libgen.h>
 
 using namespace mewa;
 
@@ -87,4 +88,17 @@ void mewa::removeFile( const std::string& filename)
 		break;
 	}
 }
+
+std::string mewa::fileBaseName( const std::string_view& fnam)
+{
+	char buf[ 1024];
+	std::size_t nn = fnam.size() >= sizeof(buf) ? sizeof(buf)-1 : fnam.size();
+	std::memcpy( buf, fnam.data(), nn);
+	char* bn = ::basename( buf);
+	std::size_t ee = std::strchr( bn, '\0')-bn;
+	for (; ee > 0 && bn[ ee] != '.'; --ee){}
+	if (ee != 0) nn = ee;
+	return std::string( bn, nn);
+}
+
 

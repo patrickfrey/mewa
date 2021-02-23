@@ -22,6 +22,7 @@ void writeFile( const std::string& filename, const std::string& content);
 std::string readFile( const std::string& filename);
 std::vector<std::string> readFileLines( const std::string& filename);
 void removeFile( const std::string& filename);
+std::string fileBaseName( const std::string_view& fnam);
 
 }//namespace
 
