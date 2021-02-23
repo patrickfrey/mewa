@@ -62,7 +62,7 @@ do
 		verify_test_result "Lua test ($tst output) compiling example program with language1 compiler" \
 						build/language1.compiler.$tst.out tests/language1.compiler.$tst.exp
 
-		lli build/language1.compiler.$tst.out > build/language1.run.$tst.out
+		lli build/language1.compiler.$tst.llr > build/language1.run.$tst.out
 		verify_test_result "Lua test ($tst run) run program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
 	fi
 done
