@@ -1,7 +1,4 @@
-; ModuleID = 'examples/language1/sources/class.prg'
-source_filename = "examples/language1/sources/class.prg"
-target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-linux-gnu"
+
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
 @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
 
@@ -11,7 +8,7 @@ target triple = "x86_64-pc-linux-gnu"
 %ObjectUpdater__1 = type {i8*, %ObjectUpdater__1__VMT* }
 %Point__1 = type { i32, i32 }
 %Line__1 = type { %Point__1 }
-define private dso_local void @__dtor_Point__1( %Point__1* %ptr) alwaysinline {
+define private dso_local void @__dtor_Point__1( %Point__1* %ths) alwaysinline {
 enter:
 br label %end
 end:
@@ -19,16 +16,16 @@ ret void
 }
 $Point__1__VMT__Object__1 = comdat any
 @Point__1__VMT__Object__1 = linkonce_odr dso_local unnamed_addr constant %Object__1__VMT { 
-	i32 (i8*)* bitcast (i32 (%Point__1*)* @__C_Point__1__x to i32 (i8*)*),
-	i32 (i8*)* bitcast (i32 (%Point__1*)* @__C_Point__1__y to i32 (i8*)*),
-	i32 (i8*, i32)* bitcast (i32 (%Point__1*, i32)* @__C_Point__1__ofs_x__i32 to i32 (i8*, i32)*),
-	i32 (i8*, i32)* bitcast (i32 (%Point__1*, i32)* @__C_Point__1__ofs_y__i32 to i32 (i8*, i32)*) }, comdat, align 8
+	i32 (i8*)* bitcast (i32 (%Point__1*)* @__C_Point__1__x__const to i32 (i8*)*),
+	i32 (i8*)* bitcast (i32 (%Point__1*)* @__C_Point__1__y__const to i32 (i8*)*),
+	i32 (i8*, i32)* bitcast (i32 (%Point__1*, i32)* @__C_Point__1__ofs_x__i32__const to i32 (i8*, i32)*),
+	i32 (i8*, i32)* bitcast (i32 (%Point__1*, i32)* @__C_Point__1__ofs_y__i32__const to i32 (i8*, i32)*) }, comdat, align 8
 $Point__1__VMT__ObjectUpdater__1 = comdat any
 @Point__1__VMT__ObjectUpdater__1 = linkonce_odr dso_local unnamed_addr constant %ObjectUpdater__1__VMT { 
 	void (i8*, i32, i32)* bitcast (void (%Point__1*, i32, i32)* @__C_Point__1__$assign__i32__i32 to void (i8*, i32, i32)*) }, comdat, align 8
-define private dso_local void @__dtor_Line__1( %Line__1* %ptr) alwaysinline {
+define private dso_local void @__dtor_Line__1( %Line__1* %ths) alwaysinline {
 enter:
-%r1 = getelementptr inbounds %Line__1, %Line__1* %ptr, i32 0, i32 0
+%r1 = getelementptr inbounds %Line__1, %Line__1* %ths, i32 0, i32 0
 call void @__dtor_Point__1( %Point__1* %r1)
 br label %end
 end:
@@ -65,21 +62,21 @@ store i32 %r2, i32* %r4
 ret void
 }
 
-define external i32 @__C_Point__1__x( %Point__1* %ths ) #0 noinline nounwind {
+define external i32 @__C_Point__1__x__const( %Point__1* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %Point__1, %Point__1* %ths, i32 0, i32 0
 %r2 = load i32, i32* %r1
 ret i32 %r2
 }
 
-define external i32 @__C_Point__1__y( %Point__1* %ths ) #0 noinline nounwind {
+define external i32 @__C_Point__1__y__const( %Point__1* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %Point__1, %Point__1* %ths, i32 0, i32 1
 %r2 = load i32, i32* %r1
 ret i32 %r2
 }
 
-define external i32 @__C_Point__1__ofs_x__i32( %Point__1* %ths, i32 %r1 ) #0 noinline nounwind {
+define external i32 @__C_Point__1__ofs_x__i32__const( %Point__1* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %Point__1, %Point__1* %ths, i32 0, i32 0
 %r3 = load i32, i32* %r2
@@ -87,7 +84,7 @@ entry:
 ret i32 %r4
 }
 
-define external i32 @__C_Point__1__ofs_y__i32( %Point__1* %ths, i32 %r1 ) #0 noinline nounwind {
+define external i32 @__C_Point__1__ofs_y__i32__const( %Point__1* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %Point__1, %Point__1* %ths, i32 0, i32 1
 %r3 = load i32, i32* %r2
@@ -95,7 +92,7 @@ entry:
 ret i32 %r4
 }
 
-define external void @__C_Point__1__object( %Object__1* sret %rt, %Point__1* %ths ) #0 noinline nounwind {
+define external void @__C_Point__1__object__const( %Object__1* sret %rt, %Point__1* %ths ) #0 noinline nounwind {
 entry:
 %r1 = bitcast %Point__1* %ths to i8*
 %r2 = getelementptr inbounds %Object__1, %Object__1* %rt, i32 0, i32 0
@@ -147,106 +144,106 @@ store float 0x3FF3AE1480000000, float* %r1
 call void @__C_Line__1__$ctor__i32__i32( %Line__1* %r2, i32 1, i32 4)
 %r4 = alloca %Object__1, align 8
 %r3 = getelementptr inbounds %Line__1, %Line__1* %r2, i32 0, i32 0
-call void @__C_Point__1__object( %Object__1* sret %r4, %Point__1* %r3)
-%r7 = getelementptr inbounds [18 x i8], [18 x i8]* @string1, i64 0, i64 0
-%r10 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r11 = load %Object__1__VMT*, %Object__1__VMT** %r10
-%r12 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r11, i32 0, i32 0
-%r8 = load i32 (i8*)*, i32 (i8*)** %r12, align 8
-%r13 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r9 = load i8*, i8** %r13
-%r14 = call i32 %r8( i8* %r9)
-call void(i8*,  ...) @printf( i8* %r7, i32 %r14)
-%r15 = getelementptr inbounds [18 x i8], [18 x i8]* @string2, i64 0, i64 0
-%r18 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r19 = load %Object__1__VMT*, %Object__1__VMT** %r18
-%r20 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r19, i32 0, i32 1
-%r16 = load i32 (i8*)*, i32 (i8*)** %r20, align 8
-%r21 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r17 = load i8*, i8** %r21
-%r22 = call i32 %r16( i8* %r17)
-call void(i8*,  ...) @printf( i8* %r15, i32 %r22)
-%r24 = alloca %ObjectUpdater__1, align 8
-%r23 = getelementptr inbounds %Line__1, %Line__1* %r2, i32 0, i32 0
-call void @__C_Point__1__updater( %ObjectUpdater__1* sret %r24, %Point__1* %r23)
-%r29 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r24, i32 0, i32 1
-%r30 = load %ObjectUpdater__1__VMT*, %ObjectUpdater__1__VMT** %r29
-%r31 = getelementptr inbounds %ObjectUpdater__1__VMT, %ObjectUpdater__1__VMT* %r30, i32 0, i32 0
-%r27 = load void (i8*, i32, i32)*, void (i8*, i32, i32)** %r31, align 8
-%r32 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r24, i32 0, i32 0
-%r28 = load i8*, i8** %r32
-call void %r27( i8* %r28, i32 31, i32 411)
-%r33 = getelementptr inbounds [18 x i8], [18 x i8]* @string3, i64 0, i64 0
-%r36 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r37 = load %Object__1__VMT*, %Object__1__VMT** %r36
-%r38 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r37, i32 0, i32 0
-%r34 = load i32 (i8*)*, i32 (i8*)** %r38, align 8
-%r39 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r35 = load i8*, i8** %r39
-%r40 = call i32 %r34( i8* %r35)
-call void(i8*,  ...) @printf( i8* %r33, i32 %r40)
-%r41 = getelementptr inbounds [18 x i8], [18 x i8]* @string4, i64 0, i64 0
-%r44 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r45 = load %Object__1__VMT*, %Object__1__VMT** %r44
-%r46 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r45, i32 0, i32 1
-%r42 = load i32 (i8*)*, i32 (i8*)** %r46, align 8
-%r47 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r43 = load i8*, i8** %r47
-%r48 = call i32 %r42( i8* %r43)
-call void(i8*,  ...) @printf( i8* %r41, i32 %r48)
-%r51 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r24, i32 0, i32 1
-%r52 = load %ObjectUpdater__1__VMT*, %ObjectUpdater__1__VMT** %r51
-%r53 = getelementptr inbounds %ObjectUpdater__1__VMT, %ObjectUpdater__1__VMT* %r52, i32 0, i32 0
-%r49 = load void (i8*, i32, i32)*, void (i8*, i32, i32)** %r53, align 8
-%r54 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r24, i32 0, i32 0
-%r50 = load i8*, i8** %r54
-call void %r49( i8* %r50, i32 71, i32 511)
-%r55 = getelementptr inbounds [18 x i8], [18 x i8]* @string5, i64 0, i64 0
-%r58 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r59 = load %Object__1__VMT*, %Object__1__VMT** %r58
-%r60 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r59, i32 0, i32 2
-%r56 = load i32 (i8*, i32)*, i32 (i8*, i32)** %r60, align 8
-%r61 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r57 = load i8*, i8** %r61
-%r62 = call i32 %r56( i8* %r57, i32 -13)
-call void(i8*,  ...) @printf( i8* %r55, i32 %r62)
-%r63 = getelementptr inbounds [18 x i8], [18 x i8]* @string6, i64 0, i64 0
-%r66 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r67 = load %Object__1__VMT*, %Object__1__VMT** %r66
-%r68 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r67, i32 0, i32 3
-%r64 = load i32 (i8*, i32)*, i32 (i8*, i32)** %r68, align 8
-%r69 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r65 = load i8*, i8** %r69
-%r70 = call i32 %r64( i8* %r65, i32 1)
-call void(i8*,  ...) @printf( i8* %r63, i32 %r70)
-%r71 = alloca %ObjectUpdater__1, align 8
-%r72 = load %ObjectUpdater__1, %ObjectUpdater__1* %r24
-store %ObjectUpdater__1 %r72, %ObjectUpdater__1* %r71
-%r76 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r71, i32 0, i32 1
-%r77 = load %ObjectUpdater__1__VMT*, %ObjectUpdater__1__VMT** %r76
-%r78 = getelementptr inbounds %ObjectUpdater__1__VMT, %ObjectUpdater__1__VMT* %r77, i32 0, i32 0
-%r74 = load void (i8*, i32, i32)*, void (i8*, i32, i32)** %r78, align 8
-%r79 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r71, i32 0, i32 0
-%r75 = load i8*, i8** %r79
-call void %r74( i8* %r75, i32 32, i32 412)
-%r80 = getelementptr inbounds [18 x i8], [18 x i8]* @string7, i64 0, i64 0
-%r83 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r84 = load %Object__1__VMT*, %Object__1__VMT** %r83
-%r85 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r84, i32 0, i32 2
-%r81 = load i32 (i8*, i32)*, i32 (i8*, i32)** %r85, align 8
-%r86 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r82 = load i8*, i8** %r86
-%r87 = call i32 %r81( i8* %r82, i32 -11)
-call void(i8*,  ...) @printf( i8* %r80, i32 %r87)
-%r88 = getelementptr inbounds [18 x i8], [18 x i8]* @string8, i64 0, i64 0
-%r91 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
-%r92 = load %Object__1__VMT*, %Object__1__VMT** %r91
-%r93 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r92, i32 0, i32 1
-%r89 = load i32 (i8*)*, i32 (i8*)** %r93, align 8
-%r94 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
-%r90 = load i8*, i8** %r94
-%r95 = call i32 %r89( i8* %r90)
-call void(i8*,  ...) @printf( i8* %r88, i32 %r95)
+call void @__C_Point__1__object__const( %Object__1* sret %r4, %Point__1* %r3)
+%r5 = getelementptr inbounds [18 x i8], [18 x i8]* @string1, i64 0, i64 0
+%r8 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r9 = load %Object__1__VMT*, %Object__1__VMT** %r8
+%r10 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r9, i32 0, i32 0
+%r6 = load i32 (i8*)*, i32 (i8*)** %r10, align 8
+%r11 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r7 = load i8*, i8** %r11
+%r12 = call i32 %r6( i8* %r7)
+call void(i8*,  ...) @printf( i8* %r5, i32 %r12)
+%r13 = getelementptr inbounds [18 x i8], [18 x i8]* @string2, i64 0, i64 0
+%r16 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r17 = load %Object__1__VMT*, %Object__1__VMT** %r16
+%r18 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r17, i32 0, i32 1
+%r14 = load i32 (i8*)*, i32 (i8*)** %r18, align 8
+%r19 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r15 = load i8*, i8** %r19
+%r20 = call i32 %r14( i8* %r15)
+call void(i8*,  ...) @printf( i8* %r13, i32 %r20)
+%r22 = alloca %ObjectUpdater__1, align 8
+%r21 = getelementptr inbounds %Line__1, %Line__1* %r2, i32 0, i32 0
+call void @__C_Point__1__updater( %ObjectUpdater__1* sret %r22, %Point__1* %r21)
+%r25 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r22, i32 0, i32 1
+%r26 = load %ObjectUpdater__1__VMT*, %ObjectUpdater__1__VMT** %r25
+%r27 = getelementptr inbounds %ObjectUpdater__1__VMT, %ObjectUpdater__1__VMT* %r26, i32 0, i32 0
+%r23 = load void (i8*, i32, i32)*, void (i8*, i32, i32)** %r27, align 8
+%r28 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r22, i32 0, i32 0
+%r24 = load i8*, i8** %r28
+call void %r23( i8* %r24, i32 31, i32 411)
+%r29 = getelementptr inbounds [18 x i8], [18 x i8]* @string3, i64 0, i64 0
+%r32 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r33 = load %Object__1__VMT*, %Object__1__VMT** %r32
+%r34 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r33, i32 0, i32 0
+%r30 = load i32 (i8*)*, i32 (i8*)** %r34, align 8
+%r35 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r31 = load i8*, i8** %r35
+%r36 = call i32 %r30( i8* %r31)
+call void(i8*,  ...) @printf( i8* %r29, i32 %r36)
+%r37 = getelementptr inbounds [18 x i8], [18 x i8]* @string4, i64 0, i64 0
+%r40 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r41 = load %Object__1__VMT*, %Object__1__VMT** %r40
+%r42 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r41, i32 0, i32 1
+%r38 = load i32 (i8*)*, i32 (i8*)** %r42, align 8
+%r43 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r39 = load i8*, i8** %r43
+%r44 = call i32 %r38( i8* %r39)
+call void(i8*,  ...) @printf( i8* %r37, i32 %r44)
+%r47 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r22, i32 0, i32 1
+%r48 = load %ObjectUpdater__1__VMT*, %ObjectUpdater__1__VMT** %r47
+%r49 = getelementptr inbounds %ObjectUpdater__1__VMT, %ObjectUpdater__1__VMT* %r48, i32 0, i32 0
+%r45 = load void (i8*, i32, i32)*, void (i8*, i32, i32)** %r49, align 8
+%r50 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r22, i32 0, i32 0
+%r46 = load i8*, i8** %r50
+call void %r45( i8* %r46, i32 71, i32 511)
+%r51 = getelementptr inbounds [18 x i8], [18 x i8]* @string5, i64 0, i64 0
+%r54 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r55 = load %Object__1__VMT*, %Object__1__VMT** %r54
+%r56 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r55, i32 0, i32 2
+%r52 = load i32 (i8*, i32)*, i32 (i8*, i32)** %r56, align 8
+%r57 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r53 = load i8*, i8** %r57
+%r58 = call i32 %r52( i8* %r53, i32 -13)
+call void(i8*,  ...) @printf( i8* %r51, i32 %r58)
+%r59 = getelementptr inbounds [18 x i8], [18 x i8]* @string6, i64 0, i64 0
+%r62 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r63 = load %Object__1__VMT*, %Object__1__VMT** %r62
+%r64 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r63, i32 0, i32 3
+%r60 = load i32 (i8*, i32)*, i32 (i8*, i32)** %r64, align 8
+%r65 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r61 = load i8*, i8** %r65
+%r66 = call i32 %r60( i8* %r61, i32 1)
+call void(i8*,  ...) @printf( i8* %r59, i32 %r66)
+%r67 = alloca %ObjectUpdater__1, align 8
+%r68 = load %ObjectUpdater__1, %ObjectUpdater__1* %r22
+store %ObjectUpdater__1 %r68, %ObjectUpdater__1* %r67
+%r71 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r67, i32 0, i32 1
+%r72 = load %ObjectUpdater__1__VMT*, %ObjectUpdater__1__VMT** %r71
+%r73 = getelementptr inbounds %ObjectUpdater__1__VMT, %ObjectUpdater__1__VMT* %r72, i32 0, i32 0
+%r69 = load void (i8*, i32, i32)*, void (i8*, i32, i32)** %r73, align 8
+%r74 = getelementptr inbounds %ObjectUpdater__1, %ObjectUpdater__1* %r67, i32 0, i32 0
+%r70 = load i8*, i8** %r74
+call void %r69( i8* %r70, i32 32, i32 412)
+%r75 = getelementptr inbounds [18 x i8], [18 x i8]* @string7, i64 0, i64 0
+%r78 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r79 = load %Object__1__VMT*, %Object__1__VMT** %r78
+%r80 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r79, i32 0, i32 2
+%r76 = load i32 (i8*, i32)*, i32 (i8*, i32)** %r80, align 8
+%r81 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r77 = load i8*, i8** %r81
+%r82 = call i32 %r76( i8* %r77, i32 -11)
+call void(i8*,  ...) @printf( i8* %r75, i32 %r82)
+%r83 = getelementptr inbounds [18 x i8], [18 x i8]* @string8, i64 0, i64 0
+%r86 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 1
+%r87 = load %Object__1__VMT*, %Object__1__VMT** %r86
+%r88 = getelementptr inbounds %Object__1__VMT, %Object__1__VMT* %r87, i32 0, i32 1
+%r84 = load i32 (i8*)*, i32 (i8*)** %r88, align 8
+%r89 = getelementptr inbounds %Object__1, %Object__1* %r4, i32 0, i32 0
+%r85 = load i8*, i8** %r89
+%r90 = call i32 %r84( i8* %r85)
+call void(i8*,  ...) @printf( i8* %r83, i32 %r90)
 ret i32 0
 br label %L1
 L1:
@@ -257,18 +254,3 @@ ret i32 0
 }
 
 
-attributes #0 = {
-	"disable-tail-calls"="false" "frame-pointer"="all" "min-legal-vector-width"="0" 
-	"correctly-rounded-divide-sqrt-fp-math"="false" "less-precise-fpmad"="false" "no-infs-fp-math"="false" 
-	"no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "unsafe-fp-math"="false" 
-	"no-jump-tables"="false" "stack-protector-buffer-size"="8" 
-	"target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "use-soft-float"="false"
-}
-attributes #1 = {
-	"no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" }
-
-!llvm.module.flags = !{!0}
-!llvm.ident = !{!1}
-
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{!"clang version 10.0.0-4ubuntu1 "}
