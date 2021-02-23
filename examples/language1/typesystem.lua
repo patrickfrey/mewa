@@ -124,6 +124,14 @@ function assignConstructor( fmt)
  		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
+-- Constructor implementing an assignment of a free function callable to a function/procedure pointer
+function assignFunctionPointerConstructor( descr)
+	local assign = assignConstructor( descr.assign)
+	return function( this, arg)
+		local functype = typedb:get_type( arg.callablectx, "()", descr.param)
+		if functype then assign( this, arg) end
+	end
+end
 -- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
 function binopArgConversionConstructor( fmt, argconv)
 	return function( this, arg)
@@ -1765,8 +1773,8 @@ function defineProcedurePointerType( node, descr, context)
 	local descr = llvmir.procedureDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
-	defineCall( descr.ret, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
-	defineCall( descr.ret, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
 end
 -- Define a function pointer type as callable object with "()" operator implementing the call
 function defineFunctionPointerType( node, descr, context)
@@ -1774,15 +1782,15 @@ function defineFunctionPointerType( node, descr, context)
 	local descr = llvmir.functionDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
-	defineCall( descr.ret, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
-	defineCall( descr.ret, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
 end
 -- Define a free function as callable object with "()" operator implementing the call
 function defineFreeFunction( node, descr, context)
 	expandDescrFreeCallTemplateParameter( descr, context)
 	local callablectx,newName = getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr)
-	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, {type=callablectx}, tag_transfer, rdw_conv) end
 	defineFunctionCall( 0, callablectx, "()", descr)
+	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, function(a) a.callablectx = callablectx; return a end, tag_transfer, rdw_conv) end
 end
 -- Define a class method as callable object with "()" operator implementing the call
 function defineClassMethod( node, descr, context)
