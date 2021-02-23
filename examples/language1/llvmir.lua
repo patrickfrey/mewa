@@ -187,6 +187,19 @@ llvmir.interfaceTemplate = {
 	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
 }
 
+local functionTemplate = { -- inherits pointer template
+	scalar = false,
+	class = "function",
+	call = "{1} = load {rtllvmtype}{signature}, {rtllvmtype}{signature}* {this}\n{out} = call {rtllvmtype}{signature} {1}( {callargstr})\n",
+	sretCall = "{1} = load void{signature}, void{signature}* {this}\ncall void{signature} {1}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
+}
+
+local procedureTemplate = { -- inherits pointer template
+	scalar = false,
+	class = "function",
+	call = "{1} = load {rtllvmtype}{signature}, {rtllvmtype}{signature}* {this}\n{out} = call {rtllvmtype}{signature} {1}( {callargstr})\n"
+}
+
 llvmir.anyClassDescr = {
 	llvmtype = "i8",
 	scalar = false,
@@ -287,6 +300,24 @@ function llvmir.pointerDescr( pointeeDescr)
 		pointerDescrMap[ llvmPointerType] = pointerDescr
 	end
 	return pointerDescr
+end
+local callableDescrMap = {}
+function callableDescr( descr, fmt, llvmtype, rtllvmtype, signature)
+	local rt = callableDescrMap[ llvmtype]
+	if not rt then
+		rt = utils.template_format( pointerTemplate, {pointee=llvmtype} )
+		funcDescr = utils.template_format( fmt, {rtllvmtype=rtllvmtype, signature=signature} )
+		for key,val in pairs(funcDescr) do rt[key] = val end
+		for key,val in pairs(descr) do rt[key] = val end
+		callableDescrMap[ llvmtype] = rt
+	end
+	return rt
+end
+function llvmir.functionDescr( descr, rtllvmtype, signature)
+	return callableDescr( descr, functionTemplate, rtllvmtype .. signature, rtllvmtype, signature)
+end
+function llvmir.procedureDescr( descr, signature)
+	return callableDescr( descr, procedureTemplate, "void" .. signature, nil, signature)
 end
 
 local arrayDescrMap = {}

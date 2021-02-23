@@ -9,11 +9,11 @@ class IntArray
 	{
 		m_ar = ar_;
 	}
-	public operator [] int& (uint idx)
+	public operator [ ] int& (uint idx)
 	{
 		return m_ar[ idx];
 	}
-	public operator [] const int& (uint idx) const
+	public operator [ ] const int& (uint idx) const
 	{
 		return m_ar[ idx];
 	}
@@ -28,11 +28,11 @@ class FloatArray
 	{
 		m_ar = ar_;
 	}
-	public operator [] float& (uint idx)
+	public operator [ ] float& (uint idx)
 	{
 		return m_ar[ idx];
 	}
-	public operator [] const float& (uint idx) const
+	public operator [ ] const float& (uint idx) const
 	{
 		return m_ar[ idx];
 	}
@@ -46,11 +46,11 @@ class DoubleArray
 	{
 		m_ar = ar_;
 	}
-	public operator [] double& (uint idx)
+	public operator [ ] double& (uint idx)
 	{
 		return m_ar[ idx];
 	}
-	public operator [] const double& (uint idx) const
+	public operator [ ] const double& (uint idx) const
 	{
 		return m_ar[ idx];
 	}

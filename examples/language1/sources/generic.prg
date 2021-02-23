@@ -10,11 +10,11 @@ generic class Array<ELEMENT,SIZE>
 	{
 		m_ar = ar_;
 	}
-	public operator [] ELEMENT& (uint idx)
+	public operator [ ] ELEMENT& (uint idx)
 	{
 		return m_ar[ idx];
 	}
-	public operator [] const ELEMENT& (uint idx) const
+	public operator [ ] const ELEMENT& (uint idx) const
 	{
 		return m_ar[ idx];
 	}
