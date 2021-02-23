@@ -5,7 +5,15 @@ set -e
 
 . tests/luaenv.sh
 LUABIN=`which $1`
-TESTID=`echo $2 | tr a-z A-Z`
+TARGET=$2
+TESTID=`echo $3 | tr a-z A-Z`
+
+if [ "x$TARGET" = "x" ]; then
+	TARGET=`cat Platform.inc  | sed 's/TARGET//' | sed 's/:=//' | sed -E 's/\s//g'`
+fi
+
+>&2 echo "Target tripple defined as $TARGET"
+>&2 echo "Using Lua binary $LUABIN"
 
 verify_test_result() {
 	TNAM=$1
@@ -46,7 +54,9 @@ do
 	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then
 		echo "* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`
 		echo "Compile and run program examples/language1/sources/$tst.prg"
-		build/language1.compiler.lua -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.out examples/language1/sources/$tst.prg
+		build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
+		LN=`grep -n 'attributes #0' build/language1.compiler.$tst.llr | awk -F: '{print $1}'`
+		head -n `expr $LN - 1` build/language1.compiler.$tst.llr | tail -n `expr $LN - 5` > build/language1.compiler.$tst.out
 		verify_test_result "Lua test ($tst debug) compiling example program with language1 compiler" \
 						build/language1.debug.$tst.out tests/language1.debug.$tst.exp
 		verify_test_result "Lua test ($tst output) compiling example program with language1 compiler" \

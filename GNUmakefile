@@ -55,8 +55,12 @@ endif
 ifeq ($(wildcard Lua.inc),)
 $(error File Lua.inc not found. Please run ./configure first!)
 endif
+ifeq ($(wildcard Platform.inc),)
+$(error File Platform.inc not found. Please run ./configure first!)
+endif
 
 include Lua.inc
+include Platform.inc
 
 # Project settings:
 BUILDDIR := build
@@ -129,7 +133,7 @@ test : all
 	$(TIMECMD) $(BUILDDIR)/testAutomaton $(TSTVBFLAGS)
 	$(TIMECMD) $(BUILDDIR)/testTypeDb $(TSTVBFLAGS)
 	$(TIMECMD) $(BUILDDIR)/testRandomTypeDb $(TSTVBFLAGS)
-	tests/luatest.sh "$(LUABIN)"
+	tests/luatest.sh "$(LUABIN)" "$(TARGET)"
 check: test
 
 install: all

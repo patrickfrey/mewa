@@ -41,6 +41,7 @@ build/*.hex
 
 # Configure
 Lua.inc
+Platform.inc
 
 # Build
 build/

@@ -62,6 +62,18 @@ writeLuaInclude() {
 	echo "CMODPATH := $CMODPATH" >> Lua.inc
 }
 
+writePlatformInclude() {
+	UNAM=`uname -m -o`
+	if [ "X$UNAM" = "Xi686 GNU/Linux" ]; then
+		echo "TARGET	:= i686-pc-linux-gnu" > Platform.inc
+	elif [ "X$UNAM" = "Xx86_64 GNU/Linux" ]; then
+		echo "TARGET	:= x86_64-pc-linux-gnu" > Platform.inc
+	else
+		echo "TARGET	:= \"?? unknown, probing of 'target tripple' in configure failed ??\"" > Platform.inc
+ 		>&2 echo "Failed to determine target tripple used for tests! Some tests with the interpreter will fail."
+	fi
+}
+
 searchLuaVersionWithPkgConfig() {
 	local VERSION=$1
 	>&2 echo "Checking with pkg-config for version $VERSION ..."
@@ -88,8 +100,11 @@ searchLuaVersionWithPkgConfig() {
 				>&2 echo "$PKGCONFIG --variable=libdir lua$VERSION => $LIBPATH"
 				>&2 echo "$PKGCONFIG --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
 				>&2 echo "$PKGCONFIG --variable=version lua$VERSION => $LUAVERSION"
-				>&2 echo "Wrote file Lua.inc:"
+				>&2 echo "\nWrote file Lua.inc:"
 				>&2 cat Lua.inc
+				writePlatformInclude
+				>&2 echo "\nWrote file Platform.inc:"
+				>&2 cat Platform.inc
 				exit 0
 			fi
 		fi
@@ -122,6 +137,9 @@ searchLuaVersionWithRawFind() {
 		>&2 echo "Lua cmod install path = $CMODPATH"
 		>&2 echo "Wrote file Lua.inc:"
 		>&2 cat Lua.inc
+		writePlatformInclude
+		>&2 echo "Wrote file Platform.inc:"
+		>&2 cat Platform.inc
 		exit 0
 	fi
 }

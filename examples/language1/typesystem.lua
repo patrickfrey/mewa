@@ -13,9 +13,10 @@ local tag_typeConversion = 4		-- Type conversion of parameters
 local tag_namespace = 5			-- Type deduction for resolving namespaces
 local tag_pointerReinterpretCast = 6	-- Type deduction only allowed in an explicit "cast" operation
 local tag_pushVararg = 7		-- Type deduction for passing parameter as vararg argument
+local tag_transfer = 8			-- Transfer of information to build an object by a constructor, used in free function callable to pointer assignment
 local tagmask_declaration = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeclaration)
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration)
-local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion)
+local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_transfer)
 local tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
 local tagmask_namespace = typedb.reduction_tagmask( tag_typeAlias, tag_namespace)
 local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_pointerReinterpretCast)
@@ -56,6 +57,7 @@ local anyClassPointerType = nil		-- type id of the "class^" type
 local anyConstClassPointerType = nil 	-- type id of the "class^" type
 local anyStructPointerType = nil	-- type id of the "struct^" type
 local anyConstStructPointerType = nil	-- type id of the "struct^" type
+local anyFreeFunctionType = nil		-- type id of any free function/procedure callable
 local controlTrueType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}			-- maps any defined type without qualifier to the table of type ids for all qualifiers possible
@@ -1337,13 +1339,13 @@ function initBuiltInTypes()
 	if not scalarIntegerType then utils.errorMessage( 0, "No integer type mapping to i32 defined in built-in scalar types (return value of main)") end
 	if not stringPointerType then utils.errorMessage( 0, "No i8 type defined suitable to be used for free string constants)") end
 
-	local descr_anyclass = utils.template_format( fmt, {symbol="any class"})
 	local qualitype_anyclass = defineQualifiedTypes( {line=0}, 0, "any class", llvmir.anyClassDescr)
 	anyClassPointerType = qualitype_anyclass.pval
 	anyConstClassPointerType = qualitype_anyclass.c_pval
 	local qualitype_anystruct = defineQualifiedTypes( {line=0}, 0, "any struct", llvmir.anyStructDescr)
 	anyStructPointerType = qualitype_anystruct.pval
 	anyConstStructPointerType = qualitype_anystruct.c_pval
+	anyFreeFunctionType = typedb:def_type( 0, "any function")
 
 	hardcodedTypeMap[ "any class^"] = anyClassPointerType
 	hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
@@ -1748,13 +1750,14 @@ function defineInterfaceMethodCall( contextTypeId, opr, descr)
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( loadfmt, callfmt, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
-function getOrCreateCallableContextTypeId( thisTypeId, name, descr)
-	local rt = typedb:get_type( thisTypeId, name)
+function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
+	local rt = typedb:get_type( contextTypeId, name)
 	if not rt then
-		rt = typedb:def_type( thisTypeId, name)
+		rt = typedb:def_type( contextTypeId, name)
 		typeDescriptionMap[ rt] = descr
+		return rt,true -- type is new
 	end
-	return rt
+	return rt,false
 end
 -- Define a procedure pointer type as callable object with "()" operator implementing the call
 function defineProcedurePointerType( node, descr, context)
@@ -1762,6 +1765,8 @@ function defineProcedurePointerType( node, descr, context)
 	local descr = llvmir.procedureDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
+	defineCall( descr.ret, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
+	defineCall( descr.ret, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
 end
 -- Define a function pointer type as callable object with "()" operator implementing the call
 function defineFunctionPointerType( node, descr, context)
@@ -1769,18 +1774,23 @@ function defineFunctionPointerType( node, descr, context)
 	local descr = llvmir.functionDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
+	defineCall( descr.ret, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
+	defineCall( descr.ret, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointer)
 end
 -- Define a free function as callable object with "()" operator implementing the call
 function defineFreeFunction( node, descr, context)
 	expandDescrFreeCallTemplateParameter( descr, context)
-	defineFunctionCall( 0, getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr), "()", descr)
+	local callablectx,newName = getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr)
+	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, {type=callablectx}, tag_transfer, rdw_conv) end
+	defineFunctionCall( 0, callablectx, "()", descr)
 end
 -- Define a class method as callable object with "()" operator implementing the call
 function defineClassMethod( node, descr, context)
 	local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	expandDescrClassCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
-	defineFunctionCall( thisTypeId, getOrCreateCallableContextTypeId( thisTypeId, descr.name, llvmir.callableDescr), "()", descr)
+	local callablectx = getOrCreateCallableContextTypeId( thisTypeId, descr.name, llvmir.callableDescr)
+	defineFunctionCall( thisTypeId, callablectx, "()", descr)
 end
 -- Define an operator on the class with its arguments
 function defineClassOperator( node, descr, context)
@@ -1802,7 +1812,8 @@ end
 function defineExternFunction( node, descr)
 	if doReturnValueAsReferenceParameter( descr.ret) then utils.errorMessage( node.line, "Type not allowed as extern function return value") end
 	expandDescrExternCallTemplateParameter( descr, context)
-	defineFunctionCall( 0, getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr), "()", descr)
+	local callablectx = getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr)
+	defineFunctionCall( 0, callablectx, "()", descr)
 end
 -- Define an interface method call as callable object with "()" operator implementing the call
 function defineInterfaceMethod( node, descr, context)
@@ -1810,7 +1821,8 @@ function defineInterfaceMethod( node, descr, context)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
 	expandContextLlvmMember( descr, context)
-	defineInterfaceMethodCall( getOrCreateCallableContextTypeId( thisTypeId, descr.name, llvmir.callableDescr), "()", descr)
+	local callablectx = getOrCreateCallableContextTypeId( thisTypeId, descr.name, llvmir.callableDescr)
+	defineInterfaceMethodCall( callablectx, "()", descr)
 end
 -- Define an operator on the interface with its arguments
 function defineInterfaceOperator( node, descr, context)
