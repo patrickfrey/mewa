@@ -381,16 +381,12 @@ end
 function constexprLlvmConversion( typeid)
 	if typeDescriptionMap[ typeid].class == "fp" then
 		if typeDescriptionMap[ typeid].llvmtype == "float" then
-			return function( val) 
-				return "0x" .. mewa.llvm_float_tohex( val)
-			end
+			return function( val) return "0x" .. mewa.llvm_float_tohex( val) end
 		elseif typeDescriptionMap[ typeid].llvmtype == "double" then
-			return function( val)
-				return "0x" .. mewa.llvm_double_tohex( val)
-			end
+			return function( val) return "0x" .. mewa.llvm_double_tohex( val) end
 		end
 	end
-	return function(arg) return tostring(arg) end
+	return function( val) return tostring( val) end
 end
 -- Constant expression/value types
 local constexprIntegerType = typedb:def_type( 0, "constexpr int")	-- const expression integers implemented as arbitrary precision BCD numbers
@@ -491,7 +487,7 @@ function defineConstExprArithmetics()
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_conv)
 	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_conv)
 	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( value) end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_conv)
 	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_conv)
 	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_conv)
 

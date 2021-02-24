@@ -77,7 +77,7 @@ class Line :Point
 
 main {
 	var float x = 1.23;
-	var Line ab = {1.23, 4.23};
+	var Line ab = {7.23, 4.23};
 	var Object obj = ab.object();
 	printf("RESULT[1] x = %d\n", obj.x());
 	printf("RESULT[1] y = %d\n", obj.y());
