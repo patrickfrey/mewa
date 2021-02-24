@@ -128,8 +128,10 @@ end
 function assignFunctionPointerConstructor( descr)
 	local assign = assignConstructor( descr.assign)
 	return function( this, arg)
-		local functype = typedb:get_type( arg.callablectx, "()", descr.param)
-		if functype then assign( this, arg) end
+		local scope_bk = typedb:scope( typedb:type_scope( arg[1].type))
+		local functype = typedb:get_type( arg[1].type, "()", descr.param)
+		typedb:scope( scope_bk)
+		if functype then return assign( this, arg) end
 	end
 end
 -- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
@@ -1045,7 +1047,7 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 	if arrayTypeId then
 		return arrayTypeId
 	else
-		local scopebk = typedb:scope( typedb:type_scope( elementTypeId))
+		local scope_bk = typedb:scope( typedb:type_scope( elementTypeId))
 		local qualitype = defineQualifiedTypes( node, elementTypeId, typnam, descr)
 		local qualitype_element = qualiTypeMap[ typeQualiSepMap[ elementTypeId].lval]
 		arrayTypeId = qualitype.lval
@@ -1055,43 +1057,34 @@ function implicitDefineArrayType( node, elementTypeId, arsize)
 		definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 		defineArrayIndexOperators( qualitype_element.rval, qualitype.rval, descr)
 		defineArrayIndexOperators( qualitype_element.c_rval, qualitype.c_rval, descr)
-		typedb:scope( scopebk)
+		typedb:scope( scope_bk)
 		return arrayTypeId
 	end
 end
-function getFrame()
+-- The frame object defines constructors/destructors called implicitly at start/end of their scope
+function getAllocationScopeFrame()
 	local rt = typedb:this_instance( "frame")
 	if not rt then
 		local callable = getCallableEnvironment()
-		rt = {entry=callable.label(), register=callable.register, label=callable.label}
+		rt = {entry=callable.label(), register=callable.register, label=callable.label, ctor="", dtor="", entry=nil}
 		typedb:set_instance( "frame", rt)
 	end
 	return rt
 end
-function setInitCode( descr, this, initVal)
-	local frame = getFrame()
-	if initVal then
-		frame.ctor = (frame.ctor or "") .. utils.constructor_format( descr.ctor_copy, {this=this,arg1=initVal}, frame.register)
-	else
-		frame.ctor = (frame.ctor or "") .. utils.constructor_format( descr.ctor, {this=this}, frame.register)
+function setInitCode( descr, code)
+	local frame = getAllocationScopeFrame()
+	frame.ctor = frame.ctor .. code
+end
+function setCleanupCode( descr, code)
+	if code ~= "" then
+		local frame = getAllocationScopeFrame()
+		frame.entry = frame.label()
+		frame.dtor = utils.constructor_format( llvmir.control.label, {inp=frame.entry}) .. code .. frame.dtor
 	end
 end
-function setCleanupCode( descr, this)
-	local frame = getFrame()
-	if not frame.dtor then frame.dtor = utils.template_format( llvmir.control.label,{inp=frame.entry}) end
-	frame.dtor = frame.dtor .. utils.constructor_format( descr.dtor, {this=this}, frame.register)
-end
-function getFrameCodeBlock( code)
+function getAllocationScopeCodeBlock( code)
 	local frame = typedb:this_instance( "frame")
-	if frame then
-		local rt = ""
-		if frame.ctor then rt = rt .. frame.ctor end
-		rt = rt .. code
-		if frame.dtor then rt = rt .. frame.dtor end
-		return rt
-	else
-		return code
-	end
+	if frame then return frame.ctor .. code .. frame.dtor else return code end
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( typeId, name, reg)
@@ -1110,31 +1103,28 @@ function defineVariable( node, context, typeId, name, initVal)
 		local code = utils.constructor_format( descr.def_local, {out = out}, callable.register)
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
-		local rt = {type=var, constructor={code=code,out=out}}
-		if initVal then
-			rt = applyCallable( node, rt, ":=", {initVal})
-		else
-			rt = applyCallable( node, rt, ":=", {})
-		end
-		if descr.dtor then setCleanupCode( descr, out) end
+		local decl = {type=var, constructor={code=code,out=out}}
+		if initVal then rt = applyCallable( node, decl, ":=", {initVal}) else rt = applyCallable( node, decl, ":=", {}) end
+		local cleanup = tryApplyCallable( node, {type=var,constructor={out=out}}, ":~", {})
+		if cleanup and cleanup.constructor then setCleanupCode( descr, cleanup.constructor.code) end
 		return rt
 	elseif not context.qualitype then
 		instantCallableEnvironment = mainCallableEnvironment
-		if type(initVal) == "table" then utils.errorMessage( node.line, "Only constexpr allowed to assign in global variable initialization") end
 		out = "@" .. name
-		if descr.scalar == true and initVal then
-			print( utils.constructor_format( descr.def_global_val, {out = out, val = initVal}))
-		else
-			print( utils.constructor_format( descr.def_global, {out = out}))
-			if initVal then
-				if descr.ctor_copy then setInitCode( descr, out, initVal) end
-			else
-				if descr.ctor then setInitCode( descr, out) end
-			end
-			if descr.dtor then setCleanupCode( descr, out) end
-		end
 		local var = typedb:def_type( 0, name, out)
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
+
+		if descr.scalar == true and initVal and type(initVal) ~= "table" then
+			valueconv = constexprLlvmConversion( typeId)
+			print( utils.constructor_format( descr.def_global_val, {out = out, val = valueconv(initVal)})) -- print global data declaration
+		else
+			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
+			local decl = {type=var, constructor={out=out}}
+			local init; if initVal then init = applyCallable( node, decl, ":=", {initVal}) else init = applyCallable( node, decl, ":=", {}) end
+			local cleanup = tryApplyCallable( node, decl, ":~", {})
+			if init.constructor then setInitCode( descr, init.constructor.code) end
+			if cleanup and cleanup.constructor then setCleanupCode( descr, cleanup.constructor.code) end
+		end
 		instantCallableEnvironment = nil
 	else
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
@@ -1344,17 +1334,13 @@ function initBuiltInTypes()
 	if not stringPointerType then utils.errorMessage( 0, "No i8 type defined suitable to be used for free string constants)") end
 
 	local qualitype_anyclass = defineQualifiedTypes( {line=0}, 0, "any class", llvmir.anyClassDescr)
-	anyClassPointerType = qualitype_anyclass.pval
-	anyConstClassPointerType = qualitype_anyclass.c_pval
+	anyClassPointerType = qualitype_anyclass.pval; hardcodedTypeMap[ "any class^"] = anyClassPointerType
+	anyConstClassPointerType = qualitype_anyclass.c_pval; hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
 	local qualitype_anystruct = defineQualifiedTypes( {line=0}, 0, "any struct", llvmir.anyStructDescr)
-	anyStructPointerType = qualitype_anystruct.pval
-	anyConstStructPointerType = qualitype_anystruct.c_pval
-	anyFreeFunctionType = typedb:def_type( 0, "any function")
+	anyStructPointerType = qualitype_anystruct.pval; hardcodedTypeMap[ "any struct^"] = anyStructPointerType
+	anyConstStructPointerType = qualitype_anystruct.c_pval; hardcodedTypeMap[ "any const struct^"] = anyConstStructPointerType
 
-	hardcodedTypeMap[ "any class^"] = anyClassPointerType
-	hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
-	hardcodedTypeMap[ "any struct^"] = anyStructPointerType
-	hardcodedTypeMap[ "any const struct^"] = anyConstStructPointerType
+	anyFreeFunctionType = typedb:def_type( 0, "any function"); typeDescriptionMap[ anyFreeFunctionType] = llvmir.anyFunctionDescr
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local scalar_pointerdescr = llvmir.pointerDescr( scalar_descr)
@@ -1511,7 +1497,7 @@ function collectItemParameter( node, item, args, parameters)
 		if rt.weight < weight then rt.weight = weight end -- use max(a,b) as weight accumulation function
 		table.insert( rt.redulist, redulist)
 		local descr = typeDescriptionMap[ redutype]
-		table.insert( rt.llvmtypes, typeDescriptionMap[ redutype].llvmtype)
+		table.insert( rt.llvmtypes, descr.llvmtype)
 	end
 	return rt
 end
@@ -1575,7 +1561,8 @@ end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of the 'this' operand
 function findApplyCallable( node, this, callable, args)
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
-	if not resolveContextType or type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
+	if not resolveContextType then return nil end
+	if type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 	local this_constructor = applyReductionList( node, reductions, this.constructor)
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight
@@ -1710,6 +1697,12 @@ function expandDescrFreeCallTemplateParameter( descr, context)
 	descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
 	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
 end
+-- Expand the structure used for mapping the LLVM template for an function/procedure variable type
+function expandDescrFunctionReferenceTemplateParameter( descr, context)
+	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
+	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
+	descr.signature = "(" .. descr.argstr .. ")"
+end
 -- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
 function expandDescrExternCallTemplateParameter( descr, context)
 	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
@@ -1766,6 +1759,7 @@ end
 -- Define a procedure pointer type as callable object with "()" operator implementing the call
 function defineProcedurePointerType( node, descr, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
+	expandDescrFunctionReferenceTemplateParameter( descr, context)
 	local descr = llvmir.procedureDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
@@ -1775,6 +1769,7 @@ end
 -- Define a function pointer type as callable object with "()" operator implementing the call
 function defineFunctionPointerType( node, descr, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
+	expandDescrFunctionReferenceTemplateParameter( descr, context)
 	local descr = llvmir.functionDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
@@ -1786,7 +1781,7 @@ function defineFreeFunction( node, descr, context)
 	expandDescrFreeCallTemplateParameter( descr, context)
 	local callablectx,newName = getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr)
 	defineFunctionCall( 0, callablectx, "()", descr)
-	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, function(a) a.callablectx = callablectx; return a end, tag_transfer, rdw_conv) end
+	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, function(a) return {type = callablectx} end, tag_transfer, rdw_conv) end
 end
 -- Define a class method as callable object with "()" operator implementing the call
 function defineClassMethod( node, descr, context)
@@ -2051,7 +2046,7 @@ function typesystem.codeblock( node)
 	local code = ""
 	local arg = utils.traverse( typedb, node)
 	for ai=1,#arg do if arg[ ai] then code = code .. arg[ ai].code end end
-	return {code=getFrameCodeBlock( code)}
+	return {code=getAllocationScopeCodeBlock( code)}
 end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
@@ -2112,7 +2107,7 @@ function typesystem.typehdr_generic( node, qualifier, context)
 	local genericType = resolveTypeFromNamePath( node, "", arg)
 	local genericDescr = typeDescriptionMap[ genericType]
 	if string.sub(genericDescr.class,1,8) == "generic_" then
-		local scopebk = typedb:scope( typedb:type_scope( genericType))
+		local scope_bk = typedb:scope( typedb:type_scope( genericType))
 		local generic_arg = matchGenericParameter( node, genericType, genericDescr.generic.param, inst_arg)
 		local instanceid = getGenericParameterIdString( generic_arg)
 		local instanceType = genericDescr.instancemap[ instanceid]
@@ -2135,7 +2130,7 @@ function typesystem.typehdr_generic( node, qualifier, context)
 				utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic class '%s'", genericDescr.class)
 			end
 		end
-		typedb:scope( scopebk)
+		typedb:scope( scope_bk)
 		return instanceType
 	else
 		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", typedb:type_string(genericType))
@@ -2293,31 +2288,35 @@ function typesystem.extern_paramdeflist( node)
 end
 function typesystem.extern_funcdef( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=false, signature=""}
+	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4],
+	               vararg=false, signature=""}
 	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=false, signature=""}
+	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3],
+	               vararg=false, signature=""}
 	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_funcdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4], vararg=true, signature=""}
+	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4],
+	               vararg=true, signature=""}
 	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef_vararg( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3], vararg=true, signature=""}
+	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3],
+	               vararg=true, signature=""}
 	defineExternFunction( node, descr)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.typedef_functype( node, context)
 	local arg = utils.traverse( typedb, node)
-	local descr = {ret = arg[2], param = arg[3], name=arg[1]}
+	local descr = {ret = arg[2], param = arg[3], name=arg[1], signature=""}
 	defineFunctionPointerType( node, descr, context)
 end
 function typesystem.typedef_proctype( node, context)

@@ -212,6 +212,12 @@ llvmir.anyStructDescr = {
 	class = "struct"
 }
 
+llvmir.anyFunctionDescr = {
+	llvmtype = "i8",
+	scalar = false,
+	class = "transfer"
+}
+
 llvmir.genericClassDescr = {
 	class = "generic_class"
 }
