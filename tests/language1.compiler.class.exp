@@ -141,7 +141,7 @@ entry:
 %r1 = alloca float, align 4
 store float 0x3FF3AE1480000000, float* %r1
 %r2 = alloca %Line__1, align 8
-call void @__C_Line__1__$ctor__i32__i32( %Line__1* %r2, i32 1, i32 4)
+call void @__C_Line__1__$ctor__i32__i32( %Line__1* %r2, i32 7, i32 4)
 %r4 = alloca %Object__1, align 8
 %r3 = getelementptr inbounds %Line__1, %Line__1* %r2, i32 0, i32 0
 call void @__C_Point__1__object__const( %Object__1* sret %r4, %Point__1* %r3)
