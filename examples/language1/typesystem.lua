@@ -131,7 +131,7 @@ function assignFunctionPointerConstructor( descr)
 		local scope_bk = typedb:scope( typedb:type_scope( arg[1].type))
 		local functype = typedb:get_type( arg[1].type, "()", descr.param)
 		typedb:scope( scope_bk)
-		if functype then return assign( this, arg) end
+		if functype then return assign( this, {{out="@" .. typeDescriptionMap[ functype].symbolname}}) end
 	end
 end
 -- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
@@ -209,11 +209,7 @@ function buildFunctionCallArguments( code, argstr, args, llvmtypes)
 		local llvmtype = llvmtypes[ ii]
 		local arg_inp,arg_code = constructorParts( arg)
 		code = code .. arg_code
-		if llvmtype then
-			rt = rt .. llvmtype .. " " .. tostring(arg_inp) .. ", "
-		else
-			rt = rt .. "i32 0, "
-		end
+		if llvmtype then rt = rt .. llvmtype .. " " .. tostring(arg_inp) .. ", " else rt = rt .. "i32 0, " end
 	end
 	if #args > 0 or argstr ~= "" then rt = rt:sub(1, -3) end
 	return code,rt
@@ -361,9 +357,7 @@ function resolveOperatorConstructor( node, thisTypeId, opr)
 end
 -- Constructor for a promote call (implementing int + float by promoting the first argument int to float and do a float + float to get the result)
 function promoteCallConstructor( call_constructor, promote_constructor)
-	return function( this, arg)
-		return call_constructor( promote_constructor( this), arg)
-	end
+	return function( this, arg) return call_constructor( promote_constructor( this), arg) end
 end
 -- Define an operation with involving the promotion of the left hand argument to another type and executing the operation as defined for the type promoted to.
 function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, promote_constructor)
@@ -1739,6 +1733,7 @@ function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
+	return functype
 end
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
 	local loadfmt = utils.template_format( descr.load, descr)
@@ -1757,20 +1752,20 @@ function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
 	return rt,false
 end
 -- Define a procedure pointer type as callable object with "()" operator implementing the call
-function defineProcedurePointerType( node, descr, context)
+function defineProcedureVariableType( node, descr, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	expandDescrFunctionReferenceTemplateParameter( descr, context)
-	local descr = llvmir.procedureDescr( descr, descr.rtllvmtype, descr.signature)
+	local descr = llvmir.procedureVariableDescr( descr, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
 	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
 end
 -- Define a function pointer type as callable object with "()" operator implementing the call
-function defineFunctionPointerType( node, descr, context)
+function defineFunctionVariableType( node, descr, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	expandDescrFunctionReferenceTemplateParameter( descr, context)
-	local descr = llvmir.functionDescr( descr, descr.rtllvmtype, descr.signature)
+	local descr = llvmir.functionVariableDescr( descr, descr.rtllvmtype, descr.signature)
 	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
 	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
@@ -1780,8 +1775,9 @@ end
 function defineFreeFunction( node, descr, context)
 	expandDescrFreeCallTemplateParameter( descr, context)
 	local callablectx,newName = getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr)
-	defineFunctionCall( 0, callablectx, "()", descr)
+	local functype = defineFunctionCall( 0, callablectx, "()", descr)
 	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, function(a) return {type = callablectx} end, tag_transfer, rdw_conv) end
+	return functype
 end
 -- Define a class method as callable object with "()" operator implementing the call
 function defineClassMethod( node, descr, context)
@@ -2056,13 +2052,19 @@ function typesystem.return_value( node)
 	if doReturnValueAsReferenceParameter( rtype) then
 		local reftype = referenceTypeMap[ rtype]
 		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {arg[1]})
-		return {code = rt.constructor.code .. "ret void\n"}
+		return {code = rt.constructor.code .. "ret void\n", nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
 		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
 		local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out})
-		return {code = constructor.code .. code}
+		return {code = constructor.code .. code, nofollow=true}
 	end
+end
+function typesystem.return_void( node)
+	local callable = getCallableEnvironment()
+	local rtype = callable.returntype
+	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
+	return {code = llvmir.control.returnFromProcedure, nofollow=true}
 end
 function typesystem.conditional_if( node)
 	local arg = utils.traverse( typedb, node)
@@ -2197,7 +2199,8 @@ function typesystem.funcdef( node, decl, context)
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		descr.attr = llvmir.functionAttribute( descr.interface)
 	else
-		defineFreeFunction( node, descr, context)
+		local functype = defineFreeFunction( node, descr, context)
+		typeDescriptionMap[ functype] = llvmir.functionReferenceDescr( descr.ret, descr.symbolname)
 	end
 	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
 	printFunctionDeclaration( node, descr)
@@ -2212,7 +2215,8 @@ function typesystem.procdef( node, decl, context)
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		descr.attr = llvmir.functionAttribute( descr.interface)
 	else
-		defineFreeFunction( node, descr, context)
+		local proctype = defineFreeFunction( node, descr, context)
+		typeDescriptionMap[ proctype] = llvmir.procedureReferenceDescr( descr.symbolname)
 	end
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
@@ -2317,12 +2321,12 @@ end
 function typesystem.typedef_functype( node, context)
 	local arg = utils.traverse( typedb, node)
 	local descr = {ret = arg[2], param = arg[3], name=arg[1], signature=""}
-	defineFunctionPointerType( node, descr, context)
+	defineFunctionVariableType( node, descr, context)
 end
 function typesystem.typedef_proctype( node, context)
 	local arg = utils.traverse( typedb, node)
 	local descr = {ret = nil, param = arg[2], name=arg[1]}
-	defineProcedurePointerType( node, descr, context)
+	defineProcedureVariableType( node, descr, context)
 end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)

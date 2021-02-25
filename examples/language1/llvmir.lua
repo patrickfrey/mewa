@@ -187,17 +187,29 @@ llvmir.interfaceTemplate = {
 	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
 }
 
-local functionTemplate = { -- inherits pointer template
+local functionVariableTemplate = { -- inherits pointer template
 	scalar = false,
-	class = "function",
+	class = "function variable",
 	call = "{1} = load {rtllvmtype}{signature}, {rtllvmtype}{signature}* {this}\n{out} = call {rtllvmtype}{signature} {1}( {callargstr})\n",
 	sretCall = "{1} = load void{signature}, void{signature}* {this}\ncall void{signature} {1}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
 }
 
-local procedureTemplate = { -- inherits pointer template
+local procedureVariableTemplate = { -- inherits pointer template
 	scalar = false,
-	class = "function",
+	class = "procedure variable",
 	call = "{1} = load {rtllvmtype}{signature}, {rtllvmtype}{signature}* {this}\n{out} = call {rtllvmtype}{signature} {1}( {callargstr})\n"
+}
+
+local functionReferenceTemplate = {
+	class = "function",
+	scalar = false,
+	symbolname = nil,
+	ret = nil
+}
+local procedureReferenceTemplate = {
+	class = "procedure",
+	scalar = false,
+	symbolname = nil
 }
 
 llvmir.anyClassDescr = {
@@ -271,6 +283,7 @@ llvmir.control = {
 	terminateTrueExit = "br label %{out}\n{1}:\n",
 	label = "br label %{inp}\n{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
+	returnFromProcedure = "ret void\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtllvmtype}{signature} @{symbolname}( {callargstr})\n",
@@ -319,11 +332,22 @@ function callableDescr( descr, fmt, llvmtype, rtllvmtype, signature)
 	end
 	return rt
 end
-function llvmir.functionDescr( descr, rtllvmtype, signature)
-	return callableDescr( descr, functionTemplate, rtllvmtype .. signature, rtllvmtype, signature)
+function llvmir.functionVariableDescr( descr, rtllvmtype, signature)
+	return callableDescr( descr, functionVariableTemplate, rtllvmtype .. signature, rtllvmtype, signature)
 end
-function llvmir.procedureDescr( descr, signature)
-	return callableDescr( descr, procedureTemplate, "void" .. signature, nil, signature)
+function llvmir.procedureVariableDescr( descr, signature)
+	return callableDescr( descr, procedureVariableTemplate, "void" .. signature, nil, signature)
+end
+function llvmir.functionReferenceDescr( ret, symbolname)
+	local rt = utils.template_format( functionReferenceTemplate, {})
+	rt.ret = ret
+	rt.symbolname = symbolname
+	return rt
+end
+function llvmir.procedureReferenceDescr( symbolname)
+	local rt = utils.template_format( procedureReferenceTemplate, {symbolname=symbolname})
+	rt.symbolname = symbolname
+	return rt
 end
 
 local arrayDescrMap = {}

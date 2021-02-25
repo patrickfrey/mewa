@@ -1,3 +1,5 @@
+// Testing different types of pointers, access via poitners and pointer arithmetics
+
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" function malloc byte^( long);
 
@@ -24,11 +26,11 @@ main {
 	var PNF pnf1 = printNumber;
 	var int cnt = 31;
 
-	cnt += 2 * pnp1( 3.11, 3);
-	pnf1( 7.22, cnt);
-	var int res = g_pnp( 19.1, 2);
+	// cnt += 2 * pnp1( 3.11, 3);
+	// pnf1( 7.22, cnt);
+	// var int res = g_pnp( 19.1, 2);
 
 	printf("RES cnt = %d\n", cnt);
-	printf("RES res = %d\n", res);	
+	// printf("RES res = %d\n", res);	
 }
 
