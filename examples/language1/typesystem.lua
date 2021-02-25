@@ -239,6 +239,17 @@ function functionCallConstructor( fmt, thisTypeId, rtype)
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, callable.register))
 	end
 end
+-- Constructor implementing an indirect call of a function through a function/procedure variable
+function functionVariableCallConstructor( fmt, thisTypeId, rtype)
+	return function( this, args, llvmtypes)
+		local callable = getCallableEnvironment()
+		local this_inp,this_code = constructorParts( this)
+		local code,argstr = buildFunctionCallArguments( "", "", args, llvmtypes)
+		local out,subst = buildFunctionCallSubst( callable, rtype, argstr)
+		subst.this = this_inp
+		return constructorStruct( out, this_code .. code .. utils.constructor_format( fmt, subst, callable.register))
+	end
+end
 -- Constructor implementing a call of a method of an interface
 function interfaceMethodCallConstructor( loadfmt, callfmt, rtype)
 	return function( this, args, llvmtypes)
@@ -1735,6 +1746,11 @@ function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	if descr.vararg then varargFuncMap[ functype] = true end
 	return functype
 end
+function defineFunctionVariableCall( thisTypeId, contextTypeId, opr, descr)
+	local callfmt = utils.template_format( descr.call, descr)
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
+	return defineCall( rtype, contextTypeId, opr, descr.param, functionVariableCallConstructor( callfmt, thisTypeId, descr.ret))
+end
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
 	local loadfmt = utils.template_format( descr.load, descr)
 	local callfmt = utils.template_format( descr.call, descr)
@@ -1751,25 +1767,24 @@ function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
 	end
 	return rt,false
 end
+-- Common part of defineProcedureVariableType/defineFunctionVariableType
+function defineCallableVariableType( node, descr, declContextTypeId)
+	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
+	defineFunctionVariableCall( qualitype.c_lval, qualitype.c_lval, "()", descr)
+	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr, qualitype.c_lval))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr, qualitype.c_lval))
+end
 -- Define a procedure pointer type as callable object with "()" operator implementing the call
 function defineProcedureVariableType( node, descr, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	expandDescrFunctionReferenceTemplateParameter( descr, context)
-	local descr = llvmir.procedureVariableDescr( descr, descr.signature)
-	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
-	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
-	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
-	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
+	defineCallableVariableType( node, llvmir.procedureVariableDescr( descr, descr.signature), declContextTypeId)
 end
 -- Define a function pointer type as callable object with "()" operator implementing the call
 function defineFunctionVariableType( node, descr, context)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	expandDescrFunctionReferenceTemplateParameter( descr, context)
-	local descr = llvmir.functionVariableDescr( descr, descr.rtllvmtype, descr.signature)
-	local qualitype = defineQualifiedTypes( node, declContextTypeId, descr.name, descr)
-	defineFunctionCall( qualitype.c_lval, declContextTypeId, "()", descr)
-	defineCall( qualitype.rval, qualitype.rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
-	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr))
+	defineCallableVariableType( node, llvmir.functionVariableDescr( descr, descr.rtllvmtype, descr.signature), declContextTypeId)
 end
 -- Define a free function as callable object with "()" operator implementing the call
 function defineFreeFunction( node, descr, context)
@@ -2441,7 +2456,9 @@ end
 function typesystem.main_procdef( node)
 	defineMainProcContext( node)
 	local arg = utils.traverse( typedb, node)
-	local descr = {body = arg[1].code}
+	local scope_bk = typedb:scope( {} ) -- set global scope
+	local descr = {body = getAllocationScopeCodeBlock( arg[1].code)}
+	typedb:scope( scope_bk)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
 end
 function typesystem.program( node)

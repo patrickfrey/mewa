@@ -5,13 +5,13 @@ extern "C" function malloc byte^( long);
 
 procedure printNumber( double aa, int& cnt)
 {
-	printf("CALL printNumber %f\n", aa);
+	printf("CALL printNumber [%d] %f\n", cnt, aa);
 	cnt += 1;
 }
 
 function printNumber int( double aa, int cnt)
 {
-	printf("CALL printNumber %f\n", aa);
+	printf("CALL printNumber [%d] %f\n", cnt, aa);
 	return cnt + 1;
 }
 
@@ -26,11 +26,11 @@ main {
 	var PNF pnf1 = printNumber;
 	var int cnt = 31;
 
-	// cnt += 2 * pnp1( 3.11, 3);
-	// pnf1( 7.22, cnt);
-	// var int res = g_pnp( 19.1, 2);
+	pnp1( 3.11, cnt);
+	cnt += 2 * pnf1( 4.22, 4);
+	pnf1( 7.22, cnt);
+	g_pnp( 19.1, cnt);
 
 	printf("RES cnt = %d\n", cnt);
-	// printf("RES res = %d\n", res);	
 }
 

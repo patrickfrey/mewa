@@ -190,14 +190,13 @@ llvmir.interfaceTemplate = {
 local functionVariableTemplate = { -- inherits pointer template
 	scalar = false,
 	class = "function variable",
-	call = "{1} = load {rtllvmtype}{signature}, {rtllvmtype}{signature}* {this}\n{out} = call {rtllvmtype}{signature} {1}( {callargstr})\n",
-	sretCall = "{1} = load void{signature}, void{signature}* {this}\ncall void{signature} {1}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
+	call = "{out} = call {rtllvmtype} {this}( {callargstr})\n",
+	sretCall = "call void {this}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
 }
-
 local procedureVariableTemplate = { -- inherits pointer template
 	scalar = false,
 	class = "procedure variable",
-	call = "{1} = load {rtllvmtype}{signature}, {rtllvmtype}{signature}* {this}\n{out} = call {rtllvmtype}{signature} {1}( {callargstr})\n"
+	call = "call void {this}( {callargstr})\n"
 }
 
 local functionReferenceTemplate = {
