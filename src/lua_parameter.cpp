@@ -120,7 +120,7 @@ bool mewa::lua::getArgumentAsBoolean( const char* functionName, lua_State* ls, i
 	return lua_toboolean( ls, li);
 }
 
-float mewa::lua::getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li)
+double mewa::lua::getArgumentAsFloatingPoint( const char* functionName, lua_State* ls, int li)
 {
 	if (!isArgumentType( functionName, ls, li, (1 << LUA_TNUMBER)))
 	{
