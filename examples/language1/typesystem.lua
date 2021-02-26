@@ -1015,7 +1015,11 @@ function defineBuiltInTypeOperators( typnam, descr)
 				local valueconv = constexprLlvmConversion( qualitype.lval, constexprType)
 				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
 				defineCall( qualitype.lval, qualitype.c_lval, operator, {constexprType}, constructor)
-				defineCall( qualitype.lval, constexprType, operator, {qualitype.lval}, binopSwapConstructor(constructor))
+				if operator == '+' or operator == '*' then
+					defineCall( qualitype.lval, constexprType, operator, {qualitype.lval}, binopSwapConstructor(constructor))
+				else
+					definePromoteCall( scalarBooleanType, constexprType, qualitype.c_lval, operator, {qualitype.c_lval}, valueconv)
+				end
 			end
 		end
 	end
@@ -1026,7 +1030,11 @@ function defineBuiltInTypeOperators( typnam, descr)
 				local valueconv = constexprLlvmConversion( qualitype.lval, constexprType)
 				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
 				defineCall( scalarBooleanType, qualitype.c_lval, operator, {constexprType}, constructor)
-				defineCall( scalarBooleanType, constexprType, operator, {qualitype.c_lval}, binopSwapConstructor(constructor))
+				if operator == "==" or operator == "!=" then
+					defineCall( scalarBooleanType, constexprType, operator, {qualitype.c_lval}, binopSwapConstructor(constructor))
+				else
+					definePromoteCall( scalarBooleanType, constexprType, qualitype.c_lval, operator, {qualitype.c_lval}, valueconv)
+				end
 			end
 		end
 	end
