@@ -329,9 +329,8 @@ foreach my $line (@content)
 	}
 	elsif ($sgn eq "unsigned")
 	{
-		@ops = ("[\"+\"] add nuw", "[\"-\"] add nsw", "[\"*\"] mul nsw", "[\"/\"] udiv", "[\"%\"] urem",
-			"[\"<<\"] shl", "[\">>\"] lshr",
-			"[\"&\"] and", "[\"|\"] or", "[\"^\"] xor");
+		@ops = ("[\"+\"] add nuw", "[\"-\"] sub nsw", "[\"*\"] mul nsw", "[\"/\"] udiv", "[\"%\"] urem",
+			"[\"<<\"] shl", "[\">>\"] lshr", "[\"&\"] and", "[\"|\"] or", "[\"^\"] xor");
 	}
 	elsif ($sgn eq "signed")
 	{

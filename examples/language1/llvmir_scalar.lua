@@ -120,7 +120,7 @@ return {
 			["~"] = "{out} = xor i64 {this}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i64 {this}, {arg1}\n",
-			["-"] = "{out} = add nsw i64 {this}, {arg1}\n",
+			["-"] = "{out} = sub nsw i64 {this}, {arg1}\n",
 			["*"] = "{out} = mul nsw i64 {this}, {arg1}\n",
 			["/"] = "{out} = udiv i64 {this}, {arg1}\n",
 			["%"] = "{out} = urem i64 {this}, {arg1}\n",
@@ -213,7 +213,7 @@ return {
 			["~"] = "{out} = xor i32 {this}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i32 {this}, {arg1}\n",
-			["-"] = "{out} = add nsw i32 {this}, {arg1}\n",
+			["-"] = "{out} = sub nsw i32 {this}, {arg1}\n",
 			["*"] = "{out} = mul nsw i32 {this}, {arg1}\n",
 			["/"] = "{out} = udiv i32 {this}, {arg1}\n",
 			["%"] = "{out} = urem i32 {this}, {arg1}\n",
@@ -306,7 +306,7 @@ return {
 			["~"] = "{out} = xor i16 {this}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i16 {this}, {arg1}\n",
-			["-"] = "{out} = add nsw i16 {this}, {arg1}\n",
+			["-"] = "{out} = sub nsw i16 {this}, {arg1}\n",
 			["*"] = "{out} = mul nsw i16 {this}, {arg1}\n",
 			["/"] = "{out} = udiv i16 {this}, {arg1}\n",
 			["%"] = "{out} = urem i16 {this}, {arg1}\n",
@@ -399,7 +399,7 @@ return {
 			["~"] = "{out} = xor i8 {this}, -1\n"},
 		binop = {
 			["+"] = "{out} = add nuw i8 {this}, {arg1}\n",
-			["-"] = "{out} = add nsw i8 {this}, {arg1}\n",
+			["-"] = "{out} = sub nsw i8 {this}, {arg1}\n",
 			["*"] = "{out} = mul nsw i8 {this}, {arg1}\n",
 			["/"] = "{out} = udiv i8 {this}, {arg1}\n",
 			["%"] = "{out} = urem i8 {this}, {arg1}\n",
