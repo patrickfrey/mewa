@@ -78,7 +78,9 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 
 ### Why are type deduction paths weighted?
 
-Type deduction rules are not equivalent. Some rules may lose more information than others. Some may be preferred over others. There may exist equivalent paths for a deduction of a type to another but you might prefer one because allowing equivalence and choosing one path randomly by just picking the first may lead to bugs not discovered. This is because you then may have to ignore any alternative solution path appearing, thus forgetting hints to bugs. You may also encounter suddenly changing behaviour with a changed pick. The weighting of deduction rules implements some sort of memory, like a neural network implemented by hand. The deduction path with the mininal weight sum is memorized as the minimal cost path in the network of deduction rules. The choice of a type reduction path may have any rationale, it is memorized by the assignment of weights to its edges.
+ * It helps the type deduction to terminate in reasonable time. 
+ * It makes the selection of the deduction path deterministic. 
+ * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one clear solution to a resolve type query. Otherwise the request is considered to be ambiguous.
 
 <a name="problemSolving"/>
 
@@ -88,9 +90,7 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 <a name="astStructure"/>
 
 ### How to process the AST structure?
-The compiler builds an Abstract Syntax Tree (AST) with the lexems explicitly declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the AST. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in [typesystem_utils.lua](examples/typesystem_utils.lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope step if defined in the AST and calls the function defined for the AST node.
-
-Unlike in most other compiler frontend frameworks the tree is meant to be traversed once. This means that at specific places it gets ugly. But the hacks needed are describable. It probably depends on the environment if this is justifiable or not.
+The compiler builds an Abstract Syntax Tree (AST) with the lexems explicitly declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the AST. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in [typesystem_utils.Lua](examples/typesystem_utils.Lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope step if defined in the AST and calls the function defined for the AST node.
 
 <a name="astTraversalAndScope"/>
 
@@ -102,13 +102,13 @@ Scope is part of the type database and represented as pair of integer numbers, t
 
 ### How to store and access scope bound data?
 
-Scope bound data in form of a lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing scopes inherit an object from the parent scope) with [typedb:get_instance](#get_instance).
+Scope bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing scopes inherit an object from the parent scope) with [typedb:get_instance](#get_instance).
 
 <a name="typeQualifiers"/>
 
 ### How to implement type qualifiers like const and reference?
 
-Qualifiers are not considered to be attached to the type but part of the type definition. So a const reference to an integer is a type on its its own, like an integer value type or a pointer to an integer. There are no attributes of types in the typedb, but you can associate attributes to types with lua tables. The implementation of the "language1" example does this quite extensively. In the typedb the only relations of types are implemented as reduction definitions.
+Qualifiers are not considered to be attached to the type but part of the type definition. So a const reference to an integer is a type on its its own, like an integer value type or a pointer to an integer. There are no attributes of types in the typedb, but you can associate attributes with types in Lua tables.
 
 <a name="pointersAndArrays"/>
 
@@ -173,7 +173,7 @@ What type should the expression on the right side of the second assignment have?
 In the example language I decided for solution (1) even though it lead to anomalies, but I will return to the problem later. So far all three possibilities can be implemented with _Mewa_.
 
 ##### What Types to Use
-The decision for data types used to implement constants is more complex as it actually looks like at the first glance. But for implementing constant values you can't rely on the scalar types of the language your implementing a compiler with because the language you design may have a different set of scalar types with a different set of rules. You need arbitrary precision arithmetics for integers and floating point numbers at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. A silly decision that should be revisited. I just did not find a module for arbitrary precision integer arithmetics on luarocks with a working installation at the time. So I decided to activate some older project (implementing arbitrary BCD arithmetics for Lua) as a luarocks module on my own. This will be replaced in the future.
+The decision for data types used to implement constants is more complex as it actually looks like at the first glance. But for implementing constant values you can't rely on the scalar types of the language your implementing a compiler with because the language you design may have a different set of scalar types with a different set of rules. You need arbitrary precision arithmetics for integers and floating point numbers at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. A silly decision that should be revisited. I just did not find a module for arbitrary precision integer arithmetics on _LuaRocks_  with a working installation at the time. So I decided to activate some older project (implementing arbitrary BCD arithmetics for Lua) as a _LuaRocks_ module on my own. This will be replaced in the future.
 
 <a name="functionsProceduresAndMethods"/>
 
