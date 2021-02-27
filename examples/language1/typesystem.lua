@@ -2002,6 +2002,7 @@ function traverseAstFunctionDef( node, context, descr)
 	printFunctionDeclaration( node, descr)
 end
 function traverseAstProcedureDef( node, context, descr)
+	descr.call = llvmir.control.procedureCall
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	instantiateCallableDef( node, context, descr)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
@@ -2193,26 +2194,30 @@ function typesystem.typehdr_generic( node, qualifier, context)
 		if not instanceType then
 			local declContextTypeId = typedb:type_context( genericType)
 			local typnam = getGenericTypeName( genericType, generic_arg)
-			local fmt; if genericDescr.class == "generic_class" then
-				fmt = llvmir.classTemplate
-			elseif genericDescr.class == "generic_struct" then
-				fmt = llvmir.structTemplate
-			elseif genericDescr.class == "generic_procedure" then
-				traverseAstProcedureDef( genericDescr.node, typnam, descr)
-			elseif genericDescr.class == "generic_function" then
-				traverseAstFunctionDef( genericDescr.node, typnam, descr)
-			end
-			if fmt then
+			if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
+				local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
 				local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
 				instanceType = qualitype.lval
 				defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
 				if genericDescr.class == "generic_class" then
 					traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
-				elseif genericDescr.class == "generic_struct" then
-					traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 				else
-					utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic class '%s'", genericDescr.class)
+					traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 				end
+			elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
+				instanceType = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
+				defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
+				local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
+				               name=typnam, symbol=typnam, private=true, const=decl.const, interface=false}
+				pushDefContextTypeConstructorPair( instanceType)
+				if genericDescr.class == "generic_function" then
+					traverseAstProcedureDef( genericDescr.node, typnam, descr)
+				else
+					traverseAstFunctionDef( genericDescr.node, typnam, descr)
+				end
+				popDefContextTypeConstructorPair( instanceType)
+			else
+				utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic '%s'", genericDescr.class)
 			end
 		end
 		typedb:scope( scope_bk)
@@ -2282,8 +2287,8 @@ function typesystem.funcdef( node, decl, context)
 end
 function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], ret = nil, private=arg[1].private, const=decl.const, interface=false}
+	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
+			name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false}
 	traverseAstProcedureDef( node, context, descr)
 end
 function typesystem.generic_funcdef( node, decl, context)
