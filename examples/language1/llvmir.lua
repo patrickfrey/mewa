@@ -199,30 +199,16 @@ local procedureVariableTemplate = { -- inherits pointer template
 	call = "call void {this}( {callargstr})\n"
 }
 
-local functionReferenceTemplate = {
-	class = "function",
-	scalar = false,
-	symbolname = nil,
-	ret = nil
-}
-local procedureReferenceTemplate = {
-	class = "procedure",
-	scalar = false,
-	symbolname = nil
-}
-
 llvmir.anyClassDescr = {
 	llvmtype = "i8",
 	scalar = false,
 	class = "class"
 }
-
 llvmir.anyStructDescr = {
 	llvmtype = "i8",
 	scalar = false,
 	class = "struct"
 }
-
 llvmir.anyFunctionDescr = {
 	llvmtype = "i8",
 	scalar = false,
@@ -232,11 +218,15 @@ llvmir.anyFunctionDescr = {
 llvmir.genericClassDescr = {
 	class = "generic_class"
 }
-
 llvmir.genericStructDescr = {
 	class = "generic_struct"
 }
-
+llvmir.genericProcedureDescr = {
+	class = "generic_procedure"
+}
+llvmir.genericFunctionDescr = {
+	class = "generic_function"
+}
 llvmir.callableDescr = {
 	class = "callable"
 }
@@ -337,16 +327,8 @@ end
 function llvmir.procedureVariableDescr( descr, signature)
 	return callableDescr( descr, procedureVariableTemplate, "void" .. signature, nil, signature)
 end
-function llvmir.functionReferenceDescr( ret, symbolname)
-	local rt = utils.template_format( functionReferenceTemplate, {})
-	rt.ret = ret
-	rt.symbolname = symbolname
-	return rt
-end
-function llvmir.procedureReferenceDescr( symbolname)
-	local rt = utils.template_format( procedureReferenceTemplate, {symbolname=symbolname})
-	rt.symbolname = symbolname
-	return rt
+function llvmir.callableReferenceDescr( class, symbolname, ret)
+	return {class = class, scalar = false, symbolname = symbolname, ret = ret }
 end
 
 local arrayDescrMap = {}

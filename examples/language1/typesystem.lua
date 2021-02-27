@@ -915,6 +915,11 @@ function defineInheritedInterfaces( node, context, classTypeId)
 			local mk = context.methodmap[ imethod.methodid]
 			if mk then
 				cmethod = context.methods[ mk]
+				if cmethod.ret ~= imethod.ret then
+					utils.errorMessage( node.line, "Return type '%s' of method '%s' of class '%s' differs from interface '%s': '%s'",
+					                    typedb:type_string( cmethod.ret or 0), cmethod.methodname, typedb:type_name(classTypeId),
+					                    typedb:type_name(iTypeId), typedb:type_string( imethod.ret or 0))
+				end
 				vmtstr = vmtstr .. sep
 					.. utils.template_format( llvmir.control.vtableElement,
 								{interface_signature=imethod.llvmtype, class_signature=cmethod.llvmtype, symbolname=cmethod.symbol})
@@ -1754,7 +1759,7 @@ function expandDescrExternCallTemplateParameter( descr, context)
 end
 -- Add a descriptor to the list of methods that helps to link interfaces with classes
 function expandContextMethodList( node, descr, context)
-	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname, symbol=descr.symbolname})
+	table.insert( context.methods, {llvmtype=descr.llvmtype, methodid=descr.methodid, methodname=descr.methodname, symbol=descr.symbolname, ret=descr.ret})
 	if not descr.private then
 		if context.methodmap[ descr.methodid] then utils.errorMessage( node.line, "Duplicate definition of method '%s'", descr.methodname) end
 		context.methodmap[ descr.methodid] = #context.methods
@@ -1977,6 +1982,31 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 	popDefContextTypeConstructorPair( qualitype.lval)
 end
+-- Common part of traverseAstFunctionDef,traverseAstProcedureDef
+function instantiateCallableDef( node, context, descr)
+	if context and context.qualitype then 
+		defineClassMethod( node, descr, context)
+		descr.interface = isInterfaceMethod( context, descr.methodid)
+		descr.attr = llvmir.functionAttribute( descr.interface)
+	else
+		local callabletype = defineFreeFunction( node, descr, context)
+		typeDescriptionMap[ callabletype] = llvmir.callableReferenceDescr( descr.ret, descr.symbolname)
+	end
+end
+function traverseAstFunctionDef( node, context, descr)
+	descr.ret = utils.traverseRange( typedb, node, {3,3}, context)[3]
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
+	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
+	instantiateCallableDef( node, context, descr)
+	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
+	printFunctionDeclaration( node, descr)
+end
+function traverseAstProcedureDef( node, context, descr)
+	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
+	instantiateCallableDef( node, context, descr)
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
+	printFunctionDeclaration( node, descr)
+end
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
@@ -2167,16 +2197,22 @@ function typesystem.typehdr_generic( node, qualifier, context)
 				fmt = llvmir.classTemplate
 			elseif genericDescr.class == "generic_struct" then
 				fmt = llvmir.structTemplate
+			elseif genericDescr.class == "generic_procedure" then
+				traverseAstProcedureDef( genericDescr.node, typnam, descr)
+			elseif genericDescr.class == "generic_function" then
+				traverseAstFunctionDef( genericDescr.node, typnam, descr)
 			end
-			local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
-			instanceType = qualitype.lval
-			defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
-			if genericDescr.class == "generic_class" then
-				traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
-			elseif genericDescr.class == "generic_struct" then
-				traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
-			else
-				utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic class '%s'", genericDescr.class)
+			if fmt then
+				local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
+				instanceType = qualitype.lval
+				defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
+				if genericDescr.class == "generic_class" then
+					traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
+				elseif genericDescr.class == "generic_struct" then
+					traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
+				else
+					utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic class '%s'", genericDescr.class)
+				end
 			end
 		end
 		typedb:scope( scope_bk)
@@ -2238,39 +2274,29 @@ function typesystem.linkage( node, llvm_linkage, context)
 	end
 	return llvm_linkage
 end
-function typesystem.funcdef( node, decl, context)
-	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+function typesystem.funcdef( node, decl, context)	
+	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], ret = arg[3], private=arg[1].private, const=decl.const, interface=false}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
-	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
-	local isInterface = false
-	if context and context.qualitype then 
-		defineClassMethod( node, descr, context)
-		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface)
-	else
-		local functype = defineFreeFunction( node, descr, context)
-		typeDescriptionMap[ functype] = llvmir.functionReferenceDescr( descr.ret, descr.symbolname)
-	end
-	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
-	printFunctionDeclaration( node, descr)
+			name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false}
+	traverseAstFunctionDef( node, context, descr)
 end
 function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 			name = arg[2], symbol = arg[2], ret = nil, private=arg[1].private, const=decl.const, interface=false}
-	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
-	if context and context.qualitype then
-		defineClassMethod( node, descr, context)
-		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface)
-	else
-		local proctype = defineFreeFunction( node, descr, context)
-		typeDescriptionMap[ proctype] = llvmir.procedureReferenceDescr( descr.symbolname)
-	end
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
-	printFunctionDeclaration( node, descr)
+	traverseAstProcedureDef( node, context, descr)
+end
+function typesystem.generic_funcdef( node, decl, context)
+	local typnam = node.arg[1].value
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
+	defineGenericType( node, declContextTypeId, typnam, llvmir.genericFunctionDescr, param)
+end
+function typesystem.generic_procdef( node, decl, context)	
+	local typnam = node.arg[1].value
+	local declContextTypeId = getTypeDeclContextTypeId( context)
+	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
+	defineGenericType( node, declContextTypeId, typnam, llvmir.genericProcedureDescr, param)
 end
 function typesystem.operatordecl( node, opr)
 	return opr
@@ -2423,7 +2449,7 @@ function typesystem.generic_structdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getTypeDeclContextTypeId( context)
 	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
-	defineGenericType( node, declContextTypeId, typnam, llvmir.llvmir.genericStructDescr, param)
+	defineGenericType( node, declContextTypeId, typnam, llvmir.genericStructDescr, param)
 end
 function typesystem.interfacedef( node, context)
 	local typnam = node.arg[1].value
