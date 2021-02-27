@@ -186,7 +186,7 @@ That is why the whole thing is quirky here. See function typesystem.callablebody
 
 ### How to implement return in a function?
 
-For every function a structure named ```callable``` is defined an attached to the scope of the function. In this structure we define the type of the returned value as member ```callable.returntype```. A return reduces the argument to the type specified as return value type and returns it.
+For every function a structure named ```env``` is defined an attached to the scope of the function. In this structure we define the type of the returned value as member ```env.returntype```. A return reduces the argument to the type specified as return value type and returns it.
 
 <a name="functionReturnComplexData"/>
 
@@ -316,9 +316,12 @@ function y() {
 		return a*x;
 	}
 ```
-By default ```a``` is accessible in function ```b```. This can lead to anomalies without precaution. Especially if we use naively define a new register allocator for every function. One solution could be using a register allocator that uses a different prefix of the allocated items depending on the function hierarchy level. In this case it could be possible to define rules on the constructors issued for variables accessed.
+To prevent a direct access of the variable ```a``` in the function ```b``` the scope inclusion rules are not enough. In the example language the access of local variables is filtered by checking if the variable is defined in the global scope or inside the scope of the function ```b```. This can be done with the one liner:
+```Lua
+if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then ...OK... else ...ERROR... end
+```
+where variableScope scope is the value of ```typedb:type_scope``` of the variable type and env.scope the procedure/function declaration scope.
 
-_This is still an open question and I do not know the correct answer yet_.
 
 <a name="orderOfDefinition"/>
 
@@ -342,10 +345,8 @@ class A {
 	B b;
 };
 ```
-For the first example we need more than one tree traversal each of implementing only a subset of functions. 
-I did not figure out yet how it would be the best to support multiple tree traversals. But I am sure that the problem does not blow up the framework of _Mewa_. You need two traversals, one restricted on type and variable declarations first and a second complete one as it is defined now.
+To implement multi pass traversal where we declare the sub classes in the first pass and the member variables in the second pass, we pass the index of the pass as additional traversal argument and check it in the sub node functions. In the example "language1" I implemented multipass traversal for class definitions.
 
-_We leave this question as TODO_.
 
 <a name="exceptions"/>
 
@@ -357,10 +358,11 @@ Exception handling and especially zero-cost exception handling is a subject of f
 
 ### How to implement generic programming with templates?
 
-Templates are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and assoziate it with a type instead of directly evaluating it.
+Templates are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
 If a template type ```TPL<A1,A2,...>``` is referenced we define a type ```T = TPL<t1,t2,...>``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
-For each template argument Ai we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. With ```T``` as context type we then call the traversal of the template class or structure.
-For functions we do not have a clear idea yet. Especially for automatic template type deduction. But as we can declare a type with the name of the template function we can do the deduction in the procedure matching the arguments to the parameters.
+For each template argument Ai we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. With ```T``` as context type we then call the traversal of the generic class, structure or function.
+
+How to do automatic template argument deduction for generic functions is an open question for me. I did not implement it in an example.
 
 
 <a name="cLibraryCalls"/>

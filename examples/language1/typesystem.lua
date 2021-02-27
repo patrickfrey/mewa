@@ -1956,6 +1956,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	-- Traversal in two passes, first type and variable declarations, then method definitions
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3)
 	descr.size = context.structsize
 	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 	defineClassConstructors( node, qualitype, descr, context)
@@ -1968,7 +1969,8 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	pushDefContextTypeConstructorPair( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=descr.symbol}
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
 	descr.size = context.structsize
 	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
 	defineStructConstructors( node, qualitype, descr, context)
@@ -2228,7 +2230,12 @@ function typesystem.variable( node)
 		utils.errorMessage( node.line, "Not allowed to access variable '%s' that is not defined in local function or global scope", typedb:type_string(typeId))
 	end
 end
-function typesystem.linkage( node, llvm_linkage)
+function typesystem.linkage( node, llvm_linkage, context)
+	if not context and typedb:scope()[0] ~= 0 then -- local function
+		if llvm_linkage.explicit == true and llvm_linkage.private == false then -- declared public
+			utils.errorMessage( node.line, "public declaration not allowed in local context")
+		end
+	end
 	return llvm_linkage
 end
 function typesystem.funcdef( node, decl, context)

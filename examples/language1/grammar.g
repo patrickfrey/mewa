@@ -56,17 +56,17 @@ ininterf_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"			
 			| "operator" operatordecl "(" extern_paramlist ")" "const" ";"			(interface_operator_procdef {const=true})
 			;
 instruct_definition	= typedefinition ";"								(definition 1)
-			| variabledefinition ";"							(definition 1)
+			| variabledefinition ";"							(definition 2)
 			| structdefinition								(definition 1)
 			;
 inclass_definition	= typedefinition ";"								(definition 1)
-			| variabledefinition ";"							(definition 1)
+			| variabledefinition ";"							(definition 2)
 			| structdefinition								(definition 1)
 			| classdefinition 								(definition 1)
 			| interfacedefinition								(definition 1)
-			| functiondefinition								(definition 2)
-			| operatordefinition								(definition 2)
-			| constructordefinition								(definition 2)
+			| functiondefinition								(definition 3)
+			| operatordefinition								(definition 3)
+			| constructordefinition								(definition 3)
 			;
 free_definition		= namespacedefinition								
 			| typedefinition ";"								(definition 1)
@@ -130,9 +130,9 @@ classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(>>classdef)
 			| "generic" "class" IDENT "<" generic_header ">" 
 				":" inheritlist "{" inclass_definitionlist "}"				(>>generic_classdef)
 			;
-linkage			= "private"									(linkage {private=true, linkage="internal"})
-			| "public"									(linkage {private=false, linkage="external"})
-			| ε										(linkage {private=false, linkage="external"})
+linkage			= "private"									(linkage {private=true, linkage="internal", explicit=true})
+			| "public"									(linkage {private=false, linkage="external", explicit=true})
+			| ε										(linkage {private=false, linkage="external", explicit=false})
 			;
 functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef {const=false})
 			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})
@@ -208,11 +208,11 @@ codeblock		= statementlist									(codeblock)
 statementlist		= statement statementlist							(>>)
 			| ε
 			;
-statement/L1		= structdefinition								(definition)
-			| classdefinition 								(definition)
-			| functiondefinition								(definition)
-			| typedefinition ";"								(definition)
-			| "var" variabledefinition ";"							(definition)
+statement/L1		= structdefinition								(definition 1)
+			| classdefinition 								(definition 1)
+			| functiondefinition								(definition 1)
+			| typedefinition ";"								(definition 1)
+			| "var" variabledefinition ";"							(definition 1)
 			| expression ";"								(free_expression)
 			| "return" expression ";"							(>>return_value)
 			| "return" ";"									(>>return_void)
