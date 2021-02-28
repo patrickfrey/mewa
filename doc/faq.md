@@ -7,6 +7,7 @@
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
 1. [Decision Questions](#decisions)
     * [Why are type deduction paths weighted?](#weightedTypeDeduction)
+    * [Why are reductions defined with scope?](#reductionScope)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
     * [How to handle scopes?](#astTraversalAndScope)
@@ -31,6 +32,7 @@
     * [How to implement access of types declared later in the source?](#orderOfDefinition)
     * [How to implement exception handling?](#exceptions)
     * [How to implement generic programming with templates?](#templates)
+    * [How to implement concepts like in C++?](#cppConcepts)
     * [How to implement call of C-Library functions?](#cLibraryCalls)
 
 
@@ -81,6 +83,14 @@ I think the original idea was that seagulls are a sign of land nearby when you a
  * It helps the type deduction to terminate in reasonable time. 
  * It makes the selection of the deduction path deterministic. 
  * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one clear solution to a resolve type query. Otherwise the request is considered to be ambiguous.
+
+
+<a name="reductionScope"/>
+
+### Why are reductions defined with scope?
+
+At the first glance there is no need for defining reductions with a scope, because the types are already bound to a scope.
+But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. In the example **language1** I define the class self reference to be defined as _private reference_ type. But defining it like this makes all private members of the class inaccessible if they are from another instance of the class. If you want to define private members of another instance of the class accessible you can only do this by defining a reduction from the self reference type to the private _private reference_ type restricted to the scope of a method body.
 
 <a name="problemSolving"/>
 
@@ -354,6 +364,7 @@ To implement multi pass traversal where we declare the sub classes in the first 
 
 Exception handling and especially zero-cost exception handling is a subject of further investigation in _Mewa_. As I broadly understood it you define a block with destructors to be executed in case of a thrown exception and LLVM builds the tables needed. This can be be implemented without any support needed from _typedb_.
 
+
 <a name="templates"/>
 
 ### How to implement generic programming with templates?
@@ -363,6 +374,14 @@ If a template type ```TPL<A1,A2,...>``` is referenced we define a type ```T = TP
 For each template argument Ai we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. With ```T``` as context type we then call the traversal of the generic class, structure or function.
 
 How to do automatic template argument deduction for generic functions is an open question for me. I did not implement it in an example.
+But I think for automatic template argument deduction you have to synthesize the generic parameter assignments somehow by matching the function parameters against the function candidates. If you got a complete set of generic parameter assignments, you can do the kind of expansion described above.
+
+
+<a name="cppConcepts"/>
+
+### How to implement concepts like in C++?
+
+I did not implement concepts in an example. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context type. In the concept definition AST node functions you can use typedb:resolve_type to retrieve properties as types to check as sub condition of the concept.
 
 
 <a name="cLibraryCalls"/>

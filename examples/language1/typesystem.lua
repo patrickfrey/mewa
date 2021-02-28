@@ -552,14 +552,18 @@ end
 -- Define all variations of a type alias that can explicitly  specified
 function defineTypeAlias( contextTypeId, typnam, aliasTypeId)
 	local qualitype = qualiTypeMap[ aliasTypeId]
-	typedb:def_type_as( contextTypeId, typnam, qualitype.lval)			-- L-value | plain typedef
-	typedb:def_type_as( contextTypeId, "const " .. typnam, qualitype.c_lval)	-- const L-value
-	typedb:def_type_as( contextTypeId, "&" .. typnam, qualitype.rval)		-- reference
-	typedb:def_type_as( contextTypeId, "const&" .. typnam, qualitype.c_rval)	-- const reference
-	typedb:def_type_as( contextTypeId, "^" .. typnam, qualitype.pval)		-- pointer
-	typedb:def_type_as( contextTypeId, "const^" .. typnam, qualitype.c_pval)	-- const pointer
-	typedb:def_type_as( contextTypeId, "^&" .. typnam, qualitype.rpval)		-- pointer reference
-	typedb:def_type_as( contextTypeId, "const^&" .. typnam, qualitype.c_rpval)	-- const pointer reference
+	if qualitype then
+		typedb:def_type_as( contextTypeId, typnam, qualitype.lval)			-- L-value | plain typedef
+		typedb:def_type_as( contextTypeId, "const " .. typnam, qualitype.c_lval)	-- const L-value
+		typedb:def_type_as( contextTypeId, "&" .. typnam, qualitype.rval)		-- reference
+		typedb:def_type_as( contextTypeId, "const&" .. typnam, qualitype.c_rval)	-- const reference
+		typedb:def_type_as( contextTypeId, "^" .. typnam, qualitype.pval)		-- pointer
+		typedb:def_type_as( contextTypeId, "const^" .. typnam, qualitype.c_pval)	-- const pointer
+		typedb:def_type_as( contextTypeId, "^&" .. typnam, qualitype.rpval)		-- pointer reference
+		typedb:def_type_as( contextTypeId, "const^&" .. typnam, qualitype.c_rpval)	-- const pointer reference
+	else
+		typedb:def_type_as( contextTypeId, typnam, aliasTypeId)				-- plain typedef
+	end
 end
 -- Define all basic types associated with a type name
 function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
@@ -2008,6 +2012,18 @@ function traverseAstProcedureDef( node, context, descr)
 	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
 	printFunctionDeclaration( node, descr)
 end
+function traverseConditionalIfElse( node, exitLabel)
+	local arg = utils.traverse( typedb, node, exitLabel)
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
+	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
+	if arg[3] then
+		local elseLinkCode = utils.constructor_format( llvmir.control.invertedControlType, {inp=cond_constructor.out, out=exitLabel})
+		return {code = cond_constructor.code .. elseLinkCode .. arg[3].code, out = arg[3].out, exitLabelUsed=true}
+	else
+		return {code = cond_constructor.code .. arg[2].code, out=cond_constructor.out}
+	end
+end
+
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
@@ -2088,14 +2104,7 @@ function typesystem.typedef( node, context)
 	local typnam = node.arg[2].value
 	local arg = utils.traverse( typedb, node)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
-	local descr = typeDescriptionMap[ arg[1]]
-	local orig_qualitype = qualiTypeMap[ arg[1]]
-	local this_qualitype = defineQualifiedTypes( node, declContextTypeId, typnam, descr)
-	local convlist = {"lval","c_lval","c_rval"}
-	for ci,conv in ipairs(convlist) do
-		typedb:def_reduction( this_qualitype[conv], orig_qualitype[conv], nil, tag_typeConversion, rdw_conv)
-		typedb:def_reduction( orig_qualitype[conv], this_qualitype[conv], nil, tag_typeConversion, rdw_conv)
-	end
+	defineTypeAlias( declContextTypeId, typnam, arg[1])
 end
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
@@ -2144,20 +2153,23 @@ function typesystem.return_void( node)
 	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
 	return {code = llvmir.control.returnFromProcedure, nofollow=true}
 end
-function typesystem.conditional_if( node)
-	local arg = utils.traverse( typedb, node)
-	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
-	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
-	return {code = cond_constructor.code .. arg[2].code .. utils.constructor_format( llvmir.control.label, {inp=cond_constructor.out})}
+function joinIfElseConditionals( constructorMain, constructorElse, env, exitLabel)
+	local elseLinkCode = utils.constructor_format( llvmir.control.invertedControlType, {inp=constructorMain.out, out=exitLabel})
+	return {code = constructorMain.code .. elseLinkCode .. constructorElse.code, out = constructorElse.out}
 end
-function typesystem.conditional_if_else( node)
-	local arg = utils.traverse( typedb, node)
-	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
-	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
+function typesystem.conditional_else( node, exitLabel)
+	return utils.traverse( typedb, node)[1]
+end
+function typesystem.conditional_elseif( node, exitLabel)
+	return traverseConditionalIfElse( node, exitLabel)
+end
+function typesystem.conditional_if( node)
 	local env = getCallableEnvironment()
-	local exit = env.label()
-	local elsecode = utils.constructor_format( llvmir.control.invertedControlType, {inp=cond_constructor.out, out=exit})
-	return {code = cond_constructor.code .. arg[2].code .. elsecode .. arg[3].code .. utils.constructor_format( llvmir.control.label, {inp=exit})}
+	local exitLabel = env.label()
+	local rt = traverseConditionalIfElse( node, exitLabel)
+	if rt.out then rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=rt.out}); rt.out = nil end
+	if rt.exitLabelUsed == true then rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel}) end
+	return rt
 end
 function typesystem.conditional_while( node)
 	local arg = utils.traverse( typedb, node)
