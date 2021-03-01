@@ -66,8 +66,9 @@ local dereferenceTypeMap = {}		-- maps reference types to their type with the re
 local constTypeMap = {}			-- maps non const types to their const type
 local privateTypeMap = {}		-- maps non private types to their private type
 local pointerTypeMap = {}		-- maps non pointer types to their pointer type
+local pointeeTypeMap = {}		-- maps pointer types to their pointee type
 local rvalueTypeMap = {}		-- maps value types with an rvalue reference type defined to their rvalue reference type
-local typeQualiSepMap = {}		-- maps any defined type id to a separation pair (lval,qualifier) = lval type (strips away qualifiers), qualifier string
+local typeQualiSepMap = {}		-- maps any defined type id to a separation pair (lval,qualifier) = lval type, qualifier as booleans
 local typeDescriptionMap = {}		-- maps any defined type id to its llvmir template structure
 local stringConstantMap = {}    	-- maps string constant values to a structure with its attributes {fmt,name,size}
 local arrayTypeMap = {}			-- maps the pair lval,size to the array type lval for an array size 
@@ -518,7 +519,7 @@ function defineConstExprArithmetics()
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_conv)
 end
 function isPointerType( typeId)
-	return not pointerTypeMap[ typeId]
+	return pointeeTypeMap[ typeId]
 end
 -- Get the declaration type of a variable or data member of a structure or class
 function getDeclarationType( typeId)
@@ -527,8 +528,7 @@ function getDeclarationType( typeId)
 end
 -- Return the raw type of a vararg argument to use for parameter passing
 function stripVarargType( typeId)
-	local qualitype = qualiTypeMap[ typeQualiSepMap[ typeId].lval]
-	if isPointerType(typeId) then return qualitype.c_pval else return qualitype.c_lval end
+	return qualiTypeMap[ typeQualiSepMap[ typeId].lval].c_lval
 end
 -- Map a type used as variable argument parameter (where no explicit parameter type defined for the callee) to its type used for parameter passing
 function getVarargArgumentType( typeId)
@@ -549,99 +549,114 @@ function getVarargArgumentType( typeId)
 		end
 	end
 end
+function getQualifierTypeName( qualifier, typnam)
+	local rt = typnam
+	if qualifier.const == true then rt = "const " .. rt end
+	if qualifier.reference == true then rt = rt .. "&" end
+end
+function getPointerQualifierTypeName( qualifier, typnam)
+	local rt = typnam
+	if qualifier.const == true then rt = rt .. " const^" else rt = rt .. "^" end
+	if qualifier.reference == true then rt = rt .. "&" end
+end
 -- Define all variations of a type alias that can explicitly  specified
-function defineTypeAlias( contextTypeId, typnam, aliasTypeId)
+function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 	local qualitype = qualiTypeMap[ aliasTypeId]
 	if qualitype then
-		typedb:def_type_as( contextTypeId, typnam, qualitype.lval)			-- L-value | plain typedef
-		typedb:def_type_as( contextTypeId, "const " .. typnam, qualitype.c_lval)	-- const L-value
-		typedb:def_type_as( contextTypeId, "&" .. typnam, qualitype.rval)		-- reference
-		typedb:def_type_as( contextTypeId, "const&" .. typnam, qualitype.c_rval)	-- const reference
-		typedb:def_type_as( contextTypeId, "^" .. typnam, qualitype.pval)		-- pointer
-		typedb:def_type_as( contextTypeId, "const^" .. typnam, qualitype.c_pval)	-- const pointer
-		typedb:def_type_as( contextTypeId, "^&" .. typnam, qualitype.rpval)		-- pointer reference
-		typedb:def_type_as( contextTypeId, "const^&" .. typnam, qualitype.c_rpval)	-- const pointer reference
+		if isPointerType( qualitype.lval) then
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {}, typnam)				-- L-value | plain typedef
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam)			-- const L-value
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam))		-- reference
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
+		else
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {}, typnam)					-- L-value | plain typedef
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true}, typnam)				-- const L-value
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {reference=true}, typnam))			-- reference
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam))		-- const reference
+		end
 	else
-		typedb:def_type_as( contextTypeId, typnam, aliasTypeId)				-- plain typedef
+		utils.errorMessage( node.line, "Can't define alias for type '%s %s'", typedb:type_string(contextTypeId), typnam)
 	end
 end
 -- Define all basic types associated with a type name
-function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
+function defineQualifiedTypeRelations( qualitype, typeDescription)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
-	local pointerPointerTypeDescription = llvmir.pointerDescr( pointerTypeDescription)
-
-	local lval = typedb:def_type( contextTypeId, typnam)				-- L-value | plain typedef
-	local c_lval = typedb:def_type( contextTypeId, "const " .. typnam)		-- const L-value
-	local rval = typedb:def_type( contextTypeId, "&" .. typnam)			-- reference
-	local c_rval = typedb:def_type( contextTypeId, "const&" .. typnam)		-- const reference
-	local pval = typedb:def_type( contextTypeId, "^" .. typnam)			-- pointer
-	local c_pval = typedb:def_type( contextTypeId, "const^" .. typnam)		-- const pointer
-	local rpval = typedb:def_type( contextTypeId, "^&" .. typnam)			-- pointer reference
-	local c_rpval = typedb:def_type( contextTypeId, "const^&" .. typnam)		-- const pointer reference
-
-	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(contextTypeId), typnam) end
+	local lval,c_lval,rval,c_rval = qualitype.lval,qualitype.c_lval,qualitype.rval,qualitype.c_rval
 
 	typeDescriptionMap[ lval]    = typeDescription
 	typeDescriptionMap[ c_lval]  = typeDescription
 	typeDescriptionMap[ rval]    = pointerTypeDescription
 	typeDescriptionMap[ c_rval]  = pointerTypeDescription
-	typeDescriptionMap[ pval]    = pointerTypeDescription
-	typeDescriptionMap[ c_pval]  = pointerTypeDescription
-	typeDescriptionMap[ rpval]   = pointerPointerTypeDescription
-	typeDescriptionMap[ c_rpval] = pointerPointerTypeDescription
 
 	referenceTypeMap[ lval]   = rval
 	referenceTypeMap[ c_lval] = c_rval
-	referenceTypeMap[ pval]   = rpval
-	referenceTypeMap[ c_pval] = c_rpval
 
 	dereferenceTypeMap[ rval]    = lval
 	dereferenceTypeMap[ c_rval]  = c_lval
-	dereferenceTypeMap[ rpval]   = pval
-	dereferenceTypeMap[ c_rpval] = c_pval
 
 	constTypeMap[ lval]  = c_lval
 	constTypeMap[ rval]  = c_rval
-	constTypeMap[ pval]  = c_pval
-	constTypeMap[ rpval] = c_rpval
 
-	pointerTypeMap[ lval]   = pval
-	pointerTypeMap[ c_lval] = c_pval
-	pointerTypeMap[ rval]   = pval
-	pointerTypeMap[ c_rval] = c_pval
+	typeQualiSepMap[ lval]    = {lval=lval,qualifier={const=false,reference=false,private=false}}
+	typeQualiSepMap[ c_lval]  = {lval=lval,qualifier={const=true,reference=false,private=false}}
+	typeQualiSepMap[ rval]    = {lval=lval,qualifier={const=false,reference=true,private=false}}
+	typeQualiSepMap[ c_rval]  = {lval=lval,qualifier={const=true,reference=true,private=false}}
 
-	typeQualiSepMap[ lval]    = {lval=lval,qualifier=""}
-	typeQualiSepMap[ c_lval]  = {lval=lval,qualifier="const "}
-	typeQualiSepMap[ rval]    = {lval=lval,qualifier="&"}
-	typeQualiSepMap[ c_rval]  = {lval=lval,qualifier="const&"}
-	typeQualiSepMap[ pval]    = {lval=lval,qualifier="^"}
-	typeQualiSepMap[ c_pval]  = {lval=lval,qualifier="const^"}
-	typeQualiSepMap[ rpval]   = {lval=lval,qualifier="^&"}
-	typeQualiSepMap[ c_rpval] = {lval=lval,qualifier="const^&"}
-
-	typedb:def_reduction( c_pval, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
  	typedb:def_reduction( lval, c_rval, convConstructor( typeDescription.load), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
-	typedb:def_reduction( pval, rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, rdw_strip_r_2)
-	typedb:def_reduction( c_pval, c_rpval, convConstructor( pointerTypeDescription.load), tag_typeDeduction, rdw_strip_r_3)
-
 	typedb:def_reduction( c_lval, lval, nil, tag_typeDeduction, rdw_strip_c_1)
 	typedb:def_reduction( c_rval, rval, nil, tag_typeDeduction, rdw_strip_c_1)
-	typedb:def_reduction( c_pval, pval, nil, tag_typeDeduction, rdw_strip_c_1)
-	typedb:def_reduction( c_rpval, rpval, nil, tag_typeDeduction, rdw_strip_c_2)
+end
+function defineQualifiedTypes( node, contextTypeId, typnam, typeDescription)
+	local lval = typedb:def_type( contextTypeId, getQualifierTypeName( {}, typnam))					-- L-value | plain typedef
+	local c_lval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true}, typnam))			-- const L-value
+	local rval = typedb:def_type( contextTypeId, getQualifierTypeName( {reference=true}, typnam))			-- reference
+	local c_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(contextTypeId), typnam) end
+	local qualitype = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval}
+	qualiTypeMap[ lval] = qualitype
+	defineQualifiedTypeRelations( qualitype, typeDescription)
+	return qualitype
+end
+-- Define index operators for pointers and arrays
+function defineArrayIndexOperators( resTypeId, arTypeId, descr)
+	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
+		defineCall( resTypeId, arTypeId, "[]", {index_type}, callConstructor( descr.index[ index_typnam]))
+	end
+end
+function definePointerQualifiedTypes( node, typeId)
+	local typeDescription = typeDescriptionMap[ typeId]
+	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
+	local qs = typeQualiSepMap[ typeId]
+	local pointeeTypeId; if qs.qualifier.const == true then pointeeTypeId = qs.lval else pointeeTypeId = qs.c_lval end
+	local typnam = typedb:type_name( pointeeTypeId)
+	local contextTypeId = typedb:type_context( pointeeTypeId)
+	local lval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {}, typnam))					-- L-value | plain typedef
+	local c_lval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam))			-- const L-value
+	local rval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam))			-- reference
+	local c_rval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(contextTypeId), typnam .. "^") end
+	local qualitype = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval}
+	qualiTypeMap[ lval] = qualitype
+	defineQualifiedTypeRelations( qualitype, pointerTypeDescription)
 
-	defineCall( pval, rval, "&", {}, function(this) return this end)
-	defineCall( rval, pval, "->", {}, function(this) return this end)
-	defineCall( c_rval, c_pval, "->", {}, function(this) return this end)
+	typedb:def_reduction( c_lval, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
+	defineCall( pointeeTypeId, c_rval, "&", {}, function(this) return this end)
+	defineCall( referenceTypeMap[ pointeeTypeId], c_lval, "->", {}, function(this) return this end)
+	defineArrayIndexOperators( pointeeTypeId, c_rval, pointerTypeDescription)
+	defineArrayIndexOperators( pointeeTypeId, rval, pointerTypeDescription)
 
-	qualiTypeMap[ lval] = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval, pval=pval, c_pval=c_pval, rpval=rpval, c_rpval=c_rpval}
-	return qualiTypeMap[ lval]
+	
+	pointerTypeMap[ pointeeTypeId] = lval
+	pointeeTypeMap[ lval] = pointeeTypeId
+	pointeeTypeMap[ c_lval] = pointeeTypeId
+	return qualitype
 end
 -- Define all R-Value reference types for type definitions representable by R-Value reference types (custom defined complex types)
 function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qualitype)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 
-	local rval_ref = typedb:def_type( contextTypeId, "&&" .. typnam)		-- R-value reference
-	local c_rval_ref = typedb:def_type( contextTypeId, "const&&" .. typnam)		-- constant R-value reference
+	local rval_ref = typedb:def_type( contextTypeId, typnam .. "&&" )			-- R-value reference
+	local c_rval_ref = typedb:def_type( contextTypeId, "const" .. typnam .. "&&")		-- constant R-value reference
 
 	qualitype.rval_ref = rval_ref
 	qualitype.c_rval_ref = c_rval_ref
@@ -651,8 +666,8 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 
 	constTypeMap[ rval_ref] = c_rval_ref
 
-	typeQualiSepMap[ rval_ref]   = {lval=lval,qualifier="&&"}
-	typeQualiSepMap[ c_rval_ref] = {lval=lval,qualifier="const&&"}
+	typeQualiSepMap[ rval_ref]   = {lval=lval,qualifier={rvalueref=true,const=false}}
+	typeQualiSepMap[ c_rval_ref] = {lval=lval,qualifier={rvalueref=true,const=true}}
 
 	rvalueTypeMap[ qualitype.lval] = rval_ref
 	rvalueTypeMap[ qualitype.c_lval] = c_rval_ref
@@ -668,62 +683,24 @@ end
 function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 
-	local priv_rval = typedb:def_type( contextTypeId, "private &" .. typnam)
-	local priv_c_rval = typedb:def_type( contextTypeId, "private const&" .. typnam)
-	local priv_pval = typedb:def_type( contextTypeId, "private ^" .. typnam)
-	local priv_c_pval = typedb:def_type( contextTypeId, "private const^" .. typnam)
-
+	local priv_rval = typedb:def_type( contextTypeId, "private " .. typnam .. "&")
 	qualitype.priv_rval = priv_rval
+	local priv_c_rval = typedb:def_type( contextTypeId, "private const " .. typnam .. "&")
 	qualitype.priv_c_rval = priv_c_rval
-	qualitype.priv_pval = priv_pval
-	qualitype.priv_c_pval = priv_c_pval
 
 	typeDescriptionMap[ priv_rval] = pointerTypeDescription
 	typeDescriptionMap[ priv_c_rval] = pointerTypeDescription
-	typeDescriptionMap[ priv_pval] = pointerTypeDescription
-	typeDescriptionMap[ priv_c_pval] = pointerTypeDescription
-
-	referenceTypeMap[ priv_pval] = qualitype.rpval
-	referenceTypeMap[ priv_c_pval] = qualitype.c_rpval
 
 	constTypeMap[ priv_rval] = priv_c_rval
-	constTypeMap[ priv_pval] = priv_c_pval
 
 	privateTypeMap[ qualitype.rval] = priv_rval
 	privateTypeMap[ qualitype.c_rval] = priv_c_rval
-	privateTypeMap[ qualitype.pval] = priv_pval
-	privateTypeMap[ qualitype.c_pval] = priv_c_pval
 
-	pointerTypeMap[ priv_rval] = priv_pval
-	pointerTypeMap[ priv_c_rval] = priv_c_pval
-
-	typeQualiSepMap[ priv_rval] = {lval=qualitype.lval,qualifier="private &"}
-	typeQualiSepMap[ priv_c_rval] = {lval=qualitype.lval,qualifier="private const&"}
-	typeQualiSepMap[ priv_pval] = {lval=qualitype.lval,qualifier="private ^"}
-	typeQualiSepMap[ priv_c_pval] = {lval=qualitype.lval,qualifier="private const^"}
+	typeQualiSepMap[ priv_rval] = {lval=qualitype.lval,qualifier={reference=true,const=false,private=true}}
+	typeQualiSepMap[ priv_c_rval] = {lval=qualitype.lval,qualifier={reference=true,const=true,private=true}}
 
 	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, rdw_strip_v_2)
 	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, rdw_strip_v_3)
-	typedb:def_reduction( qualitype.pval, priv_pval, nil, tag_typeDeduction, rdw_strip_v_2)
-	typedb:def_reduction( qualitype.c_pval, priv_c_pval, nil, tag_typeDeduction, rdw_strip_v_3)
-
-	defineCall( priv_pval, priv_rval, "&", {}, function(this) return this end)
-	defineCall( priv_rval, priv_pval, "->", {}, function(this) return this end)
-	defineCall( priv_c_rval, priv_c_pval, "->", {}, function(this) return this end)
-end
--- Define constructurs and assignment operations for pointer types and some type reductions bound to pointers only
-function definePointerOperations( qualitype, descr)
-	local pointer_descr = llvmir.pointerDescr( descr)
-	defineCall( qualitype.rpval, qualitype.rpval, "=",  {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
-	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
-	defineCall( qualitype.rpval, qualitype.rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_copy))
-	defineCall( qualitype.rpval, qualitype.rpval, ":=", {}, manipConstructor( pointer_descr.ctor))
-	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {qualitype.c_pval}, assignConstructor( pointer_descr.assign))
-	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {qualitype.c_rpval}, assignConstructor( pointer_descr.ctor_copy))
-	defineCall( qualitype.c_rpval, qualitype.c_rpval, ":=", {}, manipConstructor( pointer_descr.ctor))
-	defineCall( 0, qualitype.rpval, ":~", {}, constructorStructEmpty)
-	local voidptr_cast_fmt = utils.template_format( llvmir.control.bytePointerCast, {llvmtype=pointer_descr.llvmtype})
-	typedb:def_reduction( memPointerType, qualitype.c_pval, convConstructor(voidptr_cast_fmt), tag_pushVararg)
 end
 function defineScalarDestructors( qualitype, descr)
 	defineCall( 0, qualitype.pval, " delete", {}, constructorStructEmpty)
@@ -737,7 +714,6 @@ function defineScalarConstructors( qualitype, descr)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
-	definePointerOperations( qualitype, descr)
 	defineScalarDestructors( qualitype, descr)
 end
 -- Define a conversion reduction as implicit const reference object allocation and reduction to it as initialization with the specified ":=" constructor
@@ -754,8 +730,6 @@ function defineConstructionReduction( destType, sourceType, allocfmt, initconstr
 end
 -- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
-	definePointerOperations( qualitype, descr)
-
 	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
@@ -795,8 +769,6 @@ function defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
 end
 -- Define constructors for 'struct' types
 function defineStructConstructors( node, qualitype, descr, context)
-	definePointerOperations( qualitype, descr)
-
 	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
 
@@ -863,7 +835,6 @@ function defineStructConstructors( node, qualitype, descr, context)
 end
 -- Define constructors for 'interface' types
 function defineInterfaceConstructors( node, qualitype, descr, context)
-	definePointerOperations( qualitype, descr)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
@@ -874,8 +845,6 @@ function defineInterfaceConstructors( node, qualitype, descr, context)
 end
 -- Define constructors for 'class' types
 function defineClassConstructors( node, qualitype, descr, context)
-	definePointerOperations( qualitype, descr)
-
 	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
 	local dtors = ""
 	for mi,member in ipairs(context.members) do
@@ -962,19 +931,6 @@ function defineOperatorsWithStructArgument( node, context)
 		elseif def.maxNofArguments > 1 then
 			utils.errorMessage( node.line, "Operator '%s' defined different instances with more than one argument, but with varying signature", opr)
 		end
-	end
-end
--- Define index operators for pointers to first class citizen scalar types
-function defineArrayIndexOperators( resTypeId, arTypeId, descr)
-	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
-		defineCall( resTypeId, arTypeId, "[]", {index_type}, callConstructor( descr.index[ index_typnam]))
-	end
-end
--- Define pointer comparison operators if defined in the type description
-function definePointerCompareOperators( qualitype, pointer_descr)
-	for operator,operator_fmt in pairs( pointer_descr.cmpop) do
-		defineCall( scalarBooleanType, qualitype.c_pval, operator, {qualitype.c_pval}, callConstructor( operator_fmt))
-		if qualitype.priv_c_pval then defineCall( scalarBooleanType, qualitype.priv_c_pval, operator, {qualitype.c_pval}, callConstructor( operator_fmt)) end
 	end
 end
 -- Define built-in type conversions for first class citizen scalar types
@@ -1080,29 +1036,6 @@ function popDefContextTypeConstructorPair( val)
 	local defcontext = typedb:this_instance( "defcontext")
 	if not defcontext or defcontext[ #defcontext] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
 	table.remove( defcontext, #defcontext)
-end
--- This function checks if an array type defined by element type and size already exists and creates it implicitly if not, return the array type handle 
-function implicitDefineArrayType( node, elementTypeId, arsize)
-	local descr = llvmir.arrayDescr( typeDescriptionMap[ elementTypeId], arsize)
-	local typnam = "[" .. arsize .. "]"
-	local typkey = elementTypeId .. typnam
-	local arrayTypeId = arrayTypeMap[ typkey]
-	if arrayTypeId then
-		return arrayTypeId
-	else
-		local scope_bk = typedb:scope( typedb:type_scope( elementTypeId))
-		local qualitype = defineQualifiedTypes( node, elementTypeId, typnam, descr)
-		local qualitype_element = qualiTypeMap[ typeQualiSepMap[ elementTypeId].lval]
-		arrayTypeId = qualitype.lval
-		defineRValueReferenceTypes( elementTypeId, typnam, descr, qualitype)
-		defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
-		arrayTypeMap[ typkey] = arrayTypeId
-		definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
-		defineArrayIndexOperators( qualitype_element.rval, qualitype.rval, descr)
-		defineArrayIndexOperators( qualitype_element.c_rval, qualitype.c_rval, descr)
-		typedb:scope( scope_bk)
-		return arrayTypeId
-	end
 end
 -- The frame object defines constructors/destructors called implicitly at start/end of their scope
 function getAllocationScopeFrame()
@@ -1338,7 +1271,7 @@ end
 -- Initialize all built-in types
 function initBuiltInTypes()
 	stringAddressType = typedb:def_type( 0, " stringAddressType")
-
+	local byteQualitype = nil
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualifiedTypes( {line=0}, 0, typnam, scalar_descr)
 		local c_lval = qualitype.c_lval
@@ -1351,8 +1284,7 @@ function initBuiltInTypes()
 			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then scalarIntegerType = c_lval end
 			if scalar_descr.llvmtype == "i64" and not scalarLongType then scalarLongType = c_lval end
 			if scalar_descr.llvmtype == "i8" then
-				stringPointerType = qualitype.c_pval
-				memPointerType = qualitype.pval
+				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		elseif scalar_descr.class == "signed" then
@@ -1361,8 +1293,7 @@ function initBuiltInTypes()
 					local scalarFloatType = nil
 
 			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
-				stringPointerType = qualitype.c_pval
-				memPointerType = qualitype.pval
+				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_lval
 		end
@@ -1372,11 +1303,17 @@ function initBuiltInTypes()
 			typedb:def_reduction( qualitype.lval, constexprType, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeDeduction, weight)
 		end
 	end
+	if byteQualitype then
+		local bytePointerQualitype = definePointerQualifiedTypes( {line=0}, byteQualitype.lval)
+		stringPointerType = bytePointerQualitype.c_lval
+		memPointerType = bytePointerQualitype.lval
+	end
 	if not scalarBooleanType then utils.errorMessage( 0, "No boolean type defined in built-in scalar types") end
 	if not scalarIntegerType then utils.errorMessage( 0, "No integer type mapping to i32 defined in built-in scalar types (return value of main)") end
 	if not stringPointerType then utils.errorMessage( 0, "No i8 type defined suitable to be used for free string constants)") end
 
 	local qualitype_anyclass = defineQualifiedTypes( {line=0}, 0, "any class", llvmir.anyClassDescr)
+			                  
 	anyClassPointerType = qualitype_anyclass.pval; hardcodedTypeMap[ "any class^"] = anyClassPointerType
 	anyConstClassPointerType = qualitype_anyclass.c_pval; hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
 	local qualitype_anystruct = defineQualifiedTypes( {line=0}, 0, "any struct", llvmir.anyStructDescr)
@@ -1389,11 +1326,8 @@ function initBuiltInTypes()
 		local scalar_pointerdescr = llvmir.pointerDescr( scalar_descr)
 		local qualitype = scalarQualiTypeMap[ typnam]
 		defineScalarConstructors( qualitype, scalar_descr)
-		defineArrayIndexOperators( qualitype.rval, qualitype.pval, scalar_pointerdescr)
-		defineArrayIndexOperators( qualitype.c_rval, qualitype.c_pval, scalar_pointerdescr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
 		defineBuiltInTypeOperators( typnam, scalar_descr)
-		definePointerCompareOperators( qualitype, scalar_pointerdescr)
 	end
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
@@ -1478,13 +1412,13 @@ function matchGenericParameter( node, genericType, param, args)
 	return rt
 end
 -- For each generic argument, create an alias named as the parameter name as substitute for the generic argument specified
-function defineGenericParameterAliases( instanceType, generic_param, generic_arg)
+function defineGenericParameterAliases( node, instanceType, generic_param, generic_arg)
 	for ii=1,#generic_arg do
 		if generic_arg[ ii].value then
 			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].value)
 			typedb:def_reduction( generic_arg[ ii].type, alias, nil, tag_typeAlias)
 		else
-			defineTypeAlias( instanceType, generic_param[ ii].name, generic_arg[ ii].type)
+			defineTypeAlias( node, instanceType, generic_param[ ii].name, generic_arg[ ii].type)
 		end
 	end
 end
@@ -2023,6 +1957,68 @@ function traverseConditionalIfElse( node, exitLabel)
 		return {code = cond_constructor.code .. arg[2].code, out=cond_constructor.out}
 	end
 end
+-- Create an instance of a generic type with template arguments
+function createGenericTypeInstance( node, genericType, genericArg, genericDescr)
+	local declContextTypeId = typedb:type_context( genericType)
+	local typnam = getGenericTypeName( genericType, genericArg)
+	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
+		local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
+		local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
+		instanceType = qualitype.lval
+		defineGenericParameterAliases( node, instanceType, genericDescr.generic.param, genericArg)
+		if genericDescr.class == "generic_class" then
+			traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
+		else
+			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
+		end
+	elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
+		instanceType = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
+		defineGenericParameterAliases( node, instanceType, genericDescr.generic.param, genericArg)
+		local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
+				name=typnam, symbol=typnam, private=true, const=decl.const, interface=false}
+		pushDefContextTypeConstructorPair( instanceType)
+		if genericDescr.class == "generic_function" then
+			traverseAstProcedureDef( genericDescr.node, typnam, descr)
+		else
+			traverseAstFunctionDef( genericDescr.node, typnam, descr)
+		end
+		popDefContextTypeConstructorPair( instanceType)
+	else
+		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic '%s'", genericDescr.class)
+	end
+end
+-- Create an instance of an array type with size argument
+function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arsize)
+	local qualitype = defineQualifiedTypes( node, elementTypeId, typnam, descr)
+	local qualitype_element = qualiTypeMap[ elementTypeId]
+	arrayTypeId = qualitype.lval
+	defineRValueReferenceTypes( elementTypeId, typnam, descr, qualitype)
+	defineArrayConstructors( node, qualitype, descr, elementTypeId, arsize)
+	definePointerCompareOperators( qualitype, typeDescriptionMap[ qualitype.c_pval])
+	defineArrayIndexOperators( qualitype_element.rval, qualitype.rval, descr)
+	defineArrayIndexOperators( qualitype_element.c_rval, qualitype.c_rval, descr)
+	return arrayTypeId
+end
+function createPointerTypeInstance( node, attr, typeId)
+	local qualitype = definePointerQualifiedTypes( node, typeId)
+	local pointerTypeDescription = typeDescriptionMap( qualitype.lval)
+	!!!!! HIE WIITER
+	defineCall( qualitype.rval, qualitype.rval, "=",  {qualitype.c_lval}, assignConstructor( pointerTypeDescription.assign))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( pointerTypeDescription.assign))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( pointerTypeDescription.ctor_copy))
+	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( pointerTypeDescription.ctor))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_lval}, assignConstructor( pointerTypeDescription.assign))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( pointerTypeDescription.ctor_copy))
+	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( pointerTypeDescription.ctor))
+	defineCall( 0, qualitype.rval, ":~", {}, constructorStructEmpty)
+	local voidptr_cast_fmt = utils.template_format( llvmir.control.bytePointerCast, {llvmtype=pointerTypeDescription.llvmtype})
+	typedb:def_reduction( memPointerType, qualitype.c_lval, convConstructor(voidptr_cast_fmt), tag_pushVararg)
+
+	for operator,operator_fmt in pairs( pointerTypeDescription.cmpop) do
+		defineCall( scalarBooleanType, qualitype.c_lval, operator, {qualitype.c_lval}, callConstructor( operator_fmt))
+	end
+	if attr.const == true then return qualitype.c_lval else return qualitype.lval end
+end
 
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
@@ -2104,7 +2100,7 @@ function typesystem.typedef( node, context)
 	local typnam = node.arg[2].value
 	local arg = utils.traverse( typedb, node)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
-	defineTypeAlias( declContextTypeId, typnam, arg[1])
+	defineTypeAlias( node, declContextTypeId, typnam, arg[1])
 end
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
@@ -2192,64 +2188,54 @@ end
 function typesystem.typehdr_any( node, typeName)
 	return hardcodedTypeMap[ typeName]
 end
-function typesystem.typehdr_generic( node, qualifier, context)
+function typesystem.typegen_generic( node, context)
 	local arg = utils.traverse( typedb, node, context)
 	local inst_arg = arg[ #arg]
 	table.remove( arg, #arg)
 	local genericType = resolveTypeFromNamePath( node, "", arg)
 	local genericDescr = typeDescriptionMap[ genericType]
+	local scope_bk = typedb:scope( typedb:type_scope( genericType))
 	if string.sub(genericDescr.class,1,8) == "generic_" then
-		local scope_bk = typedb:scope( typedb:type_scope( genericType))
-		local generic_arg = matchGenericParameter( node, genericType, genericDescr.generic.param, inst_arg)
-		local instanceid = getGenericParameterIdString( generic_arg)
-		local instanceType = genericDescr.instancemap[ instanceid]
+		local genericArg = matchGenericParameter( node, genericType, genericDescr.generic.param, inst_arg)
+		local instanceId = getGenericParameterIdString( genericArg)
+		local instanceType = genericDescr.instancemap[ instanceId]
 		if not instanceType then
-			local declContextTypeId = typedb:type_context( genericType)
-			local typnam = getGenericTypeName( genericType, generic_arg)
-			if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
-				local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
-				local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
-				instanceType = qualitype.lval
-				defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
-				if genericDescr.class == "generic_class" then
-					traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
-				else
-					traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
-				end
-			elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
-				instanceType = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
-				defineGenericParameterAliases( instanceType, genericDescr.generic.param, generic_arg)
-				local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
-				               name=typnam, symbol=typnam, private=true, const=decl.const, interface=false}
-				pushDefContextTypeConstructorPair( instanceType)
-				if genericDescr.class == "generic_function" then
-					traverseAstProcedureDef( genericDescr.node, typnam, descr)
-				else
-					traverseAstFunctionDef( genericDescr.node, typnam, descr)
-				end
-				popDefContextTypeConstructorPair( instanceType)
-			else
-				utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic '%s'", genericDescr.class)
-			end
+			instanceType = createGenericTypeInstance( node, genericType, genericArg, genericDescr)
+			genericDescr.instancemap[ instanceId] = instanceType
 		end
-		typedb:scope( scope_bk)
-		return instanceType
+	elseif #inst_arg == 1 then
+		local dim = getConstexprValue( constexprUIntegerType, inst_arg[1].type, inst_arg[1].constructor)
+		if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
+		local arsize = tonumber( dim)
+		if arsize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
+		local elementTypeId = arg[1]
+		local qs = typeQualiSepMap[ elementTypeId]
+		if not qs then utils.errorMessage( node.line, "Cannot create array type for type '%s'", typedb:type_string(elementTypeId)) end
+		local strippedElementTypeId = strippedElementTypeId = qs.lval
+		local elementDescr = typeDescriptionMap[ strippedElementTypeId]
+		local typnam = "[" .. arsize .. "]"
+		local typkey = elementTypeId .. typnam
+		local instanceType = arrayTypeMap[ typkey]
+		if not instanceType then
+			instanceType = createArrayTypeInstance( node, typnam, strippedElementTypeId, elementDescr, arsize)
+			arrayTypeMap[ typkey] = instanceType
+		end
+		if constTypeMap[ elementTypeId] then return instanceType else return constTypeMap[ instanceType] end -- const qualifier transfered to array type
 	else
-		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for non generic type '%s'", typedb:type_string(genericType))
+		utils.errorMessage( node.line, "Operator '[' ']' with more than one argument for non generic %s", genericDescr.class)
 	end
+	typedb:scope( scope_bk)
+	return instanceType
 end
-function typesystem.typedim_array( node, qualifier)
+function typesystem.typegen_pointer( node, attr, context)
 	local arg = utils.traverse( typedb, node, context)
-	local dim = getConstexprValue( constexprUIntegerType, arg[2].type, arg[2].constructor)
-	if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
-	local arsize = tonumber(dim)
-	if arsize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
 	local elementTypeId = arg[1]
-	local qs = typeQualiSepMap[ elementTypeId]
-	local strippedElementTypeId; if isPointerType(elementTypeId) then strippedElementTypeId = qs.pval else strippedElementTypeId = qs.lval end
-	local arrayTypeId = implicitDefineArrayType( node, strippedElementTypeId, arsize)
-	if constTypeMap[ elementTypeId] then return arrayTypeId else return constTypeMap[ arrayTypeId] end
-		-- const qualifier stripped from element and transfered to array type
+	local instanceType = pointerTypeMap[ elementTypeId]
+	if not instanceType then
+		local qs = typeQualiSepMap[ elementTypeId]
+		if not qs then utils.errorMessage( node.line, "Cannot create pointer type for type '%s'", typedb:type_string(elementTypeId)) end
+		instanceType = createPointerTypeInstance( node, attr, elementTypeId)
+	end
 end
 function typesystem.typespec_ref( node, qualifier)
 	local arg = utils.traverse( typedb, node)

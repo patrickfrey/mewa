@@ -6,5 +6,5 @@
  * Use C++ rule of zero/five everywhere
  * Allow optional build with LuaJIT: https://luajit.org
  * Migrate Mewa repo to own github project
- 
+ * Implement address operator as implicitely generating the pointer type if it not exists before calling the real apply operator
  

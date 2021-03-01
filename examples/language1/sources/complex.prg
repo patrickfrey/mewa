@@ -21,7 +21,7 @@ function sgn int( double val)
 	}
 }
 
-generic class Complex<R>
+generic class Complex[R]
 {
 	constructor()
 	{
@@ -33,7 +33,7 @@ generic class Complex<R>
 		m_real = real_;
 		m_img = img_;
 	}
-	constructor( const Complex<R>& o)
+	constructor( const Complex[R]& o)
 	{
 		m_real = o.m_real;
 		m_img = o.m_img;
@@ -48,19 +48,19 @@ generic class Complex<R>
 		m_real = real_;
 		m_img = img_;
 	}
-	public operator + Complex<R>( const Complex<R>& o)
+	public operator + Complex[R]( const Complex[R]& o)
 	{
 		return {(m_real + o.m_real), (m_img + o.m_img)};
 	}
-	public operator - Complex<R>( const Complex<R>& o)
+	public operator - Complex[R]( const Complex[R]& o)
 	{
 		return {(m_real - o.m_real), (m_img - o.m_img)};
 	}
-	public operator * Complex<R>( const Complex<R>& o)
+	public operator * Complex[R]( const Complex[R]& o)
 	{
 		return {(m_real * o.m_real) - (m_img * o.m_img), (m_real * o.m_img) + (m_img * o.m_real)};
 	}
-	public operator / Complex<R>( const Complex<R>& o)
+	public operator / Complex[R]( const Complex[R]& o)
 	{
 		return {((m_real * o.m_real) + (m_img * o.m_img)) / (o.m_real * o.m_real + o.m_img * o.m_img), 
 					((m_img * o.m_real) - (m_real * o.m_img)) / (o.m_real * o.m_real + o.m_img * o.m_img)};
@@ -89,13 +89,13 @@ generic class Complex<R>
 	R m_img;
 }
 
-generic procedure printComplex<R>( const byte^ text, const Complex<R>& complex)
+generic procedure printComplex[R]( const byte^ text, const Complex[R]& complex)
 {
 	printf("%s %f i%f\n", text, complex.real(), complex.img());
 }
 
 main {
-	Complex<double> xx = (cast Complex<double>: { 5, 2 }).square().squareRoot();
-	printComplex<double>( "square root (5 + 2i) squared =", xx);
+	Complex[double] xx = (cast Complex[double]: { 5, 2 }).square().squareRoot();
+	printComplex[double]( "square root (5 + 2i) squared =", xx);
 }
 

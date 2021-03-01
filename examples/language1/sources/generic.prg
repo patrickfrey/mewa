@@ -3,7 +3,7 @@
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" function malloc byte^( long);
 
-generic class Array<ELEMENT,SIZE>
+generic class Array[ELEMENT,SIZE]
 {
 	constructor(){}
 	constructor( const ELEMENT[ SIZE]& ar_)
@@ -22,7 +22,8 @@ generic class Array<ELEMENT,SIZE>
 }
 
 main {
-	var Array<float,5> array = {1.1,2.2,3.3,4.4,5.5};
+	var Array[float,5] array = {1.1,2.2,3.3,4.4,5.5};
+
 	array[ 1] = -11.11;
 	array[ 3] = -33.33;
 

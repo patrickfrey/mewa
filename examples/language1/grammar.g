@@ -87,33 +87,26 @@ typename/L1		= IDENT
 			| IDENT "::" typename
 			;
 typehdr/L1		= typename									(typehdr "")
-			| typename "<" generic_instance ">"						(typehdr_generic "")
 			| "const" typename								(typehdr "const ")
-			| "const" typename "<" generic_instance ">"					(typehdr_generic "const ")
-			| typename "^"									(typehdr "^")
-			| typename "<" generic_instance ">" "^"						(typehdr_generic "^")
-			| "const" typename "^"								(typehdr "const^")
-			| "const" typename "<" generic_instance ">" "^"					(typehdr_generic "const^")
 			| "any" "class" "^"								(typehdr_any "any class^")
 			| "any" "const" "class" "^"							(typehdr_any "any const class^")
 			| "any" "struct" "^"								(typehdr_any "any struct^")
 			| "any" "const" "struct" "^"							(typehdr_any "any const struct^")
 			;
-typedim/L1		= typehdr
-			| typehdr "[" expression "]"							(typedim_array)
+typegen/L1		= typehdr
+			| typehdr "[" generic_instance "]"						(typegen_generic)
+			| typehdr "^"									(typegen_pointer {const=false})
+			| typehdr "const" "^"								(typegen_pointer {const=true})
 			;
-typespec/L1		= typedim
-			| typedim "&"									(typespec_ref)
+typespec/L1		= typegen
+			| typegen "&"									(typespec_ref)
 			;
-typepath/L1		= typename									(typehdr "")
-			| typename "<" generic_instance ">"						(typehdr_generic "")
-			;
-typedefinition		= "typedef" typepath IDENT							(>>typedef)
+typedefinition		= "typedef" typegen IDENT							(>>typedef)
 			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype)
 			| "typedef" "procedure" IDENT "(" extern_paramlist ")" 				(>>typedef_proctype)
 			;
 structdefinition	= "struct" IDENT "{" instruct_definitionlist "}"				(>>structdef)
-			| "generic" "struct" IDENT "<" generic_header ">"
+			| "generic" "struct" IDENT "[" generic_header "]"
 				"{" instruct_definitionlist "}"						(>>generic_structdef)
 			;
 interfacedefinition	= "interface" IDENT "{" ininterf_definitionlist "}"				(>>interfacedef)
@@ -125,9 +118,9 @@ namespacedefinition	= "namespace" IDENT  "{" namespace_definitionlist "}"				(>>
 			;
 classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(>>classdef)
 			| "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"			(>>classdef)
-			| "generic" "class" IDENT "<" generic_header ">"
+			| "generic" "class" IDENT "[" generic_header "]"
 				"{" inclass_definitionlist "}"						(>>generic_classdef)
-			| "generic" "class" IDENT "<" generic_header ">" 
+			| "generic" "class" IDENT "[" generic_header "]" 
 				":" inheritlist "{" inclass_definitionlist "}"				(>>generic_classdef)
 			;
 linkage			= "private"									(linkage {private=true, linkage="internal", explicit=true})
@@ -138,10 +131,10 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef 
 			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})
 			| linkage "procedure" IDENT callablebody					(procdef {const=false})
 			| linkage "procedure" IDENT callablebody_const					(procdef {const=true})
-			| "generic" "function" IDENT "<" generic_header ">" typespec callablebody	(generic_funcdef {const=false})
-			| "generic" "function" IDENT "<" generic_header ">" typespec callablebody_const (generic_funcdef {const=true})
-			| "generic" "procedure" IDENT "<" generic_header ">" callablebody		(generic_procdef {const=false})
-			| "generic" "procedure" IDENT "<" generic_header ">" callablebody_const 	(generic_procdef {const=true})
+			| "generic" "function" IDENT "[" generic_header "]" typespec callablebody	(generic_funcdef {const=false})
+			| "generic" "function" IDENT "[" generic_header "]" typespec callablebody_const (generic_funcdef {const=true})
+			| "generic" "procedure" IDENT "[" generic_header "]" callablebody		(generic_procdef {const=false})
+			| "generic" "procedure" IDENT "[" generic_header "]" callablebody_const 	(generic_procdef {const=true})
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
 			| "destructor" "{" codeblock "}"						(destructordef)
