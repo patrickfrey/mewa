@@ -111,8 +111,8 @@ structdefinition	= "struct" IDENT "{" instruct_definitionlist "}"				(>>structde
 			;
 interfacedefinition	= "interface" IDENT "{" ininterf_definitionlist "}"				(>>interfacedef)
 			;
-inheritlist		= typepath "," inheritlist							(>>inheritdef 1)
-			| typepath									(>>inheritdef 1)
+inheritlist		= typegen "," inheritlist							(>>inheritdef 1)
+			| typegen									(>>inheritdef 1)
 			;
 namespacedefinition	= "namespace" IDENT  "{" namespace_definitionlist "}"				(>>namespacedef)
 			;
@@ -168,15 +168,15 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 			| ">"										(operatordecl {name=">", symbol="gt"})
 			| "<"										(operatordecl {name="<", symbol="lt"})
 			;
-generic_instance_deflist= typepath									(generic_instance_type)
-			| typepath "," generic_instance_deflist						(generic_instance_type)
+generic_instance_deflist= typegen									(generic_instance_type)
+			| typegen "," generic_instance_deflist						(generic_instance_type)
 			| UINTEGER									(generic_instance_dimension)
 			| UINTEGER "," generic_instance_deflist						(generic_instance_dimension)
 			;
 generic_instance	= generic_instance_deflist							(generic_instance)
 			;
-generic_defaultlist	= IDENT "=" typepath "," generic_defaultlist					(generic_header_ident_type)
-			| IDENT "=" typepath								(generic_header_ident_type)
+generic_defaultlist	= IDENT "=" typegen "," generic_defaultlist					(generic_header_ident_type)
+			| IDENT "=" typegen								(generic_header_ident_type)
 			;
 generic_identlist	= IDENT "," generic_identlist							(generic_header_ident)
 			| IDENT "," generic_defaultlist							(generic_header_ident)
@@ -275,7 +275,7 @@ expression/L8		= expression  "=="  expression							(operator "==")
 			;
 expression/L9		= expression  "+"  expression							(operator "+")
 			| expression  "-"  expression							(operator "-")
-			| "&"  expression								(operator "&")
+			| "&"  expression								(operator_address "&")
 			| "-"  expression								(operator "-")
 			| "+"  expression								(operator "+") 
 			| "~"  expression								(operator "~")

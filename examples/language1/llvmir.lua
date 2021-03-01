@@ -112,13 +112,13 @@ llvmir.structTemplate = {
 	class = "struct",
 	align = 8,
 	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
-	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
+	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ths) {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{symbol}( %{symbol}* %ths, %{symbol}* %oth) alwaysinline {\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{symbol}( %{symbol}* %ths, %{symbol}* %oth) {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ths{paramstr}) alwaysinline {\n"
+	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ths{paramstr}) {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor = "call void @__ctor_{symbol}( %{symbol}* {this})\n",
 	ctor_copy = "call void @__ctor_{procname}_{symbol}( %{symbol}* {this}, %{symbol}* {arg1})\n",
@@ -139,9 +139,9 @@ llvmir.classTemplate = {
 	class = "class",
 	align = 8,
 	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
-	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
+	ctorproc = "define private dso_local void @__ctor_{symbol}( %{symbol}* %ths) {\n"
 		.. "enter:\n{ctors}br label %end\nend:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor = "call void @__ctor_{symbol}( %{symbol}* {this})\n",
 	dtor = "call void @__dtor_{symbol}( %{symbol}* {this})\n",
@@ -199,22 +199,21 @@ local procedureVariableTemplate = { -- inherits pointer template
 	call = "call void {this}( {callargstr})\n"
 }
 
-llvmir.anyClassDescr = {
-	llvmtype = "i8",
+llvmir.anyClassPointerDescr = {
+	llvmtype = "i8*",
 	scalar = false,
-	class = "class"
+	class = "any class pointer"
 }
-llvmir.anyStructDescr = {
-	llvmtype = "i8",
+llvmir.anyStructPointerDescr = {
+	llvmtype = "i8*",
 	scalar = false,
-	class = "struct"
+	class = "any struct pointer"
 }
 llvmir.anyFunctionDescr = {
-	llvmtype = "i8",
+	llvmtype = "i8*",
 	scalar = false,
 	class = "transfer"
 }
-
 llvmir.genericClassDescr = {
 	class = "generic_class"
 }

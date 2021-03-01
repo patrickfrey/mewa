@@ -34,16 +34,19 @@ $LUABIN tests/typedb.lua
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then
-/usr/bin/time -f "Time build language 1 tables for dump running %e seconds"\
+echo "Building tables for dump of example \"language1\" ..."
+/usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -d build/language1.debug.out -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
 chmod +x build/language1.dump.lua
+echo "Dump tables of compiler for example \"language1\" ..."
 build/language1.dump.lua > build/language1.dump.lua.out
 verify_test_result "Check dump automaton read by Lua script"  build/language1.dump.lua.out tests/language1.dump.lua.exp
 verify_test_result "Check dump states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xLANG1" ] ; then
-/usr/bin/time -f "Time build language 1 compiler running %e seconds"\
+echo "Building tables and script implementing the compiler for example \"language1\" ..."
+/usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -g -o build/language1.compiler.lua examples/language1/grammar.g
 chmod +x build/language1.compiler.lua
 fi
