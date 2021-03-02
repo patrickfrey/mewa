@@ -20,12 +20,12 @@ class Point :Object,ObjectUpdater
 	public constructor( int x_, int y_)
 	{
 		m_x = x_;
-		this->m_y = y_;
+		self.m_y = y_;
 	}
 
 	public operator = ( int x_, int y_)
 	{
-		this->m_x = x_;
+		self.m_x = x_;
 		m_y = y_;
 	}
 
@@ -36,7 +36,7 @@ class Point :Object,ObjectUpdater
 
 	public function y int() const
 	{
-		return this->m_y;
+		return self.m_y;
 	}
 
 	function ofs_x int( int addx) const
@@ -51,11 +51,11 @@ class Point :Object,ObjectUpdater
 
 	public function object Object() const
 	{
-		return this->Object;
+		return self.Object;
 	}
 	public function updater ObjectUpdater()
 	{
-		return this->ObjectUpdater;
+		return self.ObjectUpdater;
 	}
 
 	int m_x;
@@ -66,12 +66,12 @@ class Line :Point
 {
 	public constructor( int x_, int y_)
 	{
-		this->Point = {x_,y_};
+		self.Point = {x_,y_};
 	}
 
 	public procedure move( int x_, int y_)
 	{
-		this->Point = {x_,y_};
+		self.Point = {x_,y_};
 	}
 }
 

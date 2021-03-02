@@ -83,7 +83,7 @@ generic class Complex[R]
 	}
 	public function square R() const
 	{
-		return *this * *this;
+		return self * self;
 	}
 	R m_real;
 	R m_img;

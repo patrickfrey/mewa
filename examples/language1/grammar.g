@@ -86,8 +86,8 @@ namespace_definition	= namespacedefinition								(definition 1)
 typename/L1		= IDENT
 			| IDENT "::" typename
 			;
-typehdr/L1		= typename									(typehdr "")
-			| "const" typename								(typehdr "const ")
+typehdr/L1		= typename									(typehdr {const=false})
+			| "const" typename								(typehdr {const=true})
 			| "any" "class" "^"								(typehdr_any "any class^")
 			| "any" "const" "class" "^"							(typehdr_any "any const class^")
 			| "any" "struct" "^"								(typehdr_any "any struct^")
@@ -221,7 +221,8 @@ statement/L1		= structdefinition								(definition 1)
 			| "if" "(" expression ")" "{" codeblock "}" elseblock				({}conditional_if)
 			| "if" "(" expression ")" "{" codeblock "}" 					({}conditional_if)
 			| "while" "(" expression ")" "{" codeblock "}"					({}conditional_while)
-			| "with" "(" expression ")" "{" codeblock "}"					(>>with_do)
+			| "with" "(" expression ")" "{" codeblock "}"					({}with_do)
+			| "with" "(" expression ")" ";"							({}with_do)
 			| "{" codeblock "}"								({})
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
