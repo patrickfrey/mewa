@@ -35,8 +35,8 @@ generic class Complex[R]
 	}
 	constructor( const Complex[R]& o)
 	{
-		m_real = o.m_real;
-		m_img = o.m_img;
+		m_real = o.real();
+		m_img = o.img();
 	}
 	constructor( const R real_)
 	{
@@ -47,23 +47,6 @@ generic class Complex[R]
 	{
 		m_real = real_;
 		m_img = img_;
-	}
-	public operator + Complex[R]( const Complex[R]& o)
-	{
-		return {(m_real + o.m_real), (m_img + o.m_img)};
-	}
-	public operator - Complex[R]( const Complex[R]& o)
-	{
-		return {(m_real - o.m_real), (m_img - o.m_img)};
-	}
-	public operator * Complex[R]( const Complex[R]& o)
-	{
-		return {(m_real * o.m_real) - (m_img * o.m_img), (m_real * o.m_img) + (m_img * o.m_real)};
-	}
-	public operator / Complex[R]( const Complex[R]& o)
-	{
-		return {((m_real * o.m_real) + (m_img * o.m_img)) / (o.m_real * o.m_real + o.m_img * o.m_img), 
-					((m_img * o.m_real) - (m_real * o.m_img)) / (o.m_real * o.m_real + o.m_img * o.m_img)};
 	}
 	public function real R() const
 	{
@@ -77,13 +60,30 @@ generic class Complex[R]
 	{
 		return sqrt( m_real * m_real + m_img * m_img);
 	}
-	public function squareRoot R() const
+	public function squareRoot Complex[R]() const
 	{
 		return {sqrt( abs() + m_real) / 2, (sgn(m_img) / sqrt(2)) * sqrt( abs() - m_real) / 2};
 	}
-	public function square R() const
+	public function square Complex[R]() const
 	{
 		return self * self;
+	}
+	public operator + Complex[R]( const Complex[R]& o)
+	{
+		return {(m_real + o.real()), (m_img + o.img())};
+	}
+	public operator - Complex[R]( const Complex[R]& o)
+	{
+		return {(m_real - o.real()), (m_img - o.img())};
+	}
+	public operator * Complex[R]( const Complex[R]& o)
+	{
+		return {(m_real * o.real()) - (m_img * o.img()), (m_real * o.img()) + (m_img * o.real())};
+	}
+	public operator / Complex[R]( const Complex[R]& o)
+	{
+		return {((m_real * o.real()) + (m_img * o.img())) / (o.real() * o.real() + o.img() * o.img()), 
+					((m_img * o.real()) - (m_real * o.img())) / (o.real() * o.real() + o.img() * o.img())};
 	}
 	R m_real;
 	R m_img;

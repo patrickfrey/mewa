@@ -1924,10 +1924,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=true, members={}, operators={}, methods={}, methodmap={},
 	                 structsize=0, llvmtype="", symbol=descr.symbol, interfaces={}, properties={}}
-	-- Traversal in two passes, first type and variable declarations, then method definitions
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3)
+	for pass=1,4 do utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, pass) end -- multipass traversal, see (definition pass) in grammar.g
 	descr.size = context.structsize
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
@@ -1940,8 +1937,7 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	pushDefContextTypeConstructorPair( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	local context = {qualitype=qualitype, descr=descr, index=0, private=false, members={}, structsize=0, llvmtype="", symbol=descr.symbol}
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1)
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2)
+	for pass=1,2 do utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, pass) end -- multipass traversal, see (definition pass) in grammar.g
 	descr.size = context.structsize
 	defineStructConstructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
@@ -2245,7 +2241,7 @@ function typesystem.typegen_generic( node, context)
 		typeInstance = genericInstanceTypeMap[ typkey]
 		if not typeInstance then
 			createGenericTypeInstance( node, genericType, genericArg, genericDescr, function( ti) genericInstanceTypeMap[ typkey] = ti end)
-			genericInstanceTypeMap[ typkey] = typeInstance
+			typeInstance = genericInstanceTypeMap[ typkey]
 		end
 	elseif #inst_arg == 1 then -- generic operator on non generic type creates an array
 		local dim = getConstexprValue( constexprUIntegerType, inst_arg[1].type, inst_arg[1].constructor)

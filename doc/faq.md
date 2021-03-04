@@ -90,7 +90,8 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 ### Why are reductions defined with scope?
 
 At the first glance there is no need for defining reductions with a scope, because the types are already bound to a scope.
-But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. In the example **language1** I define the class self reference to be defined as _private reference_ type. But defining it like this makes all private members of the class inaccessible if they are from another instance of the class. If you want to define private members of another instance of the class accessible you can only do this by defining a reduction from the self reference type to the private _private reference_ type restricted to the scope of a method body.
+But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. If you want to have private/public access restrictions on type (like for example in C++) you can do this by declaring a reduction from the ```self``` reference declared as public to the private reference. If you want to have private/public access restrictions on data, meaning that an object can only access its own data, you can do this by declaring a the ```self``` reference as private.
+In the example **language1** I define the class self reference to be defined as _private reference_ type. Thus having private/public access restrictions on data.
 
 <a name="problemSolving"/>
 
@@ -297,16 +298,14 @@ Visibility is also best expressed with type qualifiers of the structure types wi
 
  * ```priv_rval``` with the qualifier "private &" with the reduction to ```rval``` with the qualifier "&"
  * ```priv_c_rval``` with the qualifier "private const&" with the reduction to ```c_rval``` with the qualifier "const&"
- * ```priv_pval``` with the qualifier "private ^" with the reduction to ```pval``` with the qualifier "^"
- * ```priv_c_pval``` with the qualifier  "private const^" with the reduction to ```c_pval``` with the qualifier "const^"
 
 for each class type.
 
 Private methods are then defined in the context of ```priv_rval``` or ```priv_c_rval``` if they are const. 
 Public methods in the contrary are then defined in the context of ```rval``` or ```c_rval``` if they are const. 
 
-In the body of a method the implicitly defined ```this``` pointer is set to be reducible to its private pointer type.
-So is the implicit reference ```*this``` added as private reference to the context used for resolving types there.
+In the body of a method the implicitly defined ```self``` reference is set to be reducible to its private reference type.
+The ```self``` is also added as private reference to the context used for resolving types there, so it does not have to be explicitely defined.
 If defined like this then private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exist no reduction from the public context type to the private context type.
 
 <a name="visibilityRuleErrors"/>
