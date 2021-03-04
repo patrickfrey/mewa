@@ -95,7 +95,7 @@ generic procedure printComplex[R]( const byte^ text, const Complex[R]& complex)
 }
 
 main {
-	Complex[double] xx = (cast Complex[double]: { 5, 2 }).square().squareRoot();
+	var Complex[double] xx = (cast Complex[double]: { 5, 2 }).square().squareRoot();
 	printComplex[double]( "square root (5 + 2i) squared =", xx);
 }
 

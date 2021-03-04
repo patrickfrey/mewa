@@ -40,8 +40,8 @@ extern_definition	= "extern" DQSTRING "function" IDENT typespec "(" extern_param
 			;
 extern_parameters 	= typespec "," extern_parameters						(extern_paramdef)
 			| typespec IDENT "," extern_parameters						(extern_paramdef)
-			| typespec									(extern_paramdef)
-			| typespec IDENT								(extern_paramdef)
+			| typespec									(extern_paramdeftail)
+			| typespec IDENT								(extern_paramdeftail)
 			;
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε										(extern_paramdeflist)
@@ -98,7 +98,7 @@ typegen/L1		= typehdr
 			| typehdr "^"									(typegen_pointer {const=false})
 			| typehdr "const" "^"								(typegen_pointer {const=true})
 			;
-typespec/L1		= typegen
+typespec/L1		= typegen									(typespec)
 			| typegen "&"									(typespec_ref)
 			;
 typedefinition		= "typedef" typegen IDENT							(>>typedef)
@@ -137,7 +137,7 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef 
 			| "generic" "procedure" IDENT "[" generic_header "]" callablebody_const 	(generic_procdef {const=true})
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
-			| "destructor" "{" codeblock "}"						(destructordef)
+			| "destructor" "{" codeblock "}"						({}destructordef)
 			;
 operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef {const=false})
 			| linkage "operator" operatordecl typespec callablebody_const			(operator_funcdef {const=true})

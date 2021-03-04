@@ -272,6 +272,8 @@ llvmir.control = {
 	label = "br label %{inp}\n{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
 	returnFromProcedure = "ret void\n",
+	implicitReturnFromProcedure = "br label %exit\nexit:\nret void\n",
+	implicitReturnFromMain = "br label %exit\nexit:\nret i32 0\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtllvmtype}{signature} @{symbolname}( {callargstr})\n",
@@ -286,7 +288,7 @@ llvmir.control = {
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
 				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
-				.. "{\nentry:\n{body}br label %exit\nexit:\nret i32 0\n}\n",
+				.. "{\nentry:\n{body}}\n",
 	vtableElement = "{interface_signature} bitcast ({class_signature} @{symbolname} to {interface_signature})",
 	vtable = "${classname}__VMT__{interfacename} = comdat any\n"
 		.. "@{classname}__VMT__{interfacename} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT { {llvmtype} }, comdat, align 8\n",

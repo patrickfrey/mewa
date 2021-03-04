@@ -40,7 +40,7 @@ local rdw_strip_c_2 = 0.125 / (2*2)	-- Reduction weight of changing constant qua
 local rdw_strip_c_3 = 0.125 / (3*3)	-- Reduction weight of changing constant qualifier in type with 3 qualifiers
 local rwd_inheritance = 0.125 / 16	-- Reduction weight of class inheritance
 local rwd_boolean = 0.125 / 16		-- Reduction weight of boolean type (control/value type) conversions
-function combineWeight( w1, w2) return w1 + w2 * 0.9921875 end -- Combining two reductions slightly less weight compared with applying both singularily
+function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
 function scalarDeductionWeight( sizeweight) return 0.25*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
 
 local weightEpsilon = 1E-8		-- epsilon used for comparing weights for equality
@@ -71,19 +71,20 @@ local rvalueTypeMap = {}		-- map of value types with an rvalue reference type de
 local typeQualiSepMap = {}		-- map of any defined type id to a separation pair (lval,qualifier) = lval type, qualifier as booleans
 local typeDescriptionMap = {}		-- map of any defined type id to its llvmir template structure
 local stringConstantMap = {}    	-- map of string constant values to a structure with its attributes {fmt,name,size}
-local arrayTypeMap = {}			-- map of the pair lval,size to the array type lval for an array size 
+local arrayTypeMap = {}			-- map of the pair lval,size to the array type lval for an array size
+local genericInstanceTypeMap = {}	-- map of the pair lval,generic parameter to the generic instance type lval for list of arguments
 local varargFuncMap = {}		-- map of types to true for vararg functions/procedures
 local instantCallableEnvironment = nil	-- callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
 local mainCallableEnvironment = nil	-- callable environment for constructors/destructors of globals
 local hardcodedTypeMap = {}		-- map of hardcoded type names to their id
 
 -- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
-function createCallableEnvironment( scope, rtype, rprefix, lprefix)
-	return {scope=scope, register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix), returntype=rtype}
+function createCallableEnvironment( rtype, rprefix, lprefix)
+	return {scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix), returntype=rtype}
 end
 -- Attach a newly created data structure for a callable to its scope
-function defineCallableEnvironment( scope, rtype)
-	typedb:set_instance( "callable", createCallableEnvironment( scope, rtype))
+function defineCallableEnvironment( rtype)
+	typedb:set_instance( "callable", createCallableEnvironment( rtype))
 end
 -- Get the active callable instance
 function getCallableEnvironment()
@@ -569,15 +570,15 @@ function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 	local qualitype = qualiTypeMap[ aliasTypeId]
 	if qualitype then
 		if isPointerType( qualitype.lval) then
-			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {}, typnam))				-- L-value | plain typedef
-			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam))			-- const L-value
-			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam))		-- reference
-			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {}, typnam), qualitype.lval)				-- L-value | plain typedef
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam), qualitype.c_lval)		-- const L-value
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam), qualitype.rval)		-- reference
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam), qualitype.c_rval)	-- const reference
 		else
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {}, typnam))					-- L-value | plain typedef
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true}, typnam))				-- const L-value
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {reference=true}, typnam))			-- reference
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam))		-- const reference
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {}, typnam), qualitype.lval)					-- L-value | plain typedef
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true}, typnam), qualitype.c_lval)			-- const L-value
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {reference=true}, typnam), qualitype.rval)			-- reference
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam), qualitype.c_rval)	-- const reference
 		end
 	else
 		utils.errorMessage( node.line, "Can't define alias for type '%s %s'", typedb:type_string(contextTypeId), typnam)
@@ -766,7 +767,7 @@ function defineConstructionReduction( destType, sourceType, allocfmt, initconstr
 end
 -- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
+	instantCallableEnvironment = createCallableEnvironment( nil)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
 	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
@@ -804,7 +805,7 @@ function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, ar
 end
 -- Define constructors for 'struct' types
 function defineStructConstructors( node, qualitype, descr, context)
-	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
+	instantCallableEnvironment = createCallableEnvironment( nil)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
 
 	for mi,member in ipairs(context.members) do
@@ -875,7 +876,7 @@ function defineInterfaceConstructors( node, qualitype, descr, context)
 end
 -- Define constructors for 'class' types
 function defineClassConstructors( node, qualitype, descr, context)
-	instantCallableEnvironment = createCallableEnvironment( node.scope, nil)
+	instantCallableEnvironment = createCallableEnvironment( nil)
 	local dtors = ""
 	for mi,member in ipairs(context.members) do
 		local out = instantCallableEnvironment.register()
@@ -1066,7 +1067,7 @@ function getAllocationScopeFrame()
 	local rt = typedb:this_instance( "frame")
 	if not rt then
 		local env = getCallableEnvironment()
-		rt = {entry=env.label(), register=env.register, label=env.label, ctor="", dtor="", entry=nil}
+		rt = {scope=env.scope, entry=env.label(), register=env.register, label=env.label, ctor="", dtor="", entry=nil}
 		typedb:set_instance( "frame", rt)
 	end
 	return rt
@@ -1082,9 +1083,13 @@ function setCleanupCode( descr, code)
 		frame.dtor = utils.constructor_format( llvmir.control.label, {inp=frame.entry}) .. code .. frame.dtor
 	end
 end
+function setImplicitEndCode( code)
+	local frame = getAllocationScopeFrame()
+	frame.endcode = code
+end
 function getAllocationScopeCodeBlock( code)
 	local frame = typedb:this_instance( "frame")
-	if frame then return frame.ctor .. code .. frame.dtor else return code end
+	if frame then return frame.ctor .. code .. frame.dtor .. (frame.endcode or "") else return code end
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( typeId, name, reg)
@@ -1166,6 +1171,7 @@ function defineVariableMember( node, context, typeId, name, private)
 		defineCall( typeId, context.qualitype.c_lval, name, {}, callConstructor( load_val))
 	end
 end
+-- Define an inherited interface in a class as a member variable
 function defineInterfaceMember( node, context, typeId, typnam, private)
 	local descr = typeDescriptionMap[ typeId]
 	table.insert( context.interfaces, typeId)
@@ -1400,15 +1406,16 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 end
 -- Get the handle of a type expected to have no arguments and no constructor (plain typedef type)
 function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
-	local rt,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
-	if constructor then utils.errorMessage( node.line, "No constructor type expected: %s", typeName) end
-	return rt
+	local typeId,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	if constructor then utils.errorMessage( node.line, "Data type expected instead of %s", typeName) end
+	return typeId
 end
+-- Get the type handle of a type defined as a path
 function resolveTypeFromNamePath( node, qualifier, arg)
 	local typeName = getQualifierTypeName( qualifier, arg[ #arg])
-	local rt
+	local typeId,constructor
 	if 1 == #arg then
-		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_namespace))
+		typeId,constructor = selectNoArgumentType( node, typeName, typedb:resolve_type( getContextTypes(), typeName, tagmask_namespace))
 	else
 		local ctxTypeName = arg[ 1]
 		local ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( getContextTypes(), ctxTypeName, tagmask_namespace))
@@ -1418,9 +1425,9 @@ function resolveTypeFromNamePath( node, qualifier, arg)
 				ctxTypeId = selectNoConstructorNoArgumentType( node, ctxTypeName, typedb:resolve_type( ctxTypeId, ctxTypeName, tagmask_namespace))
 			end
 		end
-		rt = selectNoConstructorNoArgumentType( node, typeName, typedb:resolve_type( ctxTypeId, typeName, tagmask_namespace))
+		typeId,constructor = selectNoArgumentType( node, typeName, typedb:resolve_type( ctxTypeId, typeName, tagmask_namespace))
 	end
-	return rt
+	return {type=typeId, constructor=constructor}
 end
 -- Get the list of generic arguments filled with the default parameters for the ones not specified explicitly
 function matchGenericParameter( node, genericType, param, args)
@@ -1436,8 +1443,8 @@ end
 -- For each generic argument, create an alias named as the parameter name as substitute for the generic argument specified
 function defineGenericParameterAliases( node, instanceType, generic_param, generic_arg)
 	for ii=1,#generic_arg do
-		if generic_arg[ ii].value then
-			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].value)
+		if generic_arg[ ii].constructor then
+			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].constructor)
 			typedb:def_reduction( generic_arg[ ii].type, alias, nil, tag_typeAlias)
 		else
 			defineTypeAlias( node, instanceType, generic_param[ ii].name, generic_arg[ ii].type)
@@ -1650,13 +1657,13 @@ end
 -- Symbol name for type in target LLVM output
 function getGenericParameterIdString( param)
 	local rt = ""
-	for pi,arg in ipairs(param) do if arg.value then rt = rt .. "#" .. arg.value .. "," else rt = rt .. tostring(arg.type) .. "," end end
+	for pi,arg in ipairs(param) do if arg.constructor then rt = rt .. "#" .. arg.constructor .. "," else rt = rt .. tostring(arg.type) .. "," end end
 	return rt
 end
 -- Synthezized typename for generic
 function getGenericTypeName( typeId, param)
 	local rt = typedb:type_string( typeId, "__")
-	for pi,arg in ipairs(param) do if arg.value then rt = rt .. arg.value else rt = rt .. "__" .. typedb:type_string(arg.type, "__") end end
+	for pi,arg in ipairs(param) do if arg.constructor then rt = rt .. arg.constructor else rt = rt .. "__" .. typedb:type_string(arg.type, "__") end end
 	return rt
 end
 -- Symbol name for type in target LLVM output
@@ -1839,22 +1846,18 @@ function defineInterfaceOperator( node, descr, context)
 end
 -- Define the execution context of the body of any function/procedure/operator except the main function
 function defineCallableBodyContext( node, context, descr)
-	local prev_scope = typedb:scope( node.scope)
 	if context and context.qualitype then
 		local privateThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
 		local classvar = defineVariableHardcoded( privateThisReferenceType, "self", "%ths")
 		pushDefContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
 	end
-	defineCallableEnvironment( node.scope, descr.ret)
-	typedb:scope( prev_scope)
+	defineCallableEnvironment( descr.ret)
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node)
-	local prev_scope = typedb:scope( node.scope)
 	defineVariableHardcoded( stringPointerType, "argc", "%argc")
 	defineVariableHardcoded( scalarIntegerType, "argv", "%argv")
-	defineCallableEnvironment( node.scope, scalarIntegerType)
-	typedb:scope( prev_scope)
+	defineCallableEnvironment( scalarIntegerType)
 end
 -- Create a string constant pointer type/constructor
 function getStringConstant( value)
@@ -1884,10 +1887,14 @@ function defineGenericType( node, declContextTypeId, typnam, fmt, generic)
 	local descr = utils.template_format( fmt, {})
 	descr.node = node
 	descr.generic = generic
-	descr.instancemap = {}
-	local lval = typedb:def_type( declContextTypeId, typnam)
+	local lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
+	local c_lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
+	constTypeMap[ lval] = c_lval
+	typeQualiSepMap[ lval]    = {lval=lval,qualifier={const=false}}
+	typeQualiSepMap[ c_lval]  = {lval=lval,qualifier={const=true,reference=false,private=false}}
 	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(declContextTypeId), typnam) end
 	typeDescriptionMap[ lval] = descr
+	typeDescriptionMap[ c_lval] = descr
 end
 -- Add a generic parameter to the generic parameter list
 function addGenericParameter( node, generic, name, typeId)
@@ -1965,7 +1972,7 @@ function traverseAstProcedureDef( node, context, descr)
 	descr.call = llvmir.control.procedureCall
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	instantiateCallableDef( node, context, descr)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3]
 	printFunctionDeclaration( node, descr)
 end
 -- Traversal of a conditional if/elseif node
@@ -1981,31 +1988,32 @@ function traverseConditionalIfElse( node, exitLabel)
 	end
 end
 -- Create an instance of a generic type with template arguments
-function createGenericTypeInstance( node, genericType, genericArg, genericDescr)
+function createGenericTypeInstance( node, genericType, genericArg, genericDescr, typeIdNotifyFunction)
 	local declContextTypeId = typedb:type_context( genericType)
 	local typnam = getGenericTypeName( genericType, genericArg)
 	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
 		local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
 		local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
-		instanceType = qualitype.lval
-		defineGenericParameterAliases( node, instanceType, genericDescr.generic.param, genericArg)
+		typeIdNotifyFunction( qualitype.lval)
+		defineGenericParameterAliases( genericDescr.node, qualitype.lval, genericDescr.generic.param, genericArg)
 		if genericDescr.class == "generic_class" then
 			traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 		else
 			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 		end
 	elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
-		instanceType = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
-		defineGenericParameterAliases( node, instanceType, genericDescr.generic.param, genericArg)
+		local typeInstance = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
+		typeIdNotifyFunction( typeInstance)
+		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
 		local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
 				name=typnam, symbol=typnam, private=true, const=decl.const, interface=false}
-		pushDefContextTypeConstructorPair( instanceType)
+		pushDefContextTypeConstructorPair( typeInstance)
 		if genericDescr.class == "generic_function" then
 			traverseAstProcedureDef( genericDescr.node, typnam, descr)
 		else
 			traverseAstFunctionDef( genericDescr.node, typnam, descr)
 		end
-		popDefContextTypeConstructorPair( instanceType)
+		popDefContextTypeConstructorPair( typeInstance)
 	else
 		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic '%s'", genericDescr.class)
 	end
@@ -2118,7 +2126,8 @@ function typesystem.typedef( node, context)
 	local typnam = node.arg[2].value
 	local arg = utils.traverse( typedb, node)
 	local declContextTypeId = getTypeDeclContextTypeId( context)
-	defineTypeAlias( node, declContextTypeId, typnam, arg[1])
+	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected on the left hand of a typedef declaration instead of '%s'", typedb:type_string(arg[1].type)) end
+	defineTypeAlias( node, declContextTypeId, typnam, arg[1].type)
 end
 function typesystem.assign_operator( node, operator)
 	local arg = utils.traverse( typedb, node)
@@ -2150,18 +2159,24 @@ end
 function typesystem.codeblock( node)
 	local code = ""
 	local arg = utils.traverse( typedb, node)
-	for ai=1,#arg do if arg[ ai] then code = code .. arg[ ai].code end end
-	return {code=getAllocationScopeCodeBlock( code)}
+	local nofollow = false
+	for ai=1,#arg do if arg[ ai] then
+		nofollow = arg[ ai].nofollow
+		if nofollow == true and ai ~= #arg then utils.errorMessage( node.line, "Unreachable code inside code block") end
+		code = code .. arg[ ai].code
+	end end
+	return {code=getAllocationScopeCodeBlock( code), nofollow=nofollow}
 end
 function typesystem.return_value( node)
 	local arg = utils.traverse( typedb, node)
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
+	setImplicitEndCode( nil)
 	if doReturnValueAsReferenceParameter( rtype) then
 		local reftype = referenceTypeMap[ rtype]
 		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {arg[1]})
-		return {code = rt.constructor.code .. "ret void\n", nofollow=true}
+		return {code = rt.constructor.code .. llvmir.control.returnFromProcedure, nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
 		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
@@ -2212,60 +2227,66 @@ function typesystem.typehdr( node, qualifier)
 	return resolveTypeFromNamePath( node, qualifier, utils.traverse( typedb, node))
 end
 function typesystem.typehdr_any( node, typeName)
-	return hardcodedTypeMap[ typeName]
+	return {type=hardcodedTypeMap[ typeName]}
 end
 function typesystem.typegen_generic( node, context)
-	local rt = nil
+	local typeInstance = nil
 	local arg = utils.traverse( typedb, node, context)
-	local genericType,inst_arg = arg[1],arg[2]
-	local genericDescr = typeDescriptionMap[ genericType]
+	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected on left hand of generic or array declaration instead of '%s'", typedb:type_string(arg[1].type)) end
+	local genericType,inst_arg = arg[1].type,arg[2]
+	local qs = typeQualiSepMap[ genericType]
+	if not qs then utils.errorMessage( node.line, "Non generic/array type with instantiation operator '[ ]'", typedb:type_string(genericType)) end
+	local genericDescr = typeDescriptionMap[ qs.lval]
 	local scope_bk = typedb:scope( typedb:type_scope( genericType))
 	if string.sub(genericDescr.class,1,8) == "generic_" then
 		local genericArg = matchGenericParameter( node, genericType, genericDescr.generic.param, inst_arg)
 		local instanceId = getGenericParameterIdString( genericArg)
-		rt = genericDescr.instancemap[ instanceId]
-		if not rt then
-			rt = createGenericTypeInstance( node, genericType, genericArg, genericDescr)
-			genericDescr.instancemap[ instanceId] = rt
+		local typkey = qs.lval .. "[" .. instanceId .. "]"
+		typeInstance = genericInstanceTypeMap[ typkey]
+		if not typeInstance then
+			createGenericTypeInstance( node, genericType, genericArg, genericDescr, function( ti) genericInstanceTypeMap[ typkey] = ti end)
+			genericInstanceTypeMap[ typkey] = typeInstance
 		end
 	elseif #inst_arg == 1 then -- generic operator on non generic type creates an array
-		local dim = getConstexprValue( constexprUIntegerType, inst_arg[1].type, inst_arg[1].value)
+		local dim = getConstexprValue( constexprUIntegerType, inst_arg[1].type, inst_arg[1].constructor)
 		if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
 		local arraySize = tonumber( dim)
 		if arraySize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
-		local elementTypeId = arg[1]
-		local qs = typeQualiSepMap[ elementTypeId]
-		if not qs then utils.errorMessage( node.line, "Cannot create array type for type '%s'", typedb:type_string(elementTypeId)) end
-		local strippedElementTypeId = qs.lval
-		local elementDescr = typeDescriptionMap[ strippedElementTypeId]
 		local typnam = "[" .. arraySize .. "]"
-		local typkey = strippedElementTypeId .. typnam
-		rt = arrayTypeMap[ typkey]
-		if not rt then
-			rt = createArrayTypeInstance( node, typnam, strippedElementTypeId, elementDescr, arraySize)
-			arrayTypeMap[ typkey] = rt
+		local typkey = qs.lval .. typnam
+		typeInstance = arrayTypeMap[ typkey]
+		if not typeInstance then
+			typeInstance = createArrayTypeInstance( node, typnam, qs.lval, typeDescriptionMap[ qs.lval], arraySize)
+			arrayTypeMap[ typkey] = typeInstance
 		end
-		if not constTypeMap[ elementTypeId] then rt = constTypeMap[ rt] end -- const qualifier transfered to array type created
 	else
 		utils.errorMessage( node.line, "Operator '[' ']' with more than one argument for non generic %s", genericDescr.class)
 	end
 	typedb:scope( scope_bk)
-	return rt
+	if qs.qualifier.const == true then typeInstance = constTypeMap[ typeInstance] end -- const qualifier transfered to array type created
+	return {type=typeInstance}
 end
 function typesystem.typegen_pointer( node, attr, context)
 	local arg = utils.traverse( typedb, node, context)
-	local elementTypeId = arg[1]
-	local rt = pointerTypeMap[ elementTypeId]
-	if not rt then
-		local qs = typeQualiSepMap[ elementTypeId]
-		if not qs then utils.errorMessage( node.line, "Cannot create pointer type for type '%s'", typedb:type_string(elementTypeId)) end
-		rt = createPointerTypeInstance( node, attr, elementTypeId)
+	local pointeeTypeId = arg[1].type
+	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected to create pointer from (operator '^') instead of '%s'", typedb:type_string(pointeeTypeId)) end
+	local typeInstance = pointerTypeMap[ pointeeTypeId]
+	if not typeInstance then
+		local qs = typeQualiSepMap[ pointeeTypeId]
+		if not qs then utils.errorMessage( node.line, "Cannot create pointer type for type '%s'", typedb:type_string(pointeeTypeId)) end
+		typeInstance = createPointerTypeInstance( node, attr, pointeeTypeId)
 	end
-	return rt
+	return {type=typeInstance}
+end
+function typesystem.typespec( node)
+	local arg = utils.traverse( typedb, node)
+	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' on the left hand of a variable declaration", typedb:type_string(arg[1].type)) end
+	return arg[1].type
 end
 function typesystem.typespec_ref( node, qualifier)
 	local arg = utils.traverse( typedb, node)
-	return referenceTypeMap[ arg[1]] or utils.errorMessage( node.line, "Type '%s' has no reference type", typedb:type_string(arg[1]))
+	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected as data type specifier instead of '%s'", typedb:type_string(arg[1].type)) end
+	return referenceTypeMap[ arg[1].type] or utils.errorMessage( node.line, "Type '%s' has no reference type", typedb:type_string(arg[1].type))
 end
 function typesystem.constant( node, typeName)
 	local typeId = hardcodedTypeMap[ typeName]
@@ -2312,7 +2333,8 @@ end
 function typesystem.procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false}
+			name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false,
+			endcode = llvmir.control.implicitReturnFromProcedure}
 	traverseAstProcedureDef( node, context, descr)
 end
 function typesystem.generic_funcdef( node, decl, context)
@@ -2345,22 +2367,24 @@ end
 function typesystem.operator_procdef( node, decl, context)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const, interface=false}
+			name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const, interface=false,
+			endcode = llvmir.control.implicitReturnFromProcedure}
 	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 	descr.interface = isInterfaceMethod( context, descr.methodid)
 	descr.attr = llvmir.functionAttribute( descr.interface)
 	defineClassOperator( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3]
 	printFunctionDeclaration( node, descr)
 end
 function typesystem.constructordef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false, interface=false}
+			name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false, interface=false,
+			endcode = llvmir.control.implicitReturnFromProcedure}
 	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 	context.properties.constructor = true
 	defineConstructorDestructor( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2]
 	printFunctionDeclaration( node, descr)
 end
 function typesystem.destructordef( node, context)
@@ -2368,24 +2392,35 @@ function typesystem.destructordef( node, context)
 	local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 	               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false, interface=false}
 	context.properties.destructor = true
-	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
+	local prev_scope = typedb:scope( node.scope)
+	setImplicitEndCode( llvmir.control.implicitReturnFromProcedure)
+	typedb:scope( prev_scope)
+	descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[1]
 	defineConstructorDestructor( node, descr, context)
-	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[2] .. "ret void\n"
+	descr.body  = utils.traverseRange( typedb, node, {2,2}, context, descr, 2)[1].code
 	printFunctionDeclaration( node, descr)
 end
 function typesystem.callablebody( node, context, descr, select)
-	if select == 1 then
+	local rt
+	local prev_scope = typedb:scope( node.scope)
+	if select == 1 then -- parse parameter declarations
 		defineCallableBodyContext( node, context, descr)
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
-		return arg[1]
-	else
+		rt = arg[1]
+	else -- parse statements in body
+		if descr.endcode then setImplicitEndCode( descr.endcode) end -- set implicit return statement
 		local arg = utils.traverseRange( typedb, node, {2,2}, context)
-		return arg[2].code
+		rt = arg[2].code
 	end
+	typedb:scope( prev_scope)
+	return rt
 end
 function typesystem.extern_paramdef( node, args)
 	table.insert( args, utils.traverseRange( typedb, node, {1,1})[1])
 	utils.traverseRange( typedb, node, {#node.arg,#node.arg}, args)
+end
+function typesystem.extern_paramdeftail( node, args)
+	table.insert( args, utils.traverseRange( typedb, node, {1,1})[1])
 end
 function typesystem.extern_paramdeflist( node)
 	local args = {}
@@ -2487,11 +2522,11 @@ function typesystem.interfacedef( node, context)
 	traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
 function typesystem.generic_instance_type( node, context, generic_instancelist)
-	table.insert( generic_instancelist, {type=utils.traverseRange( typedb, node, {1,1}, context)[1]} )
+	table.insert( generic_instancelist, utils.traverseRange( typedb, node, {1,1}, context)[1] )
 	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
 end
 function typesystem.generic_instance_dimension( node, context, generic_instancelist)
-	table.insert( generic_instancelist, {type=constexprUIntegerType, value=node.arg[1].value} )
+	table.insert( generic_instancelist, {type=constexprUIntegerType, constructor=node.arg[1].value} )
 	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
 end
 function typesystem.generic_instance( node, context)
@@ -2501,7 +2536,8 @@ function typesystem.generic_instance( node, context)
 end
 function typesystem.generic_header_ident_type( node, context, generic)
 	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	addGenericParameter( node, generic, arg[1], arg[2])
+	if arg[2].constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' as default generic parameter", typedb:type_string(arg[2].type)) end
+	addGenericParameter( node, generic, arg[1], arg[2].type)
 	if #arg > 2 then utils.traverseRange( typedb, node, {3,3}, context, generic) end
 end
 function typesystem.generic_header_ident( node, context, generic)
@@ -2528,7 +2564,8 @@ end
 function typesystem.inheritdef( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
-		local typeId = arg[1]
+		local typeId = arg[1].type
+		if arg[1].constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' to inherit from", typedb:type_string(typeId)) end
 		local descr = typeDescriptionMap[ typeId]
 		local typnam = typedb:type_name(typeId)
 		local private = false
@@ -2545,16 +2582,21 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 	end
 end
 function typesystem.main_procdef( node)
+	local prev_scope = typedb:scope( node.scope)
 	defineMainProcContext( node)
+	typedb:scope( prev_scope)
 	local arg = utils.traverse( typedb, node)
 	local scope_bk = typedb:scope( {} ) -- set global scope
+	instantCallableEnvironment = mainCallableEnvironment
+	setImplicitEndCode( llvmir.control.implicitReturnFromMain)
 	local descr = {body = getAllocationScopeCodeBlock( arg[1].code)}
+	instantCallableEnvironment = nil
 	typedb:scope( scope_bk)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
 end
 function typesystem.program( node)
 	initBuiltInTypes()
-	mainCallableEnvironment = createCallableEnvironment( typedb:scope(), nil, "%ir", "IL")
+	mainCallableEnvironment = createCallableEnvironment( nil, "%ir", "IL")
 	utils.traverse( typedb, node, {})
 	return node
 end

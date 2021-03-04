@@ -196,6 +196,10 @@ The scope of the newly defined type has been set with the last call of the sette
 | 3rd    | type         | any type         | Type handle of the type this type definition is a synonym for in the current scope                            |
 | Return |              | integer          | type handle passed as third argument or -1 if the definition is a duplicate                                   |
 
+#### Remark
+
+The type defined like this has the same constructor, therefore it cannot be used as alias for a type with a built constructor.
+
 
 <a name="get_type"/>
 
