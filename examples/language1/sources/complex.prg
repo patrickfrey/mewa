@@ -68,19 +68,19 @@ generic class Complex[R]
 	{
 		return self * self;
 	}
-	public operator + Complex[R]( const Complex[R]& o)
+	public operator + Complex[R]( const Complex[R]& o) const
 	{
 		return {(m_real + o.real()), (m_img + o.img())};
 	}
-	public operator - Complex[R]( const Complex[R]& o)
+	public operator - Complex[R]( const Complex[R]& o) const
 	{
 		return {(m_real - o.real()), (m_img - o.img())};
 	}
-	public operator * Complex[R]( const Complex[R]& o)
+	public operator * Complex[R]( const Complex[R]& o) const
 	{
 		return {(m_real * o.real()) - (m_img * o.img()), (m_real * o.img()) + (m_img * o.real())};
 	}
-	public operator / Complex[R]( const Complex[R]& o)
+	public operator / Complex[R]( const Complex[R]& o) const
 	{
 		return {((m_real * o.real()) + (m_img * o.img())) / (o.real() * o.real() + o.img() * o.img()), 
 					((m_img * o.real()) - (m_real * o.img())) / (o.real() * o.real() + o.img() * o.img())};

@@ -148,7 +148,7 @@ static int getLuaStackReductionSize( const std::pmr::vector<State>& stateStack, 
 
 static void luaPushLexem( lua_State* ls, const mewa::Lexem& lexem)
 {
-	lua_createtable( ls, 0/*size array*/, 3/*size struct*/);				// STK [TABLE]
+	lua_createtable( ls, 0/*size array*/, 3+1/*size struct + one reserved for free use*/);	// STK [TABLE]
 	lua_pushliteral( ls, "name");								// STK [TABLE] "name"
 	lua_pushlstring( ls, lexem.name().data(), lexem.name().size());				// STK [TABLE] "arg" [NAME]
 	lua_rawset( ls, -3);									// STK [TABLE]
@@ -225,7 +225,7 @@ static void luaReduceStruct(
 	}
 	int structsize = scopeflag == mewa::Automaton::Action::NoScope ? 3:4;
 											// STK [ARG1]...[ARGN]
-	lua_createtable( ls, 0/*size array*/, structsize);	 			// STK [ARG1]...[ARGN] [TABLE]
+	lua_createtable( ls, 0/*size array*/, structsize+1/*one reserved for free use*/);// STK [ARG1]...[ARGN] [TABLE]
 
 	lua_pushliteral( ls, "call");							// STK [ARG1]...[ARGN] [TABLE] "call"
 	lua_rawgeti( ls, ctx.calltable, callidx);					// STK [ARG1]...[ARGN] [TABLE] [CALLSTRUCT]

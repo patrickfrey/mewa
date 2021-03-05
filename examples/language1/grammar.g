@@ -64,9 +64,9 @@ inclass_definition	= typedefinition ";"								(definition 1)
 			| structdefinition								(definition 1)
 			| classdefinition 								(definition 1)
 			| interfacedefinition								(definition 1)
-			| functiondefinition								(definition 3)
-			| operatordefinition								(definition 3)
-			| constructordefinition								(definition 4)
+			| functiondefinition								(definition_decl_impl_pass 3)
+			| operatordefinition								(definition_decl_impl_pass 3)
+			| constructordefinition								(definition_decl_impl_pass 3)
 			;
 free_definition		= namespacedefinition								
 			| typedefinition ";"								(definition 1)
