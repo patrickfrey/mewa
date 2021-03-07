@@ -55,12 +55,12 @@ local arrayTemplate = {
 		.. "%A3 = icmp eq {element}* %A2, %top\n"
 		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctor_rest = "{enter}:\n"
-		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {index}\n"
-		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
+	ctor_rest = "br label %{enter}\n{enter}:\n"
+		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n"
+		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {size}\n"
 		.. "br label %{begin}\n{begin}:\n"
-		.. "{1} = phi {element}* [%base, %{enter}], [{2}, %{begin}]\n"
-		.. "{ctors}{2} = getelementptr inbounds {element}, {element}* {1}, i64 1\n"
+		.. "%ths = phi {element}* [%base, %{enter}], [{2}, %{begin}]\n"
+		.. "{ctors}{2} = getelementptr inbounds {element}, {element}* %ths, i64 1\n"
 		.. "{3} = icmp eq {element}* {2}, %top\n"
 		.. "br i1 {3}, label %{end}, label %{begin}\n"
 		.. "{end}:\n",
@@ -124,7 +124,7 @@ llvmir.structTemplate = {
 	ctor_copy = "call void @__ctor_{procname}_{symbol}( %{symbol}* {this}, %{symbol}* {arg1})\n",
 	ctor_elements = "call void @__ctor_elements_{symbol}( %{symbol}* {this}{args})\n",
 	dtor = "call void @__dtor_{symbol}( %{symbol}* {this})\n",
-	load = "{out} = load %{classname}, %{symbol}* {this}\n",
+	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
 	typedef = "%{symbol} = type { {llvmtype} }\n"

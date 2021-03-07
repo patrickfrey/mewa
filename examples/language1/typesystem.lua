@@ -25,7 +25,9 @@ local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDedu
 
 -- Centralized list of reduction preference rules:
 local rdw_conv = 1.0			-- Reduction weight of conversion
-local rdw_strip_rvref = 0.75		-- Reduction weight of instantiating rvalue reference 
+local rdw_strip_rvref_1 = 0.75 / (1)	-- Reduction weight of stripping rvalue reference from type with 1 qualifier 
+local rdw_strip_rvref_2 = 0.75 / (2*2)	-- Reduction weight of stripping rvalue reference from type with 2 qualifiers
+local rdw_strip_rvref_3 = 0.75 / (3*3)	-- Reduction weight of stripping rvalue reference from type with 3 qualifiers
 local rdw_strip_v_1 = 0.5 / (1)		-- Reduction weight of stripping private/public from type with 1 qualifier 
 local rdw_strip_v_2 = 0.5 / (2*2)	-- Reduction weight of stripping private/public from type with 2 qualifiers
 local rdw_strip_v_3 = 0.5 / (3*3)	-- Reduction weight of stripping private/public from type with 3 qualifiers
@@ -67,7 +69,7 @@ local constTypeMap = {}			-- map of non const types to their const type
 local privateTypeMap = {}		-- map of non private types to their private type
 local pointerTypeMap = {}		-- map of non pointer types to their pointer type
 local pointeeTypeMap = {}		-- map of pointer types to their pointee type
-local rvalueTypeMap = {}		-- map of value types with an rvalue reference type defined to their rvalue reference type
+local rvalueRefTypeMap = {}		-- map of value types with an rvalue reference type defined to their rvalue reference type
 local typeQualiSepMap = {}		-- map of any defined type id to a separation pair (lval,qualifier) = lval type, qualifier as booleans
 local typeDescriptionMap = {}		-- map of any defined type id to its llvmir template structure
 local stringConstantMap = {}    	-- map of string constant values to a structure with its attributes {fmt,name,size}
@@ -205,7 +207,7 @@ function rvalueReferenceMoveConstructor( this, args)
 	local arg_inp,arg_code = constructorParts( args[1])
 	return {code = this_code .. utils.template_format( arg_code, {[arg_inp] = this_inp}), out=this_inp}
 end
--- Constructor of a contant reference value from a RValue reference type, creating a temporary on the stack for it
+-- Constructor of a constant reference value from a RValue reference type, creating a temporary on the stack for it
 function constReferenceFromRvalueReferenceConstructor( descr)
 	return function( constructor)
 		local env = getCallableEnvironment()
@@ -217,7 +219,11 @@ function constReferenceFromRvalueReferenceConstructor( descr)
 end
 -- Function that decides wheter a function (in the LLVM code output) should return the return value as value or via an 'sret' pointer passed as argument
 function doReturnValueAsReferenceParameter( typeId)
-	if typeId and rvalueTypeMap[ typeId] then return true else return false end
+	if typeId and rvalueRefTypeMap[ typeId] then return true else return false end
+end
+-- Function that decides wheter a parameter of an implicitly generated function should be passed by value or by reference
+function doPassValueAsReferenceParameter( typeId)
+	return doReturnValueAsReferenceParameter( typeId)
 end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructor
 function buildFunctionCallArguments( code, argstr, args, llvmtypes)
@@ -283,105 +289,57 @@ function interfaceMethodCallConstructor( loadfmt, callfmt, rtype)
 		return constructorStruct( out, code .. utils.constructor_format( callfmt, subst, env.register))
 	end
 end
--- Constructor for a memberwise assignment of a tree structure (initializing a "struct")
-function memberwiseInitStructConstructor( node, thisTypeId, members)
-	return function( this, args)
-		args = args[1] -- args contains one list node
-		if #args ~= #members then 
-			utils.errorMessage( node.line, "Number of elements %d in init do not match for '%s' [%d]", #args, typedb:type_string(thisTypeId), #members)
-		end
-		local qualitype = qualiTypeMap[ thisTypeId]
-		local descr = typeDescriptionMap[ thisTypeId]
-		local env = getCallableEnvironment()
-		local this_inp,this_code = constructorParts( this)
-		local rt = constructorStruct( this_inp, this_code)
-		for mi,member in ipairs( members) do
-			local out = env.register()
-			local code = utils.constructor_format( member.loadref, {out = out, this = this_inp, index=mi-1}, env.register)
-			local reftype = referenceTypeMap[ member.type]
-			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[mi]})
-			rt.code = rt.code .. maparg.constructor.code
-		end
-		return rt
-	end
-end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
+	local function initArrayElementCode( node, env, refTypeId, fmtLoadRef, this_inp, arg, ai)
+		local out = env.register()
+		local code = utils.constructor_format( fmtLoadRef, {out = out, this = this_inp, index=ai-1}, env.register)
+		local res = applyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", arg)
+		return res.constructor.code
+	end
 	return function( this, args)
 		args = args[1] -- args contains one list node
 		if #args > nofElements then
 			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
-		local qualitype = qualiTypeMap[ thisTypeId]
 		local descr = typeDescriptionMap[ thisTypeId]
 		local descr_element = typeDescriptionMap[ elementTypeId]
+		local refTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
 		local env = getCallableEnvironment()
-		local this_inp,this_code = constructorParts( this)
-		local rt = constructorStruct( this_inp, this_code)
-		for ai=1,#args do
-			local out = env.register()
-			local code = utils.constructor_format( descr.loadelemref, {out = out, this = this_inp, index=ai-1}, env.register)
-			local reftype = referenceTypeMap[ elementTypeId] or elementTypeId
-			local maparg = applyCallable( node, typeConstructorStruct( reftype, out, code), ":=", {args[ai]})
-			rt.code = rt.code .. maparg.constructor.code
-		end
+		local this_inp,res_code = constructorParts( this)
+		for ai=1,#args do res_code = res_code .. initArrayElementCode( node, env, refTypeId, descr.loadelemref, this_inp, {args[ai]}, ai) end
 		if #args < nofElements then
-			local fmtdescr = {this=this_inp, element=descr_element.llvmtype,
-			                  enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args}
-			rt.code = rt.code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
+			local init = applyCallable( node, typeConstructorStruct( refTypeId, "%ths", ""), ":=", {})
+			local fmtdescr = {element=descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
+						this=this_inp, ctors=init.constructor.code}
+			res_code = res_code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
 		end
+		return constructorStruct( this_inp, res_code)
+	end
+end
+-- Constructor of an array rvalue reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an rvalue reference array type)
+function tryConstexprStructureReductionConstructorArray( node, thisTypeId, elementTypeId, nofElements)
+	local initconstructor = memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
+	return function( args) -- constructor of a constexpr structure type passed is a list of type constructor pairs
+		local rt = initconstructor( {out="{RVAL}"}, args);
+		rt.out = "RVAL";
 		return rt
 	end
 end
--- Map an argument to a requested parameter type, creating a local variable if not possible otherwise
-function tryCreateParameter( node, env, typeId, arg)
-	local redulist,weight = tryGetWeightedParameterReductionList( node, typeId, arg)
-	if redulist then
-		local constructor = applyReductionList( node, redulist, arg.constructor)
-		if not constructor then return nil end
-		return {type=typeId,constructor=constructor}
-	else
-		local derefTypeId = dereferenceTypeMap[ typeId] or typeId
-		local refTypeId = referenceTypeMap[ typeId] or typeId
-		local descr = typeDescriptionMap[ derefTypeId]
-		local out = env.register()
-		local code = utils.constructor_format( descr.def_local, {out=out}, env.register)
-		return tryApplyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", {arg})
+-- Constructor of an rvalue reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an rvalue reference type)
+function tryConstexprStructureReductionConstructor( node, thisTypeId)
+	local this = {type=referenceTypeMap[ thisTypeId], constructor={out="{RVAL}"}}
+	return function( args) -- constructor of a constexpr structure type passed is a list of type constructor pairs
+		local res = tryApplyCallable( node, this, ":=", args) -- constexpr structure constructor is a list o arguments with type
+		if res then res.constructor.out = "RVAL"; return res.constructor end
 	end
 end
--- Constructor for an application of an operator with a tree structure as argument (initializing a "class" or a applying a multiargument operator)
-function resolveOperatorConstructor( node, thisTypeId, opr)
+-- Constructor of an operator on a constexpr structure type as argument
+function tryConstexprStructureOperatorConstructor( node, thisTypeId, opr)
 	return function( this, args)
-		local rt = {}
-		if #args == 1 and args[1].type == constexprStructureType then args = args[1] end
-		local env = getCallableEnvironment()
-		local descr = typeDescriptionMap[ thisTypeId]
-		local this_inp,this_code = constructorParts( this)
-		local contextTypeId,reductions,candidateFunctions = typedb:resolve_type( thisTypeId, opr)
-		if not contextTypeId then utils.errorMessage( node.line, "No operator '%s' found for '%s'", opr, typedb:type_string( thisTypeId)) end
-		for ci,item in ipairs( candidateFunctions) do
-			if typedb:type_nof_parameters( item) == #args then
-				local param_ar = {}
-				if #args > 0 then
-					local parameters = typedb:type_parameters( item)
-					for ai,arg in ipairs(args) do
-						local maparg = tryCreateParameter( node, env, parameters[ ai].type, args[ai])
-						if not maparg then break end
-						table.insert( param_ar, maparg)
-					end
-				end
-				if #param_ar == #args then
-					table.insert( rt, applyCallable( node, typeConstructorStruct( thisTypeId, this_inp, this_code), opr, param_ar))
-				end
-			end
-		end
-		if #rt == 0 then
-			return nil
-		elseif #rt > 1 then
-			utils.errorMessage( node.line, "Ambiguus reference for constructor of '%s'", typedb:type_string( thisTypeId))
-		else
-			return rt[1].constructor
-		end
+		if args[1].type ~= constexprStructureType then utils.errorMessage( node.line, "Expected constexpr structure argument instead of: '%s'", typedb:type_string(args[1].type)) end
+		local res = tryApplyCallable( node, {type=thisTypeId, constructor=this}, opr, args[1]) -- constexpr structure constructor is a list o arguments with type
+		if res then return res.constructor end
 	end
 end
 -- Constructor for a promote call (implementing int + float by promoting the first argument int to float and do a float + float to get the result)
@@ -662,7 +620,7 @@ function definePointerQualiTypes( node, typeId)
 	qualiTypeMap[ lval] = qualitype
 	defineQualifiedTypeRelations( qualitype, pointerTypeDescription)
 
-	typedb:def_reduction( c_lval, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
+	typedb:def_reduction( lval, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
 	defineCall( pointeeTypeId, c_rval, "&", {}, function(this) return this end)
 	defineCall( referenceTypeMap[ pointeeTypeId], c_lval, "->", {}, function(this) return this end)
 
@@ -706,7 +664,7 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 
 	local rval_ref = typedb:def_type( contextTypeId, typnam .. "&&" )			-- R-value reference
-	local c_rval_ref = typedb:def_type( contextTypeId, "const" .. typnam .. "&&")		-- constant R-value reference
+	local c_rval_ref = typedb:def_type( contextTypeId, "const " .. typnam .. "&&")		-- constant R-value reference
 
 	qualitype.rval_ref = rval_ref
 	qualitype.c_rval_ref = c_rval_ref
@@ -719,12 +677,12 @@ function defineRValueReferenceTypes( contextTypeId, typnam, typeDescription, qua
 	typeQualiSepMap[ rval_ref]   = {lval=lval,qualifier={rvalueref=true,const=false}}
 	typeQualiSepMap[ c_rval_ref] = {lval=lval,qualifier={rvalueref=true,const=true}}
 
-	rvalueTypeMap[ qualitype.lval] = rval_ref
-	rvalueTypeMap[ qualitype.c_lval] = c_rval_ref
+	rvalueRefTypeMap[ qualitype.lval] = rval_ref
+	rvalueRefTypeMap[ qualitype.c_lval] = c_rval_ref
 
 	typedb:def_reduction( c_rval_ref, rval_ref, nil, tag_typeDeduction, rdw_strip_c_3)
-	typedb:def_reduction( qualitype.c_rval, c_rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, rdw_strip_rvref)
-	typedb:def_reduction( qualitype.c_rval, rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, rdw_strip_rvref)
+	typedb:def_reduction( qualitype.c_rval, c_rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, rdw_strip_rvref_2)
+	typedb:def_reduction( qualitype.c_rval, rval_ref, constReferenceFromRvalueReferenceConstructor( typeDescription), tag_typeDeduction, rdw_strip_rvref_1)
 
 	defineCall( qualitype.rval, qualitype.rval, ":=", {rval_ref}, rvalueReferenceMoveConstructor)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {c_rval_ref}, rvalueReferenceMoveConstructor)
@@ -757,25 +715,13 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 end
 function defineScalarConstructors( qualitype, descr)
 	defineCall( qualitype.rval, qualitype.rval, "=",  {qualitype.c_lval}, assignConstructor( descr.assign))
-	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))	
+	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( 0, qualitype.rval, ":~", {}, constructorStructEmpty)
-end
--- Define a conversion reduction as implicit const reference object allocation and reduction to it as initialization with the specified ":=" constructor
-function defineConstructionReduction( destType, sourceType, allocfmt, initconstructor)
-	function memberwiseInitConvConstructor( constructor)
-		local env = getCallableEnvironment()
-		out = env.register()
-		local alloc = utils.constructor_format( allocfmt, {out=out}, env.register)
-		local this = {code = alloc, out = out}
-		local args = {constructor}
-		return initconstructor( this, args)
-	end
-	typedb:def_reduction( destType, sourceType, memberwiseInitConvConstructor, tag_typeConversion, rdw_conv)
 end
 -- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
@@ -808,10 +754,10 @@ function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, ar
 	defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( arrayDescr.dtor))
 
 	if init and initcopy then
-		local initconstructor = memberwiseInitArrayConstructor( node, qualitype.lval, elementTypeId, arraySize)
-		defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, initconstructor)
-		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {constexprStructureType}, initconstructor)
-		defineConstructionReduction( qualitype.c_rval, constexprStructureType, arrayDescr.def_local, initconstructor)
+		local redu_constructor_l = tryConstexprStructureReductionConstructorArray( node, qualitype.lval, elementTypeId, arraySize)
+		local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_lval, elementTypeId, arraySize)
+		typedb:def_reduction( rvalueRefTypeMap[ qualitype.lval], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
+		typedb:def_reduction( rvalueRefTypeMap[ qualitype.c_lval], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
 	end
 	instantCallableEnvironment = nil
 end
@@ -821,24 +767,26 @@ function defineStructConstructors( node, qualitype, descr, context)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
 
 	for mi,member in ipairs(context.members) do
-		table.insert( elements, member.type)
-		paramstr = paramstr .. ", " .. typeDescriptionMap[ member.type].llvmtype .. " %p" .. mi
-		argstr = argstr .. ", " .. typeDescriptionMap[ member.type].llvmtype .. " {arg" .. mi .. "}"
-
 		local out = instantCallableEnvironment.register()
 		local inp = instantCallableEnvironment.register()
 		local llvmtype = member.descr.llvmtype
 		local c_member_type = constTypeMap[ member.type] or member.type
 		local member_reftype = referenceTypeMap[ member.type]
 		local c_member_reftype = constTypeMap[ member_reftype] or member_reftype
+		local etype; if doPassValueAsReferenceParameter( member.type) then etype = c_member_reftype else etype = c_member_type end
+		table.insert( elements, etype)
+		paramstr = paramstr .. ", " .. typeDescriptionMap[ etype].llvmtype .. " %p" .. mi
+		argstr = argstr .. ", " .. typeDescriptionMap[ etype].llvmtype .. " {arg" .. mi .. "}"
+
 		local loadref = context.descr.loadelemref
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
+		local param = {type=etype,constructor={out="%p" .. mi}}
 		local member_init = tryApplyCallable( node, ths, ":=", {} )
 		local member_initcopy = tryApplyCallable( node, ths, ":=", {oth} )
 		local member_assign = tryApplyCallable( node, ths, "=", {oth} )
-		local member_element = tryApplyCallable( node, ths, ":=", {type=c_member_type,constructor={out="%p" .. mi}} )
+		local member_element = tryApplyCallable( node, ths, ":=", {param} )
 		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
 
 		if member_init and ctors then ctors = ctors .. member_init.constructor.code else ctors = nil end
@@ -854,12 +802,12 @@ function defineStructConstructors( node, qualitype, descr, context)
 	end
 	if ctors_copy then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=ctors_copy}))
-		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
-		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
+		defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
+		defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
 	end
 	if ctors_assign then
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="assign",ctors=ctors_assign}))
-		defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
+		defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.c_rval}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
 	end
 	if ctors_elements then
 		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {procname="assign",ctors=ctors_elements,paramstr=paramstr}))
@@ -870,10 +818,10 @@ function defineStructConstructors( node, qualitype, descr, context)
 	defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 	defineCall( 0, qualitype.c_rval, ":~", {}, manipConstructor( descr.dtor))
 
-	local initconstructor = memberwiseInitStructConstructor( node, qualitype.lval, context.members)
-	defineCall( qualitype.rval, qualitype.rval, ":=", {constexprStructureType}, initconstructor)
-	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {constexprStructureType}, initconstructor)
-	defineConstructionReduction( qualitype.c_rval, constexprStructureType, descr.def_local, initconstructor)
+	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.lval)
+	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_lval)
+	typedb:def_reduction( rvalueRefTypeMap[ qualitype.lval], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( rvalueRefTypeMap[ qualitype.c_lval], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
 	instantCallableEnvironment = nil
 end
 -- Define constructors for 'interface' types
@@ -904,6 +852,10 @@ function defineClassConstructors( node, qualitype, descr, context)
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 	end
+	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.lval)
+	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_lval)
+	typedb:def_reduction( rvalueRefTypeMap[ qualitype.lval], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( rvalueRefTypeMap[ qualitype.c_lval], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
 	instantCallableEnvironment = nil
 end
 -- Tell if a method identifier by id implements an inherited interface method, thus has to be noinline
@@ -949,22 +901,24 @@ function getFunctionThisType( private, const, thisType)
 	if const == true then thisType = constTypeMap[ thisType] end
 	return thisType
 end
--- Define the attributes assigned to an operator, collected for the decision if to implement it with a recursive structure as argument (e.g. a + {3,24, 5.13})
+-- Define the attributes assigned to an operator, collected for the decision if to implement it with a constexpr structure as argument (e.g. a + {3,24, 5.13})
 function defineOperatorAttributes( context, descr)
-	local contextType = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	local thisType = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	local def = context.operators[ descr.name]
 	if def then
 		if #descr.param > def.maxNofArguments then def.maxNofArguments = #descr.param end
-		if def.contextType ~= contextType or def.ret ~= descr.ret then def.hasStructArgument = false end
+		if def.thisType ~= thisType or def.returnType ~= descr.ret then def.hasStructArgument = false end
 	else
-		context.operators[ descr.name] = {contextType = contextType, ret = descr.ret, hasStructArgument = true, maxNofArguments = #descr.param}
+		context.operators[ descr.name] = {thisType = thisType, returnType = descr.ret, hasStructArgument = true, maxNofArguments = #descr.param}
 	end
 end
--- Iterate through operator declarations and implement them with a recursive structure as argument (e.g. a + {3,24, 5.13}) if possible
+-- Iterate through operator declarations and implement them with a constexpr structure as argument (e.g. a + {3,24, 5.13}) if possible
 function defineOperatorsWithStructArgument( node, context)
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
-			defineCall( def.returnType, def.contextType, opr, {constexprStructureType}, resolveOperatorConstructor( node, def.contextType, opr))
+			local constructor = tryConstexprStructureOperatorConstructor( node, def.thisType, opr)
+			local rtval; if doReturnValueAsReferenceParameter( def.returnType) then rtval = rvalueRefTypeMap[ def.returnType] else rtval = def.returnType end
+			defineCall( rtval, def.thisType, opr, {constexprStructureType}, constructor)
 		elseif def.maxNofArguments > 1 then
 			utils.errorMessage( node.line, "Operator '%s' defined different instances with more than one argument, but with varying signature", opr)
 		end
@@ -1148,6 +1102,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		defineVariableMember( node, context, typeId, name, context.private)
 	end
 end
+-- Incremental build up of the context LLVM type specification from its members (this function is adding one member)
 function expandContextLlvmMember( descr, context)
 	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
 end
@@ -1189,7 +1144,7 @@ function defineInterfaceMember( node, context, typeId, typnam, private)
 	table.insert( context.interfaces, typeId)
 	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.symbol})
 	local thisType = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
-	defineCall( rvalueTypeMap[ typeId], thisType, typnam, {}, convConstructor( fmt, "RVAL"))
+	defineCall( rvalueRefTypeMap[ typeId], thisType, typnam, {}, convConstructor( fmt, "RVAL"))
 end
 -- Define a reduction to a member variable to implement class/interface inheritance
 function defineReductionToMember( objTypeId, name)
@@ -1375,25 +1330,43 @@ function initBuiltInTypes()
 	defineConstExprArithmetics()
 	initControlBooleanTypes()
 end
--- Application of a conversion constructor depending on its type and its argument type
-function applyConstructor( node, typeId, constructor, arg)	
+-- Application of a conversion constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
+function tryApplyConstructor( node, typeId, constructor, arg)
 	if constructor then
 		if (type(constructor) == "function") then
 			local rt = constructor( arg)
-			if not rt then utils.errorMessage( node.line, "Reduction constructor failed for '%s'", typedb:type_string(typeId)) end
-			return rt
+			return rt, rt ~= nil
 		elseif arg then
 			utils.errorMessage( node.line, "Reduction constructor overwriting previous constructor for '%s'", typedb:type_string(typeId))
 		else
-			return constructor
+			return constructor, true
 		end
 	else
-		return arg
+		return arg, true
 	end
 end
--- Create a apply a list of reductions on a constructor
+-- Application of a conversion constructor depending on its type and its argument type, throw error on failure
+function applyConstructor( node, typeId, constructor, arg)
+	local result_constructor,success = tryApplyConstructor( node, typeId, constructor, arg)
+	if not success then utils.errorMessage( node.line, "Failed to create type '%s'", typedb:type_string(typeId)) end
+	return result_constructor
+end
+-- Try to apply a list of reductions on a constructor, return false as 2nd result on failure, true on success
+function tryApplyReductionList( node, redulist, redu_constructor)
+	local success = true
+	for _,redu in ipairs(redulist) do
+		redu_constructor,success = tryApplyConstructor( node, redu.type, redu.constructor, redu_constructor)
+		if not success then return nil end
+	end
+	return redu_constructor, true
+end
+-- Apply a list of reductions on a constructor, throw error on failure
 function applyReductionList( node, redulist, redu_constructor)
-	for _,redu in ipairs(redulist) do redu_constructor = applyConstructor( node, redu.type, redu.constructor, redu_constructor) end
+	local success = true
+	for _,redu in ipairs(redulist) do
+		redu_constructor,success = tryApplyConstructor( node, redu.type, redu.constructor, redu_constructor)
+		if not success then utils.errorMessage( node.line, "Reduction constructor failed for '%s'", typedb:type_string(redu.type)) end
+	end
 	return redu_constructor
 end
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
@@ -1403,7 +1376,7 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 	end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item) == 0 then
-			constructor = applyReductionList( node, reductions, nil)
+			local constructor = applyReductionList( node, reductions, nil)
 			local item_constructor = typedb:type_constructor( item)
 			constructor = applyConstructor( node, item, item_constructor, constructor)
 			if constructor then
@@ -1562,13 +1535,14 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 			if not item_constructor and #args == 0 then
 				call_constructor = this_constructor
 			else
+				local ac,success = nil,true
 				local arg_constructors = {}
 				for ai=1,#args do
-					local ac = applyReductionList( node, item_parameter_map[ ii].redulist[ ai], args[ ai].constructor)
-					if not ac then utils.errorMessage( node.line, "Construction of arguments of '%s' failed", typedb:type_string(items[ii])) end
+					ac,success = tryApplyReductionList( node, item_parameter_map[ ii].redulist[ ai], args[ ai].constructor)
+					if not success then break end
 					table.insert( arg_constructors, ac)
 				end
-				call_constructor = item_constructor( this_constructor, arg_constructors, item_parameter_map[ ii].llvmtypes)
+				if success then call_constructor = item_constructor( this_constructor, arg_constructors, item_parameter_map[ ii].llvmtypes) end
 			end
 			if call_constructor then table.insert( bestmatch, {type=items[ ii], constructor=call_constructor}) end
 			item_parameter_map[ ii] = nil
@@ -1754,20 +1728,20 @@ function printExternFunctionDeclaration( node, descr)
 end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt = utils.template_format( descr.call, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 	return functype
 end
 function defineFunctionVariableCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt = utils.template_format( descr.call, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
 	return defineCall( rtype, contextTypeId, opr, descr.param, functionVariableCallConstructor( callfmt, thisTypeId, descr.ret))
 end
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
 	local loadfmt = utils.template_format( descr.load, descr)
 	local callfmt = utils.template_format( descr.call, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( loadfmt, callfmt, descr.ret))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
@@ -1829,7 +1803,6 @@ function defineConstructorDestructor( node, descr, context)
 	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 	if constTypeMap[ contextTypeId] then defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr) end
-	defineOperatorAttributes( context, descr)
 end
 -- Define an extern function as callable object with "()" operator implementing the call
 function defineExternFunction( node, descr)
@@ -2044,7 +2017,7 @@ function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arr
 	local arrayDescr = llvmir.arrayDescr( elementDescr, arraySize)
 	local qualitype = defineQualiTypes( node, elementTypeId, typnam, arrayDescr)
 	local arrayTypeId = qualitype.lval
-	defineRValueReferenceTypes( elementTypeId, typnam, elementDescr, qualitype)
+	defineRValueReferenceTypes( elementTypeId, typnam, arrayDescr, qualitype)
 	defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	local qualitype_element = qualiTypeMap[ elementTypeId]
 	defineArrayIndexOperators( qualitype_element.rval, qualitype.rval, arrayDescr)
@@ -2113,7 +2086,8 @@ function typesystem.allocate( node, context)
 	if ptr_constructor then memblk.constructor = ptr_constructor( memblk.constructor) end
 	local out = env.register()
 	local cast = utils.constructor_format( llvmir.control.memPointerCast, {llvmtype=descr.llvmtype, out=out,this=memblk.constructor.out}, env.register)
-	local rt = applyCallable( node, {type=refTypeId,constructor={out=out, code=memblk.constructor.code .. cast}}, ":=", {args[2]})
+	local this = {type=refTypeId,constructor={out=out, code=memblk.constructor.code .. cast}}
+	local rt = applyCallable( node, this, ":=", {args[2]})
 	rt.type = pointerTypeId
 	return rt
 end
@@ -2386,7 +2360,7 @@ function typesystem.generic_funcdef( node, decl, context)
 	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
 	defineGenericType( node, context, typnam, llvmir.genericFunctionDescr, param)
 end
-function typesystem.generic_procdef( node, decl, context)	
+function typesystem.generic_procdef( node, decl, context)
 	local typnam = node.arg[1].value
 	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
 	defineGenericType( node, context, typnam, llvmir.genericProcedureDescr, param)

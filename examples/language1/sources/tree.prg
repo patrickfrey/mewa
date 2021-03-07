@@ -1,4 +1,4 @@
-// Testing simple structures, recursive structures and recursive initialization
+// Testing structures and initialization from a tree structure specified as initializer lists in the source
 
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" procedure putchar( const byte);

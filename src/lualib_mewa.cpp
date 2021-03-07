@@ -806,7 +806,7 @@ static int mewa_typedb_derive_type( lua_State* ls)
 		int fromType = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 3);
 		mewa::TagMask selectTags( nargs >= 4 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
 		mewa::TagMask selectTagsPathLen( nargs >= 5 ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchNothing());
-		int maxPathLen = nargs >= 6 ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : -1;
+		int maxPathLen = nargs >= 6 ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 1;
 		mewa::TypeDatabase::ResultBuffer resbuf;
 		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsPathLen, maxPathLen, resbuf);
 		if (deriveres.defined)

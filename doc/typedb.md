@@ -222,6 +222,10 @@ The scope of the newly defined type has been set with the last call of the sette
 | 3rd    | type         | any type         | Type handle of the type this type definition is a synonym for in the current scope                            |
 | Return |              | integer          | type handle passed as third argument or -1 if the definition is a duplicate                                   |
 
+#### Remark
+
+The type defined like this has the same constructor, therefore it cannot be used as alias for a type with a built constructor.
+
 
 <a name="get_type"/>
 
@@ -350,7 +354,7 @@ Select none if undefined
 #### Remark (***)
 The tagmask_pathlen, max_pathlen parameters allow to define restrictions on the number of reductions that are implicit value conversions. 
 Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions. 
-Usually the max_pathlen value is 1 if implicit type conversions are allowed at all.
+Usually the max_pathlen value is 1 if implicit type conversions are allowed at all. The default if not specified is therefore 1.
 
 
 <a name="resolve_type"/>
