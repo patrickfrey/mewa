@@ -225,6 +225,10 @@ end
 function doPassValueAsReferenceParameter( typeId)
 	return doReturnValueAsReferenceParameter( typeId)
 end
+-- Function that decides wheter an explicit cast to a type creates a reference type or a value type
+function doCastToReferenceType( typeId)
+	return doReturnValueAsReferenceParameter( typeId)
+end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructor
 function buildFunctionCallArguments( code, argstr, args, llvmtypes)
 	local rt = argstr; if argstr ~= "" then rt = rt .. ", " end
@@ -298,7 +302,6 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		return res.constructor.code
 	end
 	return function( this, args)
-		args = args[1] -- args contains one list node
 		if #args > nofElements then
 			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
@@ -1559,6 +1562,10 @@ function findApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight
 end
+-- Get the signature of a function used in error messages
+function getMessageFunctionSignature( this, callable, args)
+	return utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")"
+end
 -- Filter best result and report error on ambiguity
 function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
 	if #bestmatch == 1 then
@@ -1573,22 +1580,15 @@ function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args
 			end
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
-		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s",
-				utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")", altmatchstr)
+		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s", getMessageFunctionSignature( this, callable, args), altmatchstr)
 	end
 end
 -- Retrieve and apply a callable in a specified context
 function applyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
-	if not bestweight then
-		utils.errorMessage( node.line, "Failed to find callable with signature '%s'",
-	                    utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
-	end
+	if not bestweight then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
 	local rt = getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
-	if not rt then 
-		utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'",
-	                    utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")")
-	end
+	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
 	return rt
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not
@@ -2095,8 +2095,9 @@ function typesystem.typecast( node, context)
 	local env = getCallableEnvironment()
 	local args = utils.traverse( typedb, node, context)
 	local typeId = args[1]
-	local operand = args[2]
 	local descr = typeDescriptionMap[ typeId]
+	if doCastToReferenceType( typeId) then typeId = referenceTypeMap[ constTypeMap[ typeId]] end
+	local operand = args[2]
 	if operand then
 		return {type=typeId, constructor=getRequiredTypeConstructor( node, typeId, operand, tagmask_typeCast)}
 	else
