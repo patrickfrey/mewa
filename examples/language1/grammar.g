@@ -222,7 +222,7 @@ statement/L1		= structdefinition								(definition 1)
 			| "if" "(" expression ")" "{" codeblock "}" 					({}conditional_if)
 			| "while" "(" expression ")" "{" codeblock "}"					({}conditional_while)
 			| "with" "(" expression ")" "{" codeblock "}"					({}with_do)
-			| "with" "(" expression ")" ";"							({}with_do)
+			| "with" "(" expression ")" ";"							(with_do)
 			| "{" codeblock "}"								({})
 			;
 variabledefinition	= typespec IDENT								(>>vardef)

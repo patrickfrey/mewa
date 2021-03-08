@@ -554,7 +554,7 @@ function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam), qualitype.c_rval)	-- const reference
 		end
 	else
-		utils.errorMessage( node.line, "Can't define alias for type '%s %s'", typedb:type_string(contextTypeId), typnam)
+		typedb:def_type_as( contextTypeId, typnam, aliasTypeId)
 	end
 end
 -- Define all basic types associated with a type name
@@ -1439,6 +1439,16 @@ function defineGenericParameterAliases( node, instanceType, generic_param, gener
 		end
 	end
 end
+-- Get an instance of a generic type if already defined or implicitely create it and return the created instance
+function getOrCreateGenericType( node, genericType, genericDescr, instArg)
+	local genericArg = matchGenericParameter( node, genericType, genericDescr.generic.param, instArg)
+	local instanceId = getGenericParameterIdString( genericArg)
+	local typkey = genericType .. "[" .. instanceId .. "]"
+	local typeInstance = genericInstanceTypeMap[ typkey]
+	if typeInstance then return typeInstance end
+	createGenericTypeInstance( node, genericType, genericArg, genericDescr, function( ti) genericInstanceTypeMap[ typkey] = ti end)
+	return genericInstanceTypeMap[ typkey]
+end
 -- Call a function, meaning to apply operator "()" on a callable
 function callFunction( node, contextTypes, name, args)
 	local typeId,constructor = selectNoArgumentType( node, name, typedb:resolve_type( contextTypes, name, tagmask_resolveType))
@@ -2024,6 +2034,20 @@ function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arr
 	defineArrayIndexOperators( qualitype_element.c_rval, qualitype.c_rval, arrayDescr)
 	return arrayTypeId
 end
+-- Get an instance of an array type if already defined or implicitely create it and return the created instance
+function getOrCreateArrayType( node, elementTypeId, elementDescr, dimType)
+	local dim = getConstexprValue( constexprUIntegerType, dimType.type, dimType.constructor)
+	if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
+	local arraySize = tonumber( dim)
+	if arraySize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
+	local typnam = "[" .. arraySize .. "]"
+	local typkey = elementTypeId .. typnam
+	local rt = arrayTypeMap[ typkey]
+	if rt then return rt end
+	rt = createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arraySize)
+	arrayTypeMap[ typkey] = rt
+	return rt
+end
 -- Create an instance of a pointer type on demand
 function createPointerTypeInstance( node, attr, typeId)
 	local qs = typeQualiSepMap[ typeId]
@@ -2238,32 +2262,15 @@ function typesystem.typegen_generic( node, context)
 	local typeInstance = nil
 	local arg = utils.traverse( typedb, node, context)
 	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected on left hand of generic or array declaration instead of '%s'", typedb:type_string(arg[1].type)) end
-	local genericType,inst_arg = arg[1].type,arg[2]
+	local genericType,instArg = arg[1].type,arg[2]
 	local qs = typeQualiSepMap[ genericType]
 	if not qs then utils.errorMessage( node.line, "Non generic/array type with instantiation operator '[ ]'", typedb:type_string(genericType)) end
 	local genericDescr = typeDescriptionMap[ qs.lval]
 	local scope_bk = typedb:scope( typedb:type_scope( genericType))
 	if string.sub(genericDescr.class,1,8) == "generic_" then
-		local genericArg = matchGenericParameter( node, genericType, genericDescr.generic.param, inst_arg)
-		local instanceId = getGenericParameterIdString( genericArg)
-		local typkey = qs.lval .. "[" .. instanceId .. "]"
-		typeInstance = genericInstanceTypeMap[ typkey]
-		if not typeInstance then
-			createGenericTypeInstance( node, genericType, genericArg, genericDescr, function( ti) genericInstanceTypeMap[ typkey] = ti end)
-			typeInstance = genericInstanceTypeMap[ typkey]
-		end
-	elseif #inst_arg == 1 then -- generic operator on non generic type creates an array
-		local dim = getConstexprValue( constexprUIntegerType, inst_arg[1].type, inst_arg[1].constructor)
-		if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
-		local arraySize = tonumber( dim)
-		if arraySize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
-		local typnam = "[" .. arraySize .. "]"
-		local typkey = qs.lval .. typnam
-		typeInstance = arrayTypeMap[ typkey]
-		if not typeInstance then
-			typeInstance = createArrayTypeInstance( node, typnam, qs.lval, typeDescriptionMap[ qs.lval], arraySize)
-			arrayTypeMap[ typkey] = typeInstance
-		end
+		typeInstance = getOrCreateGenericType( node, qs.lval, genericDescr, instArg)
+	elseif #instArg == 1 then -- generic operator on non generic type creates an array
+		typeInstance = getOrCreateArrayType( node, qs.lval, genericDescr, instArg[1])
 	else
 		utils.errorMessage( node.line, "Operator '[' ']' with more than one argument for non generic %s", genericDescr.class)
 	end
