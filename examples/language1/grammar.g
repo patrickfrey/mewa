@@ -295,7 +295,7 @@ expression/L12		= iexpression
 			;
 expression/L13		= expression  "(" expressionlist ")"						(operator "()")
 			| expression  "(" ")"								(operator "()")
-			| expression  "[" expressionlist "]"						(operator "[]")
+			| expression  "[" expressionlist "]"						(operator_array "[]")
 			;
 iexpression		= expression indirection IDENT							(rep_operator "->")
 			;

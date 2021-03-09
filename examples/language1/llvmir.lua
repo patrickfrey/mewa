@@ -270,6 +270,7 @@ llvmir.control = {
 	terminateFalseExit = "br label %{out}\n{1}:\n",
 	terminateTrueExit = "br label %{out}\n{1}:\n",
 	label = "br label %{inp}\n{inp}:\n",
+	plainLabel = "{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
 	returnFromProcedure = "ret void\n",
 	implicitReturnFromProcedure = "br label %exit\nexit:\nret void\n",
