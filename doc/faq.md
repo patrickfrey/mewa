@@ -15,7 +15,7 @@
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
     * [How to implement pointers and arrays?](#pointersAndArrays)
     * [How to implement namespaces?](#namespaces)
-    * [How to implement complex expressions?](#complexExpressions)
+    * [How to implement the resolving of initializer lists?](#initializerLists)
     * [How to implement control structures?](#controlStructures)
     * [How to implement constants and constant expressions?](#constants)
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
@@ -62,7 +62,7 @@ Maybe some insights into other compiler frontend implementations is recommended 
 It is not recommended to use _Mewa_ for other than compilable, stronly typed programming languages, because it was not designed for other language classes.
 To define a type system as graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
 
-**(*)** Unfortunately C++ (and C) can't be implemented with _Mewa_ as there is no clear separation of syntax and semantic analysis possible in C/C++.
+**(*)** Unfortunately C++ (and C) can't be implemented with _Mewa_ as there is no separation of syntax and semantic analysis possible in C/C++.
 To name one example: There is no way to decide if the statement ```A * B;``` is an expression or a type declaration without having semantical information about A.
 
 
@@ -82,7 +82,7 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 
  * It helps the type deduction to terminate in reasonable time. 
  * It makes the selection of the deduction path deterministic. 
- * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one clear solution to a resolve type query. Otherwise the request is considered to be ambiguous.
+ * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one unique solution to a resolve type query. Otherwise the request is considered to be ambiguous.
 
 
 <a name="reductionScope"/>
@@ -101,19 +101,19 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 <a name="astStructure"/>
 
 ### How to process the AST structure?
-The compiler builds an Abstract Syntax Tree (AST) with the lexems explicitly declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the AST. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in [typesystem_utils.Lua](examples/typesystem_utils.Lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope step if defined in the AST and calls the function defined for the AST node.
+The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexems explicitly declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the _AST_. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in [typesystem_utils.Lua](../examples/typesystem_utils.Lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope step if defined in the _AST_ and calls the function defined for the _AST_ node.
 
 <a name="astTraversalAndScope"/>
 
-### How to handle scopes?
+### How to handle lexical scopes?
 
-Scope is part of the type database and represented as pair of integer numbers, the first element specifying the start of the scope and the second the first element after the last element of the scope. Every definition has such a scope definition attached. Depending on the current scope step (an integer number) only the subset of definitions having a scope covering it are visible when resolving a type. The current scope and the current scope step are set by the tree traversal function before calling the function attached to a node. The current scope is set to its previous value after calling the function attached to a node.
+The _Scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type,reduction,instance) has a _scope_ definition attached. Depending on the current _scope step_ (an integer number) only the subset of definitions having a _scope_ covering it are visible when resolving a type. The current _scope_ and the current _scope step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. _Scope_ is usually used to envelop code blocks. Substructures on the other hand are preferrably implemented with a context type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context type to it. Every resolve type query can contain a set of context type candidates.
 
 <a name="scopeInstanceAndAllocators"/>
 
 ### How to store and access scope bound data?
 
-Scope bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing scopes inherit an object from the parent scope) with [typedb:get_instance](#get_instance).
+_Scope_ bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
 
 <a name="typeQualifiers"/>
 
@@ -125,19 +125,19 @@ Qualifiers are not considered to be attached to the type but part of the type de
 
 ### How to implement pointers and arrays?
 
-Pointers and arrays are types on its own. Because there are no attributes attached to types in the typedb, you have to declare an array of size 40 as own type that differs from the array of size 20. For arrays you need a mechanism for definition on demand. Such a mechanism you need for templates too.
+Pointers and arrays are types on its own. Because there are no attributes attached to types in the typedb, you have to declare an array of size 40 as own type that differs from the array of size 20. For arrays you need a mechanism for definition on demand. Such a mechanism you need for generics too.
 
 <a name="namespaces"/>
 
 ### How to implement namespaces?
 
-Namespaces are as types. A namespace type can then be used as context type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context types or a single context type as argument. 
+Namespaces are implementd as types. A namespace type can then be used as context type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context types or a single context type as argument. 
 
-<a name="complexExpressions"/>
+<a name="initializerLists"/>
 
-### How to implement complex expressions?
+### How to implement resolving of initializer lists?
 
-For complex expressions you may need some sort of recursive type resolution within a constructor call. In the "example language 1" I defined a const expression type for unresolved structures represented as list of type constructor pairs. The reduction of such a structure to a type that can bew instantiated with structures using type resolution ([typedb:resolve_type](#resolve_type)) and type derivation ([typedb:derive_type](#derive_type)) to build the structures as composition of the structure members. This mechanism can be defined recursively, meaning that the members can be defined as const expression type for unresolved structures themselves.
+For initializer lists without explicit typeing of the nodes (like for example ```{1,{2,3},{4,5,{6,7,8}}}```) you need some sort of recursive type resolution within a constructor call. In the example _language1_ I defined a const expression type for unresolved structures represented as list of type constructor pairs. The reduction of such a structure to a type that can bew instantiated with structures using type resolution ([typedb:resolve_type](#resolve_type)) and type derivation ([typedb:derive_type](#derive_type)) to build the structures as composition of the structure members. This mechanism can be defined recursively, meaning that the members can be defined as const expression type for unresolved structures themselves. The rule in example _language1_ is that a constructor that returns *nil* has failed and leads to an error or a dropping of the case when using it in a function with the name prefix _try_.
 
 <a name="controlStructures"/>
 
@@ -149,7 +149,7 @@ if (expr != NULL && expr->data != NULL) {...}
 ```
 the subexpression ```expr->data != NULL``` is not evaluated if ```expr != NULL``` evaluated to false.
 
-For control structures two new types have been defined in the example "language1":
+For control structures two new types have been defined in the example _language1_:
 1. Control True Type that represents a constructor as structure with 2 members: 
     1. **code** containing the code that is executed in the case the expression evaluates to **true** and 
     1. **out** the name of a free label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and 
@@ -181,17 +181,17 @@ What type should the expression on the right side of the second assignment have?
  1. We can promote 'b' to a maximum size integer type and so ```2304879``` before the addition
  1. We can propagate the type ```int``` of the left side of the assignment to the expression ```b + 2304879``` as result type.
 
-In the example language I decided for solution (1) even though it lead to anomalies, but I will return to the problem later. So far all three possibilities can be implemented with _Mewa_.
+In the example _language1_ I decided for solution (1) even though it lead to anomalies, but I will return to the problem later. So far all three possibilities can be implemented with _Mewa_.
 
-##### What Types to Use
-The decision for data types used to implement constants is more complex as it actually looks like at the first glance. But for implementing constant values you can't rely on the scalar types of the language your implementing a compiler with because the language you design may have a different set of scalar types with a different set of rules. You need arbitrary precision arithmetics for integers and floating point numbers at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. A silly decision that should be revisited. I just did not find a module for arbitrary precision integer arithmetics on _LuaRocks_  with a working installation at the time. So I decided to activate some older project (implementing arbitrary BCD arithmetics for Lua) as a _LuaRocks_ module on my own. This will be replaced in the future.
+##### What types to use for representing constant values in the compiler
+The decision for data types used to implement constants is more complex as it actually looks like at the first glance. But for implementing constant values you can't rely on the scalar types of the language your implementing a compiler with because the language you design may have a different set of scalar types with a different set of rules. You need arbitrary precision arithmetics for integers and floating point numbers at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. A silly decision that should be revised. I just did not find a module for arbitrary precision integer arithmetics on _LuaRocks_  with a working installation at the time. So I decided to activate some older project (implementing arbitrary BCD arithmetics for Lua) as a _LuaRocks_ module on my own. This has to be replaced in the future. But I do not plan to invest a lot of time there. I hope for some contribution or an idea that solves the problem.
 
 <a name="functionsProceduresAndMethods"/>
 
 ### How to implement callables like functions, procedures and methods?
 
 This is tricky because of issues around scope and visibility. There are two scopes involved the visibility of the function for callers and the scope of the codeblock that executed the callable. Furthermore we have to do some tricks to do the declaration in a predecessing pass of the code block traversal for enabling recursion (declare the function before its code, so it can be used in the code).
-That is why the whole thing is quirky here. See function typesystem.callablebody in typesystem.lua of the example "language1".
+That is why the whole thing is quirky here. See function typesystem.callablebody in typesystem.lua of the example _language1_.
 
 <a name="functionReturn"/>
 
@@ -204,7 +204,7 @@ For every function a structure named ```env``` is defined an attached to the sco
 ### How to implement return of a non scalar type from a function?
 
 LLVM has the attribute ```sret``` for structure pointers passed to functions for storing the return value for non scalar values.
-In the example language I defined the types
+In the example _language1_ I defined the types
 
  * rval_ref with the qualifier "&&" representing an R-value reference.
  * c_rval_ref with the qualifier "const&&" representing a constant R-value reference.
@@ -220,13 +220,13 @@ In the example language I defined the types
 Hierarchical data structures need recursive resolving of types probably with SFINAE. For SFINAE use the Lua pcall function.
 For representing hierarchical data structures we can define a new type representing a node with members that can also the hierarchical data structures.
 For mapping them we define a type reduction involving recursive type resolution that maps the members of the structure to the members of a candidate data structure.
-In the example "language1" I defined the type ```constexprStructureType``` to represent a node with some members in curly brackets ```{ ... }```, separated by commas.
+In the example _language1_ I defined the type ```constexprStructureType``` to represent a node with some members in curly brackets ```{ ... }```, separated by commas.
 
 <a name="withAndUsing"/>
 
 ### How to implement type contexts, e.g. the Pascal "WITH", the C++ "using" and friends?
 
-In the example "language1" I define a context list as object bound to a scope. Enclosed scopes inherit the context list from the parent scope.
+In the example _language1_ I define a context list as object bound to a scope. Enclosed scopes inherit the context list from the parent scope.
 A "WITH" or "using" defines the context list for the current scope as copy of the inherited context list if not defined yet. It then attaches the
 new context member to it.
 
@@ -234,7 +234,7 @@ new context member to it.
 
 ### How to implement object oriented polymorphism?
 
-In the example "language1" I implemented interface inheritance only. You have to implement a VMT and implement the method call as VMT call. 
+In the example _language1_ I implemented interface inheritance only. You have to implement a VMT and implement the method call as VMT call. 
 
 <a name="multipassTraversal"/>
 
@@ -244,19 +244,20 @@ Sometimes some definitions have to be prioritized, e.g. member variable definiti
 _Mewa_ does not support multipass traversal by nature, but you can implement it by passing additional parameters to the traversal routine.
 In the example grammar I attached a pass argument for the ```definition``` Lua callback:
 ```
-class_definition	= typedefinition ";"			(definition 1)
-			| variabledefinition ";"		(definition 1)
-			| structdefinition			(definition 1)
-			| classdefinition 			(definition 1)
-			| interfacedefinition			(definition 1)
-			| constructordefinition			(definition 2)
-			| functiondefinition			(definition 2)
-			;
+inclass_definition	= typedefinition ";"		    (definition 1)
+	        		| variabledefinition ";"        (definition 2)
+			        | structdefinition              (definition 1)
+			        | classdefinition               (definition 1)
+			        | interfacedefinition           (definition 1)
+			        | constructordefinition         (definition_decl_impl_pass 3)
+			        | operatorordefinition          (definition_decl_impl_pass 3)
+			        | functiondefinition            (definition_decl_impl_pass 3)
+			        ;
 free_definition		= struct_definition
-			| functiondefinition			(definition 1)
-			| classdefinition 			(definition 1)
-			| interfacedefinition			(definition 1)
-			;
+        			| functiondefinition			(definition 1)
+		        	| classdefinition           	(definition 1)
+			        | interfacedefinition			(definition 1)
+			        ;
 ```
 The callback then gets 2 additional parameters, one from the grammar: ```pass``` and one from the traversal call: ```pass_selected```
 ```Lua
@@ -277,6 +278,7 @@ function typesystem.classdef( node, context)
 	...
 end
 ```
+The declaration of functions, operators and methods of classes gets even more complicated. In the example _language1_ we define the typesystem method ```definition_decl_impl_pass``` that is executed in two passes. The first pass declares the callable. The second pass creates its implementation. The reason for this is the possibility of the methods to call each other without beeing declared in an order of their dependency as this is not always possible and not intuitive.
 
 <a name="branchDpendencies"/>
 
@@ -354,7 +356,7 @@ class A {
 	B b;
 };
 ```
-To implement multi pass traversal where we declare the sub classes in the first pass and the member variables in the second pass, we pass the index of the pass as additional traversal argument and check it in the sub node functions. In the example "language1" I implemented multipass traversal for class definitions.
+To implement multi pass traversal where we declare the sub classes in the first pass and the member variables in the second pass, we pass the index of the pass as additional traversal argument and check it in the sub node functions. In the example _language1_ I implemented multipass traversal for class definitions.
 
 
 <a name="exceptions"/>
@@ -387,6 +389,6 @@ I did not implement concepts in an example. But I would implement them similarly
 
 ### How to implement the call of a C-Library function?
 
-LLVM supports extern calls. In the specification of the example "language1" I support calls of the C standard library.
+LLVM supports extern calls. In the specification of the example _language1_ I support calls of the C standard library.
 
 

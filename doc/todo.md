@@ -5,7 +5,6 @@
  * Make deep copies of values passed as lval and shallow copies of structures passed as const lval. Define these parameter variables as references to their copies. 
  * Migrate Mewa repo to own github project
  * Implement generic var for global variables depending on a type (instead of static declarations)
- * Fix issue with scalar parameters declared as const reference that cannot be passed by value. solution: pass structures declared const, as const reference ?
 
 # Open issues
 * Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.
