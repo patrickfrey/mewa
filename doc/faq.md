@@ -30,7 +30,7 @@
     * [How to handle dependencies between branches of a node in the AST?](#branchDpendencies)
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
     * [How to implement exception handling?](#exceptions)
-    * [How to implement generic programming with templates?](#templates)
+    * [How to implement generic programming?](#generics)
     * [How to implement concepts like in C++?](#cppConcepts)
     * [How to implement call of C-Library functions?](#cLibraryCalls)
 
@@ -365,13 +365,13 @@ Exception handling and especially zero-cost exception handling is a subject of f
 
 <a name="templates"/>
 
-### How to implement generic programming with templates?
+### How to implement generic programming?
 
-Templates are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
+Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
 If a template type ```TPL<A1,A2,...>``` is referenced we define a type ```T = TPL<t1,t2,...>``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
-For each template argument Ai we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. With ```T``` as context type we then call the traversal of the generic class, structure or function.
+For each template argument ```Ai``` without a value constructor attached, we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. For types with an own constructor representing the value, we define a type ```Ai``` with the constructor and a reduction from this type to the generic argument type. With ```T``` as context type we then call the traversal of the generic class, structure or function. 
 
-How to do automatic template argument deduction for generic functions is an open question for me. I did not implement it in an example.
+How to do automatic template argument deduction for generic functions is an open question for me. I did not implement it in the example _language1_.
 But I think for automatic template argument deduction you have to synthesize the generic parameter assignments somehow by matching the function parameters against the function candidates. If you got a complete set of generic parameter assignments, you can do the kind of expansion described above.
 
 
@@ -379,7 +379,9 @@ But I think for automatic template argument deduction you have to synthesize the
 
 ### How to implement concepts like in C++?
 
-I did not implement concepts in an example. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context type. In the concept definition AST node functions you can use typedb:resolve_type to retrieve properties as types to check as sub condition of the concept.
+I did not implement concepts in the example _langauge1_. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context type. In the concept definition AST node functions you can use typedb:resolve_type to retrieve properties as types to check as sub condition of the concept.
+
+In other words, the concept is implemented as generic with a the type to check the concept against as argument, with the difference that it not produces code, but is just used to check if the concept structure can be succesfully traversed with the argument type.
 
 
 <a name="cLibraryCalls"/>
