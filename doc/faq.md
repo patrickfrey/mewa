@@ -381,7 +381,7 @@ But I think for automatic template argument deduction you have to synthesize the
 
 I did not implement concepts in the example _langauge1_. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context type. In the concept definition AST node functions you can use typedb:resolve_type to retrieve properties as types to check as sub condition of the concept.
 
-In other words, the concept is implemented as generic with a the type to check the concept against as argument, with the difference that it not produces code, but is just used to check if the concept structure can be succesfully traversed with the argument type.
+In other words, the concept is implemented as generic with a the type to check the concept against as argument, with the difference that it doesn't produce code. It is just used to check if the concept structure can be succesfully traversed with the argument type.
 
 
 <a name="cLibraryCalls"/>
