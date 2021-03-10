@@ -21,15 +21,14 @@
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
     * [How to implement return in a function?](#functionReturn)
     * [How to implement return of a non scalar type from a function?](#functionReturnComplexData)
-    * [How to implement hierarchical data structures?](#hierarchicalDataStructures)
     * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
     * [How to implement object oriented polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private,public,protected?](#visibilityRules)
         * [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
-    * [How to implement multi pass traversal?](#multipassTraversal)
+    * [How to implement access of types declared later in the source?](#orderOfDefinition)
+    * [How to implement multipass traversal?](#multipassTraversal)
     * [How to handle dependencies between branches of a node in the AST?](#branchDpendencies)
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
-    * [How to implement access of types declared later in the source?](#orderOfDefinition)
     * [How to implement exception handling?](#exceptions)
     * [How to implement generic programming with templates?](#templates)
     * [How to implement concepts like in C++?](#cppConcepts)
@@ -213,14 +212,6 @@ In the example _language1_ I defined the types
  
  This mechanism allows to treat return value references passed as parameters uniformly with scalar return values, just using different constructors representing these types.
  
-<a name="hierarchicalDataStructures"/>
-
-### How to implement hierarchical data structures?
-
-Hierarchical data structures need recursive resolving of types probably with SFINAE. For SFINAE use the Lua pcall function.
-For representing hierarchical data structures we can define a new type representing a node with members that can also the hierarchical data structures.
-For mapping them we define a type reduction involving recursive type resolution that maps the members of the structure to the members of a candidate data structure.
-In the example _language1_ I defined the type ```constexprStructureType``` to represent a node with some members in curly brackets ```{ ... }```, separated by commas.
 
 <a name="withAndUsing"/>
 
@@ -234,7 +225,34 @@ new context member to it.
 
 ### How to implement object oriented polymorphism?
 
-In the example _language1_ I implemented interface inheritance only. You have to implement a VMT and implement the method call as VMT call. 
+In the example _language1_ I implemented interface inheritance only. You have to implement a VMT ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)) and implement the method call as _VMT_ call. For this it is appropriate to parse all methods and put them into lists before processing them and creating the code. Depending on the members of the method lists yout can them decide wheter a _VMT_ has to be created at all.
+
+
+
+<a name="orderOfDefinition"/>
+
+### How to implement access of types declared later in the source?
+In C++ you can reference types declared later in the source.
+```
+class A {
+	B b;
+
+	class B {
+		...
+	};
+};
+```
+When relying on one traversal of the AST to emit code, we can only implement an access scheme following the order of definitions like this:
+```
+class A {
+	class B {
+		...
+	};
+	B b;
+};
+```
+To implement multipass traversal where we declare the sub classes in the first pass and the member variables in the second pass, we pass the index of the pass as additional traversal argument and check it in the sub node functions. In the example _language1_ I implemented multipass traversal for class definitions.
+
 
 <a name="multipassTraversal"/>
 
@@ -292,6 +310,8 @@ Use it selectively and only if there is no other possibility and try to document
 In the example **language1** of _Mewa_ I use partial traversal (utils.traverseRange) in callable definitions to make the declaration available in the body to allow self reference. Furthermore I use it in the declaration of inheritance. 
 Multipass traversal is used in **language1** to parse class and structure members, subclasses and substructures before method declarations in order to make them accessible in the methods independent from the order or definition.
 
+Sharing data between passes is encouraged by the possibility to attach data to the _AST_. _Mewa_ event reserves one preallocated entry per node for that. I would not attach complex structures though as this makes the _AST_ as output unreadable. In the example _language1_ I attach an id as integer to a node that has data shared by multiple passes and I use this id to identify the data attached.
+
 <a name="visibilityRules"/>
 
 ### How to implement visibility rules, e.g. private,public,protected?
@@ -308,7 +328,9 @@ Public methods in the contrary are then defined in the context of ```rval``` or 
 
 In the body of a method the implicitly defined ```self``` reference is set to be reducible to its private reference type.
 The ```self``` is also added as private reference to the context used for resolving types there, so it does not have to be explicitely defined.
-If defined like this then private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exist no reduction from the public context type to the private context type.
+If defined like this, private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exist no reduction from the public context type to the private context type.
+
+The example _language1_ implements private/public access restrictions on data and not on type. This means that a method cannot access the private data of another instance of the same class like for example in C++. If you want to have private/public access restrictions on type you can do this by declaring in each method a reduction from the self reference declared as public to the private reference.
 
 <a name="visibilityRuleErrors"/>
 
@@ -332,31 +354,6 @@ To prevent a direct access of the variable ```a``` in the function ```b``` the s
 if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then ...OK... else ...ERROR... end
 ```
 where variableScope scope is the value of ```typedb:type_scope``` of the variable type and env.scope the procedure/function declaration scope.
-
-
-<a name="orderOfDefinition"/>
-
-### How to implement access of types declared later in the source?
-In C++ you can reference types declared later in the source.
-```
-class A {
-	B b;
-
-	class B {
-		...
-	};
-};
-```
-When relying on one traversal of the AST to emit code, we can only implement an access scheme following the order of definitions like this:
-```
-class A {
-	class B {
-		...
-	};
-	B b;
-};
-```
-To implement multi pass traversal where we declare the sub classes in the first pass and the member variables in the second pass, we pass the index of the pass as additional traversal argument and check it in the sub node functions. In the example _language1_ I implemented multipass traversal for class definitions.
 
 
 <a name="exceptions"/>
