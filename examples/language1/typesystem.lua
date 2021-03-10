@@ -1929,7 +1929,9 @@ end
 function defineCallableBodyContext( node, context, descr)
 	if context and context.qualitype then
 		local privateThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
+		local publicThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
 		local classvar = defineVariableHardcoded( privateThisReferenceType, "self", "%ths")
+		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
 	end
 	defineCallableEnvironment( descr.ret)

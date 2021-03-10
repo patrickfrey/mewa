@@ -100,7 +100,19 @@ generic class Complex[R]
 
 generic procedure printComplex[R]( const byte^ text, const Complex[R] complex)
 {
-	printf("%s %.4f %.4fi\n", text, complex.real(), complex.img());
+	var int sgn_img = sgn(complex.img());
+	if (sgn_img == 1)
+	{
+		printf("%s %.4f +%.4fi\n", text, complex.real(), complex.img());
+	}
+	elseif (sgn_img == -1)
+	{
+		printf("%s %.4f%.4fi\n", text, complex.real(), complex.img());
+	}
+	else
+	{
+		printf("%s %.4f\n", text, complex.real());
+	}
 }
 generic procedure printFloat[R]( const byte^ text, const R val)
 {

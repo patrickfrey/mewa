@@ -32,6 +32,7 @@
     * [How to implement exception handling?](#exceptions)
     * [How to implement generic programming?](#generics)
     * [How to implement concepts like in C++?](#cppConcepts)
+    * [How to implement lambdas?](#lambdas)
     * [How to implement call of C-Library functions?](#cLibraryCalls)
 
 
@@ -89,8 +90,7 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 ### Why are reductions defined with scope?
 
 At the first glance there is no need for defining reductions with a scope, because the types are already bound to a scope.
-But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. If you want to have private/public access restrictions on type (like for example in C++) you can do this by declaring a reduction from the ```self``` reference declared as public to the private reference. If you want to have private/public access restrictions on data, meaning that an object can only access its own data, you can do this by declaring a the ```self``` reference as private.
-In the example **language1** I define the class self reference to be defined as _private reference_ type. Thus having private/public access restrictions on data.
+But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. If you want to have private/public access restrictions on type, meaning that in a method of a class you can access the private members of all instances of this class, you can do this by declaring a reduction from the class reference type to its private reference type in every method scope. If you want to have private/public access restrictions on data only, meaning that an object can only access its own data, you can do this by declaring a the ```self``` reference as private without declaring the reduction from the public to the private reference type. 
 
 <a name="problemSolving"/>
 
@@ -330,7 +330,8 @@ In the body of a method the implicitly defined ```self``` reference is set to be
 The ```self``` is also added as private reference to the context used for resolving types there, so it does not have to be explicitely defined.
 If defined like this, private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exist no reduction from the public context type to the private context type.
 
-The example _language1_ implements private/public access restrictions on data and not on type. This means that a method cannot access the private data of another instance of the same class like for example in C++. If you want to have private/public access restrictions on type you can do this by declaring in each method a reduction from the self reference declared as public to the private reference.
+The example _language1_ implements private/public access restrictions on type. This means that a method can access the private data of another instance of the same class like for example in C++.
+
 
 <a name="visibilityRuleErrors"/>
 
@@ -383,6 +384,11 @@ I did not implement concepts in the example _langauge1_. But I would implement t
 
 In other words, the concept is implemented as generic with a the type to check the concept against as argument, with the difference that it doesn't produce code. It is just used to check if the concept structure can be succesfully traversed with the argument type.
 
+<a name="lambdas"/>
+
+### How to implement lambdas?
+
+This is an open issue. One idea would be to pass the lambda as type that refers to a AST node that is traversed when referenced. It's related to generics, it is a form of evaluation on demand too, but not exactly the same thing.
 
 <a name="cLibraryCalls"/>
 
