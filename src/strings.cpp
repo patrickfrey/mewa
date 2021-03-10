@@ -96,7 +96,6 @@ std::string mewa::template_format( const std::string_view& templatstr, char sb, 
 				rt.append( si->second);
 				ti = te + 1;
 				if (!(ts = std::strchr( ti, sb))) break;
-				checkPtr( templatstr, ti, ts);
 			}
 			else
 			{
