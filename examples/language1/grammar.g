@@ -202,7 +202,7 @@ paramdecl		= typespec IDENT								(paramdef)
 			;
 codeblock		= statementlist									(codeblock)
 			;
-statementlist		= statement statementlist							(>>)
+statementlist/L1	= statement statementlist							(>>)
 			| ε
 			;
 elseblock/L1		= "elseif" "(" expression ")" "{" codeblock "}"	elseblock			({}conditional_elseif)
@@ -233,7 +233,7 @@ expression/L1		= "{" expressionlist "}"							(structure)
 			| "new" typespec ":" expression							(allocate)
 			| "cast" typespec ":" expression						(typecast)
 			;
-expression/L2		= IDENT										(variable)
+expression/L2		= typegen									(variable)
 			| BOOLEAN									(constant "constexpr bool")
 			| UINTEGER									(constant "constexpr uint")
 			| SINTEGER									(constant "constexpr int")
@@ -297,12 +297,12 @@ expression/L13		= expression  "(" expressionlist ")"						(operator "()")
 			| expression  "(" ")"								(operator "()")
 			| expression  "[" expressionlist "]"						(operator_array "[]")
 			;
-iexpression		= expression indirection IDENT							(rep_operator "->")
+iexpression/L14		= expression indirection IDENT							(rep_operator "->")
 			;
-indirection		= "->" indirection								(count)
+indirection/L14		= "->" indirection								(count)
 			| "->"										(count)
 			;
-expressionlist		= expression "," expressionlist
+expressionlist/L0	= expression "," expressionlist
 			| expression
 			;
 

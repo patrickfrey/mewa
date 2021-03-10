@@ -439,6 +439,7 @@ static std::string getStateTransitionString(
 	const char* redustr = nullptr;
 	const char* shiftstr = nullptr;
 	std::string prodstr;
+	std::string prodsumstr;
 	for (int elem : state.packedElements())
 	{
 		auto item = TransitionItem::unpack( elem);
@@ -450,30 +451,48 @@ static std::string getStateTransitionString(
 			{
 				shiftstr = "->";
 				prodstr = prod.prefix_tostring( item.prodpos);
+				if (!prodsumstr.empty()) prodsumstr.append( ", ");
+				prodsumstr.append( prod.tostring());
 			}
 		}
 		else if (followMap.content( item.follow).contains( terminal))
 		{
 			redustr = "<-";
 			if (prodstr.empty()) prodstr = prod.tostring( item.prodpos);
+			if (!prodsumstr.empty()) prodsumstr.append( ", ");
+			prodsumstr.append( prod.tostring());
 		}
 	}
 	if (redustr && shiftstr)
 	{
-		return prodstr + " " + shiftstr + "|" + redustr + " " + getLexemName( lexer, terminal);
+		prodstr.append( " ");
+		prodstr.append( shiftstr);
+		prodstr.append( "|");
+		prodstr.append( redustr);
+		prodstr.append( " ");
+		prodstr.append( getLexemName( lexer, terminal));
 	}
 	else if (redustr)
 	{
-		return prodstr + " " + redustr + " " + getLexemName(lexer,terminal);
+		prodstr.append( " ");
+		prodstr.append( redustr);
+		prodstr.append( " ");
+		prodstr.append( getLexemName( lexer, terminal));
 	}
 	else if (shiftstr)
 	{
-		return prodstr + " " + shiftstr + " " + getLexemName(lexer,terminal);
+		prodstr.append( " ");
+		prodstr.append( shiftstr);
+		prodstr.append( " ");
+		prodstr.append( getLexemName( lexer, terminal));
 	}
-	else
+	if (!prodsumstr.empty())
 	{
-		return prodstr;
+		prodstr.append(" [");
+		prodstr.append( prodsumstr);
+		prodstr.append("]");
 	}
+	return prodstr;
 }
 
 struct ProductionShiftNode
@@ -853,6 +872,12 @@ static void insertAction(
 			Error::Code ec = action.type() == Automaton::Action::Shift ? Error::ShiftShiftConflictInGrammarDef : Error::ReduceReduceConflictInGrammarDef;
 			warnings.push_back( Error( ec, getStateTransitionString( lr1State, terminal, prodlist, lexer, followMap)));
 		}
+	}
+	else if (priority.defined() != pi->second.defined())
+	{
+		warnings.push_back(
+			Error( Error::ShiftReduceConflictInGrammarDef, 
+			getStateTransitionString( lr1State, terminal, prodlist, lexer, followMap)));
 	}
 	else if (priority.value > pi->second.value)
 	{
