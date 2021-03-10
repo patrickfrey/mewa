@@ -1171,8 +1171,9 @@ function defineParameter( node, type, name, env)
 	local paramreg = env.register()
 	local var = typedb:def_type( 0, name, paramreg)
 	if var < 0 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", name) end
-	typedb:def_reduction( type, var, nil, tag_typeDeclaration)
-	return {type=type, llvmtype=descr.llvmtype, reg=paramreg}
+	local ptype; if doPassValueAsReferenceParameter( type) then ptype = referenceTypeMap[ type] or type else ptype = type end
+	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
+	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
 end
 -- Initialize control boolean types used for implementing control structures and '&&','||' operators on booleans
 function initControlBooleanTypes()

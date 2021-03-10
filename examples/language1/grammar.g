@@ -233,7 +233,7 @@ expression/L1		= "{" expressionlist "}"							(structure)
 			| "new" typespec ":" expression							(allocate)
 			| "cast" typespec ":" expression						(typecast)
 			;
-expression/L2		= typegen									(variable)
+expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
 			| UINTEGER									(constant "constexpr uint")
 			| SINTEGER									(constant "constexpr int")

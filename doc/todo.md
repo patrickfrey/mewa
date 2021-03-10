@@ -6,7 +6,6 @@
  * Migrate Mewa repo to own github project
  * Implement generic var for global variables depending on a type (instead of static declarations)
  * Fix issue with scalar parameters declared as const reference that cannot be passed by value. solution: pass structures declared const, as const reference ?
- * Valgrind sessions ! Memory problems !
 
 # Open issues
 * Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.
