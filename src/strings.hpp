@@ -30,7 +30,7 @@ std::string string_format( const char* fmt, ...);
 /// \param[in] sb start bracket character
 /// \param[in] eb end bracket character
 /// \param[in] substmap variables to substitute
-std::string template_format( const std::string& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap);
+std::string template_format( const std::string_view& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap);
 
 }//namespace
 

@@ -19,9 +19,9 @@
 
 using namespace mewa;
 
-void mewa::writeFile( const std::string& filename, const std::string& content)
+void mewa::writeFile( const char* filename, const std::string& content)
 {
-	FILE* ff = std::fopen( filename.c_str(), "w");
+	FILE* ff = std::fopen( filename, "w");
 	if (!ff) throw Error( (Error::Code)errno, filename);
 	if (content.size() != std::fwrite( content.c_str(), 1, content.size(), ff))
 	{
@@ -31,10 +31,15 @@ void mewa::writeFile( const std::string& filename, const std::string& content)
 	std::fclose( ff);
 }
 
-std::string mewa::readFile( const std::string& filename)
+void mewa::writeFile( const std::string& filename, const std::string& content)
+{
+	writeFile( filename.c_str(), content);
+}
+
+std::string mewa::readFile( const char* filename)
 {
 	std::string rt;
-	FILE* ff = std::fopen( filename.c_str(), "r");
+	FILE* ff = std::fopen( filename, "r");
 	if (!ff) throw Error( (Error::Code)errno, filename);
 
 	enum {RBufsize = 1<<12};
@@ -59,6 +64,11 @@ std::string mewa::readFile( const std::string& filename)
 		throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 	}
 	return rt;
+}
+
+std::string mewa::readFile( const std::string& filename)
+{
+	return readFile( filename.c_str());
 }
 
 std::vector<std::string> mewa::readFileLines( const std::string& filename)
@@ -92,8 +102,10 @@ void mewa::removeFile( const std::string& filename)
 std::string mewa::fileBaseName( const std::string_view& fnam)
 {
 	char buf[ 1024];
-	std::size_t nn = fnam.size() >= sizeof(buf) ? sizeof(buf)-1 : fnam.size();
+	std::size_t nn = fnam.size();
+	if (nn >= sizeof(buf)) throw Error( Error::InternalBufferOverflow, fnam);
 	std::memcpy( buf, fnam.data(), nn);
+	buf[ nn] = 0;
 	char* bn = ::basename( buf);
 	std::size_t ee = std::strchr( bn, '\0')-bn;
 	for (; ee > 0 && bn[ ee] != '.'; --ee){}

@@ -11,6 +11,7 @@
 /// \file "error.hpp"
 #ifndef _MEWA_ERROR_HPP_INCLUDED
 #define _MEWA_ERROR_HPP_INCLUDED
+
 #if __cplusplus >= 201703L
 #include <utility>
 #include <string>
@@ -30,27 +31,28 @@ public:
 	enum Code {
 		Ok=0,
 		MemoryAllocationError=400,
-		LogicError=401,
-		RuntimeException=402,
-		UnexpectedException=403,
-		SerializationError=404,
-		InternalSourceExpectedNullTerminated=405,
-		ExpectedStringArgument=406,
-		ExpectedIntegerArgument=407,
-		ExpectedNonNegativeIntegerArgument=408,
-		ExpectedUnsignedIntegerArgument=409,
-		ExpectedBooleanArgument=410,
-		ExpectedFloatingPointArgument=411,
-		ExpectedTableArgument=412,
-		ExpectedArgumentScopeStructure=413,
-		ExpectedArgumentTypeConstructorPairList=414,
-		ExpectedArgumentStringList=415,
-		ExpectedArgumentTypeList=416,
-		ExpectedArgumentTypeOrTypeConstructorPairList=417,
-		ExpectedArgumentNotNil=418,
-		TooFewArguments=419,
-		TooManyArguments=420,
-		CompileError=421,
+		InternalBufferOverflow=401,
+		LogicError=402,
+		RuntimeException=403,
+		UnexpectedException=404,
+		SerializationError=405,
+		InternalSourceExpectedNullTerminated=406,
+		ExpectedStringArgument=407,
+		ExpectedIntegerArgument=408,
+		ExpectedNonNegativeIntegerArgument=409,
+		ExpectedUnsignedIntegerArgument=410,
+		ExpectedBooleanArgument=411,
+		ExpectedFloatingPointArgument=412,
+		ExpectedTableArgument=413,
+		ExpectedArgumentScopeStructure=414,
+		ExpectedArgumentTypeConstructorPairList=415,
+		ExpectedArgumentStringList=416,
+		ExpectedArgumentTypeList=417,
+		ExpectedArgumentTypeOrTypeConstructorPairList=418,
+		ExpectedArgumentNotNil=419,
+		TooFewArguments=420,
+		TooManyArguments=421,
+		CompileError=422,
 
 		IllegalFirstCharacterInLexer=431,
 		SyntaxErrorInLexer=432,

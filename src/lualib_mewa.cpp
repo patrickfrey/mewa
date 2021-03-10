@@ -379,6 +379,12 @@ static int mewa_compiler_tostring( lua_State* ls)
 	return 1;
 }
 
+static void copyFileNameToBuffer( char* buf, std::size_t bufsize, std::string_view str)
+{
+	if (str.size() >= bufsize) throw mewa::Error( mewa::Error::InternalBufferOverflow, str);
+	std::memcpy( buf, str.data(), str.size());
+	buf[ str.size()] = 0;
+}
 static int mewa_compiler_run( lua_State* ls)
 {
 	[[maybe_unused]] static const char* functionName = "compiler:run( target, inputfile [,outputfile [,dbgoutput]])";
@@ -388,13 +394,16 @@ static int mewa_compiler_run( lua_State* ls)
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 5/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 10);
 
-		std::string_view targetfn = mewa::lua::getArgumentAsString( functionName, ls, 2); //... target filename
-		std::string_view filename = mewa::lua::getArgumentAsString( functionName, ls, 3); //... source filename
+		char targetfn[ 256]; //... target filename
+		copyFileNameToBuffer( targetfn, sizeof(targetfn), mewa::lua::getArgumentAsString( functionName, ls, 2));
+		char filename[ 256]; //... source filename
+		copyFileNameToBuffer( filename, sizeof(filename), mewa::lua::getArgumentAsString( functionName, ls, 3));
 		std::string_view outputfn = "stdout";
 
-		std::string source = mewa::readFile( std::string(filename));
-		std::string targetstr = mewa::readFile( std::string(targetfn));
-		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( source));	// STK: [COMPILER] [INPUTFILE] [SOURCE]
+		std::string sourcestr_ = mewa::readFile( std::string(filename));
+		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( sourcestr_));	// STK: [COMPILER] [INPUTFILE] [SOURCE]
+		std::string targetstr_ = mewa::readFile( std::string(targetfn));
+		std::string_view targetptr = move_string_on_lua_stack( ls, std::move( targetstr_));	// STK: [COMPILER] [INPUTFILE] [SOURCE] [TARGET]
 
 		if (nargs >= 4)
 		{
@@ -430,7 +439,7 @@ static int mewa_compiler_run( lua_State* ls)
 			cp->outputSectionMap[ "Source"] = filename;
 			cp->outputSectionMap[ "Tripple"] = tripple;
 			cp->outputSectionMap[ "Code"].append( cp->outputBuffer);
-			std::string output = mewa::template_format( targetstr, '{', '}', cp->outputSectionMap);
+			std::string output = mewa::template_format( targetptr, '{', '}', cp->outputSectionMap);
 			if (outputfn == "stderr")
 			{
 				std::fputs( output.c_str(), ::stderr);
@@ -444,13 +453,14 @@ static int mewa_compiler_run( lua_State* ls)
 				mewa::writeFile( std::string(outputfn), output);
 			}
 		}
+
 		// Restore old print function that has been left on the stack:
 					//STK: table=_G, key=print, value=function key=debug, value=function
-		lua_settable( ls, -5);	//STK: table=_G key=print, value=function 
+		lua_settable( ls, -5);	//STK: table=_G, key=print, value=function 
 		lua_settable( ls, -3);	//STK: table=_G
 		lua_pop( ls, 1);	//STK:
 		cp->closeOutput();
-		lua_pop( ls, 1);	// ... destroy string on lua stack created with move_string_on_lua_stack
+		lua_pop( ls, 2);	// ... destroy strings on lua stack created with move_string_on_lua_stack
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 0;

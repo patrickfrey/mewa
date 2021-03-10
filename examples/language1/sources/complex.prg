@@ -105,12 +105,15 @@ generic procedure printFloat[R]( const byte^ text, R val)
 main {
 	var Complex[double] xx = (cast Complex[double]: { 5, 2 }).square().squareRoot();
 	printComplex[double]( "square root (5 + 2i) squared =", xx);
-	printComplex[double]( "(1 + 3i) squared = ", (cast Complex[double]: { 1, 3 }).square()); 		// - 8 + 6i
-	printComplex[double]( "(2 + 3i) * (4 - 7i) = ", (cast Complex[double]: { 2, 3 }) * {4,-7});		// 29 - 2i
-	printComplex[double]( "(3 - 1i) + (-4 - 3i) = ", (cast Complex[double]: { 3, -1 }) + {-4,-3});		// 1 - 4i
-	printComplex[double]( "(-2 + 2i) - (-3 + 2i) = ", (cast Complex[double]: { -2, 2 }) - {-3,2});		// 1
-	printComplex[double]( "(2 + 3i) / (3 - 3i) = ", (cast Complex[double]: { 2, 3 }) / {3,-3});		// - 2i / 3
-	printFloat[double]( "abs(5 - 1i) = ", (cast Complex[double]: { 5, -1 }).abs());				// 5.09901
+	printComplex[double]( "(1 + 3i) squared = -8 + 6i | ", (cast Complex[double]: { 1, 3 }).square());
+	printComplex[double]( "(2 + 3i) * (4 - 7i) = 29 - 2i | ", (cast Complex[double]: { 2, 3 }) * {4,-7});
+	printComplex[double]( "(3 - 1i) + (-4 - 3i) = 1 - 4i | ", (cast Complex[double]: { 3, -1 }) + {-4,-3});
+	printComplex[double]( "(-2 + 2i) - (-3 + 2i) = 1 | ", (cast Complex[double]: { -2, 2 }) - {-3,2});
+	printComplex[double]( "(2 + 3i) / (3 - 3i) = -0.16666 + 0.83333i | ", (cast Complex[double]: { 2, 3 }) / {3,-3});
+	printComplex[double]( "(2 + 2i) / (3 - 3i) = 0.66666i | ", (cast Complex[double]: { 2, 2 }) / {3,-3});
+	printFloat[double]( "abs(5 - 1i) = 5.09901 | ", (cast Complex[double]: { 5, -1 }).abs());
+	printComplex[double]( "square root i = 0.707106 + 0.707106i | ", (cast Complex[double]: { 0, 1 }).squareRoot());
+	printComplex[double]( "square root i+1 = 1.09868 + 0.45508i | ", (cast Complex[double]: { 1, 1 }).squareRoot());
 	printComplex[double]( "(-8 + 6i) square root = ", (cast Complex[double]: { -8, 6 }).squareRoot());
 }
 

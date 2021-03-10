@@ -205,6 +205,7 @@ const char* Error::code2String( int code_) noexcept
 	{
 		case Ok: return "";
 		case MemoryAllocationError: return "memory allocation error";
+		case InternalBufferOverflow: return "internal buffer overflow error (some string is not fitting into a local buffer of fixed maximum size)";
 		case LogicError: return "Logic error";
 		case RuntimeException: return "Runtime error exception";
 		case UnexpectedException: return "Unexpected exception";

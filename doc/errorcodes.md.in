@@ -5,15 +5,16 @@ Mewa uses error codes. Here is a list of all error codes and their description.
 + **#1** .. **#200** _Error codes reserved for system errors (errno)_.
 A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 
-## Memory Allocation, Runtime and Logic Errors
+## Memory Allocation Errors, Buffer Overflow, Runtime and Logic Errors
 + **#$ERRCODE:MemoryAllocationError**   _$ERRTEXT:MemoryAllocationError_
++ **#$ERRCODE:InternalBufferOverflow**   _$ERRTEXT:InternalBufferOverflow_
 + **#$ERRCODE:LogicError**   _$ERRTEXT:LogicError_
-+ **#$ERRCODE:UnexpectedException**   _$ERRTEXT:UnexpectedException_
 + **#$ERRCODE:RuntimeException**   _$ERRTEXT:RuntimeException_
++ **#$ERRCODE:UnexpectedException**   _$ERRTEXT:UnexpectedException_
 + **#$ERRCODE:SerializationError**   _$ERRTEXT:SerializationError_
 + **#$ERRCODE:InternalSourceExpectedNullTerminated**   _$ERRTEXT:InternalSourceExpectedNullTerminated_
 
-## Lua Function Call Argument Errors
+## Lua Function Call Argument Check Failures
 + **#$ERRCODE:ExpectedStringArgument**   _$ERRTEXT:ExpectedStringArgument_
 + **#$ERRCODE:ExpectedIntegerArgument**   _$ERRTEXT:ExpectedIntegerArgument_
 + **#$ERRCODE:ExpectedNonNegativeIntegerArgument**   _$ERRTEXT:ExpectedNonNegativeIntegerArgument_

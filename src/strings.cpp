@@ -78,12 +78,12 @@ static inline bool isAlphaNum( char ch)
 	return isAlpha(ch)||isDigit(ch);
 }
 
-std::string mewa::template_format( const std::string& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap)
+std::string mewa::template_format( const std::string_view& templatstr, char sb, char eb, const std::map<std::string,std::string>& substmap)
 {
 	std::string rt;
-	char const* ti = templatstr.c_str();
+	char const* ti = templatstr.data();
 	char const* ts = std::strchr( ti, sb);
-	while (*ts)
+	while (ts)
 	{
 		char const* keystart = ts+1;
 		char const* te = std::strchr( keystart, eb);
@@ -96,6 +96,7 @@ std::string mewa::template_format( const std::string& templatstr, char sb, char 
 				rt.append( si->second);
 				ti = te + 1;
 				if (!(ts = std::strchr( ti, sb))) break;
+				checkPtr( templatstr, ti, ts);
 			}
 			else
 			{

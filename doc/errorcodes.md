@@ -5,31 +5,32 @@ Mewa uses error codes. Here is a list of all error codes and their description.
 + **#1** .. **#200** _Error codes reserved for system errors (errno)_.
 A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 
-## Memory Allocation, Runtime and Logic Errors
+## Memory Allocation Errors, Buffer Overflow, Runtime and Logic Errors
 + **#400**   _memory allocation error_
-+ **#401**   _Logic error_
-+ **#403**   _Unexpected exception_
-+ **#402**   _Runtime error exception_
-+ **#404**   _Error serializing a lua data structure_
-+ **#405**   _Logic error: String expected to be null terminated_
++ **#401**   _internal buffer overflow error (some string is not fitting into a local buffer of fixed maximum size)_
++ **#402**   _Logic error_
++ **#403**   _Runtime error exception_
++ **#404**   _Unexpected exception_
++ **#405**   _Error serializing a lua data structure_
++ **#406**   _Logic error: String expected to be null terminated_
 
-## Lua Function Call Argument Errors
-+ **#406**   _Expected string as argument_
-+ **#407**   _Expected integer as argument_
-+ **#408**   _Expected non negative integer as argument_
-+ **#409**   _Expected positive integer as argument_
-+ **#410**   _Expected boolean value as argument_
-+ **#411**   _Expected floating point number as argument_
-+ **#412**   _Expected table as argument_
-+ **#413**   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
-+ **#414**   _Expected argument to be a list of type,constructor pairs (named or positional)_
-+ **#415**   _Expected argument to be a list of strings_
-+ **#416**   _Expected argument to be a list of types (integers)_
-+ **#417**   _Expected argument to be a list of types (integers) or type,constructor pairs_
-+ **#418**   _Expected argument to be not nil_
-+ **#419**   _Too few arguments_
-+ **#420**   _Too many arguments_
-+ **#421**	_Compile error_
+## Lua Function Call Argument Check Failures
++ **#407**   _Expected string as argument_
++ **#408**   _Expected integer as argument_
++ **#409**   _Expected non negative integer as argument_
++ **#410**   _Expected positive integer as argument_
++ **#411**   _Expected boolean value as argument_
++ **#412**   _Expected floating point number as argument_
++ **#413**   _Expected table as argument_
++ **#414**   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
++ **#415**   _Expected argument to be a list of type,constructor pairs (named or positional)_
++ **#416**   _Expected argument to be a list of strings_
++ **#417**   _Expected argument to be a list of types (integers)_
++ **#418**   _Expected argument to be a list of types (integers) or type,constructor pairs_
++ **#419**   _Expected argument to be not nil_
++ **#420**   _Too few arguments_
++ **#421**   _Too many arguments_
++ **#422**	_Compile error_
 
 ## Errors in Lexer
 + **#431**   _Bad character in a regular expression passed to the lexer_
