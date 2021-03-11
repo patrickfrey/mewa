@@ -131,10 +131,14 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef 
 			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})
 			| linkage "procedure" IDENT callablebody					(procdef {const=false})
 			| linkage "procedure" IDENT callablebody_const					(procdef {const=true})
-			| "generic" "function" IDENT "[" generic_header "]" typespec callablebody	(generic_funcdef {const=false})
-			| "generic" "function" IDENT "[" generic_header "]" typespec callablebody_const (generic_funcdef {const=true})
-			| "generic" "procedure" IDENT "[" generic_header "]" callablebody		(generic_procdef {const=false})
-			| "generic" "procedure" IDENT "[" generic_header "]" callablebody_const 	(generic_procdef {const=true})
+			| "generic" linkage "function" IDENT "[" generic_header "]"
+				 typespec callablebody							(generic_funcdef {const=false})
+			| "generic" linkage "function" IDENT "[" generic_header "]"
+				 typespec callablebody_const 						(generic_funcdef {const=true})
+			| "generic" linkage "procedure" IDENT "[" generic_header "]"
+				 callablebody								(generic_procdef {const=false})
+			| "generic" linkage "procedure" IDENT "[" generic_header "]"
+				 callablebody_const						 	(generic_procdef {const=true})
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
 			| "destructor" "{" codeblock "}"						({}destructordef)

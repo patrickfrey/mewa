@@ -1460,15 +1460,15 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 		typeIdNotifyFunction( typeInstance)
 		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
 		local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
-				name=typnam, symbol=typnam, private=true, const=genericDescr.const, interface=false}
+				name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
 		pushSeekContextTypeConstructorPair( typeInstance)
 		if genericDescr.class == "generic_function" then
-			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr)
-			traverseAstFunctionImplementation( genericDescr.node, genericDescr.context, descr)
+			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
+			traverseAstFunctionImplementation( genericDescr.node, genericDescr.context, descr, 4)
 		else
 			descr.endcode = llvmir.control.implicitReturnFromProcedure
-			traverseAstProcedureDeclaration( genericDescr.node, genericDescr.context, descr)
-			traverseAstProcedureImplementation( genericDescr.node, genericDescr.context, descr)
+			traverseAstProcedureDeclaration( genericDescr.node, genericDescr.context, descr, 4)
+			traverseAstProcedureImplementation( genericDescr.node, genericDescr.context, descr, 4)
 		end
 		popSeekContextTypeConstructorPair( typeInstance)
 	else
@@ -1966,12 +1966,13 @@ function defineStructureType( node, declContextTypeId, typnam, fmt)
 	return descr,qualitype
 end
 -- Basic type definition for generic 
-function defineGenericType( node, context, typnam, fmt, generic, const)
+function defineGenericType( node, context, typnam, fmt, generic, const, private)
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr = utils.template_format( fmt, {})
 	descr.node = node
 	descr.generic = generic
 	descr.const = const
+	descr.private = private
 	if context then descr.context = {qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol} end
 	local lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
 	local c_lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
@@ -2044,26 +2045,26 @@ function instantiateCallableDef( node, context, descr)
 	end
 end
 -- Traversal of a function declaration node, either directly in case of an ordinary function or on demand in case of a generic function
-function traverseAstFunctionDeclaration( node, context, descr)
-	descr.ret = utils.traverseRange( typedb, node, {3,3}, context)[3]
+function traverseAstFunctionDeclaration( node, context, descr, nodeidx)
+	descr.ret = utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context)[nodeidx]
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
-	descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
+	descr.param = utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 1)[nodeidx+1]
 	instantiateCallableDef( node, context, descr)
 end
 -- Traversal of a function implementation node, either directly in case of an ordinary function or on demand in case of a generic function
-function traverseAstFunctionImplementation( node, context, descr)
-	descr.body  = utils.traverseRange( typedb, node, {4,4}, context, descr, 2)[4]
+function traverseAstFunctionImplementation( node, context, descr, nodeidx)
+	descr.body  = utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 2)[nodeidx+1]
 	printFunctionDeclaration( node, descr)
 end
 -- Traversal of a procedure declaration node, either directly in case of an ordinary procedure or on demand in case of a generic procedure
-function traverseAstProcedureDeclaration( node, context, descr)
+function traverseAstProcedureDeclaration( node, context, descr, nodeidx)
 	descr.call = llvmir.control.procedureCall
-	descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
+	descr.param = utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 1)[nodeidx]
 	instantiateCallableDef( node, context, descr)
 end
 -- Traversal of a procedure implementation node, either directly in case of an ordinary function or on demand in case of a generic function
-function traverseAstProcedureImplementation( node, context, descr)
-	descr.body  = utils.traverseRange( typedb, node, {3,3}, context, descr, 2)[3]
+function traverseAstProcedureImplementation( node, context, descr, nodeidx)
+	descr.body  = utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 2)[nodeidx]
 	printFunctionDeclaration( node, descr)
 end
 -- Build a conditional if/elseif block
@@ -2370,11 +2371,11 @@ function typesystem.funcdef( node, decl, context, pass)
 		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
 				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false}
 		allocNodeData( node, descr)
-		traverseAstFunctionDeclaration( node, context, descr)
+		traverseAstFunctionDeclaration( node, context, descr, 3)
 	end
 	if not pass or pass == 2 then
 		local descr = getNodeData( node, descr)
-		traverseAstFunctionImplementation( node, context, descr)
+		traverseAstFunctionImplementation( node, context, descr, 3)
 	end
 end
 function typesystem.procdef( node, decl, context, pass)
@@ -2384,22 +2385,20 @@ function typesystem.procdef( node, decl, context, pass)
 				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		allocNodeData( node, descr)
-		traverseAstProcedureDeclaration( node, context, descr)
+		traverseAstProcedureDeclaration( node, context, descr, 3)
 	end
 	if not pass or pass == 2 then
 		local descr = getNodeData( node, descr)
-		traverseAstProcedureImplementation( node, context, descr)
+		traverseAstProcedureImplementation( node, context, descr, 3)
 	end
 end
 function typesystem.generic_funcdef( node, decl, context)
-	local typnam = node.arg[1].value
-	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
-	defineGenericType( node, context, typnam, llvmir.genericFunctionDescr, param, decl.const)
+	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+	defineGenericType( node, context, arg[2], llvmir.genericFunctionDescr, arg[3], decl.const, arg[1].linkage.private)
 end
 function typesystem.generic_procdef( node, decl, context)
-	local typnam = node.arg[1].value
-	local param = utils.traverseRange( typedb, node, {2,2}, context)[2]
-	defineGenericType( node, context, typnam, llvmir.genericProcedureDescr, param, decl.const)
+	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+	defineGenericType( node, context, arg[2], llvmir.genericProcedureDescr, arg[3], decl.const, arg[1].linkage.private)
 end
 function typesystem.operatordecl( node, opr)
 	return opr

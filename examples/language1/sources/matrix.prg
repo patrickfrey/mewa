@@ -94,21 +94,6 @@ generic class Matrix[R,DIM1,DIM2]
                         ii += 1;
                 }
 	}
-	public operator / Matrix[R,DIM1,DIM2]( const R o) const
-	{
-                Matrix[R,DIM1,DIM2] rt;
-		int ii = 0;
-                while (ii < DIM1)
-                {
-                        int jj = 0;
-                        while (jj < DIM2)
-                        {
-                                rt[ ii][ jj] = m_ar[ ii][ jj] / o;
-                                jj += 1;
-                        }
-                        ii += 1;
-                }
-	}
 	public operator * Matrix[R,DIM1,DIM2]( const R o) const
 	{
                 Matrix[R,DIM1,DIM2] rt;
@@ -119,6 +104,21 @@ generic class Matrix[R,DIM1,DIM2]
                         while (jj < DIM2)
                         {
                                 rt[ ii][ jj] = m_ar[ ii][ jj] * o;
+                                jj += 1;
+                        }
+                        ii += 1;
+                }
+	}
+	public operator / Matrix[R,DIM1,DIM2]( const R o) const
+	{
+                Matrix[R,DIM1,DIM2] rt;
+		int ii = 0;
+                while (ii < DIM1)
+                {
+                        int jj = 0;
+                        while (jj < DIM2)
+                        {
+                                rt[ ii][ jj] = m_ar[ ii][ jj] / o;
                                 jj += 1;
                         }
                         ii += 1;
