@@ -1748,7 +1748,6 @@ function getDeclarationLlvmTypedefParameterString( descr, context)
 end
 -- Get the context for type declarations
 function getDeclarationContextTypeId( context)
-	utils.stack( "++++ STK getDeclarationContextTypeId")
 	if context.domain == "local" then return context.genericlocal or 0
 	elseif context.domain == "member" then return context.qualitype.lval
 	elseif context.domain == "global" then return context.namespace or 0
