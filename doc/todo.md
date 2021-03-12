@@ -6,7 +6,6 @@
  * Migrate Mewa repo to own github project
  * Implement generic var for global variables depending on a type (instead of static declarations)
  * lambdas [ ]( a, b, c){ a = b + c }
- * swap tag, constructor arguments in def_reduction? Constructor often nil
  * lambda argument type as transfer type with a constructor defining the reduction of the lambda argument name to the type transferred.
 
 # Open issues

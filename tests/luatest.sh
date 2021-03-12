@@ -51,7 +51,7 @@ echo "Building tables and script implementing the compiler for example \"languag
 chmod +x build/language1.compiler.lua
 fi
 
-for tst in fibo tree class array pointer generic complex
+for tst in fibo tree class array pointer generic complex matrix
 do
 	TST=`echo $tst | tr a-z A-Z`
 	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then

@@ -587,8 +587,15 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
 						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
+						call_argtype = Automaton::Call::NoArg;
+						call_function.clear();
+						call_arg.clear();
 						state = ParseProductionElement;
 					}
+					else
+					{
+						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
+					}	
 					break;
 			}
 		}

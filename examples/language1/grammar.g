@@ -94,9 +94,9 @@ typehdr/L1		= typename									(typehdr {const=false})
 			| "any" "const" "struct" "^"							(typehdr_any "any const struct^")
 			;
 typegen/L1		= typehdr
-			| typehdr "[" generic_instance "]"						(typegen_generic)
-			| typehdr "^"									(typegen_pointer {const=false})
-			| typehdr "const" "^"								(typegen_pointer {const=true})
+			| typegen "[" generic_instance "]"						(typegen_generic)
+			| typegen "^"									(typegen_pointer {const=false})
+			| typegen "const" "^"								(typegen_pointer {const=true})
 			;
 typespec/L1		= typegen									(typespec)
 			| typegen "&"									(typespec_ref)
@@ -141,7 +141,7 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef 
 				 callablebody_const						 	(generic_procdef {const=true})
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
-			| "destructor" "{" codeblock "}"						({}destructordef)
+			| "destructor" "{" codeblock "}"						({}destructordef {private=false, linkage="external"})
 			;
 operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef {const=false})
 			| linkage "operator" operatordecl typespec callablebody_const			(operator_funcdef {const=true})
