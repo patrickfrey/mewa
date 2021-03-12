@@ -1011,8 +1011,8 @@ function getSeekContextTypes()
 	local rt = typedb:get_instance( "seekctx")
 	if rt then return rt else return {0} end
 end
--- Extend the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
-function pushSeekContextTypeConstructorPair( val)
+-- Push an element to the current context type list used for resolving types
+function pushSeekContextType( val)
 	local seekctx = typedb:this_instance( "seekctx")
 	if seekctx then
 		table.insert( seekctx, val)
@@ -1021,9 +1021,7 @@ function pushSeekContextTypeConstructorPair( val)
 		if seekctx then
 			-- inherit context from enclosing scope and add new element
 			local seekctx_copy = {}
-			for di,ctx in ipairs(seekctx) do
-				table.insert( seekctx_copy, ctx)
-			end
+			for di,ctx in ipairs(seekctx) do table.insert( seekctx_copy, ctx) end
 			table.insert( seekctx_copy, val)
 			typedb:set_instance( "seekctx", seekctx_copy)
 		else
@@ -1033,8 +1031,25 @@ function pushSeekContextTypeConstructorPair( val)
 		end
 	end
 end
+-- Replace an element the current context type list (without inheriting), used for resolving types 
+function replaceSeekContextType( val, oldval, newval)
+	local seekctx = typedb:this_instance( "seekctx")
+	local match
+	local rt
+	if seekctx then
+		for di,ctx in ipairs(seekctx) do if ctx == oldval then match = di; break end end
+		if match then
+			seekctx[ match] = newval
+			rt = function() seekctx[ match] = oldval end -- function that reverts the replace
+		end
+	else
+		pushSeekContextType( val)
+		rt = function() popSeekContextType( val) end -- function that reverts the push
+	end
+	return rt
+end
 -- Remove the last element of the the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
-function popSeekContextTypeConstructorPair( val)
+function popSeekContextType( val)
 	local seekctx = typedb:this_instance( "seekctx")
 	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
 	table.remove( seekctx, #seekctx)
@@ -1085,7 +1100,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local env = getCallableEnvironment()
 		local out = env.register()
 		local code = utils.constructor_format( descr.def_local, {out = out}, env.register)
-		local var = typedb:def_type( 0, name, out)
+		local var = typedb:def_type( getLocalDeclarationContextTypeId( context), name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		local decl = {type=var, constructor={code=code,out=out}}
@@ -1179,10 +1194,10 @@ function defineInterfaceInheritanceReductions( context, name, private, const)
 	defineReductionToMember( contextType, name)
 end
 -- Make a function/procedure/operator parameter addressable by name in the callable body
-function defineParameter( node, type, name, env)
+function defineParameter( node, context, type, name, env)
 	local descr = typeDescriptionMap[ type]
 	local paramreg = env.register()
-	local var = typedb:def_type( 0, name, paramreg)
+	local var = typedb:def_type( getLocalDeclarationContextTypeId( context), name, paramreg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", name) end
 	local ptype; if doPassValueAsReferenceParameter( type) then ptype = referenceTypeMap[ type] or type else ptype = type end
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
@@ -1459,15 +1474,18 @@ end
 function createGenericTypeInstance( node, genericType, genericArg, genericDescr, typeIdNotifyFunction)
 	local declContextTypeId = typedb:type_context( genericType)
 	local typnam = getGenericTypeName( genericType, genericArg)
+	local genericlocal = typedb:def_type( declContextTypeId, "local " .. typnam)
+	if genericlocal == -1 then utils.errorMessage( node.line, "Duplicate definition of generic '%s'", typnam) end
+	pushSeekContextType( genericlocal)
 	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
 		local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
 		local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
 		typeIdNotifyFunction( qualitype.lval)
 		defineGenericParameterAliases( genericDescr.node, qualitype.lval, genericDescr.generic.param, genericArg)
 		if genericDescr.class == "generic_class" then
-			traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
+			traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, genericlocal, 3)
 		else
-			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
+			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, genericlocal, 3)
 		end
 	elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
 		local typeInstance = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
@@ -1475,19 +1493,21 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
 		local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
 				name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
-		pushSeekContextTypeConstructorPair( typeInstance)
+		pushSeekContextType( typeInstance)
+		local instanceContext = {domain=genericDescr.context.domain, qualitype=genericDescr.context.qualitype, genericlocal=genericlocal}
 		if genericDescr.class == "generic_function" then
-			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
-			traverseAstFunctionImplementation( genericDescr.node, genericDescr.context, descr, 4)
+			traverseAstFunctionDeclaration( genericDescr.node, instanceContext, descr, 4)
+			traverseAstFunctionImplementation( genericDescr.node, instanceContext, descr, 4)
 		else
 			descr.endcode = llvmir.control.implicitReturnFromProcedure
-			traverseAstProcedureDeclaration( genericDescr.node, genericDescr.context, descr, 4)
-			traverseAstProcedureImplementation( genericDescr.node, genericDescr.context, descr, 4)
+			traverseAstProcedureDeclaration( genericDescr.node, instanceContext, descr, 4)
+			traverseAstProcedureImplementation( genericDescr.node, instanceContext, descr, 4)
 		end
-		popSeekContextTypeConstructorPair( typeInstance)
+		popSeekContextType( typeInstance)
 	else
 		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic '%s'", genericDescr.class)
 	end
+	popSeekContextType( genericlocal)
 end
 -- Get an instance of a generic type if already defined or implicitely create it and return the created instance
 function getOrCreateGenericType( node, genericType, genericDescr, instArg)
@@ -1753,6 +1773,10 @@ function getDeclarationContextTypeId( context)
 	elseif context.domain == "global" then return context.namespace or 0
 	end
 end
+-- Get the context for local type declarations
+function getLocalDeclarationContextTypeId( context)
+	return context.genericlocal or 0
+end
 -- Part of identifier for generic signature, constructor (const expression, e.g. dimension) as string
 function getGenericConstructorIdString( constructor)
 	if type(constructor) == "table" then return constructor.out else return tostring(constructor) end
@@ -1958,7 +1982,7 @@ function defineCallableBodyContext( node, context, descr)
 		local publicThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
 		local classvar = defineVariableHardcoded( node, context, privateThisReferenceType, "self", "%ths")
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
-		pushSeekContextTypeConstructorPair( {type=classvar, constructor={out="%ths"}})
+		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
 	defineCallableEnvironment( descr.ret)
 end
@@ -1999,7 +2023,7 @@ function defineGenericType( node, context, typnam, fmt, generic, const, private)
 	descr.generic = generic
 	descr.const = const
 	descr.private = private
-	if context then descr.context = {context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol} end
+	descr.context = {domain=context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol}
 	local lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
 	local c_lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
 	if lval == -1 or c_lval == -1 then utils.errorMessage( node.line, "Duplicate definition of generic type '%s'", typnam) end
@@ -2018,7 +2042,7 @@ function addGenericParameter( node, generic, name, typeId)
 end
 -- Traversal of an "interface" definition node
 function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
-	pushSeekContextTypeConstructorPair( qualitype.lval)
+	pushSeekContextType( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	local context = {domain="member", qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={},
 				llvmtype="", symbol=descr.symbol, const=true}
@@ -2030,14 +2054,15 @@ function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualit
 	defineOperatorsWithStructArgument( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
-	popSeekContextTypeConstructorPair( qualitype.lval)
+	popSeekContextType( qualitype.lval)
 end
 -- Traversal of a "class" definition node, either directly in case of an ordinary class or on demand in case of a generic class
-function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
-	pushSeekContextTypeConstructorPair( qualitype.lval)
+function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, genericlocal, nodeidx)
+	pushSeekContextType( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
-	local context = {domain="member", qualitype=qualitype, descr=descr, members={}, operators={}, methods={}, methodmap={}, interfaces={}, properties={},
+	local context = {domain="member", qualitype=qualitype, genericlocal=genericlocal, descr=descr,
+				members={}, operators={}, methods={}, methodmap={}, interfaces={}, properties={},
 	                	llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,classes,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables and function/procedures/constructor headers
@@ -2047,20 +2072,20 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define function/procedure/operator/constructor/destructor implementations
 	defineInheritedInterfaces( node, context, qualitype.lval)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
-	popSeekContextTypeConstructorPair( qualitype.lval)
+	popSeekContextType( qualitype.lval)
 end
 -- Traversal of a "struct" definition node, either directly in case of an ordinary structure or on demand in case of a generic structure
-function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
-	pushSeekContextTypeConstructorPair( qualitype.lval)
+function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, genericlocal, nodeidx)
+	pushSeekContextType( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {domain="member", qualitype=qualitype, descr=descr, members={},
+	local context = {domain="member", qualitype=qualitype, genericlocal=genericlocal, descr=descr, members={},
 				llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=false}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
 	descr.size = context.structsize
 	defineStructConstructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
-	popSeekContextTypeConstructorPair( qualitype.lval)
+	popSeekContextType( qualitype.lval)
 end
 -- Common part of traverseAstFunctionDeclaration,traverseAstProcedureDeclaration
 function instantiateCallableDef( node, context, descr)
@@ -2129,12 +2154,12 @@ function typesystem.definition_decl_impl_pass( node, pass, context, pass_selecte
 		utils.traverse( typedb, node, context, 2)	-- 2nd pass: implementations
 	end
 end
-function typesystem.paramdef( node) 
-	local arg = utils.traverse( typedb, node)
-	return defineParameter( node, arg[1], arg[2], getCallableEnvironment())
+function typesystem.paramdef( node, context) 
+	local arg = utils.traverse( typedb, node, context)
+	return defineParameter( node, context, arg[1], arg[2], getCallableEnvironment())
 end
-function typesystem.paramdeflist( node)
-	return utils.traverse( typedb, node)
+function typesystem.paramdeflist( node, context)
+	return utils.traverse( typedb, node, context)
 end
 function typesystem.structure( node, context)
 	local arg = utils.traverse( typedb, node, context)
@@ -2307,7 +2332,7 @@ function typesystem.conditional_while( node, context, bla)
 end
 function typesystem.with_do( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,1}, context)
-	pushSeekContextTypeConstructorPair( arg[1])
+	pushSeekContextType( arg[1])
 	if #node.arg >= 2 then return utils.traverseRange( typedb, node, {2,2}, context)[2] end
 end
 function typesystem.typehdr( node, qualifier)
@@ -2617,7 +2642,7 @@ function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
-	traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, 2)
+	traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nil, 2)
 end
 function typesystem.generic_structdef( node, context)
 	local typnam = node.arg[1].value
@@ -2662,7 +2687,7 @@ function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
-	traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, 2)
+	traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, nil, 2)
 end
 function typesystem.generic_classdef( node, context)
 	local typnam = node.arg[1].value
