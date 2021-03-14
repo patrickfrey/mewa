@@ -81,6 +81,8 @@ local mainCallableEnvironment = nil	-- callable environment for constructors/des
 local hardcodedTypeMap = {}		-- map of hardcoded type names to their id
 local nodeIdCount = 0			-- counter for node id allocation
 local nodeDataMap = {}			-- map of node id's to a data structure (depending on the node)
+local genericLocalStack = {}		-- stack of values for currentGenericLocal 
+local currentGenericLocal = 0		-- the context type id used for declaring locals (to separate instances of generics in the same scope)
 
 -- Allocate a node identifier for multi-pass evaluation with structures temporarily stored
 function allocNodeData( node, data)
@@ -103,6 +105,12 @@ end
 -- Get the active callable instance
 function getCallableEnvironment()
 	return instantCallableEnvironment or typedb:get_instance( "callable")
+end
+-- Type string of a type declaration built from its parts for error messages
+function typeDeclarationString( contextTypeId, typnam, args)
+	local rt; if contextTypeId ~= 0 then rt = typedb:type_string(contextTypeId) .. " " .. typnam else rt = typnam end
+	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
+	return rt
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
@@ -349,20 +357,17 @@ end
 function promoteCallConstructor( call_constructor, promote_constructor)
 	return function( this, arg) return call_constructor( promote_constructor( this), arg) end
 end
-function getMessageCallSignature( thisType, opr, argTypes)
-	if thisType == 0 then return opr .. "(" .. utils.typeListString(typedb,argTypes) .. ")" else return typedb:type_string( thisType) .. " " .. opr .. " (" .. utils.typeListString(typedb,argTypes) .. ")" end
-end
 -- Define an operation with involving the promotion of the left hand argument to another type and executing the operation as defined for the type promoted to.
 function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, promote_constructor)
 	local call_constructor = typedb:type_constructor( typedb:get_type( promoteType, opr, argTypes))
 	local callType = typedb:def_type( thisType, opr, promoteCallConstructor( call_constructor, promote_constructor), argTypes)
-	if callType == -1 then utils.errorMessage( node.line, "Duplicate definition '%s'", getMessageCallSignature( thisType, opr, argTypes)) end
+	if callType == -1 then utils.errorMessage( node.line, "Duplicate definition '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
 -- Define an operation
 function defineCall( returnType, thisType, opr, argTypes, constructor)
 	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
-	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of '%s'", getMessageCallSignature( thisType, opr, argTypes)) end
+	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 	return callType
 end
@@ -561,7 +566,7 @@ function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 	else
 		alias = typedb:def_type_as( contextTypeId, typnam, aliasTypeId)
 	end
-	if alias == -1 then utils.errorMessage( 0, "Duplicate definition of alias '%s %s'", typedb:type_string(contextTypeId), typnam) end
+	if alias == -1 then utils.errorMessage( 0, "Duplicate definition of alias '%s'", typeDeclarationString( contextTypeId, typnam)) end
 end
 -- Define all basic types associated with a type name
 function defineQualifiedTypeRelations( qualitype, typeDescription)
@@ -597,7 +602,7 @@ function defineQualiTypes( node, contextTypeId, typnam, typeDescription)
 	local c_lval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true}, typnam))			-- const L-value
 	local rval = typedb:def_type( contextTypeId, getQualifierTypeName( {reference=true}, typnam))			-- reference
 	local c_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
-	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(contextTypeId), typnam) end
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s'", typeDeclarationString( contextTypeId, typnam)) end
 	local qualitype = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval}
 	qualiTypeMap[ lval] = qualitype
 	defineQualifiedTypeRelations( qualitype, typeDescription)
@@ -619,7 +624,7 @@ function definePointerQualiTypes( node, typeId)
 	local c_lval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam))			-- const L-value
 	local rval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam))			-- reference
 	local c_rval = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
-	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of pointer to type '%s %s'", typedb:type_string(contextTypeId), typnam) end
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of pointer to type '%s'", typeDeclarationString( contextTypeId, typnam)) end
 	local qualitype = {lval=lval, c_lval=c_lval, rval=rval, c_rval=c_rval}
 	qualiTypeMap[ lval] = qualitype
 	defineQualifiedTypeRelations( qualitype, pointerTypeDescription)
@@ -1011,6 +1016,16 @@ function getSeekContextTypes()
 	local rt = typedb:get_instance( "seekctx")
 	if rt then return rt else return {0} end
 end
+-- Update the list of context types associated with the current scope used for resolving types
+function setSeekContextTypes( seekctx)
+	typedb:set_instance( "seekctx", seekctx)
+end
+-- Shallow copy of the element of a list of context types
+function copySeekContextTypes( seekctx)
+	local rt = {}
+	for di,ctx in ipairs(seekctx) do table.insert( rt, ctx) end
+	return rt
+end
 -- Push an element to the current context type list used for resolving types
 function pushSeekContextType( val)
 	local seekctx = typedb:this_instance( "seekctx")
@@ -1020,8 +1035,7 @@ function pushSeekContextType( val)
 		seekctx = typedb:get_instance( "seekctx")
 		if seekctx then
 			-- inherit context from enclosing scope and add new element
-			local seekctx_copy = {}
-			for di,ctx in ipairs(seekctx) do table.insert( seekctx_copy, ctx) end
+			local seekctx_copy = copySeekContextTypes(seekctx)
 			table.insert( seekctx_copy, val)
 			typedb:set_instance( "seekctx", seekctx_copy)
 		else
@@ -1031,28 +1045,22 @@ function pushSeekContextType( val)
 		end
 	end
 end
--- Replace an element the current context type list (without inheriting), used for resolving types 
-function replaceSeekContextType( val, oldval, newval)
-	local seekctx = typedb:this_instance( "seekctx")
-	local match
-	local rt
-	if seekctx then
-		for di,ctx in ipairs(seekctx) do if ctx == oldval then match = di; break end end
-		if match then
-			seekctx[ match] = newval
-			rt = function() seekctx[ match] = oldval end -- function that reverts the replace
-		end
-	else
-		pushSeekContextType( val)
-		rt = function() popSeekContextType( val) end -- function that reverts the push
-	end
-	return rt
-end
 -- Remove the last element of the the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
 function popSeekContextType( val)
 	local seekctx = typedb:this_instance( "seekctx")
 	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
 	table.remove( seekctx, #seekctx)
+end
+-- Push an element to the generic local stack, allowing nested generic creation
+function pushGenericLocal( genericlocal)
+	table.insert( genericLocalStack, currentGenericLocal)
+	currentGenericLocal = genericlocal
+end
+-- Pop the top element from the generic local stack, restoring the previous currentGenericLocal value
+function popGenericLocal( genericlocal)
+	if currentGenericLocal ~= genericlocal or #genericLocalStack == 0 then utils.errorMessage( 0, "Internal: corrupt generic local stack") end
+	currentGenericLocal = genericLocalStack[ #genericLocalStack]
+	table.remove( genericLocalStack, #genericLocalStack)
 end
 -- The frame object defines constructors/destructors called implicitly at start/end of their scope
 function getAllocationScopeFrame()
@@ -1087,7 +1095,7 @@ end
 function defineVariableHardcoded( node, context, typeId, name, reg)
 	local contextTypeId = getDeclarationContextTypeId( context)
 	local var = typedb:def_type( contextTypeId, name, reg)
-	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s %s'", typedb:type_string(typeId or 0), name) end
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", typeDeclarationString( typeId, name)) end
 	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
 	return var
 end
@@ -1198,7 +1206,7 @@ function defineParameter( node, context, type, name, env)
 	local descr = typeDescriptionMap[ type]
 	local paramreg = env.register()
 	local var = typedb:def_type( getLocalDeclarationContextTypeId( context), name, paramreg)
-	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", name) end
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( getLocalDeclarationContextTypeId( context), name)) end
 	local ptype; if doPassValueAsReferenceParameter( type) then ptype = referenceTypeMap[ type] or type else ptype = type end
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
@@ -1476,16 +1484,19 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 	local typnam = getGenericTypeName( genericType, genericArg)
 	local genericlocal = typedb:def_type( declContextTypeId, "local " .. typnam)
 	if genericlocal == -1 then utils.errorMessage( node.line, "Duplicate definition of generic '%s'", typnam) end
+	local seekctx_bk = getSeekContextTypes()
+	setSeekContextTypes( copySeekContextTypes( genericDescr.seekctx))
 	pushSeekContextType( genericlocal)
+	pushGenericLocal( genericlocal)
 	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
 		local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
 		local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
 		typeIdNotifyFunction( qualitype.lval)
 		defineGenericParameterAliases( genericDescr.node, qualitype.lval, genericDescr.generic.param, genericArg)
 		if genericDescr.class == "generic_class" then
-			traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, genericlocal, 3)
+			traverseAstClassDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 		else
-			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, genericlocal, 3)
+			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 		end
 	elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
 		local typeInstance = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
@@ -1494,20 +1505,19 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 		local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
 				name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
 		pushSeekContextType( typeInstance)
-		local instanceContext = {domain=genericDescr.context.domain, qualitype=genericDescr.context.qualitype, genericlocal=genericlocal}
 		if genericDescr.class == "generic_function" then
-			traverseAstFunctionDeclaration( genericDescr.node, instanceContext, descr, 4)
-			traverseAstFunctionImplementation( genericDescr.node, instanceContext, descr, 4)
+			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
+			traverseAstFunctionImplementation( genericDescr.node, genericDescr.context, descr, 4)
 		else
 			descr.endcode = llvmir.control.implicitReturnFromProcedure
-			traverseAstProcedureDeclaration( genericDescr.node, instanceContext, descr, 4)
-			traverseAstProcedureImplementation( genericDescr.node, instanceContext, descr, 4)
+			traverseAstProcedureDeclaration( genericDescr.node, genericDescr.context, descr, 4)
+			traverseAstProcedureImplementation( genericDescr.node, genericDescr.context, descr, 4)
 		end
-		popSeekContextType( typeInstance)
 	else
-		utils.errorMessage( node.line, "Using generic parameter in '<' '>' brackets for unknown generic '%s'", genericDescr.class)
+		utils.errorMessage( node.line, "Using generic parameter in '[' ']' brackets for unknown generic '%s'", genericDescr.class)
 	end
-	popSeekContextType( genericlocal)
+	popGenericLocal( genericlocal)
+	setSeekContextTypes( seekctx_bk)
 end
 -- Get an instance of a generic type if already defined or implicitely create it and return the created instance
 function getOrCreateGenericType( node, genericType, genericDescr, instArg)
@@ -1768,14 +1778,14 @@ function getDeclarationLlvmTypedefParameterString( descr, context)
 end
 -- Get the context for type declarations
 function getDeclarationContextTypeId( context)
-	if context.domain == "local" then return context.genericlocal or 0
+	if context.domain == "local" then return currentGenericLocal or 0
 	elseif context.domain == "member" then return context.qualitype.lval
 	elseif context.domain == "global" then return context.namespace or 0
 	end
 end
 -- Get the context for local type declarations
 function getLocalDeclarationContextTypeId( context)
-	return context.genericlocal or 0
+	return currentGenericLocal or 0
 end
 -- Part of identifier for generic signature, constructor (const expression, e.g. dimension) as string
 function getGenericConstructorIdString( constructor)
@@ -2024,13 +2034,14 @@ function defineGenericType( node, context, typnam, fmt, generic, const, private)
 	descr.const = const
 	descr.private = private
 	descr.context = {domain=context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol}
+	descr.seekctx = copySeekContextTypes( getSeekContextTypes())
 	local lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
 	local c_lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
 	if lval == -1 or c_lval == -1 then utils.errorMessage( node.line, "Duplicate definition of generic type '%s'", typnam) end
 	constTypeMap[ lval] = c_lval
 	typeQualiSepMap[ lval]    = {lval=lval,qualifier={const=false}}
 	typeQualiSepMap[ c_lval]  = {lval=lval,qualifier={const=true,reference=false,private=false}}
-	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s %s'", typedb:type_string(declContextTypeId), typnam) end
+	if lval == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s'", typeDeclarationString( declContextTypeId, typnam)) end
 	typeDescriptionMap[ lval] = descr
 	typeDescriptionMap[ c_lval] = descr
 end
@@ -2057,11 +2068,11 @@ function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualit
 	popSeekContextType( qualitype.lval)
 end
 -- Traversal of a "class" definition node, either directly in case of an ordinary class or on demand in case of a generic class
-function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, genericlocal, nodeidx)
+function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
-	local context = {domain="member", qualitype=qualitype, genericlocal=genericlocal, descr=descr,
+	local context = {domain="member", qualitype=qualitype, descr=descr,
 				members={}, operators={}, methods={}, methodmap={}, interfaces={}, properties={},
 	                	llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,classes,structures
@@ -2075,10 +2086,10 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	popSeekContextType( qualitype.lval)
 end
 -- Traversal of a "struct" definition node, either directly in case of an ordinary structure or on demand in case of a generic structure
-function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, genericlocal, nodeidx)
+function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.lval)
 	defineRValueReferenceTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {domain="member", qualitype=qualitype, genericlocal=genericlocal, descr=descr, members={},
+	local context = {domain="member", qualitype=qualitype, descr=descr, members={},
 				llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=false}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
@@ -2176,8 +2187,7 @@ function typesystem.allocate( node, context)
 	local descr = typeDescriptionMap[ typeId]
 	local memblk = callFunction( node, {0}, "allocmem", {{type=constexprUIntegerType, constructor=bcd.int(descr.size)}})
 	local ww,ptr_constructor = typedb:get_reduction( memPointerType, memblk.type, tagmask_resolveType)
-	if not ww then utils.errorMessage( node.line, "Function '%s' not returning a pointer %s / %s", "allocmem", 
-	                                                          typedb:type_string(memblk.type), typedb:type_string(memPointerType)) end
+	if not ww then utils.errorMessage( node.line, "Function '%s' not returning a pointer %s / %s", "allocmem",  typedb:type_string(memblk.type), typedb:type_string(memPointerType)) end
 	if ptr_constructor then memblk.constructor = ptr_constructor( memblk.constructor) end
 	local out = env.register()
 	local cast = utils.constructor_format( llvmir.control.memPointerCast, {llvmtype=descr.llvmtype, out=out,this=memblk.constructor.out}, env.register)
@@ -2511,7 +2521,7 @@ function typesystem.constructordef( node, context, pass)
 	end
 end
 function typesystem.destructordef( node, lnk, context, pass)
-	local subcontext = {domain="local",genericlocal=context.genericlocal}
+	local subcontext = {domain="local"}
 	if not pass or pass == 1 then
 		local arg = utils.traverseRange( typedb, node, {1,1}, context)
 		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
@@ -2533,7 +2543,7 @@ end
 function typesystem.callablebody( node, context, descr, select)
 	local rt
 	local prev_scope = typedb:scope( node.scope)
-	local subcontext = {domain="local",genericlocal=context.genericlocal}
+	local subcontext = {domain="local"}
 	if select == 1 then -- parse parameter declarations
 		defineCallableBodyContext( node, context, descr)
 		local arg = utils.traverseRange( typedb, node, {1,1}, subcontext)
@@ -2642,7 +2652,7 @@ function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
-	traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nil, 2)
+	traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
 function typesystem.generic_structdef( node, context)
 	local typnam = node.arg[1].value
@@ -2687,7 +2697,7 @@ function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.classTemplate)
-	traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, nil, 2)
+	traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
 function typesystem.generic_classdef( node, context)
 	local typnam = node.arg[1].value
