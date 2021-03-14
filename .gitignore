@@ -49,3 +49,9 @@ build/*.out
 build/*.exp
 .depend
 
+# MS Visual Studio
+.kdev4/
+mewa.kdev4
+
+
+

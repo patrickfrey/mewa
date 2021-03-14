@@ -918,8 +918,6 @@ function defineOperatorsWithStructArgument( node, context)
 			local constructor = tryConstexprStructureOperatorConstructor( node, def.thisType, opr)
 			local rtval; if doReturnValueAsReferenceParameter( def.returnType) then rtval = rvalueRefTypeMap[ def.returnType] else rtval = def.returnType end
 			defineCall( rtval, def.thisType, opr, {constexprStructureType}, constructor)
-		elseif def.maxNofArguments > 1 then
-			utils.errorMessage( node.line, "Operator '%s' defined different instances with more than one argument, but with varying signature", opr)
 		end
 	end
 end
@@ -994,43 +992,46 @@ function defineBuiltInTypeOperators( typnam, descr)
 		end
 	end
 end
+-- Deep copy of a table containing types (context type table copy)
+function copyTypeTable( stu)
+	local rt = {}
+	for key,val in pairs(stu) do if type(val) == "table" then rt[ key] = copyTypeTable( val) else rt[ key] = val end end
+	return rt
+end
+-- Get an object instance and clone it if it is not stored in the current scope, making it possible to add elements to an inherited instance
+function thisInstanceTypeTable( name, emptyInst)
+	local inst = typedb:this_instance( name)
+	if not inst then
+		inst = typedb:get_instance( name)
+		if inst then inst = copyTypeTable( inst) else inst = copyTypeTable( emptyInst) end		
+		typedb:set_instance( name, inst)
+	end
+	return inst
+end
 -- Get the list of context types associated with the current scope used for resolving types
 function getSeekContextTypes()
-	local rt = typedb:get_instance( "seekctx")
-	if rt then return rt else return {0} end
+	local inst = typedb:get_instance( "seekctx")
+	if inst then return inst[ currentGenericLocal] or {0} else return {0} end
 end
 -- Update the list of context types associated with the current scope used for resolving types
-function setSeekContextTypes( seekctx)
-	typedb:set_instance( "seekctx", seekctx)
+function setSeekContextTypes( types)
+	local inst = thisInstanceTypeTable( "seekctx", {})
+	inst[ currentGenericLocal] = copyTypeTable( types)
 end
--- Shallow copy of the element of a list of context types
-function copySeekContextTypes( seekctx)
-	local rt = {}
-	for di,ctx in ipairs(seekctx) do table.insert( rt, ctx) end
-	return rt
+-- Get the instance of the current context types, create it if undefined
+function thisSeekContextTypes()
+	local inst = thisInstanceTypeTable( "seekctx", {})
+	local seekctx = inst[ currentGenericLocal]
+	if not seekctx then seekctx = {}; table.insert( seekctx, 0); inst[ currentGenericLocal] = seekctx end
+	return seekctx
 end
 -- Push an element to the current context type list used for resolving types
 function pushSeekContextType( val)
-	local seekctx = typedb:this_instance( "seekctx")
-	if seekctx then
-		table.insert( seekctx, val)
-	else
-		seekctx = typedb:get_instance( "seekctx")
-		if seekctx then
-			-- inherit context from enclosing scope and add new element
-			local seekctx_copy = copySeekContextTypes(seekctx)
-			table.insert( seekctx_copy, val)
-			typedb:set_instance( "seekctx", seekctx_copy)
-		else
-			-- create empty context and add new element
-			seekctx = {0,val}
-			typedb:set_instance( "seekctx", seekctx)
-		end
-	end
+	table.insert( thisSeekContextTypes(), val)
 end
 -- Remove the last element of the the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
 function popSeekContextType( val)
-	local seekctx = typedb:this_instance( "seekctx")
+	local seekctx = typedb:this_instance( "seekctx")[ currentGenericLocal]
 	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
 	table.remove( seekctx, #seekctx)
 end
@@ -1467,10 +1468,10 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 	local typnam = getGenericTypeName( genericType, genericArg)
 	local genericlocal = typedb:def_type( declContextTypeId, "local " .. typnam)
 	if genericlocal == -1 then utils.errorMessage( node.line, "Duplicate definition of generic '%s'", typnam) end
-	local seekctx_bk = getSeekContextTypes()
-	setSeekContextTypes( copySeekContextTypes( genericDescr.seekctx))
-	pushSeekContextType( genericlocal)
+
 	pushGenericLocal( genericlocal)
+	setSeekContextTypes( genericDescr.seekctx)
+	pushSeekContextType( genericlocal)
 	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
 		local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
 		local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
@@ -1499,8 +1500,6 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 	else
 		utils.errorMessage( node.line, "Using generic parameter in '[' ']' brackets for unknown generic '%s'", genericDescr.class)
 	end
-	popGenericLocal( genericlocal)
-	setSeekContextTypes( seekctx_bk)
 end
 -- Get an instance of a generic type if already defined or implicitely create it and return the created instance
 function getOrCreateGenericType( node, genericType, genericDescr, instArg)
@@ -1567,9 +1566,9 @@ function callFunction( node, contextTypes, name, args)
 	return applyCallable( node, this, "()", args)
 end
 -- Try to get the constructor and weight of a parameter passed with the deduction tagmask optionally passed as an argument
-function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask)
+function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask_decl, tagmask_conv)
 	if redutype ~= operand.type then
-		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask or tagmask_matchParameter, tagmask_typeConversion, 1)
+		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
 		if altpath then
 			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
 						typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
@@ -1603,10 +1602,10 @@ function collectItemParameter( node, item, args, parameters)
 		local redutype,redulist,weight
 		if pi <= #parameters then
 			redutype = parameters[ pi].type
-			redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi])
+			redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi], tagmask_matchParameter, tagmask_typeConversion)
 		else
 			redutype = getVarargArgumentType( args[ pi].type)
-			if redutype then redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi], tagmask_pushVararg) end
+			if redutype then redulist,weight = tryGetWeightedParameterReductionList( node, redutype, args[ pi], tagmask_pushVararg, tagmask_typeConversion) end
 		end
 		if not weight then return nil end
 		if rt.weight < weight then rt.weight = weight end -- use max(a,b) as weight accumulation function
@@ -2016,7 +2015,7 @@ function defineGenericType( node, context, typnam, fmt, generic, const, private)
 	descr.const = const
 	descr.private = private
 	descr.context = {domain=context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol}
-	descr.seekctx = copySeekContextTypes( getSeekContextTypes())
+	descr.seekctx = getSeekContextTypes()
 	local lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
 	local c_lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
 	if lval == -1 or c_lval == -1 then utils.errorMessage( node.line, "Duplicate definition of generic type '%s'", typnam) end
