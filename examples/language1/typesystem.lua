@@ -429,23 +429,6 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
 	end
 end
--- Get the value of a const expression or the value of an alias of a const expression
-function getConstexprValue( constexpr_type, type, value)
-	if type == constexpr_type then
-		return tostring(value)
-	else
-		local weight,redu_constructor = typedb:get_reduction( constexpr_type, type, tagmask_typeAlias)
-		if weight then
-			if not redu_constructor then
-				return typedb:type_constructor( type)
-			elseif type(redu_constructor) == "function" then 
-				return redu_constructor( typedb:type_constructor( type))
-			else 
-				return redu_constructor 
-			end
-		end
-	end
-end
 -- Conversion of a constexpr number constant to a floating point number
 function constexprToFloat( val, typeId)
 	if typeId == constexprFloatType then return val
@@ -1548,9 +1531,8 @@ end
 -- Get an instance of an array type if already defined or implicitely create it and return the created instance
 function getOrCreateArrayType( node, elementTypeId, elementDescr, dimType)
 	local scope_bk = typedb:scope( typedb:type_scope( elementTypeId))
-	local dim = getConstexprValue( constexprUIntegerType, dimType.type, dimType.constructor)
-	if not dim then utils.errorMessage( node.line, "Size of array is not an unsigned integer constant expression") end
-	local arraySize = tonumber( dim)
+	local dim = getRequiredTypeConstructor( node, constexprUIntegerType, dimType, tagmask_typeAlias)
+	local arraySize = tonumber( (constructorParts( dim)) )
 	if arraySize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
 	local typnam = "[" .. arraySize .. "]"
 	local typkey = elementTypeId .. typnam
@@ -1597,10 +1579,10 @@ function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask)
 		return {},0.0
 	end
 end
--- Get the constructor of an implicitly required type with the deduction tagmask optionally passed as an argument
-function getRequiredTypeConstructor( node, redutype, operand, tagmask)
+-- Get the constructor of an implicitly required type with the deduction tagmasks passed as an arguments
+function getRequiredTypeConstructor( node, redutype, operand, tagmask_decl, tagmask_conv)
 	if redutype ~= operand.type then
-		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask or tagmask_matchParameter, tagmask_typeConversion, 1)
+		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
 		if not redulist then
 			utils.errorMessage( node.line, "Type mismatch, required type '%s'", typedb:type_string(redutype))
 		elseif altpath then
@@ -2134,7 +2116,7 @@ function traverseAstProcedureImplementation( node, context, descr, nodeidx)
 end
 -- Build a conditional if/elseif block
 function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
-	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter)
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local code = cond_constructor.code .. matchblk.code
 	local exitLabelUsed
@@ -2204,7 +2186,7 @@ function typesystem.typecast( node, context)
 	if doCastToReferenceType( typeId) then typeId = referenceTypeMap[ constTypeMap[ typeId]] end
 	local operand = args[2]
 	if operand then
-		return {type=typeId, constructor=getRequiredTypeConstructor( node, typeId, operand, tagmask_typeCast)}
+		return {type=typeId, constructor=getRequiredTypeConstructor( node, typeId, operand, tagmask_typeCast, tagmask_typeConversion)}
 	else
 		local out = env.register()
 		local code = utils.constructor_format( descr.def_local, {out=out}, env.register)
@@ -2301,7 +2283,7 @@ function typesystem.return_value( node)
 		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {arg[1]})
 		return {code = rt.constructor.code .. llvmir.control.returnFromProcedure, nofollow=true}
 	else
-		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter)
+		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter, tagmask_typeConversion)
 		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
 		local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out})
 		return {code = constructor.code .. code, nofollow=true}
@@ -2332,7 +2314,7 @@ function typesystem.conditional_if( node, context)
 end
 function typesystem.conditional_while( node, context, bla)
 	local arg = utils.traverse( typedb, node, context)
-	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter)
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
 	local env = getCallableEnvironment()
 	local start = env.label()
