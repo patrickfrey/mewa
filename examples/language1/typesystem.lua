@@ -1468,7 +1468,6 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 	local typnam = getGenericTypeName( genericType, genericArg)
 	local genericlocal = typedb:def_type( declContextTypeId, "local " .. typnam)
 	if genericlocal == -1 then utils.errorMessage( node.line, "Duplicate definition of generic '%s'", typnam) end
-
 	pushGenericLocal( genericlocal)
 	setSeekContextTypes( genericDescr.seekctx)
 	pushSeekContextType( genericlocal)
@@ -1500,6 +1499,7 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 	else
 		utils.errorMessage( node.line, "Using generic parameter in '[' ']' brackets for unknown generic '%s'", genericDescr.class)
 	end
+	popGenericLocal( genericlocal)
 end
 -- Get an instance of a generic type if already defined or implicitely create it and return the created instance
 function getOrCreateGenericType( node, genericType, genericDescr, instArg)
