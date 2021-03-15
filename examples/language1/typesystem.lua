@@ -28,61 +28,64 @@ local rdw_conv = 1.0			-- Reduction weight of conversion
 local rdw_strip_rvref_1 = 0.75 / (1*1)	-- Reduction weight of stripping rvalue reference from type having 1 qualifier 
 local rdw_strip_rvref_2 = 0.75 / (2*2)	-- Reduction weight of stripping rvalue reference from type having 2 qualifiers
 local rdw_strip_rvref_3 = 0.75 / (3*3)	-- Reduction weight of stripping rvalue reference from type having 3 qualifiers
-local rdw_strip_v_1 = 0.5 / (1*1)	-- Reduction weight of stripping private/public from type having 1 qualifier 
-local rdw_strip_v_2 = 0.5 / (2*2)	-- Reduction weight of stripping private/public from type having 2 qualifiers
-local rdw_strip_v_3 = 0.5 / (3*3)	-- Reduction weight of stripping private/public from type having 3 qualifiers
+local rdw_strip_v_1 = 0.125 / (1*1)	-- Reduction weight of stripping private/public from type having 1 qualifier 
+local rdw_strip_v_2 = 0.125 / (2*2)	-- Reduction weight of stripping private/public from type having 2 qualifiers
+local rdw_strip_v_3 = 0.125 / (3*3)	-- Reduction weight of stripping private/public from type having 3 qualifiers
 local rdw_swap_r_p = 0.375 / (1*1)	-- Reduction weight of swapping reference with pointer on a type having 1 qualifier
 local rdw_swap_r_p = 0.375 / (2*2)	-- Reduction weight of swapping reference with pointer on a type having 2 qualifiers
 local rdw_swap_r_p = 0.375 / (3*3)	-- Reduction weight of swapping reference with pointer on a type having 3 qualifiers
 local rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch value) from type having 1 qualifier 
 local rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type having 2 qualifiers
 local rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type having 3 qualifiers
-local rdw_strip_c_1 = 0.125 / (1*1)	-- Reduction weight of changing constant qualifier in type having 1 qualifier
-local rdw_strip_c_2 = 0.125 / (2*2)	-- Reduction weight of changing constant qualifier in type having 2 qualifiers
-local rdw_strip_c_3 = 0.125 / (3*3)	-- Reduction weight of changing constant qualifier in type having 3 qualifiers
+local rdw_strip_c_1 = 0.5 / (1*1)	-- Reduction weight of changing constant qualifier in type having 1 qualifier
+local rdw_strip_c_2 = 0.5 / (2*2)	-- Reduction weight of changing constant qualifier in type having 2 qualifiers
+local rdw_strip_c_3 = 0.5 / (3*3)	-- Reduction weight of changing constant qualifier in type having 3 qualifiers
 local rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
 local rwd_boolean = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
 function scalarDeductionWeight( sizeweight) return 0.25*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
 
-local weightEpsilon = 1E-8		-- epsilon used for comparing weights for equality
-local scalarQualiTypeMap = {}		-- map of scalar type names without qualifiers to the table of type ids for all qualifiers possible
-local scalarIndexTypeMap = {}		-- map of scalar type names usable as index without qualifiers to the const type id used as index for [] or pointer arithmetics
-local scalarBooleanType = nil		-- type id of the boolean type, result of cmpop binary operators
-local scalarIntegerType = nil		-- type id of the main integer type, result of main function
-local scalarLongType = nil		-- type id of the main long integer type (64 bits), used for long integer vararg parameters
-local scalarFloatType = nil		-- type id of the main floating point number type (64 bits), used for floating point vararg parameters
-local stringPointerType = nil		-- type id of the string constant type used for free string litterals
-local memPointerType = nil		-- type id of the type used for result of allocmem and argument of freemem
-local stringAddressType = nil		-- type id of the string constant type used string constants outsize a function scope
-local anyClassPointerType = nil		-- type id of the "class^" type
-local anyConstClassPointerType = nil 	-- type id of the "class^" type
-local anyStructPointerType = nil	-- type id of the "struct^" type
-local anyConstStructPointerType = nil	-- type id of the "struct^" type
-local anyFreeFunctionType = nil		-- type id of any free function/procedure callable
-local controlTrueType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
-local controlFalseType = nil		-- type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
-local qualiTypeMap = {}			-- map of any defined type without qualifier to the table of type ids for all qualifiers possible
-local referenceTypeMap = {}		-- map of non reference types to their reference types
-local dereferenceTypeMap = {}		-- map of reference types to their type with the reference qualifier stripped away
-local constTypeMap = {}			-- map of non const types to their const type
-local privateTypeMap = {}		-- map of non private types to their private type
-local pointerTypeMap = {}		-- map of non pointer types to their pointer type
-local pointeeTypeMap = {}		-- map of pointer types to their pointee type
-local rvalueRefTypeMap = {}		-- map of value types with an rvalue reference type defined to their rvalue reference type
-local typeQualiSepMap = {}		-- map of any defined type id to a separation pair (lval,qualifier) = lval type, qualifier as booleans
-local typeDescriptionMap = {}		-- map of any defined type id to its llvmir template structure
-local stringConstantMap = {}		-- map of string constant values to a structure with its attributes {fmt,name,size}
-local arrayTypeMap = {}			-- map of the pair lval,size to the array type lval for an array size
-local genericInstanceTypeMap = {}	-- map of the pair lval,generic parameter to the generic instance type lval for list of arguments
-local varargFuncMap = {}		-- map of types to true for vararg functions/procedures
-local instantCallableEnvironment = nil	-- callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
-local mainCallableEnvironment = nil	-- callable environment for constructors/destructors of globals
-local hardcodedTypeMap = {}		-- map of hardcoded type names to their id
-local nodeIdCount = 0			-- counter for node id allocation
-local nodeDataMap = {}			-- map of node id's to a data structure (depending on the node)
-local genericLocalStack = {}		-- stack of values for currentGenericLocal 
-local currentGenericLocal = 0		-- the context type id used for declaring locals (to separate instances of generics in the same scope)
+local weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
+local scalarQualiTypeMap = {}		-- Map of scalar type names without qualifiers to the table of type ids for all qualifiers possible
+local scalarIndexTypeMap = {}		-- Map of scalar type names usable as index without qualifiers to the const type id used as index for [] or pointer arithmetics
+local scalarBooleanType = nil		-- Type id of the boolean type, result of cmpop binary operators
+local scalarIntegerType = nil		-- Type id of the main integer type, result of main function
+local scalarLongType = nil		-- Type id of the main long integer type (64 bits), used for long integer vararg parameters
+local scalarFloatType = nil		-- Type id of the main floating point number type (64 bits), used for floating point vararg parameters
+local stringPointerType = nil		-- Type id of the string constant type used for free string litterals
+local memPointerType = nil		-- Type id of the type used for result of allocmem and argument of freemem
+local stringAddressType = nil		-- Type id of the string constant type used string constants outsize a function scope
+local anyClassPointerType = nil		-- Type id of the "class^" type
+local anyConstClassPointerType = nil 	-- Type id of the "class^" type
+local anyStructPointerType = nil	-- Type id of the "struct^" type
+local anyConstStructPointerType = nil	-- Type id of the "struct^" type
+local anyFreeFunctionType = nil		-- Type id of any free function/procedure callable
+local controlTrueType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
+local controlFalseType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
+local qualiTypeMap = {}			-- Map of any defined type without qualifier to the table of type ids for all qualifiers possible
+local referenceTypeMap = {}		-- Map of non reference types to their reference types
+local dereferenceTypeMap = {}		-- Map of reference types to their type with the reference qualifier stripped away
+local constTypeMap = {}			-- Map of non const types to their const type
+local privateTypeMap = {}		-- Map of non private types to their private type
+local pointerTypeMap = {}		-- Map of non pointer types to their pointer type
+local pointeeTypeMap = {}		-- Map of pointer types to their pointee type
+local rvalueRefTypeMap = {}		-- Map of value types with an rvalue reference type defined to their rvalue reference type
+local typeQualiSepMap = {}		-- Map of any defined type id to a separation pair (lval,qualifier) = lval type, qualifier as booleans
+local typeDescriptionMap = {}		-- Map of any defined type id to its llvmir template structure
+local stringConstantMap = {}		-- Map of string constant values to a structure with its attributes {fmt,name,size}
+local arrayTypeMap = {}			-- Map of the pair lval,size to the array type lval for an array size
+local genericInstanceTypeMap = {}	-- Map of the pair lval,generic parameter to the generic instance type lval for list of arguments
+local varargFuncMap = {}		-- Map of types to true for vararg functions/procedures
+local instantCallableEnvironment = nil	-- Callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
+local mainCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
+local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
+local nodeIdCount = 0			-- Counter for node id allocation
+local nodeDataMap = {}			-- Map of node id's to a data structure (depending on the node)
+local genericLocalStack = {}		-- Stack of values for currentGenericLocal 
+local currentGenericLocal = 0		-- The context type id used for local type definitions, to separate instances of generics using the same scope
+local currentGenericLocalKey = "seekctx"-- Current key for the seek context type realm for typedb:set_instance,typedb:this_instance,typedb:get_instance
+local currentCallableEnvKey = "callenv"	-- Current key for the callable environment for typedb:set_instance,typedb:this_instance,typedb:get_instance
+local currentAllocFrameKey = "frame"	-- Current key for the allocation frames for typedb:set_instance,typedb:this_instance,typedb:get_instance
 
 -- Allocate a node identifier for multi-pass evaluation with structures temporarily stored
 function allocNodeData( node, data)
@@ -100,15 +103,15 @@ function createCallableEnvironment( rtype, rprefix, lprefix)
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( rtype)
-	typedb:set_instance( "callable", createCallableEnvironment( rtype))
+	typedb:set_instance( currentCallableEnvKey, createCallableEnvironment( rtype))
 end
 -- Get the active callable instance
 function getCallableEnvironment()
-	return instantCallableEnvironment or typedb:get_instance( "callable")
+	return instantCallableEnvironment or typedb:get_instance( currentCallableEnvKey)
 end
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( contextTypeId, typnam, args)
-	local rt; if contextTypeId ~= 0 then rt = typedb:type_string(contextTypeId) .. " " .. typnam else rt = typnam end
+	local rt; if contextTypeId ~= 0 then rt = typedb:type_string(contextTypeId or 0) .. " " .. typnam else rt = typnam end
 	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
 	return rt
 end
@@ -708,6 +711,7 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	typeQualiSepMap[ priv_rval] = {lval=qualitype.lval,qualifier={reference=true,const=false,private=true}}
 	typeQualiSepMap[ priv_c_rval] = {lval=qualitype.lval,qualifier={reference=true,const=true,private=true}}
 
+	typedb:def_reduction( priv_c_rval, priv_rval, nil, tag_typeDeduction, rdw_strip_c_3)
 	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, rdw_strip_v_2)
 	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, rdw_strip_v_3)
 end
@@ -998,7 +1002,7 @@ function copyTypeTable( stu)
 	for key,val in pairs(stu) do if type(val) == "table" then rt[ key] = copyTypeTable( val) else rt[ key] = val end end
 	return rt
 end
--- Get an object instance and clone it if it is not stored in the current scope, making it possible to add elements to an inherited instance
+-- Get an object instance and clone it if it is not stored in the current scope, making it possible to add elements to an inherited instance in the current scope
 function thisInstanceTypeTable( name, emptyInst)
 	local inst = typedb:this_instance( name)
 	if not inst then
@@ -1010,49 +1014,44 @@ function thisInstanceTypeTable( name, emptyInst)
 end
 -- Get the list of context types associated with the current scope used for resolving types
 function getSeekContextTypes()
-	local inst = typedb:get_instance( "seekctx")
-	if inst then return inst[ currentGenericLocal] or {0} else return {0} end
+	return typedb:get_instance( currentGenericLocalKey) or {0}
 end
 -- Update the list of context types associated with the current scope used for resolving types
 function setSeekContextTypes( types)
-	local inst = thisInstanceTypeTable( "seekctx", {})
-	inst[ currentGenericLocal] = copyTypeTable( types)
-end
--- Get the instance of the current context types, create it if undefined
-function thisSeekContextTypes()
-	local inst = thisInstanceTypeTable( "seekctx", {})
-	local seekctx = inst[ currentGenericLocal]
-	if not seekctx then seekctx = {}; table.insert( seekctx, 0); inst[ currentGenericLocal] = seekctx end
-	return seekctx
+	typedb:set_instance( currentGenericLocalKey, copyTypeTable( types))
 end
 -- Push an element to the current context type list used for resolving types
 function pushSeekContextType( val)
-	table.insert( thisSeekContextTypes(), val)
+	table.insert( thisInstanceTypeTable( currentGenericLocalKey, {0}), val)
 end
 -- Remove the last element of the the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
 function popSeekContextType( val)
-	local seekctx = typedb:this_instance( "seekctx")[ currentGenericLocal]
+	local seekctx = typedb:this_instance( currentGenericLocalKey)
 	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
 	table.remove( seekctx, #seekctx)
 end
 -- Push an element to the generic local stack, allowing nested generic creation
 function pushGenericLocal( genericlocal)
-	table.insert( genericLocalStack, currentGenericLocal)
+	table.insert( genericLocalStack, {currentGenericLocal,currentGenericLocalKey,currentCallableEnvKey,currentAllocFrameKey})
 	currentGenericLocal = genericlocal
+	local suffix = string.format(":%x", genericlocal)
+	currentGenericLocalKey = "seekctx" .. suffix
+	currentCallableEnvKey = "callenv" .. suffix
+	currentAllocFrameKey = "frame" .. suffix
 end
 -- Pop the top element from the generic local stack, restoring the previous currentGenericLocal value
 function popGenericLocal( genericlocal)
 	if currentGenericLocal ~= genericlocal or #genericLocalStack == 0 then utils.errorMessage( 0, "Internal: corrupt generic local stack") end
-	currentGenericLocal = genericLocalStack[ #genericLocalStack]
+	currentGenericLocal,currentGenericLocalKey,currentCallableEnvKey,currentAllocFrameKey = unpack(genericLocalStack[ #genericLocalStack])
 	table.remove( genericLocalStack, #genericLocalStack)
 end
 -- The frame object defines constructors/destructors called implicitly at start/end of their scope
 function getAllocationScopeFrame()
-	local rt = typedb:this_instance( "frame")
+	local rt = typedb:this_instance( currentAllocFrameKey)
 	if not rt then
 		local env = getCallableEnvironment()
 		rt = {scope=env.scope, entry=env.label(), register=env.register, label=env.label, ctor="", dtor="", entry=nil}
-		typedb:set_instance( "frame", rt)
+		typedb:set_instance( currentAllocFrameKey, rt)
 	end
 	return rt
 end
@@ -1072,7 +1071,7 @@ function setImplicitEndCode( code)
 	frame.endcode = code
 end
 function getAllocationScopeCodeBlock( code)
-	local frame = typedb:this_instance( "frame")
+	local frame = typedb:this_instance( currentAllocFrameKey)
 	if frame then return frame.ctor .. code .. frame.dtor .. (frame.endcode or "") else return code end
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
@@ -1684,7 +1683,9 @@ function findApplyCallable( node, this, callable, args)
 end
 -- Get the signature of a function used in error messages
 function getMessageFunctionSignature( this, callable, args)
-	return utils.resolveTypeString( typedb, this.type, callable) .. "(" .. utils.typeListString( typedb, args, ", ") .. ")"
+	local rt = utils.resolveTypeString( typedb, this.type, callable)
+	if args then rt = rt .. "(" .. utils.typeListString( typedb, args, ", ") .. ")" end
+	return rt
 end
 -- Filter best result and report error on ambiguity
 function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
@@ -1969,9 +1970,13 @@ end
 -- Define the execution context of the body of any function/procedure/operator except the main function
 function defineCallableBodyContext( node, context, descr)
 	if context.domain == "member" then
-		local privateThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
-		local publicThisReferenceType = getFunctionThisType( true, descr.const, context.qualitype.rval)
-		local classvar = defineVariableHardcoded( node, context, privateThisReferenceType, "self", "%ths")
+		local privateConstThisReferenceType = getFunctionThisType( true, true, context.qualitype.rval)
+		local privateThisReferenceType = getFunctionThisType( true, false, context.qualitype.rval)
+		local publicConstThisReferenceType = getFunctionThisType( false, true, context.qualitype.rval)
+		local publicThisReferenceType = getFunctionThisType( false, false, context.qualitype.rval)
+		local selfTypeId; if descr.const then selfTypeId = privateConstThisReferenceType else selfTypeId = privateThisReferenceType end
+		local classvar = defineVariableHardcoded( node, context, selfTypeId, "self", "%ths")
+		typedb:def_reduction( privateConstThisReferenceType, publicConstThisReferenceType, nil, tag_typeDeduction) -- make const private members of other instances of this class accessible
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
@@ -2057,11 +2062,12 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 				members={}, operators={}, methods={}, methodmap={}, interfaces={}, properties={},
 	                	llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,classes,structures
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables and function/procedures/constructor headers
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define callable headers
 	descr.size = context.structsize
 	defineClassConstructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define function/procedure/operator/constructor/destructor implementations
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 4) -- 4th pass: define callable implementations
 	defineInheritedInterfaces( node, context, qualitype.lval)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 	popSeekContextType( qualitype.lval)
@@ -2141,9 +2147,9 @@ function typesystem.definition_decl_impl_pass( node, pass, context, pass_selecte
 	if not pass_selected then
 		return typesystem.definition( node, pass, context, pass_selected)
 	elseif pass == pass_selected+1 then
-		utils.traverse( typedb, node, context, 1) 	-- 1st pass: declarations
+		utils.traverse( typedb, node, context, 1) 	-- pass-1 (3rd) pass: declarations
 	elseif pass == pass_selected then
-		utils.traverse( typedb, node, context, 2)	-- 2nd pass: implementations
+		utils.traverse( typedb, node, context, 2)	-- pass-0 (4th) pass: implementations
 	end
 end
 function typesystem.paramdef( node, context) 

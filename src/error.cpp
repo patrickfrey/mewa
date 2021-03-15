@@ -210,7 +210,7 @@ const char* Error::code2String( int code_) noexcept
 		case RuntimeException: return "Runtime error exception";
 		case UnexpectedException: return "Unexpected exception";
 		case SerializationError: return "Error serializing a lua data structure";
-		case InternalSourceExpectedNullTerminated: return "Logic error: String expected to be null terminated";
+
 		case ExpectedStringArgument: return "Expected string as argument";
 		case ExpectedIntegerArgument: return "Expected integer as argument";
 		case ExpectedNonNegativeIntegerArgument: return "Expected non negative integer as argument";
@@ -252,6 +252,7 @@ const char* Error::code2String( int code_) noexcept
 
 		case AmbiguousReductionDefinitions: return "Ambiguous definitions of reductions";
 		case ScopeHierarchyError: return "Error in scope hierarchy: Defined overlapping scopes without one including the other";
+		case InvalidReductionDefinition: return "Invalid reduction definition";
 
 		case BadCharacterInGrammarDef: return "Bad character in the grammar definition";
 		case ValueOutOfRangeInGrammarDef: return "Value out of range in the grammar definition";

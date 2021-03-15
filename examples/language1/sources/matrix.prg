@@ -43,7 +43,7 @@ generic class Matrix[R,DIM1,DIM2]
                         var int jj = 0;
                         while (jj < DIM2)
                         {
-                                rt[ ii][ jj] = m_ar[ ii][ jj] + o.m_ar[ ii][ jj];
+                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] + o.m_ar[ ii][ jj];
                                 jj += 1;
                         }
                         ii += 1;
@@ -59,7 +59,7 @@ generic class Matrix[R,DIM1,DIM2]
                         var int jj = 0;
                         while (jj < DIM2)
                         {
-                                rt[ ii][ jj] = m_ar[ ii][ jj] - o.m_ar[ ii][ jj];
+                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] - o.m_ar[ ii][ jj];
                                 jj += 1;
                         }
                         ii += 1;
@@ -75,30 +75,14 @@ generic class Matrix[R,DIM1,DIM2]
                         var int jj = 0;
                         while (jj < DIM2)
                         {
-                                rt[ ii][ jj] = -m_ar[ ii][ jj];
+                                rt.m_ar[ ii][ jj] = -m_ar[ ii][ jj];
                                 jj += 1;
                         }
                         ii += 1;
                 }
                 return rt;
 	}
-	public operator * Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const
-	{
-                var Matrix[R,DIM1,DIM2] rt;
-		var int ii = 0;
-                while (ii < DIM1)
-                {
-                        var int jj = 0;
-                        while (jj < DIM2)
-                        {
-                                rt[ ii][ jj] = m_ar[ ii][ jj] - o.m_ar[ ii][ jj];
-                                jj += 1;
-                        }
-                        ii += 1;
-                }
-                return rt;
-	}
-	public operator * Matrix[R,DIM1,DIM2]( const Matrix[R,DIM2,DIM1] o) const
+	public operator * Matrix[R,DIM2,DIM2]( const Matrix[R,DIM2,DIM1] o) const
 	{
                 var Matrix[R,DIM2,DIM2] rt;
 		var int ii = 0;
@@ -113,7 +97,23 @@ generic class Matrix[R,DIM1,DIM2]
                                 {
                                         sum += m_ar[ ii][ kk] * o.m_ar[ kk][ jj];
                                 }
-                                rt[ ii][ jj] = sum;
+                                rt.m_ar[ ii][ jj] = sum;
+                                jj += 1;
+                        }
+                        ii += 1;
+                }
+                return rt;
+	}
+	public operator * Matrix[R,DIM1,DIM2]( const R o) const
+	{
+                var Matrix[R,DIM1,DIM2] rt;
+		var int ii = 0;
+                while (ii < DIM1)
+                {
+                        var int jj = 0;
+                        while (jj < DIM2)
+                        {
+                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] * o;
                                 jj += 1;
                         }
                         ii += 1;
@@ -129,7 +129,7 @@ generic class Matrix[R,DIM1,DIM2]
                         var int jj = 0;
                         while (jj < DIM2)
                         {
-                                rt[ ii][ jj] = m_ar[ ii][ jj] / o;
+                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] / o;
                                 jj += 1;
                         }
                         ii += 1;

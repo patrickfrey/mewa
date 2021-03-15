@@ -12,7 +12,6 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:RuntimeException**   _$ERRTEXT:RuntimeException_
 + **#$ERRCODE:UnexpectedException**   _$ERRTEXT:UnexpectedException_
 + **#$ERRCODE:SerializationError**   _$ERRTEXT:SerializationError_
-+ **#$ERRCODE:InternalSourceExpectedNullTerminated**   _$ERRTEXT:InternalSourceExpectedNullTerminated_
 
 ## Lua Function Call Argument Check Failures
 + **#$ERRCODE:ExpectedStringArgument**   _$ERRTEXT:ExpectedStringArgument_
@@ -59,6 +58,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 
 + **#$ERRCODE:AmbiguousReductionDefinitions**   _$ERRTEXT:AmbiguousReductionDefinitions_
 + **#$ERRCODE:ScopeHierarchyError**   _$ERRTEXT:ScopeHierarchyError_
++ **#$ERRCODE:InvalidReductionDefinition**   _$ERRTEXT:InvalidReductionDefinition_
 
 ## Grammar Definition Errors
 + **#$ERRCODE:BadCharacterInGrammarDef**   _$ERRTEXT:BadCharacterInGrammarDef_

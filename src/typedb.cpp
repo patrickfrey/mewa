@@ -258,10 +258,13 @@ void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType
 	if (constructor < 0) throw Error( Error::InvalidHandle, string_format( "%d", constructor));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
-
+	if (toType == fromType)
+	{
+		std::string nam = debugTypeToString( toType, " ");
+		throw Error( Error::InvalidReductionDefinition, string_format( "%s <- %s", nam.c_str(), nam.c_str()));
+	}
 	m_reduTable->set( scope, fromType, toType, constructor, tag, weight);
 }
-
 
 struct ReduStackElem
 {

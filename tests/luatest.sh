@@ -56,16 +56,18 @@ do
 	TST=`echo $tst | tr a-z A-Z`
 	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then
 		echo "* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`
-		echo "Compile and run program examples/language1/sources/$tst.prg"
-		build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
+		echo "Compile program examples/language1/sources/$tst.prg to LLVM IR"
+		/usr/bin/time -f "Running for %e seconds"\
+			build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
 		LN=`grep -n 'attributes #0' build/language1.compiler.$tst.llr | awk -F: '{print $1}'`
 		head -n `expr $LN - 1` build/language1.compiler.$tst.llr | tail -n `expr $LN - 5` > build/language1.compiler.$tst.out
 		verify_test_result "Lua test ($tst debug) compiling example program with language1 compiler" \
 						build/language1.debug.$tst.out tests/language1.debug.$tst.exp
 		verify_test_result "Lua test ($tst output) compiling example program with language1 compiler" \
 						build/language1.compiler.$tst.out tests/language1.compiler.$tst.exp
-
-		lli build/language1.compiler.$tst.llr > build/language1.run.$tst.out
+		echo "Run program examples/language1/sources/$tst.prg with LLVM interpreter (lli)"
+		/usr/bin/time -f "Running for %e seconds"\
+			lli build/language1.compiler.$tst.llr > build/language1.run.$tst.out
 		verify_test_result "Lua test ($tst run) run program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
 	fi
 done

@@ -12,7 +12,6 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#403**   _Runtime error exception_
 + **#404**   _Unexpected exception_
 + **#405**   _Error serializing a lua data structure_
-+ **#406**   _Logic error: String expected to be null terminated_
 
 ## Lua Function Call Argument Check Failures
 + **#407**   _Expected string as argument_
@@ -59,6 +58,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 
 + **#462**   _Ambiguous definitions of reductions_
 + **#463**   _Error in scope hierarchy: Defined overlapping scopes without one including the other_
++ **#464**   _Invalid reduction definition_
 
 ## Grammar Definition Errors
 + **#501**   _Bad character in the grammar definition_

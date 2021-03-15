@@ -210,11 +210,7 @@ function utils.resolveTypeString( typedb, contextType, typeName)
 		if #contextType == 0 then
 			rt = "{} " .. typeName
 		else
-			rt = "{ " .. utils.typeString( typedb, contextType[1])
-			for ii = 2,#contextType,1 do
-				rt = rt .. ", " .. utils.typeString( typedb, contextType[ ii])
-			end
-			rt = rt .. " } " .. typeName
+			rt = "{ " .. utils.typeListString( typedb, contextType) .. " } " .. typeName
 		end
 	else
 		rt = utils.typeString( typedb, contextType) .. " " .. typeName

@@ -36,7 +36,7 @@ public:
 		RuntimeException=403,
 		UnexpectedException=404,
 		SerializationError=405,
-		InternalSourceExpectedNullTerminated=406,
+
 		ExpectedStringArgument=407,
 		ExpectedIntegerArgument=408,
 		ExpectedNonNegativeIntegerArgument=409,
@@ -76,6 +76,7 @@ public:
 
 		AmbiguousReductionDefinitions=462,
 		ScopeHierarchyError=463,
+		InvalidReductionDefinition=464,
 
 		BadCharacterInGrammarDef=501,
 		ValueOutOfRangeInGrammarDef=502,

@@ -50,6 +50,8 @@ build/*.exp
 .depend
 
 # MS Visual Studio
+
+# KDevelop project
 .kdev4/
 mewa.kdev4
 

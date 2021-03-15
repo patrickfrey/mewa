@@ -11,6 +11,7 @@
 /// \file "lexer.cpp"
 #include "lexer.hpp"
 #include "error.hpp"
+#include "strings.hpp"
 #include "utf8.hpp"
 
 using namespace mewa;
@@ -220,7 +221,7 @@ std::pair<std::string_view,int> LexemDef::match( const char* srcptr, std::size_t
 
 void Scanner::checkNullTerminated()
 {
-	if (m_src.data()[ m_src.size()] != 0) throw Error( Error::InternalSourceExpectedNullTerminated);
+	if (m_src.data()[ m_src.size()] != 0) throw Error( Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 }
 
 char const* Scanner::next( int incr)
