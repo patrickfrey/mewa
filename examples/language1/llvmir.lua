@@ -38,14 +38,14 @@ local pointerTemplate = {
 }
 
 local arrayTemplate = {
-	symbol = "[{size} x {element}]",
+	symbol = "{size}__{elementsymbol}",
 	def_local = "{out} = alloca [{size} x {element}], align 8\n",
 	def_global = "{out} = internal global [{size} x {element}] zeroinitializer, align 8\n",
 	llvmtype = "[{size} x {element}]",
 	class = "array",
 	assign = "store [{size} x {element}] {arg1}, [{size} x {element}]* {this}\n",
 	scalar = false,
-	ctorproc = "define private dso_local void @__ctor_{size}__{element}( [{size} x {element}]* %ar) alwaysinline {\n"
+	ctorproc = "define private dso_local void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* %ar) alwaysinline {\n"
 		.. "enter:\n"
 		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0\n"
 		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
@@ -64,7 +64,7 @@ local arrayTemplate = {
 		.. "{3} = icmp eq {element}* {2}, %top\n"
 		.. "br i1 {3}, label %{end}, label %{begin}\n"
 		.. "{end}:\n",
-	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{element}( [{size} x {element}]* %ths_ar, [{size} x {element}]* %oth_ar) alwaysinline {\n"
+	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{elementsymbol}( [{size} x {element}]* %ths_ar, [{size} x {element}]* %oth_ar) alwaysinline {\n"
 		.. "enter:\n"
 		.. "%ths_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0\n"
 		.. "%ths_top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 {size}\n"
@@ -76,7 +76,7 @@ local arrayTemplate = {
 		.. "%A4 = icmp eq {element}* %A2, %ths_top\n"
 		.. "br i1 %A4, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{size}__{element}( [{size} x {element}]* %ar) alwaysinline {\n"
+	dtorproc = "define private dso_local void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* %ar) alwaysinline {\n"
 		.. "enter:\n"
 		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0\n"
 		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
@@ -86,9 +86,9 @@ local arrayTemplate = {
 		.. "%A3 = icmp eq {element}* %A2, %base\n"
 		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctor = "call void @__ctor_{size}__{element}( [{size} x {element}]* {this})\n",
-	ctor_copy = "call void @__ctor_{procname}_{size}__{element}( [{size} x {element}]* {this}, [{size} x {element}]* {arg1})\n",
-	dtor = "call void @__dtor_{size}__{element}( [{size} x {element}]* {this})\n",
+	ctor = "call void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* {this})\n",
+	ctor_copy = "call void @__ctor_{procname}_{size}__{elementsymbol}( [{size} x {element}]* {this}, [{size} x {element}]* {arg1})\n",
+	dtor = "call void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* {this})\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
@@ -339,7 +339,7 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	local arrayDescrKey = llvmElementType .. "#" .. arraySize
 	local arrayDescr = arrayDescrMap[ arrayDescrKey]
 	if not arrayDescr then
-		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType,size=arraySize})
+		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType, elementsymbol=elementDescr.symbol or llvmElementType, size=arraySize})
 		arrayDescr.size = elementDescr.size * arraySize
 		arrayDescr.align = elementDescr.align
 		arrayDescrMap[ arrayDescrKey] = arrayDescr;

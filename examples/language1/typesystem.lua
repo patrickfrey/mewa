@@ -324,7 +324,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		for ai=1,#args do res_code = res_code .. initArrayElementCode( node, env, refTypeId, descr.loadelemref, this_inp, {args[ai]}, ai) end
 		if #args < nofElements then
 			local init = applyCallable( node, typeConstructorStruct( refTypeId, "%ths", ""), ":=", {})
-			local fmtdescr = {element=descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
+			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}
 			res_code = res_code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
 		end
@@ -1723,7 +1723,7 @@ function getTargetFunctionIdentifierString( name, args, const, context)
 		return utils.uniqueName( name .. "__")
 	else
 		local pstr; if context.symbol then pstr = "__C_" .. context.symbol .. "__" .. name else pstr = name end
-		for ai,arg in ipairs(args) do pstr = pstr .. "__" .. arg.llvmtype end
+		for ai,arg in ipairs(args) do pstr = pstr .. "__" .. (arg.symbol or arg.llvmtype) end
 		if const == true then pstr = pstr .. "__const" end
 		return utils.encodeName(  pstr)
 	end
