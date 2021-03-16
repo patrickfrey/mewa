@@ -26,7 +26,7 @@ generic class Matrix[R,DIM1,DIM2]
 	{
                 m_ar = {};
         }
-	constructor( const R[DIM1][DIM2] ar_)
+	constructor( const R[DIM2][DIM1] ar_)
 	{
 		m_ar = ar_;
 	}
@@ -82,20 +82,21 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator * Matrix[R,DIM2,DIM2]( const Matrix[R,DIM2,DIM1] o) const
+	public operator * Matrix[R,DIM1,DIM1]( const Matrix[R,DIM2,DIM1] o) const
 	{
-                var Matrix[R,DIM2,DIM2] rt;
+                var Matrix[R,DIM1,DIM1] rt;
 		var int ii = 0;
-                while (ii < DIM2)
+                while (ii < DIM1)
                 {
                         var int jj = 0;
-                        while (jj < DIM2)
+                        while (jj < DIM1)
                         {
                                 var double sum = 0;
                                 var int kk = 0;
-                                while (kk < DIM1)
+                                while (kk < DIM2)
                                 {
                                         sum += m_ar[ ii][ kk] * o.m_ar[ kk][ jj];
+                                        kk += 1;
                                 }
                                 rt.m_ar[ ii][ jj] = sum;
                                 jj += 1;
@@ -145,26 +146,62 @@ generic class Matrix[R,DIM1,DIM2]
                 return m_ar[i][j];
         }
 
-	R[DIM1][DIM2] m_ar;
+	R[DIM2][DIM1] m_ar;
+}
+
+generic procedure printMatrix[DIM1,DIM2]( const Matrix[double,DIM1,DIM2] mt)
+{
+	var int ii = 0;
+	while (ii < DIM1)
+	{
+		var int jj = 0;
+		while (jj < DIM2)
+		{
+			printf( "\t%.4f", mt[ ii, jj]);
+			jj += 1;
+		}
+		printf( "\n");
+		ii += 1;
+	}
 }
 
 main {
-// Matrix A:
-//      0	2	1
-//      3	1	1
-//      4	0	1
-//      1	5	2
-var Matrix[double,3,4] A = {{0,2,1},{3,1,1},{4,0,1},{1,5,2}};
-// Matrix B:
-//      1	2	0	3
-//      4	0	5	2
-//      3	3	1	1
-var Matrix[double,4,3] B = {{1,2,0,3},{4,0,5,2},{3,3,1,1}};
-// Result A*B:
-//	11	3	11	5
-//	10	9	6	12
-//	7	11	1	13
-//	27	8	27	15
-// var Matrix[double,4,4] C = A * B;
+	// Matrix A:
+	//      0	2	1
+	//      3	1	1
+	//      4	0	1
+	//      1	5	2
+	var Matrix[double,4,3] A = {{0,2,1},{3,1,1},{4,0,1},{1,5,2}};
+	printf( "Matrix %s:\n", "A");
+	printMatrix[4,3]( A);
+	printf( "\n");
+
+	// Matrix B:
+	//      1	2	0	3
+	//      4	0	5	2
+	//      3	3	1	1
+	var Matrix[double,3,4] B = {{1,2,0,3},{4,0,5,2},{3,3,1,1}};
+	printf( "Matrix %s:\n", "B");
+	printMatrix[3,4]( B);
+	printf( "\n");
+
+	// Result A*B:
+	//	11	3	11	5
+	//	10	9	6	12
+	//	7	11	1	13
+	//	27	8	27	15
+	var Matrix[double,4,4] C = A * B;
+	printf( "Matrix %s:\n", "A*B");
+	printMatrix[4,4]( C);
+	printf( "\n");
+
+	// Result B * A:
+	// 	9	19	9
+	//	22	18	13
+	//	14	14	9
+	var Matrix[double,3,3] D = B * A;
+	printf( "Matrix %s:\n", "B*A");
+	printMatrix[3,3]( D);
+	printf( "\n");
 }
 

@@ -120,10 +120,10 @@ function typeDeclarationString( contextTypeId, typnam, args)
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.out,(constructor.code or ""),(constructor.alloc or "") else return constructor,"","" end
+	if type(constructor) == "table" then return constructor.out,(constructor.code or ""),(constructor.alloc or "") else return tostring(constructor),"","" end
 end
 function constructorStruct( out, code)
-	return {out=out, code=code or ""}
+	return {out=tostring(out), code=code or ""}
 end
 function constructorStructEmpty()
 	return {code=""}
@@ -439,7 +439,7 @@ end
 function constexprToFloat( val, typeId)
 	if typeId == constexprFloatType then return val
 	elseif typeId == constexprIntegerType then return val:tonumber()
-	elseif typeId == constexprUIntegerType then return val:tonumber()
+	elseif typeId == constexprUIntegerType then if type(val) == "string" then return tonumber(val) else return val:tonumber() end
 	elseif typeId == constexprBooleanType then if val == true then return 1.0 else return 0.0 end
 	else utils.errorMessage( 0, "Can't convert constexpr value of type '%s' to number: '%s'", typedb:type_string(typeId), tostring(number))
 	end
@@ -1447,7 +1447,7 @@ function matchGenericParameter( node, genericType, param, args)
 	if #param < #args then utils.errorMessage( node.line, "Too many arguments (%d) passed to instantiate generic '%s'", #args, typedb:type_string(genericType)) end
 	for pi=1,#param do
 		local arg = args[pi] or param[pi] -- argument or default parameter
-		if not arg then utils.errorMessage( node.line, "Missing parameter '%s' of generic '%s'", param[ pi].name, typedb:type_string(genericType)) end
+		if not arg.type then utils.errorMessage( node.line, "Missing parameter '%s' of generic '%s'", param[ pi].name, typedb:type_string(genericType)) end
 		table.insert( rt, arg)
 	end
 	return rt
@@ -1455,7 +1455,8 @@ end
 -- For each generic argument, create an alias named as the parameter name as substitute for the generic argument specified
 function defineGenericParameterAliases( node, instanceType, generic_param, generic_arg)
 	for ii=1,#generic_arg do
-		if generic_arg[ ii].constructor then
+		local constructor = generic_arg[ ii].constructor 
+		if constructor then
 			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].constructor)
 			if alias == -1 then utils.errorMessage( node.line, "Duplicate definition of generic parameter '%s' '%s'", typedb:type_string(instanceType), generic_param[ ii].name) end
 			typedb:def_reduction( generic_arg[ ii].type, alias, nil, tag_typeAlias)
@@ -1779,13 +1780,17 @@ end
 -- Identifier for generic signature
 function getGenericParameterIdString( param)
 	local rt = ""
-	for pi,arg in ipairs(param) do if arg.constructor then rt = rt .. "#" .. getGenericConstructorIdString( arg.constructor) else rt = rt .. tostring(arg.type) .. "," end end
+	for pi,arg in ipairs(param) do
+		if arg.constructor then rt = rt .. "#" .. getGenericConstructorIdString( arg.constructor) else rt = rt .. tostring(arg.type) .. "," end
+	end
 	return rt
 end
 -- Synthesized typename for generic
 function getGenericTypeName( typeId, param)
 	local rt = typedb:type_string( typeId, "__")
-	for pi,arg in ipairs(param) do rt = rt .. "__"; if arg.constructor then rt = rt .. getGenericConstructorIdString(arg.constructor) else rt = rt .. typedb:type_string(arg.type, "__") end end
+	for pi,arg in ipairs(param) do
+		rt = rt .. "__"; if arg.constructor then rt = rt .. getGenericConstructorIdString(arg.constructor) else rt = rt .. typedb:type_string(arg.type, "__") end
+	end
 	return rt
 end
 -- Symbol name for type in target LLVM output
