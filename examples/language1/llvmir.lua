@@ -45,9 +45,9 @@ local arrayTemplate = {
 	class = "array",
 	assign = "store [{size} x {element}] {arg1}, [{size} x {element}]* {this}\n",
 	scalar = false,
-	ctorproc = "define private dso_local void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* %ar) alwaysinline {\n"
+	ctorproc = "define private dso_local void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* %ar, i32 %start) alwaysinline {\n"
 		.. "enter:\n"
-		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 0\n"
+		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 %start\n"
 		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
 		.. "br label %loop\nloop:\n"
 		.. "%ths = phi {element}* [%base, %enter], [%A2, %loop]\n"
@@ -55,15 +55,6 @@ local arrayTemplate = {
 		.. "%A3 = icmp eq {element}* %A2, %top\n"
 		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctor_rest = "br label %{enter}\n{enter}:\n"
-		.. "%base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n"
-		.. "%top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {size}\n"
-		.. "br label %{begin}\n{begin}:\n"
-		.. "%ths = phi {element}* [%base, %{enter}], [{2}, %{begin}]\n"
-		.. "{ctors}{2} = getelementptr inbounds {element}, {element}* %ths, i64 1\n"
-		.. "{3} = icmp eq {element}* {2}, %top\n"
-		.. "br i1 {3}, label %{end}, label %{begin}\n"
-		.. "{end}:\n",
 	ctorproc_copy = "define private dso_local void @__ctor_{procname}_{size}__{elementsymbol}( [{size} x {element}]* %ths_ar, [{size} x {element}]* %oth_ar) alwaysinline {\n"
 		.. "enter:\n"
 		.. "%ths_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0\n"
@@ -86,7 +77,8 @@ local arrayTemplate = {
 		.. "%A3 = icmp eq {element}* %A2, %base\n"
 		.. "br i1 %A3, label %end, label %loop\n"
 		.. "end:\nret void\n}\n",
-	ctor = "call void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* {this})\n",
+	ctor = "call void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* {this}, i32 0)\n",
+	ctor_rest = "call void @__ctor_{size}__{elementsymbol}( [{size} x {element}]* {this}, i32 {index})\n",
 	ctor_copy = "call void @__ctor_{procname}_{size}__{elementsymbol}( [{size} x {element}]* {this}, [{size} x {element}]* {arg1})\n",
 	dtor = "call void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* {this})\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",

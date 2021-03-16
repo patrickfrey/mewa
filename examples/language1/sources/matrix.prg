@@ -165,6 +165,6 @@ var Matrix[double,4,3] B = {{1,2,0,3},{4,0,5,2},{3,3,1,1}};
 //	10	9	6	12
 //	7	11	1	13
 //	27	8	27	15
-var Matrix[double,4,4] C = A * B;
+// var Matrix[double,4,4] C = A * B;
 }
 

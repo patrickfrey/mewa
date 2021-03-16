@@ -89,13 +89,16 @@ local currentAllocFrameKey = "frame"	-- Current key for the allocation frames fo
 
 -- Allocate a node identifier for multi-pass evaluation with structures temporarily stored
 function allocNodeData( node, data)
-	nodeIdCount = nodeIdCount + 1
-	node.id = nodeIdCount
-	nodeDataMap[ nodeIdCount] = data
+	if not node.id then
+		nodeIdCount = nodeIdCount + 1
+		node.id = nodeIdCount
+		nodeDataMap[ nodeIdCount] = {}
+	end
+	nodeDataMap[ node.id][ currentGenericLocal] = data
 end
 -- Get node data attached to a node with `allocNodeData( node, data)`
 function getNodeData( node)
-	return nodeDataMap[ node.id]
+	return nodeDataMap[ node.id][ currentGenericLocal]
 end
 -- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
 function createCallableEnvironment( rtype, rprefix, lprefix)
@@ -1787,11 +1790,8 @@ function getGenericTypeName( typeId, param)
 end
 -- Symbol name for type in target LLVM output
 function getDeclarationUniqueName( contextTypeId, typnam)
-	if contextTypeId == 0 then 
-		return utils.uniqueName( typnam .. "__")
-	else		
-		return utils.uniqueName( typedb:type_string(contextTypeId, "__") .. "__" .. typnam .. "__")
-	end
+	if contextTypeId == currentGenericLocal then nam = typnam else nam = typedb:type_string(contextTypeId, "__") .. "__" .. typnam end
+	if typedb:scope()[1] == 0 then return nam else return utils.uniqueName( nam .. "__") end
 end
 -- Function shared by all expansions of the structure used for mapping the LLVM template for a function call
 function expandDescrCallTemplateParameter( descr, context)
@@ -2286,19 +2286,21 @@ function typesystem.return_value( node)
 	if doReturnValueAsReferenceParameter( rtype) then
 		local reftype = referenceTypeMap[ rtype]
 		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {arg[1]})
-		return {code = rt.constructor.code .. llvmir.control.returnFromProcedure, nofollow=true}
+		setImplicitEndCode( llvmir.control.returnFromProcedure)
+		return {code = rt.constructor.code, nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter, tagmask_typeConversion)
 		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
-		local code = utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out})
-		return {code = constructor.code .. code, nofollow=true}
+		setImplicitEndCode( utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out}))
+		return {code = constructor.code, nofollow=true}
 	end
 end
 function typesystem.return_void( node)
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
-	return {code = llvmir.control.returnFromProcedure, nofollow=true}
+	setImplicitEndCode( llvmir.control.returnFromProcedure)
+	return {code = "", nofollow=true}
 end
 function typesystem.conditional_else( node, context, exitLabel)
 	return utils.traverse( typedb, node, context)[1]
