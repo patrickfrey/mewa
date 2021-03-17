@@ -15,17 +15,24 @@ fi
 >&2 echo "Target tripple defined as $TARGET"
 >&2 echo "Using Lua binary $LUABIN"
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+NOCOL='\033[0m'
+
 verify_test_result() {
+	FLAG_OK=${GREEN}OK${NOCOL}
+	FLAG_ERR=${RED}ERR${NOCOL}
 	TNAM=$1
 	OUTF=$2
 	EXPF=$3
 	DIFF=`diff $OUTF $EXPF | wc -l`
 	if [ "$DIFF" = "0" ]
 	then
-		echo $TNAM OK
+		echo $TNAM $FLAG_OK
 	else
                 echo "diff $OUTF $EXPF"
-		echo $TNAM ERR
+		echo $TNAM $FLAG_ERR
 	fi
 }
 
@@ -34,11 +41,11 @@ $LUABIN tests/typedb.lua
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then
-echo "Building tables for dump of example \"language1\" ..."
+echo "${ORANGE}Building tables for dump of example \"language1\" ...${NOCOL}"
 /usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -d build/language1.debug.out -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
 chmod +x build/language1.dump.lua
-echo "Dump tables of compiler for example \"language1\" ..."
+echo "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
 build/language1.dump.lua > build/language1.dump.lua.out
 verify_test_result "Check dump automaton read by Lua script"  build/language1.dump.lua.out tests/language1.dump.lua.exp
 verify_test_result "Check dump states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp
@@ -55,7 +62,7 @@ for tst in fibo tree class array pointer generic complex matrix
 do
 	TST=`echo $tst | tr a-z A-Z`
 	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then
-		echo "* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`
+		echo "${ORANGE}* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`"${NOCOL}"
 		echo "Compile program examples/language1/sources/$tst.prg to LLVM IR"
 		/usr/bin/time -f "Running for %e seconds"\
 			build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg

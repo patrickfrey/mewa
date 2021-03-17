@@ -2151,8 +2151,8 @@ end
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
-		local arg = utils.traverse( typedb, node, context)
-		if arg[1] then return {code = arg[1].constructor.code} else return {code=""} end
+		local arg = unpack( utils.traverse( typedb, node, context))
+		if arg then return {code = arg.constructor.code} else return {code=""} end
 	end
 end
 function typesystem.definition_decl_impl_pass( node, pass, context, pass_selected)
@@ -2165,11 +2165,16 @@ function typesystem.definition_decl_impl_pass( node, pass, context, pass_selecte
 	end
 end
 function typesystem.paramdef( node, context) 
-	local arg = utils.traverse( typedb, node, context)
-	return defineParameter( node, context, arg[1], arg[2], getCallableEnvironment())
+	local datatype,varname = unpack( utils.traverse( typedb, node, context))
+	return defineParameter( node, context, datatype, varname, getCallableEnvironment())
 end
 function typesystem.paramdeflist( node, context)
 	return utils.traverse( typedb, node, context)
+end
+function typesystem.funcattribute( node, decl)
+	local rt = unpack( utils.traverse( typedb, node, context)) or {}
+	for key,val in pairs(decl) do rt[key] = val end
+	return rt
 end
 function typesystem.structure( node, context)
 	local arg = utils.traverse( typedb, node, context)
@@ -2177,8 +2182,7 @@ function typesystem.structure( node, context)
 end
 function typesystem.allocate( node, context)
 	local env = getCallableEnvironment()
-	local args = utils.traverse( typedb, node, context)
-	local typeId = args[1]
+	local typeId,expression = unpack( utils.traverse( typedb, node, context))
 	local pointerTypeId = pointerTypeMap[typeId]
 	if not pointerTypeId then utils.errorMessage( node.line, "Only non pointer type allowed in %s", "new") end
 	local refTypeId = referenceTypeMap[ typeId]
@@ -2191,17 +2195,15 @@ function typesystem.allocate( node, context)
 	local out = env.register()
 	local cast = utils.constructor_format( llvmir.control.memPointerCast, {llvmtype=descr.llvmtype, out=out,this=memblk.constructor.out}, env.register)
 	local this = {type=refTypeId,constructor={out=out, code=memblk.constructor.code .. cast}}
-	local rt = applyCallable( node, this, ":=", {args[2]})
+	local rt = applyCallable( node, this, ":=", {expression})
 	rt.type = pointerTypeId
 	return rt
 end
 function typesystem.typecast( node, context)
 	local env = getCallableEnvironment()
-	local args = utils.traverse( typedb, node, context)
-	local typeId = args[1]
+	local typeId,operand = unpack( utils.traverse( typedb, node, context))
 	local descr = typeDescriptionMap[ typeId]
 	if doCastToReferenceType( typeId) then typeId = referenceTypeMap[ constTypeMap[ typeId]] end
-	local operand = args[2]
 	if operand then
 		return {type=typeId, constructor=getRequiredTypeConstructor( node, typeId, operand, tagmask_typeCast, tagmask_typeConversion)}
 	else
@@ -2212,9 +2214,9 @@ function typesystem.typecast( node, context)
 end
 function typesystem.delete( node, context)
 	local env = getCallableEnvironment()
-	local args = utils.traverse( typedb, node, context)
-	local typeId = args[1].type
-	local out,code = constructorParts( args[1].constructor)
+	local operand = unpack( utils.traverse( typedb, node, context))
+	local typeId = operand.type
+	local out,code = constructorParts( operand.constructor)
 	local res = applyCallable( node, {type=typeId,constructor={code=code,out=out}}, " delete")
 	local valueTypeId = pointeeTypeMap[ typedb:type_context( res.type)]
 	local descr = typeDescriptionMap[ valueTypeId]
@@ -2224,24 +2226,31 @@ function typesystem.delete( node, context)
 	return {code=memblk.constructor.code}
 end
 function typesystem.vardef( node, context)
-	local arg = utils.traverse( typedb, node, context)
-	return defineVariable( node, context, arg[1], arg[2], nil)
+	local datatype,varnam = unpack( utils.traverse( typedb, node, context))
+	return defineVariable( node, context, datatype, varnam, nil)
 end
 function typesystem.vardef_assign( node, context)
-	local arg = utils.traverse( typedb, node, context)
-	return defineVariable( node, context, arg[1], arg[2], arg[3])
+	local datatype,varnam,initval = unpack( utils.traverse( typedb, node, context))
+	return defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.typedef( node, context)
-	local typnam = node.arg[2].value
-	local arg = utils.traverse( typedb, node)
+	local typ,alias = unpack( utils.traverse( typedb, node))
 	local declContextTypeId = getDeclarationContextTypeId( context)
-	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected on the left hand of a typedef declaration instead of '%s'", typedb:type_string(arg[1].type)) end
-	defineTypeAlias( node, declContextTypeId, typnam, arg[1].type)
+	if typ.constructor then utils.errorMessage( node.line, "Data type expected on the left hand of a typedef declaration instead of '%s'", typedb:type_string(typ.type)) end
+	defineTypeAlias( node, declContextTypeId, alias, typ.type)
 end
 function typesystem.assign_operator( node, operator)
-	local arg = utils.traverse( typedb, node)
-	local righthand = applyCallable( node, arg[1], operator, {arg[2]})
-	return applyCallable( node, arg[1], "=", {righthand})
+	local target,operand = unpack( utils.traverse( typedb, node))
+	local assign_operand = applyCallable( node, target, operator, {operand})
+	return applyCallable( node, target, "=", {assign_operand})
+end
+function typesystem.binop( node, operator)
+	local this,operand = unpack( utils.traverse( typedb, node))
+	return applyCallable( node, this, operator, {operand})
+end
+function typesystem.unop( node, operator)
+	local this = unpack( utils.traverse( typedb, node))
+	return applyCallable( node, this, operator, {})
 end
 function typesystem.operator( node, operator)
 	local args = utils.traverse( typedb, node)
@@ -2270,38 +2279,38 @@ function typesystem.operator_array( node, operator)
 	end
 end
 function typesystem.free_expression( node)
-	local arg = utils.traverse( typedb, node)
-	if arg[1].type == controlTrueType or arg[1].type == controlFalseType then
-		return {code=arg[1].constructor.code .. utils.constructor_format( llvmir.control.label, {inp=arg[1].constructor.out})}
+	local operand = unpack( utils.traverse( typedb, node))
+	if operand.type == controlTrueType or operand.type == controlFalseType then
+		return {code=operand.constructor.code .. utils.constructor_format( llvmir.control.label, {inp=operand.constructor.out})}
 	else
-		return {code=arg[1].constructor.code}
+		return {code=operand.constructor.code}
 	end
 end
 function typesystem.codeblock( node, context)
 	local code = ""
-	local arg = utils.traverse( typedb, node, context)
+	local args = utils.traverse( typedb, node, context)
 	local nofollow = false
-	for ai=1,#arg do if arg[ ai] then
-		nofollow = arg[ ai].nofollow
-		if nofollow == true and ai ~= #arg then utils.errorMessage( node.line, "Unreachable code inside code block") end
-		code = code .. arg[ ai].code
+	for ai=1,#args do if args[ ai] then
+		nofollow = args[ ai].nofollow
+		if nofollow == true and ai ~= #args then utils.errorMessage( node.line, "Unreachable code inside code block") end
+		code = code .. args[ ai].code
 	end end
-	local follow; if #arg > 0 then follow = arg[#arg].follow end
+	local follow; if #args > 0 then follow = args[#args].follow end
 	return {code=getAllocationScopeCodeBlock( code), nofollow=nofollow,follow=follow}
 end
 function typesystem.return_value( node)
-	local arg = utils.traverse( typedb, node)
+	local operand = unpack( utils.traverse( typedb, node))
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
 	setImplicitEndCode( nil)
 	if doReturnValueAsReferenceParameter( rtype) then
 		local reftype = referenceTypeMap[ rtype]
-		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {arg[1]})
+		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {operand})
 		setImplicitEndCode( llvmir.control.returnFromProcedure)
 		return {code = rt.constructor.code, nofollow=true}
 	else
-		local constructor = getRequiredTypeConstructor( node, rtype, arg[1], tagmask_matchParameter, tagmask_typeConversion)
+		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
 		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
 		setImplicitEndCode( utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out}))
 		return {code = constructor.code, nofollow=true}
@@ -2318,13 +2327,13 @@ function typesystem.conditional_else( node, context, exitLabel)
 	return utils.traverse( typedb, node, context)[1]
 end
 function typesystem.conditional_elseif( node, context, exitLabel)
-	local arg = utils.traverse( typedb, node, context, exitLabel)
-	return conditionalIfElseBlock( node, arg[1], arg[2], arg[3], exitLabel)
+	local condition,yesblock,noblock = unpack( utils.traverse( typedb, node, context, exitLabel))
+	return conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
 end
 function typesystem.conditional_if( node, context)
-	local exitLabel; if #node.arg >= 3 then exitLabel = getCallableEnvironment().label() end
-	local arg = utils.traverse( typedb, node, context, exitLabel)
-	local rt = conditionalIfElseBlock( node, arg[1], arg[2], arg[3], exitLabel)
+	local exitLabel; if #node.arg >= 3 then exitLabel = getCallableEnvironment().label() else exitLabel = nil end
+	local condition,yesblock,noblock = unpack( utils.traverse( typedb, node, context, exitLabel))
+	local rt = conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
 	if rt.exitLabelUsed == true then
 		rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel})
 		rt.follow = true
@@ -2332,18 +2341,18 @@ function typesystem.conditional_if( node, context)
 	return rt
 end
 function typesystem.conditional_while( node, context, bla)
-	local arg = utils.traverse( typedb, node, context)
-	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, arg[1], tagmask_matchParameter, tagmask_typeConversion)
-	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(arg[1].type)) end
+	local condition,yesblock = unpack( utils.traverse( typedb, node, context))
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
+	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local env = getCallableEnvironment()
 	local start = env.label()
 	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
-	return {code = startcode .. cond_constructor.code .. arg[2].code 
+	return {code = startcode .. cond_constructor.code .. yesblock.code 
 			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
 end
 function typesystem.with_do( node, context)
-	local arg = utils.traverseRange( typedb, node, {1,1}, context)
-	pushSeekContextType( arg[1])
+	local operand = unpack( utils.traverseRange( typedb, node, {1,1}, context))
+	pushSeekContextType( operand)
 	if #node.arg >= 2 then return utils.traverseRange( typedb, node, {2,2}, context)[2] end
 end
 function typesystem.typehdr( node, qualifier)
@@ -2354,11 +2363,10 @@ function typesystem.typehdr_any( node, typeName)
 end
 function typesystem.typegen_generic( node, context)
 	local typeInstance = nil
-	local arg = utils.traverse( typedb, node, context)
-	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected on left hand of generic or array declaration instead of '%s'", typedb:type_string(arg[1].type)) end
-	local genericType,instArg = arg[1].type,arg[2]
-	local qs = typeQualiSepMap[ genericType]
-	if not qs then utils.errorMessage( node.line, "Non generic/array type with instantiation operator '[ ]'", typedb:type_string(genericType)) end
+	local genericType,instArg = unpack( utils.traverse( typedb, node, context))
+	if genericType.constructor then utils.errorMessage( node.line, "Data type expected on left hand of generic or array declaration instead of '%s'", typedb:type_string(genericType.type)) end
+	local qs = typeQualiSepMap[ genericType.type]
+	if not qs then utils.errorMessage( node.line, "Non generic/array type with instantiation operator '[ ]'", typedb:type_string(genericType.type)) end
 	local genericDescr = typeDescriptionMap[ qs.lval]
 	if string.sub(genericDescr.class,1,8) == "generic_" then
 		typeInstance = getOrCreateGenericType( node, qs.lval, genericDescr, instArg)
@@ -2371,9 +2379,9 @@ function typesystem.typegen_generic( node, context)
 	return {type=typeInstance}
 end
 function typesystem.typegen_pointer( node, attr, context)
-	local arg = utils.traverse( typedb, node, context)
-	local pointeeTypeId = arg[1].type
-	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected to create pointer from (operator '^') instead of '%s'", typedb:type_string(pointeeTypeId)) end
+	local pointeeType = unpack( utils.traverse( typedb, node, context))
+	local pointeeTypeId = pointeeType.type
+	if pointeeType.constructor then utils.errorMessage( node.line, "Data type expected to create pointer from (operator '^') instead of '%s'", typedb:type_string(pointeeTypeId)) end
 	local typeInstance = pointerTypeMap[ pointeeTypeId]
 	if not typeInstance then
 		local qs = typeQualiSepMap[ pointeeTypeId]
@@ -2383,14 +2391,14 @@ function typesystem.typegen_pointer( node, attr, context)
 	return {type=typeInstance}
 end
 function typesystem.typespec( node)
-	local arg = utils.traverse( typedb, node)
-	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' on the left hand of a variable declaration", typedb:type_string(arg[1].type)) end
-	return arg[1].type
+	local datatype = unpack( utils.traverse( typedb, node))
+	if datatype.constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' on the left hand of a variable declaration", typedb:type_string(datatype.type)) end
+	return datatype.type
 end
 function typesystem.typespec_ref( node, qualifier)
-	local arg = utils.traverse( typedb, node)
-	if arg[1].constructor then utils.errorMessage( node.line, "Data type expected as data type specifier instead of '%s'", typedb:type_string(arg[1].type)) end
-	return referenceTypeMap[ arg[1].type] or utils.errorMessage( node.line, "Type '%s' has no reference type", typedb:type_string(arg[1].type))
+	local datatype = unpack( utils.traverse( typedb, node))
+	if datatype.constructor then utils.errorMessage( node.line, "Data type expected as data type specifier instead of '%s'", typedb:type_string(datatype.type)) end
+	return referenceTypeMap[ datatype.type] or utils.errorMessage( node.line, "Type '%s' has no reference type", typedb:type_string(datatype.type))
 end
 function typesystem.constant( node, typeName)
 	local typeId = hardcodedTypeMap[ typeName]
@@ -2432,11 +2440,11 @@ function typesystem.linkage( node, llvm_linkage, context)
 end
 function typesystem.funcdef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,2}, context)
+		local lnk,name = unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
-		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+				name=name, symbol=name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstFunctionDeclaration( node, context, descr, 3)
 	end
@@ -2447,11 +2455,11 @@ function typesystem.funcdef( node, context, pass)
 end
 function typesystem.procdef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,2}, context)
+		local lnk,name = unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
-		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, throws=decl.throws, interface=false,
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+				name = name, symbol = name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		allocNodeData( node, descr)
 		traverseAstProcedureDeclaration( node, context, descr, 3)
@@ -2462,26 +2470,26 @@ function typesystem.procdef( node, context, pass)
 	end
 end
 function typesystem.generic_funcdef( node, context)
-	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+	local lnk,name,generic_arg = unpack( utils.traverseRange( typedb, node, {1,3}, context))
 	local decl = utils.traverseRange( typedb, node, {5,5}, context, descr, 0)[5] -- decl {const,throws}
 	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
-	defineGenericType( node, context, arg[2], llvmir.genericFunctionDescr, arg[3], decl.const, decl.throws, arg[1].linkage.private)
+	defineGenericType( node, context, name, llvmir.genericFunctionDescr, generic_arg, decl.const, decl.throws, lnk.linkage.private)
 end
 function typesystem.generic_procdef( node, context)
-	local arg = utils.traverseRange( typedb, node, {1,3}, context)
+	local lnk,name,generic_arg = unpack( utils.traverseRange( typedb, node, {1,3}, context))
 	local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
-	defineGenericType( node, context, arg[2], llvmir.genericProcedureDescr, arg[3], decl.const, decl.throws, arg[1].linkage.private)
+	defineGenericType( node, context, name, llvmir.genericProcedureDescr, generic_arg, decl.const, decl.throws, lnk.linkage.private)
 end
 function typesystem.operatordecl( node, opr)
 	return opr
 end
 function typesystem.operator_funcdef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,3}, context) -- linkage, operatordecl, retvaluetype
+		local lnk, operatordecl, ret = unpack( utils.traverseRange( typedb, node, {1,3}, context))
 		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
-		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+				name=operatordecl.name, symbol ="$"..operatordecl.symbol, ret=ret, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 		descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
@@ -2497,10 +2505,10 @@ function typesystem.operator_funcdef( node, context, pass)
 end
 function typesystem.operator_procdef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,2}, context) -- linkage, operatordecl
+		local lnk, operatordecl = unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
-		local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const, throws=decl.throws, interface=false,
+		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+				name = operatordecl.name, symbol = "$" .. operatordecl.symbol, ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
@@ -2516,11 +2524,11 @@ function typesystem.operator_procdef( node, context, pass)
 end
 function typesystem.constructordef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,1}, context) -- linkage
+		local lnk = unpack( utils.traverseRange( typedb, node, {1,1}, context))
 		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
 		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
-		local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=decl.const, throws=decl.throws, interface=false,
+		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+				name = ":=", symbol = "$ctor", ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
@@ -2536,7 +2544,7 @@ end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,1}, context)
+		utils.traverseRange( typedb, node, {1,1}, context)
 		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
 		               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false, interface=false}
 		context.properties.destructor = true
@@ -2588,70 +2596,66 @@ function typesystem.extern_paramdeflist( node, context)
 end
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4],
-	               vararg=false, signature=""}
+	local lang,name,ret,param = unpack( utils.traverse( typedb, node, context))
+	local descr = {call=llvmir.control.functionCall, externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=false, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef( node)
 	local context = {domain="global"}
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3],
-	               vararg=false, signature=""}
+	local lang,name,param = unpack( utils.traverse( typedb, node, context))
+	local descr = {call=llvmir.control.procedureCall, externtype=lang, name=name, symbol=name, param=param, vararg=false, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_funcdef_vararg( node)
 	local context = {domain="global"}
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.functionCall, externtype = arg[1], name = arg[2], symbol = arg[2], ret = arg[3], param = arg[4],
-	               vararg=true, signature=""}
+	local lang,name,ret,param = unpack( utils.traverse( typedb, node, context))
+	local descr = {call=llvmir.control.functionCall, externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=true, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef_vararg( node)
 	local context = {domain="global"}
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {call = llvmir.control.procedureCall, externtype = arg[1], name = arg[2], symbol = arg[2], param = arg[3],
-	               vararg=true, signature=""}
+	local lang,name,param = unpack( utils.traverse( typedb, node, context))
+	local descr = {call=llvmir.control.procedureCall, externtype=lang, name=name, symbol=name, param=param, vararg=true, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.typedef_functype( node, decl, context)
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {ret = arg[2], param = arg[3], name=arg[1], signature="", throws=decl.throws}
+	local name,ret,param = unpack( utils.traverse( typedb, node, context))
+	local descr = {ret=ret, param=param, name=name, signature="", throws=decl.throws}
 	defineFunctionVariableType( node, descr, context)
 end
 function typesystem.typedef_proctype( node, decl, context)
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {ret = nil, param = arg[2], name=arg[1], throws=decl.throws}
+	local name,param = unpack( utils.traverse( typedb, node, context))
+	local descr = {ret = nil, param=param, name=name, throws=decl.throws}
 	defineProcedureVariableType( node, descr, context)
 end
-function typesystem.interface_funcdef( node, decl, context)
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", private=false, const=decl.const, throws=decl.throws,
+function typesystem.interface_funcdef( node, context)
+	local name,ret,param,decl = unpack( utils.traverse( typedb, node, context))
+	local descr = {name=name, symbol=name, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceMethod( node, descr, context)
 end
-function typesystem.interface_procdef( node, decl, context)
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", private=false, const=decl.const, throws=decl.throws,
+function typesystem.interface_procdef( node, context)
+	local name,param,decl = unpack( utils.traverse( typedb, node, context))
+	local descr = {name=name, symbol=name, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
 	defineInterfaceMethod( node, descr, context)
 end
-function typesystem.interface_operator_funcdef( node, decl, context)
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", private=false, const=decl.const, throws=decl.throws,
+function typesystem.interface_operator_funcdef( node, context)
+	local opr,ret,param,decl = unpack( utils.traverse( typedb, node, context))
+	local descr = {name=opr.name, symbol = "$"..opr.symbol, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 			index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceOperator( node, descr, context)
 end
-function typesystem.interface_operator_procdef( node, decl, context)
-	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2], signature = "", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
+function typesystem.interface_operator_procdef( node, context)
+	local opr,param,decl = unpack( utils.traverse( typedb, node, context))
+	local descr = {name=opr.name, symbol="$"..opr.symbol, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
+	               index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod, call=context.descr.procedureCall}
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.namespacedef( node, context)
@@ -2720,9 +2724,9 @@ function typesystem.generic_classdef( node, context)
 end
 function typesystem.inheritdef( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
-		local arg = utils.traverseRange( typedb, node, {1,1}, context)
-		local typeId = arg[1].type
-		if arg[1].constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' to inherit from", typedb:type_string(typeId)) end
+		local operand = unpack( utils.traverseRange( typedb, node, {1,1}, context))
+		local typeId = operand.type
+		if operand.constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' to inherit from", typedb:type_string(typeId)) end
 		local descr = typeDescriptionMap[ typeId]
 		local typnam = typedb:type_name(typeId)
 		local private = false
@@ -2737,26 +2741,6 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 		end
 		if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, pass_selected) end
 	end
-end
-function typesystem.main_procdef( node)
-	local prev_scope = typedb:scope( node.scope)
-	local context = {domain="local"}
-	defineMainProcContext( node, context)
-	typedb:scope( prev_scope)
-	local arg = utils.traverse( typedb, node, context)
-	local scope_bk = typedb:scope( {} ) -- set global scope
-	instantCallableEnvironment = mainCallableEnvironment
-	setImplicitEndCode( llvmir.control.implicitReturnFromMain)
-	local descr = {body = getAllocationScopeCodeBlock( arg[1].code)}
-	instantCallableEnvironment = nil
-	typedb:scope( scope_bk)
-	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
-end
-function typesystem.program( node)
-	initBuiltInTypes()
-	mainCallableEnvironment = createCallableEnvironment( nil, "%ir", "IL")
-	utils.traverse( typedb, node, {domain="global"})
-	return node
 end
 function typesystem.count( node)
 	if #node.arg == 0 then
@@ -2777,6 +2761,26 @@ end
 function typesystem.member( node)
 	local arg = utils.traverse( typedb, node)
 	return applyCallable( node, arg[1], arg[2])
+end
+function typesystem.main_procdef( node)
+	local prev_scope = typedb:scope( node.scope)
+	local context = {domain="local"}
+	defineMainProcContext( node, context)
+	typedb:scope( prev_scope)
+	local codeblock = unpack( utils.traverse( typedb, node, context))
+	local scope_bk = typedb:scope( {} ) -- set global scope
+	instantCallableEnvironment = mainCallableEnvironment
+	setImplicitEndCode( llvmir.control.implicitReturnFromMain)
+	local descr = {body = getAllocationScopeCodeBlock( codeblock.code)}
+	instantCallableEnvironment = nil
+	typedb:scope( scope_bk)
+	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
+end
+function typesystem.program( node)
+	initBuiltInTypes()
+	mainCallableEnvironment = createCallableEnvironment( nil, "%ir", "IL")
+	utils.traverse( typedb, node, {domain="global"})
+	return node
 end
 
 return typesystem
