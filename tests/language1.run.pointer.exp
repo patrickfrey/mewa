@@ -1,0 +1,5 @@
+CALL printNumber [31] 3.110000
+CALL printNumber [4] 4.220000
+CALL printNumber [42] 7.220000
+CALL printNumber [42] 19.100000
+RES cnt = 43

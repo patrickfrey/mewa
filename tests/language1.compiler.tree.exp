@@ -1,82 +1,113 @@
-; ModuleID = 'examples/language1/sources/tree.prg'
-source_filename = "examples/language1/sources/tree.prg"
-target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-linux-gnu"
+
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
 @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
 
-%Tree__Data__1 = type { i32 }
-%Tree__1 = type { %Tree__Data__1, %Tree__1*, %Tree__1* }
-define private dso_local void @__ctor_Tree__Data__1( %Tree__Data__1* %ptr) alwaysinline {
+%Tree__Data = type { i32 }
+%Tree = type { %Tree__Data, %Tree*, %Tree* }
+define private dso_local void @__ctor_Tree__Data( %Tree__Data* %ths) {
 enter:
-%r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
+%r1 = getelementptr inbounds %Tree__Data, %Tree__Data* %ths, i32 0, i32 0
 store i32 0, i32* %r1
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_Tree__Data__1( %Tree__Data__1* %ptr, %Tree__Data__1* %oth) alwaysinline {
+define private dso_local void @__ctor_copy_Tree__Data( %Tree__Data* %ths, %Tree__Data* %oth) {
 enter:
-%r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
-%r2 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %oth, i32 0, i32 0
+%r1 = getelementptr inbounds %Tree__Data, %Tree__Data* %ths, i32 0, i32 0
+%r2 = getelementptr inbounds %Tree__Data, %Tree__Data* %oth, i32 0, i32 0
+%r3 = load i32, i32* %r2
+store i32 %r3, i32* %r1
+br label %end
+end:
+ret void
+}
+define private dso_local void @__ctor_assign_Tree__Data( %Tree__Data* %ths, %Tree__Data* %oth) {
+enter:
+%r1 = getelementptr inbounds %Tree__Data, %Tree__Data* %ths, i32 0, i32 0
+%r2 = getelementptr inbounds %Tree__Data, %Tree__Data* %oth, i32 0, i32 0
 %r4 = load i32, i32* %r2
 store i32 %r4, i32* %r1
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_Tree__Data__1( %Tree__Data__1* %ptr, %Tree__Data__1* %oth) alwaysinline {
+define private dso_local void @__ctor_elements_Tree__Data( %Tree__Data* %ths, i32 %p1) {
 enter:
-%r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
-%r2 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %oth, i32 0, i32 0
-%r5 = load i32, i32* %r2
-store i32 %r5, i32* %r1
+%r1 = getelementptr inbounds %Tree__Data, %Tree__Data* %ths, i32 0, i32 0
+store i32 %p1, i32* %r1
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_elements_Tree__Data__1( %Tree__Data__1* %ptr, i32 %p1) alwaysinline {
-enter:
-%r1 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %ptr, i32 0, i32 0
-store i32 0, i32* %r1
-br label %end
-end:
-ret void
-}
-define private dso_local void @__dtor_Tree__Data__1( %Tree__Data__1* %ptr) alwaysinline {
+define private dso_local void @__dtor_Tree__Data( %Tree__Data* %ths) {
 enter:
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_Tree__1( %Tree__1* %ptr) alwaysinline {
+define private dso_local void @__ctor_Tree( %Tree* %ths) {
 enter:
-%r1 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 0
-call void @__ctor_Tree__Data__1( %Tree__Data__1* %r1)
-%r3 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 1
-store %Tree__1* null, %Tree__1** %r3
-%r8 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 2
-store %Tree__1* null, %Tree__1** %r8
+%r1 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 0
+call void @__ctor_Tree__Data( %Tree__Data* %r1)
+%r3 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 1
+store %Tree* null, %Tree** %r3
+%r7 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 2
+store %Tree* null, %Tree** %r7
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_elements_Tree__1( %Tree__1* %ptr, %Tree__Data__1 %p1, %Tree__1* %p2, %Tree__1* %p3) alwaysinline {
+define private dso_local void @__ctor_copy_Tree( %Tree* %ths, %Tree* %oth) {
 enter:
-%r1 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 0
-call void @__ctor_Tree__Data__1( %Tree__Data__1* %r1)
-%r3 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 1
-store %Tree__1* null, %Tree__1** %r3
-%r8 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 2
-store %Tree__1* null, %Tree__1** %r8
+%r1 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 0
+%r2 = getelementptr inbounds %Tree, %Tree* %oth, i32 0, i32 0
+call void @__ctor_copy_Tree__Data( %Tree__Data* %r1, %Tree__Data* %r2)
+%r3 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 1
+%r4 = getelementptr inbounds %Tree, %Tree* %oth, i32 0, i32 1
+%r5 = load %Tree*, %Tree** %r4
+store %Tree* %r5, %Tree** %r3
+%r7 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 2
+%r8 = getelementptr inbounds %Tree, %Tree* %oth, i32 0, i32 2
+%r9 = load %Tree*, %Tree** %r8
+store %Tree* %r9, %Tree** %r7
 br label %end
 end:
 ret void
 }
-define private dso_local void @__dtor_Tree__1( %Tree__1* %ptr) alwaysinline {
+define private dso_local void @__ctor_assign_Tree( %Tree* %ths, %Tree* %oth) {
 enter:
-%r1 = getelementptr inbounds %Tree__1, %Tree__1* %ptr, i32 0, i32 0
-call void @__dtor_Tree__Data__1( %Tree__Data__1* %r1)
+%r1 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 0
+%r2 = getelementptr inbounds %Tree, %Tree* %oth, i32 0, i32 0
+call void @__ctor_assign_Tree__Data( %Tree__Data* %r1, %Tree__Data* %r2)
+%r3 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 1
+%r4 = getelementptr inbounds %Tree, %Tree* %oth, i32 0, i32 1
+%r6 = load %Tree*, %Tree** %r4
+store %Tree* %r6, %Tree** %r3
+%r7 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 2
+%r8 = getelementptr inbounds %Tree, %Tree* %oth, i32 0, i32 2
+%r10 = load %Tree*, %Tree** %r8
+store %Tree* %r10, %Tree** %r7
+br label %end
+end:
+ret void
+}
+define private dso_local void @__ctor_elements_Tree( %Tree* %ths, %Tree__Data* %p1, %Tree* %p2, %Tree* %p3) {
+enter:
+%r1 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 0
+call void @__ctor_copy_Tree__Data( %Tree__Data* %r1, %Tree__Data* %p1)
+%r3 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 1
+store %Tree* %p2, %Tree** %r3
+%r7 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 2
+store %Tree* %p3, %Tree** %r7
+br label %end
+end:
+ret void
+}
+define private dso_local void @__dtor_Tree( %Tree* %ths) {
+enter:
+%r1 = getelementptr inbounds %Tree, %Tree* %ths, i32 0, i32 0
+call void @__dtor_Tree__Data( %Tree__Data* %r1)
 br label %end
 end:
 ret void
@@ -109,82 +140,88 @@ ret i8* %r2
 define internal void @freemem__i8$( i8* %r1 ) #0 nounwind {
 entry:
 call void @free( i8* %r1)
+br label %exit
+exit:
 ret void
 }
-@g_tree = internal global %Tree__1 zeroinitializer, align 8
+@g_tree = internal global %Tree zeroinitializer, align 8
 @string1 = private unnamed_addr constant [10 x i8] c"Node: %d\0A\00"
 
-define internal void @printTree__Tree__1$__i32( %Tree__1* %r1, i32 %r2 ) #0 nounwind {
+define internal void @printTree__Tree$__i32( %Tree* %r1, i32 %r2 ) #0 nounwind {
 entry:
 %r3 = alloca i32, align 4
 store i32 0, i32* %r3
-br label %L3
-L3:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, %r2
-br i1 %r5, label %L2, label %L1
-L2:
-call void @putchar( i8 32)
-%r9 = load i32, i32* %r3
-%r11 = add nsw i32 %r9, 1
-store i32 %r11, i32* %r3
-br label %L3
-L1:
-%r12 = getelementptr inbounds [10 x i8], [10 x i8]* @string1, i64 0, i64 0
-%r13 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 0
-%r14 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r13, i32 0, i32 0
-%r15 = load i32, i32* %r14
-call void(i8*,  ...) @printf( i8* %r12, i32 %r15)
-%r16 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
-%r17 = load %Tree__1*, %Tree__1** %r16
-%r18 = icmp ne %Tree__1* %r17, null
-br i1 %r18, label %L5, label %L4
-L5:
-%r19 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
-%r22 = load %Tree__1*, %Tree__1** %r19
-%r21 = add nsw i32 %r2, 1
-call void @printTree__Tree__1$__i32( %Tree__1* %r22, i32 %r21)
 br label %L4
 L4:
-%r23 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
-%r24 = load %Tree__1*, %Tree__1** %r23
-%r25 = icmp ne %Tree__1* %r24, null
-br i1 %r25, label %L7, label %L6
-L7:
-%r26 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
-%r29 = load %Tree__1*, %Tree__1** %r26
-%r28 = add nsw i32 %r2, 1
-call void @printTree__Tree__1$__i32( %Tree__1* %r29, i32 %r28)
-br label %L6
+%r4 = load i32, i32* %r3
+%r5 = icmp slt i32 %r4, %r2
+br i1 %r5, label %L3, label %L2
+L3:
+call void @putchar( i8 32)
+%r6 = load i32, i32* %r3
+%r7 = add nsw i32 %r6, 1
+store i32 %r7, i32* %r3
+br label %L4
+L2:
+%r8 = getelementptr inbounds [10 x i8], [10 x i8]* @string1, i64 0, i64 0
+%r9 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 0
+%r10 = getelementptr inbounds %Tree__Data, %Tree__Data* %r9, i32 0, i32 0
+%r11 = load i32, i32* %r10
+call void(i8*,  ...) @printf( i8* %r8, i32 %r11)
+%r12 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 1
+%r13 = load %Tree*, %Tree** %r12
+%r14 = icmp ne %Tree* %r13, null
+br i1 %r14, label %L6, label %L5
 L6:
+%r15 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 1
+%r17 = load %Tree*, %Tree** %r15
+%r16 = add nsw i32 %r2, 1
+call void @printTree__Tree$__i32( %Tree* %r17, i32 %r16)
+br label %L5
+L5:
+%r18 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 2
+%r19 = load %Tree*, %Tree** %r18
+%r20 = icmp ne %Tree* %r19, null
+br i1 %r20, label %L8, label %L7
+L8:
+%r21 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 2
+%r23 = load %Tree*, %Tree** %r21
+%r22 = add nsw i32 %r2, 1
+call void @printTree__Tree$__i32( %Tree* %r23, i32 %r22)
+br label %L7
+L7:
+br label %exit
+exit:
 ret void
 }
 
-define internal void @deleteTree__Tree__1$( %Tree__1* %r1 ) #0 nounwind {
+define internal void @deleteTree__Tree$( %Tree* %r1 ) #0 nounwind {
 entry:
-%r2 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
-%r3 = load %Tree__1*, %Tree__1** %r2
-%r4 = icmp ne %Tree__1* %r3, null
-br i1 %r4, label %L2, label %L1
-L2:
-%r5 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 1
-%r6 = load %Tree__1*, %Tree__1** %r5
-call void @deleteTree__Tree__1$( %Tree__1* %r6)
-br label %L1
-L1:
-%r7 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
-%r8 = load %Tree__1*, %Tree__1** %r7
-%r9 = icmp ne %Tree__1* %r8, null
-br i1 %r9, label %L4, label %L3
-L4:
-%r10 = getelementptr inbounds %Tree__1, %Tree__1* %r1, i32 0, i32 2
-%r11 = load %Tree__1*, %Tree__1** %r10
-call void @deleteTree__Tree__1$( %Tree__1* %r11)
-br label %L3
+%r2 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 1
+%r3 = load %Tree*, %Tree** %r2
+%r4 = icmp ne %Tree* %r3, null
+br i1 %r4, label %L3, label %L2
 L3:
-call void @__dtor_Tree__1( %Tree__1* %r1)
-%r12 = bitcast %Tree__1* %r1 to i8*
+%r5 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 1
+%r6 = load %Tree*, %Tree** %r5
+call void @deleteTree__Tree$( %Tree* %r6)
+br label %L2
+L2:
+%r7 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 2
+%r8 = load %Tree*, %Tree** %r7
+%r9 = icmp ne %Tree* %r8, null
+br i1 %r9, label %L5, label %L4
+L5:
+%r10 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 2
+%r11 = load %Tree*, %Tree** %r10
+call void @deleteTree__Tree$( %Tree* %r11)
+br label %L4
+L4:
+call void @__dtor_Tree( %Tree* %r1)
+%r12 = bitcast %Tree* %r1 to i8*
 call void @freemem__i8$( i8* %r12)
+br label %exit
+exit:
 ret void
 }
 @string2 = private unnamed_addr constant [8 x i8] c"VAL %d\0A\00"
@@ -194,74 +231,47 @@ declare dso_local i32 @__gxx_personality_v0(...)
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
 entry:
-%r25 = alloca %Tree__1*
-%r19 = call i8* @allocmem__i64( i64 24)
-%r20 = bitcast i8* %r19 to %Tree__1*
-%r21 = getelementptr inbounds %Tree__1, %Tree__1* %r20, i32 0, i32 0
-%r22 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r21, i32 0, i32 0
-store i32 11, i32* %r22
-%r23 = getelementptr inbounds %Tree__1, %Tree__1* %r20, i32 0, i32 1
+call void @__ctor_Tree( %Tree* @g_tree)
+%r21 = alloca %Tree*
+%r16 = call i8* @allocmem__i64( i64 24)
+%r17 = bitcast i8* %r16 to %Tree*
+%r19 = alloca %Tree__Data, align 8
+call void @__ctor_elements_Tree__Data( %Tree__Data* %r19, i32 11)
 %r1 = call i8* @allocmem__i64( i64 24)
-%r2 = bitcast i8* %r1 to %Tree__1*
-%r3 = getelementptr inbounds %Tree__1, %Tree__1* %r2, i32 0, i32 0
-%r4 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r3, i32 0, i32 0
-store i32 1, i32* %r4
-%r5 = getelementptr inbounds %Tree__1, %Tree__1* %r2, i32 0, i32 1
-store %Tree__1* null, %Tree__1** %r5
-%r6 = getelementptr inbounds %Tree__1, %Tree__1* %r2, i32 0, i32 2
-store %Tree__1* null, %Tree__1** %r6
-store %Tree__1* %r2, %Tree__1** %r23
-%r24 = getelementptr inbounds %Tree__1, %Tree__1* %r20, i32 0, i32 2
-%r13 = call i8* @allocmem__i64( i64 24)
-%r14 = bitcast i8* %r13 to %Tree__1*
-%r15 = getelementptr inbounds %Tree__1, %Tree__1* %r14, i32 0, i32 0
-%r16 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r15, i32 0, i32 0
-store i32 2, i32* %r16
-%r17 = getelementptr inbounds %Tree__1, %Tree__1* %r14, i32 0, i32 1
-store %Tree__1* null, %Tree__1** %r17
-%r18 = getelementptr inbounds %Tree__1, %Tree__1* %r14, i32 0, i32 2
-%r7 = call i8* @allocmem__i64( i64 24)
-%r8 = bitcast i8* %r7 to %Tree__1*
-%r9 = getelementptr inbounds %Tree__1, %Tree__1* %r8, i32 0, i32 0
-%r10 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r9, i32 0, i32 0
-store i32 22, i32* %r10
-%r11 = getelementptr inbounds %Tree__1, %Tree__1* %r8, i32 0, i32 1
-store %Tree__1* null, %Tree__1** %r11
-%r12 = getelementptr inbounds %Tree__1, %Tree__1* %r8, i32 0, i32 2
-store %Tree__1* null, %Tree__1** %r12
-store %Tree__1* %r8, %Tree__1** %r18
-store %Tree__1* %r14, %Tree__1** %r24
-store %Tree__1* %r20, %Tree__1** %r25
-%r26 = getelementptr inbounds [8 x i8], [8 x i8]* @string2, i64 0, i64 0
-%r27 = load %Tree__1*, %Tree__1** %r25
-%r28 = getelementptr inbounds %Tree__1, %Tree__1* %r27, i32 0, i32 0
-%r29 = getelementptr inbounds %Tree__Data__1, %Tree__Data__1* %r28, i32 0, i32 0
-%r30 = load i32, i32* %r29
-call void(i8*,  ...) @printf( i8* %r26, i32 %r30)
-%r31 = load %Tree__1*, %Tree__1** %r25
-call void @printTree__Tree__1$__i32( %Tree__1* %r31, i32 0)
-%r32 = load %Tree__1*, %Tree__1** %r25
-call void @deleteTree__Tree__1$( %Tree__1* %r32)
-%r33 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r33)
+%r2 = bitcast i8* %r1 to %Tree*
+%r4 = alloca %Tree__Data, align 8
+call void @__ctor_elements_Tree__Data( %Tree__Data* %r4, i32 1)
+call void @__ctor_elements_Tree( %Tree* %r2, %Tree__Data* %r4, %Tree* null, %Tree* null)
+%r11 = call i8* @allocmem__i64( i64 24)
+%r12 = bitcast i8* %r11 to %Tree*
+%r14 = alloca %Tree__Data, align 8
+call void @__ctor_elements_Tree__Data( %Tree__Data* %r14, i32 2)
+%r6 = call i8* @allocmem__i64( i64 24)
+%r7 = bitcast i8* %r6 to %Tree*
+%r9 = alloca %Tree__Data, align 8
+call void @__ctor_elements_Tree__Data( %Tree__Data* %r9, i32 22)
+call void @__ctor_elements_Tree( %Tree* %r7, %Tree__Data* %r9, %Tree* null, %Tree* null)
+call void @__ctor_elements_Tree( %Tree* %r12, %Tree__Data* %r14, %Tree* null, %Tree* %r7)
+call void @__ctor_elements_Tree( %Tree* %r17, %Tree__Data* %r19, %Tree* %r2, %Tree* %r12)
+store %Tree* %r17, %Tree** %r21
+%r22 = getelementptr inbounds [8 x i8], [8 x i8]* @string2, i64 0, i64 0
+%r23 = load %Tree*, %Tree** %r21
+%r24 = getelementptr inbounds %Tree, %Tree* %r23, i32 0, i32 0
+%r25 = getelementptr inbounds %Tree__Data, %Tree__Data* %r24, i32 0, i32 0
+%r26 = load i32, i32* %r25
+call void(i8*,  ...) @printf( i8* %r22, i32 %r26)
+%r27 = load %Tree*, %Tree** %r21
+call void @printTree__Tree$__i32( %Tree* %r27, i32 0)
+%r28 = load %Tree*, %Tree** %r21
+call void @deleteTree__Tree$( %Tree* %r28)
+%r29 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r29)
+br label %IL2
+IL2:
+call void @__dtor_Tree( %Tree* @g_tree)
 br label %exit
 exit:
 ret i32 0
 }
 
 
-attributes #0 = {
-	"disable-tail-calls"="false" "frame-pointer"="all" "min-legal-vector-width"="0" 
-	"correctly-rounded-divide-sqrt-fp-math"="false" "less-precise-fpmad"="false" "no-infs-fp-math"="false" 
-	"no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "unsafe-fp-math"="false" 
-	"no-jump-tables"="false" "stack-protector-buffer-size"="8" 
-	"target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "use-soft-float"="false"
-}
-attributes #1 = {
-	"no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" }
-
-!llvm.module.flags = !{!0}
-!llvm.ident = !{!1}
-
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{!"clang version 10.0.0-4ubuntu1 "}

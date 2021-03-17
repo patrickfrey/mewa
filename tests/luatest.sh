@@ -43,10 +43,19 @@ fi
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then
 echo "${ORANGE}Building tables for dump of example \"language1\" ...${NOCOL}"
 /usr/bin/time -f "Running for %e seconds"\
-    build/mewa -b "$LUABIN" -d build/language1.debug.out -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
+    build/mewa -b "$LUABIN" -d build/language1.debug.tmp -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
 chmod +x build/language1.dump.lua
 echo "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
-build/language1.dump.lua > build/language1.dump.lua.out
+build/language1.dump.lua > build/language1.dump.lua.tmp
+cat build/language1.dump.lua.tmp\
+	| sed -E 's@\[[0-9][0-9]*\] = [0-9][0-9]*@\[XX\] = YY@g' | uniq > build/language1.dump.lua.out
+cat build/language1.debug.tmp\
+	| sed -E 's@^\[[0-9][0-9]*\]@\[XX\]@g'\
+	| sed -E 's@FOLLOW \[[0-9][0-9]*\]@FOLLOW \[XX\]@g'\
+	| sed -E 's@\([0-9][0-9]*\)@\(XX\)@g'\
+	| sed -E 's@GOTO [0-9][0-9]*@GOTO XX@g'\
+	| sed -E 's@goto [0-9][0-9]*@goto XX@g'\
+	| sed -E 's@=> [0-9][0-9]*@=> XX@g' > build/language1.debug.out
 verify_test_result "Check dump automaton read by Lua script"  build/language1.dump.lua.out tests/language1.dump.lua.exp
 verify_test_result "Check dump states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp
 fi
@@ -65,8 +74,10 @@ do
 		echo "${ORANGE}* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`"${NOCOL}"
 		echo "Compile program examples/language1/sources/$tst.prg to LLVM IR"
 		/usr/bin/time -f "Running for %e seconds"\
-			build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.dbg -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
-		cat build/language1.debug.$tst.dbg | sed -E 's/goto [0-9][0-9]*/goto XXX/g' | sed -E 's/state [0-9][0-9]*/state XXX/g' > build/language1.debug.$tst.out
+			build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.tmp -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
+		cat build/language1.debug.$tst.tmp\
+			| sed -E 's/goto [0-9][0-9]*/goto XXX/g'\
+			| sed -E 's/state [0-9][0-9]*/state XXX/g' > build/language1.debug.$tst.out
 		LN=`grep -n 'attributes #0' build/language1.compiler.$tst.llr | awk -F: '{print $1}'`
 		head -n `expr $LN - 1` build/language1.compiler.$tst.llr | tail -n `expr $LN - 5` > build/language1.compiler.$tst.out
 		verify_test_result "Lua test ($tst debug) compiling example program with language1 compiler" \
