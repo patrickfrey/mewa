@@ -341,6 +341,7 @@ static RelationQuery selectRelQuery( const NodeDefTree* nd)
 static std::string findVariable( const NodeDefTree* nd, const std::string& var, Scope::Step step)
 {
 	std::string rt;
+	if (var == "A" && step == 2033778558) {fprintf(stderr,"++++ FIND SCOPE [%d,%d] STEP %d\n", (int)nd->item.scope.start(), (int)nd->item.scope.end(), (int)step); fflush(stderr);}
 	if (nd->item.scope.contains( step))
 	{
 		if (nd->chld)
@@ -780,7 +781,7 @@ static void testRandomScope( int maxdepth, int maxwidth, int maxnofnodes, int ma
 	int nofTagsUsed = g_random.get( 1, g_random.get( 1, noftags));
 	int depth = g_random.get( 1, maxdepth+1);
 	int members = g_random.get( 1, maxnofmembers+1);
-	Scope scope( 0, g_random.get( 1, std::numeric_limits<int>::max()));
+	Scope scope( 0, g_random.get( 1, 1<<30));
 	std::unique_ptr<NodeDefTree> tree;
 	int nodecnt = 0;
 	do

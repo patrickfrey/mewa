@@ -19,14 +19,11 @@ endif
 # Debug and release flags, RELEASE=Y highest optimization level else create debug symbols and buil with lowest optimization level
 ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(RELEASE)))),Y)
 DEBUGOPTFLAGS:=-O3
-TEST_DEBUGOPTFLAGS:=-O2
 else
 ifeq ($(strip $(CC)),clang)
 DEBUGOPTFLAGS:=-ggdb -g3 -O0 -fstandalone-debug
-TEST_DEBUGOPTFLAGS:=-ggdb -g3 -O0 -fstandalone-debug
 else
 DEBUGOPTFLAGS:=-ggdb -g3 -O0
-TEST_DEBUGOPTFLAGS:=-ggdb -g3 -O0
 endif
 endif
 
@@ -34,7 +31,6 @@ endif
 # used for structures intended to be allocated on the stack. This must not be set in a release build and not in all cases of a debug build.
 ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(TESTLOCALMEM)))),Y)
 DEBUGOPTFLAGS:=$(DEBUGOPTFLAGS) -DMEWA_TEST_LOCAL_MEMORY_RESOURCE
-TEST_DEBUGOPTFLAGS:=$(TEST_DEBUGOPTFLAGS) -DMEWA_TEST_LOCAL_MEMORY_RESOURCE
 endif
 
 # Switch verbosity on for build and make test/check
@@ -115,7 +111,7 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(MAKEDEP)
 	$(CC) $(CXXFLAGS) $(DEBUGOPTFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp $(MAKEDEP)
-	$(CC) $(CXXFLAGS) $(TEST_DEBUGOPTFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) $(DEBUGOPTFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
 	$(AR) $(LIBRARY) $(LIBOBJS)
