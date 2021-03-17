@@ -2176,13 +2176,13 @@ function typesystem.funcattribute( node, decl)
 	for key,val in pairs(decl) do rt[key] = val end
 	return rt
 end
-function typesystem.structure( node, context)
-	local arg = utils.traverse( typedb, node, context)
+function typesystem.structure( node)
+	local arg = utils.traverse( typedb, node)
 	return {type=constexprStructureType, constructor=arg}
 end
-function typesystem.allocate( node, context)
+function typesystem.allocate( node)
 	local env = getCallableEnvironment()
-	local typeId,expression = unpack( utils.traverse( typedb, node, context))
+	local typeId,expression = unpack( utils.traverse( typedb, node))
 	local pointerTypeId = pointerTypeMap[typeId]
 	if not pointerTypeId then utils.errorMessage( node.line, "Only non pointer type allowed in %s", "new") end
 	local refTypeId = referenceTypeMap[ typeId]
@@ -2199,9 +2199,9 @@ function typesystem.allocate( node, context)
 	rt.type = pointerTypeId
 	return rt
 end
-function typesystem.typecast( node, context)
+function typesystem.typecast( node)
 	local env = getCallableEnvironment()
-	local typeId,operand = unpack( utils.traverse( typedb, node, context))
+	local typeId,operand = unpack( utils.traverse( typedb, node))
 	local descr = typeDescriptionMap[ typeId]
 	if doCastToReferenceType( typeId) then typeId = referenceTypeMap[ constTypeMap[ typeId]] end
 	if operand then
@@ -2212,9 +2212,12 @@ function typesystem.typecast( node, context)
 		return tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
 	end
 end
-function typesystem.delete( node, context)
+function typesystem.throw_exception( node)
+	utils.errorMessage( node.line, "Throw exception not implemented")
+end
+function typesystem.delete( node)
 	local env = getCallableEnvironment()
-	local operand = unpack( utils.traverse( typedb, node, context))
+	local operand = unpack( utils.traverse( typedb, node))
 	local typeId = operand.type
 	local out,code = constructorParts( operand.constructor)
 	local res = applyCallable( node, {type=typeId,constructor={code=code,out=out}}, " delete")

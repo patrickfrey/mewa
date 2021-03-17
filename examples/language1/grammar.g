@@ -231,6 +231,7 @@ expression/L1		= "{" expressionlist "}"							(structure)
 			| "{" "}"									(structure)
 			| "new" typespec ":" expression							(allocate)
 			| "cast" typespec ":" expression						(typecast)
+			| "throw" expression								(throw_exception)
 			;
 expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
