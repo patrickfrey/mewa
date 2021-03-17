@@ -65,7 +65,8 @@ do
 		echo "${ORANGE}* Lua test '$tst': "`head -n1 examples/language1/sources/$tst.prg | sed s@//@@`"${NOCOL}"
 		echo "Compile program examples/language1/sources/$tst.prg to LLVM IR"
 		/usr/bin/time -f "Running for %e seconds"\
-			build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.out -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
+			build/language1.compiler.lua -t $TARGET -d build/language1.debug.$tst.dbg -o build/language1.compiler.$tst.llr examples/language1/sources/$tst.prg
+		cat build/language1.debug.$tst.dbg | sed -E 's/goto [0-9][0-9]*/goto XXX/g' | sed -E 's/state [0-9][0-9]*/state XXX/g' > build/language1.debug.$tst.out
 		LN=`grep -n 'attributes #0' build/language1.compiler.$tst.llr | awk -F: '{print $1}'`
 		head -n `expr $LN - 1` build/language1.compiler.$tst.llr | tail -n `expr $LN - 5` > build/language1.compiler.$tst.out
 		verify_test_result "Lua test ($tst debug) compiling example program with language1 compiler" \
