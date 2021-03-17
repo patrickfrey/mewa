@@ -245,12 +245,12 @@ int TypeDatabase::defineType( const Scope& scope, int contextType, const std::st
 	return typerec;
 }
 
-bool TypeDatabase::defineTypeAs( const Scope& scope, int contextType, const std::string_view& name, int type)
+int TypeDatabase::defineTypeAs( const Scope& scope, int contextType, const std::string_view& name, int type)
 {
 	if (contextType < 0 || contextType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", contextType));
-
+	if (type <= 0 || type > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", type));
 	TypeDef typeDef( contextType, m_identMap->get( name));
-	return m_typeTable->set( scope, typeDef, type) ? type : -1;
+	return m_typeTable->set( scope, typeDef, type) ? type : 0;
 }
 
 void TypeDatabase::defineReduction( const Scope& scope, int toType, int fromType, int constructor, int tag, float weight)

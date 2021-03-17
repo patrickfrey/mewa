@@ -196,7 +196,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 		std::set<std::string_view> usedSet;
 		std::map<Automaton::Call, int> callmap;
 		Priority priority;
-		Automaton::Call::ArgumentType call_argtype;
+		Automaton::Call::ArgumentType call_argtype = Automaton::Call::NoArg;
 		std::string call_function;
 		std::string call_arg;
 		int selectidx = 0;

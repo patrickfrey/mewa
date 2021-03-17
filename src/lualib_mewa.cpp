@@ -261,7 +261,9 @@ static int mewa_llvm_float_tohex( lua_State* ls)
 		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 		double num = mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 1);
 		char buf[ 64];
-		int64_t encnum = (*(int64_t*)&num >> 28);
+		int64_t encnum;
+		std::memmove( &encnum, &num, sizeof( encnum));
+		encnum >>= 28;
 		bool doinc = (encnum & 1);
 		if (doinc) ++encnum;
 		encnum = (encnum >> 1);
@@ -284,7 +286,8 @@ static int mewa_llvm_double_tohex( lua_State* ls)
 		mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 1/*maxNofArgs*/);
 		double num = mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 1);
 		char buf[ 64];
-		int64_t encnum = *(int64_t*)&num;
+		int64_t encnum;
+		std::memmove( &encnum, &num, sizeof( encnum));
 		const char* fmt64 = sizeof(long) == 8 ? "%lx" : "%llx";
 		std::snprintf( buf, sizeof(buf), fmt64, encnum);
 		for (char* bi = buf; *bi; ++bi) if (*bi >= 'a' && *bi <= 'z') {*bi -= 32;}

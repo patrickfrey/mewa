@@ -31,12 +31,12 @@ cd mewa
 
 ### Build with GNU C/C++
 ```Bash
-make -DCOMPILER=gcc -DRELEASE=true
+make COMPILER=gcc RELEASE=YES
 ```
 
 ### Build with Clang C/C++
 ```Bash
-make -DCOMPILER=clang -DRELEASE=true
+make COMPILER=clang RELEASE=YES
 ```
 
 ### Run tests
