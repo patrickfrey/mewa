@@ -160,8 +160,9 @@ function assignFunctionPointerConstructor( descr)
 	return function( this, arg)
 		local scope_bk = typedb:scope( typedb:type_scope( arg[1].type))
 		local functype = typedb:get_type( arg[1].type, "()", descr.param)
+		local functypeDescr = typeDescriptionMap[ functype]
 		typedb:scope( scope_bk)
-		if functype then return assign( this, {{out="@" .. typeDescriptionMap[ functype].symbolname}}) end
+		if functype and descr.throws == functypeDescr.throws then return assign( this, {{out="@" .. functypeDescr.symbolname}}) end
 	end
 end
 -- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
@@ -883,6 +884,11 @@ function defineInheritedInterfaces( node, context, classTypeId)
 			local mk = context.methodmap[ imethod.methodid]
 			if mk then
 				cmethod = context.methods[ mk]
+				if cmethod.throws ~= imethod.throws then
+					utils.errorMessage( node.line, "Exception behaviour (attribute nothrow) of method '%s' of class '%s' differs from interface '%s': '%s'",
+					                    cmethod.methodname, typedb:type_name(classTypeId),
+					                    typedb:type_name(iTypeId), typedb:type_string( imethod.ret or 0))
+				end
 				if cmethod.ret ~= imethod.ret then
 					utils.errorMessage( node.line, "Return type '%s' of method '%s' of class '%s' differs from interface '%s': '%s'",
 					                    typedb:type_string( cmethod.ret or 0), cmethod.methodname, typedb:type_name(classTypeId),
@@ -2017,13 +2023,14 @@ function defineStructureType( node, declContextTypeId, typnam, fmt)
 	return descr,qualitype
 end
 -- Basic type definition for generic 
-function defineGenericType( node, context, typnam, fmt, generic, const, private)
+function defineGenericType( node, context, typnam, fmt, generic, const, throws, private)
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr = utils.template_format( fmt, {})
 	descr.node = node
 	descr.generic = generic
 	descr.const = const
 	descr.private = private
+	descr.throws = throws
 	descr.context = {domain=context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol}
 	descr.seekctx = getSeekContextTypes()
 	local lval = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
@@ -2098,7 +2105,7 @@ function instantiateCallableDef( node, context, descr)
 		descr.attr = llvmir.functionAttribute( descr.interface)
 	else
 		local callabletype = defineFreeFunction( node, descr, context)
-		typeDescriptionMap[ callabletype] = llvmir.callableReferenceDescr( descr.ret, descr.symbolname)
+		typeDescriptionMap[ callabletype] = llvmir.callableReferenceDescr( descr.symbolname, descr.ret, descr.throws)
 	end
 end
 -- Traversal of a function declaration node, either directly in case of an ordinary function or on demand in case of a generic function
@@ -2423,11 +2430,13 @@ function typesystem.linkage( node, llvm_linkage, context)
 	end
 	return llvm_linkage
 end
-function typesystem.funcdef( node, decl, context, pass)
+function typesystem.funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local arg = utils.traverseRange( typedb, node, {1,2}, context)
+		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
+		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
 		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false}
+				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstFunctionDeclaration( node, context, descr, 3)
 	end
@@ -2436,11 +2445,13 @@ function typesystem.funcdef( node, decl, context, pass)
 		traverseAstFunctionImplementation( node, context, descr, 3)
 	end
 end
-function typesystem.procdef( node, decl, context, pass)
+function typesystem.procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local arg = utils.traverseRange( typedb, node, {1,2}, context)
+		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
+		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
 		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, interface=false,
+				name = arg[2], symbol = arg[2], private=arg[1].private, const=decl.const, throws=decl.throws, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		allocNodeData( node, descr)
 		traverseAstProcedureDeclaration( node, context, descr, 3)
@@ -2450,22 +2461,27 @@ function typesystem.procdef( node, decl, context, pass)
 		traverseAstProcedureImplementation( node, context, descr, 3)
 	end
 end
-function typesystem.generic_funcdef( node, decl, context)
+function typesystem.generic_funcdef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	defineGenericType( node, context, arg[2], llvmir.genericFunctionDescr, arg[3], decl.const, arg[1].linkage.private)
+	local decl = utils.traverseRange( typedb, node, {5,5}, context, descr, 0)[5] -- decl {const,throws}
+	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
+	defineGenericType( node, context, arg[2], llvmir.genericFunctionDescr, arg[3], decl.const, decl.throws, arg[1].linkage.private)
 end
-function typesystem.generic_procdef( node, decl, context)
+function typesystem.generic_procdef( node, context)
 	local arg = utils.traverseRange( typedb, node, {1,3}, context)
-	defineGenericType( node, context, arg[2], llvmir.genericProcedureDescr, arg[3], decl.const, arg[1].linkage.private)
+	local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
+	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
+	defineGenericType( node, context, arg[2], llvmir.genericProcedureDescr, arg[3], decl.const, decl.throws, arg[1].linkage.private)
 end
 function typesystem.operatordecl( node, opr)
 	return opr
 end
-function typesystem.operator_funcdef( node, decl, context, pass)
+function typesystem.operator_funcdef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,3}, context)
+		local arg = utils.traverseRange( typedb, node, {1,3}, context) -- linkage, operatordecl, retvaluetype
+		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 		local descr = {lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const, interface=false}
+				name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = arg[3], private=arg[1].private, const=decl.const, throws=decl.throws, interface=false}
 		if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 		descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
@@ -2479,11 +2495,12 @@ function typesystem.operator_funcdef( node, decl, context, pass)
 		printFunctionDeclaration( node, descr)
 	end
 end
-function typesystem.operator_procdef( node, decl, context, pass)
+function typesystem.operator_procdef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,2}, context)
+		local arg = utils.traverseRange( typedb, node, {1,2}, context) -- linkage, operatordecl
+		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
 		local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const, interface=false,
+				name = arg[2].name, symbol = "$" .. arg[2].symbol, ret = nil, private=arg[1].private, const=decl.const, throws=decl.throws, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
@@ -2499,9 +2516,11 @@ function typesystem.operator_procdef( node, decl, context, pass)
 end
 function typesystem.constructordef( node, context, pass)
 	if not pass or pass == 1 then
-		local arg = utils.traverseRange( typedb, node, {1,1}, context)
+		local arg = utils.traverseRange( typedb, node, {1,1}, context) -- linkage
+		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
+		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
 		local descr = {call = llvmir.control.procedureCall, lnk = arg[1].linkage, attr = llvmir.functionAttribute( arg[1].private), signature="",
-				name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=false, interface=false,
+				name = ":=", symbol = "$ctor", ret = nil, private=arg[1].private, const=decl.const, throws=decl.throws, interface=false,
 				endcode = llvmir.control.implicitReturnFromProcedure}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
@@ -2534,7 +2553,8 @@ function typesystem.destructordef( node, lnk, context, pass)
 		printFunctionDeclaration( node, descr)
 	end
 end
-function typesystem.callablebody( node, context, descr, select)
+function typesystem.callablebody( node, decl, context, descr, select)
+	if select == 0 then return decl end
 	local rt
 	local prev_scope = typedb:scope( node.scope)
 	local subcontext = {domain="local"}
@@ -2542,7 +2562,7 @@ function typesystem.callablebody( node, context, descr, select)
 		defineCallableBodyContext( node, context, descr)
 		local arg = utils.traverseRange( typedb, node, {1,1}, subcontext)
 		rt = arg[1]
-	else -- parse statements in body
+	elseif select == 2 then -- parse statements in body
 		if descr.endcode then setImplicitEndCode( descr.endcode) end -- set implicit return statement
 		local arg = utils.traverseRange( typedb, node, {2,2}, subcontext)
 		rt = arg[2].code
@@ -2598,39 +2618,39 @@ function typesystem.extern_procdef_vararg( node)
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
-function typesystem.typedef_functype( node, context)
+function typesystem.typedef_functype( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {ret = arg[2], param = arg[3], name=arg[1], signature=""}
+	local descr = {ret = arg[2], param = arg[3], name=arg[1], signature="", throws=decl.throws}
 	defineFunctionVariableType( node, descr, context)
 end
-function typesystem.typedef_proctype( node, context)
+function typesystem.typedef_proctype( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {ret = nil, param = arg[2], name=arg[1]}
+	local descr = {ret = nil, param = arg[2], name=arg[1], throws=decl.throws}
 	defineProcedureVariableType( node, descr, context)
 end
 function typesystem.interface_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", private=false, const=decl.const,
+	local descr = {name = arg[1], symbol = arg[1], ret = arg[2], param = arg[3], signature="", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", private=false, const=decl.const,
+	local descr = {name = arg[1], symbol = arg[1], ret = nil, param = arg[2], signature="", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", private=false, const=decl.const,
+	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = arg[2], param = arg[3], signature="", private=false, const=decl.const, throws=decl.throws,
 			index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, decl, context)
 	local arg = utils.traverse( typedb, node, context)
-	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2], signature = "", private=false, const=decl.const,
+	local descr = {name = arg[1].name, symbol = "$" .. arg[1].symbol, ret = nil, param = arg[2], signature = "", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
 	defineInterfaceOperator( node, descr, context)
 end

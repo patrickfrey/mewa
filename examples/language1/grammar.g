@@ -46,14 +46,22 @@ extern_parameters 	= typespec "," extern_parameters						(extern_paramdef)
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε										(extern_paramdeflist)
 			;
-ininterf_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"			(interface_funcdef {const=false})
-			| "function" IDENT typespec "(" extern_paramlist ")" "const" ";"		(interface_funcdef {const=true})
-			| "procedure" IDENT "(" extern_paramlist ")" ";"				(interface_procdef {const=false})
-			| "procedure" IDENT "(" extern_paramlist ")" "const" ";"			(interface_procdef {const=true})
-			| "operator" operatordecl typespec "(" extern_paramlist ")" ";"			(interface_operator_funcdef {const=false})
-			| "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";"		(interface_operator_funcdef {const=true})
-			| "operator" operatordecl "(" extern_paramlist ")" ";"				(interface_operator_procdef {const=false})
-			| "operator" operatordecl "(" extern_paramlist ")" "const" ";"			(interface_operator_procdef {const=true})
+ininterf_definition 	= "function" IDENT typespec "(" extern_paramlist ")" ";"			(interface_funcdef {const=false,throws=true})
+			| "function" IDENT typespec "(" extern_paramlist ")" "const" ";"		(interface_funcdef {const=true,throws=true})
+			| "procedure" IDENT "(" extern_paramlist ")" ";"				(interface_procdef {const=false,throws=true})
+			| "procedure" IDENT "(" extern_paramlist ")" "const" ";"			(interface_procdef {const=true,throws=true})
+			| "function" IDENT typespec "(" extern_paramlist ")" "nothrow" ";"		(interface_funcdef {const=false,throws=false})
+			| "function" IDENT typespec "(" extern_paramlist ")" "nothrow" "const" ";"	(interface_funcdef {const=true,throws=false})
+			| "procedure" IDENT "(" extern_paramlist ")" "nothrow" ";"			(interface_procdef {const=false,throws=false})
+			| "procedure" IDENT "(" extern_paramlist ")" "const" "nothrow" ";"		(interface_procdef {const=true,throws=false})
+			| "operator" operatordecl typespec "(" extern_paramlist ")" ";"			(interface_operator_funcdef {const=false,throws=true})
+			| "operator" operatordecl typespec "(" extern_paramlist ")" "const" ";"		(interface_operator_funcdef {const=true,throws=true})
+			| "operator" operatordecl "(" extern_paramlist ")" ";"				(interface_operator_procdef {const=false,throws=true})
+			| "operator" operatordecl "(" extern_paramlist ")" "const" ";"			(interface_operator_procdef {const=true,throws=true})
+			| "operator" operatordecl typespec "(" extern_paramlist ")" "nothrow" ";"	(interface_operator_funcdef {const=false,throws=false})
+			| "operator" operatordecl typespec "(" extern_paramlist ")" "nothrow" "const" ";"(interface_operator_funcdef {const=true,throws=false})
+			| "operator" operatordecl "(" extern_paramlist ")" "nothrow" ";"		(interface_operator_procdef {const=false,throws=false})
+			| "operator" operatordecl "(" extern_paramlist ")" "const" "nothrow" ";"	(interface_operator_procdef {const=true,throws=false})
 			;
 instruct_definition	= typedefinition ";"								(definition 1)
 			| variabledefinition ";"							(definition 2)
@@ -102,8 +110,10 @@ typespec/L1		= typegen									(typespec)
 			| typegen "&"									(typespec_ref)
 			;
 typedefinition		= "typedef" typegen IDENT							(>>typedef)
-			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype)
-			| "typedef" "procedure" IDENT "(" extern_paramlist ")" 				(>>typedef_proctype)
+			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype {throws=true})
+			| "typedef" "procedure" IDENT "(" extern_paramlist ")"				(>>typedef_proctype {throws=true})
+			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" 	(>>typedef_functype {throws=false})
+			| "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"		(>>typedef_proctype {throws=false})
 			;
 structdefinition	= "struct" IDENT "{" instruct_definitionlist "}"				(>>structdef)
 			| "generic" "struct" IDENT "[" generic_header "]"
@@ -127,26 +137,18 @@ linkage			= "private"									(linkage {private=true, linkage="internal", explic
 			| "public"									(linkage {private=false, linkage="external", explicit=true})
 			| ε										(linkage {private=false, linkage="external", explicit=false})
 			;
-functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef {const=false})
-			| linkage "function" IDENT typespec callablebody_const				(funcdef {const=true})
-			| linkage "procedure" IDENT callablebody					(procdef {const=false})
-			| linkage "procedure" IDENT callablebody_const					(procdef {const=true})
+functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef)
+			| linkage "procedure" IDENT callablebody					(procdef)
 			| "generic" linkage "function" IDENT "[" generic_header "]"
-				 typespec callablebody							(generic_funcdef {const=false})
-			| "generic" linkage "function" IDENT "[" generic_header "]"
-				 typespec callablebody_const 						(generic_funcdef {const=true})
+				 typespec callablebody							(generic_funcdef)
 			| "generic" linkage "procedure" IDENT "[" generic_header "]"
-				 callablebody								(generic_procdef {const=false})
-			| "generic" linkage "procedure" IDENT "[" generic_header "]"
-				 callablebody_const						 	(generic_procdef {const=true})
+				 callablebody								(generic_procdef)
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
 			| "destructor" "{" codeblock "}"						({}destructordef {private=false, linkage="external"})
 			;
-operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef {const=false})
-			| linkage "operator" operatordecl typespec callablebody_const			(operator_funcdef {const=true})
-			| linkage "operator" operatordecl callablebody					(operator_procdef {const=false})
-			| linkage "operator" operatordecl callablebody_const				(operator_procdef {const=true})
+operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef)
+			| linkage "operator" operatordecl callablebody					(operator_procdef)
 			;
 operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 			| "="										(operatordecl {name="=", symbol="assign"})
@@ -189,9 +191,10 @@ generic_identlist	= IDENT "," generic_identlist							(generic_header_ident)
 generic_header		= generic_identlist								(generic_header)
 			| generic_defaultlist								(generic_header)
 			;
-callablebody		= "(" parameterlist ")" "{" codeblock "}"					({}callablebody)
-			;
-callablebody_const	=  "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody)
+callablebody		= "(" parameterlist ")" "nothrow" "{" codeblock "}"				({}callablebody {throws=false,const=false})
+			| "(" parameterlist ")" "{" codeblock "}"					({}callablebody {throws=true,const=false})
+			| "(" parameterlist ")" "const" "nothrow" "{" codeblock "}"			({}callablebody {throws=false,const=true})
+			| "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody {throws=true,const=true})
 			;
 main_procedure		= "main" "{" codeblock "}"							({}main_procdef)
 			| ε

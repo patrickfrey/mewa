@@ -321,8 +321,9 @@ end
 function llvmir.procedureVariableDescr( descr, signature)
 	return callableDescr( descr, procedureVariableTemplate, "void" .. signature, nil, signature)
 end
-function llvmir.callableReferenceDescr( class, symbolname, ret)
-	return {class = class, scalar = false, symbolname = symbolname, ret = ret }
+function llvmir.callableReferenceDescr( symbolname, ret, throws)
+	local class; if ret then class = "function" else class = "procedure" end
+	return {class = class, scalar = false, symbolname = symbolname, ret = ret, throws = throws }
 end
 
 local arrayDescrMap = {}
