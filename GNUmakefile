@@ -18,19 +18,23 @@ endif
 
 # Debug and release flags, RELEASE=Y highest optimization level else create debug symbols and buil with lowest optimization level
 ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(RELEASE)))),Y)
-DEBUGFLAGS:=-O3
+DEBUGOPTFLAGS:=-O3
+TEST_DEBUGOPTFLAGS:=-O2
 else
 ifeq ($(strip $(CC)),clang)
-DEBUGFLAGS:=-ggdb -g3 -O0 -fstandalone-debug
+DEBUGOPTFLAGS:=-ggdb -g3 -O0 -fstandalone-debug
+TEST_DEBUGOPTFLAGS:=-ggdb -g3 -O0 -fstandalone-debug
 else
-DEBUGFLAGS:=-ggdb -g3 -O0
+DEBUGOPTFLAGS:=-ggdb -g3 -O0
+TEST_DEBUGOPTFLAGS:=-ggdb -g3 -O0
 endif
 endif
 
 # Flag for using an allocator always throwing bad_alloc as upstream memory resource for the monotonic buffer resource 
 # used for structures intended to be allocated on the stack. This must not be set in a release build and not in all cases of a debug build.
 ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(TESTLOCALMEM)))),Y)
-DEBUGFLAGS:=$(DEBUGFLAGS) -DMEWA_TEST_LOCAL_MEMORY_RESOURCE
+DEBUGOPTFLAGS:=$(DEBUGOPTFLAGS) -DMEWA_TEST_LOCAL_MEMORY_RESOURCE
+TEST_DEBUGOPTFLAGS:=$(TEST_DEBUGOPTFLAGS) -DMEWA_TEST_LOCAL_MEMORY_RESOURCE
 endif
 
 # Switch verbosity on for build and make test/check
@@ -72,7 +76,7 @@ INCDIR   := include
 TESTDIR  := tests
 DOCDIR   := doc
 STDFLAGS := -std=c++17
-CXXFLAGS := -c $(STDFLAGS) $(CXXVBFLAGS) $(DEBUGFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread
+CXXFLAGS := -c $(STDFLAGS) $(CXXVBFLAGS) -fPIC -Wall -Wshadow -pedantic -Wfatal-errors -fvisibility=hidden -pthread
 INCFLAGS := -I$(SRCDIR) -I$(LUAINC) -I$(INCDIR)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
@@ -108,10 +112,10 @@ include .depend
 
 # Build rules:
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(MAKEDEP)
-	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) $(DEBUGOPTFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(BUILDDIR)/%.o: $(TESTDIR)/%.cpp $(MAKEDEP)
-	$(CC) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) $(TEST_DEBUGOPTFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(LIBRARY): $(LIBOBJS)
 	$(AR) $(LIBRARY) $(LIBOBJS)
