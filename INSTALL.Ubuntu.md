@@ -17,6 +17,15 @@ luarocks install bit32
 luarocks install penlight 
 luarocks install LuaBcd
 ```
+### Build LuaBcd from sources (if luarocks install LuaBcd fails)
+If the build of LuaBcd with luarocks fails, you can fetch the sources from github and build it:
+```Bash
+git clone https://github.com/patrickfrey/luabcd.git
+cd LuaBcd
+./configure
+make
+make PREFIX=/usr/local install
+```
 
 ### Fetch sources
 ```Bash
