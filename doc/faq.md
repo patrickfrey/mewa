@@ -31,7 +31,8 @@
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
     * [How to implement exception handling?](#exceptions)
     * [How to implement generic programming?](#generics)
-    * [How to implement concepts like in C++?](#cppConcepts)
+    * [How to traverse AST nodes multiple times without the definitions of different traversals interfering?](#multipleTraversal)
+    * [How to implement concepts like in C++?](#concepts)
     * [How to implement lambdas?](#lambdas)
     * [How to implement call of C-Library functions?](#cLibraryCalls)
 
@@ -369,14 +370,24 @@ Exception handling and especially zero-cost exception handling is a subject of f
 ### How to implement generic programming?
 
 Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
+
 If a template type ```TPL<A1,A2,...>``` is referenced we define a type ```T = TPL<t1,t2,...>``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
 For each template argument ```Ai``` without a value constructor attached, we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. For types with an own constructor representing the value, we define a type ```Ai``` with the constructor and a reduction from this type to the generic argument type. With ```T``` as context type we then call the traversal of the generic class, structure or function. 
+
+The lazy evaluation used in generics requires multiple traversal of the same AST node. The types defined in each traversal may differ and definitions with context type 0 (free locals, globals) may interfere. How to handle this is answered [here](#multipleTraversal).
 
 How to do automatic template argument deduction for generic functions is an open question for me. I did not implement it in the example _language1_.
 But I think for automatic template argument deduction you have to synthesize the generic parameter assignments somehow by matching the function parameters against the function candidates. If you got a complete set of generic parameter assignments, you can do the kind of expansion described above.
 
 
-<a name="cppConcepts"/>
+<a name="multipleTraversal"/>
+
+### How to traverse AST nodes multiple times without the definitions of different traversals interfering?
+
+Generics use definition scopes multiple times with differing declarations inside the scope. These definitions interfere. To separate the definitions I suggest to define a type named 'local &lt;generic name&gt;' and define this type as global variable to use as context type for local variables inside this scope. In the example language I use a stack for the context types used for locals inside a generic scope, resp. during the expansion of a generic as these generic expansions can pile up (The expansion can lead to another generic expansion, etc.).
+
+
+<a name="concepts"/>
 
 ### How to implement concepts like in C++?
 

@@ -89,7 +89,14 @@ do
 		echo "Run program examples/language1/sources/$tst.prg with LLVM interpreter (lli)"
 		/usr/bin/time -f "Running for %e seconds"\
 			lli build/language1.compiler.$tst.llr > build/language1.run.$tst.out
-		verify_test_result "Lua test ($tst run) run program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
+		verify_test_result "Lua test ($tst run) interprete program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
+		echo "Build object file build/language1.compiler.$tst.o"
+		llc -filetype=obj build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.o
+		echo "Build executable file build/language1.compiler.$tst"
+		clang -lm -lstdc++ -o build/language1.compiler.$tst build/language1.compiler.$tst.o
+		echo "Run executable file build/language1.compiler.$tst"
+		build/language1.compiler.$tst > build/language1.run.$tst.bin.out
+		verify_test_result "Lua test ($tst exe) native run program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
 	fi
 done
 
