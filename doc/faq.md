@@ -22,6 +22,7 @@
     * [How to implement return in a function?](#functionReturn)
     * [How to implement return of a non scalar type from a function?](#functionReturnComplexData)
     * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
+    * [How to implement class inheritance?](#inheritance)
     * [How to implement object oriented polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private,public,protected?](#visibilityRules)
         * [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
@@ -222,12 +223,20 @@ In the example _language1_ I define a context list as object bound to a scope. E
 A "WITH" or "using" defines the context list for the current scope as copy of the inherited context list if not defined yet. It then attaches the
 new context member to it.
 
+<a name="inheritance"/>
+
+### How to implement class inheritance?
+
+You define the inherited class as member and define a reduction from the inheriting class to the inherited class with the loading of this member as constructor.
+
+
 <a name="virtualMethodTables"/>
 
 ### How to implement object oriented polymorphism?
 
 In the example _language1_ I implemented interface inheritance only. You have to implement a VMT ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)) and implement the method call as _VMT_ call. For this it is appropriate to parse all methods and put them into lists before processing them and creating the code. Depending on the members of the method lists yout can them decide wheter a _VMT_ has to be created at all.
 
+Implementing polymorphism with virtual methods and class inheritance is difficult. The problems start with multiple inheritance. The ```self``` pointer to be passed to the implementation of a virtual method has to be the one of the first class defining the method as virtual and thus defining the VMT where the method is declared in. When encountering inheritance of two base classes, then the 3 base pointers can't be aligned. Therefore each method implementation has to calculate its ```self``` pointer from the base pointer passed, that is by contract the base pointer of the first class implementing a method. This is not the only problem. I will consider to think about implementing class polymorphism besides interface polymorphism implemented in the example _language1_, if someone succeeds to explain me why it is useful.
 
 
 <a name="orderOfDefinition"/>

@@ -1,4 +1,4 @@
-// Testing different types of pointers, access via poitners and pointer arithmetics
+// Testing different types of pointers, access via pointers and pointer arithmetics
 
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" function malloc byte^( long);
