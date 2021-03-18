@@ -1,4 +1,4 @@
-// Testing matrix implementation with generics
+// Testing matrix implementation
 
 extern "C" procedure printf( const byte^ fmt ...);
 

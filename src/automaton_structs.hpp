@@ -645,7 +645,7 @@ class IntSetHandleMap
 {
 public:
 	explicit IntSetHandleMap( int startidx_=1)
-		:m_map(1024),m_inv(),m_startidx(startidx_){m_inv.reserve(1024);}
+		:m_map(),m_inv(),m_startidx(startidx_){m_inv.reserve(1024);}
 	IntSetHandleMap( const IntSetHandleMap& o)
 		:m_map(o.m_map),m_inv(o.m_inv),m_startidx(o.m_startidx){}
 	IntSetHandleMap& operator=( const IntSetHandleMap& o)
@@ -693,7 +693,7 @@ private:
 	typedef FlatSet<int> Sequence;
 
 private:
-	std::unordered_map<Sequence,int> m_map;
+	std::map<Sequence,int> m_map;
 	std::vector<Sequence> m_inv;
 	int m_startidx;
 };
