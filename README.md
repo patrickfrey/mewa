@@ -23,7 +23,7 @@ Currently there is only GNU Makefile support. CMake support is not planned for t
 ## Hardware
 The tests currently use a LLVM IR target template file for the following platforms:
 
- * [Linux x86_64] (Intel 64 bit)](examples/target/x86_64-pc-linux-gnu.tpl)
+ * [Linux x86_64 (Intel 64 bit)](examples/target/x86_64-pc-linux-gnu.tpl)
  * [Linux i686 (Intel 32 bit)](examples/target/i686-pc-linux-gnu.tpl)
 
 Contributions for other platforms are appreciated.
