@@ -13,13 +13,20 @@ The examples provided here use the [intermediate representation (IR) of LLVM](ht
 For reading more see the [collected links](doc/links.md).
 
 # Status
-The project development is currently ongoing. First release will be in March.
+The project development is currently ongoing. First release will be in April.
 
 # Portability
+
 ## Build
 Currently there is only GNU Makefile support. CMake support is not planned for this project because the project is too small to justify it and it has not many dependencies. I would rather like to have Makefiles for platforms where GNU Makefile support is not available (e.g. Windows). 
+
 ## Hardware
-The tests currently use a LLVM IR target template file for x86_64. I was told that the LLVM interpreter ```lli``` segfaulted running it on a x86_32 platform. I will take a look at that. Contributions in for of target template files like [examples/target/x86_64-pc-linux-gnu.tpl](examples/target/x86_64-pc-linux-gnu.tpl) for other platforms are appreciated.
+The tests currently use a LLVM IR target template file for the following platforms:
+
+ * [Linux x86_64] (Intel 64 bit)](examples/target/x86_64-pc-linux-gnu.tpl)
+ * [Linux i686 (Intel 32 bit)](examples/target/i686-pc-linux-gnu.tpl)
+
+Contributions for other platforms are appreciated.
 
 # Documentation
 * [Examples](doc/example_compiler.md)
