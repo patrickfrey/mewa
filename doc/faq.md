@@ -53,7 +53,6 @@ It aims to support the mapping of a programming language to an intermediate repr
 
 ### What audience is targeted by _Mewa_?
 **_Mewa_ is for people with some base knowledge about how parser generators work (*).**
-Maybe some insights into other compiler frontend implementations is recommended as the *naive* approach of _Mewa_ as the only point of view could be misleading.
 
 **(*)** There has not yet been much effort done to assist users in case of conflicts in a grammar. The conflicts are detected and reported and the building of the parser fails in consequence, but there is no mechanism implemented for autocorrection and there is no deeper analysis made by the _Mewa_ parser generator program.
 

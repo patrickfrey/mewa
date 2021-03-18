@@ -7,11 +7,10 @@ A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides some as
 An example implementation of a non trivial compiler and an FAQ exists to help you in problem solving.
 
 # Design Philosophy and Limitations
- - _Mewa_'s approach is **naive**. It tries to get as far as possible with a minimalistic but clearly defined model of its world.
+ - _Mewa_ is **not a framework**. It is not instrumented with configuration or plug-ins. The program logic is entirely implemented by the compiler front-end author in _Lua_. 
  - _Mewa_ is **not optimised for collaborative work** unlike most other compiler front-ends.
  - _Mewa_ provides no support for evaluation of different paths of code generation. The idea is to do a one to one mapping of program structures to code and to **leave all analytical optimization steps to the backend**.
- - _Mewa_ is **not a framework**. It is not instrumented with configuration or plug-ins. It provides a data structure, the [AST](doc/ast.md) and an in-memory map called _typedb_ to store and retrieve scope bound data. The program logic is entirely implemented by the compiler front-end author in _Lua_. In other words: You write the compiler front-end with _Lua_ using _Mewa_ and not with _Mewa_ using _Lua_ as binding language.
-
+ 
 # Links
 - Github Project
 - Codeproject Article
