@@ -35,7 +35,8 @@
     * [How to traverse AST nodes multiple times without the definitions of different traversals interfering?](#multipleTraversal)
     * [How to implement concepts like in C++?](#concepts)
     * [How to implement lambdas?](#lambdas)
-    * [How to implement call of C-Library functions?](#cLibraryCalls)
+    * [How to implement calls of C-Library functions?](#cLibraryCalls)
+    * [How to implement coroutines?](#coroutines)
 
 
 <a name="general"/>
@@ -411,8 +412,16 @@ This is an open issue. One idea would be to pass the lambda as type that refers 
 
 <a name="cLibraryCalls"/>
 
-### How to implement the call of a C-Library function?
+### How to implement calls of C-Library functions?
 
 LLVM supports extern calls. In the specification of the example _language1_ I support calls of the C standard library.
+
+
+<a name="coroutines"/>
+
+### How to implement coroutines?
+
+This is an open issue. I have no clue yet, but in my opinion coroutines should not be implemented with a sort of context switch in the user land with the coroutines having their own stack. So the statemachine of the coroutine pool should be implemented as one function with the ```yield``` implemented with branching inside this function.
+
 
 

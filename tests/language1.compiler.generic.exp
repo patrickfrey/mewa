@@ -91,8 +91,8 @@ declare external i8* @malloc( i64 ) #1 nounwind
 
 define external void @__C___Array__float__5__$ctor( %__Array__float__5* %ths ) #0 noinline nounwind {
 entry:
-br label %exit
-exit:
+br label %L1
+L1:
 ret void
 }
 
@@ -100,8 +100,8 @@ define external void @__C___Array__float__5__$ctor__$5xfloat$( %__Array__float__
 entry:
 %r2 = getelementptr inbounds %__Array__float__5, %__Array__float__5* %ths, i32 0, i32 0
 call void @__ctor_assign_5__float( [5 x float]* %r2, [5 x float]* %r1)
-br label %exit
-exit:
+br label %L1
+L1:
 ret void
 }
 
@@ -110,6 +110,8 @@ entry:
 %r2 = getelementptr inbounds %__Array__float__5, %__Array__float__5* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
 %r3 = getelementptr inbounds [5 x float], [5 x float]* %r2, i64 0, i64 %r4
+br label %L1
+L1:
 ret float* %r3
 }
 
@@ -118,6 +120,8 @@ entry:
 %r2 = getelementptr inbounds %__Array__float__5, %__Array__float__5* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
 %r3 = getelementptr inbounds [5 x float], [5 x float]* %r2, i64 0, i64 %r4
+br label %L1
+L1:
 ret float* %r3
 }
 @string1 = private unnamed_addr constant [19 x i8] c"ARRAY[ %d] = %.4f\0A\00"
@@ -126,49 +130,52 @@ declare dso_local i32 @__gxx_personality_v0(...)
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
 entry:
-%r1 = alloca %__Array__float__5, align 8
-%r7 = alloca [5 x float], align 8
-%r2 = getelementptr inbounds [5 x float], [5 x float]* %r7, i32 0, i32 0
-store float 0x3FF19999A0000000, float* %r2
-%r3 = getelementptr inbounds [5 x float], [5 x float]* %r7, i32 0, i32 1
-store float 0x40019999A0000000, float* %r3
-%r4 = getelementptr inbounds [5 x float], [5 x float]* %r7, i32 0, i32 2
-store float 0x400A666660000000, float* %r4
-%r5 = getelementptr inbounds [5 x float], [5 x float]* %r7, i32 0, i32 3
-store float 0x40119999A0000000, float* %r5
-%r6 = getelementptr inbounds [5 x float], [5 x float]* %r7, i32 0, i32 4
-store float 0x4016000000000000, float* %r6
-call void @__C___Array__float__5__$ctor__$5xfloat$( %__Array__float__5* %r1, [5 x float]* %r7)
-%r8 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r1, i32 1)
-store float 0xC0263851E0000000, float* %r8
-%r9 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r1, i32 3)
-store float 0xC040AA3D80000000, float* %r9
-%r10 = alloca i32, align 4
-store i32 0, i32* %r10
+%r1 = alloca i32, align 4
+%r2 = alloca %__Array__float__5, align 8
+%r8 = alloca [5 x float], align 8
+%r3 = getelementptr inbounds [5 x float], [5 x float]* %r8, i32 0, i32 0
+store float 0x3FF19999A0000000, float* %r3
+%r4 = getelementptr inbounds [5 x float], [5 x float]* %r8, i32 0, i32 1
+store float 0x40019999A0000000, float* %r4
+%r5 = getelementptr inbounds [5 x float], [5 x float]* %r8, i32 0, i32 2
+store float 0x400A666660000000, float* %r5
+%r6 = getelementptr inbounds [5 x float], [5 x float]* %r8, i32 0, i32 3
+store float 0x40119999A0000000, float* %r6
+%r7 = getelementptr inbounds [5 x float], [5 x float]* %r8, i32 0, i32 4
+store float 0x4016000000000000, float* %r7
+call void @__C___Array__float__5__$ctor__$5xfloat$( %__Array__float__5* %r2, [5 x float]* %r8)
+%r9 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 1)
+store float 0xC0263851E0000000, float* %r9
+%r10 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 3)
+store float 0xC040AA3D80000000, float* %r10
+%r11 = alloca i32, align 4
+store i32 0, i32* %r11
+br label %L4
+L4:
+%r12 = load i32, i32* %r11
+%r13 = icmp slt i32 %r12, 5
+br i1 %r13, label %L3, label %L2
+L3:
+%r14 = getelementptr inbounds [19 x i8], [19 x i8]* @string1, i64 0, i64 0
+%r17 = load i32, i32* %r11
+%r15 = load i32, i32* %r11
+%r16 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 %r15)
+%r18 = load float, float* %r16
+%r19 = fpext float %r18 to double
+call void(i8*,  ...) @printf( i8* %r14, i32 %r17, double %r19)
+%r20 = load i32, i32* %r11
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r11
+br label %L4
+L2:
+store i32 0, i32* %r1
 br label %L5
 L5:
-%r11 = load i32, i32* %r10
-%r12 = icmp slt i32 %r11, 5
-br i1 %r12, label %L4, label %L3
-L4:
-%r13 = getelementptr inbounds [19 x i8], [19 x i8]* @string1, i64 0, i64 0
-%r16 = load i32, i32* %r10
-%r14 = load i32, i32* %r10
-%r15 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r1, i32 %r14)
-%r17 = load float, float* %r15
-%r18 = fpext float %r17 to double
-call void(i8*,  ...) @printf( i8* %r13, i32 %r16, double %r18)
-%r19 = load i32, i32* %r10
-%r20 = add nsw i32 %r19, 1
-store i32 %r20, i32* %r10
-br label %L5
-L3:
-br label %L2
-L2:
-call void @__dtor___Array__float__5( %__Array__float__5* %r1)
-br label %exit
-exit:
-ret i32 0
+call void @__dtor___Array__float__5( %__Array__float__5* %r2)
+br label %L1
+L1:
+%r22 = load i32, i32* %r1
+ret i32 %r22
 }
 
 

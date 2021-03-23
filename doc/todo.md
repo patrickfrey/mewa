@@ -3,7 +3,10 @@
  * Report error on statements after return and similar cases, mark statements without follow statement allowed
  * Try to get into https://llvm.org/ProjectsWithLLVM
  * Make deep copies of values passed as lval and shallow copies of structures passed as const lval. Define these parameter variables as references to their copies. 
- * Migrate Mewa repo to own github project
+ * Solve problem with destructor of variable with destructor assigned where the assignment fails, after the variable has been destroyed. Add an own destructor chain with the destroyed type as part of the key, that leaves out the destruction of the variable.
+ * Pointer relations of inherited class to derived class
+ * Migrate Mewa repo to own github organization
+ * Use more 'next' instead of array access in Lua, replace ipairs with pairs or next where possible
  * Implement generic var for global variables depending on a type (instead of static declarations)
  * lambdas ```lambda( a, b, c){ a = b + c }```
  * lambda argument type as transfer type with a constructor defining the reduction of the lambda argument name to the type transferred.

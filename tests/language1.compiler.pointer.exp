@@ -26,8 +26,8 @@ call void(i8*,  ...) @printf( i8* %r3, i32 %r4, double %r1)
 %r5 = load i32, i32* %r2
 %r6 = add nsw i32 %r5, 1
 store i32 %r6, i32* %r2
-br label %exit
-exit:
+br label %L1
+L1:
 ret void
 }
 
@@ -36,6 +36,8 @@ entry:
 %r3 = getelementptr inbounds [26 x i8], [26 x i8]* @string1, i64 0, i64 0
 call void(i8*,  ...) @printf( i8* %r3, i32 %r2, double %r1)
 %r4 = add nsw i32 %r2, 1
+br label %L1
+L1:
 ret i32 %r4
 }
 @g_pnp = internal global void(double, i32*)* null
@@ -46,31 +48,34 @@ define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i3
 {
 entry:
 store void(double, i32*)* @printNumber__double__i32$, void(double, i32*)** @g_pnp
-%r1 = alloca void(double, i32*)*
-store void(double, i32*)* @printNumber__double__i32$, void(double, i32*)** %r1
-%r2 = alloca i32(double, i32)*
-store i32(double, i32)* @printNumber__double__i32, i32(double, i32)** %r2
-%r3 = alloca i32, align 4
-store i32 31, i32* %r3
-%r4 = load void(double, i32*)*, void(double, i32*)** %r1
-call void %r4( double 0x4008E147AE147AE1, i32* %r3)
-%r8 = load i32, i32* %r3
-%r5 = load i32(double, i32)*, i32(double, i32)** %r2
-%r6 = call i32 %r5( double 0x4010E147AE147AE1, i32 4)
-%r7 = mul nsw i32 %r6, 2
-%r9 = add nsw i32 %r8, %r7
-store i32 %r9, i32* %r3
-%r10 = load i32(double, i32)*, i32(double, i32)** %r2
-%r11 = load i32, i32* %r3
-%r12 = call i32 %r10( double 0x401CE147AE147AE1, i32 %r11)
-%r13 = load void(double, i32*)*, void(double, i32*)** @g_pnp
-call void %r13( double 0x403319999999999A, i32* %r3)
-%r14 = getelementptr inbounds [14 x i8], [14 x i8]* @string2, i64 0, i64 0
-%r15 = load i32, i32* %r3
-call void(i8*,  ...) @printf( i8* %r14, i32 %r15)
-br label %exit
-exit:
-ret i32 0
+%r1 = alloca i32, align 4
+%r2 = alloca void(double, i32*)*
+store void(double, i32*)* @printNumber__double__i32$, void(double, i32*)** %r2
+%r3 = alloca i32(double, i32)*
+store i32(double, i32)* @printNumber__double__i32, i32(double, i32)** %r3
+%r4 = alloca i32, align 4
+store i32 31, i32* %r4
+%r5 = load void(double, i32*)*, void(double, i32*)** %r2
+call void %r5( double 0x4008E147AE147AE1, i32* %r4)
+%r9 = load i32, i32* %r4
+%r6 = load i32(double, i32)*, i32(double, i32)** %r3
+%r7 = call i32 %r6( double 0x4010E147AE147AE1, i32 4)
+%r8 = mul nsw i32 %r7, 2
+%r10 = add nsw i32 %r9, %r8
+store i32 %r10, i32* %r4
+%r11 = load i32(double, i32)*, i32(double, i32)** %r3
+%r12 = load i32, i32* %r4
+%r13 = call i32 %r11( double 0x401CE147AE147AE1, i32 %r12)
+%r14 = load void(double, i32*)*, void(double, i32*)** @g_pnp
+call void %r14( double 0x403319999999999A, i32* %r4)
+%r15 = getelementptr inbounds [14 x i8], [14 x i8]* @string2, i64 0, i64 0
+%r16 = load i32, i32* %r4
+call void(i8*,  ...) @printf( i8* %r15, i32 %r16)
+store i32 0, i32* %r1
+br label %L1
+L1:
+%r17 = load i32, i32* %r1
+ret i32 %r17
 }
 
 

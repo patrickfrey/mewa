@@ -77,15 +77,17 @@ local arrayTypeMap = {}			-- Map of the pair lval,size to the array type lval fo
 local genericInstanceTypeMap = {}	-- Map of the pair lval,generic parameter to the generic instance type lval for list of arguments
 local varargFuncMap = {}		-- Map of types to true for vararg functions/procedures
 local instantCallableEnvironment = nil	-- Callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
-local mainCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
+local globalCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
+local globalInitCode = ""		-- Init code for global variables
+local globalCleanupCode = ""		-- Cleanup code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
 local nodeIdCount = 0			-- Counter for node id allocation
 local nodeDataMap = {}			-- Map of node id's to a data structure (depending on the node)
 local genericLocalStack = {}		-- Stack of values for currentGenericLocal 
 local currentGenericLocal = 0		-- The context type id used for local type definitions, to separate instances of generics using the same scope
-local currentGenericLocalKey = "seekctx"-- Current key for the seek context type realm for typedb:set_instance,typedb:this_instance,typedb:get_instance
-local currentCallableEnvKey = "callenv"	-- Current key for the callable environment for typedb:set_instance,typedb:this_instance,typedb:get_instance
-local currentAllocFrameKey = "frame"	-- Current key for the allocation frames for typedb:set_instance,typedb:this_instance,typedb:get_instance
+local currentGenericLocalKey = "seekctx"-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local currentCallableEnvKey = "callenv"	-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local currentAllocFrameKey = "frame"	-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 
 -- Allocate a node identifier for multi-pass evaluation with structures temporarily stored
 function allocNodeData( node, data)
@@ -100,13 +102,15 @@ end
 function getNodeData( node)
 	return nodeDataMap[ node.id][ currentGenericLocal]
 end
--- Create the data structure with attributes attached to a context (referenced in body) of some function/procedure or a callable in general terms
-function createCallableEnvironment( rtype, rprefix, lprefix)
-	return {scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix), returntype=rtype}
+-- Create the data structure with attributes attached to a context (referenced in body) of some callable
+function createCallableEnvironment( name, rtype, rprefix, lprefix)
+	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix), returntype=rtype, returnfunction=nil, frames={}}
 end
 -- Attach a newly created data structure for a callable to its scope
-function defineCallableEnvironment( rtype)
-	typedb:set_instance( currentCallableEnvKey, createCallableEnvironment( rtype))
+function defineCallableEnvironment( name, rtype)
+	local env = createCallableEnvironment( name, rtype, rfunc)
+	typedb:set_instance( currentCallableEnvKey, env)
+	return env
 end
 -- Get the active callable instance
 function getCallableEnvironment()
@@ -120,13 +124,16 @@ function typeDeclarationString( contextTypeId, typnam, args)
 end
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then return constructor.out,(constructor.code or ""),(constructor.alloc or "") else return tostring(constructor),"","" end
+	if type(constructor) == "table" then return constructor.out,(constructor.code or "") else return tostring(constructor),"" end
 end
 function constructorStruct( out, code)
 	return {out=tostring(out), code=code or ""}
 end
 function constructorStructEmpty()
 	return {code=""}
+end
+function constructorKey( prefix, typeId, out)
+	return prefix .. string.format(":%x:", typeId) .. out
 end
 function typeConstructorStruct( type, out, code)
 	return {type=type, constructor=constructorStruct( out, code)}
@@ -732,7 +739,7 @@ function defineScalarConstructors( qualitype, descr)
 end
 -- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	instantCallableEnvironment = createCallableEnvironment( nil)
+	instantCallableEnvironment = createCallableEnvironment( "init " .. arrayDescr.symbol)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
 	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
@@ -770,7 +777,7 @@ function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, ar
 end
 -- Define constructors for 'struct' types
 function defineStructConstructors( node, qualitype, descr, context)
-	instantCallableEnvironment = createCallableEnvironment( nil)
+	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
 
 	for mi,member in ipairs(context.members) do
@@ -843,7 +850,7 @@ function defineInterfaceConstructors( node, qualitype, descr, context)
 end
 -- Define constructors for 'class' types
 function defineClassConstructors( node, qualitype, descr, context)
-	instantCallableEnvironment = createCallableEnvironment( nil)
+	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
 	local dtors = ""
 	for mi,member in ipairs(context.members) do
 		local out = instantCallableEnvironment.register()
@@ -1054,34 +1061,148 @@ function popGenericLocal( genericlocal)
 	currentGenericLocal,currentGenericLocalKey,currentCallableEnvKey,currentAllocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
 	table.remove( genericLocalStack, #genericLocalStack)
 end
--- The frame object defines constructors/destructors called implicitly at start/end of their scope
-function getAllocationScopeFrame()
+-- The frame object defines constructors/destructors called implicitly at start/end of their lifetime
+function getAllocationFrame()
 	local rt = typedb:this_instance( currentAllocFrameKey)
 	if not rt then
+		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
-		rt = {scope=env.scope, entry=env.label(), register=env.register, label=env.label, ctor="", dtor="", entry=nil}
+		if parent and parent.env ~= env then parent = nil end
+		rt = {parent=parent, env=env, ctor="", scope=typedb:scope(), dtors={}, exitmap={}}
+		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
 	return rt
 end
-function setInitCode( descr, code)
-	local frame = getAllocationScopeFrame()
+-- Add some code to the initialization part of the frame
+function setInitCode( code)
+	local frame = getAllocationFrame()
 	frame.ctor = frame.ctor .. code
 end
-function setCleanupCode( descr, code)
-	if code ~= "" then
-		local frame = getAllocationScopeFrame()
-		frame.entry = frame.label()
-		frame.dtor = utils.constructor_format( llvmir.control.label, {inp=frame.entry}) .. code .. frame.dtor
+-- Set cleanup code for the current scope step, must be called in ascending order
+function setCleanupCode( node, varTypeId, code)
+	local frame = getAllocationFrame()
+	local step = typedb:step()
+	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage(node.line,"Internal: Cleanup code not in added in strict ascending order") end
+	table.insert( frame.dtors, {step=step,code=code,var=varTypeId} )
+end
+-- Binary search for scope step that is greater than the argument step in a frame dtors list passed as argument
+function binsearchUpperboundFrameDtors( dtors, step)
+	local aa = 1
+	local bb = #dtors
+	local mid = 1
+	if bb == 0 then return nil end
+	while bb - aa > 3 do
+		mid = tointeger( (bb+aa)/2)
+		if dtors[ mid].step > step then bb = mid else aa = mid end
+	end
+	local val = dtors[ mid]
+	while mid and mid <= bb and val.step < step do mid,val = next(dtors,mid) end
+	if not mid or mid > bb then return nil else return mid end
+end
+-- Binary search for biggest scope step that is smaller than the argument step in a frame dtors list passed as argument
+function binsearchLowerboundFrameDtors( dtors, step)
+	local idx = binsearchUpperboundFrameDtors( dtors, step)
+	if not idx then idx = #dtors else idx=idx-1 end
+	return idx
+end
+-- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
+function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
+	local exit = frame.exitmap[ exitkey]
+	if not exit then
+		labels = {}
+		for di=1,#frame.dtors do table.insert( labels, frame.env.label()) end
+		local nextlabel = exitlabel
+		if frame.parent then
+			nextlabel = getFrameCleanupLabel( frame.parent, exitkey, exitcode, exitlabel)
+			exitcode = nil
+		elseif exitlabel then
+			nextlabel = exitlabel
+		elseif exitcode then
+			nextlabel = frame.env.label()
+		end
+		frame.exitmap[ exitkey] = {labels=labels, exitcode=exitcode, exitlabel=nextlabel}
+		exit = frame.exitmap[ exitkey]
+	elseif exit.exitcode ~= exitcode or exit.exitlabel ~= exitlabel then
+		 utils.errorMessage( {line=0}, "Internal: exit code mismatch")
+	end
+	local idx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
+	if idx == 0 then
+		return exit.exitlabel
+	else
+		if #exit.labels < idx then for di=#exit.labels+1,idx do table.insert( exit.labels, frame.env.label()) end end
+		return exit.labels[ idx]
 	end
 end
-function setImplicitEndCode( code)
-	local frame = getAllocationScopeFrame()
-	frame.endcode = code
+function getCleanupLabel( exitkey, exitcode, exitlabel)
+	return getFrameCleanupLabel( getAllocationFrame(), exitkey, exitcode, exitlabel)
 end
-function getAllocationScopeCodeBlock( code)
-	local frame = typedb:this_instance( currentAllocFrameKey)
-	if frame then return frame.ctor .. code .. frame.dtor .. (frame.endcode or "") else return code end
+-- Get the code of a jump to the start of a cleanup chain with an ending 'ret llvmtype value' statement
+function doReturnTypeStatement( typeId, constructor)
+	local out,code = constructorParts( constructor)
+	local retcode = utils.template_format( llvmir.control.returnStatement, {this=out, type=typeDescriptionMap[ typeId].llvmtype})
+	local label = getCleanupLabel( constructorKey( "return", typeId, out), retcode)
+	return code .. utils.template_format( llvmir.control.gotoStatement, {inp=label})
+end
+-- Get the code of a jump to the start of a cleanup chain with an ending 'br label {exit}' statement
+function doReturnFromMain( exitlabel)
+	local label = getCleanupLabel( "main return", nil, exitlabel)
+	return utils.constructor_format( llvmir.control.gotoStatement, {inp=label})
+end
+-- Get the code of a jump to the start of a cleanup chain with an ending 'ret void' statement
+function doReturnVoidStatement()
+	local label = getCleanupLabel( "return void", llvmir.control.returnFromProcedure)
+	return utils.template_format( llvmir.control.gotoStatement, {inp=label})
+end
+-- Get the label of a throw exception cleanup chain
+function getExceptionThrowCleanupLabel()
+	return getCleanupLabel( "throw exception")
+end
+-- Function as env.returnfunction used for return from main
+function returnFromMainFunction( rtype, exitlabel, retvaladr)
+	local assign_int_fmt = typeDescriptionMap[ rtype].assign
+	return function( constructor)
+		local out,code = constructorParts( constructor)
+		local assignretcode = code .. utils.constructor_format( assign_int_fmt, {this=retvaladr, arg1=out})
+		return assignretcode .. doReturnFromMain( exitlabel)		
+	end
+end
+-- Get the cleanup code of the current allocation frame if defined
+function getAllocationFrameCleanupCode( frame)
+	local code = ""
+	local nofollow = true
+	for _,exit in pairs( frame.exitmap) do
+		if #exit.labels > 0 then nofollow = false end
+		for di=#exit.labels,1,-1 do
+			code = code .. utils.template_format( llvmir.control.plainLabel, {inp=exit.labels[di]}) .. frame.dtors[di].code
+			if di > 1 then code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.labels[di-1]}) end
+		end
+		if exit.exitcode then
+			local fmt; if nofollow == true then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+			code = code .. utils.constructor_format( fmt, {inp=exit.exitlabel}) .. exit.exitcode
+		elseif exit.exitlabel and not nofollow then 
+			code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.exitlabel})
+		end
+	end
+	return code
+end
+-- For debugging: Print the contents of an allocation frame to string without following parents
+function allocationFrameToString( frame)
+	local rt = ""
+	rt = rt .. mewa.tostring({envname=frame.env.name,scope=frame.scope,dtors=frame.dtors}) .. "\n"
+	for key,exit in pairs( frame.exitmap) do
+		rt = rt .. key .. " => " .. mewa.tostring({exit}) .. "\n"
+	end
+	return rt
+end
+-- Get the whole code block of a callable including init and cleanup code 
+function getCallableEnvironmentCodeBlock( code)
+	local env = getCallableEnvironment()
+	local rt = ""
+	for _,frame in pairs(env.frames) do rt = rt .. frame.ctor end
+	rt = rt .. code
+	for _,frame in pairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
+	return rt
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( node, context, typeId, name, reg)
@@ -1106,10 +1227,10 @@ function defineVariable( node, context, typeId, name, initVal)
 		local decl = {type=var, constructor={code=code,out=out}}
 		if initVal then rt = applyCallable( node, decl, ":=", {initVal}) else rt = applyCallable( node, decl, ":=", {}) end
 		local cleanup = tryApplyCallable( node, {type=var,constructor={out=out}}, ":~", {})
-		if cleanup and cleanup.constructor then setCleanupCode( descr, cleanup.constructor.code) end
+		if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then setCleanupCode( node, var, cleanup.constructor.code) end
 		return rt
 	elseif context.domain == "global" then
-		instantCallableEnvironment = mainCallableEnvironment
+		instantCallableEnvironment = globalCallableEnvironment
 		out = "@" .. name
 		local var = typedb:def_type( 0, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
@@ -1122,8 +1243,8 @@ function defineVariable( node, context, typeId, name, initVal)
 			local decl = {type=var, constructor={out=out}}
 			local init; if initVal then init = applyCallable( node, decl, ":=", {initVal}) else init = applyCallable( node, decl, ":=", {}) end
 			local cleanup = tryApplyCallable( node, decl, ":~", {})
-			if init.constructor then setInitCode( descr, init.constructor.code) end
-			if cleanup and cleanup.constructor then setCleanupCode( descr, cleanup.constructor.code) end
+			if init.constructor then globalInitCode = globalInitCode .. init.constructor.code end
+			if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then globalCleanupCode = cleanup.constructor.code .. globalCleanupCode end
 		end
 		instantCallableEnvironment = nil
 	elseif context.domain == "member" then
@@ -1501,7 +1622,6 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
 			traverseAstFunctionImplementation( genericDescr.node, genericDescr.context, descr, 4)
 		else
-			descr.endcode = llvmir.control.implicitReturnFromProcedure
 			traverseAstProcedureDeclaration( genericDescr.node, genericDescr.context, descr, 4)
 			traverseAstProcedureImplementation( genericDescr.node, genericDescr.context, descr, 4)
 		end
@@ -1684,7 +1804,8 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of the 'this' operand
 function findApplyCallable( node, this, callable, args)
-	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
+	local mask; if callable == ":=" then mask = tagmask_declaration else mask = tagmask_resolveType end
+	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
 	if not resolveContextType then return nil end
 	if type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 	local this_constructor = applyReductionList( node, reductions, this.constructor)
@@ -1991,13 +2112,12 @@ function defineCallableBodyContext( node, context, descr)
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
-	defineCallableEnvironment( descr.ret)
+	defineCallableEnvironment( "body " .. descr.symbol, descr.ret)
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node, context)
 	defineVariableHardcoded( node, context, stringPointerType, "argc", "%argc")
 	defineVariableHardcoded( node, context, scalarIntegerType, "argv", "%argv")
-	defineCallableEnvironment( scalarIntegerType)
 end
 -- Create a string constant pointer type/constructor
 function getStringConstant( value)
@@ -2144,10 +2264,10 @@ function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
 		code = code .. utils.template_format( llvmir.control.invertedControlType, {inp=cond_constructor.out, out=exitLabel})
 		exitLabelUsed = true
 	end
+	local nofollow; if matchblk.nofollow and elseblk and elseblk.nofollow then nofollow = true else nofollow = false end
 	local out; if elseblk then code = code .. elseblk.code; out = elseblk.out else out = cond_constructor.out end
-	return {code = code, out = out, exitLabelUsed=exitLabelUsed}
+	return {code = code, out = out, exitLabelUsed=exitLabelUsed, nofollow=nofollow}
 end
-
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
@@ -2209,7 +2329,12 @@ function typesystem.typecast( node)
 	else
 		local out = env.register()
 		local code = utils.constructor_format( descr.def_local, {out=out}, env.register)
-		return tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
+		local rt = tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
+		if rt then
+			local cleanup = tryApplyCallable( node, {type=typeId,constructor={out=out}}, ":~", {})
+			if cleanup then setCleanupCode( node, nil, cleanup) end
+		end
+		return rt
 	end
 end
 function typesystem.throw_exception( node)
@@ -2298,33 +2423,28 @@ function typesystem.codeblock( node, context)
 		if nofollow == true and ai ~= #args then utils.errorMessage( node.line, "Unreachable code inside code block") end
 		code = code .. args[ ai].code
 	end end
-	local follow; if #args > 0 then follow = args[#args].follow end
-	return {code=getAllocationScopeCodeBlock( code), nofollow=nofollow,follow=follow}
+	return {code = code, nofollow=nofollow}
 end
 function typesystem.return_value( node)
 	local operand = table.unpack( utils.traverse( typedb, node))
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
-	setImplicitEndCode( nil)
 	if doReturnValueAsReferenceParameter( rtype) then
 		local reftype = referenceTypeMap[ rtype]
 		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {operand})
-		setImplicitEndCode( llvmir.control.returnFromProcedure)
-		return {code = rt.constructor.code, nofollow=true}
+		return {code = rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
-		if not constructor then utils.errorMessage( node.line, "Return value does not match declared return type '%s'", typedb:type_string(rtype)) end
-		setImplicitEndCode( utils.constructor_format( llvmir.control.returnStatement, {type=typeDescriptionMap[rtype].llvmtype, this=constructor.out}))
-		return {code = constructor.code, nofollow=true}
+		local code; if env.returnfunction then code = env.returnfunction( constructor) else code = doReturnTypeStatement( rtype, constructor) end
+		return {code = code, nofollow=true}
 	end
 end
 function typesystem.return_void( node)
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
-	setImplicitEndCode( llvmir.control.returnFromProcedure)
-	return {code = "", nofollow=true}
+	return {code = doReturnVoidStatement(), nofollow=true}
 end
 function typesystem.conditional_else( node, context, exitLabel)
 	return utils.traverse( typedb, node, context)[1]
@@ -2337,10 +2457,7 @@ function typesystem.conditional_if( node, context)
 	local exitLabel; if #node.arg >= 3 then exitLabel = getCallableEnvironment().label() else exitLabel = nil end
 	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
 	local rt = conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
-	if rt.exitLabelUsed == true then
-		rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel})
-		rt.follow = true
-	end
+	if rt.exitLabelUsed == true then rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel}) end
 	return rt
 end
 function typesystem.conditional_while( node, context, bla)
@@ -2462,8 +2579,7 @@ function typesystem.procdef( node, context, pass)
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
 		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-				name = name, symbol = name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false,
-				endcode = llvmir.control.implicitReturnFromProcedure}
+				name = name, symbol = name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstProcedureDeclaration( node, context, descr, 3)
 	end
@@ -2511,8 +2627,7 @@ function typesystem.operator_procdef( node, context, pass)
 		local lnk, operatordecl = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
 		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-				name = operatordecl.name, symbol = "$" .. operatordecl.symbol, ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false,
-				endcode = llvmir.control.implicitReturnFromProcedure}
+				name = operatordecl.name, symbol = "$" .. operatordecl.symbol, ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		descr.attr = llvmir.functionAttribute( descr.interface)
@@ -2531,8 +2646,7 @@ function typesystem.constructordef( node, context, pass)
 		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
 		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
 		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-				name = ":=", symbol = "$ctor", ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false,
-				endcode = llvmir.control.implicitReturnFromProcedure}
+				name = ":=", symbol = "$ctor", ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
 		defineConstructorDestructor( node, descr, context)
@@ -2546,39 +2660,41 @@ function typesystem.constructordef( node, context, pass)
 end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
-	if not pass or pass == 1 then
-		utils.traverseRange( typedb, node, {1,1}, context)
-		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-		               name = ":~", symbol = "$dtor", ret = nil, private=false, const=false, interface=false}
-		context.properties.destructor = true
-		local prev_scope = typedb:scope( node.scope)
-		setImplicitEndCode( llvmir.control.implicitReturnFromProcedure)
-		typedb:scope( prev_scope)
-		utils.traverse( typedb, node, subcontext, descr, 1)
-		defineConstructorDestructor( node, descr, context)
-		allocNodeData( node, descr)
-	end
 	if not pass or pass == 2 then
-		local descr = getNodeData( node, descr)
-		descr.body  = utils.traverse( typedb, node, subcontext, descr, 2)[1].code
+		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+		               name = ":~", symbol = "$dtor", ret = nil, param=nil, private=false, const=false, interface=false}
+		context.properties.destructor = true
+		defineConstructorDestructor( node, descr, context)
+		local scope_bk = typedb:scope( node.scope)
+		local block = utils.traverse( typedb, node, subcontext)[1]
+		local code = block.code
+		typedb:step( node.scope[2] -1)
+		if not block.nofollow then code = code .. doReturnVoidStatement() end
+		descr.body = getCallableEnvironmentCodeBlock( code)
+		typedb:scope( scope_bk)
 		printFunctionDeclaration( node, descr)
 	end
 end
 function typesystem.callablebody( node, decl, context, descr, select)
 	if select == 0 then return decl end
 	local rt
-	local prev_scope = typedb:scope( node.scope)
+	local scope_bk = typedb:scope( node.scope)
 	local subcontext = {domain="local"}
-	if select == 1 then -- parse parameter declarations
+	if select == 1 then -- parameter declarations
 		defineCallableBodyContext( node, context, descr)
-		local arg = utils.traverseRange( typedb, node, {1,1}, subcontext)
-		rt = arg[1]
-	elseif select == 2 then -- parse statements in body
-		if descr.endcode then setImplicitEndCode( descr.endcode) end -- set implicit return statement
-		local arg = utils.traverseRange( typedb, node, {2,2}, subcontext)
-		rt = arg[2].code
+		rt = utils.traverseRange( typedb, node, {1,1}, subcontext)[1]
+	elseif select == 2 then -- statements in body
+		local block = utils.traverseRange( typedb, node, {2,2}, subcontext)[2]
+		local code = block.code
+		typedb:step( node.scope[2] -1)
+		if descr.ret then
+			if not block.nofollow then utils.errorMessage( node.line, "Missing return value") end
+		else
+			if not block.nofollow then code = code .. doReturnVoidStatement() end
+		end
+		rt = getCallableEnvironmentCodeBlock( code)
 	end
-	typedb:scope( prev_scope)
+	typedb:scope( scope_bk)
 	return rt
 end
 function typesystem.extern_paramdef( node, context, args)
@@ -2746,11 +2862,7 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 	end
 end
 function typesystem.count( node)
-	if #node.arg == 0 then
-		return 1
-	else
-		return utils.traverseCall( node)[ 1] + 1
-	end
+	if #node.arg == 0 then return 1 else return utils.traverseCall( node)[ 1] + 1 end
 end
 function typesystem.rep_operator( node)
 	local arg = utils.traverse( typedb, node)
@@ -2766,22 +2878,28 @@ function typesystem.member( node)
 	return applyCallable( node, arg[1], arg[2])
 end
 function typesystem.main_procdef( node)
-	local prev_scope = typedb:scope( node.scope)
 	local context = {domain="local"}
+	local scope_bk = typedb:scope( node.scope)
+	local env = defineCallableEnvironment( "main ", scalarIntegerType)
+	local exitlabel = env.label()
+	local retvaladr = env.register()
+	local retvalinit = utils.constructor_format( typeDescriptionMap[ scalarIntegerType].def_local, {out=retvaladr}, env.register)
+	env.returnfunction = returnFromMainFunction( scalarIntegerType, exitlabel, retvaladr)
 	defineMainProcContext( node, context)
-	typedb:scope( prev_scope)
-	local codeblock = table.unpack( utils.traverse( typedb, node, context))
-	local scope_bk = typedb:scope( {} ) -- set global scope
-	instantCallableEnvironment = mainCallableEnvironment
-	setImplicitEndCode( llvmir.control.implicitReturnFromMain)
-	local descr = {body = getAllocationScopeCodeBlock( codeblock.code)}
-	instantCallableEnvironment = nil
+	local block = table.unpack( utils.traverse( typedb, node, context))
+	local code = globalInitCode .. retvalinit .. block.code
+	typedb:step( node.scope[2] -1)
+	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end
+	code = getCallableEnvironmentCodeBlock( code)
+		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel}) 
+		.. globalCleanupCode
+		.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
 	typedb:scope( scope_bk)
-	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, descr))
+	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=code}))
 end
 function typesystem.program( node)
 	initBuiltInTypes()
-	mainCallableEnvironment = createCallableEnvironment( nil, "%ir", "IL")
+	globalCallableEnvironment = createCallableEnvironment( "globals ", "%ir", "IL")
 	utils.traverse( typedb, node, {domain="global"})
 	return node
 end
