@@ -433,7 +433,6 @@ entry:
 br i1 %r3, label %L8, label %L7
 L8:
 br label %L2
-br label %L7
 L7:
 %r4 = load double, double* @epsilon
 %r5 = fneg double %r4
@@ -441,15 +440,14 @@ L7:
 br i1 %r6, label %L6, label %L5
 L6:
 br label %L3
-br label %L5
 L5:
 br label %L4
+L2:
+ret i32 1
 L3:
 ret i32 -1
 L4:
 ret i32 0
-L2:
-ret i32 1
 }
 
 define external void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %ths ) #0 noinline nounwind {

@@ -1068,7 +1068,7 @@ function getAllocationFrame()
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
 		if parent and parent.env ~= env then parent = nil end
-		rt = {parent=parent, env=env, ctor="", scope=typedb:scope(), dtors={}, exitmap={}}
+		rt = {parent=parent, env=env, ctor="", scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}}
 		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
@@ -1123,6 +1123,7 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 		end
 		frame.exitmap[ exitkey] = {labels=labels, exitcode=exitcode, exitlabel=nextlabel}
 		exit = frame.exitmap[ exitkey]
+		table.insert( frame.exitkeys, exitkey)
 	elseif exit.exitcode ~= exitcode or exit.exitlabel ~= exitlabel then
 		 utils.errorMessage( {line=0}, "Internal: exit code mismatch")
 	end
@@ -1171,7 +1172,8 @@ end
 function getAllocationFrameCleanupCode( frame)
 	local code = ""
 	local nofollow = true
-	for _,exit in pairs( frame.exitmap) do
+	for _,ek in pairs( frame.exitkeys) do
+		exit = frame.exitmap[ ek]
 		if #exit.labels > 0 then nofollow = false end
 		for di=#exit.labels,1,-1 do
 			code = code .. utils.template_format( llvmir.control.plainLabel, {inp=exit.labels[di]}) .. frame.dtors[di].code
@@ -1190,8 +1192,8 @@ end
 function allocationFrameToString( frame)
 	local rt = ""
 	rt = rt .. mewa.tostring({envname=frame.env.name,scope=frame.scope,dtors=frame.dtors}) .. "\n"
-	for key,exit in pairs( frame.exitmap) do
-		rt = rt .. key .. " => " .. mewa.tostring({exit}) .. "\n"
+	for _,ek in pairs( frame.exitkeys) do
+		rt = rt .. ek .. " => " .. mewa.tostring({frame.exitmap[ ek]}) .. "\n"
 	end
 	return rt
 end
@@ -2257,7 +2259,10 @@ function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local code = cond_constructor.code .. matchblk.code
 	local exitLabelUsed
-	if not exitLabel or matchblk.nofollow == true then
+	if matchblk.nofollow == true then
+		code = code .. utils.template_format( llvmir.control.plainLabel, {inp=cond_constructor.out})
+		exitLabelUsed = false
+	elseif not exitLabel then
 		code = code .. utils.template_format( llvmir.control.label, {inp=cond_constructor.out})
 		exitLabelUsed = false
 	else

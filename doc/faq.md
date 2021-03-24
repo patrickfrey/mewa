@@ -414,14 +414,14 @@ This is an open issue. One idea would be to pass the lambda as type that refers 
 
 ### How to implement calls of C-Library functions?
 
-LLVM supports extern calls. In the specification of the example _language1_ I support calls of the C standard library.
+LLVM supports extern calls. In the specification of the example _language1_, I support calls of the C standard library.
 
 
 <a name="coroutines"/>
 
 ### How to implement coroutines?
 
-This is an open issue. I have no clue yet, but in my opinion coroutines should not be implemented with a sort of context switch in the user land with the coroutines having their own stack. So the statemachine of the coroutine pool should be implemented as one function with the ```yield``` implemented with branching inside this function.
+This is an open issue. In a compiled language where you cannot switch the stack easily, you have to implement a yielding function as statemachine. The states are the entry point of the function and the continuation entry points after yields. All temporary values in a yielding routine have to be represented as part of the state and not on the stack. I have clue yet, how to implement this in the example _language1_.
 
 
 
