@@ -83,11 +83,12 @@ local globalCleanupCode = ""		-- Cleanup code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
 local nodeIdCount = 0			-- Counter for node id allocation
 local nodeDataMap = {}			-- Map of node id's to a data structure (depending on the node)
-local genericLocalStack = {}		-- Stack of values for currentGenericLocal 
-local currentGenericLocal = 0		-- The context type id used for local type definitions, to separate instances of generics using the same scope
-local currentGenericLocalKey = "seekctx"-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local genericLocalStack = {}		-- Stack of values for localDefinitionContext 
+local localDefinitionContext = 0	-- The context type id used for local type definitions, to separate instances of generics using the same scope
+local seekContextKey = "seekctx"-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local currentCallableEnvKey = "callenv"	-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local currentAllocFrameKey = "frame"	-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local exceptionSectionPrinted = false	-- True if the code for throwing exceptions hat been attached to the code
 
 -- Allocate a node identifier for multi-pass evaluation with structures temporarily stored
 function allocNodeData( node, data)
@@ -96,11 +97,11 @@ function allocNodeData( node, data)
 		node.id = nodeIdCount
 		nodeDataMap[ nodeIdCount] = {}
 	end
-	nodeDataMap[ node.id][ currentGenericLocal] = data
+	nodeDataMap[ node.id][ localDefinitionContext] = data
 end
 -- Get node data attached to a node with `allocNodeData( node, data)`
 function getNodeData( node)
-	return nodeDataMap[ node.id][ currentGenericLocal]
+	return nodeDataMap[ node.id][ localDefinitionContext]
 end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
@@ -1030,35 +1031,35 @@ function thisInstanceTypeTable( name, emptyInst)
 end
 -- Get the list of context types associated with the current scope used for resolving types
 function getSeekContextTypes()
-	return typedb:get_instance( currentGenericLocalKey) or {0}
+	return typedb:get_instance( seekContextKey) or {0}
 end
 -- Update the list of context types associated with the current scope used for resolving types
 function setSeekContextTypes( types)
-	typedb:set_instance( currentGenericLocalKey, copyTypeTable( types))
+	typedb:set_instance( seekContextKey, copyTypeTable( types))
 end
 -- Push an element to the current context type list used for resolving types
 function pushSeekContextType( val)
-	table.insert( thisInstanceTypeTable( currentGenericLocalKey, {0}), val)
+	table.insert( thisInstanceTypeTable( seekContextKey, {0}), val)
 end
 -- Remove the last element of the the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
 function popSeekContextType( val)
-	local seekctx = typedb:this_instance( currentGenericLocalKey)
+	local seekctx = typedb:this_instance( seekContextKey)
 	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
 	table.remove( seekctx, #seekctx)
 end
 -- Push an element to the generic local stack, allowing nested generic creation
 function pushGenericLocal( genericlocal)
-	table.insert( genericLocalStack, {currentGenericLocal,currentGenericLocalKey,currentCallableEnvKey,currentAllocFrameKey})
-	currentGenericLocal = genericlocal
+	table.insert( genericLocalStack, {localDefinitionContext,seekContextKey,currentCallableEnvKey,currentAllocFrameKey})
+	localDefinitionContext = genericlocal
 	local suffix = string.format(":%x", genericlocal)
-	currentGenericLocalKey = "seekctx" .. suffix
+	seekContextKey = "seekctx" .. suffix
 	currentCallableEnvKey = "callenv" .. suffix
 	currentAllocFrameKey = "frame" .. suffix
 end
--- Pop the top element from the generic local stack, restoring the previous currentGenericLocal value
+-- Pop the top element from the generic local stack, restoring the previous localDefinitionContext value
 function popGenericLocal( genericlocal)
-	if currentGenericLocal ~= genericlocal or #genericLocalStack == 0 then utils.errorMessage( 0, "Internal: corrupt generic local stack") end
-	currentGenericLocal,currentGenericLocalKey,currentCallableEnvKey,currentAllocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
+	if localDefinitionContext ~= genericlocal or #genericLocalStack == 0 then utils.errorMessage( 0, "Internal: corrupt generic local stack") end
+	localDefinitionContext,seekContextKey,currentCallableEnvKey,currentAllocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
 	table.remove( genericLocalStack, #genericLocalStack)
 end
 -- The frame object defines constructors/destructors called implicitly at start/end of their lifetime
@@ -1124,7 +1125,7 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 		frame.exitmap[ exitkey] = {labels=labels, exitcode=exitcode, exitlabel=nextlabel}
 		exit = frame.exitmap[ exitkey]
 		table.insert( frame.exitkeys, exitkey)
-	elseif exit.exitcode ~= exitcode or exit.exitlabel ~= exitlabel then
+	elseif (exitcode and exit.exitcode ~= exitcode) or (exitlabel and exit.exitlabel ~= exitlabel) then
 		 utils.errorMessage( {line=0}, "Internal: exit code mismatch")
 	end
 	local idx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
@@ -1156,8 +1157,8 @@ function doReturnVoidStatement()
 	return utils.template_format( llvmir.control.gotoStatement, {inp=label})
 end
 -- Get the label of a throw exception cleanup chain
-function getExceptionThrowCleanupLabel()
-	return getCleanupLabel( "throw exception")
+function getExceptionThrowCleanupLabel( catchlabel)
+	return getCleanupLabel( "throw exception", nil, catchlabel)
 end
 -- Function as env.returnfunction used for return from main
 function returnFromMainFunction( rtype, exitlabel, retvaladr)
@@ -1206,6 +1207,18 @@ function getCallableEnvironmentCodeBlock( code)
 	for _,frame in pairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
 	return rt
 end
+-- Get the constructor for throwing an exception
+function throwExceptionConstructor( errcode, errmsg)
+	local env = getCallableEnvironment()
+	if not exceptionSectionPrinted then
+		print_section( "Auto", llvmir.exception.section)
+		exceptionSectionPrinted = true
+	end
+	local errcode_out,errcode_code = constructorParts( errcode)
+	local errmsg_out,errmsg_code = constructorParts( errmsg)
+	local code = errcode_code .. errmsg_code .. utils.constructor_format( llvmir.exception.throw, {errcode=errcode_out,errmsg=errmsg_out}, env.register)
+	return {code=code, nofollow=true}
+end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( node, context, typeId, name, reg)
 	local contextTypeId = getDeclarationContextTypeId( context)
@@ -1223,7 +1236,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local env = getCallableEnvironment()
 		local out = env.register()
 		local code = utils.constructor_format( descr.def_local, {out = out}, env.register)
-		local var = typedb:def_type( getLocalDeclarationContextTypeId( context), name, out)
+		local var = typedb:def_type( localDefinitionContext, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		local decl = {type=var, constructor={code=code,out=out}}
@@ -1320,8 +1333,8 @@ end
 function defineParameter( node, context, type, name, env)
 	local descr = typeDescriptionMap[ type]
 	local paramreg = env.register()
-	local var = typedb:def_type( getLocalDeclarationContextTypeId( context), name, paramreg)
-	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( getLocalDeclarationContextTypeId( context), name)) end
+	local var = typedb:def_type( localDefinitionContext, name, paramreg)
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( localDefinitionContext, name)) end
 	local ptype; if doPassValueAsReferenceParameter( type) then ptype = referenceTypeMap[ type] or type else ptype = type end
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
@@ -1548,8 +1561,12 @@ end
 -- Get the handle of a type expected to have no arguments and no constructor (plain typedef type)
 function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
 	local typeId,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
-	if constructor then utils.errorMessage( node.line, "Data type expected instead of %s", typeName) end
+	if constructor then utils.errorMessage( node.line, "'%s' does not refer to a data type", typeName) end
 	return typeId
+end
+-- Issue an error if the argument does not refer to a value
+function expectValueType( node, item)
+	if not item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a value", typedb:type_string(typeId)) end
 end
 -- Get the type handle of a type defined as a path
 function resolveTypeFromNamePath( node, qualifier, arg)
@@ -1893,14 +1910,10 @@ function getDeclarationLlvmTypedefParameterString( descr, context)
 end
 -- Get the context for type declarations
 function getDeclarationContextTypeId( context)
-	if context.domain == "local" then return currentGenericLocal or 0
+	if context.domain == "local" then return localDefinitionContext
 	elseif context.domain == "member" then return context.qualitype.lval
 	elseif context.domain == "global" then return context.namespace or 0
 	end
-end
--- Get the context for local type declarations
-function getLocalDeclarationContextTypeId( context)
-	return currentGenericLocal or 0
 end
 -- Part of identifier for generic signature, constructor (const expression, e.g. dimension) as string
 function getGenericConstructorIdString( constructor)
@@ -1924,7 +1937,7 @@ function getGenericTypeName( typeId, param)
 end
 -- Symbol name for type in target LLVM output
 function getDeclarationUniqueName( contextTypeId, typnam)
-	if contextTypeId == currentGenericLocal then nam = typnam else nam = typedb:type_string(contextTypeId, "__") .. "__" .. typnam end
+	if contextTypeId == localDefinitionContext then nam = typnam else nam = typedb:type_string(contextTypeId, "__") .. "__" .. typnam end
 	if typedb:scope()[1] == 0 then return nam else return utils.uniqueName( nam .. "__") end
 end
 -- Function shared by all expansions of the structure used for mapping the LLVM template for a function call
@@ -2343,7 +2356,37 @@ function typesystem.typecast( node)
 	end
 end
 function typesystem.throw_exception( node)
-	utils.errorMessage( node.line, "Throw exception not implemented")
+	local errcode,errmsg = unpack( utils.traverse( typedb, node))
+	expectValueType( node, errcode)
+	expectValueType( node, errmsg)
+	local errcode_constructor = getRequiredTypeConstructor( node, scalarLongType, errcode, tagmask_matchParameter, tagmask_typeConversion)
+	local errmsg_constructor = getRequiredTypeConstructor( node, stringPointerType, errcode, tagmask_matchParameter, tagmask_typeConversion)
+	return throwExceptionConstructor( errcode_constructor, errmsg_constructor)
+end
+function typesystem.tryblock( node, catchlabel)
+	local scope_bk = typedb:scope( node.scope)	
+	getExceptionThrowCleanupLabel( catchlabel)
+	local codeblock = unpack( utils.traverse( typedb, node))
+	typedb:scope( scope_bk)
+end
+function typesystem.catchblock( node, catchlabel)
+	local errcodevar,errmsgvar = unpack( utils.traverseRange( typedb, node, {1,#node.arg-1}))
+	local env = getCallableEnvironment()
+	local errcode_constructor = constructorStruct( env.register())
+	local errmsg_constructor = constructorStruct( env.register())
+	typedb:def_type( localDefinitionContext, errcodevar, errcode_constructor)
+	typedb:def_type( localDefinitionContext, errmsgvar, errmsg_constructor)
+	local code = utils.constructor_format( llvmir.exception.catch, {errcode=errcode_constructor.out,errmsg=errmsg_constructor.out}, env.register)
+	setCleanupCode( node, nil, utils.constructor_format( llvmir.exception.freemsg, {this=errmsg_constructor.out}))
+	return utils.traverseRange( typedb, node, {#node.arg,#node.arg})[#node.arg]
+end
+function typesystem.trycatch( node)
+	local env = getCallableEnvironment()
+	local catchlabel = env.label()
+	local tryblock,catchblock = unpack( utils.traverse( typedb, node, catchlabel))
+	local fmt; if tryblock.nofollow then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+	local code = tryblock.code .. utils.constructor_format( fmt, {inp=catchlabel}) .. catchblock.code
+	return {code=code, nofollow=catchblock.nofollow}
 end
 function typesystem.delete( node)
 	local env = getCallableEnvironment()
@@ -2379,6 +2422,8 @@ function typesystem.assign_operator( node, operator)
 end
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, this)
+	expectValueType( node, operand)
 	return applyCallable( node, this, operator, {operand})
 end
 function typesystem.unop( node, operator)
@@ -2392,7 +2437,8 @@ function typesystem.operator( node, operator)
 	return applyCallable( node, this, operator, args)
 end
 function typesystem.operator_address( node, operator)
-	local this = utils.traverse( typedb, node)[1]
+	local this = unpack( utils.traverse( typedb, node))
+	expectValueType( node, this)
 	local declType = getDeclarationType( this.type)
 	if not pointerTypeMap[ declType] then createPointerTypeInstance( node, {const=false}, dereferenceTypeMap[ declType] or declType) end
 	return applyCallable( node, this, operator, {})
@@ -2432,6 +2478,7 @@ function typesystem.codeblock( node, context)
 end
 function typesystem.return_value( node)
 	local operand = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, operand)
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end

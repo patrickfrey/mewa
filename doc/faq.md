@@ -421,7 +421,7 @@ LLVM supports extern calls. In the specification of the example _language1_, I s
 
 ### How to implement coroutines?
 
-This is an open issue. In a compiled language where you cannot switch the stack easily, you have to implement a yielding function as statemachine. The states are the entry point of the function and the continuation entry points after yields. All temporary values in a yielding routine have to be represented as part of the state and not on the stack. I have clue yet, how to implement this in the example _language1_.
+This is an open issue. In a compiled language where you cannot switch the stack easily, you have to implement a yielding function as statemachine. The states are the entry point of the function and the continuation entry points after yields. All temporary values in a yielding routine appearing in the scope after the yield have to be represented as part of the state data and not on the stack. I plan to implement coroutines in the example _language1_.
 
 
 

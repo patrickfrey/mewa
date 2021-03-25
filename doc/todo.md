@@ -8,9 +8,10 @@
  * Migrate Mewa repo to own github organization
  * Use more 'next' instead of array access in Lua, replace ipairs with pairs or next where possible
  * Implement generic var for global variables depending on a type (instead of static declarations)
- * lambdas ```lambda( a, b, c){ a = b + c }```
+ * Implement lambdas ```lambda( a, b, c){ a = b + c }```
  * lambda argument type as transfer type with a constructor defining the reduction of the lambda argument name to the type transferred.
- * free operators: ```operator Complex[double]( const double, const Complex[double] o)```for promote calls
+ * Implement free operators: ```operator Complex[double]( const double, const Complex[double] o)```for promote calls
+ * Implement coroutines
 
 # Open issues
 * Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.
