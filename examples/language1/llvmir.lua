@@ -266,7 +266,6 @@ llvmir.control = {
 	plainLabel = "{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
 	returnFromProcedure = "ret void\n",
-	assignReturnFromMain = "store i32 {inp}, i32* {this}\n",
 	returnFromMain = "{1} = load i32, i32* {this}\nret i32 {1}\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
@@ -277,7 +276,6 @@ llvmir.control = {
 	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
 	functionVarargSignature = "({argstr} ...)",
-	sretFunctionCallType = "void ({argstr})*",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
