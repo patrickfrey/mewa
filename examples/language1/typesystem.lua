@@ -1232,6 +1232,8 @@ function getAllocationFrameCleanupCode( frame)
 		if exit.exitcode then
 			local fmt; if #exit.labels > 0 then fmt = llvmir.control.label else fmt = llvmir.control.plainLabel end
 			code = code .. utils.constructor_format( fmt, {inp=exit.exitlabel}) .. exit.exitcode
+		elseif exit.exitlabel and #exit.labels > 0 then
+			code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.exitlabel})
 		end
 	end
 	return code
