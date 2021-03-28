@@ -105,7 +105,8 @@ function getNodeData( node)
 end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
-	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix), returntype=rtype, returnfunction=nil, frames={}}
+	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
+	        returntype=rtype, returnfunction=nil, frames={}, implicitobjects={}}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( name, rtype)
@@ -1068,8 +1069,8 @@ function getAllocationFrame()
 	if not rt then
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
-		if parent and parent.env ~= env then parent = nil end
-		rt = {parent=parent, env=env, ctor="", scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}}
+		local catch; if not parent or parent.env ~= env then parent = nil else catch = parent.catch end
+		rt = {parent=parent, catch=catch, env=env, ctor="", scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad=""}
 		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
@@ -1112,21 +1113,20 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	local exit = frame.exitmap[ exitkey]
 	if not exit then
 		labels = {}
+		local nextlabel
 		for di=1,#frame.dtors do table.insert( labels, frame.env.label()) end
-		local nextlabel = exitlabel
-		if frame.parent then
+		if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then
 			nextlabel = getFrameCleanupLabel( frame.parent, exitkey, exitcode, exitlabel)
 			exitcode = nil
-		elseif exitlabel then
-			nextlabel = exitlabel
 		elseif exitcode then
 			nextlabel = frame.env.label()
+			if exitlabel then exitcode = exitcode .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
+		else
+			nextlabel = exitlabel
 		end
 		frame.exitmap[ exitkey] = {labels=labels, exitcode=exitcode, exitlabel=nextlabel}
 		exit = frame.exitmap[ exitkey]
 		table.insert( frame.exitkeys, exitkey)
-	elseif (exitcode and exit.exitcode ~= exitcode) or (exitlabel and exit.exitlabel ~= exitlabel) then
-		 utils.errorMessage( {line=0}, "Internal: exit code mismatch")
 	end
 	local idx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
 	if idx == 0 then
@@ -1156,9 +1156,60 @@ function doReturnVoidStatement()
 	local label = getCleanupLabel( "return void", llvmir.control.returnFromProcedure)
 	return utils.template_format( llvmir.control.gotoStatement, {inp=label})
 end
--- Get the label of a throw exception cleanup chain
-function getExceptionThrowCleanupLabel( catchlabel)
-	return getCleanupLabel( "throw exception", nil, catchlabel)
+function defineImplicitObjectException( frame)
+	frame.env.implicitobjects[ "exception"] = llvmir.exception.allocExceptionLocal
+end
+function defineImplicitObjectLandingpad( frame)
+	frame.env.implicitobjects[ "landingpad"] = llvmir.exception.allocLandingpad
+end
+-- Initialize a frame that catches exceptions
+function initTryBlock( catchlabel)
+	local frame = getAllocationFrame()
+	frame.catch = frame
+	defineImplicitObjectException( frame)
+	getFrameCleanupLabel( frame, "catch", nil, catchlabel)
+end
+-- Get the label to unwind a throwing call in case of an exception
+function getInvokeUnwindLabel()
+	local frame = getAllocationFrame()
+	local rt = frame.env.label()
+	if not exceptionSectionPrinted then print_section( "Auto", llvmir.exception.section); exceptionSectionPrinted = true end
+	defineImplicitObjectLandingpad( frame)
+	if frame.catch then
+		local cleanup = getFrameCleanupLabel( frame, "catch")
+		frame.landingpad = frame.landingpad .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, frame.env.register)
+	else
+		local cleanup
+		if frame.exitmap[ "catch"] then
+			cleanup = getFrameCleanupLabel( frame, "catch")
+		else
+			local exitcode = utils.constructor_format( llvmir.exception.cleanup_end, {}, frame.env.register)
+			cleanup = getFrameCleanupLabel( frame, "catch", exitcode)
+		end
+		frame.landingpad = frame.landingpad .. utils.constructor_format( llvmir.exception.cleanup_start, {cleanup=cleanup, landingpad=rt}, frame.env.register)
+	end
+	return rt
+end
+-- Get the code that throws an exception
+function getThrowExceptionCode( errcode, errmsg)
+	local frame = getAllocationFrame()
+	local rt = frame.env.label()
+	local errcode_out,errcode_code = constructorParts( errcode)
+	local errmsg_out,errmsg_code = constructorParts( errmsg)
+	if not exceptionSectionPrinted then print_section( "Auto", llvmir.exception.section); exceptionSectionPrinted = true end
+	local cleanup
+	if frame.catch then
+		cleanup = getFrameCleanupLabel( frame, "catch")
+	else
+		if frame.exitmap[ "throw"] then
+			cleanup = getFrameCleanupLabel( frame, "throw")
+		else
+			local exitcode = utils.constructor_format( llvmir.exception.throwExceptionLocal, {}, frame.env.register)
+			cleanup = getFrameCleanupLabel( frame, "throw", exitcode)
+		end
+	end
+	return utils.constructor_format( llvmir.exception.initExceptionLocal, {errcode=errcode_out, errmsg=errmsg_out}, env.register)
+			.. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanup})
 end
 -- Function as env.returnfunction used for return from main
 function returnFromMainFunction( rtype, exitlabel, retvaladr)
@@ -1171,20 +1222,16 @@ function returnFromMainFunction( rtype, exitlabel, retvaladr)
 end
 -- Get the cleanup code of the current allocation frame if defined
 function getAllocationFrameCleanupCode( frame)
-	local code = ""
-	local nofollow = true
+	local code = frame.landingpad
 	for _,ek in pairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
-		if #exit.labels > 0 then nofollow = false end
 		for di=#exit.labels,1,-1 do
 			code = code .. utils.template_format( llvmir.control.plainLabel, {inp=exit.labels[di]}) .. frame.dtors[di].code
 			if di > 1 then code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.labels[di-1]}) end
 		end
 		if exit.exitcode then
-			local fmt; if nofollow == true then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+			local fmt; if #exit.labels > 0 then fmt = llvmir.control.label else fmt = llvmir.control.plainLabel end
 			code = code .. utils.constructor_format( fmt, {inp=exit.exitlabel}) .. exit.exitcode
-		elseif exit.exitlabel and not nofollow then 
-			code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.exitlabel})
 		end
 	end
 	return code
@@ -1202,22 +1249,11 @@ end
 function getCallableEnvironmentCodeBlock( code)
 	local env = getCallableEnvironment()
 	local rt = ""
+	for _,constructor in pairs(env.implicitobjects) do rt = rt .. constructor.code end
 	for _,frame in pairs(env.frames) do rt = rt .. frame.ctor end
 	rt = rt .. code
 	for _,frame in pairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
 	return rt
-end
--- Get the constructor for throwing an exception
-function throwExceptionConstructor( errcode, errmsg)
-	local env = getCallableEnvironment()
-	if not exceptionSectionPrinted then
-		print_section( "Auto", llvmir.exception.section)
-		exceptionSectionPrinted = true
-	end
-	local errcode_out,errcode_code = constructorParts( errcode)
-	local errmsg_out,errmsg_code = constructorParts( errmsg)
-	local code = errcode_code .. errmsg_code .. utils.constructor_format( llvmir.exception.throw, {errcode=errcode_out,errmsg=errmsg_out}, env.register)
-	return {code=code, nofollow=true}
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( node, context, typeId, name, reg)
@@ -2361,11 +2397,11 @@ function typesystem.throw_exception( node)
 	expectValueType( node, errmsg)
 	local errcode_constructor = getRequiredTypeConstructor( node, scalarLongType, errcode, tagmask_matchParameter, tagmask_typeConversion)
 	local errmsg_constructor = getRequiredTypeConstructor( node, stringPointerType, errcode, tagmask_matchParameter, tagmask_typeConversion)
-	return throwExceptionConstructor( errcode_constructor, errmsg_constructor)
+	return {code=getThrowExceptionCode( errcode_constructor, errmsg_constructor), nofollow=true}
 end
 function typesystem.tryblock( node, catchlabel)
-	local scope_bk = typedb:scope( node.scope)	
-	getExceptionThrowCleanupLabel( catchlabel)
+	local scope_bk = typedb:scope( node.scope)
+	initTryBlock( catchlabel)
 	local codeblock = unpack( utils.traverse( typedb, node))
 	typedb:scope( scope_bk)
 end
@@ -2376,8 +2412,9 @@ function typesystem.catchblock( node, catchlabel)
 	local errmsg_constructor = constructorStruct( env.register())
 	typedb:def_type( localDefinitionContext, errcodevar, errcode_constructor)
 	typedb:def_type( localDefinitionContext, errmsgvar, errmsg_constructor)
-	local code = utils.constructor_format( llvmir.exception.catch, {errcode=errcode_constructor.out,errmsg=errmsg_constructor.out}, env.register)
-	setCleanupCode( node, nil, utils.constructor_format( llvmir.exception.freemsg, {this=errmsg_constructor.out}))
+	local code = utils.constructor_format( llvmir.exception.loadExceptionErrCode, {errcode=errcode_constructor.out}, env.register)
+			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {errmsg=errmsg_constructor.out}, env.register)
+	setCleanupCode( node, nil, utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out}))
 	return utils.traverseRange( typedb, node, {#node.arg,#node.arg})[#node.arg]
 end
 function typesystem.trycatch( node)

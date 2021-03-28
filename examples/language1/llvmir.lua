@@ -291,23 +291,28 @@ llvmir.control = {
 llvmir.exception = {
 	section = "%__L_Exception = type { i64, i8* }\n"
 		.. "declare external void @strdup( i8*, ... ) #1 nounwind\n"
+		.. "define dso_local void @__L_init__Exception( %__L_Exception* exception, i64 %code, i8* %msg) {\n"
+		.. "%ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
+		.. "store i64 {errcode}, i64* %ObjCodeRef\n"
+		.. "%ObjMsgRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"
+		.. "%IsNull = icmp ne i8* {errmsg}, null\n"
+		.. "br i1 %IsNull, label %L_COPY, label %L_NULL\n"
+		.. "L_COPY:\n"
+		.. "%MsgCopy = call i8* @strdup( i8* {errmsg}) nounwind\n"
+		.. "store i8* %MsgCopy, i8** %ObjMsgRef\n"
+		.. "br label %L_CONT\n"
+		.. "L_NULL:\n"
+		.. "store i8* null, i8** %ObjMsgRef\n"
+		.. "br label %L_CONT\n"
+		.. "L_CONT:\n"
+		.. "ret void\n"
+		.. "}\n"
 		.. "define dso_local void @__L_throw__Exception( i64 %code, i8* %msg) {\n"
 		.. "%Size = getelementptr %__L_Exception* null, i32 1\n"
 		.. "%SizeOfObj = ptrtoint %__L_Exception* %Size to i32\n"
 		.. "%Mem = call i8* @__cxa_allocate_exception( i32 %SizeOfObj) nounwind\n"
 		.. "%Obj = bitcast i8* %Mem to %__L_Exception*\n"
-		.. "%ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %Obj, i32 0, i32 0\n"
-		.. "store i64 %code, i64* %ObjCodeRef\n"
-		.. "%rObjMsgRef = getelementptr inbounds %__L_Exception, %__L_Exception* %Obj, i32 0, i32 1\n"
-		.. "%IsNull = icmp ne i8* %msg, null\n"
-		.. "br i1 %IsNull, label %L_COPY, label %L_NULL\n"
-		.. "L_COPY:\n"
-		.. "%MsgCopy = call i8* @strdup( i8* %msg) nounwind\n"
-		.. "br label %L_CONT\n"
-		.. "L_NULL:\n"
-		.. "store i8* %MsgCopy, i8** %ObjMsgRef\n"
-		.. "br label %L_CONT\n"
-		.. "L_CONT:\n"
+		.. "call void @__L_init__Exception( %__L_Exception* %Obj, %code, %msg)\n"
 		.. "call void @__cxa_throw( i8* %Mem, i8* null, i8* null) noreturn\n"
 		.. "unreachable\n"
 		.. "}\n"
@@ -320,18 +325,42 @@ llvmir.exception = {
 		.. "L_DONE:\n"
 		.. "ret void\n"
 		.. "}\n",
-	throw = "call void @__L_throw__Exception( i64 {errcode}, i8* {errmsg}) noreturn\nunreachable\n",
-	freemsg = "call void @__L_free__ExceptionMsg( i8* {this})\n",
-	catch = "{1} = alloca %__L_Exception\n"
-		.. "{2} = landingpad { i8*, i32 } catch i8* null\n"
-		.. "{3} = extractvalue { i8*, i32 } {2}, 0\n"
-		.. "{4} = bitcast i8* {3} to %__L_Exception*\n"
-		.. "{5} = load %__L_Exception, %__L_Exception* {4}\n"
-		.. "store %__L_Exception {5}, %__L_Exception* {1}\n"
-		.. "{6} = getelementptr inbounds %__L_Exception, %__L_Exception* {1}, i32 0, i32 0\n"
-		.. "{errcode} = load i64, i64* {6}\n"
-		.. "{7} = getelementptr inbounds %__L_Exception, %__L_Exception* {1}, i32 0, i32 1\n"
-		.. "{errmsg} = load i8*, i8** {7}\n"
+	allocLandingpad = "%excptr = alloca i8*\n%excidx = alloca i32\n",
+	allocExceptionLocal = "%exception = alloca %__L_Exception*\n",
+	initExceptionLocal = "call void @__L_init__Exception( %__L_Exception* %exception, i64 {errcode}, i8* {errmsg})\n",
+	throwExceptionLocal = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
+		.. "{2} = load i64, i64* {1}\n"
+		.. "{3} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"
+		.. "{4} = load i8*, i8** {7}\n"
+		.. "call void @__L_throw__Exception( i64 {2}, i8* {4}) noreturn\n"
+		.. "unreachable\n",
+	loadExceptionErrCode = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
+		.. "{out} = load i64, i64* {1}\n",
+	loadExceptionErrMsg = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"
+		.. "{out} = load i8*, i8** {7}\n",
+	freeExceptionErrMsg = "call void @__L_free__ExceptionMsg( i8* {this})\n",
+	catch = "{landingpad}:\n"
+		.. "{1} = landingpad { i8*, i32 } catch i8* null\n"
+		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
+		.. "{3} = bitcast i8* {2} to %__L_Exception*\n"
+		.. "{4} = load %__L_Exception, %__L_Exception* {3}\n"
+		.. "store %__L_Exception {4}, %__L_Exception* %exception\n"
+		.. "br label {cleanup}\n",
+	invoke = "{out} = call {rtllvmtype}{signature} {func}( {callargstr}) to label %{continue} unwind label %{cleanup}\n"
+		.. "{continue}:\n",
+	cleanup_start = "{landingpad}:\n"
+		.. "{1} = landingpad { i8*, i32 }\n"
+		.. "\tcleanup\n"
+		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
+		.. "store i8* {2}, i8** %excptr\n"
+		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
+		.. "store i32 {3}, i32* %excidx\n"
+		.. "br label {cleanup}\n",
+	cleanup_end = "{1} = load i8*, i8** %excptr\n"
+		.. "{2} = load i32, i32* %excidx\n"
+		.. "{3} = insertvalue { i8*, i32 } undef, i8* {1}, 0\n"
+		.. "{4} = insertvalue { i8*, i32 } {3}, i32 {2}, 1\n"
+		.. "resume { i8*, i32 } {4}\n"
 }
 
 function llvmir.functionAttribute( isInterface)
