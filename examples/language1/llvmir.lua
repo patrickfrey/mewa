@@ -178,14 +178,11 @@ llvmir.interfaceTemplate = {
 
 local functionVariableTemplate = { -- inherits pointer template
 	scalar = false,
-	class = "function variable",
-	call = "{out} = call {rtllvmtype} {this}( {callargstr})\n",
-	sretCall = "call void {this}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
+	class = "function variable"
 }
 local procedureVariableTemplate = { -- inherits pointer template
 	scalar = false,
-	class = "procedure variable",
-	call = "call void {this}( {callargstr})\n"
+	class = "procedure variable"
 }
 
 llvmir.anyClassPointerDescr = {
@@ -269,7 +266,9 @@ llvmir.control = {
 	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
 	procedureCall = "call void{signature} {func}( {callargstr})\n",
 	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
-	functionCallThrowing = "{out} = call {rtllvmtype}{signature} {func}( {callargstr}) to label %{continue} unwind label %{cleanup}\n{continue}:\n",
+	functionCallThrowing = "{out} = invoke {rtllvmtype}{signature} {func}( {callargstr}) to label %{1} unwind label %{cleanup}\n{1}:\n",
+	procedureCallThrowing = "invoke void{signature} {func}( {callargstr}) to label %{1} unwind label %{cleanup}\n{1}:\n",
+	sretFunctionCallThrowing = "invoke void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr}) to label %{1} unwind label %{cleanup}\n{1}:\n",	
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
@@ -288,15 +287,19 @@ llvmir.control = {
 
 llvmir.exception = {
 	section = "%__L_Exception = type { i64, i8* }\n"
-		.. "declare external void @strdup( i8*, ... ) #1 nounwind\n"
-		.. "define dso_local void @__L_init__Exception( %__L_Exception* exception, i64 %code, i8* %msg) {\n"
+		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)"
+		.. "declare external i8* @strdup( i8*) nounwind\n"
+		.. "declare external void @free( i8* %msg) nounwind\n"
+		.. "declare external i8* @__cxa_allocate_exception( i32)\n"
+		.. "declare external void @__cxa_throw( i8*, i8*, i8*)\n"
+		.. "define dso_local void @__L_init__Exception( %__L_Exception* %exception, i64 %code, i8* %msg) {\n"
 		.. "%ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
-		.. "store i64 {errcode}, i64* %ObjCodeRef\n"
+		.. "store i64 %code, i64* %ObjCodeRef\n"
 		.. "%ObjMsgRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"
-		.. "%IsNull = icmp ne i8* {errmsg}, null\n"
+		.. "%IsNull = icmp ne i8* %msg, null\n"
 		.. "br i1 %IsNull, label %L_COPY, label %L_NULL\n"
 		.. "L_COPY:\n"
-		.. "%MsgCopy = call i8* @strdup( i8* {errmsg}) nounwind\n"
+		.. "%MsgCopy = call i8* @strdup( i8* %msg) nounwind\n"
 		.. "store i8* %MsgCopy, i8** %ObjMsgRef\n"
 		.. "br label %L_CONT\n"
 		.. "L_NULL:\n"
@@ -306,11 +309,10 @@ llvmir.exception = {
 		.. "ret void\n"
 		.. "}\n"
 		.. "define dso_local void @__L_throw__Exception( i64 %code, i8* %msg) {\n"
-		.. "%Size = getelementptr %__L_Exception* null, i32 1\n"
-		.. "%SizeOfObj = ptrtoint %__L_Exception* %Size to i32\n"
-		.. "%Mem = call i8* @__cxa_allocate_exception( i32 %SizeOfObj) nounwind\n"
+		.. "%SizeObObj = load i32, i32* @__L_ExceptionSize\n"
+		.. "%Mem = call i8* @__cxa_allocate_exception( i32 %SizeObObj) nounwind\n"
 		.. "%Obj = bitcast i8* %Mem to %__L_Exception*\n"
-		.. "call void @__L_init__Exception( %__L_Exception* %Obj, %code, %msg)\n"
+		.. "call void @__L_init__Exception( %__L_Exception* %Obj, i64 %code, i8* %msg)\n"
 		.. "call void @__cxa_throw( i8* %Mem, i8* null, i8* null) noreturn\n"
 		.. "unreachable\n"
 		.. "}\n"
@@ -319,7 +321,7 @@ llvmir.exception = {
 		.. "br i1 %IsNull, label %L_FREE, label %L_DONE\n"
 		.. "L_FREE:\n"
 		.. "call void @free( i8* %msg) nounwind\n"
-		.. "br label %L_CONT\n"
+		.. "br label %L_DONE\n"
 		.. "L_DONE:\n"
 		.. "ret void\n"
 		.. "}\n",
@@ -343,15 +345,14 @@ llvmir.exception = {
 		.. "{3} = bitcast i8* {2} to %__L_Exception*\n"
 		.. "{4} = load %__L_Exception, %__L_Exception* {3}\n"
 		.. "store %__L_Exception {4}, %__L_Exception* %exception\n"
-		.. "br label {cleanup}\n",
+		.. "br label %{cleanup}\n",
 	cleanup_start = "{landingpad}:\n"
-		.. "{1} = landingpad { i8*, i32 }\n"
-		.. "\tcleanup\n"
+		.. "{1} = landingpad { i8*, i32 } cleanup\n"
 		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
 		.. "store i8* {2}, i8** %excptr\n"
 		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
 		.. "store i32 {3}, i32* %excidx\n"
-		.. "br label {cleanup}\n",
+		.. "br label %{cleanup}\n",
 	cleanup_end = "{1} = load i8*, i8** %excptr\n"
 		.. "{2} = load i32, i32* %excidx\n"
 		.. "{3} = insertvalue { i8*, i32 } undef, i8* {1}, 0\n"

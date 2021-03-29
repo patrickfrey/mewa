@@ -72,10 +72,12 @@ With a parameter the function sets the current scope to the parameter value and 
 This function was designed to support the mapping of AST nodes to scopes in the tree traversal: You set the current scope when you enter the node and restore the old current scope value when leaving the node.
 
 #### Parameter
-| #      | Name     | Type              | Description                                                                   |
-| :----- | :------- | :---------------- | :---------------------------------------------------------------------------- |
-| 1st    | scope    | table             | (optional) pair of integers describing the scope to set as current scope      |
-| Return |          | table             | pair of integers describing the (previously defined) current scope            |
+| #          | Name     | Type              | Description                                                                                                |
+| :--------- | :------- | :---------------- | :--------------------------------------------------------------------------------------------------------- |
+| 1st        | scope    | table             | (optional) pair of integers describing the scope to set as the current one                                 |
+| 2nd        | step     | integer           | (optional) integer describing the scope step to set as the current one, set to scope[2]-1 if not specified |
+| Return 1st |          | table             | pair of integers describing the (previously defined) current scope                                         |
+| Return 2nd |          | integer           | integer describing the (previously defined) current scope step                                             |
 
 
 <a name="step"/>

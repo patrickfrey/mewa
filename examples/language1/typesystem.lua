@@ -106,7 +106,7 @@ end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, implicitobjects={}}
+	        returntype=rtype, returnfunction=nil, frames={}, implicitcode_exception="", implicitcode_landingpad=""}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( name, rtype)
@@ -266,56 +266,56 @@ function buildFunctionCallArguments( code, argstr, args, llvmtypes)
 	if #args > 0 or argstr ~= "" then rt = rt:sub(1, -3) end
 	return code,rt
 end
--- Builds the table with the variables to substitute in a function call template
-function buildFunctionCallSubst( env, rtype, argstr)
-	if not rtype then
-		return nil,{callargstr = argstr}
-	elseif doReturnValueAsReferenceParameter( rtype) then
-		local out = "RVAL"
-		local rvalsubst; if argstr == "" then rvalsubst = "{RVAL}" else rvalsubst = "{RVAL}, " end
-		return out,{callargstr = argstr, rvalref = rvalsubst}
+-- Constructor of a function call generalized
+function functionCallConstructor( env, code, func, argstr, descr)
+	local out,fmt,subst
+	if descr.ret then
+		if doReturnValueAsReferenceParameter( descr.ret) then
+			local rvalsubst; if argstr == "" then rvalsubst = "{RVAL}" else rvalsubst = "{RVAL}, " end
+			out = "RVAL"
+			subst = {func = func, callargstr = argstr, rvalref = rvalsubst, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
+			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); fmt = llvmir.control.sretFunctionCallThrowing else fmt = llvmir.control.sretFunctionCall end
+		else
+			out = env.register()
+			subst = {func = func, callargstr = argstr, out = out, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
+			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); fmt = llvmir.control.functionCallThrowing else fmt = llvmir.control.functionCall end
+		end
 	else
-		local out = env.register()
-		subst = {out = out, callargstr = argstr}
-		return out,subst
+		subst = {func = func, callargstr = argstr, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
+		if descr.throws then subst.cleanup = getInvokeUnwindLabel(); fmt = llvmir.control.procedureCallThrowing else fmt = llvmir.control.procedureCall end
 	end
+	return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.label))
 end
--- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
-function functionCallConstructor( fmt, thisTypeId, rtype, symbolname)
+-- Constructor implementing a direct call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
+function functionDirectCallConstructor( thisTypeId, descr)
 	return function( this, args, llvmtypes)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
 		local this_argstr; if thisTypeId ~= 0 then this_argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else this_argstr = "" end
 		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, args, llvmtypes)
-		local out,subst = buildFunctionCallSubst( env, rtype, argstr)
-		subst.func = "@" .. symbolname
-		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
+		return functionCallConstructor( env, code, "@" .. descr.symbolname, argstr, descr)
 	end
 end
 -- Constructor implementing an indirect call of a function through a function/procedure variable
-function functionVariableCallConstructor( fmt, thisTypeId, rtype)
+function functionIndirectCallConstructor( thisTypeId, descr)
 	return function( this, args, llvmtypes)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
 		local code,argstr = buildFunctionCallArguments( "", "", args, llvmtypes)
-		local out,subst = buildFunctionCallSubst( env, rtype, argstr)
-		subst.this = this_inp
-		return constructorStruct( out, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
+		return functionCallConstructor( env, this_code .. code, this_inp, argstr, descr)
 	end
 end
 -- Constructor implementing a call of a method of an interface
-function interfaceMethodCallConstructor( loadfmt, callfmt, rtype)
+function interfaceMethodCallConstructor( descr)
 	return function( this, args, llvmtypes)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
 		local intr_func = env.register()
 		local intr_this = env.register()
-		this_code = this_code .. utils.constructor_format( loadfmt, {this=this_inp, out_func=intr_func, out_this=intr_this}, env.register)
+		this_code = this_code .. utils.constructor_format( descr.load, {this=this_inp, index=descr.index, llvmtype=descr.llvmtype, out_func=intr_func, out_this=intr_this}, env.register)
 		local this_argstr = "i8* " .. intr_this
 		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, args, llvmtypes)
-		local out,subst = buildFunctionCallSubst( env, rtype, argstr)
-		subst.func = intr_func
-		return constructorStruct( out, code .. utils.constructor_format( callfmt, subst, env.register))
+		return functionCallConstructor( env, code, intr_func, argstr, descr)
 	end
 end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
@@ -1158,10 +1158,10 @@ function doReturnVoidStatement()
 	return utils.template_format( llvmir.control.gotoStatement, {inp=label})
 end
 function defineImplicitObjectException( frame)
-	frame.env.implicitobjects[ "exception"] = llvmir.exception.allocExceptionLocal
+	frame.env.implicitcode_exception = llvmir.exception.allocExceptionLocal
 end
 function defineImplicitObjectLandingpad( frame)
-	frame.env.implicitobjects[ "landingpad"] = llvmir.exception.allocLandingpad
+	frame.env.implicitcode_landingpad = llvmir.exception.allocLandingpad
 end
 -- Initialize a frame that catches exceptions
 function initTryBlock( catchlabel)
@@ -1251,8 +1251,7 @@ end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( code)
 	local env = getCallableEnvironment()
-	local rt = ""
-	for _,constructor in pairs(env.implicitobjects) do rt = rt .. constructor.code end
+	local rt = env.implicitcode_exception .. env.implicitcode_landingpad
 	for _,frame in pairs(env.frames) do rt = rt .. frame.ctor end
 	rt = rt .. code
 	for _,frame in pairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
@@ -1303,7 +1302,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		instantCallableEnvironment = nil
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
-		defineVariableMember( node, context, typeId, name, context.private)
+		defineVariableMember( node, descr, context, typeId, name, context.private)
 	else
 		utils.errorMessage( node.line, "Internal: Context domain undefined, context=%s", mewa.tostring(context))
 	end
@@ -1313,8 +1312,7 @@ function expandContextLlvmMember( descr, context)
 	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
 end
 -- Define a member variable of a class or a structure
-function defineVariableMember( node, context, typeId, name, private)
-	local descr = typeDescriptionMap[ typeId]
+function defineVariableMember( node, descr, context, typeId, name, private)
 	local qualisep = typeQualiSepMap[ typeId]
 	local memberpos = context.structsize
 	local load_ref = utils.template_format( context.descr.loadelemref, {index=#context.members, type=descr.llvmtype})
@@ -2013,7 +2011,6 @@ end
 function expandDescrFunctionReferenceTemplateParameter( descr, context)
 	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
-	descr.signature = "(" .. descr.argstr .. ")"
 end
 -- Expand the structure used for mapping the LLVM template for an extern function call with keys derived from the call description
 function expandDescrExternCallTemplateParameter( descr, context)
@@ -2048,24 +2045,20 @@ function printExternFunctionDeclaration( node, descr)
 end
 -- Define a direct function call: class method call, free function call
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
-	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
-	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret, descr.symbolname))
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionDirectCallConstructor( thisTypeId, descr))
 	if descr.vararg then varargFuncMap[ functype] = true end
 	return functype
 end
 -- Define an indirect function call over a variable containing the function address
 function defineFunctionVariableCall( thisTypeId, contextTypeId, opr, descr)
-	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
-	return defineCall( rtype, contextTypeId, opr, descr.param, functionVariableCallConstructor( callfmt, thisTypeId, descr.ret))
+	return defineCall( rtype, contextTypeId, opr, descr.param, functionIndirectCallConstructor( thisTypeId, descr))
 end
 -- Define an indirect function call over an interface method table (VMT)
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
-	local loadfmt = utils.template_format( descr.load, descr)
-	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
-	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( loadfmt, callfmt, descr.ret))
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( descr))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
 -- Get (if already defined) or create the callable context type (function name) on which the "()" operator implements the function call
@@ -2089,13 +2082,13 @@ end
 function defineProcedureVariableType( node, descr, context)
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	expandDescrFunctionReferenceTemplateParameter( descr, context)
-	defineCallableVariableType( node, llvmir.procedureVariableDescr( descr, descr.signature), declContextTypeId)
+	defineCallableVariableType( node, llvmir.procedureVariableDescr( descr, "(" .. descr.argstr .. ")"), declContextTypeId)
 end
 -- Define a function pointer type as callable object with "()" operator implementing the call
 function defineFunctionVariableType( node, descr, context)
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	expandDescrFunctionReferenceTemplateParameter( descr, context)
-	defineCallableVariableType( node, llvmir.functionVariableDescr( descr, descr.rtllvmtype, descr.signature), declContextTypeId)
+	defineCallableVariableType( node, llvmir.functionVariableDescr( descr, descr.rtllvmtype, "(" .. descr.argstr .. ")"), declContextTypeId)
 end
 -- Define a free function as callable object with "()" operator implementing the call
 function defineFreeFunction( node, descr, context)
@@ -2285,7 +2278,6 @@ end
 -- Traversal of a function declaration node, either directly in case of an ordinary function or on demand in case of a generic function
 function traverseAstFunctionDeclaration( node, context, descr, nodeidx)
 	descr.ret = utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context)[nodeidx]
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 	descr.param = utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 1)[nodeidx+1]
 	instantiateCallableDef( node, context, descr)
 end
@@ -2296,7 +2288,6 @@ function traverseAstFunctionImplementation( node, context, descr, nodeidx)
 end
 -- Traversal of a procedure declaration node, either directly in case of an ordinary procedure or on demand in case of a generic procedure
 function traverseAstProcedureDeclaration( node, context, descr, nodeidx)
-	descr.call = llvmir.control.procedureCall
 	descr.param = utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 1)[nodeidx]
 	instantiateCallableDef( node, context, descr)
 end
@@ -2701,7 +2692,6 @@ function typesystem.operator_funcdef( node, context, pass)
 		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
 				name=operatordecl.name, symbol ="$"..operatordecl.symbol, ret=ret, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
-		if doReturnValueAsReferenceParameter( descr.ret) then descr.call = llvmir.control.sretFunctionCall else descr.call = llvmir.control.functionCall end
 		descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		descr.attr = llvmir.functionAttribute( descr.interface)
@@ -2718,8 +2708,8 @@ function typesystem.operator_procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
-		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-				name = operatordecl.name, symbol = "$" .. operatordecl.symbol, ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="", name = operatordecl.name, symbol = "$" .. operatordecl.symbol, 
+				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		descr.attr = llvmir.functionAttribute( descr.interface)
@@ -2737,8 +2727,8 @@ function typesystem.constructordef( node, context, pass)
 		local lnk = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
 		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
 		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
-		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-				name = ":=", symbol = "$ctor", ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="", name = ":=", symbol = "$ctor", 
+				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
 		defineConstructorDestructor( node, descr, context)
@@ -2753,14 +2743,13 @@ end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
 	if not pass or pass == 2 then
-		local descr = {call = llvmir.control.procedureCall, lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-		               name = ":~", symbol = "$dtor", ret = nil, param=nil, private=false, const=false, interface=false}
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="", name = ":~", symbol = "$dtor", 
+		               ret = nil, param=nil, private=false, const=false, interface=false}
 		context.properties.destructor = true
 		defineConstructorDestructor( node, descr, context)
 		local scope_bk = typedb:scope( node.scope)
 		local block = utils.traverse( typedb, node, subcontext)[1]
 		local code = block.code
-		typedb:step( node.scope[2] -1)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
 		descr.body = getCallableEnvironmentCodeBlock( code)
 		typedb:scope( scope_bk)
@@ -2778,7 +2767,6 @@ function typesystem.callablebody( node, decl, context, descr, select)
 	elseif select == 2 then -- statements in body
 		local block = utils.traverseRange( typedb, node, {2,2}, subcontext)[2]
 		local code = block.code
-		typedb:step( node.scope[2] -1)
 		if descr.ret then
 			if not block.nofollow then utils.errorMessage( node.line, "Missing return value") end
 		else
@@ -2808,28 +2796,28 @@ end
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
 	local lang,name,ret,param = table.unpack( utils.traverse( typedb, node, context))
-	local descr = {call=llvmir.control.functionCall, externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=false, signature=""}
+	local descr = {externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=false, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef( node)
 	local context = {domain="global"}
 	local lang,name,param = table.unpack( utils.traverse( typedb, node, context))
-	local descr = {call=llvmir.control.procedureCall, externtype=lang, name=name, symbol=name, param=param, vararg=false, signature=""}
+	local descr = {externtype=lang, name=name, symbol=name, param=param, vararg=false, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_funcdef_vararg( node)
 	local context = {domain="global"}
 	local lang,name,ret,param = table.unpack( utils.traverse( typedb, node, context))
-	local descr = {call=llvmir.control.functionCall, externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=true, signature=""}
+	local descr = {externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=true, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
 function typesystem.extern_procdef_vararg( node)
 	local context = {domain="global"}
 	local lang,name,param = table.unpack( utils.traverse( typedb, node, context))
-	local descr = {call=llvmir.control.procedureCall, externtype=lang, name=name, symbol=name, param=param, vararg=true, signature=""}
+	local descr = {externtype=lang, name=name, symbol=name, param=param, vararg=true, signature=""}
 	defineExternFunction( node, descr, context)
 	printExternFunctionDeclaration( node, descr)
 end
@@ -2840,33 +2828,31 @@ function typesystem.typedef_functype( node, decl, context)
 end
 function typesystem.typedef_proctype( node, decl, context)
 	local name,param = table.unpack( utils.traverse( typedb, node, context))
-	local descr = {ret = nil, param=param, name=name, throws=decl.throws}
+	local descr = {ret = nil, param=param, name=name, signature="", throws=decl.throws}
 	defineProcedureVariableType( node, descr, context)
 end
 function typesystem.interface_funcdef( node, context)
 	local name,ret,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=name, symbol=name, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretFunctionCall else descr.call=llvmir.control.functionCall end
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_procdef( node, context)
 	local name,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=name, symbol=name, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = llvmir.control.procedureCall}
+	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, context)
 	local opr,ret,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=opr.name, symbol = "$"..opr.symbol, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 			index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretFunctionCall else descr.call=llvmir.control.functionCall end
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, context)
 	local opr,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=opr.name, symbol="$"..opr.symbol, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod, call=llvmir.control.procedureCall}
+	               index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod}
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.namespacedef( node, context)
@@ -2942,7 +2928,7 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 		local typnam = typedb:type_name(typeId)
 		local private = false
 		if descr.class == "class" then
-			defineVariableMember( node, context, typeId, typnam, private)
+			defineVariableMember( node, descr, context, typeId, typnam, private)
 			defineClassInheritanceReductions( context, typnam, private, false)
 		elseif descr.class == "interface" then
 			defineInterfaceMember( node, context, typeId, typnam, private)
@@ -2980,7 +2966,6 @@ function typesystem.main_procdef( node)
 	defineMainProcContext( node, context)
 	local block = table.unpack( utils.traverse( typedb, node, context))
 	local code = globalInitCode .. retvalinit .. block.code
-	typedb:step( node.scope[2] -1)
 	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end
 	code = getCallableEnvironmentCodeBlock( code)
 		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel}) 

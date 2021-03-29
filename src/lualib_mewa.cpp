@@ -515,18 +515,20 @@ static int mewa_typedb_scope( lua_State* ls)
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 3/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 4);
-		mewa::Scope rt = td->curScope;
+		mewa::Scope rt_scope = td->curScope;
+		mewa::Scope::Step rt_step = td->curStep;
 		if (nargs >= 2)
 		{
 			td->curScope = mewa::lua::getArgumentAsScope( functionName, ls, 2);
-			td->curStep = td->curScope.start();
+			td->curStep = (nargs >= 3) ? mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 3) : (td->curScope.end()-1);
 		}
-		mewa::lua::pushScope( ls, functionName, rt);
+		mewa::lua::pushScope( ls, functionName, rt_scope);
+		lua_pushinteger( ls, rt_step);
 	}
 	catch (...) { lippincottFunction( ls); }
-	return 1;
+	return 2;
 }
 
 static int mewa_typedb_step( lua_State* ls)
