@@ -173,10 +173,7 @@ llvmir.interfaceTemplate = {
 			.. "{3} = getelementptr inbounds %{symbol}__VMT, %{symbol}__VMT* {2}, i32 0, i32 {index}\n"
 			.. "{out_func} = load {llvmtype}, {llvmtype}* {3}, align 8\n"
 			.. "{5} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 0\n"
-			.. "{out_this} = load i8*, i8** {5}\n",
-	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
-	procedureCall = "call void{signature} {func}( {callargstr})\n",
-	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n"
+			.. "{out_this} = load i8*, i8** {5}\n"
 }
 
 local functionVariableTemplate = { -- inherits pointer template
@@ -269,9 +266,10 @@ llvmir.control = {
 	returnFromMain = "{1} = load i32, i32* {this}\nret i32 {1}\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
-	functionCall = "{out} = call {rtllvmtype}{signature} @{symbolname}( {callargstr})\n",
-	procedureCall = "call void{signature} @{symbolname}( {callargstr})\n",
-	sretFunctionCall = "call void{signature} @{symbolname}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
+	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
+	procedureCall = "call void{signature} {func}( {callargstr})\n",
+	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr})\n",
+	functionCallThrowing = "{out} = call {rtllvmtype}{signature} {func}( {callargstr}) to label %{continue} unwind label %{cleanup}\n{continue}:\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) #1 nounwind\n",
 	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
@@ -346,8 +344,6 @@ llvmir.exception = {
 		.. "{4} = load %__L_Exception, %__L_Exception* {3}\n"
 		.. "store %__L_Exception {4}, %__L_Exception* %exception\n"
 		.. "br label {cleanup}\n",
-	invoke = "{out} = call {rtllvmtype}{signature} {func}( {callargstr}) to label %{continue} unwind label %{cleanup}\n"
-		.. "{continue}:\n",
 	cleanup_start = "{landingpad}:\n"
 		.. "{1} = landingpad { i8*, i32 }\n"
 		.. "\tcleanup\n"

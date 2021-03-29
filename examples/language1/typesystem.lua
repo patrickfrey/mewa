@@ -281,13 +281,14 @@ function buildFunctionCallSubst( env, rtype, argstr)
 	end
 end
 -- Constructor implementing a call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
-function functionCallConstructor( fmt, thisTypeId, rtype)
+function functionCallConstructor( fmt, thisTypeId, rtype, symbolname)
 	return function( this, args, llvmtypes)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
 		local this_argstr; if thisTypeId ~= 0 then this_argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else this_argstr = "" end
 		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, args, llvmtypes)
 		local out,subst = buildFunctionCallSubst( env, rtype, argstr)
+		subst.func = "@" .. symbolname
 		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
 	end
 end
@@ -2049,7 +2050,7 @@ end
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
 	local callfmt = utils.template_format( descr.call, descr)
 	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = rvalueRefTypeMap[ descr.ret] else rtype = descr.ret end
-	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret))
+	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionCallConstructor( callfmt, thisTypeId, descr.ret, descr.symbolname))
 	if descr.vararg then varargFuncMap[ functype] = true end
 	return functype
 end
@@ -2846,26 +2847,26 @@ function typesystem.interface_funcdef( node, context)
 	local name,ret,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=name, symbol=name, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretFunctionCall else descr.call=llvmir.control.functionCall end
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_procdef( node, context)
 	local name,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=name, symbol=name, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = context.descr.procedureCall}
+	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod, call = llvmir.control.procedureCall}
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, context)
 	local opr,ret,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=opr.name, symbol = "$"..opr.symbol, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
 			index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
-	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=context.descr.sretFunctionCall else descr.call=context.descr.functionCall end
+	if doReturnValueAsReferenceParameter( descr.ret) then descr.call=llvmir.control.sretFunctionCall else descr.call=llvmir.control.functionCall end
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.interface_operator_procdef( node, context)
 	local opr,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=opr.name, symbol="$"..opr.symbol, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod, call=context.descr.procedureCall}
+	               index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod, call=llvmir.control.procedureCall}
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.namespacedef( node, context)
