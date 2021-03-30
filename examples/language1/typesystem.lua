@@ -106,7 +106,7 @@ end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, implicitcode_exception="", implicitcode_landingpad=""}
+	        returntype=rtype, returnfunction=nil, frames={}, implicitcode_exception="", implicitcode_landingpad="", initcode=""}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( name, rtype)
@@ -1262,7 +1262,7 @@ end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( code)
 	local env = getCallableEnvironment()
-	local rt = env.implicitcode_exception .. env.implicitcode_landingpad
+	local rt = env.implicitcode_exception .. env.implicitcode_landingpad .. env.initcode
 	for _,frame in pairs(env.frames) do rt = rt .. frame.ctor end
 	rt = rt .. code
 	for _,frame in pairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
@@ -1378,12 +1378,16 @@ function defineInterfaceInheritanceReductions( context, name, private, const)
 	defineReductionToMember( contextType, name)
 end
 -- Make a function/procedure/operator parameter addressable by name in the callable body
-function defineParameter( node, context, type, name, env)
-	local descr = typeDescriptionMap[ type]
+function defineParameter( node, context, typeId, name, env)
+	local descr = typeDescriptionMap[ typeId]
 	local paramreg = env.register()
 	local var = typedb:def_type( localDefinitionContext, name, paramreg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( localDefinitionContext, name)) end
-	local ptype; if doPassValueAsReferenceParameter( type) then ptype = referenceTypeMap[ type] or type else ptype = type end
+	local ptype = typeId
+	if doPassValueAsReferenceParameter( typeId) then
+		ptype = referenceTypeMap[ typeId]
+		if constTypeMap[ typeId] then utils.errorMessage( node.line, "Passing structure parameter as LValue not allowes as implicit copy is not implemented") end
+	end
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
 end
