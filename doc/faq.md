@@ -60,12 +60,9 @@ It aims to support the mapping of a programming language to an intermediate repr
 <a name="coveredLanguageClasses"/>
 
 ### What classes of languages are covered by _Mewa_?
-**_Mewa_ was been designed to be capable to implement general purpose programming languages with the power of C++ (*) or Rust having a LALR(1) grammar definition.**
+**_Mewa_ was been designed to be capable to implement strogly typed, general purpose programming languages having a LALR(1) grammar definition.**
 It is not recommended to use _Mewa_ for other than compilable, stronly typed programming languages, because it was not designed for other language classes.
 To define a type system as graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
-
-**(*)** Unfortunately C++ (and C) can't be implemented with _Mewa_ as there is no separation of syntax and semantic analysis possible in C/C++.
-To name one example: There is no way to decide if the statement ```A * B;``` is an expression or a type declaration without having semantical information about A.
 
 
 <a name="nameMewa"/>
