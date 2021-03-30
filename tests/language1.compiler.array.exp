@@ -2,6 +2,7 @@
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
 @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
 
+declare external i32 @__gxx_personality_v0( ... ) nounwind
 %IntArray = type { [5 x i32] }
 %FloatArray = type { [5 x float] }
 %DoubleArray = type { [5 x double] }
@@ -228,17 +229,14 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
   ret void
 }
 
-
-declare external void @printf( i8*, ... ) #1 nounwind
-
-define external void @__C_IntArray__$ctor( %IntArray* %ths ) #0 noinline nounwind {
+declare external void @printf( i8*, ... ) nounwind
+define external void @__C_IntArray__$ctor( %IntArray* %ths ) #0 nounwind {
 entry:
 br label %L1
 L1:
 ret void
 }
-
-define external void @__C_IntArray__$ctor__$5xi32$( %IntArray* %ths, [5 x i32]* %r1 ) #0 noinline nounwind {
+define external void @__C_IntArray__$ctor__$5xi32$( %IntArray* %ths, [5 x i32]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
 call void @__ctor_assign_5__i32( [5 x i32]* %r2, [5 x i32]* %r1)
@@ -246,8 +244,7 @@ br label %L1
 L1:
 ret void
 }
-
-define external i32* @__C_IntArray__$get__i32( %IntArray* %ths, i32 %r1 ) #0 noinline nounwind {
+define external i32* @__C_IntArray__$get__i32( %IntArray* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
@@ -256,8 +253,7 @@ br label %L1
 L1:
 ret i32* %r3
 }
-
-define external i32* @__C_IntArray__$get__i32__const( %IntArray* %ths, i32 %r1 ) #0 noinline nounwind {
+define external i32* @__C_IntArray__$get__i32__const( %IntArray* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
@@ -266,15 +262,13 @@ br label %L1
 L1:
 ret i32* %r3
 }
-
-define external void @__C_FloatArray__$ctor( %FloatArray* %ths ) #0 noinline nounwind {
+define external void @__C_FloatArray__$ctor( %FloatArray* %ths ) #0 nounwind {
 entry:
 br label %L1
 L1:
 ret void
 }
-
-define external void @__C_FloatArray__$ctor__$5xfloat$( %FloatArray* %ths, [5 x float]* %r1 ) #0 noinline nounwind {
+define external void @__C_FloatArray__$ctor__$5xfloat$( %FloatArray* %ths, [5 x float]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
 call void @__ctor_assign_5__float( [5 x float]* %r2, [5 x float]* %r1)
@@ -282,8 +276,7 @@ br label %L1
 L1:
 ret void
 }
-
-define external float* @__C_FloatArray__$get__i32( %FloatArray* %ths, i32 %r1 ) #0 noinline nounwind {
+define external float* @__C_FloatArray__$get__i32( %FloatArray* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
@@ -292,8 +285,7 @@ br label %L1
 L1:
 ret float* %r3
 }
-
-define external float* @__C_FloatArray__$get__i32__const( %FloatArray* %ths, i32 %r1 ) #0 noinline nounwind {
+define external float* @__C_FloatArray__$get__i32__const( %FloatArray* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
@@ -302,15 +294,13 @@ br label %L1
 L1:
 ret float* %r3
 }
-
-define external void @__C_DoubleArray__$ctor( %DoubleArray* %ths ) #0 noinline nounwind {
+define external void @__C_DoubleArray__$ctor( %DoubleArray* %ths ) #0 nounwind {
 entry:
 br label %L1
 L1:
 ret void
 }
-
-define external void @__C_DoubleArray__$ctor__$5xdouble$( %DoubleArray* %ths, [5 x double]* %r1 ) #0 noinline nounwind {
+define external void @__C_DoubleArray__$ctor__$5xdouble$( %DoubleArray* %ths, [5 x double]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0
 call void @__ctor_assign_5__double( [5 x double]* %r2, [5 x double]* %r1)
@@ -318,8 +308,7 @@ br label %L1
 L1:
 ret void
 }
-
-define external double* @__C_DoubleArray__$get__i32( %DoubleArray* %ths, i32 %r1 ) #0 noinline nounwind {
+define external double* @__C_DoubleArray__$get__i32( %DoubleArray* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
@@ -328,8 +317,7 @@ br label %L1
 L1:
 ret double* %r3
 }
-
-define external double* @__C_DoubleArray__$get__i32__const( %DoubleArray* %ths, i32 %r1 ) #0 noinline nounwind {
+define external double* @__C_DoubleArray__$get__i32__const( %DoubleArray* %ths, i32 %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0
 %r4 = zext i32 %r1 to i64
@@ -339,8 +327,7 @@ L1:
 ret double* %r3
 }
 @string1 = private unnamed_addr constant [17 x i8] c"ARRAY[ %d] = %d\0A\00"
-
-define external void @printIntArray(  ) #0 noinline nounwind {
+define external void @printIntArray(  ) #0 nounwind {
 entry:
 %r1 = alloca %IntArray, align 8
 %r7 = alloca [5 x i32], align 8
@@ -383,8 +370,7 @@ ret void
 }
 @string2 = private unnamed_addr constant [12 x i8] c"FL = %f %f\0A\00"
 @string3 = private unnamed_addr constant [17 x i8] c"ARRAY[ %d] = %f\0A\00"
-
-define external void @printFloatArray(  ) #0 noinline nounwind {
+define external void @printFloatArray(  ) #0 nounwind {
 entry:
 %r1 = alloca float, align 4
 store float 0x4002666660000000, float* %r1
@@ -438,8 +424,7 @@ L5:
 ret void
 }
 @string4 = private unnamed_addr constant [12 x i8] c"DB = %f %f\0A\00"
-
-define external void @printDoubleArray(  ) #0 noinline nounwind {
+define external void @printDoubleArray(  ) #0 nounwind {
 entry:
 %r1 = alloca double, align 8
 store double 0x400999999999999A, double* %r1
@@ -490,7 +475,6 @@ L5:
 ret void
 }
 
-declare dso_local i32 @__gxx_personality_v0(...)
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
 entry:

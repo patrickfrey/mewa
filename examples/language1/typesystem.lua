@@ -1170,11 +1170,22 @@ function initTryBlock( catchlabel)
 	defineImplicitObjectException( frame)
 	getFrameCleanupLabel( frame, "catch", nil, catchlabel)
 end
+-- Ensure that exceptions and their linkup code are defined, define them if not yet done
+function requireExceptions()
+	if not exceptionSectionPrinted then
+		local exceptionSection = ""
+		exceptionSection = llvmir.externFunctionDeclaration( "C", "i8*", "strdup", "i8*", false)
+				.. llvmir.externFunctionDeclaration( "C", "void", "free", "i8*", false)
+				.. llvmir.exception.section
+		print_section( "Auto", exceptionSection)
+		exceptionSectionPrinted = true
+	end
+end
 -- Get the label to unwind a throwing call in case of an exception
 function getInvokeUnwindLabel()
 	local frame = getAllocationFrame()
 	local rt = frame.env.label()
-	if not exceptionSectionPrinted then print_section( "Auto", llvmir.exception.section); exceptionSectionPrinted = true end
+	requireExceptions()
 	defineImplicitObjectLandingpad( frame)
 	if frame.catch then
 		local cleanup = getFrameCleanupLabel( frame, "catch")
@@ -1197,8 +1208,8 @@ function getThrowExceptionCode( errcode, errmsg)
 	local rt = frame.env.label()
 	local errcode_out,errcode_code = constructorParts( errcode)
 	local errmsg_out,errmsg_code = constructorParts( errmsg)
-	if not exceptionSectionPrinted then print_section( "Auto", llvmir.exception.section); exceptionSectionPrinted = true end
 	local cleanup
+	requireExceptions()
 	if frame.catch then
 		cleanup = getFrameCleanupLabel( frame, "catch")
 	else
@@ -1671,7 +1682,7 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 		local typeInstance = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
 		typeIdNotifyFunction( typeInstance)
 		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
-		local descr = {lnk="internal", attr=llvmir.functionAttribute(false), signature="",
+		local descr = {lnk="internal", attr=llvmir.functionAttribute( false, genericDescr.throws), signature="",
 				name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
 		pushSeekContextType( typeInstance)
 		if genericDescr.class == "generic_function" then
@@ -2037,11 +2048,7 @@ function expandContextMethodList( node, descr, context)
 end
 function printFunctionDeclaration( node, descr)
 	local fmt; if doReturnValueAsReferenceParameter( descr.ret) then fmt = llvmir.control.sretFunctionDeclaration else fmt = llvmir.control.functionDeclaration end
-	print( "\n" .. utils.constructor_format( fmt, descr))
-end
-function printExternFunctionDeclaration( node, descr)
-	local fmt; if descr.vararg then fmt = llvmir.control.extern_functionDeclaration_vararg else fmt = llvmir.control.extern_functionDeclaration end
-	print( "\n" .. utils.constructor_format( fmt, descr))
+	print( utils.constructor_format( fmt, descr))
 end
 -- Define a direct function call: class method call, free function call
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
@@ -2269,7 +2276,7 @@ function instantiateCallableDef( node, context, descr)
 	if context.domain == "member" then
 		defineClassMethod( node, descr, context)
 		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface)
+		descr.attr = llvmir.functionAttribute( descr.interface, descr.throws)
 	else
 		local callabletype = defineFreeFunction( node, descr, context)
 		typeDescriptionMap[ callabletype] = llvmir.callableReferenceDescr( descr.symbolname, descr.ret, descr.throws)
@@ -2646,7 +2653,7 @@ function typesystem.funcdef( node, context, pass)
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="",
 				name=name, symbol=name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstFunctionDeclaration( node, context, descr, 3)
@@ -2661,7 +2668,7 @@ function typesystem.procdef( node, context, pass)
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="",
 				name = name, symbol = name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstProcedureDeclaration( node, context, descr, 3)
@@ -2690,11 +2697,11 @@ function typesystem.operator_funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl, ret = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
 		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="",
-				name=operatordecl.name, symbol ="$"..operatordecl.symbol, ret=ret, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, signature="", name=operatordecl.name, symbol ="$"..operatordecl.symbol, 
+				ret=ret, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface)
+		descr.attr = llvmir.functionAttribute( descr.interface, decl.throws)
 		defineClassOperator( node, descr, context)
 		allocNodeData( node, descr)
 	end
@@ -2708,11 +2715,11 @@ function typesystem.operator_procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="", name = operatordecl.name, symbol = "$" .. operatordecl.symbol, 
+		local descr = {lnk = lnk.linkage, signature="", name = operatordecl.name, symbol = "$" .. operatordecl.symbol, 
 				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface)
+		descr.attr = llvmir.functionAttribute( descr.interface, decl.throws)
 		defineClassOperator( node, descr, context)
 		allocNodeData( node, descr)
 	end
@@ -2727,7 +2734,7 @@ function typesystem.constructordef( node, context, pass)
 		local lnk = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
 		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
 		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="", name = ":=", symbol = "$ctor", 
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="", name = ":=", symbol = "$ctor", 
 				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
@@ -2743,7 +2750,7 @@ end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
 	if not pass or pass == 2 then
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( lnk.private), signature="", name = ":~", symbol = "$dtor", 
+		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, false), signature="", name = ":~", symbol = "$dtor", 
 		               ret = nil, param=nil, private=false, const=false, interface=false}
 		context.properties.destructor = true
 		defineConstructorDestructor( node, descr, context)
@@ -2798,28 +2805,28 @@ function typesystem.extern_funcdef( node)
 	local lang,name,ret,param = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=false, signature=""}
 	defineExternFunction( node, descr, context)
-	printExternFunctionDeclaration( node, descr)
+	print_section( "Typedefs", llvmir.externFunctionDeclaration( lang, descr.rtllvmtype, name, descr.argstr, false))
 end
 function typesystem.extern_procdef( node)
 	local context = {domain="global"}
 	local lang,name,param = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {externtype=lang, name=name, symbol=name, param=param, vararg=false, signature=""}
 	defineExternFunction( node, descr, context)
-	printExternFunctionDeclaration( node, descr)
+	print_section( "Typedefs", llvmir.externFunctionDeclaration( lang, "void", name, descr.argstr, false))
 end
 function typesystem.extern_funcdef_vararg( node)
 	local context = {domain="global"}
 	local lang,name,ret,param = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {externtype=lang, name=name, symbol=name, ret=ret, param=param, vararg=true, signature=""}
 	defineExternFunction( node, descr, context)
-	printExternFunctionDeclaration( node, descr)
+	print( llvmir.externFunctionDeclaration( lang, descr.rtllvmtype, name, descr.argstr, true))
 end
 function typesystem.extern_procdef_vararg( node)
 	local context = {domain="global"}
 	local lang,name,param = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {externtype=lang, name=name, symbol=name, param=param, vararg=true, signature=""}
 	defineExternFunction( node, descr, context)
-	printExternFunctionDeclaration( node, descr)
+	print( llvmir.externFunctionDeclaration( lang, "void", name, descr.argstr, true))
 end
 function typesystem.typedef_functype( node, decl, context)
 	local name,ret,param = table.unpack( utils.traverse( typedb, node, context))
@@ -2975,6 +2982,7 @@ function typesystem.main_procdef( node)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=code}))
 end
 function typesystem.program( node)
+	llvmir.init()
 	initBuiltInTypes()
 	globalCallableEnvironment = createCallableEnvironment( "globals ", "%ir", "IL")
 	utils.traverse( typedb, node, {domain="global"})

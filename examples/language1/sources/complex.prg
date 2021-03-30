@@ -5,7 +5,7 @@ extern "C" function sqrt double( double val);
 
 double epsilon = 1.11e-16;
 
-function sgn int( double val)
+function sgn int( double val) nothrow
 {
 	if (val >= epsilon)
 	{
@@ -23,73 +23,73 @@ function sgn int( double val)
 
 generic class Complex[R]
 {
-	constructor()
+	constructor() nothrow
 	{
 		m_real = 0.0;
 		m_img = 0.0;
 	}
-	constructor( const R real_, const R img_)
+	constructor( const R real_, const R img_) nothrow
 	{
 		m_real = real_;
 		m_img = img_;
 	}
-	constructor( const Complex[R] o)
+	constructor( const Complex[R] o) nothrow
 	{
 		m_real = o.real();
 		m_img = o.img();
 	}
-	constructor( const R real_)
+	constructor( const R real_) nothrow
 	{
 		m_real = real_;
 		m_img = 0.0;
 	}
-	public operator = ( const R real_, const R img_)
+	public operator = ( const R real_, const R img_) nothrow
 	{
 		m_real = real_;
 		m_img = img_;
 	}
-	public function real R() const
+	public function real R() const nothrow
 	{
 		return m_real;
 	}
-	public function img R() const
+	public function img R() const nothrow
 	{
 		return m_img;
 	}
-	public function abs R() const
+	public function abs R() const nothrow
 	{
 		return sqrt( m_real * m_real + m_img * m_img);
 	}
-	public function squareRoot Complex[R]() const
+	public function squareRoot Complex[R]() const nothrow
 	{
 		var double abs_ = abs();
 		return (cast Complex[R]: {m_real + abs_, m_img}) / sqrt( 2 * (m_real + abs_));
 	}
-	public function square Complex[R]() const
+	public function square Complex[R]() const nothrow
 	{
 		return self * self;
 	}
-	public operator + Complex[R]( const Complex[R] o) const
+	public operator + Complex[R]( const Complex[R] o) const nothrow
 	{
 		return {(m_real + o.real()), (m_img + o.img())};
 	}
-	public operator - Complex[R]( const Complex[R] o) const
+	public operator - Complex[R]( const Complex[R] o) const nothrow
 	{
 		return {(m_real - o.real()), (m_img - o.img())};
 	}
-	public operator - Complex[R]() const
+	public operator - Complex[R]() const nothrow
 	{
 		return {-m_real,-m_img};
 	}
-	public operator * Complex[R]( const Complex[R] o) const
+	public operator * Complex[R]( const Complex[R] o) const nothrow
 	{
 		return {(m_real * o.real()) - (m_img * o.img()), (m_real * o.img()) + (m_img * o.real())};
 	}
-	public operator / Complex[R]( const R o) const
+	public operator / Complex[R]( const R o) const nothrow
 	{
 		return {m_real / o, m_img / o};
 	}
-	public operator / Complex[R]( const Complex[R] o) const
+	public operator / Complex[R]( const Complex[R] o) const nothrow
 	{
 		return {((m_real * o.real()) + (m_img * o.img())) / (o.real() * o.real() + o.img() * o.img()), 
 					((m_img * o.real()) - (m_real * o.img())) / (o.real() * o.real() + o.img() * o.img())};
@@ -98,7 +98,7 @@ generic class Complex[R]
 	R m_img;
 }
 
-generic procedure printComplex[R]( const byte^ text, const Complex[R] complex)
+generic procedure printComplex[R]( const byte^ text, const Complex[R] complex) nothrow
 {
 	var int sgn_img = sgn(complex.img());
 	if (sgn_img == 1)
@@ -114,7 +114,7 @@ generic procedure printComplex[R]( const byte^ text, const Complex[R] complex)
 		printf("%s %.4f\n", text, complex.real());
 	}
 }
-generic procedure printFloat[R]( const byte^ text, const R val)
+generic procedure printFloat[R]( const byte^ text, const R val) nothrow
 {
 	printf("%s %.4f\n", text, val);
 }

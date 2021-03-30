@@ -24,8 +24,6 @@ attributes #0 = {
 	"stack-protector-buffer-size"="8" "target-cpu"="pentium4" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87"
 	"unsafe-fp-math"="false" "use-soft-float"="false"
 }
-attributes #1 = {
-	"no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "stack-protector-buffer-size"="8" }
 
 !llvm.module.flags = !{!0, !1, !2, !3}
 !llvm.ident = !{!4}

@@ -73,6 +73,7 @@ Reduce #2 to paramdecl by token ')' at line 8 in state XXX, call paramdef, goto 
 Reduce #1 to parameters by token ')' at line 8 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 8 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 8 in state XXX, goto XXX
+Shift token "nothrow" at line 8 in state XXX, goto XXX
 Shift token '{' at line 9 in state XXX, goto XXX
 Shift token "if" at line 10 in state XXX, goto XXX
 Shift token '(' at line 10 in state XXX, goto XXX
@@ -132,7 +133,7 @@ Reduce #0 to statementlist by token '}' at line 22 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 22 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 22 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 22 in state XXX, goto XXX
-Reduce #6 to callablebody by token "generic" at line 24 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "generic" at line 24 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #5 to functiondefinition by token "generic" at line 24 in state XXX, call funcdef, goto XXX
 Reduce #1 to free_definition by token "generic" at line 24 in state XXX, call definition 1, goto XXX
 Shift token "generic" at line 24 in state XXX, goto XXX
@@ -149,6 +150,7 @@ Shift token "constructor" at line 26 in state XXX, goto XXX
 Shift token '(' at line 26 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 26 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 26 in state XXX, goto XXX
+Shift token "nothrow" at line 26 in state XXX, goto XXX
 Shift token '{' at line 27 in state XXX, goto XXX
 Shift token IDENT = "m_real" at line 28 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 28 in state XXX, call variable, goto XXX
@@ -171,7 +173,7 @@ Reduce #2 to statementlist by token '}' at line 30 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 30 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 30 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 30 in state XXX, goto XXX
-Reduce #6 to callablebody by token "constructor" at line 31 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "constructor" at line 31 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #3 to constructordefinition by token "constructor" at line 31 in state XXX, call constructordef, goto XXX
 Reduce #1 to inclass_definition by token "constructor" at line 31 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Reduce #0 to linkage by token "constructor" at line 31 in state XXX, call linkage {private=false,linkage="external",explicit=false}, goto XXX
@@ -198,6 +200,7 @@ Reduce #1 to parameters by token ')' at line 31 in state XXX, goto XXX
 Reduce #3 to parameters by token ')' at line 31 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 31 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 31 in state XXX, goto XXX
+Shift token "nothrow" at line 31 in state XXX, goto XXX
 Shift token '{' at line 32 in state XXX, goto XXX
 Shift token IDENT = "m_real" at line 33 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 33 in state XXX, call variable, goto XXX
@@ -220,7 +223,7 @@ Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 35 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 35 in state XXX, goto XXX
-Reduce #6 to callablebody by token "constructor" at line 36 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "constructor" at line 36 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #3 to constructordefinition by token "constructor" at line 36 in state XXX, call constructordef, goto XXX
 Reduce #1 to inclass_definition by token "constructor" at line 36 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Reduce #0 to linkage by token "constructor" at line 36 in state XXX, call linkage {private=false,linkage="external",explicit=false}, goto XXX
@@ -246,6 +249,7 @@ Reduce #2 to paramdecl by token ')' at line 36 in state XXX, call paramdef, goto
 Reduce #1 to parameters by token ')' at line 36 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 36 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 36 in state XXX, goto XXX
+Shift token "nothrow" at line 36 in state XXX, goto XXX
 Shift token '{' at line 37 in state XXX, goto XXX
 Shift token IDENT = "m_real" at line 38 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 38 in state XXX, call variable, goto XXX
@@ -280,7 +284,7 @@ Reduce #2 to statementlist by token '}' at line 40 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 40 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 40 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 40 in state XXX, goto XXX
-Reduce #6 to callablebody by token "constructor" at line 41 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "constructor" at line 41 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #3 to constructordefinition by token "constructor" at line 41 in state XXX, call constructordef, goto XXX
 Reduce #1 to inclass_definition by token "constructor" at line 41 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Reduce #0 to linkage by token "constructor" at line 41 in state XXX, call linkage {private=false,linkage="external",explicit=false}, goto XXX
@@ -297,6 +301,7 @@ Reduce #2 to paramdecl by token ')' at line 41 in state XXX, call paramdef, goto
 Reduce #1 to parameters by token ')' at line 41 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 41 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 41 in state XXX, goto XXX
+Shift token "nothrow" at line 41 in state XXX, goto XXX
 Shift token '{' at line 42 in state XXX, goto XXX
 Shift token IDENT = "m_real" at line 43 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 43 in state XXX, call variable, goto XXX
@@ -319,7 +324,7 @@ Reduce #2 to statementlist by token '}' at line 45 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 45 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 45 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 45 in state XXX, goto XXX
-Reduce #6 to callablebody by token "public" at line 46 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "public" at line 46 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #3 to constructordefinition by token "public" at line 46 in state XXX, call constructordef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 46 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 46 in state XXX, goto XXX
@@ -349,6 +354,7 @@ Reduce #1 to parameters by token ')' at line 46 in state XXX, goto XXX
 Reduce #3 to parameters by token ')' at line 46 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 46 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 46 in state XXX, goto XXX
+Shift token "nothrow" at line 46 in state XXX, goto XXX
 Shift token '{' at line 47 in state XXX, goto XXX
 Shift token IDENT = "m_real" at line 48 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 48 in state XXX, call variable, goto XXX
@@ -371,7 +377,7 @@ Reduce #2 to statementlist by token '}' at line 50 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 50 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 50 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 50 in state XXX, goto XXX
-Reduce #6 to callablebody by token "public" at line 51 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "public" at line 51 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #4 to operatordefinition by token "public" at line 51 in state XXX, call operator_procdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 51 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 51 in state XXX, goto XXX
@@ -387,6 +393,7 @@ Shift token '(' at line 51 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 51 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 51 in state XXX, goto XXX
 Shift token "const" at line 51 in state XXX, goto XXX
+Shift token "nothrow" at line 51 in state XXX, goto XXX
 Shift token '{' at line 52 in state XXX, goto XXX
 Shift token "return" at line 53 in state XXX, goto XXX
 Shift token IDENT = "m_real" at line 53 in state XXX, goto XXX
@@ -397,7 +404,7 @@ Reduce #0 to statementlist by token '}' at line 54 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 54 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 54 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 54 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 55 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 55 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to functiondefinition by token "public" at line 55 in state XXX, call funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 55 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 55 in state XXX, goto XXX
@@ -413,6 +420,7 @@ Shift token '(' at line 55 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 55 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 55 in state XXX, goto XXX
 Shift token "const" at line 55 in state XXX, goto XXX
+Shift token "nothrow" at line 55 in state XXX, goto XXX
 Shift token '{' at line 56 in state XXX, goto XXX
 Shift token "return" at line 57 in state XXX, goto XXX
 Shift token IDENT = "m_img" at line 57 in state XXX, goto XXX
@@ -423,7 +431,7 @@ Reduce #0 to statementlist by token '}' at line 58 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 58 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 58 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 58 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 59 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 59 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to functiondefinition by token "public" at line 59 in state XXX, call funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 59 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 59 in state XXX, goto XXX
@@ -439,6 +447,7 @@ Shift token '(' at line 59 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 59 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 59 in state XXX, goto XXX
 Shift token "const" at line 59 in state XXX, goto XXX
+Shift token "nothrow" at line 59 in state XXX, goto XXX
 Shift token '{' at line 60 in state XXX, goto XXX
 Shift token "return" at line 61 in state XXX, goto XXX
 Shift token IDENT = "sqrt" at line 61 in state XXX, goto XXX
@@ -467,7 +476,7 @@ Reduce #0 to statementlist by token '}' at line 62 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 62 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 62 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 62 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 63 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 63 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to functiondefinition by token "public" at line 63 in state XXX, call funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 63 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 63 in state XXX, goto XXX
@@ -492,6 +501,7 @@ Shift token '(' at line 63 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 63 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 63 in state XXX, goto XXX
 Shift token "const" at line 63 in state XXX, goto XXX
+Shift token "nothrow" at line 63 in state XXX, goto XXX
 Shift token '{' at line 64 in state XXX, goto XXX
 Shift token "var" at line 65 in state XXX, goto XXX
 Shift token IDENT = "double" at line 65 in state XXX, goto XXX
@@ -572,7 +582,7 @@ Reduce #2 to statementlist by token '}' at line 67 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 67 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 67 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 67 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 68 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 68 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to functiondefinition by token "public" at line 68 in state XXX, call funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 68 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 68 in state XXX, goto XXX
@@ -597,6 +607,7 @@ Shift token '(' at line 68 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 68 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 68 in state XXX, goto XXX
 Shift token "const" at line 68 in state XXX, goto XXX
+Shift token "nothrow" at line 68 in state XXX, goto XXX
 Shift token '{' at line 69 in state XXX, goto XXX
 Shift token "return" at line 70 in state XXX, goto XXX
 Shift token IDENT = "self" at line 70 in state XXX, goto XXX
@@ -611,7 +622,7 @@ Reduce #0 to statementlist by token '}' at line 71 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 71 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 71 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 71 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 72 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 72 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to functiondefinition by token "public" at line 72 in state XXX, call funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 72 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 72 in state XXX, goto XXX
@@ -655,6 +666,7 @@ Reduce #1 to parameters by token ')' at line 72 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 72 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 72 in state XXX, goto XXX
 Shift token "const" at line 72 in state XXX, goto XXX
+Shift token "nothrow" at line 72 in state XXX, goto XXX
 Shift token '{' at line 73 in state XXX, goto XXX
 Shift token "return" at line 74 in state XXX, goto XXX
 Shift token '{' at line 74 in state XXX, goto XXX
@@ -699,7 +711,7 @@ Reduce #0 to statementlist by token '}' at line 75 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 75 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 75 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 75 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 76 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 76 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 76 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 76 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 76 in state XXX, goto XXX
@@ -743,6 +755,7 @@ Reduce #1 to parameters by token ')' at line 76 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 76 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 76 in state XXX, goto XXX
 Shift token "const" at line 76 in state XXX, goto XXX
+Shift token "nothrow" at line 76 in state XXX, goto XXX
 Shift token '{' at line 77 in state XXX, goto XXX
 Shift token "return" at line 78 in state XXX, goto XXX
 Shift token '{' at line 78 in state XXX, goto XXX
@@ -787,7 +800,7 @@ Reduce #0 to statementlist by token '}' at line 79 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 79 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 79 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 79 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 80 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 80 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 80 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 80 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 80 in state XXX, goto XXX
@@ -813,6 +826,7 @@ Shift token '(' at line 80 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 80 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 80 in state XXX, goto XXX
 Shift token "const" at line 80 in state XXX, goto XXX
+Shift token "nothrow" at line 80 in state XXX, goto XXX
 Shift token '{' at line 81 in state XXX, goto XXX
 Shift token "return" at line 82 in state XXX, goto XXX
 Shift token '{' at line 82 in state XXX, goto XXX
@@ -835,7 +849,7 @@ Reduce #0 to statementlist by token '}' at line 83 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 83 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 83 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 83 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 84 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 84 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 84 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 84 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 84 in state XXX, goto XXX
@@ -879,6 +893,7 @@ Reduce #1 to parameters by token ')' at line 84 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 84 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 84 in state XXX, goto XXX
 Shift token "const" at line 84 in state XXX, goto XXX
+Shift token "nothrow" at line 84 in state XXX, goto XXX
 Shift token '{' at line 85 in state XXX, goto XXX
 Shift token "return" at line 86 in state XXX, goto XXX
 Shift token '{' at line 86 in state XXX, goto XXX
@@ -957,7 +972,7 @@ Reduce #0 to statementlist by token '}' at line 87 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 87 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 87 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 87 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 88 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 88 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 88 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 88 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 88 in state XXX, goto XXX
@@ -992,6 +1007,7 @@ Reduce #1 to parameters by token ')' at line 88 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 88 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 88 in state XXX, goto XXX
 Shift token "const" at line 88 in state XXX, goto XXX
+Shift token "nothrow" at line 88 in state XXX, goto XXX
 Shift token '{' at line 89 in state XXX, goto XXX
 Shift token "return" at line 90 in state XXX, goto XXX
 Shift token '{' at line 90 in state XXX, goto XXX
@@ -1018,7 +1034,7 @@ Reduce #0 to statementlist by token '}' at line 91 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 91 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 91 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 91 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 92 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token "public" at line 92 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 92 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 92 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 92 in state XXX, goto XXX
@@ -1062,6 +1078,7 @@ Reduce #1 to parameters by token ')' at line 92 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 92 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 92 in state XXX, goto XXX
 Shift token "const" at line 92 in state XXX, goto XXX
+Shift token "nothrow" at line 92 in state XXX, goto XXX
 Shift token '{' at line 93 in state XXX, goto XXX
 Shift token "return" at line 94 in state XXX, goto XXX
 Shift token '{' at line 94 in state XXX, goto XXX
@@ -1232,7 +1249,7 @@ Reduce #0 to statementlist by token '}' at line 96 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 96 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 96 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 96 in state XXX, goto XXX
-Reduce #7 to callablebody by token IDENT = "R" at line 97 in state XXX, call callablebody {throws=true,const=true}, goto XXX
+Reduce #8 to callablebody by token IDENT = "R" at line 97 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token IDENT = "R" at line 97 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token IDENT = "R" at line 97 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token IDENT = "R" at line 97 in state XXX, goto XXX
@@ -1317,6 +1334,7 @@ Reduce #1 to parameters by token ')' at line 101 in state XXX, goto XXX
 Reduce #3 to parameters by token ')' at line 101 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 101 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 101 in state XXX, goto XXX
+Shift token "nothrow" at line 101 in state XXX, goto XXX
 Shift token '{' at line 102 in state XXX, goto XXX
 Shift token "var" at line 103 in state XXX, goto XXX
 Shift token IDENT = "int" at line 103 in state XXX, goto XXX
@@ -1477,7 +1495,7 @@ Reduce #2 to statementlist by token '}' at line 116 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 116 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 116 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 116 in state XXX, goto XXX
-Reduce #6 to callablebody by token "generic" at line 117 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "generic" at line 117 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #8 to functiondefinition by token "generic" at line 117 in state XXX, call generic_procdef, goto XXX
 Reduce #1 to free_definition by token "generic" at line 117 in state XXX, call definition 1, goto XXX
 Shift token "generic" at line 117 in state XXX, goto XXX
@@ -1513,6 +1531,7 @@ Reduce #1 to parameters by token ')' at line 117 in state XXX, goto XXX
 Reduce #3 to parameters by token ')' at line 117 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 117 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 117 in state XXX, goto XXX
+Shift token "nothrow" at line 117 in state XXX, goto XXX
 Shift token '{' at line 118 in state XXX, goto XXX
 Shift token IDENT = "printf" at line 119 in state XXX, goto XXX
 Reduce #1 to expression by token '(' at line 119 in state XXX, call variable, goto XXX
@@ -1536,7 +1555,7 @@ Reduce #0 to statementlist by token '}' at line 120 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 120 in state XXX, goto XXX
 Reduce #1 to codeblock by token '}' at line 120 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 120 in state XXX, goto XXX
-Reduce #6 to callablebody by token "main" at line 122 in state XXX, call callablebody {throws=true,const=false}, goto XXX
+Reduce #7 to callablebody by token "main" at line 122 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #8 to functiondefinition by token "main" at line 122 in state XXX, call generic_procdef, goto XXX
 Reduce #1 to free_definition by token "main" at line 122 in state XXX, call definition 1, goto XXX
 Reduce #0 to free_definitionlist by token "main" at line 122 in state XXX, goto XXX
@@ -2665,10 +2684,10 @@ Lua call result [1]
                   line = 20,
                   step = 7}},
               call = {
-                name = "callablebody {throws=true,const=false}",
+                name = "callablebody {throws=false,const=false}",
                 obj = {
                   const = false,
-                  throws = true},
+                  throws = false},
                 proc = <function>},
               line = 20,
               scope = {
@@ -2820,10 +2839,10 @@ Lua call result [1]
                           line = 29,
                           step = 8}},
                       call = {
-                        name = "callablebody {throws=true,const=false}",
+                        name = "callablebody {throws=false,const=false}",
                         obj = {
                           const = false,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 29,
                       scope = {
@@ -3009,10 +3028,10 @@ Lua call result [1]
                           line = 34,
                           step = 9}},
                       call = {
-                        name = "callablebody {throws=true,const=false}",
+                        name = "callablebody {throws=false,const=false}",
                         obj = {
                           const = false,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 34,
                       scope = {
@@ -3239,10 +3258,10 @@ Lua call result [1]
                           line = 39,
                           step = 10}},
                       call = {
-                        name = "callablebody {throws=true,const=false}",
+                        name = "callablebody {throws=false,const=false}",
                         obj = {
                           const = false,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 39,
                       scope = {
@@ -3398,10 +3417,10 @@ Lua call result [1]
                           line = 44,
                           step = 11}},
                       call = {
-                        name = "callablebody {throws=true,const=false}",
+                        name = "callablebody {throws=false,const=false}",
                         obj = {
                           const = false,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 44,
                       scope = {
@@ -3597,10 +3616,10 @@ Lua call result [1]
                           line = 49,
                           step = 12}},
                       call = {
-                        name = "callablebody {throws=true,const=false}",
+                        name = "callablebody {throws=false,const=false}",
                         obj = {
                           const = false,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 49,
                       scope = {
@@ -3692,10 +3711,10 @@ Lua call result [1]
                           line = 53,
                           step = 14}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 53,
                       scope = {
@@ -3787,10 +3806,10 @@ Lua call result [1]
                           line = 57,
                           step = 16}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 57,
                       scope = {
@@ -3958,10 +3977,10 @@ Lua call result [1]
                           line = 61,
                           step = 18}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 61,
                       scope = {
@@ -4320,10 +4339,10 @@ Lua call result [1]
                           line = 66,
                           step = 21}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 66,
                       scope = {
@@ -4468,10 +4487,10 @@ Lua call result [1]
                           line = 70,
                           step = 23}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 70,
                       scope = {
@@ -4762,10 +4781,10 @@ Lua call result [1]
                           line = 74,
                           step = 25}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 74,
                       scope = {
@@ -5056,10 +5075,10 @@ Lua call result [1]
                           line = 78,
                           step = 27}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 78,
                       scope = {
@@ -5225,10 +5244,10 @@ Lua call result [1]
                           line = 82,
                           step = 29}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 82,
                       scope = {
@@ -5633,10 +5652,10 @@ Lua call result [1]
                           line = 86,
                           step = 31}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 86,
                       scope = {
@@ -5855,10 +5874,10 @@ Lua call result [1]
                           line = 90,
                           step = 33}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 90,
                       scope = {
@@ -6567,10 +6586,10 @@ Lua call result [1]
                           line = 95,
                           step = 35}},
                       call = {
-                        name = "callablebody {throws=true,const=true}",
+                        name = "callablebody {throws=false,const=true}",
                         obj = {
                           const = true,
-                          throws = true},
+                          throws = false},
                         proc = <function>},
                       line = 95,
                       scope = {
@@ -7328,10 +7347,10 @@ Lua call result [1]
                   line = 114,
                   step = 43}},
               call = {
-                name = "callablebody {throws=true,const=false}",
+                name = "callablebody {throws=false,const=false}",
                 obj = {
                   const = false,
-                  throws = true},
+                  throws = false},
                 proc = <function>},
               line = 114,
               scope = {
@@ -7532,10 +7551,10 @@ Lua call result [1]
                   line = 119,
                   step = 44}},
               call = {
-                name = "callablebody {throws=true,const=false}",
+                name = "callablebody {throws=false,const=false}",
                 obj = {
                   const = false,
-                  throws = true},
+                  throws = false},
                 proc = <function>},
               line = 119,
               scope = {

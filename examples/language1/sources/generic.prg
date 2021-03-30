@@ -5,16 +5,16 @@ extern "C" function malloc byte^( long);
 
 generic class Array[ELEMENT,SIZE]
 {
-	constructor(){}
-	constructor( const ELEMENT[ SIZE]& ar_)
+	constructor() nothrow{}
+	constructor( const ELEMENT[ SIZE]& ar_) nothrow
 	{
 		m_ar = ar_;
 	}
-	public operator [ ] ELEMENT& (uint idx)
+	public operator [ ] ELEMENT& (uint idx) nothrow
 	{
 		return m_ar[ idx];
 	}
-	public operator [ ] const ELEMENT& (uint idx) const
+	public operator [ ] const ELEMENT& (uint idx) const nothrow
 	{
 		return m_ar[ idx];
 	}

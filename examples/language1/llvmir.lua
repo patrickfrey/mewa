@@ -269,15 +269,12 @@ llvmir.control = {
 	functionCallThrowing = "{out} = invoke {rtllvmtype}{signature} {func}( {callargstr}) to label %{1} unwind label %{cleanup}\n{1}:\n",
 	procedureCallThrowing = "invoke void{signature} {func}( {callargstr}) to label %{1} unwind label %{cleanup}\n{1}:\n",
 	sretFunctionCallThrowing = "invoke void{signature} {func}( {rtllvmtype}* sret {rvalref}{callargstr}) to label %{1} unwind label %{cleanup}\n{1}:\n",	
-	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) #1 nounwind\n",
-	extern_functionDeclaration_vararg = "declare external {rtllvmtype} @{symbolname}( {argstr}, ... ) #1 nounwind\n",
+	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
 	functionVarargSignature = "({argstr} ...)",
 	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
-	mainDeclaration = "declare dso_local i32 @__gxx_personality_v0(...)\n" 
-				.. "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n"
-				.. "{\nentry:\n{body}}\n",
+	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n{\nentry:\n{body}}\n",
 	vtableElement = "{interface_signature} bitcast ({class_signature} @{symbolname} to {interface_signature})",
 	vtable = "${classname}__VMT__{interfacename} = comdat any\n"
 		.. "@{classname}__VMT__{interfacename} = linkonce_odr dso_local unnamed_addr constant %{interfacename}__VMT { {llvmtype} }, comdat, align 8\n",
@@ -288,14 +285,12 @@ llvmir.control = {
 llvmir.exception = {
 	section = "%__L_Exception = type { i64, i8* }\n"
 		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)"
-		.. "declare external i8* @strdup( i8*) nounwind\n"
-		.. "declare external void @free( i8* %msg) nounwind\n"
 		.. "declare external i8* @__cxa_allocate_exception( i32)\n"
-		.. "declare external void @__cxa_throw( i8*, i8*, i8*)\n"
+		.. "declare external void @__cxa_throw( i8*, i8*, i8*) noreturn\n"
 		.. "@_ZTVN10__cxxabiv117__class_type_infoE = external dso_local global i8*\n"
 		.. "$__typename__L_Exception = comdat any\n"
 		.. "$__typeinfo__L_Exception = comdat any\n"
-		.. "@__typename__L_Exception = linkonce_odr dso_local constant [11 x i8] c\"1exception\\00\", comdat, align 1\n"
+		.. "@__typename__L_Exception = linkonce_odr dso_local constant [11 x i8] c\"9exception\\00\", comdat, align 1\n"
 		.. "@__typeinfo__L_Exception = linkonce_odr dso_local constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([11 x i8], [11 x i8]* @__typename__L_Exception, i32 0, i32 0) }, comdat, align 8\n"
 		.. "define dso_local void @__L_init__Exception( %__L_Exception* %exception, i64 %code, i8* %msg) {\n"
 		.. "%ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
@@ -364,9 +359,27 @@ llvmir.exception = {
 		.. "{4} = insertvalue { i8*, i32 } {3}, i32 {2}, 1\n"
 		.. "resume { i8*, i32 } {4}\n"
 }
-
-function llvmir.functionAttribute( isInterface)
-	if isInterface == true then return "#0 nounwind" else return "#0 noinline nounwind" end
+local externFunctionReferenceMap = {}
+function llvmir.externFunctionDeclaration( lang, rtllvmtype, symbolname, argstr, vararg)
+	if vararg then if argstr == "" then argstr = "..." else argstr = argstr .. ", ..." end end
+	local key = lang .. rtllvmtype .. symbolname .. argstr
+	local fmt
+	if not externFunctionReferenceMap[ key] then
+		externFunctionReferenceMap[ key] = true
+		return utils.template_format( llvmir.control.extern_functionDeclaration, {lang=lang, rtllvmtype=rtllvmtype, symbolname=symbolname, argstr=argstr})
+	else
+		return ""
+	end
+end
+function llvmir.functionAttribute( isInterface, throws)
+	local behaviour_exception="";
+	if throws then 
+		behaviour_exception = " personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)"
+	else
+		behaviour_exception = " nounwind"
+	end
+	local behaviour_inline=""; if isInterface then behaviour_inline = " noinline" end
+	return "#0" .. behaviour_inline .. behaviour_exception
 end
                                                                            
 local pointerDescrMap = {}
@@ -416,5 +429,8 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	return arrayDescr
 end
 
+function llvmir.init()
+	print_section( "Typedefs", llvmir.externFunctionDeclaration( "C", "i32", "__gxx_personality_v0", "", true))
+end
 return llvmir
 

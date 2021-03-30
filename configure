@@ -4,7 +4,7 @@ while getopts "hv:" arg; do
   case $arg in
     h)
       echo "Usage: configure [-h] [-v <Lua version>]"
-      echo "<Lua version> : \"5.4\", \"5.3\" or \"5.2\""
+      echo "<Lua version> : \"5.4\", \"5.3\" or \"5.2\" or \"5.1\""
       exit 0
       ;;
     v)
@@ -117,7 +117,7 @@ searchLuaWithPkgConfig() {
 	if [ "x$OPTLUAVERSION" != "x" ]; then
 		searchLuaVersionWithPkgConfig $OPTLUAVERSION
 	else
-		for VERSION in 5.4 5.3 5.2 ; do
+		for VERSION in 5.4 5.3 5.2 5.1; do
 			searchLuaVersionWithPkgConfig $VERSION
 		done
 	fi
@@ -152,7 +152,7 @@ searchLuaWithRawFind() {
 	if [ "x$OPTLUAVERSION" != "x" ]; then
 		searchLuaVersionWithRawFind $OPTLUAVERSION
 	else
-		for VERSION in 5.4 5.3 5.2 ; do
+		for VERSION in 5.4 5.3 5.2 5.1; do
 			searchLuaVersionWithRawFind $VERSION
 		done
 	fi
@@ -164,7 +164,7 @@ searchLuaWithRawFind
 if [ "x$OPTLUAVERSION" != "x" ]; then
 	>&2 echo "Lua installation (version $OPTLUAVERSION) not found!"
 else
-	>&2 echo "Lua installation (version 5.2,5.3 or 5.4) not found!"
+	>&2 echo "Lua installation (version 5.1,5.2,5.3 or 5.4) not found!"
 fi
 
 

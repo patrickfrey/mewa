@@ -4,7 +4,7 @@ extern "C" procedure printf( const byte^ fmt ...);
 
 double epsilon = 1.11e-16;
 
-function sgn int( double val)
+function sgn int( double val) nothrow
 {
 	if (val >= epsilon)
 	{
@@ -22,19 +22,19 @@ function sgn int( double val)
 
 generic class Matrix[R,DIM1,DIM2]
 {
-	constructor()
+	constructor() nothrow
 	{
                 m_ar = {};
         }
-	constructor( const R[DIM2][DIM1] ar_)
+	constructor( const R[DIM2][DIM1] ar_) nothrow
 	{
 		m_ar = ar_;
 	}
-	constructor( const Matrix[R,DIM1,DIM2] o)
+	constructor( const Matrix[R,DIM1,DIM2] o) nothrow
 	{
 		m_ar = o.m_ar;
 	}
-	public operator + Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const
+	public operator + Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
 	{
                 var Matrix[R,DIM1,DIM2] rt;
 		var int ii = 0;
@@ -50,7 +50,7 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator - Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const
+	public operator - Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
 	{
                 var Matrix[R,DIM1,DIM2] rt;
 		var int ii = 0;
@@ -66,7 +66,7 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator - Matrix[R,DIM1,DIM2]() const
+	public operator - Matrix[R,DIM1,DIM2]() const nothrow
 	{
                 var Matrix[R,DIM1,DIM2] rt;
 		var int ii = 0;
@@ -82,7 +82,7 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator * Matrix[R,DIM1,DIM1]( const Matrix[R,DIM2,DIM1] o) const
+	public operator * Matrix[R,DIM1,DIM1]( const Matrix[R,DIM2,DIM1] o) const nothrow
 	{
                 var Matrix[R,DIM1,DIM1] rt;
 		var int ii = 0;
@@ -105,7 +105,7 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator * Matrix[R,DIM1,DIM2]( const R o) const
+	public operator * Matrix[R,DIM1,DIM2]( const R o) const nothrow
 	{
                 var Matrix[R,DIM1,DIM2] rt;
 		var int ii = 0;
@@ -121,7 +121,7 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator / Matrix[R,DIM1,DIM2]( const R o) const
+	public operator / Matrix[R,DIM1,DIM2]( const R o) const nothrow
 	{
                 var Matrix[R,DIM1,DIM2] rt;
 		var int ii = 0;
@@ -137,11 +137,11 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-        public operator [] R& (int i, int j)
+        public operator [] R& (int i, int j) nothrow
         {
                 return m_ar[i][j];
         }
-        public operator [] const R (int i, int j) const
+        public operator [] const R (int i, int j) const nothrow
         {
                 return m_ar[i][j];
         }
@@ -149,7 +149,7 @@ generic class Matrix[R,DIM1,DIM2]
 	R[DIM2][DIM1] m_ar;
 }
 
-generic procedure printMatrix[DIM1,DIM2]( const Matrix[double,DIM1,DIM2] mt)
+generic procedure printMatrix[DIM1,DIM2]( const Matrix[double,DIM1,DIM2] mt) nothrow
 {
 	var int ii = 0;
 	while (ii < DIM1)

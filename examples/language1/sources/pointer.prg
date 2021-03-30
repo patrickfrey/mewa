@@ -3,24 +3,24 @@
 extern "C" procedure printf( const byte^ fmt ...);
 extern "C" function malloc byte^( long);
 
-procedure printNumber( double aa, int& cnt)
+procedure printNumber( double aa, int& cnt) nothrow
 {
 	printf("CALL printNumber [%d] %f\n", cnt, aa);
 	cnt += 1;
 }
 
-function printNumber int( double aa, int cnt)
+function printNumber int( double aa, int cnt) nothrow
 {
 	printf("CALL printNumber [%d] %f\n", cnt, aa);
 	return cnt + 1;
 }
 
-typedef procedure PNP( double aa, int& cnt);
+typedef procedure PNP( double aa, int& cnt) nothrow;
 
 PNP g_pnp = printNumber;
 
 main {
-	typedef function PNF int( double aa, int cnt);
+	typedef function PNF int( double aa, int cnt) nothrow;
 
 	var PNP pnp1 = printNumber;
 	var PNF pnf1 = printNumber;

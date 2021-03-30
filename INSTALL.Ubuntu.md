@@ -10,6 +10,11 @@ Install packages with 'apt-get'/aptitude.
 ```Bash
 lua5.2 liblua5.2-dev luarocks llvm llvm-runtime
 ```
+or 
+```Bash
+lua5.1 liblua5.1-0-dev luarocks llvm llvm-runtime
+```
+when building for Lua 5.1.
 
 #### Install required luarocks packages
 ```Bash

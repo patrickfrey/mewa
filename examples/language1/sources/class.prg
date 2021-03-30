@@ -4,10 +4,10 @@ extern "C" procedure printf( const byte^ fmt ...);
 
 interface Object
 {
-	function x int() const;
-	function y int() const;
-	function ofs_x int( int addx) const;
-	function ofs_y int( int addy) const;
+	function x int() const nothrow;
+	function y int() const nothrow;
+	function ofs_x int( int addx) const nothrow;
+	function ofs_y int( int addy) const nothrow;
 }
 
 interface ObjectUpdater
@@ -17,43 +17,43 @@ interface ObjectUpdater
 
 class Point :Object,ObjectUpdater
 {
-	public constructor( int x_, int y_)
+	public constructor( int x_, int y_) nothrow
 	{
 		m_x = x_;
 		self.m_y = y_;
 	}
 
-	public operator = ( int x_, int y_)
+	public operator = ( int x_, int y_) nothrow
 	{
 		self.m_x = x_;
 		m_y = y_;
 	}
 
-	public function x int() const
+	public function x int() const nothrow
 	{
 		return m_x;
 	}
 
-	public function y int() const
+	public function y int() const nothrow
 	{
 		return self.m_y;
 	}
 
-	function ofs_x int( int addx) const
+	function ofs_x int( int addx) const nothrow
 	{
 		return m_x + addx;
 	}
 
-	function ofs_y int( int addy) const
+	function ofs_y int( int addy) const nothrow
 	{
 		return m_y + addy;
 	}
 
-	public function object Object() const
+	public function object Object() const nothrow
 	{
 		return self.Object;
 	}
-	public function updater ObjectUpdater()
+	public function updater ObjectUpdater() nothrow
 	{
 		return self.ObjectUpdater;
 	}
@@ -64,12 +64,12 @@ class Point :Object,ObjectUpdater
 
 class Line :Point
 {
-	public constructor( int x_, int y_)
+	public constructor( int x_, int y_) nothrow
 	{
 		self.Point = {x_,y_};
 	}
 
-	public procedure move( int x_, int y_)
+	public procedure move( int x_, int y_) nothrow
 	{
 		self.Point = {x_,y_};
 	}

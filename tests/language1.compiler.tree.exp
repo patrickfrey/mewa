@@ -2,6 +2,10 @@
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
 @llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
 
+declare external i32 @__gxx_personality_v0( ... ) nounwind
+declare external void @putchar( i8 ) nounwind
+declare external i8* @malloc( i64 ) nounwind
+declare external void @free( i8* ) nounwind
 %Tree__Data = type { i32 }
 %Tree = type { %Tree__Data, %Tree*, %Tree* }
 define private dso_local void @__ctor_Tree__Data( %Tree__Data* %ths) {
@@ -122,15 +126,7 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
   ret void
 }
 
-
-declare external void @printf( i8*, ... ) #1 nounwind
-
-declare external void @putchar( i8 ) #1 nounwind
-
-declare external i8* @malloc( i64 ) #1 nounwind
-
-declare external void @free( i8* ) #1 nounwind
-
+declare external void @printf( i8*, ... ) nounwind
 define internal i8* @allocmem__i64( i64 %r1 ) #0 nounwind {
 entry:
 %r2 = call i8* @malloc( i64 %r1)
@@ -138,7 +134,6 @@ br label %L1
 L1:
 ret i8* %r2
 }
-
 define internal void @freemem__i8$( i8* %r1 ) #0 nounwind {
 entry:
 call void @free( i8* %r1)
@@ -148,7 +143,6 @@ ret void
 }
 @g_tree = internal global %Tree zeroinitializer, align 8
 @string1 = private unnamed_addr constant [10 x i8] c"Node: %d\0A\00"
-
 define internal void @printTree__Tree$__i32( %Tree* %r1, i32 %r2 ) #0 nounwind {
 entry:
 %r3 = alloca i32, align 4
@@ -196,7 +190,6 @@ br label %L8
 L8:
 ret void
 }
-
 define internal void @deleteTree__Tree$( %Tree* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %Tree, %Tree* %r1, i32 0, i32 1
@@ -229,7 +222,6 @@ ret void
 @string2 = private unnamed_addr constant [8 x i8] c"VAL %d\0A\00"
 @string3 = private unnamed_addr constant [6 x i8] c"Done\0A\00"
 
-declare dso_local i32 @__gxx_personality_v0(...)
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
 entry:

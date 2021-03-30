@@ -2,9 +2,9 @@
 
 extern "C" procedure printf( const byte^ fmt, int arg);
 
-private function fibonacci int( int n)
+private function fibonacci int( int n) nothrow
 {
-	procedure swap( int& a, int& b)
+	procedure swap( int& a, int& b) nothrow
 	{
 		var int tmp = a;
 		a = b;
