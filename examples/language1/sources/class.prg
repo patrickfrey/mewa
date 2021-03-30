@@ -12,7 +12,7 @@ interface Object
 
 interface ObjectUpdater
 {
-	operator = ( int x_, int y_);
+	operator = ( int x_, int y_) nothrow;
 }
 
 class Point :Object,ObjectUpdater

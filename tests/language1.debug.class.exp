@@ -137,7 +137,9 @@ Reduce #2 to extern_parameters by token ')' at line 15 in state XXX, call extern
 Reduce #4 to extern_parameters by token ')' at line 15 in state XXX, call extern_paramdef, goto XXX
 Reduce #1 to extern_paramlist by token ')' at line 15 in state XXX, call extern_paramdeflist, goto XXX
 Shift token ')' at line 15 in state XXX, goto XXX
+Shift token "nothrow" at line 15 in state XXX, goto XXX
 Reduce #0 to funcattribute by token ';' at line 15 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
+Reduce #2 to funcattribute by token ';' at line 15 in state XXX, call funcattribute {throws=false}, goto XXX
 Shift token ';' at line 15 in state XXX, goto XXX
 Reduce #7 to ininterf_definition by token '}' at line 16 in state XXX, call interface_operator_procdef, goto XXX
 Reduce #0 to ininterf_definitionlist by token '}' at line 16 in state XXX, goto XXX
@@ -1444,12 +1446,21 @@ Lua call result [1]
                   line = 15,
                   step = 1},
                 {
-                  arg = {},
+                  arg = {
+                    {
+                      arg = {},
+                      call = {
+                        name = "funcattribute {const=false,throws=true}",
+                        obj = {
+                          const = false,
+                          throws = true},
+                        proc = <function>},
+                      line = 15,
+                      step = 1}},
                   call = {
-                    name = "funcattribute {const=false,throws=true}",
+                    name = "funcattribute {throws=false}",
                     obj = {
-                      const = false,
-                      throws = true},
+                      throws = false},
                     proc = <function>},
                   line = 15,
                   step = 1}},
