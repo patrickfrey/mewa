@@ -137,7 +137,7 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef)
 				 callablebody								(generic_procdef)
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
-			| "destructor" "{" codeblock "}"						({}destructordef {private=false, linkage="external"})
+			| "destructor" "{" codeblock "}"						({}destructordef {linkage="external"})
 			;
 operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef)
 			| linkage "operator" operatordecl callablebody					(operator_procdef)

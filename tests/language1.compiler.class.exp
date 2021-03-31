@@ -9,12 +9,6 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %ObjectUpdater = type {i8*, %ObjectUpdater__VMT* }
 %Point = type { i32, i32 }
 %Line = type { %Point }
-define private dso_local void @__dtor_Point( %Point* %ths) {
-enter:
-br label %end
-end:
-ret void
-}
 $Point__VMT__Object = comdat any
 @Point__VMT__Object = linkonce_odr dso_local unnamed_addr constant %Object__VMT { 
 	i32 (i8*)* bitcast (i32 (%Point*)* @__C_Point__x__const to i32 (i8*)*),
@@ -27,7 +21,7 @@ $Point__VMT__ObjectUpdater = comdat any
 define private dso_local void @__dtor_Line( %Line* %ths) {
 enter:
 %r1 = getelementptr inbounds %Line, %Line* %ths, i32 0, i32 0
-call void @__dtor_Point( %Point* %r1)
+call void @__C_Point__$dtor( %Point* %r1)
 br label %end
 end:
 ret void
@@ -49,6 +43,12 @@ entry:
 store i32 %r1, i32* %r3
 %r4 = getelementptr inbounds %Point, %Point* %ths, i32 0, i32 1
 store i32 %r2, i32* %r4
+br label %L1
+L1:
+ret void
+}
+define external void @__C_Point__$dtor( %Point* %ths ) #0 nounwind {
+entry:
 br label %L1
 L1:
 ret void

@@ -159,8 +159,8 @@ function assignConstructor( fmt)
 		local this_inp,this_code = constructorParts( this)
 		local arg_inp,arg_code = constructorParts( arg[1])
 		local subst = {arg1 = tostring(arg_inp), this = this_inp}
-		code = code .. this_code .. arg_code
- 		return constructorStruct( this_inp, code .. utils.constructor_format( fmt, subst, env.register))
+		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
+ 		return constructorStruct( this_inp, code)
 	end
 end
 -- Constructor implementing an assignment of a free function callable to a function/procedure pointer
@@ -183,8 +183,8 @@ function binopArgConversionConstructor( fmt, argconv)
 		local this_inp,this_code = constructorParts( this)
 		local arg_inp,arg_code = constructorParts( arg[1])
 		local subst = {out = out, this = this_inp, arg1 = argconv(arg_inp)}
-		code = code .. this_code .. arg_code
-		return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
+		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
+		return constructorStruct( out, code)
 	end
 end
 -- Constructor for commutative binary operation, swapping arguments
@@ -253,7 +253,7 @@ end
 function doCastToReferenceType( typeId)
 	return doReturnValueAsReferenceParameter( typeId)
 end
--- Builds the argument string and the argument build-up code for a function call or interface method call constructor
+-- Builds the argument string and the argument build-up code for a function call or interface method call constructors
 function buildFunctionCallArguments( code, argstr, args, llvmtypes)
 	local rt = argstr; if argstr ~= "" then rt = rt .. ", " end
 	for ii=1,#args do
@@ -384,7 +384,7 @@ end
 -- Define an operation
 function defineCall( returnType, thisType, opr, argTypes, constructor)
 	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
-	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of '%s'", typeDeclarationString( thisType, opr, argTypes)) end
+	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of call '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 	return callType
 end
@@ -656,7 +656,7 @@ function definePointerQualiTypes( node, typeId)
 		typedb:def_reduction( lval, anyClassPointerType, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( c_lval, anyConstClassPointerType, nil, tag_pointerReinterpretCast)
 	end
-	defineScalarConstructors( qualitype, pointerTypeDescription)
+	defineScalarConstructorDestructors( qualitype, pointerTypeDescription)
 	typedb:scope( scope_bk)
 	return qualitype
 end
@@ -729,8 +729,8 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	typedb:def_reduction( qualitype.rval, priv_rval, nil, tag_typeDeduction, rdw_strip_v_2)
 	typedb:def_reduction( qualitype.c_rval, priv_c_rval, nil, tag_typeDeduction, rdw_strip_v_3)
 end
--- Define the constructors for built-in scalar types
-function defineScalarConstructors( qualitype, descr)
+-- Define the constructors/destructors for built-in scalar types
+function defineScalarConstructorDestructors( qualitype, descr)
 	defineCall( qualitype.rval, qualitype.rval, "=",  {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_rval}, assignConstructor( descr.ctor_copy))
@@ -740,8 +740,8 @@ function defineScalarConstructors( qualitype, descr)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( 0, qualitype.rval, ":~", {}, constructorStructEmpty)
 end
--- Define constructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
-function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
+-- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
+function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	instantCallableEnvironment = createCallableEnvironment( "init " .. arrayDescr.symbol)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
@@ -778,8 +778,8 @@ function defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, ar
 	end
 	instantCallableEnvironment = nil
 end
--- Define constructors for 'struct' types
-function defineStructConstructors( node, qualitype, descr, context)
+-- Define constructors/destructors for 'struct' types
+function defineStructConstructorDestructors( node, qualitype, descr, context)
 	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
 	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
 
@@ -841,8 +841,8 @@ function defineStructConstructors( node, qualitype, descr, context)
 	typedb:def_reduction( rvalueRefTypeMap[ qualitype.c_lval], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
 	instantCallableEnvironment = nil
 end
--- Define constructors for 'interface' types
-function defineInterfaceConstructors( node, qualitype, descr, context)
+-- Define constructors/destructors for 'interface' types
+function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.rval, qualitype.rval, ":=", {}, manipConstructor( descr.ctor))
 	defineCall( qualitype.c_rval, qualitype.c_rval, ":=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
@@ -851,21 +851,26 @@ function defineInterfaceConstructors( node, qualitype, descr, context)
 	defineCall( qualitype.rval, qualitype.rval, ":=", {qualitype.c_lval}, assignConstructor( descr.assign))
 	defineCall( qualitype.rval, qualitype.rval, "=", {qualitype.rval}, assignConstructor( descr.ctor_copy))
 end
--- Define constructors for 'class' types
-function defineClassConstructors( node, qualitype, descr, context)
-	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
-	local dtors = ""
-	for mi,member in ipairs(context.members) do
-		local out = instantCallableEnvironment.register()
+-- Get the implicit part of a class destructor that calls the member destructors
+function getClassMemberDestructorCode( env, descr, members)
+	local rt = ""
+	for mi,member in ipairs(members) do
+		local out = env.register()
 		local llvmtype = member.descr.llvmtype
 		local member_reftype = referenceTypeMap[ member.type]
-		local loadref = context.descr.loadelemref
-		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
+		local loadref = descr.loadelemref
+		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype},env.register),out=out}}
 
 		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
-		if member_destroy then dtors = member_destroy.constructor.code .. dtors else dtors = "" end
+		if member_destroy then rt = member_destroy.constructor.code .. rt end
 	end
+	return rt
+end
+-- Define constructors/destructors for 'class' types
+function defineClassConstructorDestructors( node, qualitype, descr, context)
+	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
 	if not context.properties.destructor then
+		local dtors = getClassMemberDestructorCode( instantCallableEnvironment, descr, context.members)
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 		defineCall( 0, qualitype.rval, ":~", {}, manipConstructor( descr.dtor))
 	end
@@ -1213,12 +1218,7 @@ function getThrowExceptionCode( errcode, errmsg)
 	if frame.catch then
 		cleanup = getFrameCleanupLabel( frame, "catch")
 	else
-		if frame.exitmap[ "throw"] then
-			cleanup = getFrameCleanupLabel( frame, "throw")
-		else
-			local exitcode = utils.constructor_format( llvmir.exception.throwExceptionLocal, {}, frame.env.register)
-			cleanup = getFrameCleanupLabel( frame, "throw", exitcode)
-		end
+		cleanup = getFrameCleanupLabel( frame, "throw", llvmir.exception.throwExceptionLocal)
 	end
 	return utils.constructor_format( llvmir.exception.initExceptionLocal, {errcode=errcode_out, errmsg=errmsg_out}, env.register)
 			.. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanup})
@@ -1260,8 +1260,7 @@ function allocationFrameToString( frame)
 	return rt
 end
 -- Get the whole code block of a callable including init and cleanup code 
-function getCallableEnvironmentCodeBlock( code)
-	local env = getCallableEnvironment()
+function getCallableEnvironmentCodeBlock( env, code)
 	local rt = env.implicitcode_exception .. env.implicitcode_landingpad .. env.initcode
 	for _,frame in pairs(env.frames) do rt = rt .. frame.ctor end
 	rt = rt .. code
@@ -1541,7 +1540,7 @@ function initBuiltInTypes()
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = scalarQualiTypeMap[ typnam]
-		defineScalarConstructors( qualitype, scalar_descr)
+		defineScalarConstructorDestructors( qualitype, scalar_descr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
 		defineBuiltInTypeOperators( typnam, scalar_descr)
 	end
@@ -1721,7 +1720,7 @@ function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arr
 	local qualitype = defineQualiTypes( node, elementTypeId, typnam, arrayDescr)
 	local arrayTypeId = qualitype.lval
 	defineRValueReferenceTypes( elementTypeId, typnam, arrayDescr, qualitype)
-	defineArrayConstructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
+	defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	local qualitype_element = qualiTypeMap[ elementTypeId]
 	defineArrayIndexOperators( qualitype_element.rval, qualitype.rval, arrayDescr)
 	defineArrayIndexOperators( qualitype_element.c_rval, qualitype.c_rval, arrayDescr)
@@ -2121,14 +2120,21 @@ end
 function defineClassOperator( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
 	if context.methods then expandContextMethodList( node, descr, context) end
-	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 	defineOperatorAttributes( context, descr)
 end
--- Define an constructor/destructor
-function defineConstructorDestructor( node, descr, context)
+-- Define a constructor
+function defineConstructor( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
-	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
+	if constTypeMap[ contextTypeId] then defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr) end
+end
+-- Define a destructor
+function defineDestructor( node, descr, context)
+	expandDescrClassCallTemplateParameter( descr, context)
+	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 	if constTypeMap[ contextTypeId] then defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr) end
 end
@@ -2153,7 +2159,7 @@ function defineInterfaceOperator( node, descr, context)
 	expandDescrInterfaceCallTemplateParameter( descr, context)
 	expandContextMethodList( node, descr, context)
 	expandContextLlvmMember( descr, context)
-	contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
+	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.rval)
 	defineInterfaceMethodCall( contextTypeId, descr.name, descr)
 	defineOperatorAttributes( context, descr)
 end
@@ -2189,7 +2195,7 @@ function getStringConstant( value)
 	if not env then
 		return {type=stringAddressType,constructor=stringConstantMap[ value]}
 	else
-		out = env.register()
+		local out = env.register()
 		return {type=stringPointerType,constructor={code=utils.constructor_format( stringConstantMap[ value].fmt, {out=out}), out=out}}
 	end
 end
@@ -2237,7 +2243,7 @@ function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualit
 	descr.methods = context.methods
 	descr.methodmap = context.methodmap
 	descr.const = context.const
-	defineInterfaceConstructors( node, qualitype, descr, context)
+	defineInterfaceConstructorDestructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
@@ -2253,9 +2259,10 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	                	llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,classes,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
-	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define callable headers
+	descr.members = context.members
 	descr.size = context.structsize
-	defineClassConstructors( node, qualitype, descr, context)
+	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define callable headers
+	defineClassConstructorDestructors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 4) -- 4th pass: define callable implementations
 	defineInheritedInterfaces( node, context, qualitype.lval)
@@ -2271,7 +2278,7 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
 	descr.size = context.structsize
-	defineStructConstructors( node, qualitype, descr, context)
+	defineStructConstructorDestructors( node, qualitype, descr, context)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 	popSeekContextType( qualitype.lval)
 end
@@ -2742,7 +2749,7 @@ function typesystem.constructordef( node, context, pass)
 				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
-		defineConstructorDestructor( node, descr, context)
+		defineConstructor( node, descr, context)
 		allocNodeData( node, descr)
 	end
 	if not pass or pass == 2 then
@@ -2753,16 +2760,21 @@ function typesystem.constructordef( node, context, pass)
 end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
-	if not pass or pass == 2 then
+	if not pass or pass == 1 then
 		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, false), signature="", name = ":~", symbol = "$dtor", 
-		               ret = nil, param=nil, private=false, const=false, interface=false}
+		               ret = nil, param={}, private=false, const=false, throws=false, interface=false}
 		context.properties.destructor = true
-		defineConstructorDestructor( node, descr, context)
+		defineDestructor( node, descr, context)
+		allocNodeData( node, descr)
+	end
+	if not pass or pass == 2 then
 		local scope_bk = typedb:scope( node.scope)
+		local descr = getNodeData( node, descr)
+		local env = defineCallableEnvironment( "body " .. descr.symbol, nil)
 		local block = utils.traverse( typedb, node, subcontext)[1]
-		local code = block.code
+		local code = block.code .. getClassMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
-		descr.body = getCallableEnvironmentCodeBlock( code)
+		descr.body = getCallableEnvironmentCodeBlock( env, code)
 		typedb:scope( scope_bk)
 		printFunctionDeclaration( node, descr)
 	end
@@ -2776,6 +2788,7 @@ function typesystem.callablebody( node, decl, context, descr, select)
 		defineCallableBodyContext( node, context, descr)
 		rt = utils.traverseRange( typedb, node, {1,1}, subcontext)[1]
 	elseif select == 2 then -- statements in body
+		local env = getCallableEnvironment()
 		local block = utils.traverseRange( typedb, node, {2,2}, subcontext)[2]
 		local code = block.code
 		if descr.ret then
@@ -2783,7 +2796,7 @@ function typesystem.callablebody( node, decl, context, descr, select)
 		else
 			if not block.nofollow then code = code .. doReturnVoidStatement() end
 		end
-		rt = getCallableEnvironmentCodeBlock( code)
+		rt = getCallableEnvironmentCodeBlock( env, code)
 	end
 	typedb:scope( scope_bk)
 	return rt
@@ -2978,12 +2991,12 @@ function typesystem.main_procdef( node)
 	local block = table.unpack( utils.traverse( typedb, node, context))
 	local code = globalInitCode .. retvalinit .. block.code
 	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end
-	code = getCallableEnvironmentCodeBlock( code)
+	local body = getCallableEnvironmentCodeBlock( env, code)
 		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel}) 
 		.. globalCleanupCode
 		.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
 	typedb:scope( scope_bk)
-	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=code}))
+	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
 end
 function typesystem.program( node)
 	llvmir.init()

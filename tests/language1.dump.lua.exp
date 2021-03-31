@@ -95,7 +95,7 @@
 		{ name="generic_funcdef", proc=typesystem.generic_funcdef},
 		{ name="generic_procdef", proc=typesystem.generic_procdef},
 		{ name="constructordef", proc=typesystem.constructordef},
-		{ name='destructordef {private=false,linkage="external"}', proc=typesystem.destructordef, obj={private=false,linkage="external"}},
+		{ name='destructordef {linkage="external"}', proc=typesystem.destructordef, obj={linkage="external"}},
 		{ name="operator_funcdef", proc=typesystem.operator_funcdef},
 		{ name="operator_procdef", proc=typesystem.operator_procdef},
 		{ name='operatordecl {name="->",symbol="arrow"}', proc=typesystem.operatordecl, obj={name="->",symbol="arrow"}},

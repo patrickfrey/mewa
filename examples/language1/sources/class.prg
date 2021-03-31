@@ -22,6 +22,9 @@ class Point :Object,ObjectUpdater
 		m_x = x_;
 		self.m_y = y_;
 	}
+	destructor
+	{
+	}
 
 	public operator = ( int x_, int y_) nothrow
 	{

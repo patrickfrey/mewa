@@ -308,11 +308,11 @@ llvmir.exception = {
 		.. "L_CONT:\n"
 		.. "ret void\n"
 		.. "}\n"
-		.. "define dso_local void @__L_throw__Exception( i64 %code, i8* %msg) {\n"
+		.. "define dso_local void @__L_throw__Exception( %__L_Exception* %exception) {\n"
 		.. "%SizeObObj = load i32, i32* @__L_ExceptionSize\n"
 		.. "%Mem = call i8* @__cxa_allocate_exception( i32 %SizeObObj) nounwind\n"
 		.. "%Obj = bitcast i8* %Mem to %__L_Exception*\n"
-		.. "call void @__L_init__Exception( %__L_Exception* %Obj, i64 %code, i8* %msg)\n"
+		.. "store %__L_Exception %exception, %__L_Exception* %Obj\n"
 		.. "call void @__cxa_throw( i8* %Mem, i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*), i8* null) noreturn\n"
 		.. "unreachable\n"
 		.. "}\n"
@@ -328,12 +328,7 @@ llvmir.exception = {
 	allocLandingpad = "%excptr = alloca i8*\n%excidx = alloca i32\n",
 	allocExceptionLocal = "%exception = alloca %__L_Exception*\n",
 	initExceptionLocal = "call void @__L_init__Exception( %__L_Exception* %exception, i64 {errcode}, i8* {errmsg})\n",
-	throwExceptionLocal = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
-		.. "{2} = load i64, i64* {1}\n"
-		.. "{3} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"
-		.. "{4} = load i8*, i8** {7}\n"
-		.. "call void @__L_throw__Exception( i64 {2}, i8* {4}) noreturn\n"
-		.. "unreachable\n",
+	throwExceptionLocal = "call void @__L_throw__Exception( %__L_Exception* %exception)\nunreachable\n",
 	loadExceptionErrCode = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
 		.. "{out} = load i64, i64* {1}\n",
 	loadExceptionErrMsg = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"

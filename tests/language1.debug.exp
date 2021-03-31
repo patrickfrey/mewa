@@ -19832,7 +19832,7 @@ expressionlist/L0 = expression
 [XX]
 	operatordefinition = linkage "operator" operatordecl callablebody . (XX), FOLLOW [XX] -> REDUCE operatordefinition #4 CALL operator_procdef
 [XX]
-	constructordefinition = "destructor" "{" codeblock "}" . (scope:50), FOLLOW [XX] -> REDUCE constructordefinition #4 CALL destructordef {private=false,linkage="external"}
+	constructordefinition = "destructor" "{" codeblock "}" . (scope:50), FOLLOW [XX] -> REDUCE constructordefinition #4 CALL destructordef {linkage="external"}
 [XX]
 	classdefinition = "class" IDENT ":" inheritlist "{" inclass_definitionlist "}" . (step:40), FOLLOW [XX] -> REDUCE classdefinition #7 CALL classdef
 [XX]
@@ -21319,7 +21319,7 @@ expressionlist/L0 = expression
 (XX) generic_funcdef
 (XX) generic_procdef
 (XX) constructordef
-(XX) destructordef, {private=false,linkage="external"}
+(XX) destructordef, {linkage="external"}
 (XX) operator_funcdef
 (XX) operator_procdef
 (XX) operatordecl, {name="->",symbol="arrow"}
@@ -27478,23 +27478,23 @@ expressionlist/L0 = expression
 	"constructor" => Reduce #4 operatordefinition call operator_procdef
 	"destructor" => Reduce #4 operatordefinition call operator_procdef
 [XX]
-	$ => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	IDENT => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"function" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"procedure" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"operator" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"const" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"any" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"class" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"struct" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"typedef" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	'}' => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"generic" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"interface" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"private" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"public" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"constructor" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
-	"destructor" => Reduce #4 constructordefinition call destructordef {private=false,linkage="external"}
+	$ => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	IDENT => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"function" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"procedure" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"operator" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"const" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"any" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"class" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"struct" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"typedef" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	'}' => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"generic" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"interface" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"private" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"public" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"constructor" => Reduce #4 constructordefinition call destructordef {linkage="external"}
+	"destructor" => Reduce #4 constructordefinition call destructordef {linkage="external"}
 [XX]
 	$ => Reduce #7 classdefinition call classdef
 	BOOLEAN => Reduce #7 classdefinition call classdef
