@@ -38,8 +38,8 @@ verify_test_result() {
 	elif [ "x$ORDER" = "xSORT" ]
 	then
 		sort $OUTF > $OUTF.sort
-		sort $EXPF > $EXPF.sort
-		DIFF=`diff $OUTF.sort $EXPF.sort | wc -l`
+		sort $EXPF > $OUTF.exp.sort
+		DIFF=`diff $OUTF.sort $OUTF.exp.sort | wc -l`
 		if [ "$DIFF" = "0" ]
 		then
 			$ECHOCOL $TNAM $FLAG_OK_ND
