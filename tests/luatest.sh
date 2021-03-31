@@ -17,6 +17,7 @@ fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+BLUE='\033[0;34m'
 ORANGE='\033[0;33m'
 NOCOL='\033[0m'
 ECHOBIN=`which echo`
@@ -24,14 +25,28 @@ ECHOCOL="$ECHOBIN -e"
 
 verify_test_result() {
 	FLAG_OK=${GREEN}OK${NOCOL}
+	FLAG_OK_ND=${BLUE}OK${NOCOL}
 	FLAG_ERR=${RED}ERR${NOCOL}
 	TNAM=$1
 	OUTF=$2
 	EXPF=$3
+	ORDER=$4
 	DIFF=`diff $OUTF $EXPF | wc -l`
 	if [ "$DIFF" = "0" ]
 	then
 		$ECHOCOL $TNAM $FLAG_OK
+	elif [ "x$ORDER" = "xSORT" ]
+	then
+		sort $OUTF > $OUTF.sort
+		sort $EXPF > $EXPF.sort
+		DIFF=`diff $OUTF.sort $EXPF.sort | wc -l`
+		if [ "$DIFF" = "0" ]
+		then
+			$ECHOCOL $TNAM $FLAG_OK_ND
+		else
+			echo "diff $OUTF $EXPF"
+			$ECHOCOL $TNAM $FLAG_ERR
+		fi
 	else
                 echo "diff $OUTF $EXPF"
 		$ECHOCOL $TNAM $FLAG_ERR
@@ -59,7 +74,7 @@ cat build/language1.debug.tmp\
 	| sed -E 's@goto [0-9][0-9]*@goto XX@g'\
 	| sed -E 's@=> [0-9][0-9]*@=> XX@g' > build/language1.debug.out
 verify_test_result "Check dump automaton read by Lua script"  build/language1.dump.lua.out tests/language1.dump.lua.exp
-verify_test_result "Check dump states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp
+verify_test_result "Check dump states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp "SORT"
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xLANG1" ] ; then

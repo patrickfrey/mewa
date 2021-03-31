@@ -173,7 +173,7 @@ struct FollowMap
 	void printFollowSets( std::ostream& out, const std::map<int,TransitionState>& states, const Lexer& lexer) const
 	{
 		std::set<int> usedFollowHandles = getUsedFollowHandles( states);
-		for (std::size_t follow=0; follow != m_followMap.size(); ++follow)
+		for (std::size_t follow=m_followMap.start(); follow != m_followMap.size(); ++follow)
 		{
 			if (usedFollowHandles.find( follow) != usedFollowHandles.end())
 			{

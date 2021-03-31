@@ -688,6 +688,10 @@ public:
 	{
 		return m_inv.size()+m_startidx;
 	}
+	std::size_t start() const noexcept
+	{
+		return m_startidx;
+	}
 
 private:
 	typedef FlatSet<int> Sequence;
