@@ -167,10 +167,10 @@ end
 function assignFunctionPointerConstructor( descr)
 	local assign = assignConstructor( descr.assign)
 	return function( this, arg)
-		local scope_bk = typedb:scope( typedb:type_scope( arg[1].type))
+		local scope_bk,step_bk = typedb:scope( typedb:type_scope( arg[1].type))
 		local functype = typedb:get_type( arg[1].type, "()", descr.param)
 		local functypeDescr = typeDescriptionMap[ functype]
-		typedb:scope( scope_bk)
+		typedb:scope( scope_bk,step_bk)
 		if functype and descr.throws == functypeDescr.throws then return assign( this, {{out="@" .. functypeDescr.symbolname}}) end
 	end
 end
@@ -533,9 +533,8 @@ function getVarargArgumentType( typeId)
 	end
 end
 -- Get the name used for a non pointer type with qualifiers built into the type name
-function getQualifierTypeName( qualifier, typnam)
-	local rt = typnam
-	if qualifier.private == true then rt = "private " .. rt end
+function getQualifierTypeName( qualifier, typnam, prefix)
+	local rt; if prefix then rt = prefix .. " " .. typnam else rt = typnam end
 	if qualifier.const == true then rt = "const " .. rt end
 	if qualifier.reference == true then rt = rt .. "&" end
 	return rt
@@ -610,7 +609,7 @@ function defineQualiTypes( node, contextTypeId, typnam, typeDescription)
 end
 -- Define all types related to a pointer to a type and defined all its relations and operations
 function definePointerQualiTypes( node, typeId)
-	local scope_bk = typedb:scope( typedb:type_scope( typeId))
+	local scope_bk,step_bk = typedb:scope( typedb:type_scope( typeId))
 	local typeDescription = typeDescriptionMap[ typeId]
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 	local qs = typeQualiSepMap[ typeId]
@@ -657,7 +656,7 @@ function definePointerQualiTypes( node, typeId)
 		typedb:def_reduction( c_lval, anyConstClassPointerType, nil, tag_pointerReinterpretCast)
 	end
 	defineScalarConstructorDestructors( qualitype, pointerTypeDescription)
-	typedb:scope( scope_bk)
+	typedb:scope( scope_bk,step_bk)
 	return qualitype
 end
 -- Define index operators for pointers and arrays
@@ -706,9 +705,11 @@ end
 function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 
-	local priv_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {private=true,const=false,reference=true}, typnam))
+	local init_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=false,reference=true}, typnam, "init"))
+	qualitype.init_rval = init_rval
+	local priv_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=false,reference=true}, typnam, "private"))
 	qualitype.priv_rval = priv_rval
-	local priv_c_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {private=true,const=true,reference=true}, typnam))
+	local priv_c_rval = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam, "private"))
 	qualitype.priv_c_rval = priv_c_rval
 
 	typeDescriptionMap[ priv_rval] = pointerTypeDescription
@@ -722,6 +723,7 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	dereferenceTypeMap[ priv_rval]    = lval
 	dereferenceTypeMap[ priv_c_rval]  = c_lval
 
+	typeQualiSepMap[ init_rval] = {lval=qualitype.lval,qualifier={reference=true,const=false,init=true}}
 	typeQualiSepMap[ priv_rval] = {lval=qualitype.lval,qualifier={reference=true,const=false,private=true}}
 	typeQualiSepMap[ priv_c_rval] = {lval=qualitype.lval,qualifier={reference=true,const=true,private=true}}
 
@@ -1321,12 +1323,30 @@ end
 function expandContextLlvmMember( descr, context)
 	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
 end
+-- Log an initialization call of a member in a constructor
+function logInitCall( name, index)
+	local env = getCallableEnvironment()
+	if not env.initcalls then env.initcalls = {} end
+	table.insert( env.initcalls, {name=name,index=index,step=typedb:step(),scope=(typedb:scope())} )
+end
+-- Define a constructor invoked by an assignment in the constructor (via the init type of the class)
+function defineConstructorInitAssignments( refType, initType, name, index, load_ref)
+	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
+	local items = typedb:get_types( refType, ":=")
+	typedb:scope( scope_bk,step_bk)
+	local loadType = typedb:def_type( initType, name, callConstructor( load_ref), {})
+	for _,item in pairs(items) do
+		local constructor = typedb:type_constructor(item)
+		defineCall( loadType, loadType, "=", typedb:type_parameters(item), function(this,args) logInitCall(name,index); return constructor(this,args) end)
+	end
+end
 -- Define a member variable of a class or a structure
 function defineVariableMember( node, descr, context, typeId, name, private)
 	local qualisep = typeQualiSepMap[ typeId]
 	local memberpos = context.structsize
-	local load_ref = utils.template_format( context.descr.loadelemref, {index=#context.members, type=descr.llvmtype})
-	local load_val = utils.template_format( context.descr.loadelem, {index=#context.members, type=descr.llvmtype})
+	local index = #context.members
+	local load_ref = utils.template_format( context.descr.loadelemref, {index=index, type=descr.llvmtype})
+	local load_val = utils.template_format( context.descr.loadelem, {index=index, type=descr.llvmtype})
 
 	while math.fmod( memberpos, descr.align) ~= 0 do memberpos = memberpos + 1 end
 	context.structsize = memberpos + descr.size
@@ -1350,6 +1370,9 @@ function defineVariableMember( node, descr, context, typeId, name, private)
 		defineCall( r_typeId, context.qualitype.rval, name, {}, callConstructor( load_ref))
 		defineCall( c_r_typeId, context.qualitype.c_rval, name, {}, callConstructor( load_ref))
 		defineCall( typeId, context.qualitype.c_lval, name, {}, callConstructor( load_val))
+	end
+	if context.qualitype.init_rval then
+		defineConstructorInitAssignments( r_typeId, context.qualitype.init_rval, name, index, load_ref)
 	end
 end
 -- Define an inherited interface in a class as a member variable
@@ -1702,7 +1725,7 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 end
 -- Get an instance of a generic type if already defined or implicitely create it and return the created instance
 function getOrCreateGenericType( node, genericType, genericDescr, instArg)
-	local scope_bk = typedb:scope( typedb:type_scope( genericType))
+	local scope_bk,step_bk = typedb:scope( typedb:type_scope( genericType))
 	local genericArg = matchGenericParameter( node, genericType, genericDescr.generic.param, instArg)
 	local instanceId = getGenericParameterIdString( genericArg)
 	local typkey = genericType .. "[" .. instanceId .. "]"
@@ -1711,7 +1734,7 @@ function getOrCreateGenericType( node, genericType, genericDescr, instArg)
 		createGenericTypeInstance( node, genericType, genericArg, genericDescr, function( ti) genericInstanceTypeMap[ typkey] = ti end)
 		typeInstance = genericInstanceTypeMap[ typkey]
 	end
-	typedb:scope( scope_bk)
+	typedb:scope( scope_bk,step_bk)
 	return typeInstance
 end
 -- Create an instance of an array type on demand with the size as argument
@@ -1728,7 +1751,7 @@ function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arr
 end
 -- Get an instance of an array type if already defined or implicitely create it and return the created instance
 function getOrCreateArrayType( node, elementTypeId, elementDescr, dimType)
-	local scope_bk = typedb:scope( typedb:type_scope( elementTypeId))
+	local scope_bk,step_bk = typedb:scope( typedb:type_scope( elementTypeId))
 	local dim = getRequiredTypeConstructor( node, constexprUIntegerType, dimType, tagmask_typeAlias)
 	local arraySize = tonumber( (constructorParts( dim)) )
 	if arraySize <= 0 then utils.errorMessage( node.line, "Size of array is not a positive integer number") end
@@ -1739,7 +1762,7 @@ function getOrCreateArrayType( node, elementTypeId, elementDescr, dimType)
 		rt = createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arraySize)
 		arrayTypeMap[ typkey] = rt
 	end
-	typedb:scope( scope_bk)
+	typedb:scope( scope_bk,step_bk)
 	return rt
 end
 -- Create an instance of a pointer type on demand
@@ -2412,10 +2435,10 @@ function typesystem.throw_exception( node)
 	return {code=getThrowExceptionCode( errcode_constructor, errmsg_constructor), nofollow=true}
 end
 function typesystem.tryblock( node, catchlabel)
-	local scope_bk = typedb:scope( node.scope)
+	local scope_bk,step_bk = typedb:scope( node.scope)
 	initTryBlock( catchlabel)
 	local codeblock = unpack( utils.traverse( typedb, node))
-	typedb:scope( scope_bk)
+	typedb:scope( scope_bk,step_bk)
 end
 function typesystem.catchblock( node, catchlabel)
 	local errcodevar,errmsgvar = unpack( utils.traverseRange( typedb, node, {1,#node.arg-1}))
