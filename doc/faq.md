@@ -37,6 +37,7 @@
     * [How to implement lambdas?](#lambdas)
     * [How to implement calls of C-Library functions?](#cLibraryCalls)
     * [How to implement coroutines?](#coroutines)
+    * [How to implement copy elision?](#copyElision)
 
 
 <a name="general"/>
@@ -419,6 +420,16 @@ LLVM supports extern calls. In the specification of the example _language1_, I s
 ### How to implement coroutines?
 
 This is an open issue. In a compiled language where you cannot switch the stack easily, you have to implement a yielding function as statemachine. The states are the entry point of the function and the continuation entry points after yields. All temporary values in a yielding routine appearing in the scope after the yield have to be represented as part of the state data and not on the stack. I plan to implement coroutines in the example _language1_.
+
+
+<a name="copyElision"/>
+
+### How to implement copy elision?
+
+Copy elision, though it's making your program faster is not considered optimization, because it changes behaviour. Copy elision has to be part of your language specification and thus be implemented in the compiler front-end. In the example _language1_, I implemented two 2 cases of copy elision:
+  * Construction of a return value in the return slot (LLVM sret) provided by the caller
+  * Construction of a return value in the return slot, when using a unique variable for the return value, having the same type as the return value (TODO)
+
 
 
 
