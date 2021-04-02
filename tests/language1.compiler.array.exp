@@ -239,7 +239,7 @@ ret void
 define external void @__C_IntArray__$ctor__$5xi32$( %IntArray* %ths, [5 x i32]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
-call void @__ctor_assign_5__i32( [5 x i32]* %r2, [5 x i32]* %r1)
+call void @__ctor_copy_5__i32( [5 x i32]* %r2, [5 x i32]* %r1)
 br label %L1
 L1:
 ret void
@@ -271,7 +271,7 @@ ret void
 define external void @__C_FloatArray__$ctor__$5xfloat$( %FloatArray* %ths, [5 x float]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
-call void @__ctor_assign_5__float( [5 x float]* %r2, [5 x float]* %r1)
+call void @__ctor_copy_5__float( [5 x float]* %r2, [5 x float]* %r1)
 br label %L1
 L1:
 ret void
@@ -303,7 +303,7 @@ ret void
 define external void @__C_DoubleArray__$ctor__$5xdouble$( %DoubleArray* %ths, [5 x double]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0
-call void @__ctor_assign_5__double( [5 x double]* %r2, [5 x double]* %r1)
+call void @__ctor_copy_5__double( [5 x double]* %r2, [5 x double]* %r1)
 br label %L1
 L1:
 ret void

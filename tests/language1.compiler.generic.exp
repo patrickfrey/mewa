@@ -96,7 +96,7 @@ ret void
 define external void @__C___Array__float__5__$ctor__$5xfloat$( %__Array__float__5* %ths, [5 x float]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Array__float__5, %__Array__float__5* %ths, i32 0, i32 0
-call void @__ctor_assign_5__float( [5 x float]* %r2, [5 x float]* %r1)
+call void @__ctor_copy_5__float( [5 x float]* %r2, [5 x float]* %r1)
 br label %L1
 L1:
 ret void

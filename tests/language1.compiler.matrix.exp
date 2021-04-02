@@ -451,9 +451,7 @@ ret i32 0
 define external void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-%r2 = alloca [4 x [4 x double]], align 8
-call void @__ctor_4__4__double( [4 x [4 x double]]* %r2, i32 0)
-call void @__ctor_assign_4__4__double( [4 x [4 x double]]* %r1, [4 x [4 x double]]* %r2)
+call void @__ctor_4__4__double( [4 x [4 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -461,7 +459,7 @@ ret void
 define external void @__C___Matrix__double__4__4__$ctor__$4x$4xdouble$( %__Matrix__double__4__4* %ths, [4 x [4 x double]]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-call void @__ctor_assign_4__4__double( [4 x [4 x double]]* %r2, [4 x [4 x double]]* %r1)
+call void @__ctor_copy_4__4__double( [4 x [4 x double]]* %r2, [4 x [4 x double]]* %r1)
 br label %L1
 L1:
 ret void
@@ -470,7 +468,7 @@ define external void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
 %r3 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
-call void @__ctor_assign_4__4__double( [4 x [4 x double]]* %r2, [4 x [4 x double]]* %r3)
+call void @__ctor_copy_4__4__double( [4 x [4 x double]]* %r2, [4 x [4 x double]]* %r3)
 br label %L1
 L1:
 ret void
@@ -840,9 +838,7 @@ ret double %r6
 define external void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-%r2 = alloca [3 x [3 x double]], align 8
-call void @__ctor_3__3__double( [3 x [3 x double]]* %r2, i32 0)
-call void @__ctor_assign_3__3__double( [3 x [3 x double]]* %r1, [3 x [3 x double]]* %r2)
+call void @__ctor_3__3__double( [3 x [3 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -850,7 +846,7 @@ ret void
 define external void @__C___Matrix__double__3__3__$ctor__$3x$3xdouble$( %__Matrix__double__3__3* %ths, [3 x [3 x double]]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-call void @__ctor_assign_3__3__double( [3 x [3 x double]]* %r2, [3 x [3 x double]]* %r1)
+call void @__ctor_copy_3__3__double( [3 x [3 x double]]* %r2, [3 x [3 x double]]* %r1)
 br label %L1
 L1:
 ret void
@@ -859,7 +855,7 @@ define external void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
 %r3 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
-call void @__ctor_assign_3__3__double( [3 x [3 x double]]* %r2, [3 x [3 x double]]* %r3)
+call void @__ctor_copy_3__3__double( [3 x [3 x double]]* %r2, [3 x [3 x double]]* %r3)
 br label %L1
 L1:
 ret void
@@ -1229,9 +1225,7 @@ ret double %r6
 define external void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-%r2 = alloca [3 x [4 x double]], align 8
-call void @__ctor_3__4__double( [3 x [4 x double]]* %r2, i32 0)
-call void @__ctor_assign_3__4__double( [3 x [4 x double]]* %r1, [3 x [4 x double]]* %r2)
+call void @__ctor_3__4__double( [3 x [4 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -1239,7 +1233,7 @@ ret void
 define external void @__C___Matrix__double__3__4__$ctor__$3x$4xdouble$( %__Matrix__double__3__4* %ths, [3 x [4 x double]]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-call void @__ctor_assign_3__4__double( [3 x [4 x double]]* %r2, [3 x [4 x double]]* %r1)
+call void @__ctor_copy_3__4__double( [3 x [4 x double]]* %r2, [3 x [4 x double]]* %r1)
 br label %L1
 L1:
 ret void
@@ -1248,7 +1242,7 @@ define external void @__C___Matrix__double__3__4__$ctor____Matrix__double__3__4$
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
 %r3 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
-call void @__ctor_assign_3__4__double( [3 x [4 x double]]* %r2, [3 x [4 x double]]* %r3)
+call void @__ctor_copy_3__4__double( [3 x [4 x double]]* %r2, [3 x [4 x double]]* %r3)
 br label %L1
 L1:
 ret void
@@ -1618,9 +1612,7 @@ ret double %r6
 define external void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-%r2 = alloca [4 x [3 x double]], align 8
-call void @__ctor_4__3__double( [4 x [3 x double]]* %r2, i32 0)
-call void @__ctor_assign_4__3__double( [4 x [3 x double]]* %r1, [4 x [3 x double]]* %r2)
+call void @__ctor_4__3__double( [4 x [3 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -1628,7 +1620,7 @@ ret void
 define external void @__C___Matrix__double__4__3__$ctor__$4x$3xdouble$( %__Matrix__double__4__3* %ths, [4 x [3 x double]]* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-call void @__ctor_assign_4__3__double( [4 x [3 x double]]* %r2, [4 x [3 x double]]* %r1)
+call void @__ctor_copy_4__3__double( [4 x [3 x double]]* %r2, [4 x [3 x double]]* %r1)
 br label %L1
 L1:
 ret void
@@ -1637,7 +1629,7 @@ define external void @__C___Matrix__double__4__3__$ctor____Matrix__double__4__3$
 entry:
 %r2 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
 %r3 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
-call void @__ctor_assign_4__3__double( [4 x [3 x double]]* %r2, [4 x [3 x double]]* %r3)
+call void @__ctor_copy_4__3__double( [4 x [3 x double]]* %r2, [4 x [3 x double]]* %r3)
 br label %L1
 L1:
 ret void

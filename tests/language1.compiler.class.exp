@@ -122,7 +122,7 @@ ret void
 define external void @__C_Line__$ctor__i32__i32( %Line* %ths, i32 %r1, i32 %r2 ) #0 nounwind {
 entry:
 %r3 = getelementptr inbounds %Line, %Line* %ths, i32 0, i32 0
-call void @__C_Point__$assign__i32__i32( %Point* %r3, i32 %r1, i32 %r2)
+call void @__C_Point__$ctor__i32__i32( %Point* %r3, i32 %r1, i32 %r2)
 br label %L1
 L1:
 ret void
