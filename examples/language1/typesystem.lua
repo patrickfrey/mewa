@@ -553,15 +553,15 @@ function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 	local alias
 	if qualitype then
 		if isPointerType( qualitype.valtype) then
-			alias = typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {}, typnam), qualitype.valtype)			-- L-value | plain typedef
-			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam), qualitype.c_valtype)		-- const L-value
-			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam), qualitype.reftype)		-- reference
+			alias = typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {}, typnam), qualitype.valtype)			-- value type | plain typedef
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam), qualitype.c_valtype)		-- const value type
+			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam), qualitype.reftype)		-- reference type
 			typedb:def_type_as( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam), qualitype.c_reftype) -- const reference
 		else
-			alias = typedb:def_type_as( contextTypeId, getQualifierTypeName( {}, typnam), qualitype.valtype)			-- L-value | plain typedef
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true}, typnam), qualitype.c_valtype)			-- const L-value
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {reference=true}, typnam), qualitype.reftype)			-- reference
-			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam), qualitype.c_reftype)	-- const reference
+			alias = typedb:def_type_as( contextTypeId, getQualifierTypeName( {}, typnam), qualitype.valtype)			-- value type | plain typedef
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true}, typnam), qualitype.c_valtype)			-- const value type
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {reference=true}, typnam), qualitype.reftype)			-- reference type
+			typedb:def_type_as( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam), qualitype.c_reftype)	-- const reference type
 		end
 	else
 		alias = typedb:def_type_as( contextTypeId, typnam, aliasTypeId)
@@ -598,10 +598,10 @@ function defineQualifiedTypeRelations( qualitype, typeDescription)
 end
 -- Define the basic data types for non pointer types
 function defineQualiTypes( node, contextTypeId, typnam, typeDescription)
-	local valtype = typedb:def_type( contextTypeId, getQualifierTypeName( {}, typnam))					-- L-value | plain typedef
-	local c_valtype = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true}, typnam))			-- const L-value
-	local reftype = typedb:def_type( contextTypeId, getQualifierTypeName( {reference=true}, typnam))			-- reference
-	local c_reftype = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
+	local valtype = typedb:def_type( contextTypeId, getQualifierTypeName( {}, typnam))				-- value type | plain typedef
+	local c_valtype = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true}, typnam))			-- const value type
+	local reftype = typedb:def_type( contextTypeId, getQualifierTypeName( {reference=true}, typnam))		-- reference type
+	local c_reftype = typedb:def_type( contextTypeId, getQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference type
 	if valtype == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s'", typeDeclarationString( contextTypeId, typnam)) end
 	local qualitype = {valtype=valtype, c_valtype=c_valtype, reftype=reftype, c_reftype=c_reftype}
 	qualiTypeMap[ valtype] = qualitype
@@ -620,10 +620,10 @@ function definePointerQualiTypes( node, typeId)
 	local pointeeRefTypeId = referenceTypeMap[ pointeeTypeId]
 	local typnam = typedb:type_name( pointeeTypeId)
 	local contextTypeId = typedb:type_context( pointeeTypeId)
-	local valtype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {}, typnam))					-- L-value | plain typedef
-	local c_valtype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam))			-- const L-value
-	local reftype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam))			-- reference
-	local c_reftype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference
+	local valtype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {}, typnam))				-- value type | plain typedef
+	local c_valtype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true}, typnam))			-- const value type
+	local reftype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {reference=true}, typnam))			-- reference type
+	local c_reftype = typedb:def_type( contextTypeId, getPointerQualifierTypeName( {const=true,reference=true}, typnam))	-- const reference type
 	if valtype == -1 then utils.errorMessage( node.line, "Duplicate definition of pointer to type '%s'", typeDeclarationString( contextTypeId, typnam)) end
 	local qualitype = {valtype=valtype, c_valtype=c_valtype, reftype=reftype, c_reftype=c_reftype}
 	qualiTypeMap[ valtype] = qualitype
@@ -1415,7 +1415,7 @@ function defineParameter( node, context, typeId, name, env)
 	local ptype = typeId
 	if doPassValueAsReferenceParameter( typeId) then
 		ptype = referenceTypeMap[ typeId]
-		if constTypeMap[ typeId] then utils.errorMessage( node.line, "Passing structure parameter as LValue not allowes as implicit copy is not implemented") end
+		if constTypeMap[ typeId] then utils.errorMessage( node.line, "Passing structure parameter as value type not allowes as implicit copy is not implemented") end
 	end
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}

@@ -55,3 +55,29 @@ Component that scans the input and produces a stream of items called lexems that
 Intermediate representation of the program. Output of the program parser. The AST in _Mewa_ is described [here](ast.md).
 
 
+## Glossary of the Example language1
+### Types
+The types are split into the following categories, each category having a different constructor function interface.
+
+#### Reference Type (reftype/c_reftype)
+These types (const and non const instance) are referring to a address of a variable. Similar to an _lvalue_ in C++.
+
+#### Value Type (valtype/c_valuetype)
+These types (const and non const instance) are referring to a value of a variable, but also used for the pure type (without qualifiers). Similar to an _rvalue_ in C++.
+
+#### Unbound Reference Type (unbound_reftype/c_unbound_reftype)
+These types (const and non const instance) are an internal representation of a reference type whos address has not yet been determined. They are mainly used as return type of functions where the return slot is provided by the caller. The address of this reference type is injected by an assignment constructor.
+
+#### Private Reference Type (priv_reftype/priv_c_reftype)
+These types are used as context type for accessing private members (in class methods).
+
+#### Private Reference Type (init_reftype)
+This type is used as *self* reference in constructors. Constructors may only initialize member variables and are not permitted to call methods.
+
+#### Control True/False Types
+Most language specifications require the evaluation of a boolean expression to terminate as early as the result is quaranteed, even when some branches of the expressions are undefined. Thus ```if (a && a->x)``` should evaluate to false if a is _NULL_ without trying to evaluate the undefined branch ```a->x``` that would lead to a segmentation fault on most platforms. For representing boolean expressions we define the types *controlTrueType* that contains the code that is executed for the expression remaining *true* and in contains an unbound label in the out variable where the code jumps to when the expression evaluates to *false*. The mirror type of the *controlTrueType* is the type *controlFalseType* that contains the code that is executed for the expression remaining *false* and in contains an unbound label in the out variable where the code jumps to when the expression evaluates to *true*.
+
+#### Pointer types
+Pointer types are implicitely created types. A pointer type is created when used the first time. 
+
+
