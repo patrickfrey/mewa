@@ -80,4 +80,13 @@ Most language specifications require the evaluation of a boolean expression to t
 #### Pointer types
 Pointer types are implicitely created types. A pointer type is created when used the first time. 
 
+#### Constant expression types
+Constants in the source and expressions built from constants are represented by the following types
+  * **constexprIntegerType**	const expression integers implemented as arbitrary precision BCD numbers
+  * **constexprUIntegerType** 	const expression unsigned integer implemented as arbitrary precision BCD numbers
+  * **constexprFloatType** 	const expression floating point numbers implemented as 'double'
+  * **constexprBooleanType** 	const expression boolean implemented as boolean true/false
+  * **constexprNullType** 	const expression null value
+  * **constexprStructureType**  const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
+
 

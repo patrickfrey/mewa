@@ -396,7 +396,7 @@ local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")	-- const exp
 local constexprFloatType = typedb:def_type( 0, "constexpr float")	-- const expression floating point numbers implemented as 'double'
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")	-- const expression boolean implemented as Lua boolean
 local constexprNullType = typedb:def_type( 0, "constexpr null")		-- const expression null value implemented as nil
-local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- const expression tree structure implemented as a list of type/constructor pairs
+local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
 -- Mapping of some constant expression type naming
 hardcodedTypeMap[ "constexpr bool"] = constexprBooleanType
 hardcodedTypeMap[ "constexpr uint"] = constexprUIntegerType
