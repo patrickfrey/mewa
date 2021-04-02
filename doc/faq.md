@@ -205,10 +205,11 @@ For every function a structure named ```env``` is defined an attached to the sco
 LLVM has the attribute ```sret``` for structure pointers passed to functions for storing the return value for non scalar values.
 In the example _language1_ I defined the types
 
- * rval_ref with the qualifier "&&" representing an R-value reference.
- * c_rval_ref with the qualifier "const&&" representing a constant R-value reference.
+ * unbound_reftype with the qualifier "&<-" representing a reference to an unbound variable. 
+ * c_unbound_reftype with the qualifiers "const " and "&<-" representing an unbound constant reference.
  
- and an own kind of constructors for these types. The ```out``` member of the constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allowes to inject the destination address later in the process, after the constructor code has been built. It allows to implement copy elision and to instantiate the target of the constructor in the assignment of the R-value reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the R-value reference is reduced to a value reference instead.
+ The unbound references are instantiated by a special constructor, thus implementing copy elision.
+ The ```out``` member of the constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allowes to inject the destination address later in the process, after the constructor code has been built. This allows to implement copy elision and to instantiate the target of the constructor in the assignment of the unbound reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the unbound reference is reduced to a value instead.
  
  This mechanism allows to treat return value references passed as parameters uniformly with scalar return values, just using different constructors representing these types.
  
