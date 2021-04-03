@@ -109,7 +109,6 @@ Reduce #0 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 12 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 12 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 12 in state XXX, goto XXX
 Reduce #7 to callablebody by token "var" at line 13 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #4 to functiondefinition by token "var" at line 13 in state XXX, call procdef, goto XXX
@@ -201,9 +200,9 @@ Reduce #0 to statementlist by token '}' at line 21 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 21 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 21 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 21 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 21 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 21 in state XXX, goto XXX
-Reduce #7 to statement by token "return" at line 22 in state XXX, call conditional_while, goto XXX
+Reduce #3 to codeblock by token "return" at line 22 in state XXX, call codeblock, goto XXX
+Reduce #5 to statement by token "return" at line 22 in state XXX, call conditional_while, goto XXX
 Shift token "return" at line 22 in state XXX, goto XXX
 Shift token IDENT = "i2" at line 22 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 22 in state XXX, call variable, goto XXX
@@ -216,7 +215,6 @@ Reduce #2 to statementlist by token '}' at line 23 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 23 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 23 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 23 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 23 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 23 in state XXX, goto XXX
 Reduce #7 to callablebody by token "main" at line 25 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #5 to functiondefinition by token "main" at line 25 in state XXX, call funcdef, goto XXX
@@ -261,8 +259,8 @@ Reduce #2 to statement by token '}' at line 29 in state XXX, call free_expressio
 Reduce #0 to statementlist by token '}' at line 29 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 29 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 29 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 29 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 29 in state XXX, goto XXX
+Reduce #2 to main_procedure by token $ at line 31 in state XXX, call main_procdef, goto XXX
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -445,22 +443,22 @@ Lua call result [1]
                     {
                       arg = {
                         {
+                          arg = {},
+                          call = {
+                            name = "linkage {private=false,linkage="external",explicit=false}",
+                            obj = {
+                              explicit = false,
+                              linkage = "internal",
+                              private = true},
+                            proc = <function>},
+                          line = 5,
+                          step = 0},
+                        {
+                          line = 7,
+                          name = "IDENT",
+                          value = "swap"},
+                        {
                           arg = {
-                            {
-                              arg = {},
-                              call = {
-                                name = "linkage {private=false,linkage="external",explicit=false}",
-                                obj = {
-                                  explicit = false,
-                                  linkage = "internal",
-                                  private = true},
-                                proc = <function>},
-                              line = 5,
-                              step = 0},
-                            {
-                              line = 7,
-                              name = "IDENT",
-                              value = "swap"},
                             {
                               arg = {
                                 {
@@ -470,65 +468,27 @@ Lua call result [1]
                                         {
                                           arg = {
                                             {
-                                              arg = {
-                                                {
-                                                  line = 7,
-                                                  name = "IDENT",
-                                                  value = "int"}},
-                                              call = {
-                                                name = "typehdr {const=false}",
-                                                obj = {
-                                                  const = false},
-                                                proc = <function>},
                                               line = 7,
-                                              step = 0}},
+                                              name = "IDENT",
+                                              value = "int"}},
                                           call = {
-                                            name = "typespec_ref",
+                                            name = "typehdr {const=false}",
+                                            obj = {
+                                              const = false},
                                             proc = <function>},
                                           line = 7,
-                                          step = 0},
-                                        {
-                                          line = 7,
-                                          name = "IDENT",
-                                          value = "a"}},
+                                          step = 0}},
                                       call = {
-                                        name = "paramdef",
+                                        name = "typespec_ref",
                                         proc = <function>},
                                       line = 7,
                                       step = 0},
                                     {
-                                      arg = {
-                                        {
-                                          arg = {
-                                            {
-                                              arg = {
-                                                {
-                                                  line = 7,
-                                                  name = "IDENT",
-                                                  value = "int"}},
-                                              call = {
-                                                name = "typehdr {const=false}",
-                                                obj = {
-                                                  const = false},
-                                                proc = <function>},
-                                              line = 7,
-                                              step = 0}},
-                                          call = {
-                                            name = "typespec_ref",
-                                            proc = <function>},
-                                          line = 7,
-                                          step = 0},
-                                        {
-                                          line = 7,
-                                          name = "IDENT",
-                                          value = "b"}},
-                                      call = {
-                                        name = "paramdef",
-                                        proc = <function>},
                                       line = 7,
-                                      step = 0}},
+                                      name = "IDENT",
+                                      value = "a"}},
                                   call = {
-                                    name = "paramdeflist",
+                                    name = "paramdef",
                                     proc = <function>},
                                   line = 7,
                                   step = 0},
@@ -539,152 +499,183 @@ Lua call result [1]
                                         {
                                           arg = {
                                             {
-                                              arg = {
-                                                {
-                                                  arg = {
-                                                    {
-                                                      line = 9,
-                                                      name = "IDENT",
-                                                      value = "int"}},
-                                                  call = {
-                                                    name = "typehdr {const=false}",
-                                                    obj = {
-                                                      const = false},
-                                                    proc = <function>},
-                                                  line = 9,
-                                                  step = 0}},
-                                              call = {
-                                                name = "typespec",
-                                                proc = <function>},
-                                              line = 9,
-                                              step = 0},
-                                            {
-                                              line = 9,
+                                              line = 7,
                                               name = "IDENT",
-                                              value = "tmp"},
-                                            {
-                                              arg = {
-                                                {
-                                                  line = 9,
-                                                  name = "IDENT",
-                                                  value = "a"}},
-                                              call = {
-                                                name = "variable",
-                                                proc = <function>},
-                                              line = 9,
-                                              step = 0}},
+                                              value = "int"}},
                                           call = {
-                                            name = "vardef_assign",
+                                            name = "typehdr {const=false}",
+                                            obj = {
+                                              const = false},
                                             proc = <function>},
-                                          line = 9,
-                                          step = 1}},
+                                          line = 7,
+                                          step = 0}},
                                       call = {
-                                        name = "definition 1",
-                                        obj = 1,
+                                        name = "typespec_ref",
                                         proc = <function>},
-                                      line = 9,
-                                      step = 1},
+                                      line = 7,
+                                      step = 0},
+                                    {
+                                      line = 7,
+                                      name = "IDENT",
+                                      value = "b"}},
+                                  call = {
+                                    name = "paramdef",
+                                    proc = <function>},
+                                  line = 7,
+                                  step = 0}},
+                              call = {
+                                name = "paramdeflist",
+                                proc = <function>},
+                              line = 7,
+                              step = 0},
+                            {
+                              arg = {
+                                {
+                                  arg = {
                                     {
                                       arg = {
                                         {
                                           arg = {
                                             {
-                                              arg = {
-                                                {
-                                                  line = 10,
-                                                  name = "IDENT",
-                                                  value = "a"}},
-                                              call = {
-                                                name = "variable",
-                                                proc = <function>},
-                                              line = 10,
-                                              step = 1},
-                                            {
-                                              arg = {
-                                                {
-                                                  line = 10,
-                                                  name = "IDENT",
-                                                  value = "b"}},
-                                              call = {
-                                                name = "variable",
-                                                proc = <function>},
-                                              line = 10,
-                                              step = 1}},
+                                              line = 9,
+                                              name = "IDENT",
+                                              value = "int"}},
                                           call = {
-                                            name = "binop =",
-                                            obj = "=",
+                                            name = "typehdr {const=false}",
+                                            obj = {
+                                              const = false},
                                             proc = <function>},
-                                          line = 10,
-                                          step = 1}},
+                                          line = 9,
+                                          step = 0}},
                                       call = {
-                                        name = "free_expression",
+                                        name = "typespec",
+                                        proc = <function>},
+                                      line = 9,
+                                      step = 0},
+                                    {
+                                      line = 9,
+                                      name = "IDENT",
+                                      value = "tmp"},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 9,
+                                          name = "IDENT",
+                                          value = "a"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 9,
+                                      step = 0}},
+                                  call = {
+                                    name = "vardef_assign",
+                                    proc = <function>},
+                                  line = 9,
+                                  step = 1}},
+                              call = {
+                                name = "definition 1",
+                                obj = 1,
+                                proc = <function>},
+                              line = 9,
+                              step = 1},
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          line = 10,
+                                          name = "IDENT",
+                                          value = "a"}},
+                                      call = {
+                                        name = "variable",
                                         proc = <function>},
                                       line = 10,
                                       step = 1},
                                     {
                                       arg = {
                                         {
-                                          arg = {
-                                            {
-                                              arg = {
-                                                {
-                                                  line = 11,
-                                                  name = "IDENT",
-                                                  value = "b"}},
-                                              call = {
-                                                name = "variable",
-                                                proc = <function>},
-                                              line = 11,
-                                              step = 1},
-                                            {
-                                              arg = {
-                                                {
-                                                  line = 11,
-                                                  name = "IDENT",
-                                                  value = "tmp"}},
-                                              call = {
-                                                name = "variable",
-                                                proc = <function>},
-                                              line = 11,
-                                              step = 1}},
-                                          call = {
-                                            name = "binop =",
-                                            obj = "=",
-                                            proc = <function>},
-                                          line = 11,
-                                          step = 1}},
+                                          line = 10,
+                                          name = "IDENT",
+                                          value = "b"}},
                                       call = {
-                                        name = "free_expression",
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 10,
+                                      step = 1}},
+                                  call = {
+                                    name = "binop =",
+                                    obj = "=",
+                                    proc = <function>},
+                                  line = 10,
+                                  step = 1}},
+                              call = {
+                                name = "free_expression",
+                                proc = <function>},
+                              line = 10,
+                              step = 1},
+                            {
+                              arg = {
+                                {
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          line = 11,
+                                          name = "IDENT",
+                                          value = "b"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 11,
+                                      step = 1},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 11,
+                                          name = "IDENT",
+                                          value = "tmp"}},
+                                      call = {
+                                        name = "variable",
                                         proc = <function>},
                                       line = 11,
                                       step = 1}},
                                   call = {
-                                    name = "codeblock",
+                                    name = "binop =",
+                                    obj = "=",
                                     proc = <function>},
                                   line = 11,
                                   step = 1}},
                               call = {
-                                name = "callablebody {throws=false,const=false}",
-                                obj = {
-                                  const = false,
-                                  throws = false},
+                                name = "free_expression",
                                 proc = <function>},
                               line = 11,
-                              scope = {
-                                0,
-                                2}}},
+                              step = 1}},
                           call = {
-                            name = "procdef",
+                            name = "callablebody {throws=false,const=false}",
+                            obj = {
+                              const = false,
+                              throws = false},
                             proc = <function>},
-                          id = 2,
                           line = 11,
-                          step = 2}},
+                          scope = {
+                            0,
+                            2}}},
                       call = {
-                        name = "definition 1",
-                        obj = 1,
+                        name = "procdef",
                         proc = <function>},
+                      id = 2,
                       line = 11,
-                      step = 2},
+                      step = 2}},
+                  call = {
+                    name = "definition 1",
+                    obj = 1,
+                    proc = <function>},
+                  line = 11,
+                  step = 2},
+                {
+                  arg = {
                     {
                       arg = {
                         {
@@ -692,50 +683,50 @@ Lua call result [1]
                             {
                               arg = {
                                 {
-                                  arg = {
-                                    {
-                                      line = 13,
-                                      name = "IDENT",
-                                      value = "int"}},
-                                  call = {
-                                    name = "typehdr {const=false}",
-                                    obj = {
-                                      const = false},
-                                    proc = <function>},
                                   line = 13,
-                                  step = 2}},
+                                  name = "IDENT",
+                                  value = "int"}},
                               call = {
-                                name = "typespec",
-                                proc = <function>},
-                              line = 13,
-                              step = 2},
-                            {
-                              line = 13,
-                              name = "IDENT",
-                              value = "i1"},
-                            {
-                              arg = {
-                                {
-                                  line = 13,
-                                  name = "UINTEGER",
-                                  value = "0"}},
-                              call = {
-                                name = "constant constexpr uint",
-                                obj = "constexpr uint",
+                                name = "typehdr {const=false}",
+                                obj = {
+                                  const = false},
                                 proc = <function>},
                               line = 13,
                               step = 2}},
                           call = {
-                            name = "vardef_assign",
+                            name = "typespec",
                             proc = <function>},
                           line = 13,
-                          step = 3}},
+                          step = 2},
+                        {
+                          line = 13,
+                          name = "IDENT",
+                          value = "i1"},
+                        {
+                          arg = {
+                            {
+                              line = 13,
+                              name = "UINTEGER",
+                              value = "0"}},
+                          call = {
+                            name = "constant constexpr uint",
+                            obj = "constexpr uint",
+                            proc = <function>},
+                          line = 13,
+                          step = 2}},
                       call = {
-                        name = "definition 1",
-                        obj = 1,
+                        name = "vardef_assign",
                         proc = <function>},
                       line = 13,
-                      step = 3},
+                      step = 3}},
+                  call = {
+                    name = "definition 1",
+                    obj = 1,
+                    proc = <function>},
+                  line = 13,
+                  step = 3},
+                {
+                  arg = {
                     {
                       arg = {
                         {
@@ -743,50 +734,50 @@ Lua call result [1]
                             {
                               arg = {
                                 {
-                                  arg = {
-                                    {
-                                      line = 14,
-                                      name = "IDENT",
-                                      value = "int"}},
-                                  call = {
-                                    name = "typehdr {const=false}",
-                                    obj = {
-                                      const = false},
-                                    proc = <function>},
                                   line = 14,
-                                  step = 3}},
+                                  name = "IDENT",
+                                  value = "int"}},
                               call = {
-                                name = "typespec",
-                                proc = <function>},
-                              line = 14,
-                              step = 3},
-                            {
-                              line = 14,
-                              name = "IDENT",
-                              value = "i2"},
-                            {
-                              arg = {
-                                {
-                                  line = 14,
-                                  name = "UINTEGER",
-                                  value = "1"}},
-                              call = {
-                                name = "constant constexpr uint",
-                                obj = "constexpr uint",
+                                name = "typehdr {const=false}",
+                                obj = {
+                                  const = false},
                                 proc = <function>},
                               line = 14,
                               step = 3}},
                           call = {
-                            name = "vardef_assign",
+                            name = "typespec",
                             proc = <function>},
                           line = 14,
-                          step = 4}},
+                          step = 3},
+                        {
+                          line = 14,
+                          name = "IDENT",
+                          value = "i2"},
+                        {
+                          arg = {
+                            {
+                              line = 14,
+                              name = "UINTEGER",
+                              value = "1"}},
+                          call = {
+                            name = "constant constexpr uint",
+                            obj = "constexpr uint",
+                            proc = <function>},
+                          line = 14,
+                          step = 3}},
                       call = {
-                        name = "definition 1",
-                        obj = 1,
+                        name = "vardef_assign",
                         proc = <function>},
                       line = 14,
-                      step = 4},
+                      step = 4}},
+                  call = {
+                    name = "definition 1",
+                    obj = 1,
+                    proc = <function>},
+                  line = 14,
+                  step = 4},
+                {
+                  arg = {
                     {
                       arg = {
                         {
@@ -794,49 +785,79 @@ Lua call result [1]
                             {
                               arg = {
                                 {
-                                  arg = {
-                                    {
-                                      line = 15,
-                                      name = "IDENT",
-                                      value = "int"}},
-                                  call = {
-                                    name = "typehdr {const=false}",
-                                    obj = {
-                                      const = false},
-                                    proc = <function>},
                                   line = 15,
-                                  step = 4}},
+                                  name = "IDENT",
+                                  value = "int"}},
                               call = {
-                                name = "typespec",
-                                proc = <function>},
-                              line = 15,
-                              step = 4},
-                            {
-                              line = 15,
-                              name = "IDENT",
-                              value = "i"},
-                            {
-                              arg = {
-                                {
-                                  line = 15,
-                                  name = "UINTEGER",
-                                  value = "0"}},
-                              call = {
-                                name = "constant constexpr uint",
-                                obj = "constexpr uint",
+                                name = "typehdr {const=false}",
+                                obj = {
+                                  const = false},
                                 proc = <function>},
                               line = 15,
                               step = 4}},
                           call = {
-                            name = "vardef_assign",
+                            name = "typespec",
                             proc = <function>},
                           line = 15,
-                          step = 5}},
+                          step = 4},
+                        {
+                          line = 15,
+                          name = "IDENT",
+                          value = "i"},
+                        {
+                          arg = {
+                            {
+                              line = 15,
+                              name = "UINTEGER",
+                              value = "0"}},
+                          call = {
+                            name = "constant constexpr uint",
+                            obj = "constexpr uint",
+                            proc = <function>},
+                          line = 15,
+                          step = 4}},
                       call = {
-                        name = "definition 1",
-                        obj = 1,
+                        name = "vardef_assign",
                         proc = <function>},
                       line = 15,
+                      step = 5}},
+                  call = {
+                    name = "definition 1",
+                    obj = 1,
+                    proc = <function>},
+                  line = 15,
+                  step = 5},
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              line = 16,
+                              name = "IDENT",
+                              value = "i"}},
+                          call = {
+                            name = "variable",
+                            proc = <function>},
+                          line = 16,
+                          step = 5},
+                        {
+                          arg = {
+                            {
+                              line = 16,
+                              name = "IDENT",
+                              value = "n"}},
+                          call = {
+                            name = "variable",
+                            proc = <function>},
+                          line = 16,
+                          step = 5}},
+                      call = {
+                        name = "binop <",
+                        obj = "<",
+                        proc = <function>},
+                      line = 16,
                       step = 5},
                     {
                       arg = {
@@ -845,30 +866,56 @@ Lua call result [1]
                             {
                               arg = {
                                 {
-                                  line = 16,
-                                  name = "IDENT",
-                                  value = "i"}},
-                              call = {
-                                name = "variable",
-                                proc = <function>},
-                              line = 16,
-                              step = 5},
-                            {
-                              arg = {
+                                  arg = {
+                                    {
+                                      line = 18,
+                                      name = "IDENT",
+                                      value = "i1"}},
+                                  call = {
+                                    name = "variable",
+                                    proc = <function>},
+                                  line = 18,
+                                  step = 5},
                                 {
-                                  line = 16,
-                                  name = "IDENT",
-                                  value = "n"}},
+                                  arg = {
+                                    {
+                                      arg = {
+                                        {
+                                          line = 18,
+                                          name = "IDENT",
+                                          value = "i2"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 18,
+                                      step = 5},
+                                    {
+                                      arg = {
+                                        {
+                                          line = 18,
+                                          name = "IDENT",
+                                          value = "i1"}},
+                                      call = {
+                                        name = "variable",
+                                        proc = <function>},
+                                      line = 18,
+                                      step = 5}},
+                                  call = {
+                                    name = "binop +",
+                                    obj = "+",
+                                    proc = <function>},
+                                  line = 18,
+                                  step = 5}},
                               call = {
-                                name = "variable",
+                                name = "binop =",
+                                obj = "=",
                                 proc = <function>},
-                              line = 16,
+                              line = 18,
                               step = 5}},
                           call = {
-                            name = "binop <",
-                            obj = "<",
+                            name = "free_expression",
                             proc = <function>},
-                          line = 16,
+                          line = 18,
                           step = 5},
                         {
                           arg = {
@@ -877,175 +924,112 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      arg = {
-                                        {
-                                          line = 18,
-                                          name = "IDENT",
-                                          value = "i1"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 18,
-                                      step = 5},
-                                    {
-                                      arg = {
-                                        {
-                                          arg = {
-                                            {
-                                              line = 18,
-                                              name = "IDENT",
-                                              value = "i2"}},
-                                          call = {
-                                            name = "variable",
-                                            proc = <function>},
-                                          line = 18,
-                                          step = 5},
-                                        {
-                                          arg = {
-                                            {
-                                              line = 18,
-                                              name = "IDENT",
-                                              value = "i1"}},
-                                          call = {
-                                            name = "variable",
-                                            proc = <function>},
-                                          line = 18,
-                                          step = 5}},
-                                      call = {
-                                        name = "binop +",
-                                        obj = "+",
-                                        proc = <function>},
-                                      line = 18,
-                                      step = 5}},
+                                      line = 19,
+                                      name = "IDENT",
+                                      value = "swap"}},
                                   call = {
-                                    name = "binop =",
-                                    obj = "=",
+                                    name = "variable",
                                     proc = <function>},
-                                  line = 18,
-                                  step = 5}},
-                              call = {
-                                name = "free_expression",
-                                proc = <function>},
-                              line = 18,
-                              step = 5},
-                            {
-                              arg = {
+                                  line = 19,
+                                  step = 5},
                                 {
                                   arg = {
                                     {
-                                      arg = {
-                                        {
-                                          line = 19,
-                                          name = "IDENT",
-                                          value = "swap"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
                                       line = 19,
-                                      step = 5},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 19,
-                                          name = "IDENT",
-                                          value = "i1"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 19,
-                                      step = 5},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 19,
-                                          name = "IDENT",
-                                          value = "i2"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 19,
-                                      step = 5}},
+                                      name = "IDENT",
+                                      value = "i1"}},
                                   call = {
-                                    name = "operator ()",
-                                    obj = "()",
+                                    name = "variable",
+                                    proc = <function>},
+                                  line = 19,
+                                  step = 5},
+                                {
+                                  arg = {
+                                    {
+                                      line = 19,
+                                      name = "IDENT",
+                                      value = "i2"}},
+                                  call = {
+                                    name = "variable",
                                     proc = <function>},
                                   line = 19,
                                   step = 5}},
                               call = {
-                                name = "free_expression",
+                                name = "operator ()",
+                                obj = "()",
                                 proc = <function>},
                               line = 19,
-                              step = 5},
+                              step = 5}},
+                          call = {
+                            name = "free_expression",
+                            proc = <function>},
+                          line = 19,
+                          step = 5},
+                        {
+                          arg = {
                             {
                               arg = {
                                 {
                                   arg = {
                                     {
-                                      arg = {
-                                        {
-                                          line = 20,
-                                          name = "IDENT",
-                                          value = "i"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
                                       line = 20,
-                                      step = 5},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 20,
-                                          name = "UINTEGER",
-                                          value = "1"}},
-                                      call = {
-                                        name = "constant constexpr uint",
-                                        obj = "constexpr uint",
-                                        proc = <function>},
-                                      line = 20,
-                                      step = 5}},
+                                      name = "IDENT",
+                                      value = "i"}},
                                   call = {
-                                    name = "assign_operator +",
-                                    obj = "+",
+                                    name = "variable",
+                                    proc = <function>},
+                                  line = 20,
+                                  step = 5},
+                                {
+                                  arg = {
+                                    {
+                                      line = 20,
+                                      name = "UINTEGER",
+                                      value = "1"}},
+                                  call = {
+                                    name = "constant constexpr uint",
+                                    obj = "constexpr uint",
                                     proc = <function>},
                                   line = 20,
                                   step = 5}},
                               call = {
-                                name = "free_expression",
+                                name = "assign_operator +",
+                                obj = "+",
                                 proc = <function>},
                               line = 20,
                               step = 5}},
                           call = {
-                            name = "codeblock",
+                            name = "free_expression",
                             proc = <function>},
                           line = 20,
                           step = 5}},
                       call = {
-                        name = "conditional_while",
+                        name = "codeblock",
                         proc = <function>},
                       line = 20,
                       scope = {
                         5,
-                        6}},
+                        6}}},
+                  call = {
+                    name = "conditional_while",
+                    proc = <function>},
+                  line = 20,
+                  step = 6},
+                {
+                  arg = {
                     {
                       arg = {
                         {
-                          arg = {
-                            {
-                              line = 22,
-                              name = "IDENT",
-                              value = "i2"}},
-                          call = {
-                            name = "variable",
-                            proc = <function>},
                           line = 22,
-                          step = 6}},
+                          name = "IDENT",
+                          value = "i2"}},
                       call = {
-                        name = "return_value",
+                        name = "variable",
                         proc = <function>},
                       line = 22,
-                      step = 7}},
+                      step = 6}},
                   call = {
-                    name = "codeblock",
+                    name = "return_value",
                     proc = <function>},
                   line = 22,
                   step = 7}},
@@ -1197,14 +1181,14 @@ Lua call result [1]
             name = "codeblock",
             proc = <function>},
           line = 28,
-          step = 9}},
+          scope = {
+            8,
+            10}}},
       call = {
         name = "main_procdef",
         proc = <function>},
       line = 28,
-      scope = {
-        8,
-        10}}},
+      step = 10}},
   call = {
     name = "program",
     proc = <function>},

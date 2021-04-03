@@ -137,7 +137,7 @@ functiondefinition	= linkage "function" IDENT typespec callablebody				(funcdef)
 				 callablebody								(generic_procdef)
 			;
 constructordefinition	= linkage "constructor" callablebody						(constructordef)
-			| "destructor" "{" codeblock "}"						({}destructordef {linkage="external"})
+			| "destructor" codeblock							(destructordef {linkage="external"})
 			;
 operatordefinition      = linkage "operator" operatordecl typespec callablebody				(operator_funcdef)
 			| linkage "operator" operatordecl callablebody					(operator_procdef)
@@ -183,12 +183,12 @@ generic_identlist	= IDENT "," generic_identlist							(generic_header_ident)
 generic_header		= generic_identlist								(generic_header)
 			| generic_defaultlist								(generic_header)
 			;
-callablebody		= "(" parameterlist ")" "nothrow" "{" codeblock "}"				({}callablebody {throws=false,const=false})
-			| "(" parameterlist ")" "{" codeblock "}"					({}callablebody {throws=true,const=false})
-			| "(" parameterlist ")" "const" "nothrow" "{" codeblock "}"			({}callablebody {throws=false,const=true})
-			| "(" parameterlist ")" "const" "{" codeblock "}"				({}callablebody {throws=true,const=true})
+callablebody		= "(" parameterlist ")" "nothrow" "{" statementlist "}"				({}callablebody {throws=false,const=false})
+			| "(" parameterlist ")" "{" statementlist "}"					({}callablebody {throws=true,const=false})
+			| "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"			({}callablebody {throws=false,const=true})
+			| "(" parameterlist ")" "const" "{" statementlist "}"				({}callablebody {throws=true,const=true})
 			;
-main_procedure		= "main" "{" codeblock "}"							({}main_procdef)
+main_procedure		= "main" codeblock								(main_procdef)
 			| ε
 			;
 parameterlist		= parameters									(paramdeflist)
@@ -199,19 +199,19 @@ parameters		= paramdecl "," parameters
 			;
 paramdecl		= typespec IDENT								(paramdef)
 			;
-codeblock		= statementlist									(codeblock)
+codeblock/L1		= "{" statementlist "}"								({}codeblock)
 			;
 statementlist/L1	= statement statementlist							(>>)
 			| ε
 			;
-elseblock/L1		= "elseif" "(" expression ")" "{" codeblock "}"	elseblock			({}conditional_elseif)
-			| "elseif" "(" expression ")" "{" codeblock "}" 				({}conditional_elseif)
-			| "else" "{" codeblock "}" 							({}conditional_else)
+elseblock/L1		= "elseif" "(" expression ")" codeblock	elseblock				(conditional_elseif)
+			| "elseif" "(" expression ")" codeblock 					(conditional_elseif)
+			| "else" codeblock 								(conditional_else)
 			;
-catchblock		= "catch" IDENT	"{" codeblock "}"						(catchblock)
-			| "catch" IDENT	"," IDENT "{" codeblock "}"					(catchblock)
+catchblock		= "catch" IDENT	codeblock							(catchblock)
+			| "catch" IDENT	"," IDENT codeblock						(catchblock)
 			;
-tryblock		= "try" "{" codeblock "}"							({}tryblock)
+tryblock		= "try" codeblock								(tryblock)
 			;
 statement/L1		= structdefinition								(definition 1)
 			| classdefinition 								(definition 1)
@@ -225,12 +225,12 @@ statement/L1		= structdefinition								(definition 1)
 			| "throw" expression  ";"							(throw_exception)
 			| tryblock catchblock								({}trycatch)
 			| "delete" expression ";"							(delete)
-			| "if" "(" expression ")" "{" codeblock "}" elseblock				({}conditional_if)
-			| "if" "(" expression ")" "{" codeblock "}" 					({}conditional_if)
-			| "while" "(" expression ")" "{" codeblock "}"					({}conditional_while)
-			| "with" "(" expression ")" "{" codeblock "}"					({}with_do)
+			| "if" "(" expression ")" codeblock elseblock					(conditional_if)
+			| "if" "(" expression ")" codeblock 						(conditional_if)
+			| "while" "(" expression ")" codeblock						(conditional_while)
+			| "with" "(" expression ")" codeblock						(with_do)
 			| "with" "(" expression ")" ";"							(with_do)
-			| "{" codeblock "}"								({})
+			| codeblock
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
 			| typespec IDENT "=" expression							(>>vardef_assign)

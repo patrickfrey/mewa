@@ -41,7 +41,7 @@
 		"expression", "iexpression", "indirection", "expressionlist"},
 	action = {
 		[XX] = YY,	[XX] = YY,	[XX] = YY,	[XX] = YY,
-		[XX] = YY},
+		[XX] = YY,	[XX] = YY,	[XX] = YY,	[XX] = YY},
 	gto = {
 		[XX] = YY,	[XX] = YY,	[XX] = YY,	[XX] = YY,
 		[XX] = YY,	[XX] = YY,	[XX] = YY},

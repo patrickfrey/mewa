@@ -63,7 +63,6 @@ Shift token ')' at line 8 in state XXX, goto XXX
 Shift token "nothrow" at line 8 in state XXX, goto XXX
 Shift token '{' at line 8 in state XXX, goto XXX
 Reduce #0 to statementlist by token '}' at line 8 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 8 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 8 in state XXX, goto XXX
 Reduce #7 to callablebody by token "constructor" at line 9 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #3 to constructordefinition by token "constructor" at line 9 in state XXX, call constructordef, goto XXX
@@ -104,7 +103,6 @@ Shift token ';' at line 11 in state XXX, goto XXX
 Reduce #2 to statement by token '}' at line 12 in state XXX, call free_expression, goto XXX
 Reduce #0 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 12 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 12 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 12 in state XXX, goto XXX
 Reduce #7 to callablebody by token "public" at line 13 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #3 to constructordefinition by token "public" at line 13 in state XXX, call constructordef, goto XXX
@@ -147,7 +145,6 @@ Shift token ';' at line 15 in state XXX, goto XXX
 Reduce #3 to statement by token '}' at line 16 in state XXX, call return_value, goto XXX
 Reduce #0 to statementlist by token '}' at line 16 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 16 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 16 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 16 in state XXX, goto XXX
 Reduce #7 to callablebody by token "public" at line 17 in state XXX, call callablebody {throws=false,const=false}, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 17 in state XXX, call operator_funcdef, goto XXX
@@ -192,7 +189,6 @@ Shift token ';' at line 19 in state XXX, goto XXX
 Reduce #3 to statement by token '}' at line 20 in state XXX, call return_value, goto XXX
 Reduce #0 to statementlist by token '}' at line 20 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 20 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 20 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 20 in state XXX, goto XXX
 Reduce #8 to callablebody by token IDENT = "ELEMENT" at line 21 in state XXX, call callablebody {throws=false,const=true}, goto XXX
 Reduce #5 to operatordefinition by token IDENT = "ELEMENT" at line 21 in state XXX, call operator_funcdef, goto XXX
@@ -359,17 +355,17 @@ Reduce #2 to statement by token '}' at line 34 in state XXX, call free_expressio
 Reduce #0 to statementlist by token '}' at line 34 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 34 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 34 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 34 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 34 in state XXX, goto XXX
-Reduce #7 to statement by token '}' at line 35 in state XXX, call conditional_while, goto XXX
+Reduce #3 to codeblock by token '}' at line 35 in state XXX, call codeblock, goto XXX
+Reduce #5 to statement by token '}' at line 35 in state XXX, call conditional_while, goto XXX
 Reduce #0 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 35 in state XXX, goto XXX
-Reduce #1 to codeblock by token '}' at line 35 in state XXX, call codeblock, goto XXX
 Shift token '}' at line 35 in state XXX, goto XXX
+Reduce #2 to main_procedure by token $ at line 37 in state XXX, call main_procdef, goto XXX
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -575,13 +571,6 @@ Lua call result [1]
                             name = "paramdeflist",
                             proc = <function>},
                           line = 6,
-                          step = 0},
-                        {
-                          arg = {},
-                          call = {
-                            name = "codeblock",
-                            proc = <function>},
-                          line = 6,
                           step = 0}},
                       call = {
                         name = "callablebody {throws=false,const=false}",
@@ -701,40 +690,33 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      arg = {
-                                        {
-                                          line = 11,
-                                          name = "IDENT",
-                                          value = "m_ar"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
                                       line = 11,
-                                      step = 1},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 11,
-                                          name = "IDENT",
-                                          value = "ar_"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 11,
-                                      step = 1}},
+                                      name = "IDENT",
+                                      value = "m_ar"}},
                                   call = {
-                                    name = "binop =",
-                                    obj = "=",
+                                    name = "variable",
+                                    proc = <function>},
+                                  line = 11,
+                                  step = 1},
+                                {
+                                  arg = {
+                                    {
+                                      line = 11,
+                                      name = "IDENT",
+                                      value = "ar_"}},
+                                  call = {
+                                    name = "variable",
                                     proc = <function>},
                                   line = 11,
                                   step = 1}},
                               call = {
-                                name = "free_expression",
+                                name = "binop =",
+                                obj = "=",
                                 proc = <function>},
                               line = 11,
                               step = 1}},
                           call = {
-                            name = "codeblock",
+                            name = "free_expression",
                             proc = <function>},
                           line = 11,
                           step = 1}},
@@ -852,40 +834,33 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      arg = {
-                                        {
-                                          line = 15,
-                                          name = "IDENT",
-                                          value = "m_ar"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
                                       line = 15,
-                                      step = 2},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 15,
-                                          name = "IDENT",
-                                          value = "idx"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 15,
-                                      step = 2}},
+                                      name = "IDENT",
+                                      value = "m_ar"}},
                                   call = {
-                                    name = "operator_array []",
-                                    obj = "[]",
+                                    name = "variable",
+                                    proc = <function>},
+                                  line = 15,
+                                  step = 2},
+                                {
+                                  arg = {
+                                    {
+                                      line = 15,
+                                      name = "IDENT",
+                                      value = "idx"}},
+                                  call = {
+                                    name = "variable",
                                     proc = <function>},
                                   line = 15,
                                   step = 2}},
                               call = {
-                                name = "return_value",
+                                name = "operator_array []",
+                                obj = "[]",
                                 proc = <function>},
                               line = 15,
-                              step = 3}},
+                              step = 2}},
                           call = {
-                            name = "codeblock",
+                            name = "return_value",
                             proc = <function>},
                           line = 15,
                           step = 3}},
@@ -1003,40 +978,33 @@ Lua call result [1]
                                 {
                                   arg = {
                                     {
-                                      arg = {
-                                        {
-                                          line = 19,
-                                          name = "IDENT",
-                                          value = "m_ar"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
                                       line = 19,
-                                      step = 4},
-                                    {
-                                      arg = {
-                                        {
-                                          line = 19,
-                                          name = "IDENT",
-                                          value = "idx"}},
-                                      call = {
-                                        name = "variable",
-                                        proc = <function>},
-                                      line = 19,
-                                      step = 4}},
+                                      name = "IDENT",
+                                      value = "m_ar"}},
                                   call = {
-                                    name = "operator_array []",
-                                    obj = "[]",
+                                    name = "variable",
+                                    proc = <function>},
+                                  line = 19,
+                                  step = 4},
+                                {
+                                  arg = {
+                                    {
+                                      line = 19,
+                                      name = "IDENT",
+                                      value = "idx"}},
+                                  call = {
+                                    name = "variable",
                                     proc = <function>},
                                   line = 19,
                                   step = 4}},
                               call = {
-                                name = "return_value",
+                                name = "operator_array []",
+                                obj = "[]",
                                 proc = <function>},
                               line = 19,
-                              step = 5}},
+                              step = 4}},
                           call = {
-                            name = "codeblock",
+                            name = "return_value",
                             proc = <function>},
                           line = 19,
                           step = 5}},
@@ -1623,26 +1591,26 @@ Lua call result [1]
                     name = "codeblock",
                     proc = <function>},
                   line = 33,
-                  step = 10}},
+                  scope = {
+                    10,
+                    11}}},
               call = {
                 name = "conditional_while",
                 proc = <function>},
               line = 33,
-              scope = {
-                10,
-                11}}},
+              step = 11}},
           call = {
             name = "codeblock",
             proc = <function>},
           line = 33,
-          step = 11}},
+          scope = {
+            8,
+            12}}},
       call = {
         name = "main_procdef",
         proc = <function>},
       line = 33,
-      scope = {
-        8,
-        12}}},
+      step = 12}},
   call = {
     name = "program",
     proc = <function>},
