@@ -499,7 +499,9 @@ TypeDatabase::GetReductionResult TypeDatabase::getReduction( const Scope::Step s
 	return rt;
 }
 
-TypeDatabase::GetReductionsResult TypeDatabase::getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const
+TypeDatabase::GetReductionsResult TypeDatabase::getReductions(
+	const Scope::Step step, int fromType,
+	const TagMask& selectTags, const TagMask& selectTagsCount, ResultBuffer& resbuf) const
 {
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 
@@ -511,22 +513,23 @@ TypeDatabase::GetReductionsResult TypeDatabase::getReductions( const Scope::Step
 
 	for (auto const& redu : redulist)
 	{
-		rt.reductions.push_back( {redu.right(), redu.value()/*constructor*/, redu.weight()});
+		bool countFlag = selectTagsCount.matches( redu.tagval());
+		rt.reductions.push_back( {redu.right(), redu.value()/*constructor*/, redu.weight(), countFlag});
 	}
 	return rt;
 }
 
 TypeDatabase::DeriveResult TypeDatabase::deriveType( 
 	const Scope::Step step, int toType, int fromType,
-	const TagMask& selectTags, const TagMask& selectTagsPathLength, int maxPathLengthCount, ResultBuffer& resbuf) const
+	const TagMask& selectTags, const TagMask& selectTagsCount, int maxCount, ResultBuffer& resbuf) const
 {
 	DeriveResult rt( resbuf);
 	bool alt_searchstate = false;
 
 	if (fromType <= 0 || fromType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", fromType));
 	if (toType < 0 || toType > (int)m_typerecMap.size()) throw Error( Error::InvalidHandle, string_format( "%d", toType));
-	if (maxPathLengthCount == -1) maxPathLengthCount = std::numeric_limits<int>::max();
-	if (maxPathLengthCount < 0) throw Error( Error::InvalidBoundary, string_format( "%d", maxPathLengthCount));
+	if (maxCount == -1) maxCount = std::numeric_limits<int>::max();
+	if (maxCount < 0) throw Error( Error::InvalidBoundary, string_format( "%d", maxCount));
 
 	int buffer[ 4096];
 	mewa::monotonic_buffer_resource stack_memrsc( buffer, sizeof buffer);
@@ -571,8 +574,8 @@ TypeDatabase::DeriveResult TypeDatabase::deriveType(
 
 		for (auto const& redu : redulist)
 		{
-			int pathlen = selectTagsPathLength.matches( redu.tagval()) ? (elem.pathlen+1) : elem.pathlen;
-			if (pathlen <= maxPathLengthCount)
+			int pathlen = selectTagsCount.matches( redu.tagval()) ? (elem.pathlen+1) : elem.pathlen;
+			if (pathlen <= maxCount)
 			{
 				int index = stack.pushIfNew( redu.right()/*type*/, redu.value()/*constructor*/, qe.index/*prev*/, pathlen);
 				if (index >= 0)

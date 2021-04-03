@@ -153,11 +153,12 @@ public:
 		int type;
 		int constructor;
 		float weight;
+		bool count;
 
 		WeightedReduction( const WeightedReduction& o) noexcept
-			:type(o.type),constructor(o.constructor),weight(o.weight){}
-		WeightedReduction( int type_, int constructor_, float weight_) noexcept
-			:type(type_),constructor(constructor_),weight(weight_){}
+			:type(o.type),constructor(o.constructor),weight(o.weight),count(o.count){}
+		WeightedReduction( int type_, int constructor_, float weight_, bool count_) noexcept
+			:type(type_),constructor(constructor_),weight(weight_),count(count_){}
 	};
 	struct GetTypesResult
 	{
@@ -336,17 +337,18 @@ public:
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
+	/// \param[in] selectTagsCount set of tags (subset of selectTags) that set a count flag in a result
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the list of reductions found
-	GetReductionsResult getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, ResultBuffer& resbuf) const;
+	GetReductionsResult getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, const TagMask& selectTagsCount, ResultBuffer& resbuf) const;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
 	/// \param[in] step the scope step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
-	/// \param[in] selectTagsPathLength set of tags (subset of selectTags) that contribute to the path length count of the search
-	/// \param[in] maxPathLengthCount maximum path length count (number of reductions matching selectTagsPathLength) of an accepted result, -1 for undefined
+	/// \param[in] selectTagsCount set of tags (subset of selectTags) that contribute to length count of the search
+	/// \param[in] maxCount maximum count (number of reductions matching selectTagsCount) of an accepted result, -1 for undefined
 	/// \param[in,out] resbuf the buffer used for memory allocation when building the result (allocate memory on the stack instead of the heap)
 	/// \return the path found and its weight sum that is minimal and a conflict path if the solution is not unique
 	DeriveResult deriveType( const Scope::Step step, int toType, int fromType, 

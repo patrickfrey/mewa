@@ -293,11 +293,12 @@ Get the list of reductions defined for a type from a list of selected classes de
 The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
 
 #### Parameter
-| #      | Name         | Type    | Description                                                                           |
-| :----- | :----------- | :------ | :------------------------------------------------------------------------------------ |
-| 1st    | type         | integer | Start type of the reductions to inspect.                                              |
-| 2nd    | tagmask      | integer | Set (bit-set) of tags (*) that selects the reduction classes to consider.             |
-| Return |              | table   | List of type/constructor/weight as tables with named members.                         | 
+| #      | Name         | Type    | Description                                                                                                    |
+| :----- | :----------- | :------ | :------------------------------------------------------------------------------------------------------------- |
+| 1st    | type         | integer | Start type of the reductions to inspect.                                                                       |
+| 2nd    | tagmask      | integer | (optional) Set (bit-set) of tags (*) that selects the reduction classes to consider (select all if undefined). |
+| 3rd    | tagmask      | integer | (optional) Set (bit-set) of tags (*) that trigger a flag 'count' to be set in a result if it matches.          |
+| Return |              | table   | List of type/constructor/weight/count as tables with named members.                                            | 
 
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).

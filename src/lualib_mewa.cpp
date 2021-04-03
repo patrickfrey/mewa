@@ -796,13 +796,14 @@ static int mewa_typedb_get_reductions( lua_State* ls)
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 3/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 2/*minNofArgs*/, 4/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		int type = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 2);
 		mewa::TagMask selectTags( nargs >= 3 && !lua_isnil(ls,3) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 3) : mewa::TagMask::matchAll());
+		mewa::TagMask selectTagsCount( nargs >= 4 && !lua_isnil(ls,4) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchNothing());
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto res = td->impl->getReductions( td->curStep, type, selectTags, resbuf);
+		auto res = td->impl->getReductions( td->curStep, type, selectTags, selectTagsCount, resbuf);
 		mewa::lua::pushWeightedReductions( ls, functionName, td->objTableName.buf, res.reductions);
 	}
 	catch (...) { lippincottFunction( ls); }
@@ -820,10 +821,10 @@ static int mewa_typedb_derive_type( lua_State* ls)
 		int toType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		int fromType = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 3);
 		mewa::TagMask selectTags( nargs >= 4 && !lua_isnil(ls,4) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
-		mewa::TagMask selectTagsPathLen( nargs >= 5 && !lua_isnil(ls,5) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchNothing());
+		mewa::TagMask selectTagsCount( nargs >= 5 && !lua_isnil(ls,5) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 5) : mewa::TagMask::matchNothing());
 		int maxPathLen = nargs >= 6 && !lua_isnil(ls,6) ? mewa::lua::getArgumentAsInteger( functionName, ls, 6) : 1;
 		mewa::TypeDatabase::ResultBuffer resbuf;
-		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsPathLen, maxPathLen, resbuf);
+		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsCount, maxPathLen, resbuf);
 		if (deriveres.defined)
 		{
 			mewa::lua::pushTypeConstructorPairs( ls, functionName, td->objTableName.buf, deriveres.reductions);

@@ -344,7 +344,7 @@ static void testQuery( std::ostream& outbuf, TypeDatabaseImpl& tdbimpl, const Te
 	{
 		out << "Reductions of context type " << tdbimpl.typeToString( fdef.contextType) << " [" << query.step << "] :" << std::endl;
 		mewa::TypeDatabase::ResultBuffer redu_resbuf;
-		auto res = tdbimpl.typedb->getReductions( query.step, fdef.contextType, TagMask::matchAll(), redu_resbuf);
+		auto res = tdbimpl.typedb->getReductions( query.step, fdef.contextType, TagMask::matchAll(), TagMask::matchNothing(), redu_resbuf);
 		out << "Context Type reductions:" << std::endl;
 		for (auto const& redu : res.reductions)
 		{

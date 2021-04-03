@@ -447,11 +447,14 @@ static inline void pushTypeConstructorPair( lua_State* ls, int type, int constru
 }
 
 /// \note Assume STK: [OBJTAB] [REDUTAB]
-static inline void pushTypeConstructorWeightTuple( lua_State* ls, int type, int constructor, float weight)
+static inline void pushTypeConstructorWeightTuple( lua_State* ls, int type, int constructor, float weight, bool countFlag)
 {
 	pushTypeConstructorPair( ls, type, constructor);
 	lua_pushliteral( ls, "weight");			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight"
-	lua_pushnumber( ls, weight);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight" [TYPE]
+	lua_pushnumber( ls, weight);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight" [WEIGHT]
+	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
+	lua_pushliteral( ls, "count");			// STK: [OBJTAB] [ELEMTAB] [ELEM] "count"
+	lua_pushboolean( ls, countFlag);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "count" [COUNT]
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
 }
 
@@ -483,10 +486,10 @@ void mewa::lua::pushWeightedReductions(
 	for (auto const& reduction : reductions)
 	{
 		++ridx;
-		pushTypeConstructorWeightTuple( ls, reduction.type, reduction.constructor, reduction.weight);	// STK: [OBJTAB] [REDUTAB] [REDU]
-		lua_rawseti( ls, -2, ridx);									// STK: [OBJTAB] [REDUTAB]
+		pushTypeConstructorWeightTuple( ls, reduction.type, reduction.constructor, reduction.weight, reduction.count);	// STK: [OBJTAB] [REDUTAB] [REDU]
+		lua_rawseti( ls, -2, ridx);											// STK: [OBJTAB] [REDUTAB]
 	}
-	lua_replace( ls, -2);											// STK: [REDUTAB]
+	lua_replace( ls, -2);													// STK: [REDUTAB]
 }
 
 void mewa::lua::pushTypeList(
