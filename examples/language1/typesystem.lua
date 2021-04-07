@@ -108,7 +108,7 @@ end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, implicitcode_exception="", implicitcode_landingpad="", initstate=nil}
+	        returntype=rtype, returnfunction=nil, frames={}, implicitcode={exception="", landingpad="", initstate=""}, initstate=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype, initstate)
@@ -1173,9 +1173,8 @@ function getAllocationFrame()
 	if not rt then
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
-		local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
-		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad="",
-		      initstate=initstate, invokeUnwindLabelHandler=nil}
+		local catch; if not parent or parent.env ~= env then parent = nil else catch = parent.catch end
+		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad=""}
 		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
@@ -1262,10 +1261,10 @@ function doReturnVoidStatement()
 	return utils.template_format( llvmir.control.gotoStatement, {inp=label})
 end
 function defineImplicitObjectException( frame)
-	frame.env.implicitcode_exception = llvmir.exception.allocExceptionLocal
+	frame.env.implicitcode.exception = llvmir.exception.allocExceptionLocal
 end
 function defineImplicitObjectLandingpad( frame)
-	frame.env.implicitcode_landingpad = llvmir.exception.allocLandingpad
+	frame.env.implicitcode.landingpad = llvmir.exception.allocLandingpad
 end
 -- Initialize a frame that catches exceptions
 function initTryBlock( catchlabel)
@@ -1361,21 +1360,31 @@ function allocationFrameToString( frame)
 end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( env, code)
-	local rt = env.implicitcode_exception .. env.implicitcode_landingpad
+	local rt = env.implicitcode.exception .. env.implicitcode.landingpad .. env.implicitcode.initstate
 	rt = rt .. code
 	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
 	return rt
 end
--- Return true if two scopes are disjoint, meaning a configuration of either [start(A) .. end(A)] [start(B) .. end(B)], end(A) <= start(B), or [start(B) .. end(B)] [start(A) .. end(A)], end(B) <= start(A)
-function disjointScopes( scope1, scope2)
-	return scope1[2] <= scope2[1] or scope1[1] >= scope2[2]
+function disallowInitCalls( line, msg, scope)
+	if scope then
+		local scope_bk = typedb:scope()
+		if not typedb:get_instance("noinit") then typedb:set_instance("noinit",{line,msg}) end
+		typedb:scope(scope_bk)
+	else
+		if not typedb:get_instance("noinit") then typedb:set_instance("noinit",{line,msg}) end
+	end
+end
+function checkInitCallsAllowed()
+	local line,msg = unpack(typedb:get_instance("noinit") or {})
+	if msg then utils.errorMessage( line, msg) end
 end
 -- Log an initialization call of a member in a constructor
 function logInitCall( this, name, index, destructor)
+	checkInitCallsAllowed()
 	local frame = getAllocationFrame()
 	local scope,step = typedb:scope()
-	if frame.initstate >= index+1 then utils.errorMessage( frame.env.line or 0, "Multiple initializations for member '%s' or initializations not in order of definition", name) end
-	frame.initstate = index+1
+	if frame.env.initstate >= index+1 then utils.errorMessage( frame.env.line or 0, "Multiple initializations for member '%s' or initializations not in order of definition", name) end
+	frame.env.initstate = index+1
 	local destructorCode = destructor(constructorStruct(this.out),{}).code
 	-- if destructorCode ~= "" then setCleanupCode( name, destructorCode, true) end
 end
@@ -2608,9 +2617,9 @@ function typesystem.catchblock( node, catchlabel)
 end
 function typesystem.trycatch( node)
 	local env = getCallableEnvironment()
+	if env.initstate then disallowInitCalls( node.line, "Member initializations not allowed in try/catch block") end
 	local catchlabel = env.label()
 	local tryblock,catchblock = unpack( utils.traverse( typedb, node, catchlabel))
-	if env.initstate and (getInitCalls( env, node.arg[1].arg[1].scope or getInitCalls( env, node.arg[2].arg[#node.arg[2]].scope))) then utils.errorMessage( node.line, "Member intialization call of constructor inside a try/catch") end
 	local fmt; if tryblock.nofollow then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
 	local code = tryblock.code .. utils.constructor_format( fmt, {inp=catchlabel}) .. catchblock.code
 	return {code=code, nofollow=catchblock.nofollow}
@@ -2734,7 +2743,7 @@ end
 function typesystem.conditional_while( node, context, bla)
 	local condition,yesblock = table.unpack( utils.traverse( typedb, node, context))
 	local env = getCallableEnvironment()
-	if env.initstate and getInitCalls( env, node.arg[2].scope) then utils.errorMessage( node.line, "Member intialization call of constructor inside a loop") end
+	if env.initstate then disallowInitCalls( node.line, "Member initializations not allowed inside a loop", node.arg[2].scope) end
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local start = env.label()
