@@ -148,6 +148,19 @@ end
 function constConstructor( val)
 	return function() return {out=val,code=""} end
 end
+-- Build the format substitution structure for a call constructor
+function buildCallArguments( out, this_inp, args)
+	local code = ""
+	local subst = {out = out, this = this_inp}
+	if args then
+		for ii=1,#args do
+			local arg_inp,arg_code = constructorParts( args[ ii])
+			code = code .. arg_code
+			subst[ "arg" .. ii] = arg_inp
+		end
+	end
+	return code,subst
+end
 -- Constructor implementing some sort of manipulation of an object without output
 function manipConstructor( fmt)
 	return function( this)
@@ -155,8 +168,8 @@ function manipConstructor( fmt)
 		return constructorStruct( inp, code .. utils.constructor_format( fmt, {this=inp}))
 	end
 end
--- Constructor implementing an assignment of a single argument to an object
-function copyConstructor( fmt)
+-- Constructor implementing a constructor of an object by a single argument
+function singleArgumentConstructor( fmt)
 	return function( this, arg)
 		local env = getCallableEnvironment()
 		local code = ""
@@ -167,26 +180,57 @@ function copyConstructor( fmt)
  		return constructorStruct( this_inp, code)
 	end
 end
--- Constructor implementing an assignment of an object to another by calling the copy constructor to a local slot and then calling the destructor of this followed by a move of the copy constructed object to the free slot
-function assignConstructor( descr)
-	local copyConstructorFunc = copyConstructor( descr.assign)
+-- Constructor implementing a potentially throwing copy constructor
+function copyConstructor( descr, throws)
 	return function( this, arg)
 		local env = getCallableEnvironment()
-		local out_copy = env.register()
-		local this_buf = constructorStruct( out_copy, utils.constructor_format( descr.def_local, {out_copy}, env.register))
+		local code = ""
 		local this_inp,this_code = constructorParts( this)
-		local res_buf = copyConstructorFunc( this_buf, arg)
-		local destroy = utils.constructor_format( descr.dtor, {this=this_inp}, env.register)
-		local res_load = env.register()
-		local code = this_code .. res_buf.code .. destroy
-				.. utils.constructor_format( descr.load, {out=res_load,this=res_buf.out}, env.register)
-				.. utils.constructor_format( descr.assign, {arg1=res_load,this=this_inp}, env.register)
+		local arg_inp,arg_code = constructorParts( arg[1])
+		local subst = {arg1 = arg_inp, this = this_inp}
+		local fmt
+		if throws then fmt = descr.ctor_copy_throwing; subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); else fmt = descr.ctor_copy end
+		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
  		return constructorStruct( this_inp, code)
+	end
+end
+-- Constructor implementing an assignment of an object to another by calling the copy constructor to a local slot and then calling the destructor of this followed by a move of the copy constructed object to the free slot
+function assignConstructor( descr, throws)
+	local copyConstructorFunc = copyConstructor( descr, throws)
+	if throws then
+		return function( this, arg)
+			local env = getCallableEnvironment()
+			local out_copy = env.register()
+			local copy_buf = constructorStruct( out_copy, utils.constructor_format( descr.def_local, {out=out_copy}, env.register))
+			local copy_res = copyConstructorFunc( copy_buf, args)
+			local this_inp,this_code = constructorParts( this)
+			local code = code .. this_code .. copy_res.code .. utils.constructor_format( descr.assign, {this = this_inp, arg1 = out_copy}, env.register)
+			return constructorStruct( this_inp, code)
+		end
+	else
+		return function( this, arg)
+			local this_inp,this_code = constructorParts( this)
+			local destroy = utils.constructor_format( descr.dtor, {this=this_inp}, env.register)
+			local code = this_code .. destroy .. copyConstructorFunc( this, arg)
+			return constructorStruct( this_inp, code)
+		end
+	end
+end
+-- Call constructor that might throw an exception
+function elementConstructorThrowing( fmt)
+	return function( this, args)
+		local env = getCallableEnvironment()
+		local this_inp,this_code = constructorParts( this)
+		local code,subst = buildCallArguments( nil, this_inp, args)
+		subst.success = env.label()
+		subst.cleanup = getInvokeUnwindLabel()
+		code = code .. utils.constructor_format( fmt, subst, env.register)
+		return constructorStruct( this_inp, code)
 	end
 end
 -- Constructor implementing an assignment of a free function callable to a function/procedure pointer
 function copyFunctionPointerConstructor( descr)
-	local copyFunc = copyConstructor( descr.assign)
+	local copyFunc = singleArgumentConstructor( descr.assign)
 	return function( this, arg)
 		local scope_bk,step_bk = typedb:scope( typedb:type_scope( arg[1].type))
 		local functype = typedb:get_type( arg[1].type, "()", descr.param)
@@ -224,25 +268,12 @@ function convConstructor( fmt, outUnboundRefType)
 	end
 end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
--- param[in] fmt format string, param[in] outUnboundRefType output variable in case of an unbound reftype constructor
-function callConstructor( fmt, outUnboundRefType)
-	local function buildArguments( out, this_inp, args)
-		local code = ""
-		local subst = {out = out, this = this_inp}
-		if args then
-			for ii=1,#args do
-				local arg_inp,arg_code = constructorParts( args[ ii])
-				code = code .. arg_code
-				subst[ "arg" .. ii] = arg_inp
-			end
-		end
-		return code,subst
-	end
+function callConstructor( fmt)
 	return function( this, args)
 		local env = getCallableEnvironment()
-		local out,outsubst; if outUnboundRefType then out,outsubst = outUnboundRefType,("{"..outUnboundRefType.."}") else out = env.register(); outsubst = out end
+		local out = env.register()
 		local this_inp,this_code = constructorParts( this)
-		local code,subst = buildArguments( outsubst, this_inp, args)
+		local code,subst = buildCallArguments( out, this_inp, args)
 		return constructorStruct( out, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
 	end
 end
@@ -295,17 +326,17 @@ function functionCallConstructor( env, code, func, argstr, descr)
 			local reftypesubst; if argstr == "" then reftypesubst = "{RVAL}" else reftypesubst = "{RVAL}, " end
 			out = "RVAL"
 			subst = {func = func, callargstr = argstr, reftyperef = reftypesubst, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
-			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); fmt = llvmir.control.sretFunctionCallThrowing else fmt = llvmir.control.sretFunctionCall end
+			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.sretFunctionCallThrowing else fmt = llvmir.control.sretFunctionCall end
 		else
 			out = env.register()
 			subst = {func = func, callargstr = argstr, out = out, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
-			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); fmt = llvmir.control.functionCallThrowing else fmt = llvmir.control.functionCall end
+			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.functionCallThrowing else fmt = llvmir.control.functionCall end
 		end
 	else
 		subst = {func = func, callargstr = argstr, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
-		if descr.throws then subst.cleanup = getInvokeUnwindLabel(); fmt = llvmir.control.procedureCallThrowing else fmt = llvmir.control.procedureCall end
+		if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.procedureCallThrowing else fmt = llvmir.control.procedureCall end
 	end
-	return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.label))
+	return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
 end
 -- Constructor implementing a direct call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
 function functionDirectCallConstructor( thisTypeId, descr)
@@ -754,12 +785,12 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 end
 -- Define the constructors/destructors for built-in scalar types
 function defineScalarConstructorDestructors( qualitype, descr)
-	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, copyConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, singleArgumentConstructor( descr.ctor_copy))
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, singleArgumentConstructor( descr.ctor_copy))
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
 	defineCall( 0, qualitype.reftype, ":~", {}, constructorStructEmpty)
 end
@@ -796,22 +827,22 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	local cr_elementTypeId = constTypeMap[ r_elementTypeId] or r_elementTypeId
 	local ths = {type=r_elementTypeId, constructor={out="%ths"}}
 	local oth = {type=cr_elementTypeId, constructor={out="%oth"}}
-	local init,init_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
-	local copy,copy_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
+	local init,init_throws = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
+	local copy,copy_throws = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
 	local destroy = tryApplyCallable( node, ths, ":~", {} )
 	if init then
-		local attributes = llvmir.functionAttribute( false, init_hasCleanup)
-		local entercode,rewind; if init_hasCleanup == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
+		local attributes = llvmir.functionAttribute( false, init_throws)
+		local entercode,rewind; if init_throws == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_init, {ctors=init.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
 		defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( arrayDescr.ctor_init))
 	end
 	if copy then
-		local attributes = llvmir.functionAttribute( false, copy_hasCleanup)
-		local entercode,rewind; if copy_hasCleanup == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
+		local attributes = llvmir.functionAttribute( false, copy_throws)
+		local entercode,rewind; if copy_throws == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {ctors=copy.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr.ctor_copy))
-		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr.ctor_copy))
-		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( arrayDescr))
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr, copy_throws))
+		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr, copy_throws))
+		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( arrayDescr, copy_throws))
 	end
 	local dtor_code; if destroy then dtor_code = destroy.constructor.code else dtor_code = "" end
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
@@ -840,7 +871,7 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 	local paramstr,argstr,elements = "","",{}
 	local cleanupLabel = "cleanup_0"
 	local rewindlist = {{label=cleanupLabel}}
-	local init_nofCleanup,copy_nofCleanup,element_nofCleanup = 0,0,0
+	local init_nofThrows,copy_nofThrows,element_nofThrows = 0,0,0
 
 	for mi,member in ipairs(context.members) do
 		local out = instantCallableEnvironment.register()
@@ -859,43 +890,44 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
 		local param = {type=etype,constructor={out="%p" .. mi}}
-		local member_init,init_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {}, cleanupLabel)
-		if init_hasCleanup then init_nofCleanup = init_nofCleanup + 1 end
-		local member_copy,copy_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, cleanupLabel)
-		if init_hasCleanup then copy_nofCleanup = copy_nofCleanup + 1 end
-		local member_element,element_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
-		if element_hasCleanup then element_nofCleanup = element_nofCleanup + 1 end
+		local member_init,init_throws = tryApplyCallableWithCleanup( node, ths, ":=", {}, cleanupLabel)
+		if init_throws then init_nofThrows = init_nofThrows + 1 end
+		local member_copy,copy_throws = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, cleanupLabel)
+		if init_throws then copy_nofThrows = copy_nofThrows + 1 end
+		local member_element,element_throws = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
+		if element_throws then element_nofThrows = element_nofThrows + 1 end
 		local member_destroy = tryApplyCallable( node, {type=member_reftype,constructor={out=out}}, ":~", {})
 
 		cleanupLabel = "cleanup_" .. mi
-		if member_destroy and dtors then local dc = member_destroy.constructor.code; if dc and dc ~= "" then table.insert( rewindlist,{label=cleanupLabel, code=dc}); dtors = ths.constructor.code .. dc .. dtors end end
+		if member_destroy and dtors then local dc = member_destroy.constructor.code; if dc and dc ~= "" and mi ~= #context.members then table.insert( rewindlist,{label=cleanupLabel, code=dc}); dtors = ths.constructor.code .. dc .. dtors end end
 		if member_init and ctors then ctors = ctors .. member_init.constructor.code else ctors = nil end
 		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end 
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
 	end
 	if ctors then
-		local attributes = llvmir.functionAttribute( false, init_nofCleanup > 0)
-		local entercode,rewind; if init_nofCleanup > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		local attributes = llvmir.functionAttribute( false, init_nofThrows > 0)
+		local entercode,rewind; if init_nofThrows > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
 		print_section( "Auto", utils.template_format( descr.ctorproc_init, {ctors=ctors, rewind=rewind, entercode=entercode, attributes=attributes}))
 		defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
 		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
 	end
 	if ctors_copy then
-		local attributes = llvmir.functionAttribute( false, copy_nofCleanup > 0)
-		local entercode,rewind; if copy_nofCleanup > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		local attributes = llvmir.functionAttribute( false, copy_nofThrows > 0)
+		local entercode,rewind; if copy_nofThrows > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {ctors=ctors_copy, rewind=rewind, entercode=entercode, attributes=attributes}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
-		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr, copy_nofThrows > 0))
+		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr, copy_nofThrows > 0))
 	end
 	if ctors_elements then
-		local attributes = llvmir.functionAttribute( false, element_nofCleanup > 0)
-		local entercode,rewind; if element_nofCleanup > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		local attributes = llvmir.functionAttribute( false, element_nofThrows > 0)
+		local entercode,rewind; if element_nofThrows > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
 		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements, paramstr=paramstr, rewind=rewind, entercode=entercode, attributes=attributes}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})))
-		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})))
+		local constructor; if element_nofThrows > 0 then constructor = elementConstructorThrowing( utils.template_format( descr.ctor_elements_throwing, {args=argstr})) else constructor = callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})) end
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, constructor)
+		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, constructor)
 	end
 	if ctors_copy and not context.properties.assignment then
-		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( descr))
+		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( descr, copy_nofThrows > 0))
 	end
 	if dtors and not context.properties.destructor then
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
@@ -908,11 +940,11 @@ end
 function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, copyConstructor( descr.ctor_copy))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.reftype}, copyConstructor( descr.ctor_copy))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
 end
 -- Get the implicit part of a class destructor that calls the member destructors
 function getClassMemberDestructorCode( env, descr, members)
@@ -928,7 +960,8 @@ function getClassMemberDestructorCode( env, descr, members)
 		local dtor_e = member_destroy.constructor.code
 		if member_destroy and dtor_e ~= "" then
 			dtors = dtor_e .. dtors
-			partial_dtors = utils.constructor_format( descr.partial_dtorelem, {creg=instantCallableEnvironment.register(), istate=mi, dtor=dtor_e}, instantCallableEnvironment.label) .. partial_dtors
+			partial_dtors = utils.constructor_format( descr.partial_dtorelem, {creg=instantCallableEnvironment.register(), istate=mi, dtor=dtor_e}, instantCallableEnvironment.label)
+				.. partial_dtors
 		end
 
 	end
@@ -2043,11 +2076,11 @@ function tryApplyCallable( node, this, callable, args)
 end
 -- Same as tryApplyCallable but with a cleanup label passed, returns a boolean as second return value telling if the cleanup has been used
 function tryApplyCallableWithCleanup( node, this, callable, args, cleanupLabel)
-	local hasCleanup = false
-	instantUnwindLabelGenerator = function() hasCleanup = true; return cleanupLabel end
+	local throws = false
+	instantUnwindLabelGenerator = function() throws = true; return cleanupLabel end
 	local res = tryApplyCallable( node, this, callable, args)
 	instantUnwindLabelGenerator = nil
-	return res,hasCleanup
+	return res,throws
 end
 -- Get the symbol name for a function in the LLVM output
 function getTargetFunctionIdentifierString( name, args, const, context)
