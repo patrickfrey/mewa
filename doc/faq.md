@@ -88,7 +88,6 @@ Some may say that the whole example _language1_ is a big hack because of so many
 
 ### Why are type deduction paths weighted?
 
- * It helps the type deduction to terminate in reasonable time. 
  * It makes the selection of the deduction path deterministic. 
  * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one unique solution to a resolve type query. Otherwise the request is considered to be ambiguous.
 
