@@ -223,7 +223,7 @@ foreach my $line (@content)
 	print "\t\tsizeweight = $sizeWeightMap{$llvmtype},\n";
 	print "\t\tmaxvalue = \"" . $maxvaluemap{ $llvmtype . "_" . $sgn } . "\",\n";
 	print "\t\tassign = \"" . assign_constructor( $llvmtype) . "\",\n";
-	print "\t\tctor = \"" . default_constructor( $llvmtype) . "\",\n";
+	print "\t\tctor_init = \"" . default_constructor( $llvmtype) . "\",\n";
 	print "\t\tctor_copy = \"" . ctor_copy_constructor( $llvmtype) . "\",\n";
 	print "\t\tload = \"" . load_constructor( $llvmtype) . "\",\n";
 	print "\t\tpromote = {";

@@ -1,9 +1,7 @@
 # TODO List
 
- * Set child scope before calling child proc instead of set scope and calling child procs. A lot of typedb:scope calls not needed anymore. 
- * Report error on statements after return and similar cases, mark statements without follow statement allowed
- * Try to get into https://llvm.org/ProjectsWithLLVM
- * Solve problem with destructor of variable with destructor assigned where the assignment fails, after the variable has been destroyed. Add an own destructor chain with the destroyed type as part of the key, that leaves out the destruction of the variable.
+ * Solve problem with destructor of variable with destructor assigned where the assignment fails, after the variable has been destroyed. 
+	Add an destructor chain with the destroyed type as part of the key, that leaves out the destruction of the variable.
  * Pointer relations of inherited class to derived class
  * Migrate Mewa repo to own github organization
  * Implement generic var for global variables depending on a type (instead of static declarations)
@@ -12,11 +10,11 @@
  * Implement coroutines
  * Implement copy elision of single return variable
  * Implement a derive type dump with queue in typesystem_utils.lua for debugging
- * Test with Lua 5.1 (LuaJIT)
-
+ 
 # Open issues
-* Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.
-* Native build for non GNU platforms. CMake is not considered.
-* Build with LuaJIT
-* Packaging
+ * Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.
+ * Native build for non GNU platforms. CMake is not considered.
+ * Test with Lua 5.1, build with LuaJIT
+ * Packaging
+ * Try to get into https://llvm.org/ProjectsWithLLVM
 

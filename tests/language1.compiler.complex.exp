@@ -11,6 +11,12 @@ br label %end
 end:
 ret void
 }
+define private dso_local void @__partial_dtor___Complex__double( %__Complex__double* %ths, i32 %istate) {
+enter:
+br label %end
+end:
+ret void
+}
 
 
 define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {

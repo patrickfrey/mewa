@@ -218,7 +218,7 @@ Same as [typedb:get_types](#get_types) but filtering the one instance with all p
 | 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure          |
 | 2nd    | name         | string           | Name of the type defined                                                                                    |
 | 3rd    | parameter    | table            | (optional) Array of type handles (integers) or *nil* if no parameters defined                               |
-| Return |              | integer          | identifier assigned to the type or *nil* if not found                                                           |
+| Return |              | integer          | identifier assigned to the type or *nil* if not found                                                       |
 
 
 <a name="get_types"/>

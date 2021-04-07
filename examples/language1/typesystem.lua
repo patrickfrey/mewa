@@ -79,6 +79,7 @@ local genericInstanceTypeMap = {}	-- Map of the pair valtype,generic parameter t
 local varargFuncMap = {}		-- Map of types to true for vararg functions/procedures
 local instantCallableEnvironment = nil	-- Callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
 local globalCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
+local instantUnwindLabelGenerator = nil -- Function to allocate a label for cleanup in case of an exception created for implicitly generated code (constructors,destructors,assignments,etc.)
 local globalInitCode = ""		-- Init code for global variables
 local globalCleanupCode = ""		-- Cleanup code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
@@ -107,11 +108,13 @@ end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, implicitcode_exception="", implicitcode_landingpad="", initcode=""}
+	        returntype=rtype, returnfunction=nil, frames={}, implicitcode_exception="", implicitcode_landingpad="", initstate=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
-function defineCallableEnvironment( name, rtype)
-	local env = createCallableEnvironment( name, rtype, rfunc)
+function defineCallableEnvironment( node, name, rtype, initstate)
+	local env = createCallableEnvironment( name, rtype)
+	env.initstate = initstate
+	env.line = node.line
 	typedb:set_instance( currentCallableEnvKey, env)
 	return env
 end
@@ -153,7 +156,7 @@ function manipConstructor( fmt)
 	end
 end
 -- Constructor implementing an assignment of a single argument to an object
-function assignConstructor( fmt)
+function copyConstructor( fmt)
 	return function( this, arg)
 		local env = getCallableEnvironment()
 		local code = ""
@@ -164,15 +167,32 @@ function assignConstructor( fmt)
  		return constructorStruct( this_inp, code)
 	end
 end
+-- Constructor implementing an assignment of an object to another by calling the copy constructor to a local slot and then calling the destructor of this followed by a move of the copy constructed object to the free slot
+function assignConstructor( descr)
+	local copyConstructorFunc = copyConstructor( descr.assign)
+	return function( this, arg)
+		local env = getCallableEnvironment()
+		local out_copy = env.register()
+		local this_buf = constructorStruct( out_copy, utils.constructor_format( descr.def_local, {out_copy}, env.register))
+		local this_inp,this_code = constructorParts( this)
+		local res_buf = copyConstructorFunc( this_buf, arg)
+		local destroy = utils.constructor_format( descr.dtor, {this=this_inp}, env.register)
+		local res_load = env.register()
+		local code = this_code .. res_buf.code .. destroy
+				.. utils.constructor_format( descr.load, {out=res_load,this=res_buf.out}, env.register)
+				.. utils.constructor_format( descr.assign, {arg1=res_load,this=this_inp}, env.register)
+ 		return constructorStruct( this_inp, code)
+	end
+end
 -- Constructor implementing an assignment of a free function callable to a function/procedure pointer
-function assignFunctionPointerConstructor( descr)
-	local assign = assignConstructor( descr.assign)
+function copyFunctionPointerConstructor( descr)
+	local copyFunc = copyConstructor( descr.assign)
 	return function( this, arg)
 		local scope_bk,step_bk = typedb:scope( typedb:type_scope( arg[1].type))
 		local functype = typedb:get_type( arg[1].type, "()", descr.param)
 		local functypeDescr = typeDescriptionMap[ functype]
 		typedb:scope( scope_bk,step_bk)
-		if functype and descr.throws == functypeDescr.throws then return assign( this, {{out="@" .. functypeDescr.symbolname}}) end
+		if functype and descr.throws == functypeDescr.throws then return copyFunc( this, {{out="@" .. functypeDescr.symbolname}}) end
 	end
 end
 -- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
@@ -734,14 +754,38 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 end
 -- Define the constructors/destructors for built-in scalar types
 function defineScalarConstructorDestructors( qualitype, descr)
-	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, assignConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, assignConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, assignConstructor( descr.ctor_copy))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, assignConstructor( descr.assign))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, assignConstructor( descr.ctor_copy))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor))
+	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, copyConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
 	defineCall( 0, qualitype.reftype, ":~", {}, constructorStructEmpty)
+end
+-- Get the invoke landingpad resume code of a default constructor
+function getDefaultConstructorCleanupResumeCode( env, codelist)
+	local partial_dtor = ""
+	for ci=#codelist,1,-1 do 
+		local label = codelist[ ci].label
+		local code = codelist[ ci].code
+		local dtor_label = label .. "_dtor"
+		local dtor_next = nil; local ni=ci; while ni > 1 do ni = ni-1; cd = codelist[ni].code; if cd and cd ~= "" then dtor_next = codelist[ ni].label .. "_dtor"; break end end
+		if not dtor_next then dtor_next = "finish" end
+		if code then
+			partial_dtor = partial_dtor
+				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label,cleanup=dtor_label}, env.register)
+				.. utils.constructor_format( llvmir.control.plainLabel, {inp=dtor_label}) .. code
+				.. utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor_next})
+		else
+			partial_dtor = partial_dtor
+				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label,cleanup=dtor_next}, env.register)
+		end
+	end
+	partial_dtor = partial_dtor
+				.. utils.constructor_format( llvmir.control.plainLabel, {inp="finish"}, env.register)
+				.. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
+	return llvmir.exception.allocLandingpad,partial_dtor
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
@@ -752,28 +796,28 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	local cr_elementTypeId = constTypeMap[ r_elementTypeId] or r_elementTypeId
 	local ths = {type=r_elementTypeId, constructor={out="%ths"}}
 	local oth = {type=cr_elementTypeId, constructor={out="%oth"}}
-	local init = tryApplyCallable( node, ths, ":=", {} )
-	local initcopy = tryApplyCallable( node, ths, ":=", {oth} )
-	local assign = tryApplyCallable( node, ths, "=", {oth} )
+	local init,init_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
+	local copy,copy_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
 	local destroy = tryApplyCallable( node, ths, ":~", {} )
 	if init then
-		print_section( "Auto", utils.template_format( arrayDescr.ctorproc, {ctors=init.constructor.code}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( arrayDescr.ctor))
+		local attributes = llvmir.functionAttribute( false, init_hasCleanup)
+		local entercode,rewind; if init_hasCleanup == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
+		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_init, {ctors=init.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( arrayDescr.ctor_init))
 	end
-	if initcopy then
-		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {procname="copy",ctors=initcopy.constructor.code}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, assignConstructor( utils.template_format( arrayDescr.ctor_copy, {procname="copy"})))
-		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, assignConstructor( utils.template_format( arrayDescr.ctor_copy, {procname="copy"})))
-	end
-	if assign then
-		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {procname="assign",ctors=assign.constructor.code}))
-		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( utils.template_format( arrayDescr.ctor_copy, {procname="assign"})))
+	if copy then
+		local attributes = llvmir.functionAttribute( false, copy_hasCleanup)
+		local entercode,rewind; if copy_hasCleanup == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
+		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {ctors=copy.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr.ctor_copy))
+		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr.ctor_copy))
+		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( arrayDescr))
 	end
 	local dtor_code; if destroy then dtor_code = destroy.constructor.code else dtor_code = "" end
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( arrayDescr.dtor))
 
-	if init and initcopy then
+	if init and copy then
 		local redu_constructor_l = tryConstexprStructureReductionConstructorArray( node, qualitype.valtype, elementTypeId, arraySize)
 		local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_valtype, elementTypeId, arraySize)
 		typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
@@ -781,10 +825,22 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	end
 	instantCallableEnvironment = nil
 end
--- Define constructors/destructors for 'struct' types
+-- Define initialization from an initializer structure
+function defineInitializationFromStructure( node, qualitype)
+	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.valtype)
+	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_valtype)
+	typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
+end
+-- Define implicit constructors/destructors for 'struct'/'class' types
 function defineStructConstructorDestructors( node, qualitype, descr, context)
 	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
-	local ctors,dtors,ctors_copy,ctors_assign,ctors_elements,paramstr,argstr,elements = "","","","","","","",{}
+	local dtors = ""
+	local ctors,ctors_copy,ctors_elements = "","",""
+	local paramstr,argstr,elements = "","",{}
+	local cleanupLabel = "cleanup_0"
+	local rewindlist = {{label=cleanupLabel}}
+	local init_nofCleanup,copy_nofCleanup,element_nofCleanup = 0,0,0
 
 	for mi,member in ipairs(context.members) do
 		local out = instantCallableEnvironment.register()
@@ -798,65 +854,69 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		paramstr = paramstr .. ", " .. typeDescriptionMap[ etype].llvmtype .. " %p" .. mi
 		argstr = argstr .. ", " .. typeDescriptionMap[ etype].llvmtype .. " {arg" .. mi .. "}"
 
-		local loadref = context.descr.loadelemref
+		local loadref = descr.loadelemref
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
 		local param = {type=etype,constructor={out="%p" .. mi}}
-		local member_init = tryApplyCallable( node, ths, ":=", {} )
-		local member_initcopy = tryApplyCallable( node, ths, ":=", {oth} )
-		local member_assign = tryApplyCallable( node, ths, "=", {oth} )
-		local member_element = tryApplyCallable( node, ths, ":=", {param} )
-		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
+		local member_init,init_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {}, cleanupLabel)
+		if init_hasCleanup then init_nofCleanup = init_nofCleanup + 1 end
+		local member_copy,copy_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, cleanupLabel)
+		if init_hasCleanup then copy_nofCleanup = copy_nofCleanup + 1 end
+		local member_element,element_hasCleanup = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
+		if element_hasCleanup then element_nofCleanup = element_nofCleanup + 1 end
+		local member_destroy = tryApplyCallable( node, {type=member_reftype,constructor={out=out}}, ":~", {})
 
+		cleanupLabel = "cleanup_" .. mi
+		if member_destroy and dtors then local dc = member_destroy.constructor.code; if dc and dc ~= "" then table.insert( rewindlist,{label=cleanupLabel, code=dc}); dtors = ths.constructor.code .. dc .. dtors end end
 		if member_init and ctors then ctors = ctors .. member_init.constructor.code else ctors = nil end
-		if member_initcopy and ctors_copy then ctors_copy = ctors_copy .. member_initcopy.constructor.code else ctors_copy = nil end
-		if member_assign and ctors_assign then ctors_assign = ctors_assign .. member_assign.constructor.code else ctors_assign = nil end
+		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end 
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
-		if member_destroy then dtors = member_destroy.constructor.code .. dtors end
 	end
 	if ctors then
-		print_section( "Auto", utils.template_format( descr.ctorproc, {ctors=ctors}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor))
-		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor))
+		local attributes = llvmir.functionAttribute( false, init_nofCleanup > 0)
+		local entercode,rewind; if init_nofCleanup > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		print_section( "Auto", utils.template_format( descr.ctorproc_init, {ctors=ctors, rewind=rewind, entercode=entercode, attributes=attributes}))
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
+		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
 	end
 	if ctors_copy then
-		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="copy",ctors=ctors_copy}))
-		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
-		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="copy"})))
-	end
-	if ctors_assign then
-		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {procname="assign",ctors=ctors_assign}))
-		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( utils.template_format( descr.ctor_copy, {procname="assign"})))
+		local attributes = llvmir.functionAttribute( false, copy_nofCleanup > 0)
+		local entercode,rewind; if copy_nofCleanup > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {ctors=ctors_copy, rewind=rewind, entercode=entercode, attributes=attributes}))
+		defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
+		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr.ctor_copy))
 	end
 	if ctors_elements then
-		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {procname="assign",ctors=ctors_elements,paramstr=paramstr}))
+		local attributes = llvmir.functionAttribute( false, element_nofCleanup > 0)
+		local entercode,rewind; if element_nofCleanup > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements, paramstr=paramstr, rewind=rewind, entercode=entercode, attributes=attributes}))
 		defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})))
 		defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})))
 	end
-	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
-	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
-	defineCall( 0, qualitype.c_reftype, ":~", {}, manipConstructor( descr.dtor))
-
-	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.valtype)
-	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_valtype)
-	typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
+	if ctors_copy and not context.properties.assignment then
+		defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.c_reftype}, assignConstructor( descr))
+	end
+	if dtors and not context.properties.destructor then
+		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
+		defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
+		defineCall( 0, qualitype.c_reftype, ":~", {}, manipConstructor( descr.dtor))
+	end
 	instantCallableEnvironment = nil
 end
 -- Define constructors/destructors for 'interface' types
 function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, assignConstructor( descr.ctor_copy))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.reftype}, assignConstructor( descr.ctor_copy))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, assignConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, assignConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, assignConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.reftype}, copyConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, copyConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, copyConstructor( descr.ctor_copy))
 end
 -- Get the implicit part of a class destructor that calls the member destructors
 function getClassMemberDestructorCode( env, descr, members)
-	local rt = ""
+	local dtors,partial_dtors = "",""
 	for mi,member in ipairs(members) do
 		local out = env.register()
 		local llvmtype = member.descr.llvmtype
@@ -865,22 +925,24 @@ function getClassMemberDestructorCode( env, descr, members)
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype},env.register),out=out}}
 
 		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
-		if member_destroy then rt = member_destroy.constructor.code .. rt end
+		local dtor_e = member_destroy.constructor.code
+		if member_destroy and dtor_e ~= "" then
+			dtors = dtor_e .. dtors
+			partial_dtors = utils.constructor_format( descr.partial_dtorelem, {creg=instantCallableEnvironment.register(), istate=mi, dtor=dtor_e}, instantCallableEnvironment.label) .. partial_dtors
+		end
+
 	end
-	return rt
+	return dtors,partial_dtors
 end
 -- Define constructors/destructors for 'class' types
 function defineClassConstructorDestructors( node, qualitype, descr, context)
 	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
 	if not context.properties.destructor then
-		local dtors = getClassMemberDestructorCode( instantCallableEnvironment, descr, context.members)
+		local dtors,partial_dtors = getClassMemberDestructorCode( instantCallableEnvironment, descr, context.members)
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
+		print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
 		defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
 	end
-	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.valtype)
-	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_valtype)
-	typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
 	instantCallableEnvironment = nil
 end
 -- Tell if a method identifier by id implements an inherited interface method, thus has to be noinline
@@ -1078,24 +1140,25 @@ function getAllocationFrame()
 	if not rt then
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
-		local catch; if not parent or parent.env ~= env then parent = nil else catch = parent.catch end
-		rt = {parent=parent, catch=catch, env=env, ctor="", scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad=""}
+		local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
+		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad="",
+		      initstate=initstate, invokeUnwindLabelHandler=nil}
 		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
 	return rt
 end
--- Add some code to the initialization part of the frame
-function setInitCode( code)
-	local frame = getAllocationFrame()
-	frame.ctor = frame.ctor .. code
-end
 -- Set cleanup code for the current scope step, must be called in ascending order
-function setCleanupCode( node, varTypeId, code)
+function setCleanupCode( name, code)
 	local frame = getAllocationFrame()
 	local step = typedb:step()
-	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage(node.line,"Internal: Cleanup code not in added in strict ascending order") end
-	table.insert( frame.dtors, {step=step,code=code,var=varTypeId} )
+	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage( 0, "Internal: Cleanup code not in added in strict ascending order") end
+	local new_dtor = {step=step,code=code,name=name}
+	table.insert( frame.dtors, new_dtor)
+end
+function getCodeBlockCode( code)
+	local frame = typedb:this_instance( currentAllocFrameKey)
+	if frame then return code else return code end
 end
 -- Binary search for scope step that is greater than the argument step in a frame dtors list passed as argument
 function binsearchUpperboundFrameDtors( dtors, step)
@@ -1190,7 +1253,8 @@ function requireExceptions()
 	end
 end
 -- Get the label to unwind a throwing call in case of an exception
-function getInvokeUnwindLabel()
+function getInvokeUnwindLabel( skipHandler)
+	if instantUnwindLabelGenerator then return instantUnwindLabelGenerator() end
 	local frame = getAllocationFrame()
 	local rt = frame.env.label()
 	requireExceptions()
@@ -1264,8 +1328,7 @@ function allocationFrameToString( frame)
 end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( env, code)
-	local rt = env.implicitcode_exception .. env.implicitcode_landingpad .. env.initcode
-	for _,frame in ipairs(env.frames) do rt = rt .. frame.ctor end
+	local rt = env.implicitcode_exception .. env.implicitcode_landingpad
 	rt = rt .. code
 	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
 	return rt
@@ -1275,14 +1338,13 @@ function disjointScopes( scope1, scope2)
 	return scope1[2] <= scope2[1] or scope1[1] >= scope2[2]
 end
 -- Log an initialization call of a member in a constructor
-function logInitCall( this, name, index)
+function logInitCall( this, name, index, destructor)
 	local frame = getAllocationFrame()
 	local scope,step = typedb:scope()
-	if not frame.initcalls then frame.initcalls = {}; frame.env.hasInitCalls = true end
-	for _,initcall in ipairs(frame.initcalls) do
-		if initcall.index == index and not disjointScopes( scope, initcall.scope) then utils.errorMessage("Multiple initializations for member '%s'", name) end
-	end
-	table.insert( frame.initcalls, {this=this,name=name,index=index,step=step,scope=scope})
+	if frame.initstate >= index+1 then utils.errorMessage( frame.env.line or 0, "Multiple initializations for member '%s' or initializations not in order of definition", name) end
+	frame.initstate = index+1
+	local destructorCode = destructor(constructorStruct(this.out),{}).code
+	-- if destructorCode ~= "" then setCleanupCode( name, destructorCode, true) end
 end
 -- Test if we are in a constructor context and there has been an initialization of a member variable called
 function getInitCalls( scope)
@@ -1293,14 +1355,13 @@ function getInitCalls( scope)
 	return rt
 end
 -- Joins 2 lists of 2 blocks with their logged init calls and puts them into the parent frame, completes the other scope with default constructors for initialzations not called
-function joinInitCalls( node, frame, scope1, scope2)
-	if not frame.env.hasInitCalls then return end
+function joinInitCalls( node, scope1, scope2)
+	if not frame.env.initstate then return end
 	local jl = {}
 	local code1,code2 = "",""
 	local tb = {}
-	initcalls1 = getInitCalls( frame, scope1)
-	initcalls2 = getInitCalls( frame, scope2)
---!!!!! HIE WIITER
+	initcalls1 = getInitCalls( scope1)
+	initcalls2 = getInitCalls( scope2)
 	for idx,i1 in ipairs(initcalls1) do tb[ i1.index] = 2; table.insert( jl, i1) end
 	for idx,i2 in ipairs(initcalls2) do if tb[ i2.index] then tb[ i2.index] = 3 else tb[ i2.index] = 2; table.insert( jl, i2) end end
 	table.sort( jl, function( a, b) return a.step < b.step end)
@@ -1336,7 +1397,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local decl = {type=var, constructor={code=code,out=out}}
 		if initVal then rt = applyCallable( node, decl, ":=", {initVal}) else rt = applyCallable( node, decl, ":=", {}) end
 		local cleanup = tryApplyCallable( node, {type=var,constructor={out=out}}, ":~", {})
-		if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then setCleanupCode( node, var, cleanup.constructor.code) end
+		if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then setCleanupCode( name, cleanup.constructor.code, false) end
 		return rt
 	elseif context.domain == "global" then
 		instantCallableEnvironment = globalCallableEnvironment
@@ -1371,11 +1432,12 @@ end
 function defineConstructorInitAssignments( refType, initType, name, index, load_ref)
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
 	local items = typedb:get_types( refType, ":=")
+	local destructor = typedb:type_constructor( typedb:get_type( refType, ":~"))
 	typedb:scope( scope_bk,step_bk)
 	local loadType = typedb:def_type( initType, name, callConstructor( load_ref), {})
 	for _,item in ipairs(items) do
 		local constructor = typedb:type_constructor(item)
-		defineCall( loadType, loadType, "=", typedb:type_parameters(item), function(this,args) logInitCall(this,name,index); return constructor(this,args) end)
+		defineCall( loadType, loadType, "=", typedb:type_parameters(item), function(this,args) logInitCall(this,name,index,destructor); return constructor(this,args) end)
 	end
 end
 -- Define a member variable of a class or a structure
@@ -1979,6 +2041,14 @@ function tryApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end
+-- Same as tryApplyCallable but with a cleanup label passed, returns a boolean as second return value telling if the cleanup has been used
+function tryApplyCallableWithCleanup( node, this, callable, args, cleanupLabel)
+	local hasCleanup = false
+	instantUnwindLabelGenerator = function() hasCleanup = true; return cleanupLabel end
+	local res = tryApplyCallable( node, this, callable, args)
+	instantUnwindLabelGenerator = nil
+	return res,hasCleanup
+end
 -- Get the symbol name for a function in the LLVM output
 function getTargetFunctionIdentifierString( name, args, const, context)
 	if context.domain == "local" then
@@ -2146,8 +2216,8 @@ end
 function defineCallableVariableType( node, descr, declContextTypeId)
 	local qualitype = defineQualiTypes( node, declContextTypeId, descr.name, descr)
 	defineFunctionVariableCall( qualitype.c_valtype, qualitype.c_valtype, "()", descr)
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr, qualitype.c_valtype))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {anyFreeFunctionType}, assignFunctionPointerConstructor( descr, qualitype.c_valtype))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {anyFreeFunctionType}, copyFunctionPointerConstructor( descr, qualitype.c_valtype))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {anyFreeFunctionType}, copyFunctionPointerConstructor( descr, qualitype.c_valtype))
 end
 -- Define a procedure pointer type as callable object with "()" operator implementing the call
 function defineProcedureVariableType( node, descr, context)
@@ -2188,16 +2258,16 @@ end
 -- Define a constructor
 function defineConstructor( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
-	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
+	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
-	if constTypeMap[ contextTypeId] then defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr) end
+	defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr)
 end
 -- Define a destructor
 function defineDestructor( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
-	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
+	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
-	if constTypeMap[ contextTypeId] then defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr) end
+	defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr)
 end
 -- Define an extern function as callable object with "()" operator implementing the call
 function defineExternFunction( node, descr, context)
@@ -2237,7 +2307,8 @@ function defineCallableBodyContext( node, context, descr)
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
-	defineCallableEnvironment( "body " .. descr.symbol, descr.ret)
+	local initstate; if descr.symbol == "$ctor" then initstate = 0 end
+	defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, initstate)
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node, context)
@@ -2316,7 +2387,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	defineUnboundRefTypeTypes( declContextTypeId, typnam, descr, qualitype)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	local context = {domain="member", qualitype=qualitype, descr=descr,
-				members={}, operators={}, methods={}, methodmap={}, interfaces={}, properties={},
+				members={}, properties={}, operators={}, methods={}, methodmap={}, interfaces={}, 
 	                	llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,classes,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
@@ -2324,6 +2395,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	descr.size = context.structsize
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define callable headers
 	defineClassConstructorDestructors( node, qualitype, descr, context)
+	defineInitializationFromStructure( node, qualitype)
 	defineOperatorsWithStructArgument( node, context)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 4) -- 4th pass: define callable implementations
 	defineInheritedInterfaces( node, context, qualitype.valtype)
@@ -2334,12 +2406,13 @@ end
 function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.valtype)
 	defineUnboundRefTypeTypes( declContextTypeId, typnam, descr, qualitype)
-	local context = {domain="member", qualitype=qualitype, descr=descr, members={},
+	local context = {domain="member", qualitype=qualitype, descr=descr, members={}, properties={},
 				llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=false}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
 	descr.size = context.structsize
 	defineStructConstructorDestructors( node, qualitype, descr, context)
+	defineInitializationFromStructure( node, qualitype)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 	popSeekContextType( qualitype.valtype)
 end
@@ -2405,7 +2478,7 @@ function collectCode( node, args)
 			code = code .. arg.code
 		end
 	end
-	return {code = code, nofollow=nofollow}
+	return {code = getCodeBlockCode( code), nofollow=nofollow}
 end
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
@@ -2471,7 +2544,7 @@ function typesystem.typecast( node)
 		local rt = tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
 		if rt then
 			local cleanup = tryApplyCallable( node, {type=typeId,constructor={out=out}}, ":~", {})
-			if cleanup then setCleanupCode( node, nil, cleanup) end
+			if cleanup then setCleanupCode( "cast " .. typedb:type_name(typeId), cleanup, false) end
 		end
 		return rt
 	end
@@ -2486,7 +2559,7 @@ function typesystem.throw_exception( node)
 end
 function typesystem.tryblock( node, catchlabel)
 	initTryBlock( catchlabel)
-	local codeblock = unpack( utils.traverse( typedb, node))
+	return unpack( utils.traverse( typedb, node))
 end
 function typesystem.catchblock( node, catchlabel)
 	local errcodevar,errmsgvar = unpack( utils.traverseRange( typedb, node, {1,#node.arg-1}))
@@ -2497,13 +2570,14 @@ function typesystem.catchblock( node, catchlabel)
 	typedb:def_type( localDefinitionContext, errmsgvar, errmsg_constructor)
 	local code = utils.constructor_format( llvmir.exception.loadExceptionErrCode, {errcode=errcode_constructor.out}, env.register)
 			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {errmsg=errmsg_constructor.out}, env.register)
-	setCleanupCode( node, nil, utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out}))
+	setCleanupCode( "exception message", utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out}), false)
 	return utils.traverseRange( typedb, node, {#node.arg,#node.arg})[#node.arg]
 end
 function typesystem.trycatch( node)
 	local env = getCallableEnvironment()
 	local catchlabel = env.label()
 	local tryblock,catchblock = unpack( utils.traverse( typedb, node, catchlabel))
+	if env.initstate and (getInitCalls( env, node.arg[1].arg[1].scope or getInitCalls( env, node.arg[2].arg[#node.arg[2]].scope))) then utils.errorMessage( node.line, "Member intialization call of constructor inside a try/catch") end
 	local fmt; if tryblock.nofollow then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
 	local code = tryblock.code .. utils.constructor_format( fmt, {inp=catchlabel}) .. catchblock.code
 	return {code=code, nofollow=catchblock.nofollow}
@@ -2627,7 +2701,7 @@ end
 function typesystem.conditional_while( node, context, bla)
 	local condition,yesblock = table.unpack( utils.traverse( typedb, node, context))
 	local env = getCallableEnvironment()
-	if env.hasInitCalls and getInitCalls( env, node.scope) then utils.errorMessage( node.line, "Member intialization call of constructor inside a loop") end
+	if env.initstate and getInitCalls( env, node.arg[2].scope) then utils.errorMessage( node.line, "Member intialization call of constructor inside a loop") end
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local start = env.label()
@@ -2810,7 +2884,7 @@ function typesystem.constructordef( node, context, pass)
 		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
 		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
 		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="", name = ":=", symbol = "$ctor", 
-				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+				ret = nil, private=lnk.private, const=false, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
 		defineConstructor( node, descr, context)
@@ -2834,7 +2908,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 	if not pass or pass == 2 then
 		local scope_bk = typedb:scope( node.arg[1].scope)
 		local descr = getNodeData( node, descr)
-		local env = defineCallableEnvironment( "body " .. descr.symbol, nil)
+		local env = defineCallableEnvironment( node, "body " .. descr.symbol)
 		local block = utils.traverse( typedb, node, subcontext)[1]
 		local code = block.code .. getClassMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
@@ -3045,7 +3119,7 @@ end
 function typesystem.main_procdef( node)
 	local context = {domain="local"}
 	local scope_bk = typedb:scope( node.arg[1].scope)
-	local env = defineCallableEnvironment( "main ", scalarIntegerType)
+	local env = defineCallableEnvironment( node, "main ", scalarIntegerType)
 	local exitlabel = env.label()
 	local retvaladr = env.register()
 	local retvalinit = utils.constructor_format( typeDescriptionMap[ scalarIntegerType].def_local, {out=retvaladr}, env.register)
@@ -3064,7 +3138,7 @@ end
 function typesystem.program( node)
 	llvmir.init()
 	initBuiltInTypes()
-	globalCallableEnvironment = createCallableEnvironment( "globals ", "%ir", "IL")
+	globalCallableEnvironment = createCallableEnvironment( "globals ", nil, "%ir", "IL")
 	utils.traverse( typedb, node, {domain="global"})
 	return node
 end

@@ -7,21 +7,21 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %__Matrix__double__3__3 = type { [3 x [3 x double]] }
 %__Matrix__double__3__4 = type { [3 x [4 x double]] }
 %__Matrix__double__4__3 = type { [4 x [3 x double]] }
-define private dso_local void @__ctor_3__double( [3 x double]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__ctor_init_3__double( [3 x double]* %ar, i32 %start)#0 nounwind {
 enter:
-%base = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 3
+%ths_base = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 3
 br label %loop
 loop:
-%ths = phi double* [%base, %enter], [%A2, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %loop]
 store double 0.00000, double* %ths
 %A2 = getelementptr inbounds double, double* %ths, i64 1
-%A3 = icmp eq double* %A2, %top
+%A3 = icmp eq double* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_3__double( [3 x double]* %ths_ar, [3 x double]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_3__double( [3 x double]* %ths_ar, [3 x double]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [3 x double], [3 x double]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [3 x double], [3 x double]* %ths_ar, i32 0, i32 3
@@ -39,52 +39,38 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_3__double( [3 x double]* %ths_ar, [3 x double]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_3__double( [3 x double]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [3 x double], [3 x double]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [3 x double], [3 x double]* %ths_ar, i32 0, i32 3
-%oth_base = getelementptr inbounds [3 x double], [3 x double]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
-%oth = phi double* [%oth_base, %enter], [%A3, %loop]
-%r2 = load double, double* %oth
-store double %r2, double* %ths
-%A2 = getelementptr inbounds double, double* %ths, i64 1
-%A3 = getelementptr inbounds double, double* %oth, i64 1
-%A4 = icmp eq double* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_3__double( [3 x double]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 3
+%top = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi double* [%top, %enter], [%A2, %loop]
+%ths = phi double* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds double, double* %ths, i64 -1
-%A3 = icmp eq double* %A2, %base
+%A3 = icmp eq double* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_4__3__double( [4 x [3 x double]]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__ctor_init_4__3__double( [4 x [3 x double]]* %ar, i32 %start)#0 nounwind {
 enter:
-%base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 4
+%ths_base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 4
 br label %loop
 loop:
-%ths = phi [3 x double]* [%base, %enter], [%A2, %loop]
-call void @__ctor_3__double( [3 x double]* %ths, i32 0)
+%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
+call void @__ctor_init_3__double( [3 x double]* %ths, i32 0)
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
-%A3 = icmp eq [3 x double]* %A2, %top
+%A3 = icmp eq [3 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_4__3__double( [4 x [3 x double]]* %ths_ar, [4 x [3 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_4__3__double( [4 x [3 x double]]* %ths_ar, [4 x [3 x double]]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ths_ar, i32 0, i32 4
@@ -101,52 +87,39 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_4__3__double( [4 x [3 x double]]* %ths_ar, [4 x [3 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_4__3__double( [4 x [3 x double]]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ths_ar, i32 0, i32 4
-%oth_base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [3 x double]* [%oth_base, %enter], [%A3, %loop]
-call void @__ctor_assign_3__double( [3 x double]* %ths, [3 x double]* %oth)
-%A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
-%A3 = getelementptr inbounds [3 x double], [3 x double]* %oth, i64 1
-%A4 = icmp eq [3 x double]* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_4__3__double( [4 x [3 x double]]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 4
+%top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi [3 x double]* [%top, %enter], [%A2, %loop]
+%ths = phi [3 x double]* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 -1
-call void @__dtor_3__double( [3 x double]* %ths)
-%A3 = icmp eq [3 x double]* %A2, %base
+call void @__dtor_3__double( [3 x double]* %ths, i32 3)
+%A3 = icmp eq [3 x double]* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_4__double( [4 x double]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__ctor_init_4__double( [4 x double]* %ar, i32 %start)#0 nounwind {
 enter:
-%base = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 4
+%ths_base = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 4
 br label %loop
 loop:
-%ths = phi double* [%base, %enter], [%A2, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %loop]
 store double 0.00000, double* %ths
 %A2 = getelementptr inbounds double, double* %ths, i64 1
-%A3 = icmp eq double* %A2, %top
+%A3 = icmp eq double* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_4__double( [4 x double]* %ths_ar, [4 x double]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_4__double( [4 x double]* %ths_ar, [4 x double]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [4 x double], [4 x double]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [4 x double], [4 x double]* %ths_ar, i32 0, i32 4
@@ -164,52 +137,38 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_4__double( [4 x double]* %ths_ar, [4 x double]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_4__double( [4 x double]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [4 x double], [4 x double]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [4 x double], [4 x double]* %ths_ar, i32 0, i32 4
-%oth_base = getelementptr inbounds [4 x double], [4 x double]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
-%oth = phi double* [%oth_base, %enter], [%A3, %loop]
-%r2 = load double, double* %oth
-store double %r2, double* %ths
-%A2 = getelementptr inbounds double, double* %ths, i64 1
-%A3 = getelementptr inbounds double, double* %oth, i64 1
-%A4 = icmp eq double* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_4__double( [4 x double]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 4
+%top = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi double* [%top, %enter], [%A2, %loop]
+%ths = phi double* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds double, double* %ths, i64 -1
-%A3 = icmp eq double* %A2, %base
+%A3 = icmp eq double* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_4__4__double( [4 x [4 x double]]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__ctor_init_4__4__double( [4 x [4 x double]]* %ar, i32 %start)#0 nounwind {
 enter:
-%base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 4
+%ths_base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 4
 br label %loop
 loop:
-%ths = phi [4 x double]* [%base, %enter], [%A2, %loop]
-call void @__ctor_4__double( [4 x double]* %ths, i32 0)
+%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
+call void @__ctor_init_4__double( [4 x double]* %ths, i32 0)
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
-%A3 = icmp eq [4 x double]* %A2, %top
+%A3 = icmp eq [4 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_4__4__double( [4 x [4 x double]]* %ths_ar, [4 x [4 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_4__4__double( [4 x [4 x double]]* %ths_ar, [4 x [4 x double]]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ths_ar, i32 0, i32 4
@@ -226,33 +185,20 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_4__4__double( [4 x [4 x double]]* %ths_ar, [4 x [4 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_4__4__double( [4 x [4 x double]]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ths_ar, i32 0, i32 4
-%oth_base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [4 x double]* [%oth_base, %enter], [%A3, %loop]
-call void @__ctor_assign_4__double( [4 x double]* %ths, [4 x double]* %oth)
-%A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
-%A3 = getelementptr inbounds [4 x double], [4 x double]* %oth, i64 1
-%A4 = icmp eq [4 x double]* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_4__4__double( [4 x [4 x double]]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 4
+%top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi [4 x double]* [%top, %enter], [%A2, %loop]
+%ths = phi [4 x double]* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 -1
-call void @__dtor_4__double( [4 x double]* %ths)
-%A3 = icmp eq [4 x double]* %A2, %base
+call void @__dtor_4__double( [4 x double]* %ths, i32 4)
+%A3 = icmp eq [4 x double]* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
@@ -260,26 +206,39 @@ ret void
 define private dso_local void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %ths) {
 enter:
 %r1 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-call void @__dtor_4__4__double( [4 x [4 x double]]* %r1)
+call void @__dtor_4__4__double( [4 x [4 x double]]* %r1, i32 4)
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_3__4__double( [3 x [4 x double]]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__partial_dtor___Matrix__double__4__4( %__Matrix__double__4__4* %ths, i32 %istate) {
 enter:
-%base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 3
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+call void @__dtor_4__4__double( [4 x [4 x double]]* %r1, i32 4)
+br label %L2
+L2:
+br label %end
+end:
+ret void
+}
+define private dso_local void @__ctor_init_3__4__double( [3 x [4 x double]]* %ar, i32 %start)#0 nounwind {
+enter:
+%ths_base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 3
 br label %loop
 loop:
-%ths = phi [4 x double]* [%base, %enter], [%A2, %loop]
-call void @__ctor_4__double( [4 x double]* %ths, i32 0)
+%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
+call void @__ctor_init_4__double( [4 x double]* %ths, i32 0)
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
-%A3 = icmp eq [4 x double]* %A2, %top
+%A3 = icmp eq [4 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_3__4__double( [3 x [4 x double]]* %ths_ar, [3 x [4 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_3__4__double( [3 x [4 x double]]* %ths_ar, [3 x [4 x double]]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ths_ar, i32 0, i32 3
@@ -296,52 +255,39 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_3__4__double( [3 x [4 x double]]* %ths_ar, [3 x [4 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_3__4__double( [3 x [4 x double]]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ths_ar, i32 0, i32 3
-%oth_base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [4 x double]* [%oth_base, %enter], [%A3, %loop]
-call void @__ctor_assign_4__double( [4 x double]* %ths, [4 x double]* %oth)
-%A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
-%A3 = getelementptr inbounds [4 x double], [4 x double]* %oth, i64 1
-%A4 = icmp eq [4 x double]* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_3__4__double( [3 x [4 x double]]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 3
+%top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi [4 x double]* [%top, %enter], [%A2, %loop]
+%ths = phi [4 x double]* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 -1
-call void @__dtor_4__double( [4 x double]* %ths)
-%A3 = icmp eq [4 x double]* %A2, %base
+call void @__dtor_4__double( [4 x double]* %ths, i32 4)
+%A3 = icmp eq [4 x double]* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_3__3__double( [3 x [3 x double]]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__ctor_init_3__3__double( [3 x [3 x double]]* %ar, i32 %start)#0 nounwind {
 enter:
-%base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 3
+%ths_base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 3
 br label %loop
 loop:
-%ths = phi [3 x double]* [%base, %enter], [%A2, %loop]
-call void @__ctor_3__double( [3 x double]* %ths, i32 0)
+%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
+call void @__ctor_init_3__double( [3 x double]* %ths, i32 0)
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
-%A3 = icmp eq [3 x double]* %A2, %top
+%A3 = icmp eq [3 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_3__3__double( [3 x [3 x double]]* %ths_ar, [3 x [3 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_3__3__double( [3 x [3 x double]]* %ths_ar, [3 x [3 x double]]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ths_ar, i32 0, i32 3
@@ -358,33 +304,20 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_3__3__double( [3 x [3 x double]]* %ths_ar, [3 x [3 x double]]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_3__3__double( [3 x [3 x double]]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ths_ar, i32 0, i32 3
-%oth_base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [3 x double]* [%oth_base, %enter], [%A3, %loop]
-call void @__ctor_assign_3__double( [3 x double]* %ths, [3 x double]* %oth)
-%A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
-%A3 = getelementptr inbounds [3 x double], [3 x double]* %oth, i64 1
-%A4 = icmp eq [3 x double]* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_3__3__double( [3 x [3 x double]]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 3
+%top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi [3 x double]* [%top, %enter], [%A2, %loop]
+%ths = phi [3 x double]* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 -1
-call void @__dtor_3__double( [3 x double]* %ths)
-%A3 = icmp eq [3 x double]* %A2, %base
+call void @__dtor_3__double( [3 x double]* %ths, i32 3)
+%A3 = icmp eq [3 x double]* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
@@ -392,7 +325,20 @@ ret void
 define private dso_local void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %ths) {
 enter:
 %r1 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-call void @__dtor_3__3__double( [3 x [3 x double]]* %r1)
+call void @__dtor_3__3__double( [3 x [3 x double]]* %r1, i32 3)
+br label %end
+end:
+ret void
+}
+define private dso_local void @__partial_dtor___Matrix__double__3__3( %__Matrix__double__3__3* %ths, i32 %istate) {
+enter:
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+call void @__dtor_3__3__double( [3 x [3 x double]]* %r1, i32 3)
+br label %L2
+L2:
 br label %end
 end:
 ret void
@@ -400,7 +346,20 @@ ret void
 define private dso_local void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %ths) {
 enter:
 %r1 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-call void @__dtor_3__4__double( [3 x [4 x double]]* %r1)
+call void @__dtor_3__4__double( [3 x [4 x double]]* %r1, i32 3)
+br label %end
+end:
+ret void
+}
+define private dso_local void @__partial_dtor___Matrix__double__3__4( %__Matrix__double__3__4* %ths, i32 %istate) {
+enter:
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+call void @__dtor_3__4__double( [3 x [4 x double]]* %r1, i32 3)
+br label %L2
+L2:
 br label %end
 end:
 ret void
@@ -408,7 +367,20 @@ ret void
 define private dso_local void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %ths) {
 enter:
 %r1 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-call void @__dtor_4__3__double( [4 x [3 x double]]* %r1)
+call void @__dtor_4__3__double( [4 x [3 x double]]* %r1, i32 4)
+br label %end
+end:
+ret void
+}
+define private dso_local void @__partial_dtor___Matrix__double__4__3( %__Matrix__double__4__3* %ths, i32 %istate) {
+enter:
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+call void @__dtor_4__3__double( [4 x [3 x double]]* %r1, i32 4)
+br label %L2
+L2:
 br label %end
 end:
 ret void
@@ -451,7 +423,7 @@ ret i32 0
 define external void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-call void @__ctor_4__4__double( [4 x [4 x double]]* %r1, i32 0)
+call void @__ctor_init_4__4__double( [4 x [4 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -838,7 +810,7 @@ ret double %r6
 define external void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-call void @__ctor_3__3__double( [3 x [3 x double]]* %r1, i32 0)
+call void @__ctor_init_3__3__double( [3 x [3 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -1225,7 +1197,7 @@ ret double %r6
 define external void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-call void @__ctor_3__4__double( [3 x [4 x double]]* %r1, i32 0)
+call void @__ctor_init_3__4__double( [3 x [4 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void
@@ -1612,7 +1584,7 @@ ret double %r6
 define external void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-call void @__ctor_4__3__double( [4 x [3 x double]]* %r1, i32 0)
+call void @__ctor_init_4__3__double( [4 x [3 x double]]* %r1, i32 0)
 br label %L4
 L4:
 ret void

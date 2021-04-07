@@ -26,6 +26,19 @@ br label %end
 end:
 ret void
 }
+define private dso_local void @__partial_dtor_Line( %Line* %ths, i32 %istate) {
+enter:
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %Line, %Line* %ths, i32 0, i32 0
+call void @__C_Point__$dtor( %Point* %r1)
+br label %L2
+L2:
+br label %end
+end:
+ret void
+}
 
 
 define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {

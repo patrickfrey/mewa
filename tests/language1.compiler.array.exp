@@ -6,21 +6,21 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %IntArray = type { [5 x i32] }
 %FloatArray = type { [5 x float] }
 %DoubleArray = type { [5 x double] }
-define private dso_local void @__ctor_5__i32( [5 x i32]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__ctor_init_5__i32( [5 x i32]* %ar, i32 %start)#0 nounwind {
 enter:
-%base = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 5
+%ths_base = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 5
 br label %loop
 loop:
-%ths = phi i32* [%base, %enter], [%A2, %loop]
+%ths = phi i32* [%ths_base, %enter], [%A2, %loop]
 store i32 0, i32* %ths
 %A2 = getelementptr inbounds i32, i32* %ths, i64 1
-%A3 = icmp eq i32* %A2, %top
+%A3 = icmp eq i32* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_5__i32( [5 x i32]* %ths_ar, [5 x i32]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_5__i32( [5 x i32]* %ths_ar, [5 x i32]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 5
@@ -38,33 +38,19 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_5__i32( [5 x i32]* %ths_ar, [5 x i32]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_5__i32( [5 x i32]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 5
-%oth_base = getelementptr inbounds [5 x i32], [5 x i32]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi i32* [%ths_base, %enter], [%A2, %loop]
-%oth = phi i32* [%oth_base, %enter], [%A3, %loop]
-%r2 = load i32, i32* %oth
-store i32 %r2, i32* %ths
-%A2 = getelementptr inbounds i32, i32* %ths, i64 1
-%A3 = getelementptr inbounds i32, i32* %oth, i64 1
-%A4 = icmp eq i32* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_5__i32( [5 x i32]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 5
+%top = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi i32* [%top, %enter], [%A2, %loop]
+%ths = phi i32* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds i32, i32* %ths, i64 -1
-%A3 = icmp eq i32* %A2, %base
+%A3 = icmp eq i32* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
@@ -72,26 +58,39 @@ ret void
 define private dso_local void @__dtor_IntArray( %IntArray* %ths) {
 enter:
 %r1 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
-call void @__dtor_5__i32( [5 x i32]* %r1)
+call void @__dtor_5__i32( [5 x i32]* %r1, i32 5)
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_5__float( [5 x float]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__partial_dtor_IntArray( %IntArray* %ths, i32 %istate) {
 enter:
-%base = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 5
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
+call void @__dtor_5__i32( [5 x i32]* %r1, i32 5)
+br label %L2
+L2:
+br label %end
+end:
+ret void
+}
+define private dso_local void @__ctor_init_5__float( [5 x float]* %ar, i32 %start)#0 nounwind {
+enter:
+%ths_base = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 5
 br label %loop
 loop:
-%ths = phi float* [%base, %enter], [%A2, %loop]
+%ths = phi float* [%ths_base, %enter], [%A2, %loop]
 store float 0.00000, float* %ths
 %A2 = getelementptr inbounds float, float* %ths, i64 1
-%A3 = icmp eq float* %A2, %top
+%A3 = icmp eq float* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_5__float( [5 x float]* %ths_ar, [5 x float]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_5__float( [5 x float]* %ths_ar, [5 x float]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 5
@@ -109,33 +108,19 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_5__float( [5 x float]* %ths_ar, [5 x float]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_5__float( [5 x float]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 5
-%oth_base = getelementptr inbounds [5 x float], [5 x float]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi float* [%ths_base, %enter], [%A2, %loop]
-%oth = phi float* [%oth_base, %enter], [%A3, %loop]
-%r2 = load float, float* %oth
-store float %r2, float* %ths
-%A2 = getelementptr inbounds float, float* %ths, i64 1
-%A3 = getelementptr inbounds float, float* %oth, i64 1
-%A4 = icmp eq float* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_5__float( [5 x float]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 5
+%top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi float* [%top, %enter], [%A2, %loop]
+%ths = phi float* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds float, float* %ths, i64 -1
-%A3 = icmp eq float* %A2, %base
+%A3 = icmp eq float* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
@@ -143,26 +128,39 @@ ret void
 define private dso_local void @__dtor_FloatArray( %FloatArray* %ths) {
 enter:
 %r1 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
-call void @__dtor_5__float( [5 x float]* %r1)
+call void @__dtor_5__float( [5 x float]* %r1, i32 5)
 br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_5__double( [5 x double]* %ar, i32 %start) alwaysinline {
+define private dso_local void @__partial_dtor_FloatArray( %FloatArray* %ths, i32 %istate) {
 enter:
-%base = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 %start
-%top = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 5
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
+call void @__dtor_5__float( [5 x float]* %r1, i32 5)
+br label %L2
+L2:
+br label %end
+end:
+ret void
+}
+define private dso_local void @__ctor_init_5__double( [5 x double]* %ar, i32 %start)#0 nounwind {
+enter:
+%ths_base = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 5
 br label %loop
 loop:
-%ths = phi double* [%base, %enter], [%A2, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %loop]
 store double 0.00000, double* %ths
 %A2 = getelementptr inbounds double, double* %ths, i64 1
-%A3 = icmp eq double* %A2, %top
+%A3 = icmp eq double* %A2, %ths_top
 br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_copy_5__double( [5 x double]* %ths_ar, [5 x double]* %oth_ar) alwaysinline {
+define private dso_local void @__ctor_copy_5__double( [5 x double]* %ths_ar, [5 x double]* %oth_ar)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [5 x double], [5 x double]* %ths_ar, i32 0, i32 0
 %ths_top = getelementptr inbounds [5 x double], [5 x double]* %ths_ar, i32 0, i32 5
@@ -180,33 +178,19 @@ br i1 %A4, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_assign_5__double( [5 x double]* %ths_ar, [5 x double]* %oth_ar) alwaysinline {
+define private dso_local void @__dtor_5__double( [5 x double]* %ar, i32 %arsize) alwaysinline {
 enter:
-%ths_base = getelementptr inbounds [5 x double], [5 x double]* %ths_ar, i32 0, i32 0
-%ths_top = getelementptr inbounds [5 x double], [5 x double]* %ths_ar, i32 0, i32 5
-%oth_base = getelementptr inbounds [5 x double], [5 x double]* %oth_ar, i32 0, i32 0
-br label %loop
-loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
-%oth = phi double* [%oth_base, %enter], [%A3, %loop]
-%r2 = load double, double* %oth
-store double %r2, double* %ths
-%A2 = getelementptr inbounds double, double* %ths, i64 1
-%A3 = getelementptr inbounds double, double* %oth, i64 1
-%A4 = icmp eq double* %A2, %ths_top
-br i1 %A4, label %end, label %loop
-end:
-ret void
-}
-define private dso_local void @__dtor_5__double( [5 x double]* %ar) alwaysinline {
-enter:
+%X1 = icmp eq i32 %arsize, 0
+br i1 %X1, label %end, label %start
+start:
+%artop = sub nsw i32 %arsize, 1
 %base = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 0
-%top = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 5
+%top = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 %artop
 br label %loop
 loop:
-%ths = phi double* [%top, %enter], [%A2, %loop]
+%ths = phi double* [%top, %start], [%A2, %loop]
 %A2 = getelementptr inbounds double, double* %ths, i64 -1
-%A3 = icmp eq double* %A2, %base
+%A3 = icmp eq double* %ths, %base
 br i1 %A3, label %end, label %loop
 end:
 ret void
@@ -214,7 +198,20 @@ ret void
 define private dso_local void @__dtor_DoubleArray( %DoubleArray* %ths) {
 enter:
 %r1 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0
-call void @__dtor_5__double( [5 x double]* %r1)
+call void @__dtor_5__double( [5 x double]* %r1, i32 5)
+br label %end
+end:
+ret void
+}
+define private dso_local void @__partial_dtor_DoubleArray( %DoubleArray* %ths, i32 %istate) {
+enter:
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0
+call void @__dtor_5__double( [5 x double]* %r1, i32 5)
+br label %L2
+L2:
 br label %end
 end:
 ret void
