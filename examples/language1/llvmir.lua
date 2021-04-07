@@ -356,6 +356,7 @@ llvmir.exception = {
 		.. "}\n",
 	allocLandingpad = "%excptr = alloca i8*\n%excidx = alloca i32\n",
 	allocExceptionLocal = "%exception = alloca %__L_Exception*\n",
+	allocInitstate = "%initstate = alloca i32\n",
 	initExceptionLocal = "call void @__L_init__Exception( %__L_Exception* %exception, i64 {errcode}, i8* {errmsg})\n",
 	throwExceptionLocal = "call void @__L_throw__Exception( %__L_Exception* %exception)\nunreachable\n",
 	loadExceptionErrCode = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
@@ -381,7 +382,15 @@ llvmir.exception = {
 		.. "{2} = load i32, i32* %excidx\n"
 		.. "{3} = insertvalue { i8*, i32 } undef, i8* {1}, 0\n"
 		.. "{4} = insertvalue { i8*, i32 } {3}, i32 {2}, 1\n"
-		.. "resume { i8*, i32 } {4}\n"
+		.. "resume { i8*, i32 } {4}\n",
+	cleanup_start_constructor =  "{landingpad}:\n"
+		.. "{1} = landingpad { i8*, i32 } cleanup\n"
+		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
+		.. "store i8* {2}, i8** %excptr\n"
+		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
+		.. "store i32 {3}, i32* %excidx\n"
+		.. "store i32 {initstate}, i32* %initstate\n"
+		.. "br label %{cleanup}\n"
 }
 local externFunctionReferenceMap = {}
 function llvmir.externFunctionDeclaration( lang, rtllvmtype, symbolname, argstr, vararg)

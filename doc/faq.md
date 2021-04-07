@@ -5,6 +5,7 @@
     * [What audience is targeted by _Mewa_?](#targetAudience)
     * [What classes of languages are covered by _Mewa_?](#coveredLanguageClasses)
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
+    * [What are the hacks you had to make to implement the example language1?](#hacks)
 1. [Decision Questions](#decisions)
     * [Why are type deduction paths weighted?](#weightedTypeDeduction)
     * [Why are reductions defined with scope?](#reductionScope)
@@ -71,6 +72,13 @@ To define a type system as graph of types and reductions within the hierarchical
 ### What does this silly name _Mewa_ stand for?
 Name finding is difficult. I got stuck in Polish names of birds without non ASCII characters. _Mewa_ is the Polish name for seagull. 
 I think the original idea was that seagulls are a sign of land nearby when you are lost in the sea. Compiler projects are usually a neverending thing (like the sea). With _Mewa_ you see land, meaning that you can at least prototype your compiler. :-)
+
+<a name="hacks"/>
+
+### What are the hacks you had to make to implement the example language1?
+Some may say that the whole example _language1_ is a big hack because of so many parts of informations distributed all over the place. I cannot say much against that argument. _Mewa_ is not optimised for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
+ 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a Lua table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately I did not have a better idea.
+
 
 <a name="decisions"/>
 

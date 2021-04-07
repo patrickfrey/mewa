@@ -1262,9 +1262,11 @@ function doReturnVoidStatement()
 end
 function defineImplicitObjectException( frame)
 	frame.env.implicitcode.exception = llvmir.exception.allocExceptionLocal
+	if initstate then env.implicitcode.initstate = llvmir.exception.allocInitstate end
 end
 function defineImplicitObjectLandingpad( frame)
 	frame.env.implicitcode.landingpad = llvmir.exception.allocLandingpad
+	if initstate then env.implicitcode.initstate = llvmir.exception.allocInitstate end
 end
 -- Initialize a frame that catches exceptions
 function initTryBlock( catchlabel)
@@ -1286,7 +1288,7 @@ function requireExceptions()
 end
 -- Get the label to unwind a throwing call in case of an exception
 function getInvokeUnwindLabel( skipHandler)
-	if instantUnwindLabelGenerator then return instantUnwindLabelGenerator() end
+	if not skipHandler and instantUnwindLabelGenerator then return instantUnwindLabelGenerator() end
 	local frame = getAllocationFrame()
 	local rt = frame.env.label()
 	requireExceptions()
@@ -1302,7 +1304,8 @@ function getInvokeUnwindLabel( skipHandler)
 			local exitcode = utils.constructor_format( llvmir.exception.cleanup_end, {}, frame.env.register)
 			cleanup = getFrameCleanupLabel( frame, "catch", exitcode)
 		end
-		frame.landingpad = frame.landingpad .. utils.constructor_format( llvmir.exception.cleanup_start, {cleanup=cleanup, landingpad=rt}, frame.env.register)
+		local cleanup_start_fmt; if frame.env.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
+		frame.landingpad = frame.landingpad .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=frame.env.initstate}, frame.env.register)
 	end
 	return rt
 end
