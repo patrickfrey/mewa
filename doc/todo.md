@@ -11,6 +11,7 @@
  * Implement copy elision of single return variable
  * Implement a derive type dump with queue in typesystem_utils.lua for debugging
  * Define a reduction from init_reftype to the reftype completing initialization with defaults in constrcutor if applied
+ * Define implicit assignment operators generally based on constructors defined (not only copy constructor also structure constructor, element constructor, etc.)
 
 # Open issues
  * Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.

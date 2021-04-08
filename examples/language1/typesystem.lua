@@ -108,12 +108,12 @@ end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, implicitcode={exception="", landingpad="", initstate=""}, initstate=nil}
+	        returntype=rtype, returnfunction=nil, frames={}, implicitcode={exception="", landingpad="", initstate=""},
+	        initstate=nil, partial_dtor=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
-function defineCallableEnvironment( node, name, rtype, initstate)
+function defineCallableEnvironment( node, name, rtype)
 	local env = createCallableEnvironment( name, rtype)
-	env.initstate = initstate
 	env.line = node.line
 	typedb:set_instance( currentCallableEnvKey, env)
 	return env
@@ -121,6 +121,9 @@ end
 -- Get the active callable instance
 function getCallableEnvironment()
 	return instantCallableEnvironment or typedb:get_instance( currentCallableEnvKey)
+end
+-- Initialize a constructors initialization state, initstate is incremented with every member constructed, partial_dtor is called in case of a cleanup or an exception thrown
+function defineCallableEnvironmentConstructor( env, initstate, partial_dtor)
 end
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( contextTypeId, typnam, args)
@@ -1215,15 +1218,16 @@ end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
 function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	local exit = frame.exitmap[ exitkey]
+	local env = frame.env
 	if not exit then
 		labels = {}
 		local nextlabel
-		for di=1,#frame.dtors do table.insert( labels, frame.env.label()) end
+		for di=1,#frame.dtors do table.insert( labels, env.label()) end
 		if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then
 			nextlabel = getFrameCleanupLabel( frame.parent, exitkey, exitcode, exitlabel)
 			exitcode = nil
 		elseif exitcode then
-			nextlabel = frame.env.label()
+			nextlabel = env.label()
 			if exitlabel then exitcode = exitcode .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
 		else
 			nextlabel = exitlabel
@@ -1236,7 +1240,7 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	if idx == 0 then
 		return exit.exitlabel
 	else
-		if #exit.labels < idx then for di=#exit.labels+1,idx do table.insert( exit.labels, frame.env.label()) end end
+		if #exit.labels < idx then for di=#exit.labels+1,idx do table.insert( exit.labels, env.label()) end end
 		return exit.labels[ idx]
 	end
 end
@@ -1290,39 +1294,43 @@ end
 function getInvokeUnwindLabel( skipHandler)
 	if not skipHandler and instantUnwindLabelGenerator then return instantUnwindLabelGenerator() end
 	local frame = getAllocationFrame()
-	local rt = frame.env.label()
+	local env = frame.env
+	local rt = env.label()
 	requireExceptions()
 	defineImplicitObjectLandingpad( frame)
 	if frame.catch then
 		local cleanup = getFrameCleanupLabel( frame, "catch")
-		frame.landingpad = frame.landingpad .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, frame.env.register)
+		frame.landingpad = frame.landingpad .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, env.register)
 	else
 		local cleanup
 		if frame.exitmap[ "catch"] then
 			cleanup = getFrameCleanupLabel( frame, "catch")
 		else
-			local exitcode = utils.constructor_format( llvmir.exception.cleanup_end, {}, frame.env.register)
+			local exitcode = (env.partial_dtor or "") .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
 			cleanup = getFrameCleanupLabel( frame, "catch", exitcode)
 		end
-		local cleanup_start_fmt; if frame.env.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
-		frame.landingpad = frame.landingpad .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=frame.env.initstate}, frame.env.register)
+		local cleanup_start_fmt; if env.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
+		frame.landingpad = frame.landingpad .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=env.initstate}, env.register)
 	end
 	return rt
 end
 -- Get the code that throws an exception
 function getThrowExceptionCode( errcode, errmsg)
 	local frame = getAllocationFrame()
+	local env = frame.env
 	local rt = frame.env.label()
 	local errcode_out,errcode_code = constructorParts( errcode)
 	local errmsg_out,errmsg_code = constructorParts( errmsg)
 	local cleanup
 	requireExceptions()
+	defineImplicitObjectException( frame)
 	if frame.catch then
 		cleanup = getFrameCleanupLabel( frame, "catch")
 	else
-		cleanup = getFrameCleanupLabel( frame, "throw", llvmir.exception.throwExceptionLocal)
+		cleanup = getFrameCleanupLabel( frame, "throw", (env.partial_dtor or "") .. llvmir.exception.throwExceptionLocal)
 	end
-	return utils.constructor_format( llvmir.exception.initExceptionLocal, {errcode=errcode_out, errmsg=errmsg_out}, env.register)
+	local code = errcode_code .. errmsg_code; if env.initstate then code = code .. utils.template_format( llvmir.exception.set_constructor_initstate, {initstate=env.initstate}) end
+	return code .. utils.constructor_format( llvmir.exception.initExceptionLocal, {errcode=errcode_out, errmsg=errmsg_out}, env.register)
 			.. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanup})
 end
 -- Function as env.returnfunction used for return from main
@@ -1368,6 +1376,7 @@ function getCallableEnvironmentCodeBlock( env, code)
 	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
 	return rt
 end
+-- Mark the scope passed as argument or the current scope as zone where initializations of member variables in a constructor are not allowed
 function disallowInitCalls( line, msg, scope)
 	if scope then
 		local scope_bk = typedb:scope()
@@ -1377,19 +1386,14 @@ function disallowInitCalls( line, msg, scope)
 		if not typedb:get_instance("noinit") then typedb:set_instance("noinit",{line,msg}) end
 	end
 end
-function checkInitCallsAllowed()
-	local line,msg = unpack(typedb:get_instance("noinit") or {})
-	if msg then utils.errorMessage( line, msg) end
-end
 -- Log an initialization call of a member in a constructor
 function logInitCall( this, name, index, destructor)
-	checkInitCallsAllowed()
+	local line,msg = unpack(typedb:get_instance("noinit") or {})
+	if msg then utils.errorMessage( line, msg) end
 	local frame = getAllocationFrame()
-	local scope,step = typedb:scope()
-	if frame.env.initstate >= index+1 then utils.errorMessage( frame.env.line or 0, "Multiple initializations for member '%s' or initializations not in order of definition", name) end
-	frame.env.initstate = index+1
-	local destructorCode = destructor(constructorStruct(this.out),{}).code
-	-- if destructorCode ~= "" then setCleanupCode( name, destructorCode, true) end
+	local env = frame.env
+	if env.initstate >= index+1 then utils.errorMessage( env.line, "Multiple initializations for member '%s' or initializations not in order of definition", name) end
+	env.initstate = index+1
 end
 -- Test if we are in a constructor context and there has been an initialization of a member variable called
 function getInitCalls( scope)
@@ -2352,8 +2356,12 @@ function defineCallableBodyContext( node, context, descr)
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
-	local initstate; if descr.symbol == "$ctor" then initstate = 0 end
-	defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, initstate)
+	defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret)
+	if descr.symbol == "$ctor" then
+		local env = getCallableEnvironment()
+		env.initstate = 0
+		env.partial_dtor = utils.template_format( context.descr.dtor, {symbol=context.descr.symbol,llvmtype="%" .. context.descr.symbol})
+	end
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node, context)

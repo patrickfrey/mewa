@@ -159,6 +159,7 @@ llvmir.classTemplate = {
 	partial_dtorelem = "{creg} = icmp sle i32 %istate, {istate}\n"
 		.. "br i1 {creg}, label %{1}, label %{2}\n"
 		.. "{1}:\n{dtor}br label %{2}\n{2}:\n",
+	partial_dtor = "call void @__partial_dtor_{symbol}( %{symbol}* %ths, i32 %initstate)\n",
 	ctor_init = llvmir.structTemplate.ctor_init,
 	ctor_init_throwing = llvmir.structTemplate.ctor_init_throwing,
 	ctor_copy = llvmir.structTemplate.ctor_copy,
@@ -311,6 +312,17 @@ llvmir.control = {
 	bytePointerCast = "{out} = bitcast {llvmtype}* {this} to i8*\n"
 }
 
+local exception_vars =
+{
+	cleanup_landingpad = "{landingpad}:\n"
+		.. "{1} = landingpad { i8*, i32 } cleanup\n"
+		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
+		.. "store i8* {2}, i8** %excptr\n"
+		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
+		.. "store i32 {3}, i32* %excidx\n",
+	set_constructor_initstate = "store i32 {initstate}, i32* %initstate\n"
+}
+
 llvmir.exception = {
 	section = "%__L_Exception = type { i64, i8* }\n"
 		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)"
@@ -371,25 +383,16 @@ llvmir.exception = {
 		.. "{4} = load %__L_Exception, %__L_Exception* {3}\n"
 		.. "store %__L_Exception {4}, %__L_Exception* %exception\n"
 		.. "br label %{cleanup}\n",
-	cleanup_start = "{landingpad}:\n"
-		.. "{1} = landingpad { i8*, i32 } cleanup\n"
-		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
-		.. "store i8* {2}, i8** %excptr\n"
-		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
-		.. "store i32 {3}, i32* %excidx\n"
+	cleanup_start = exception_vars.cleanup_landingpad
 		.. "br label %{cleanup}\n",
 	cleanup_end = "{1} = load i8*, i8** %excptr\n"
 		.. "{2} = load i32, i32* %excidx\n"
 		.. "{3} = insertvalue { i8*, i32 } undef, i8* {1}, 0\n"
 		.. "{4} = insertvalue { i8*, i32 } {3}, i32 {2}, 1\n"
 		.. "resume { i8*, i32 } {4}\n",
-	cleanup_start_constructor =  "{landingpad}:\n"
-		.. "{1} = landingpad { i8*, i32 } cleanup\n"
-		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
-		.. "store i8* {2}, i8** %excptr\n"
-		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
-		.. "store i32 {3}, i32* %excidx\n"
-		.. "store i32 {initstate}, i32* %initstate\n"
+	set_constructor_initstate = exception_vars.set_constructor_initstate,
+	cleanup_start_constructor = exception_vars.cleanup_landingpad
+		.. exception_vars.set_constructor_initstate
 		.. "br label %{cleanup}\n"
 }
 local externFunctionReferenceMap = {}
