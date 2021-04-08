@@ -134,9 +134,11 @@ end
 function constructorParts( constructor)
 	if type(constructor) == "table" then return constructor.out,(constructor.code or "") else return tostring(constructor),"" end
 end
+-- Get a constructor structure
 function constructorStruct( out, code)
 	return {out=tostring(out), code=code or ""}
 end
+-- Get an empty constructor structure
 function constructorStructEmpty()
 	return {code=""}
 end
@@ -182,32 +184,6 @@ function singleArgumentConstructor( fmt)
  		return constructorStruct( this_inp, code)
 	end
 end
--- Constructor implementing a potentially throwing copy constructor
-function copyConstructor( descr, throws)
-	return function( this, arg)
-		local env = getCallableEnvironment()
-		local code = ""
-		local this_inp,this_code = constructorParts( this)
-		local arg_inp,arg_code = constructorParts( arg[1])
-		local subst = {arg1 = arg_inp, this = this_inp}
-		local fmt
-		if throws then fmt = descr.ctor_copy_throwing; subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); else fmt = descr.ctor_copy end
-		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
- 		return constructorStruct( this_inp, code)
-	end
-end
--- Call constructor that might throw an exception
-function elementConstructorThrowing( fmt)
-	return function( this, args)
-		local env = getCallableEnvironment()
-		local this_inp,this_code = constructorParts( this)
-		local code,subst = buildCallArguments( nil, this_inp, args)
-		subst.success = env.label()
-		subst.cleanup = getInvokeUnwindLabel()
-		code = code .. utils.constructor_format( fmt, subst, env.register)
-		return constructorStruct( this_inp, code)
-	end
-end
 -- Constructor implementing an assignment of a free function callable to a function/procedure pointer
 function copyFunctionPointerConstructor( descr)
 	local copyFunc = singleArgumentConstructor( descr.assign)
@@ -248,13 +224,25 @@ function convConstructor( fmt, outUnboundRefType)
 	end
 end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
-function callConstructor( fmt)
+function callConstructor( fmt, has_result)
 	return function( this, args)
 		local env = getCallableEnvironment()
-		local out = env.register()
 		local this_inp,this_code = constructorParts( this)
+		local out,res; if has_result then out = env.register(); res = out else res = this_inp end
 		local code,subst = buildCallArguments( out, this_inp, args)
-		return constructorStruct( out, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
+		return constructorStruct( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
+	end
+end
+-- Call constructor that might throw an exception
+function invokeConstructor( fmt, has_result)
+	return function( this, args)
+		local env = getCallableEnvironment()
+		local this_inp,this_code = constructorParts( this)
+		local out,res; if has_result then out = env.register(); res = out else res = this_inp end
+		local code,subst = buildCallArguments( out, this_inp, args)
+		subst.success = env.label()
+		subst.cleanup = getInvokeUnwindLabel()
+		return constructorStruct( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
 	end
 end
 -- Move constructor of a reference type from an inject reference type type
@@ -670,7 +658,7 @@ function definePointerQualiTypes( node, typeId)
 	defineArrayIndexOperators( pointeeRefTypeId, c_reftype, pointerTypeDescription)
 	defineArrayIndexOperators( pointeeRefTypeId, reftype, pointerTypeDescription)
 	for operator,operator_fmt in pairs( pointerTypeDescription.cmpop) do
-		defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt))
+		defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
 	end
 	pointerTypeMap[ pointeeTypeId] = valtype
 	pointeeTypeMap[ valtype] = pointeeTypeId
@@ -694,7 +682,7 @@ end
 -- Define index operators for pointers and arrays
 function defineArrayIndexOperators( resTypeId, arTypeId, arDescr)
 	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
-		defineCall( resTypeId, arTypeId, "[]", {index_type}, callConstructor( arDescr.index[ index_typnam]))
+		defineCall( resTypeId, arTypeId, "[]", {index_type}, callConstructor( arDescr.index[ index_typnam], true))
 	end
 end
 -- Define all types related to a pointer to a base type and its const type with all relations and operations (crossed too)
@@ -788,7 +776,8 @@ function getAssignmentsFromConstructors( node, qualitype, descr)
 			return function( this, arg)
 				local this_inp,this_code = constructorParts( this)
 				local destroy = utils.constructor_format( descr.dtor, {this=this_inp}, env.register)
-				local code = this_code .. destroy .. copyConstructorFunc( this, arg)
+				local copy_res = ctorfunc( this, args)
+				local code = this_code .. destroy .. copy_res.code
 				return constructorStruct( this_inp, code)
 			end
 		end
@@ -838,18 +827,32 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	local destroy = tryApplyCallable( node, ths, ":~", {} )
 	if init then
 		local attributes = llvmir.functionAttribute( false, init_throws)
-		local entercode,rewind; if init_throws == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
+		local entercode,rewind,constructorFunc
+		if init_throws == true then
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}})
+			constructorFunc = invokeConstructor( arrayDescr.ctor_init_throwing)
+		else
+			entercode,rewind = "",""
+			constructorFunc = callConstructor( arrayDescr.ctor_init)
+		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_init, {ctors=init.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( arrayDescr.ctor_init))
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( arrayDescr.ctor_init))
+		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
+		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, constructorFunc)
 		if init_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if copy then
 		local attributes = llvmir.functionAttribute( false, copy_throws)
-		local entercode,rewind; if copy_throws == true then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}) else entercode,rewind = "","" end
+		local entercode,rewind,constructorFunc
+		if copy_throws == true then 
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}})
+			constructorFunc = invokeConstructor( arrayDescr.ctor_copy_throwing)
+		else
+			entercode,rewind = "",""
+			constructorFunc = callConstructor( arrayDescr.ctor_copy)
+		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {ctors=copy.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr, copy_throws))
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( arrayDescr, copy_throws))
+		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, constructorFunc)
+		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, constructorFunc)
 		if copy_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	local dtor_code; if destroy then dtor_code = destroy.constructor.code else dtor_code = "" end
@@ -914,28 +917,49 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 	end
 	if ctors then
 		local attributes = llvmir.functionAttribute( false, init_nofThrows > 0)
-		local entercode,rewind; if init_nofThrows > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		local entercode,rewind,constructorFunc
+		if init_nofThrows > 0 then
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist)
+			constructorFunc = invokeConstructor( descr.ctor_init_throwing)
+		else
+			entercode,rewind = "",""
+			constructorFunc = callConstructor( descr.ctor_init)
+		end
 		print_section( "Auto", utils.template_format( descr.ctorproc_init, {ctors=ctors, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
-		if init_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
+		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, constructorFunc)
+		if init_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if ctors_copy then
 		local attributes = llvmir.functionAttribute( false, copy_nofThrows > 0)
-		local entercode,rewind; if copy_nofThrows > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		local entercode,rewind,constructorFunc
+		if copy_nofThrows > 0 then
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist)
+			constructorFunc = invokeConstructor( descr.ctor_copy_throwing)
+		else
+			entercode,rewind = "",""
+			constructorFunc = callConstructor( descr.ctor_copy)
+		end
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {ctors=ctors_copy, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr, copy_nofThrows > 0))
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, copyConstructor( descr, copy_nofThrows > 0))
-		if copy_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, constructorFunc)
+		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, constructorFunc)
+		if copy_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if ctors_elements then
 		local attributes = llvmir.functionAttribute( false, element_nofThrows > 0)
-		local entercode,rewind; if element_nofThrows > 0 then entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist) else entercode,rewind = "","" end
+		local entercode,rewind,constructorFunc
+		if element_nofThrows > 0 then
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist)
+			constructorFunc = invokeConstructor( utils.template_format( descr.ctor_elements_throwing, {args=argstr}))
+			
+		else
+			entercode,rewind = "",""
+			constructorFunc = callConstructor( utils.template_format( descr.ctor_elements, {args=argstr}))
+		end
 		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements, paramstr=paramstr, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local constructor; if element_nofThrows > 0 then constructor = elementConstructorThrowing( utils.template_format( descr.ctor_elements_throwing, {args=argstr})) else constructor = callConstructor( utils.template_format( descr.ctor_elements, {args=argstr})) end
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, constructor)
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, constructor)
-		if element_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, constructorFunc)
+		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, constructorFunc)
+		if element_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if dtors and not context.properties.destructor then
 		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
@@ -1092,12 +1116,12 @@ function defineBuiltInTypeOperators( typnam, descr)
 	local constexprTypes = typeClassToConstExprTypesMap[ descr.class]
 	if descr.unop then
 		for operator,operator_fmt in pairs( descr.unop) do
-			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {}, callConstructor( operator_fmt))
+			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {}, callConstructor( operator_fmt, true))
 		end
 	end
 	if descr.binop then
 		for operator,operator_fmt in pairs( descr.binop) do
-			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt))
+			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
 			for i,constexprType in ipairs(constexprTypes) do
 				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType)
 				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
@@ -1112,7 +1136,7 @@ function defineBuiltInTypeOperators( typnam, descr)
 	end
 	if descr.cmpop then
 		for operator,operator_fmt in pairs( descr.cmpop) do
-			defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt))
+			defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
 			for i,constexprType in ipairs(constexprTypes) do
 				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType)
 				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
@@ -1490,7 +1514,7 @@ function defineConstructorInitAssignments( refType, initType, name, index, load_
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
 	local items = typedb:get_types( refType, ":=")
 	typedb:scope( scope_bk,step_bk)
-	local loadType = typedb:def_type( initType, name, callConstructor( load_ref), {})
+	local loadType = typedb:def_type( initType, name, callConstructor( load_ref, true), {})
 	for _,item in ipairs(items) do
 		local constructor = typedb:type_constructor(item)
 		local function loggedConstructor( this, args) -- increment the state after successful constructor call, that is the info for the partial cleanup, if the constructor throws
@@ -1526,12 +1550,12 @@ function defineVariableMember( node, descr, context, typeId, name, private)
 	local r_typeId = referenceTypeMap[ typeId]
 	local c_r_typeId = constTypeMap[ r_typeId]
 	if private == true then
-		defineCall( r_typeId, context.qualitype.priv_reftype, name, {}, callConstructor( load_ref))
-		defineCall( c_r_typeId, context.qualitype.priv_c_reftype, name, {}, callConstructor( load_ref))
+		defineCall( r_typeId, context.qualitype.priv_reftype, name, {}, callConstructor( load_ref, true))
+		defineCall( c_r_typeId, context.qualitype.priv_c_reftype, name, {}, callConstructor( load_ref, true))
 	else
-		defineCall( r_typeId, context.qualitype.reftype, name, {}, callConstructor( load_ref))
-		defineCall( c_r_typeId, context.qualitype.c_reftype, name, {}, callConstructor( load_ref))
-		defineCall( typeId, context.qualitype.c_valtype, name, {}, callConstructor( load_val))
+		defineCall( r_typeId, context.qualitype.reftype, name, {}, callConstructor( load_ref, true))
+		defineCall( c_r_typeId, context.qualitype.c_reftype, name, {}, callConstructor( load_ref, true))
+		defineCall( typeId, context.qualitype.c_valtype, name, {}, callConstructor( load_val, true))
 	end
 	if context.qualitype.init_reftype then
 		defineConstructorInitAssignments( r_typeId, context.qualitype.init_reftype, name, index, load_ref)
