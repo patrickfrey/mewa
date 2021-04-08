@@ -450,7 +450,6 @@ function llvmir.callableReferenceDescr( symbolname, ret, throws)
 	local class; if ret then class = "function" else class = "procedure" end
 	return {class = class, scalar = false, symbolname = symbolname, ret = ret, throws = throws }
 end
-
 local arrayDescrMap = {}
 function llvmir.arrayDescr( elementDescr, arraySize)
 	local llvmElementType = elementDescr.llvmtype
