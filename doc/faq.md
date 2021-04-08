@@ -76,8 +76,8 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 <a name="hacks"/>
 
 ### What are the hacks you had to make to implement the example language1?
-Some may say that the whole example _language1_ is a big hack because of so many parts of informations distributed all over the place. I cannot say much against that argument. _Mewa_ is not optimised for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
- 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a Lua table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately I did not have a better idea.
+Some may say that the whole example _language1_ is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimised for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
+ 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a Lua table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately I don't have any idea to get around the problem in a different fashion.
 
 
 <a name="decisions"/>

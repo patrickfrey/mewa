@@ -87,7 +87,7 @@ local nodeIdCount = 0			-- Counter for node id allocation
 local nodeDataMap = {}			-- Map of node id's to a data structure (depending on the node)
 local genericLocalStack = {}		-- Stack of values for localDefinitionContext 
 local localDefinitionContext = 0	-- The context type id used for local type definitions, to separate instances of generics using the same scope
-local seekContextKey = "seekctx"-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local seekContextKey = "seekctx"	-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local currentCallableEnvKey = "callenv"	-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local currentAllocFrameKey = "frame"	-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local exceptionSectionPrinted = false	-- True if the code for throwing exceptions hat been attached to the code
@@ -109,7 +109,7 @@ end
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
 	        returntype=rtype, returnfunction=nil, frames={}, implicitcode={exception="", landingpad="", initstate=""},
-	        initstate=nil, partial_dtor=nil}
+	        initstate=nil, partial_dtor=nil, initcontext=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype)
@@ -121,9 +121,6 @@ end
 -- Get the active callable instance
 function getCallableEnvironment()
 	return instantCallableEnvironment or typedb:get_instance( currentCallableEnvKey)
-end
--- Initialize a constructors initialization state, initstate is incremented with every member constructed, partial_dtor is called in case of a cleanup or an exception thrown
-function defineCallableEnvironmentConstructor( env, initstate, partial_dtor)
 end
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( contextTypeId, typnam, args)
@@ -1176,8 +1173,8 @@ function getAllocationFrame()
 	if not rt then
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
-		local catch; if not parent or parent.env ~= env then parent = nil else catch = parent.catch end
-		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad=""}
+		local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
+		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
 		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
@@ -1190,10 +1187,6 @@ function setCleanupCode( name, code)
 	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage( 0, "Internal: Cleanup code not in added in strict ascending order") end
 	local new_dtor = {step=step,code=code,name=name}
 	table.insert( frame.dtors, new_dtor)
-end
-function getCodeBlockCode( code)
-	local frame = typedb:this_instance( currentAllocFrameKey)
-	if frame then return code else return code end
 end
 -- Binary search for scope step that is greater than the argument step in a frame dtors list passed as argument
 function binsearchUpperboundFrameDtors( dtors, step)
@@ -1300,7 +1293,7 @@ function getInvokeUnwindLabel( skipHandler)
 	defineImplicitObjectLandingpad( frame)
 	if frame.catch then
 		local cleanup = getFrameCleanupLabel( frame, "catch")
-		frame.landingpad = frame.landingpad .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, env.register)
+		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, env.register)
 	else
 		local cleanup
 		if frame.exitmap[ "catch"] then
@@ -1309,8 +1302,8 @@ function getInvokeUnwindLabel( skipHandler)
 			local exitcode = (env.partial_dtor or "") .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
 			cleanup = getFrameCleanupLabel( frame, "catch", exitcode)
 		end
-		local cleanup_start_fmt; if env.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
-		frame.landingpad = frame.landingpad .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=env.initstate}, env.register)
+		local cleanup_start_fmt; if frame.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
+		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=frame.initstate}, env.register)
 	end
 	return rt
 end
@@ -1329,7 +1322,8 @@ function getThrowExceptionCode( errcode, errmsg)
 	else
 		cleanup = getFrameCleanupLabel( frame, "throw", (env.partial_dtor or "") .. llvmir.exception.throwExceptionLocal)
 	end
-	local code = errcode_code .. errmsg_code; if env.initstate then code = code .. utils.template_format( llvmir.exception.set_constructor_initstate, {initstate=env.initstate}) end
+	local code = errcode_code .. errmsg_code
+	if frame.initstate then code = code .. utils.template_format( llvmir.exception.set_constructor_initstate, {initstate=frame.initstate}) end
 	return code .. utils.constructor_format( llvmir.exception.initExceptionLocal, {errcode=errcode_out, errmsg=errmsg_out}, env.register)
 			.. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanup})
 end
@@ -1344,7 +1338,7 @@ function returnFromMainFunction( rtype, exitlabel, retvaladr)
 end
 -- Get the cleanup code of the current allocation frame if defined
 function getAllocationFrameCleanupCode( frame)
-	local code = frame.landingpad
+	local code = frame.landingpad or ""
 	for _,ek in ipairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
 		for di=#exit.labels,1,-1 do
@@ -1386,42 +1380,40 @@ function disallowInitCalls( line, msg, scope)
 		if not typedb:get_instance("noinit") then typedb:set_instance("noinit",{line,msg}) end
 	end
 end
--- Log an initialization call of a member in a constructor
-function logInitCall( this, name, index, destructor)
+-- Log an initialization call of a member by the assignment operator '=' in a constructor
+function logInitCall( name, index)
 	local line,msg = unpack(typedb:get_instance("noinit") or {})
+	local code = ""
 	if msg then utils.errorMessage( line, msg) end
 	local frame = getAllocationFrame()
 	local env = frame.env
-	if env.initstate >= index+1 then utils.errorMessage( env.line, "Multiple initializations for member '%s' or initializations not in order of definition", name) end
-	env.initstate = index+1
+	if frame.initstate >= index+1 then utils.errorMessage( env.line, "Multiple initializations for member '%s' or initializations not in order of definition", name)
+	else while frame.initstate ~= index do
+		code = code .. getImplicitInitCode( env, frame.initstate, index)
+		frame.initstate = index+1
+	end end
+	frame.initstate = index+1
+	return code
 end
--- Test if we are in a constructor context and there has been an initialization of a member variable called
-function getInitCalls( scope)
-	local scope_bk,step_bk = typedb:scope( scope)
-	local frame = typedb:this_instance( currentAllocFrameKey)
-	local rt; if frame then rt = frame.initcalls end
-	typedb:scope( scope_bk,step_bk)
-	return rt
+-- Update the environment initialization state after an allocation frame is done
+function resumeInitState( frame)
+	if frame.parent then if frame.parent.initstate < frame.initstate then frame.parent.initstate = frame.initstate end else frame.env.initstate = frame.initstate end
 end
--- Joins 2 lists of 2 blocks with their logged init calls and puts them into the parent frame, completes the other scope with default constructors for initialzations not called
-function joinInitCalls( node, scope1, scope2)
-	if not frame.env.initstate then return end
-	local jl = {}
-	local code1,code2 = "",""
-	local tb = {}
-	initcalls1 = getInitCalls( scope1)
-	initcalls2 = getInitCalls( scope2)
-	for idx,i1 in ipairs(initcalls1) do tb[ i1.index] = 2; table.insert( jl, i1) end
-	for idx,i2 in ipairs(initcalls2) do if tb[ i2.index] then tb[ i2.index] = 3 else tb[ i2.index] = 2; table.insert( jl, i2) end end
-	table.sort( jl, function( a, b) return a.step < b.step end)
-	for _,initcall in ipairs( jl) do
-		if tb[ initcall.index] == 1 then -- only in first list, add default constructor to the second code buffer
-			code2 = code2 .. applyCallable( node, initcall.this, ":=", {}).code
-		elseif tb[ initcall.index] == 2 then  -- only in second list, add default constructor to the first code buffer
-			code1 = code1 .. applyCallable( node, initcall.this, ":=", {}).code
-		end
+-- Get the code of the default initialization constructor
+function defaultInitConstructorCode( env, member)
+	local membervar,memberconstructor = selectNoArgumentType( node, member.name, typedb:resolve_type( getSeekContextTypes(), member.name, tagmask_resolveType))
+	local res = tryApplyCallable( node, {type=membervar,constructor=memberconstructor}, ":=", {})
+	if not res then utils.errorMessage( env.line, "No default constructor available for member '%s', need explicit initialization for every case", member.name) end
+	return res.constructor.code
+end
+-- Get the code of the default initialization constructors from state initstate to state initstateTo, needed top level up initialization states of different branches
+function getImplicitInitCode( env, initstate, initstateTo)
+	local rt = ""
+	while initstate < initstateTo do
+		initstate = initstate + 1
+		rt = rt .. defaultInitConstructorCode( env, env.initcontext.members[ initstate])
 	end
-	return jl,code1,code2
+	return rt
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
 function defineVariableHardcoded( node, context, typeId, name, reg)
@@ -1481,12 +1473,18 @@ end
 function defineConstructorInitAssignments( refType, initType, name, index, load_ref)
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
 	local items = typedb:get_types( refType, ":=")
-	local destructor = typedb:type_constructor( typedb:get_type( refType, ":~"))
 	typedb:scope( scope_bk,step_bk)
 	local loadType = typedb:def_type( initType, name, callConstructor( load_ref), {})
 	for _,item in ipairs(items) do
 		local constructor = typedb:type_constructor(item)
-		defineCall( loadType, loadType, "=", typedb:type_parameters(item), function(this,args) logInitCall(this,name,index,destructor); return constructor(this,args) end)
+		local function loggedConstructor( this, args) -- increment the state after successful constructor call, that is the info for the partial cleanup, if the constructor throws
+			local rt = constructor(this,args)
+			rt.code = logInitCall( name, index) .. rt.code
+			return rt
+		end
+		local params = typedb:type_parameters(item)
+		defineCall( loadType, loadType, "=", params, loggedConstructor)
+		if #params == 0 then defineCall( loadType, loadType, ":=", {}, constructor) end -- declare default constructor
 	end
 end
 -- Define a member variable of a class or a structure
@@ -1501,12 +1499,11 @@ function defineVariableMember( node, descr, context, typeId, name, private)
 	context.structsize = memberpos + descr.size
 	local member = {
 		type = typeId,
+		name = name,
 		qualitype = qualiTypeMap[ qualisep.valtype],
 		qualifier = qualisep.qualifier,
 		descr = descr,
-		bytepos = memberpos,
-		loadref = load_ref,
-		load = load_val
+		bytepos = memberpos
 	}
 	table.insert( context.members, member)
 	expandContextLlvmMember( descr, context)
@@ -2356,10 +2353,10 @@ function defineCallableBodyContext( node, context, descr)
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
-	defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret)
+	local env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret)
 	if descr.symbol == "$ctor" then
-		local env = getCallableEnvironment()
 		env.initstate = 0
+		env.initcontext = context
 		env.partial_dtor = utils.template_format( context.descr.dtor, {symbol=context.descr.symbol,llvmtype="%" .. context.descr.symbol})
 	end
 end
@@ -2502,10 +2499,21 @@ function traverseAstProcedureImplementation( node, context, descr, nodeidx)
 	printFunctionDeclaration( node, descr)
 end
 -- Build a conditional if/elseif block
-function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
+function conditionalIfElseBlock( node, initstate, condition, matchblk, elseblk, exitLabel)
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local code = cond_constructor.code .. matchblk.code
+	if initstate then -- in a constructor
+		if elseblk then -- we level up the initialization state by adding default init constructors for the members missing initialization
+			if elseblk.initstate > matchblk.initstate then
+				matchblk.code = matchblk.code .. getImplicitInitCode( env, matchblk.initstate, elseblk.initstate)
+			elseif elseblk.initstate < matchblk.initstate then
+				elseblk.code = elseblk.code .. getImplicitInitCode( env, elseblk.initstate, matchblk.initstate)
+			end
+		elseif initstate < matchblk.initstate then -- no else block available, but initializations in matchblk, then create an elseblk with initializations leveled up by adding default init constructors
+			elseblk = {code = getImplicitInitCode( env, initstate, matchblk.initstate)}
+		end
+	end
 	local exitLabelUsed
 	if matchblk.nofollow == true then
 		code = code .. utils.template_format( llvmir.control.plainLabel, {inp=cond_constructor.out})
@@ -2521,6 +2529,7 @@ function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
 	local out; if elseblk then code = code .. elseblk.code; out = elseblk.out else out = cond_constructor.out end
 	return {code = code, out = out, exitLabelUsed=exitLabelUsed, nofollow=nofollow}
 end
+-- Collect the code of a scope and resume the initialization state if we are in a constructor
 function collectCode( node, args)
 	local code = ""
 	local nofollow = false
@@ -2531,7 +2540,10 @@ function collectCode( node, args)
 			code = code .. arg.code
 		end
 	end
-	return {code = getCodeBlockCode( code), nofollow=nofollow}
+	local frame = typedb:this_instance( currentAllocFrameKey)
+	local initstate
+	if frame then if frame.initstate then resumeInitState( frame); initstate = frame.initstate end end
+	return {code=code, nofollow=nofollow, initstate=initstate}
 end
 -- AST Callbacks:
 function typesystem.definition( node, pass, context, pass_selected)
@@ -2741,20 +2753,32 @@ function typesystem.conditional_else( node, context, exitLabel)
 	return utils.traverse( typedb, node, context)[1]
 end
 function typesystem.conditional_elseif( node, context, exitLabel)
+	local env = getCallableEnvironment()
+	local initstate
+	if env.initstate then -- we are in a constructor, so we calculate the init state to pass it to conditionalIfElseBlock
+		local frame = typedb:get_instance( currentAllocFrameKey)
+		if frame then initstate = frame.initstate else initstate = env.initstate end
+	end
 	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
-	return conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
+	return conditionalIfElseBlock( node, initstate, condition, yesblock, noblock, exitLabel)
 end
 function typesystem.conditional_if( node, context)
-	local exitLabel; if #node.arg >= 3 then exitLabel = getCallableEnvironment().label() else exitLabel = nil end
+	local env = getCallableEnvironment()
+	local exitLabel; if #node.arg >= 3 then exitLabel = env.label() else exitLabel = nil end
+	local initstate
+	if env.initstate then -- we are in a constructor, so we calculate the init state to pass it to conditionalIfElseBlock
+		local frame = typedb:get_instance( currentAllocFrameKey)
+		if frame then initstate = frame.initstate else initstate = env.initstate end
+	end
 	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
-	local rt = conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
+	local rt = conditionalIfElseBlock( node, initstate, condition, yesblock, noblock, exitLabel)
 	if rt.exitLabelUsed == true then rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel}) end
 	return rt
 end
 function typesystem.conditional_while( node, context, bla)
-	local condition,yesblock = table.unpack( utils.traverse( typedb, node, context))
 	local env = getCallableEnvironment()
 	if env.initstate then disallowInitCalls( node.line, "Member initializations not allowed inside a loop", node.arg[2].scope) end
+	local condition,yesblock = table.unpack( utils.traverse( typedb, node, context))
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local start = env.label()
@@ -3072,9 +3096,9 @@ end
 function typesystem.namespacedef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
-	local scope_bk = typedb:scope( {} ) -- set global scope
+	local scope_bk,step_bk = typedb:scope( {} ) -- set global scope
 	local namespace = typedb:get_type( declContextTypeId, typnam) or typedb:def_type( declContextTypeId, typnam)
-	typedb:scope( scope_bk)
+	typedb:scope( scope_bk,step_bk)
 	utils.traverseRange( typedb, node, {2,2}, {domain="global", namespace = namespace})
 end
 function typesystem.structdef( node, context)
