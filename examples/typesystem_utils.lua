@@ -306,6 +306,90 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 	end
 end
 
+-- Debug function that returns the search trace of a derive type call
+function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_pathlen, max_pathlen)
+	local rt = ""
+	if not max_pathlen then max_pathlen = 1 end
+	local elementmap = {[srcType] = 1}
+	local elementlist = {{type=srcType, weight=0.0, pathlen=0, pred=0}}
+	local queue = {{weight=0.0, elementidx=#elementlist}}
+	local function insertQueue( queue, weight, elementidx)
+		for qi=1,#queue do
+			if queue[ qi].weight > weight then
+				table.insert( queue, qi, {weight=weight, elementidx=elementidx})
+				return true
+			end
+		end
+		table.insert( queue, {weight=weight, elementidx=elementidx})
+	end
+	local function fetchElement()
+		local weight = queue[1].weight
+		local index = queue[1].elementidx
+		local element = elementlist[ index]
+		table.remove( queue, 1)
+		return element,weight,index
+	end
+	local function pushElement( typeId, weight, count, pred, constructor)
+		local pathlen
+		if count then incr = 1 else incr = 0 end
+		if pred == 0 then
+			pathlen = incr
+		else
+			pathlen = elementlist[ pred].pathlen +incr
+			weight = weight + elementlist[ pred].weight
+		end
+		if pathlen <= max_pathlen then
+			if elementmap[ typeId] then
+				local elementidx = elementmap[ typeId]
+				local element = elementlist[ elementidx]
+				if weight < element.weight then
+					element.weight = weight
+					insertQueue( queue, weight, elementidx)
+				end
+			else
+				table.insert( elementlist, {type=typeId, weight=weight, pathlen=pathlen, pred=pred, constructor=constructor})
+				elementmap[ typeId] = #elementlist
+				insertQueue( queue, weight, #elementlist)
+			end
+		end
+	end
+	local function elementString( element)
+		local rt = typedb:type_string( element.type)
+		if element.pred > 0 then rt = rt .. " <- " .. elementString( elementlist[element.pred]) end
+		return rt
+	end
+	local weightEpsilon = 1E-8
+	local result
+	local resultweight
+	local rt_bk
+	while #queue > 0 do
+		local element,weight,elementidx = fetchElement()
+		if resultweight and weight > resultweight + weightEpsilon then break end
+		rt = rt .. "CANDIDATE weight=" .. string.format( "%.4f", weight) .. " #" .. element.pathlen .. " = " .. elementString( element) .. "\n"
+		if element.type == destType then
+			if resultweight then
+				if resultweight < weight + weightEpsilon then 
+					rt = rt .. "AMBIGUOUS\n"
+					rt_bk = rt
+				end
+				break
+			else
+				rt = rt .. "MATCH\n"
+				rt_bk = rt
+				resultweight = weight
+			end
+		end
+		local redulist = typedb:get_reductions( element.type, tagmask, tagmask_pathlen)
+		for _,redu in ipairs( redulist) do
+			pushElement( redu.type, redu.weight, redu.count, elementidx, redu.constructor)
+		end
+	end
+	if not resultweight then 
+		rt = rt .. "NOTFOUND\n"
+	end
+	return rt_bk or rt
+end
+
 local function treeToString( typedb, node, indentstr, node_tostring)
 	rt = ""
 	local scope = node:scope()
