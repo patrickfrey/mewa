@@ -110,8 +110,7 @@ end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, implicitcode={exception="", landingpad="", initstate=""},
-	        initstate=nil, partial_dtor=nil, initcontext=nil}
+	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype)
@@ -1297,19 +1296,27 @@ function doReturnVoidStatement()
 	local label = getCleanupLabel( "return void", llvmir.control.returnFromProcedure)
 	return utils.template_format( llvmir.control.gotoStatement, {inp=label})
 end
-function defineImplicitObjectException( frame)
-	frame.env.implicitcode.exception = llvmir.exception.allocExceptionLocal
-	if initstate then env.implicitcode.initstate = llvmir.exception.allocInitstate end
+-- Some initialization code of a callable environment defined by features used (usage declared in in env.features)
+function callableFeaturesInitCode( env)
+	local rt = ""
+	if env.features then
+		if env.features.exception then rt = rt .. llvmir.exception.allocExceptionLocal end
+		if env.features.landingpad then rt = rt .. llvmir.exception.allocLandingpad end
+		if env.features.initstate and env.initstate then rt = rt .. llvmir.exception.allocInitstate end
+	end
+	return rt
 end
-function defineImplicitObjectLandingpad( frame)
-	frame.env.implicitcode.landingpad = llvmir.exception.allocLandingpad
-	if initstate then env.implicitcode.initstate = llvmir.exception.allocInitstate end
+function enableFeatureException( env)
+	if not env.features then env.features={exception=true, landingpad=false, initstate=true} else env.features.exception = true; env.features.initstate=true end
+end
+function enableFeatureLandingpad( env)
+	if not env.features then env.features={exception=false, landingpad=true, initstate=true} else env.features.landingpad = true; env.features.initstate=true end
 end
 -- Initialize a frame that catches exceptions
 function initTryBlock( catchlabel)
 	local frame = getAllocationFrame()
 	frame.catch = frame
-	defineImplicitObjectException( frame)
+	enableFeatureException( frame.env)
 	getFrameCleanupLabel( frame, "catch", nil, catchlabel)
 end
 -- Ensure that exceptions and their linkup code are defined, define them if not yet done
@@ -1330,7 +1337,7 @@ function getInvokeUnwindLabel( skipHandler)
 	local env = frame.env
 	local rt = env.label()
 	requireExceptions()
-	defineImplicitObjectLandingpad( frame)
+	enableFeatureLandingpad( env)
 	if frame.catch then
 		local cleanup = getFrameCleanupLabel( frame, "catch")
 		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, env.register)
@@ -1356,7 +1363,7 @@ function getThrowExceptionCode( errcode, errmsg)
 	local errmsg_out,errmsg_code = constructorParts( errmsg)
 	local cleanup
 	requireExceptions()
-	defineImplicitObjectException( frame)
+	enableFeatureException( env)
 	if frame.catch then
 		cleanup = getFrameCleanupLabel( frame, "catch")
 	else
@@ -1405,8 +1412,7 @@ function allocationFrameToString( frame)
 end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( env, code)
-	local rt = env.implicitcode.exception .. env.implicitcode.landingpad .. env.implicitcode.initstate
-	rt = rt .. code
+	local rt = callableFeaturesInitCode( env) .. code
 	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
 	return rt
 end
