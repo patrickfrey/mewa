@@ -267,8 +267,8 @@ function utils.utf8to32( node, utf8str)
 end
 
 -- Debug function that returns the tree with all resolve type paths
-function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
-	function getResolveTypeTree_rec( typedb, contextType, typeName, indentstr, visited, weightsum)
+function utils.getResolveTypeTrace( typedb, contextType, typeName, tagmask)
+	function getResolveTypeTrace_rec( typedb, contextType, typeName, indentstr, visited, weightsum)
 		local typeid = typedb:resolve_type( contextType, typeName, tagmask)
 		if typeid and typeid == contextType then
 			local rt = ""; if indentstr ~= "" then rt = rt .. "\n" end
@@ -282,7 +282,7 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 				local in_visited = false; for vi,ve in ipairs(visited) do if ve == rd.type then in_visited = true; end end
 				if not in_visited then
 					rt = rt .. indentstr .. "[" .. weightsum+rd.weight .."] ".. typedb:type_string(contextType) .." -> ".. typedb:type_string(rd.type)
-					rt = rt .. getResolveTypeTree_rec( typedb, rd.type, typeName, indentstr .. "  ", visited, weightsum+rd.weight)
+					rt = rt .. getResolveTypeTrace_rec( typedb, rd.type, typeName, indentstr .. "  ", visited, weightsum+rd.weight)
 				end
 			end
 			table.remove( visited, #visited)
@@ -293,16 +293,16 @@ function utils.getResolveTypeTreeDump( typedb, contextType, typeName, tagmask)
 	end
 	if type(contextType) == "table" then
 		if contextType.type then
-			return getResolveTypeTree_rec( typedb, contextType.type, typeName, "", {}, 0.0)
+			return getResolveTypeTrace_rec( typedb, contextType.type, typeName, "", {}, 0.0)
 		else
 			local rt = ""
 			for ci,ct in ipairs(contextType) do
-				rt = rt .. utils.getResolveTypeTreeDump( typedb, ct, typeName, tagmask) .. "\n"
+				rt = rt .. utils.getResolveTypeTrace( typedb, ct, typeName, tagmask) .. "\n"
 			end
 			return rt
 		end
 	else
-		return getResolveTypeTree_rec( typedb, contextType, typeName, "", {}, 0.0)
+		return getResolveTypeTrace_rec( typedb, contextType, typeName, "", {}, 0.0)
 	end
 end
 

@@ -13,6 +13,7 @@
     * [How to process the AST structure?](#astStructure)
     * [How to handle scopes?](#astTraversalAndScope)
     * [How to store and access scope bound data?](#scopeInstanceAndAllocators)
+    * [How to debug/trace the _Mewa_ functions?](#tracing)
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
     * [How to implement pointers and arrays?](#pointersAndArrays)
     * [How to implement namespaces?](#namespaces)
@@ -121,6 +122,24 @@ The _Scope_ (referring to the lexical scope) is part of the type database and re
 
 _Scope_ bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
 
+<a name="tracing"/>
+
+### How to debug/trace the _Mewa_ functions?
+
+A developer of a compiler front-end with Lua using _Mewa_ should not have to debug a program with a C/C++ debugger if something goes wrong.
+Fortunately the _Mewa_ code for the important functions like typedb:resolve_type and typedb:derive_type is so simple that I wrote parallel implementations in Lua that do the same. The _typedb_ API has been extended with convenient functions that make such parallel implementations possible. You find them in examples/typesystem_utils.lua:
+
+ * utils.getResolveTypeTrace( typedb, contextType, typeName, tagmask) is the equivalent of typedb:resolve_type 
+ * utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_pathlen, max_pathlen) is the equivalent of typedb:derive_type 
+
+ Both functions are not returning a result though, but just printing a trace of the search and returning this trace as dump.
+
+Besides that you find 2 functions in examples/typesystem_utils.lua that dump the scope tree of definitions:
+ * function utils.getTypeTreeDump( typedb) dumps all reductions defined, arranges the definitions in in a tree where the nodes correspond to scopes
+ * function utils.getReductionTreeDump( typedb) dumps all types defined, arranges the definitions in in a tree where the nodes correspond to scopes
+
+I must admit that I have rarely used the tree dump functions. They are tested though. I just found that the trace functions of typedb:resolve_type and typedb:derive_type showed to be much more useful in practice.
+ 
 <a name="typeQualifiers"/>
 
 ### How to implement type qualifiers like const and reference?
