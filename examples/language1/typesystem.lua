@@ -90,7 +90,7 @@ local nodeDataMap = {}			-- Map of node id's to a data structure (depending on t
 local genericLocalStack = {}		-- Stack of values for localDefinitionContext 
 local localDefinitionContext = 0	-- The context type id used for local type definitions, to separate instances of generics using the same scope
 local seekContextKey = "seekctx"	-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
-local currentCallableEnvKey = "callenv"	-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local currentCallableEnvKey = "env"	-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local currentAllocFrameKey = "frame"	-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local exceptionSectionPrinted = false	-- True if the code for throwing exceptions hat been attached to the code
 
@@ -108,6 +108,18 @@ function getNodeData( node)
 	return nodeDataMap[ node.id][ localDefinitionContext]
 end
 -- Create the data structure with attributes attached to a context (referenced in body) of some callable
+-- Callable Environment Fields:
+--	name		: Name for debugging/loging/tracing
+--      scope		: Scope of the callable
+--      register	: LLVM register/slot allocator
+--	label		: LLVM label allocator
+--	returntype	: Return type in case of a function, used by the return statement to derive the value returned
+--	returnfunction	: Function implementing the return statement, there are differences between regular functions and the main function
+--	frames		: List of allocation frames allocated during this function, used for collecting the exception handling code when printing the function
+--	features	: Set of flags indicating what features are used and what initialization code should be generated
+--	initstate	: Initialization state counter in case of constructor, otherwise undefined
+--	partial_dtor	: Call of partial dtor in case of an exception, used in exception handling code in the case of a constructor, otherwise undefined
+--	initcontext	: Context of the class in case of a constructor, otherwise undefined
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
 	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
@@ -1197,7 +1209,7 @@ function pushGenericLocal( genericlocal)
 	localDefinitionContext = genericlocal
 	local suffix = string.format(":%x", genericlocal)
 	seekContextKey = "seekctx" .. suffix
-	currentCallableEnvKey = "callenv" .. suffix
+	currentCallableEnvKey = "env" .. suffix
 	currentAllocFrameKey = "frame" .. suffix
 end
 -- Pop the top element from the generic local stack, restoring the previous localDefinitionContext value
@@ -1207,6 +1219,16 @@ function popGenericLocal( genericlocal)
 	table.remove( genericLocalStack, #genericLocalStack)
 end
 -- The frame object defines constructors/destructors called implicitly at start/end of their lifetime
+-- Allocation Frame Fields:
+--	parent		: Parent allocation frame, the allocation frame in which this allocation frame has been created (in the same callable environment)
+--	catch		: Allocation frame of the exception handler in the same callable environment that handles the exceptions thrown or forwarded by this allocation frame
+--	env		: The callable environment this allocation frame belongs to
+--	scope		: Scope of this allocation frame
+--	dtors		: List of cleanup code entries, one for every object with a destructor, used to build the cleanup code sequences for different exit scenarios
+--	exitmap		: Maps different named exit scenarios (exceptions thrown, return from a function with a specific value to a cleanup code sequence)
+--	exitkeys	: List of all keys for the output in definition order (deterministic) of the exitmap entries
+--	landingpad	: Code with all landingpads defined in this frame
+--	initstate	: Initialization state counter
 function getAllocationFrame()
 	local rt = typedb:this_instance( currentAllocFrameKey)
 	if not rt then
@@ -2943,6 +2965,28 @@ function typesystem.linkage( node, llvm_linkage, context)
 	end
 	return llvm_linkage
 end
+-- Callable Description (descr) Fields:
+--	externtype	: Identifier for extern function defitions that determine some properties like the calling convention, currently only "C" known.
+--	name		: Name of the callable that may contain non alphanumeric characters, not suitable for output, but comprehensible for tracing/debugging
+--	symbol		: Symbol name of the callable, suitable for output
+--	ret		: Return type in case of a function, otherwise undefined
+--	param		: List of declared parameters of the callable
+--	vararg		: Boolean flag, true in case of a function with a variable number of arguments, parameter list ending with "..."
+--	private		: Boolean flag, true in case of a callable that is a private member of the class
+--	const		: Boolean flag, true in case of a callable that can be called for a class declared as const 
+--	throws		: Boolean flag, true in case of a callable that may throw an exception
+--	interface	: Boolean flag, true in case of a method implementing a method that is defined by an interface
+--	signature	: Signature string of the callable for casts and for calling functions with a variable number of arguments (vararg = true)
+--	index		: Index of a method in the VMT of an interface, undefined for others than interfaces
+--	llvmthis	: LLVM Type used for the this pointer in the parameter list of an interface method call, undefined for others than interfaces
+--	load 		: Load format string for loading the method from the method table, undefined for others than interfaces
+--	lnk		: Some attributes describing the visibility/compiling/linking of the callable
+--	attr  		: LLVM function attribute string
+--	node 		: Node that declared the generic callable, undefined for others than generics
+--	generic 	: List of arguments of the generic, undefined for others than generics
+--	context 	: Some subset of the context where the generic was declared, undefined for others than generics
+--	seekctx 	: Seek context types at the time when the generic was declared, undefined for others than generics
+
 function typesystem.funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
