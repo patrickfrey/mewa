@@ -111,6 +111,9 @@ local arrayTemplate = {
 	}
 }
 
+local structTemplate_vars = {
+	dtorname = "__dtor_{symbol}"
+}
 llvmir.structTemplate = {
 	symbol = "{symbol}",
 	def_local = "{out} = alloca %{symbol}, align 8\n",
@@ -126,7 +129,7 @@ llvmir.structTemplate = {
 		.. "enter:\n{entercode}{ctors}br label %end\n{rewind}end:\nret void\n}\n",
 	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ths{paramstr}){attributes} {\n"
 		.. "enter:\n{entercode}{ctors}br label %end\n{rewind}end:\nret void\n}\n",
-	dtorproc = "define private dso_local void @__dtor_{symbol}( %{symbol}* %ths) {\n"
+	dtorproc = "define private dso_local void @" .. structTemplate_vars.dtorname .. "( %{symbol}* %ths) {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
 	ctor_init = "call void @__ctor_init_{symbol}( %{symbol}* {this})\n",
 	ctor_init_throwing = "invoke void @__ctor_init_{symbol}( %{symbol}* {this}) to label %{success} unwind label %{cleanup}\n{success}:\n",
@@ -134,7 +137,8 @@ llvmir.structTemplate = {
 	ctor_copy_throwing = "invoke void @__ctor_copy_{symbol}( %{symbol}* {this}, %{symbol}* {arg1}) to label %{success} unwind label %{cleanup}\n{success}:\n",
 	ctor_elements = "call void @__ctor_elements_{symbol}( %{symbol}* {this}{args})\n",
 	ctor_elements_throwing = "invoke void @__ctor_elements_{symbol}( %{symbol}* {this}{args}) to label %{success} unwind label %{cleanup}\n{success}:\n",
-	dtor = "call void @__dtor_{symbol}( %{symbol}* {this})\n",
+	dtorname = structTemplate_vars.dtorname,
+	dtor = "call void @" .. structTemplate_vars.dtorname .. "( %{symbol}* {this})\n",
 	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
@@ -166,6 +170,7 @@ llvmir.classTemplate = {
 	ctor_copy_throwing = llvmir.structTemplate.ctor_copy_throwing,
 	ctor_elements = llvmir.structTemplate.ctor_elements,
 	ctor_elements_throwing = llvmir.structTemplate.ctor_elements_throwing,
+	dtorname = llvmir.structTemplate.dtorname,
 	dtor = llvmir.structTemplate.dtor,
 	load = llvmir.structTemplate.load,
 	loadelemref = llvmir.structTemplate.loadelemref,

@@ -874,27 +874,72 @@ function defineInitializationFromStructure( node, qualitype)
 	typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
 	typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
 end
--- Define implicit constructors/destructors for 'struct'/'class' types
-function defineStructConstructorDestructors( node, qualitype, descr, context)
+-- Get the code of a class/struct destructor that calls the member destructors, for struct it is the complete constructor, for classes the final part
+function getStructMemberDestructorCode( env, descr, members)
+	local rt = ""
+	for mi,member in ipairs(descr.members) do
+		local out = env.register()
+		local llvmtype = member.descr.llvmtype
+		local member_reftype = referenceTypeMap[ member.type]
+		local ths = {type=member_reftype,constructor={code=utils.constructor_format(descr.loadelemref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
+		local member_destroy_code; if member.descr.dtor then member_destroy_code = utils.constructor_format( member.descr.dtor, {this=out}, env.register) else member_destroy_code = "" end
+		if member_destroy_code ~= "" then rt = ths.constructor.code .. member_destroy_code .. rt end
+	end
+	return rt
+end
+-- Get a partial destructor used in class constructors for rewinding object construction in case of an exception
+function getClassMemberPartialDestructorCode( env, descr, members)
+	local rt = ""
+	for mi,member in ipairs(descr.members) do
+		local out = env.register()
+		local llvmtype = member.descr.llvmtype
+		local member_reftype = referenceTypeMap[ member.type]
+		local ths = {type=member_reftype,constructor={code=utils.constructor_format(descr.loadelemref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
+		if member.descr.dtor then
+			local member_destroy_code = ths.constructor.code .. utils.constructor_format( member.descr.dtor, {this=out}, env.register)
+			rt = utils.constructor_format( descr.partial_dtorelem, {creg=env.register(), istate=mi, dtor=member_destroy_code}, env.label) .. rt
+		end
+	end
+	return rt
+end
+-- Define implicit destructors for 'struct'/'class' types
+function defineStructDestructors( node, qualitype, descr)
+	instantCallableEnvironment = createCallableEnvironment( "destroy " .. descr.symbol)
+	local dtors = getStructMemberDestructorCode( instantCallableEnvironment, descr, members)
+	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
+	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
+	defineCall( 0, qualitype.c_reftype, ":~", {}, manipConstructor( descr.dtor))
+	instantCallableEnvironment = nil
+end
+-- Print the code of the partial destructor for a 'class' type
+function definePartialClassDestructor( node, qualitype, descr)
+	instantCallableEnvironment = createCallableEnvironment( "destroy " .. descr.symbol)
+	local partial_dtors = getClassMemberPartialDestructorCode( instantCallableEnvironment, descr, members)
+	print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
+	instantCallableEnvironment = nil
+end
+-- Define implicit constructors for 'struct'/'class' types
+function defineStructConstructors( node, qualitype, descr)
 	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
-	local dtors = ""
+	local env = instantCallableEnvironment
 	local ctors,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
 	local cleanupLabel = "cleanup_0"
 	local rewindlist = {{label=cleanupLabel}}
 	local init_nofThrows,copy_nofThrows,element_nofThrows = 0,0,0
 
-	for mi,member in ipairs(context.members) do
-		local out = instantCallableEnvironment.register()
-		local inp = instantCallableEnvironment.register()
+	for mi,member in ipairs(descr.members) do
+		local out = env.register()
+		local inp = env.register()
 		local llvmtype = member.descr.llvmtype
 		local c_member_type = constTypeMap[ member.type] or member.type
 		local member_reftype = referenceTypeMap[ member.type]
 		local c_member_reftype = constTypeMap[ member_reftype] or member_reftype
 		local etype; if doPassValueAsReferenceParameter( member.type) then etype = c_member_reftype else etype = c_member_type end
 		table.insert( elements, etype)
-		paramstr = paramstr .. ", " .. typeDescriptionMap[ etype].llvmtype .. " %p" .. mi
-		argstr = argstr .. ", " .. typeDescriptionMap[ etype].llvmtype .. " {arg" .. mi .. "}"
+		local paramDescr = typeDescriptionMap[ etype]
+		paramstr = paramstr .. ", " .. paramDescr.llvmtype .. " %p" .. mi
+		argstr = argstr .. ", " .. paramDescr.llvmtype .. " {arg" .. mi .. "}"
 
 		local loadref = descr.loadelemref
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
@@ -907,10 +952,10 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		if init_throws then copy_nofThrows = copy_nofThrows + 1 end
 		local member_element,element_throws = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
 		if element_throws then element_nofThrows = element_nofThrows + 1 end
-		local member_destroy = tryApplyCallable( node, {type=member_reftype,constructor={out=out}}, ":~", {})
+		local member_destroy_code; if member.descr.dtor then member_destroy_code = utils.constructor_format( member.descr.dtor, {this=out}, env.register) else member_destroy_code = "" end
 
 		cleanupLabel = "cleanup_" .. mi
-		if member_destroy and dtors then local dc = member_destroy.constructor.code; if dc and dc ~= "" and mi ~= #context.members then table.insert( rewindlist,{label=cleanupLabel, code=dc}); dtors = ths.constructor.code .. dc .. dtors end end
+		if member_destroy_code ~= "" and mi ~= #descr.members then table.insert( rewindlist,{label=cleanupLabel, code=member_destroy_code}) end
 		if member_init and ctors then ctors = ctors .. member_init.constructor.code else ctors = nil end
 		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end 
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
@@ -919,7 +964,7 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		local attributes = llvmir.functionAttribute( false, init_nofThrows > 0)
 		local entercode,rewind,constructorFunc
 		if init_nofThrows > 0 then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist)
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist)
 			constructorFunc = invokeConstructor( descr.ctor_init_throwing)
 		else
 			entercode,rewind = "",""
@@ -934,7 +979,7 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		local attributes = llvmir.functionAttribute( false, copy_nofThrows > 0)
 		local entercode,rewind,constructorFunc
 		if copy_nofThrows > 0 then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist)
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist)
 			constructorFunc = invokeConstructor( descr.ctor_copy_throwing)
 		else
 			entercode,rewind = "",""
@@ -949,7 +994,7 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		local attributes = llvmir.functionAttribute( false, element_nofThrows > 0)
 		local entercode,rewind,constructorFunc
 		if element_nofThrows > 0 then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, rewindlist)
+			entercode,rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist)
 			constructorFunc = invokeConstructor( utils.template_format( descr.ctor_elements_throwing, {args=argstr}))
 			
 		else
@@ -960,11 +1005,6 @@ function defineStructConstructorDestructors( node, qualitype, descr, context)
 		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, constructorFunc)
 		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, constructorFunc)
 		if element_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
-	end
-	if dtors and not context.properties.destructor then
-		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
-		defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
-		defineCall( 0, qualitype.c_reftype, ":~", {}, manipConstructor( descr.dtor))
 	end
 	instantCallableEnvironment = nil
 end
@@ -977,38 +1017,6 @@ function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
 	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
-end
--- Get the implicit part of a class destructor that calls the member destructors
-function getClassMemberDestructorCode( env, descr, members)
-	local dtors,partial_dtors = "",""
-	for mi,member in ipairs(members) do
-		local out = env.register()
-		local llvmtype = member.descr.llvmtype
-		local member_reftype = referenceTypeMap[ member.type]
-		local loadref = descr.loadelemref
-		local ths = {type=member_reftype,constructor={code=utils.constructor_format(loadref,{out=out,this="%ths",index=mi-1, type=llvmtype},env.register),out=out}}
-
-		local member_destroy = tryApplyCallable( node, ths, ":~", {} )
-		local dtor_e = member_destroy.constructor.code
-		if member_destroy and dtor_e ~= "" then
-			dtors = dtor_e .. dtors
-			partial_dtors = utils.constructor_format( descr.partial_dtorelem, {creg=instantCallableEnvironment.register(), istate=mi, dtor=dtor_e}, instantCallableEnvironment.label)
-				.. partial_dtors
-		end
-
-	end
-	return dtors,partial_dtors
-end
--- Define constructors/destructors for 'class' types
-function defineClassConstructorDestructors( node, qualitype, descr, context)
-	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
-	if not context.properties.destructor then
-		local dtors,partial_dtors = getClassMemberDestructorCode( instantCallableEnvironment, descr, context.members)
-		print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
-		print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
-		defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
-	end
-	instantCallableEnvironment = nil
 end
 -- Tell if a method identifier by id implements an inherited interface method, thus has to be noinline
 function isInterfaceMethod( context, methodid)
@@ -2137,13 +2145,15 @@ function tryApplyCallableWithCleanup( node, this, callable, args, cleanupLabel)
 	return res,throws
 end
 -- Get the symbol name for a function in the LLVM output
-function getTargetFunctionIdentifierString( name, args, const, context)
+function getTargetFunctionIdentifierString( descr, context)
 	if context.domain == "local" then
-		return utils.uniqueName( name .. "__")
+		return utils.uniqueName( descr.symbol .. "__")
+	elseif descr.name == ":~" then
+		return utils.encodeName( context.descr.dtorname)
 	else
-		local pstr; if context.symbol then pstr = "__C_" .. context.symbol .. "__" .. name else pstr = name end
-		for ai,arg in ipairs(args) do pstr = pstr .. "__" .. (arg.symbol or arg.llvmtype) end
-		if const == true then pstr = pstr .. "__const" end
+		local pstr; if context.symbol then pstr = "__C_" .. context.symbol .. "__" .. descr.symbol else pstr = descr.symbol end
+		for ai,arg in ipairs(descr.param) do pstr = pstr .. "__" .. (arg.symbol or arg.llvmtype) end
+		if descr.const == true then pstr = pstr .. "__const" end
 		return utils.encodeName(  pstr)
 	end
 end
@@ -2213,7 +2223,7 @@ end
 function expandDescrCallTemplateParameter( descr, context)
 	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
-	descr.symbolname = getTargetFunctionIdentifierString( descr.symbol, descr.param, descr.const, context)
+	descr.symbolname = getTargetFunctionIdentifierString( descr, context)
 end
 -- Expand the structure used for relating class and interface methods and construct the LLVM type of the function representing the method 
 function expandDescrMethod( descr, context)
@@ -2491,7 +2501,9 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	descr.members = context.members
 	descr.size = context.structsize
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define callable headers
-	defineClassConstructorDestructors( node, qualitype, descr, context)
+	if not context.properties.constructor then defineStructConstructors( node, qualitype, descr) end
+	if not context.properties.destructor then defineStructDestructors( node, qualitype, descr) end
+	definePartialClassDestructor( node, qualitype, descr)
 	defineInitializationFromStructure( node, qualitype)
 	if not context.properties.assignment then getAssignmentsFromConstructors( node, qualitype, descr) end
 	defineOperatorsWithStructArgument( node, context)
@@ -2508,8 +2520,10 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 				llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=false}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
+	descr.members = context.members
 	descr.size = context.structsize
-	defineStructConstructorDestructors( node, qualitype, descr, context)
+	defineStructConstructors( node, qualitype, descr)
+	defineStructDestructors( node, qualitype, descr)
 	defineInitializationFromStructure( node, qualitype)
 	getAssignmentsFromConstructors( node, qualitype, descr)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
@@ -3036,7 +3050,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 		local descr = getNodeData( node, descr)
 		local env = defineCallableEnvironment( node, "body " .. descr.symbol)
 		local block = utils.traverse( typedb, node, subcontext)[1]
-		local code = block.code .. getClassMemberDestructorCode( env, context.descr, context.members)
+		local code = block.code .. getStructMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
 		descr.body = getCallableEnvironmentCodeBlock( env, code)
 		typedb:scope( scope_bk)
