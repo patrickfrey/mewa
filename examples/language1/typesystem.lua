@@ -10,22 +10,27 @@ local tag_typeAlias = 1			-- Type that describes a substitution (as used for gen
 local tag_typeDeduction = 2		-- Inheritance relation
 local tag_typeDeclaration = 3		-- Type declaration relation (e.g. variable to data type)
 local tag_typeConversion = 4		-- Type conversion of parameters
-local tag_namespace = 5			-- Type deduction for resolving namespaces
-local tag_pointerReinterpretCast = 6	-- Type deduction only allowed in an explicit "cast" operation
-local tag_pushVararg = 7		-- Type deduction for passing parameter as vararg argument
-local tag_transfer = 8			-- Transfer of information to build an object by a constructor, used in free function callable to pointer assignment
+local tag_typeInstantiation = 5		-- Type value construction from const expression
+local tag_namespace = 6			-- Type deduction for resolving namespaces
+local tag_pointerReinterpretCast = 7	-- Type deduction only allowed in an explicit "cast" operation
+local tag_pushVararg = 8		-- Type deduction for passing parameter as vararg argument
+local tag_transfer = 9			-- Transfer of information to build an object by a constructor, used in free function callable to pointer assignment
 
 local tagmask_declaration = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeclaration)
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration)
-local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_transfer)
+local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_transfer)
 local tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
 local tagmask_namespace = typedb.reduction_tagmask( tag_typeAlias, tag_namespace)
-local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_pointerReinterpretCast)
+local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_pointerReinterpretCast)
 local tagmask_typeAlias = typedb.reduction_tagmask( tag_typeAlias)
-local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_pushVararg)
+local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_pushVararg)
 
 -- Centralized list of the ordering of the reduction rules determined by their weights:
 local rdw_conv = 1.0			-- Reduction weight of conversion
+local rdw_constexpr = rdw_conv + 0.0675 -- Conversion from a const expression
+local rdw_sign = rdw_conv + 0.125	-- Conversion of integers changing sign
+local rdw_float = rdw_conv + 0.25	-- Conversion switching floating point with integers
+local rdw_bool = rdw_conv + 0.25	-- Conversion of numeric value to boolean
 local rdw_barrier = 2.0			-- Reduction weight of a reduction that invokes a state transition if used
 local rdw_strip_u_1 = 0.75 / (1*1)	-- Reduction weight of stripping unbound reftype from type having 1 qualifier 
 local rdw_strip_u_2 = 0.75 / (2*2)	-- Reduction weight of stripping unbound reftype from type having 2 qualifiers
@@ -441,10 +446,10 @@ typeDescriptionMap[ constexprNullType] = llvmir.constexprNullDescr
 typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr
 -- Table listing the accepted constant expression/value types for each scalar type class 
 local typeClassToConstExprTypesMap = {
-	fp = {constexprFloatType,constexprIntegerType,constexprUIntegerType}, 
-	bool = {constexprBooleanType},
-	signed = {constexprIntegerType,constexprUIntegerType},
-	unsigned = {constexprUIntegerType}
+	fp = {{type=constexprFloatType,weight=0.0}, {type=constexprIntegerType,weight=rdw_float},{type=constexprUIntegerType,weight=rdw_float}}, 
+	bool = {{type=constexprBooleanType,weight=0.0}},
+	signed = {{type=constexprIntegerType,weight=0.0},{type=constexprUIntegerType,weight=rdw_sign}},
+	unsigned = {{type=constexprUIntegerType,weight=0.0}}
 }
 local bits64 = bcd.bits( 64)
 local constexprOperatorMap = {
@@ -522,15 +527,15 @@ function defineConstExprArithmetics()
 			definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
 		end
 	end
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
+	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
 
 	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_conv)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_bool)
 end
 function isPointerType( typeId)
 	return pointeeTypeMap[ typeId]
@@ -666,8 +671,8 @@ function definePointerQualiTypes( node, typeId)
 	local dc; if typeDescription.scalar == false and typeDescription.dtor then dc = manipConstructor( typeDescription.dtor) else dc = constructorStructEmpty end
 	defineCall( valtype, valtype, " delete", {}, dc)
 
-	defineArrayIndexOperators( pointeeRefTypeId, c_reftype, pointerTypeDescription)
-	defineArrayIndexOperators( pointeeRefTypeId, reftype, pointerTypeDescription)
+	defineArrayIndexOperators( pointeeRefTypeId, c_valtype, pointerTypeDescription)
+	defineArrayIndexOperators( pointeeRefTypeId, valtype, pointerTypeDescription)
 	for operator,operator_fmt in pairs( pointerTypeDescription.cmpop) do
 		defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
 	end
@@ -826,7 +831,7 @@ function getDefaultConstructorCleanupResumeCode( env, codelist)
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	instantCallableEnvironment = createCallableEnvironment( "init " .. arrayDescr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( "ctor " .. arrayDescr.symbol)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
 	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
@@ -915,7 +920,7 @@ function getClassMemberPartialDestructorCode( env, descr, members)
 end
 -- Define implicit destructors for 'struct'/'class' types
 function defineStructDestructors( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( "destroy " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( "dtor " .. descr.symbol)
 	local dtors = getStructMemberDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
@@ -924,14 +929,14 @@ function defineStructDestructors( node, qualitype, descr)
 end
 -- Print the code of the partial destructor for a 'class' type
 function definePartialClassDestructor( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( "destroy " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( "dtor " .. descr.symbol)
 	local partial_dtors = getClassMemberPartialDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
 	instantCallableEnvironment = nil
 end
 -- Define implicit constructors for 'struct'/'class' types
 function defineStructConstructors( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( "init " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( "ctor " .. descr.symbol)
 	local env = instantCallableEnvironment
 	local ctors,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
@@ -1105,7 +1110,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 		for oth_typnam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typnam]
 			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
-			typedb:def_reduction( qualitype.valtype, oth_qualitype.c_valtype, conv_constructor, tag_typeConversion, rdw_conv)
+			typedb:def_reduction( qualitype.valtype, oth_qualitype.c_valtype, conv_constructor, tag_typeConversion, rdw_conv + conv.weight)
 		end
 	end
 end
@@ -1142,13 +1147,13 @@ function defineBuiltInTypeOperators( typnam, descr)
 		for operator,operator_fmt in pairs( descr.binop) do
 			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
 			for i,constexprType in ipairs(constexprTypes) do
-				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType)
+				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType.type)
 				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
-				defineCall( qualitype.valtype, qualitype.c_valtype, operator, {constexprType}, constructor)
+				defineCall( qualitype.valtype, qualitype.c_valtype, operator, {constexprType.type}, constructor)
 				if operator == '+' or operator == '*' then
-					defineCall( qualitype.valtype, constexprType, operator, {qualitype.valtype}, binopSwapConstructor(constructor))
+					defineCall( qualitype.valtype, constexprType.type, operator, {qualitype.valtype}, binopSwapConstructor(constructor))
 				else
-					definePromoteCall( scalarBooleanType, constexprType, qualitype.c_valtype, operator, {qualitype.c_valtype}, valueconv)
+					definePromoteCall( qualitype.c_valtype, constexprType.type, qualitype.c_valtype, operator, {qualitype.c_valtype}, valueconv)
 				end
 			end
 		end
@@ -1157,13 +1162,13 @@ function defineBuiltInTypeOperators( typnam, descr)
 		for operator,operator_fmt in pairs( descr.cmpop) do
 			defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
 			for i,constexprType in ipairs(constexprTypes) do
-				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType)
+				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType.type)
 				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
-				defineCall( scalarBooleanType, qualitype.c_valtype, operator, {constexprType}, constructor)
+				defineCall( scalarBooleanType, qualitype.c_valtype, operator, {constexprType.type}, constructor)
 				if operator == "==" or operator == "!=" then
-					defineCall( scalarBooleanType, constexprType, operator, {qualitype.c_valtype}, binopSwapConstructor(constructor))
+					defineCall( scalarBooleanType, constexprType.type, operator, {qualitype.c_valtype}, binopSwapConstructor(constructor))
 				else
-					definePromoteCall( scalarBooleanType, constexprType, qualitype.c_valtype, operator, {qualitype.c_valtype}, valueconv)
+					definePromoteCall( scalarBooleanType, constexprType.type, qualitype.c_valtype, operator, {qualitype.c_valtype}, valueconv)
 				end
 			end
 		end
@@ -1562,6 +1567,7 @@ function defineConstructorInitAssignments( refType, initType, name, index, load_
 		defineCall( loadType, loadType, "=", params, loggedConstructor)
 		if #params == 0 then defineCall( loadType, loadType, ":=", {}, constructor) end -- declare default constructor
 	end
+	typedb:def_reduction( refType, loadType, completeInitializationAndReturnThis, tag_typeDeduction, rdw_barrier) -- define phase change to completed initialization if used otherwise
 end
 -- Define a member variable of a class or a structure
 function defineVariableMember( node, descr, context, typeId, name, private)
@@ -1759,9 +1765,9 @@ function initBuiltInTypes()
 			scalarIndexTypeMap[ typnam] = c_valtype
 		end
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
-			local weight = scalarDeductionWeight( scalar_descr.sizeweight)
-			local valueconv = constexprLlvmConversion( c_valtype, constexprType)
-			typedb:def_reduction( qualitype.valtype, constexprType, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeDeduction, weight)
+			local weight = constexprType.weight + scalarDeductionWeight( scalar_descr.sizeweight)
+			local valueconv = constexprLlvmConversion( c_valtype, constexprType.type)
+			typedb:def_reduction( qualitype.valtype, constexprType.type, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeInstantiation, weight)
 		end
 	end
 	if byteQualitype then
@@ -2433,7 +2439,7 @@ function defineCallableBodyContext( node, context, descr)
 			selfTypeId = context.qualitype.init_reftype
 			env.initstate = 0
 			env.initcontext = context
-			env.partial_dtor = utils.template_format( context.descr.dtor, {symbol=context.descr.symbol,llvmtype="%" .. context.descr.symbol})
+			env.partial_dtor = utils.template_format( context.descr.partial_dtor, {symbol=context.descr.symbol,llvmtype="%" .. context.descr.symbol})
 		elseif descr.const then
 			selfTypeId = privateConstThisReferenceType
 		else
@@ -2710,7 +2716,7 @@ function typesystem.throw_exception( node)
 	expectValueType( node, errcode)
 	expectValueType( node, errmsg)
 	local errcode_constructor = getRequiredTypeConstructor( node, scalarLongType, errcode, tagmask_matchParameter, tagmask_typeConversion)
-	local errmsg_constructor = getRequiredTypeConstructor( node, stringPointerType, errcode, tagmask_matchParameter, tagmask_typeConversion)
+	local errmsg_constructor = getRequiredTypeConstructor( node, stringPointerType, errmsg, tagmask_matchParameter, tagmask_typeConversion)
 	return {code=getThrowExceptionCode( errcode_constructor, errmsg_constructor), nofollow=true}
 end
 function typesystem.tryblock( node, catchlabel)

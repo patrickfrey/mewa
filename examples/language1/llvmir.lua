@@ -358,7 +358,8 @@ llvmir.exception = {
 		.. "%SizeObObj = load i32, i32* @__L_ExceptionSize\n"
 		.. "%Mem = call i8* @__cxa_allocate_exception( i32 %SizeObObj) nounwind\n"
 		.. "%Obj = bitcast i8* %Mem to %__L_Exception*\n"
-		.. "store %__L_Exception %exception, %__L_Exception* %Obj\n"
+		.. "%exceptionVal = load %__L_Exception, %__L_Exception* %exception\n"
+		.. "store %__L_Exception %exceptionVal, %__L_Exception* %Obj\n"
 		.. "call void @__cxa_throw( i8* %Mem, i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*), i8* null) noreturn\n"
 		.. "unreachable\n"
 		.. "}\n"
@@ -372,7 +373,7 @@ llvmir.exception = {
 		.. "ret void\n"
 		.. "}\n",
 	allocLandingpad = "%excptr = alloca i8*\n%excidx = alloca i32\n",
-	allocExceptionLocal = "%exception = alloca %__L_Exception*\n",
+	allocExceptionLocal = "%exception = alloca %__L_Exception\n",
 	allocInitstate = "%initstate = alloca i32\n",
 	initExceptionLocal = "call void @__L_init__Exception( %__L_Exception* %exception, i64 {errcode}, i8* {errmsg})\n",
 	throwExceptionLocal = "call void @__L_throw__Exception( %__L_Exception* %exception)\nunreachable\n",

@@ -353,9 +353,9 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 			end
 		end
 	end
-	local function elementString( element)
+	local function elementString( element, elementidx)
 		local rt = typedb:type_string( element.type)
-		if element.pred > 0 then rt = rt .. " <- " .. elementString( elementlist[element.pred]) end
+		if element.pred > 0 then rt = rt .. " <- [" .. string.format( "%.4f", elementlist[elementidx].weight) .. "] " .. elementString( elementlist[element.pred],element.pred) end
 		return rt
 	end
 	local weightEpsilon = 1E-8
@@ -365,7 +365,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 	while #queue > 0 do
 		local element,weight,elementidx = fetchElement()
 		if resultweight and weight > resultweight + weightEpsilon then break end
-		rt = rt .. "CANDIDATE weight=" .. string.format( "%.4f", weight) .. " #" .. element.pathlen .. " = " .. elementString( element) .. "\n"
+		rt = rt .. "CANDIDATE weight=" .. string.format( "%.4f", weight) .. " #" .. element.pathlen .. " = " .. elementString( element, elementidx) .. "\n"
 		if element.type == destType then
 			if resultweight then
 				if resultweight < weight + weightEpsilon then 
@@ -374,7 +374,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 				end
 				break
 			else
-				rt = rt .. "MATCH\n"
+				rt = rt .. "MATCH " .. typedb:type_string(destType) .. "\n"
 				rt_bk = rt
 				resultweight = weight
 			end

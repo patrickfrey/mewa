@@ -32,5 +32,9 @@ main {
 	g_pnp( 19.1, cnt);
 
 	printf("RES cnt = %d\n", cnt);
+	var const byte^ str = "Hello World!";
+	var byte fc = str[0];
+	var byte sc = str[6];
+	printf("Initials %c %c\n", fc, sc);
 }
 

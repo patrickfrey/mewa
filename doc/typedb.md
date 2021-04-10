@@ -337,8 +337,8 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 <a name="derive_type"/>
 
 ### typedb:derive_type
-Finds the path of reductions selected by the _tagmask_ parameter with the minimum cost (sum of reduction weights). Throws an error if the results are ambiguous.
-The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope). 
+Finds the path of reductions selected by the _tagmask_ parameter with the minimum cost (sum of reduction weights).
+The scope step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
 | #          | Name            | Type              | Description                                                                                                      |
@@ -346,11 +346,11 @@ The scope step of the search that defines the valid reduction candidates has bee
 | 1st        | dest-type       | integer  | Resulting type to derive.                                                                                                 |
 | 2nd        | src-type        | integer  | Start type of the reduction path leading to the result type.                                                              |
 | 3rd        | tagmask         | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions to use (select all if undefined).                        |
-| 3rd        | tagmask_pathlen | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions contributing to the path length count of a result. (**)  |
-| 4th        | max_pathlen     | integer  | (optional) maximum length count (number of reductions selected by tagmask_pathlen) of a path accepted as a result. (***)  |
+| 3rd        | tagmask_pathlen | integer  | (optional) Set (bit-set) of tags (*) that selects the reductions contributing to the length count of a result. (**)       |
+| 4th        | max_pathlen     | integer  | (optional) maximum length count (number of reductions selected by tagmask_pathlen) of an accepted result. (***)           |
 | Return 1st |                 | table    | List of type/constructor pairs as tables with named members or *nil* if no result path found.                             |
-| Return 2nd |                 | number   | Weight sum of best path found                                                                                             |
-| Return 3rd |                 | table    | Alternative path with same weight found. There is an ambiguus reference if this value is not *nil*.                       |
+| Return 2nd |                 | number   | Weight sum of best solution found                                                                                         |
+| Return 3rd |                 | table    | Alternative solution with same weight found. There exists an ambiguus reference if this value is not *nil*.               |
 
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
@@ -358,7 +358,7 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 Select none if undefined
 #### Remark (***)
 The tagmask_pathlen, max_pathlen parameters allow to define restrictions on the number of reductions that are implicit value conversions. 
-Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions. 
+Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions and to reduce the costs of calculation.
 Usually the max_pathlen value is 1 if implicit type conversions are allowed at all. The default if not specified is also 1.
 
 
