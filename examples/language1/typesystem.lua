@@ -1375,7 +1375,8 @@ function getInvokeUnwindLabel( skipHandler)
 		if frame.exitmap[ "catch"] then
 			cleanup = getFrameCleanupLabel( frame, "catch")
 		else
-			local exitcode = (env.partial_dtor or "") .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
+			local exitcode; if env.partial_dtor then exitcode = utils.constructor_format( env.partial_dtor, {}, env.register) else exitcode = "" end
+			exitcode = exitcode .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
 			cleanup = getFrameCleanupLabel( frame, "catch", exitcode)
 		end
 		local cleanup_start_fmt; if frame.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end

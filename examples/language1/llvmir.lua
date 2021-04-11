@@ -163,7 +163,8 @@ llvmir.classTemplate = {
 	partial_dtorelem = "{creg} = icmp sle i32 %istate, {istate}\n"
 		.. "br i1 {creg}, label %{1}, label %{2}\n"
 		.. "{1}:\n{dtor}br label %{2}\n{2}:\n",
-	partial_dtor = "call void @__partial_dtor_{symbol}( %{symbol}* %ths, i32 %initstate)\n",
+	partial_dtor = "{1} = load i32, i32* %initstate\n"
+		.. "call void @__partial_dtor_{symbol}( %{symbol}* %ths, i32 {1})\n",
 	ctor_init = llvmir.structTemplate.ctor_init,
 	ctor_init_throwing = llvmir.structTemplate.ctor_init_throwing,
 	ctor_copy = llvmir.structTemplate.ctor_copy,
