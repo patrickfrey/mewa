@@ -135,6 +135,7 @@ end
 function defineCallableEnvironment( node, name, rtype)
 	local env = createCallableEnvironment( name, rtype)
 	env.line = node.line
+	if typedb:this_instance( currentCallableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
 	typedb:set_instance( currentCallableEnvKey, env)
 	return env
 end
@@ -2055,7 +2056,6 @@ function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask_
 	if redutype ~= operand.type then
 		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
 		if altpath then
-			local scope_bk,step_bk = typedb:scope({}) weight_XX = typedb:get_reduction( typedb:get_type( 0, "int"), constexprIntegerType); typedb:scope(scope_bk,step_bk); io.stderr:write(string.format("++++ WEIGHT %.4f\n", weight_XX))
 			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
 						typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
 		end
@@ -2485,6 +2485,7 @@ function defineCallableBodyContext( node, context, descr)
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
+	return env
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node, context)
@@ -3139,7 +3140,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 	if not pass or pass == 2 then
 		local scope_bk = typedb:scope( node.arg[1].scope)
 		local descr = getNodeData( node, descr)
-		local env = defineCallableEnvironment( node, "body " .. descr.symbol)
+		local env = defineCallableBodyContext( node, context, descr)
 		local block = utils.traverse( typedb, node, subcontext)[1]
 		local code = block.code .. getStructMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end

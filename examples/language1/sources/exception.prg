@@ -39,6 +39,10 @@ class String
 		memcpy( m_ptr, cstr_, size_);
 		m_ptr[ size_] = 0;
 	}
+	destructor
+	{
+		freemem( m_ptr);
+	}
 	public function c_str const byte^() const
 	{
 		return m_ptr;

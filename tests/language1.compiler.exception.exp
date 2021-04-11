@@ -1,0 +1,236 @@
+
+@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
+@llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
+
+declare external i32 @__gxx_personality_v0( ... ) nounwind
+declare external void @putchar( i8 ) nounwind
+declare external i8* @malloc( i64 ) nounwind
+declare external void @free( i8* ) nounwind
+declare external i8* @memcpy( i8*, i8*, i64 ) nounwind
+declare external i64 @strlen( i8* ) nounwind
+%std__String = type { i8*, i32 }
+declare external i8* @strdup( i8* ) nounwind
+%__L_Exception = type { i64, i8* }
+@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)declare external i8* @__cxa_allocate_exception( i32)
+declare external void @__cxa_throw( i8*, i8*, i8*) noreturn
+@_ZTVN10__cxxabiv117__class_type_infoE = external dso_local global i8*
+$__typename__L_Exception = comdat any
+$__typeinfo__L_Exception = comdat any
+@__typename__L_Exception = linkonce_odr dso_local constant [11 x i8] c"9exception\00", comdat, align 1
+@__typeinfo__L_Exception = linkonce_odr dso_local constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([11 x i8], [11 x i8]* @__typename__L_Exception, i32 0, i32 0) }, comdat, align 8
+define dso_local void @__L_init__Exception( %__L_Exception* %exception, i64 %code, i8* %msg) {
+%ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
+store i64 %code, i64* %ObjCodeRef
+%ObjMsgRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1
+%IsNull = icmp ne i8* %msg, null
+br i1 %IsNull, label %L_COPY, label %L_NULL
+L_COPY:
+%MsgCopy = call i8* @strdup( i8* %msg) nounwind
+store i8* %MsgCopy, i8** %ObjMsgRef
+br label %L_CONT
+L_NULL:
+store i8* null, i8** %ObjMsgRef
+br label %L_CONT
+L_CONT:
+ret void
+}
+define dso_local void @__L_throw__Exception( %__L_Exception* %exception) {
+%SizeObObj = load i32, i32* @__L_ExceptionSize
+%Mem = call i8* @__cxa_allocate_exception( i32 %SizeObObj) nounwind
+%Obj = bitcast i8* %Mem to %__L_Exception*
+%exceptionVal = load %__L_Exception, %__L_Exception* %exception
+store %__L_Exception %exceptionVal, %__L_Exception* %Obj
+call void @__cxa_throw( i8* %Mem, i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*), i8* null) noreturn
+unreachable
+}
+define dso_local void @__L_free__ExceptionMsg( i8* %msg) {
+%IsNull = icmp ne i8* %msg, null
+br i1 %IsNull, label %L_FREE, label %L_DONE
+L_FREE:
+call void @free( i8* %msg) nounwind
+br label %L_DONE
+L_DONE:
+ret void
+}
+define private dso_local void @__partial_dtor_std__String( %std__String* %ths, i32 %istate) {
+enter:
+br label %end
+end:
+ret void
+}
+
+
+define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {
+  ret void
+}
+
+define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp section ".text.startup" {
+  ret void
+}
+
+declare external void @printf( i8*, ... ) nounwind
+@g_allocCnt = internal global i32 0, align 4
+@g_maxAllocCnt = internal global i32 0, align 4
+@string1 = private unnamed_addr constant [32 x i8] c"Max allowed allocations reached\00"
+@string2 = private unnamed_addr constant [14 x i8] c"Out of memory\00"
+define internal i8* @allocmem__i64( i64 %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%exception = alloca %__L_Exception
+%r2 = load i32, i32* @g_allocCnt
+%r3 = add nsw i32 %r2, 1
+store i32 %r3, i32* @g_allocCnt
+%r4 = load i32, i32* @g_allocCnt
+%r5 = load i32, i32* @g_maxAllocCnt
+%r6 = icmp eq i32 %r4, %r5
+br i1 %r6, label %L4, label %L3
+L4:
+%r7 = getelementptr inbounds [32 x i8], [32 x i8]* @string1, i64 0, i64 0
+call void @__L_init__Exception( %__L_Exception* %exception, i64 201, i8* %r7)
+br label %L2
+L3:
+%r9 = alloca i8*
+%r8 = call i8* @malloc( i64 %r1)
+store i8* %r8, i8** %r9
+%r10 = load i8*, i8** %r9
+%r11 = icmp eq i8* %r10, null
+br i1 %r11, label %L8, label %L7
+L8:
+%r12 = getelementptr inbounds [14 x i8], [14 x i8]* @string2, i64 0, i64 0
+call void @__L_init__Exception( %__L_Exception* %exception, i64 12, i8* %r12)
+br label %L6
+L7:
+%r13 = load i8*, i8** %r9
+br label %L9
+L2:
+call void @__L_throw__Exception( %__L_Exception* %exception)
+unreachable
+L6:
+call void @__L_throw__Exception( %__L_Exception* %exception)
+unreachable
+L9:
+ret i8* %r13
+}
+define internal void @freemem__i8$( i8* %r1 ) #0 nounwind {
+entry:
+call void @free( i8* %r1)
+br label %L1
+L1:
+ret void
+}
+define external void @__C_std__String__$ctor__i8$( %std__String* %ths, i8* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%excptr = alloca i8*
+%excidx = alloca i32
+%initstate = alloca i32
+%r3 = alloca i32, align 4
+%r2 = call i64 @strlen( i8* %r1)
+%r4 = trunc i64 %r2 to i32
+store i32 %r4, i32* %r3
+%r5 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r6 = load i32, i32* %r3
+%r7 = add nsw i32 %r6, 1
+%r8 = sext i32 %r7 to i64
+%r9 = invoke i8* @allocmem__i64( i64 %r8) to label %L3 unwind label %L1
+L3:
+store i8* %r9, i8** %r5
+%r18 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r19 = load i32, i32* %r3
+store i32 %r19, i32* %r18
+%r20 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r21 = load i8*, i8** %r20
+%r22 = load i32, i32* %r3
+%r23 = sext i32 %r22 to i64
+%r24 = call i8* @memcpy( i8* %r21, i8* %r1, i64 %r23)
+%r25 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r26 = load i8*, i8** %r25
+%r27 = load i32, i32* %r3
+%r28 = getelementptr i8, i8* %r26, i32 %r27
+store i8 0, i8* %r28
+br label %L4
+L1:
+%r15 = landingpad { i8*, i32 } cleanup
+%r16 = extractvalue { i8*, i32 } %r15, 0
+store i8* %r16, i8** %excptr
+%r17 = extractvalue { i8*, i32 } %r15, 1
+store i32 %r17, i32* %excidx
+store i32 0, i32* %initstate
+br label %L2
+L2:
+%r10 = load i32, i32* %initstate
+call void @__partial_dtor_std__String( %std__String* %ths, i32 %r10)
+%r11 = load i8*, i8** %excptr
+%r12 = load i32, i32* %excidx
+%r13 = insertvalue { i8*, i32 } undef, i8* %r11, 0
+%r14 = insertvalue { i8*, i32 } %r13, i32 %r12, 1
+resume { i8*, i32 } %r14
+L4:
+ret void
+}
+define external void @__dtor_std__String( %std__String* %ths ) #0 nounwind {
+entry:
+%r1 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r2 = load i8*, i8** %r1
+call void @freemem__i8$( i8* %r2)
+br label %L1
+L1:
+ret void
+}
+define external i8* @__C_std__String__c_str__const( %std__String* %ths ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%r1 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r2 = load i8*, i8** %r1
+br label %L1
+L1:
+ret i8* %r2
+}
+@string3 = private unnamed_addr constant [13 x i8] c"Hello world!\00"
+
+define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+{
+entry:
+%excptr = alloca i8*
+%excidx = alloca i32
+store i32 0, i32* @g_allocCnt
+store i32 0, i32* @g_maxAllocCnt
+%r1 = alloca i32, align 4
+%r3 = alloca %std__String, align 8
+%r2 = getelementptr inbounds [13 x i8], [13 x i8]* @string3, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r3, i8* %r2) to label %L4 unwind label %L2
+L4:
+%r11 = invoke i8* @__C_std__String__c_str__const( %std__String* %r3) to label %L7 unwind label %L5
+L7:
+call void(i8*,  ...) @printf( i8* %r11)
+store i32 0, i32* %r1
+br label %L8
+L2:
+%r8 = landingpad { i8*, i32 } cleanup
+%r9 = extractvalue { i8*, i32 } %r8, 0
+store i8* %r9, i8** %excptr
+%r10 = extractvalue { i8*, i32 } %r8, 1
+store i32 %r10, i32* %excidx
+br label %L3
+L5:
+%r12 = landingpad { i8*, i32 } cleanup
+%r13 = extractvalue { i8*, i32 } %r12, 0
+store i8* %r13, i8** %excptr
+%r14 = extractvalue { i8*, i32 } %r12, 1
+store i32 %r14, i32* %excidx
+br label %L6
+L6:
+call void @__dtor_std__String( %std__String* %r3)
+br label %L3
+L3:
+%r4 = load i8*, i8** %excptr
+%r5 = load i32, i32* %excidx
+%r6 = insertvalue { i8*, i32 } undef, i8* %r4, 0
+%r7 = insertvalue { i8*, i32 } %r6, i32 %r5, 1
+resume { i8*, i32 } %r7
+L8:
+call void @__dtor_std__String( %std__String* %r3)
+br label %L1
+L1:
+%r15 = load i32, i32* %r1
+ret i32 %r15
+}
+
+
