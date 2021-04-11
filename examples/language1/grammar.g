@@ -183,10 +183,7 @@ generic_identlist	= IDENT "," generic_identlist							(generic_header_ident)
 generic_header		= generic_identlist								(generic_header)
 			| generic_defaultlist								(generic_header)
 			;
-callablebody		= "(" parameterlist ")" "nothrow" "{" statementlist "}"				({}callablebody {throws=false,const=false})
-			| "(" parameterlist ")" "{" statementlist "}"					({}callablebody {throws=true,const=false})
-			| "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"			({}callablebody {throws=false,const=true})
-			| "(" parameterlist ")" "const" "{" statementlist "}"				({}callablebody {throws=true,const=true})
+callablebody		= "(" parameterlist ")" funcattribute "{" statementlist "}"			({}callablebody)
 			;
 main_procedure		= "main" codeblock								(main_procdef)
 			| ε

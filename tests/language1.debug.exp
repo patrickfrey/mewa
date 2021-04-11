@@ -273,10 +273,7 @@ generic_identlist = IDENT "," generic_defaultlist (XX)
 generic_identlist = IDENT (XX)
 generic_header = generic_identlist (XX)
 generic_header = generic_defaultlist (XX)
-callablebody = "(" parameterlist ")" "nothrow" "{" statementlist "}" (scope:82)
-callablebody = "(" parameterlist ")" "{" statementlist "}" (scope:83)
-callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist "}" (scope:84)
-callablebody = "(" parameterlist ")" "const" "{" statementlist "}" (scope:85)
+callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" (scope:82)
 main_procedure = "main" codeblock (XX)
 main_procedure = 
 parameterlist = parameters (XX)
@@ -284,7 +281,7 @@ parameterlist =  (XX)
 parameters = paramdecl "," parameters
 parameters = paramdecl
 paramdecl = typespec IDENT (XX)
-codeblock/L1 = "{" statementlist "}" (scope:89)
+codeblock/L1 = "{" statementlist "}" (scope:86)
 statementlist/L1 = statement statementlist (step)
 statementlist/L1 = 
 elseblock/L1 = "elseif" "(" expression ")" codeblock elseblock (XX)
@@ -299,11 +296,11 @@ statement/L1 = functiondefinition (XX)
 statement/L1 = typedefinition ";" (XX)
 statement/L1 = "var" variabledefinition ";" (step:16)
 statement/L1 = expression ";" (XX)
-statement/L1 = "return" expression ";" (step:95)
-statement/L1 = "return" ";" (step:96)
+statement/L1 = "return" expression ";" (step:92)
+statement/L1 = "return" ";" (step:93)
 statement/L1 = "throw" expression "," expression ";" (XX)
 statement/L1 = "throw" expression ";" (XX)
-statement/L1 = tryblock catchblock (scope:98)
+statement/L1 = tryblock catchblock (scope:95)
 statement/L1 = "delete" expression ";" (XX)
 statement/L1 = "if" "(" expression ")" codeblock elseblock (XX)
 statement/L1 = "if" "(" expression ")" codeblock (XX)
@@ -311,8 +308,8 @@ statement/L1 = "while" "(" expression ")" codeblock (XX)
 statement/L1 = "with" "(" expression ")" codeblock (XX)
 statement/L1 = "with" "(" expression ")" ";" (XX)
 statement/L1 = codeblock
-variabledefinition = typespec IDENT (step:103)
-variabledefinition = typespec IDENT "=" expression (step:104)
+variabledefinition = typespec IDENT (step:100)
+variabledefinition = typespec IDENT "=" expression (step:101)
 expression/L1 = "{" expressionlist "}" (XX)
 expression/L1 = "{" "}" (XX)
 expression/L1 = "new" typespec ":" expression (XX)
@@ -326,20 +323,20 @@ expression/L2 = "null" (XX)
 expression/L2 = DQSTRING (XX)
 expression/L2 = SQSTRING (XX)
 expression/L2 = "(" expression ")"
-expression/L3 = expression "=" expression (step:116)
-expression/L3 = expression "+=" expression (step:117)
-expression/L3 = expression "-=" expression (step:118)
-expression/L3 = expression "*=" expression (step:119)
-expression/L3 = expression "/=" expression (step:120)
-expression/L3 = expression "^=" expression (step:121)
-expression/L3 = expression "&=" expression (step:122)
-expression/L3 = expression "%=" expression (step:123)
-expression/L3 = expression "&&=" expression (step:124)
-expression/L3 = expression "||=" expression (step:125)
-expression/L3 = expression "&=" expression (step:122)
-expression/L3 = expression "|=" expression (step:126)
-expression/L3 = expression "<<=" expression (step:127)
-expression/L3 = expression ">>=" expression (step:128)
+expression/L3 = expression "=" expression (step:113)
+expression/L3 = expression "+=" expression (step:114)
+expression/L3 = expression "-=" expression (step:115)
+expression/L3 = expression "*=" expression (step:116)
+expression/L3 = expression "/=" expression (step:117)
+expression/L3 = expression "^=" expression (step:118)
+expression/L3 = expression "&=" expression (step:119)
+expression/L3 = expression "%=" expression (step:120)
+expression/L3 = expression "&&=" expression (step:121)
+expression/L3 = expression "||=" expression (step:122)
+expression/L3 = expression "&=" expression (step:119)
+expression/L3 = expression "|=" expression (step:123)
+expression/L3 = expression "<<=" expression (step:124)
+expression/L3 = expression ">>=" expression (step:125)
 expression/L4 = expression "||" expression (XX)
 expression/L5 = expression "&&" expression (XX)
 expression/L6 = expression "|" expression (XX)
@@ -867,10 +864,7 @@ expressionlist/L0 = expression
 	functiondefinition = linkage "function" IDENT . typespec callablebody
 [XX]
 	functiondefinition = linkage "procedure" IDENT . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	typename/L1 = IDENT "::" typename .
 [XX]
@@ -2140,10 +2134,7 @@ expressionlist/L0 = expression
 	expressionlist/L0 = . expression
 [XX]
 	functiondefinition = linkage "function" IDENT typespec . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	functiondefinition = linkage "procedure" IDENT callablebody .
 [XX]
@@ -2161,10 +2152,7 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^"
 	typespec/L1 = . typegen
 	typespec/L1 = . typegen "&"
-	callablebody = "(" . parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = "(" . parameterlist ")" "{" statementlist "}"
-	callablebody = "(" . parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = "(" . parameterlist ")" "const" "{" statementlist "}"
+	callablebody = "(" . parameterlist ")" funcattribute "{" statementlist "}"
 	parameterlist = . parameters
 	parameterlist = .
 	parameters = . paramdecl "," parameters
@@ -5132,10 +5120,7 @@ expressionlist/L0 = expression
 [XX]
 	paramdecl = typespec . IDENT
 [XX]
-	callablebody = "(" parameterlist . ")" "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist . ")" "{" statementlist "}"
-	callablebody = "(" parameterlist . ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist . ")" "const" "{" statementlist "}"
+	callablebody = "(" parameterlist . ")" funcattribute "{" statementlist "}"
 [XX]
 	parameterlist = parameters .
 [XX]
@@ -5175,10 +5160,7 @@ expressionlist/L0 = expression
 	operatordecl = . "<"
 [XX]
 	constructordefinition = linkage "constructor" . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	inclass_definition = variabledefinition ";" .
 [XX]
@@ -7107,10 +7089,10 @@ expressionlist/L0 = expression
 [XX]
 	paramdecl = typespec IDENT .
 [XX]
-	callablebody = "(" parameterlist ")" . "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist ")" . "{" statementlist "}"
-	callablebody = "(" parameterlist ")" . "const" "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist ")" . "const" "{" statementlist "}"
+	funcattribute = . "const" funcattribute
+	funcattribute = . "nothrow" funcattribute
+	funcattribute = .
+	callablebody = "(" parameterlist ")" . funcattribute "{" statementlist "}"
 [XX]
 	typename/L1 = . IDENT
 	typename/L1 = . IDENT "::" typename
@@ -7147,10 +7129,7 @@ expressionlist/L0 = expression
 	typespec/L1 = . typegen "&"
 	operatordefinition = linkage "operator" operatordecl . typespec callablebody
 	operatordefinition = linkage "operator" operatordecl . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	constructordefinition = linkage "constructor" callablebody .
 [XX]
@@ -7422,117 +7401,22 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
 [XX]
-	callablebody = "(" parameterlist ")" "const" . "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist ")" "const" . "{" statementlist "}"
+	callablebody = "(" parameterlist ")" funcattribute . "{" statementlist "}"
 [XX]
-	callablebody = "(" parameterlist ")" "nothrow" . "{" statementlist "}"
+	funcattribute = . "const" funcattribute
+	funcattribute = "const" . funcattribute
+	funcattribute = . "nothrow" funcattribute
+	funcattribute = .
 [XX]
-	typedefinition = . "typedef" typegen IDENT
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}"
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}"
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}"
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}"
-	linkage = . "private"
-	linkage = . "public"
-	linkage = .
-	functiondefinition = . linkage "function" IDENT typespec callablebody
-	functiondefinition = . linkage "procedure" IDENT callablebody
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
-	callablebody = "(" parameterlist ")" "{" . statementlist "}"
-	codeblock/L1 = . "{" statementlist "}"
-	statementlist/L1 = . statement statementlist
-	statementlist/L1 = .
-	tryblock = . "try" codeblock
-	statement/L1 = . structdefinition
-	statement/L1 = . classdefinition
-	statement/L1 = . functiondefinition
-	statement/L1 = . typedefinition ";"
-	statement/L1 = . "var" variabledefinition ";"
-	statement/L1 = . expression ";"
-	statement/L1 = . "return" expression ";"
-	statement/L1 = . "return" ";"
-	statement/L1 = . "throw" expression "," expression ";"
-	statement/L1 = . "throw" expression ";"
-	statement/L1 = . tryblock catchblock
-	statement/L1 = . "delete" expression ";"
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock
-	statement/L1 = . "if" "(" expression ")" codeblock
-	statement/L1 = . "while" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" ";"
-	statement/L1 = . codeblock
-	expression/L1 = . "{" expressionlist "}"
-	expression/L1 = . "{" "}"
-	expression/L1 = . "new" typespec ":" expression
-	expression/L1 = . "cast" typespec ":" expression
-	expression/L2 = . IDENT
-	expression/L2 = . BOOLEAN
-	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
-	expression/L2 = . FLOAT
-	expression/L2 = . "null"
-	expression/L2 = . DQSTRING
-	expression/L2 = . SQSTRING
-	expression/L2 = . "(" expression ")"
-	expression/L3 = . expression "=" expression
-	expression/L3 = . expression "+=" expression
-	expression/L3 = . expression "-=" expression
-	expression/L3 = . expression "*=" expression
-	expression/L3 = . expression "/=" expression
-	expression/L3 = . expression "^=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "%=" expression
-	expression/L3 = . expression "&&=" expression
-	expression/L3 = . expression "||=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "|=" expression
-	expression/L3 = . expression "<<=" expression
-	expression/L3 = . expression ">>=" expression
-	expression/L4 = . expression "||" expression
-	expression/L5 = . expression "&&" expression
-	expression/L6 = . expression "|" expression
-	expression/L7 = . expression "^" expression
-	expression/L7 = . expression "&" expression
-	expression/L8 = . expression "==" expression
-	expression/L8 = . expression "!=" expression
-	expression/L8 = . expression "<=" expression
-	expression/L8 = . expression "<" expression
-	expression/L8 = . expression ">=" expression
-	expression/L8 = . expression ">" expression
-	expression/L9 = . expression "+" expression
-	expression/L9 = . expression "-" expression
-	expression/L9 = . "&" expression
-	expression/L9 = . "-" expression
-	expression/L9 = . "+" expression
-	expression/L9 = . "~" expression
-	expression/L9 = . "!" expression
-	expression/L10 = . expression "*" expression
-	expression/L10 = . expression "/" expression
-	expression/L10 = . expression "%" expression
-	expression/L11 = . expression "<<" expression
-	expression/L11 = . expression ">>" expression
-	expression/L12 = . iexpression
-	expression/L12 = . expression "." IDENT
-	expression/L12 = . "*" expression
-	expression/L13 = . expression "(" expressionlist ")"
-	expression/L13 = . expression "(" ")"
-	expression/L13 = . expression "[" expressionlist "]"
-	iexpression/L14 = . expression indirection IDENT
+	funcattribute = . "const" funcattribute
+	funcattribute = . "nothrow" funcattribute
+	funcattribute = "nothrow" . funcattribute
+	funcattribute = .
 [XX]
 	parameters = paramdecl "," parameters .
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	operatordefinition = linkage "operator" operatordecl callablebody .
 [XX]
@@ -7582,10 +7466,7 @@ expressionlist/L0 = expression
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" . typespec callablebody
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	inclass_definitionlist = . inclass_definition inclass_definitionlist
 	inclass_definitionlist = .
@@ -7767,8 +7648,6 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" .
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" . "{" statementlist "}"
-[XX]
 	typedefinition = . "typedef" typegen IDENT
 	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
 	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
@@ -7787,7 +7666,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody
 	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
 	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
-	callablebody = "(" parameterlist ")" "const" "{" . statementlist "}"
+	callablebody = "(" parameterlist ")" funcattribute "{" . statementlist "}"
 	codeblock/L1 = . "{" statementlist "}"
 	statementlist/L1 = . statement statementlist
 	statementlist/L1 = .
@@ -7868,106 +7747,9 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
-	typedefinition = . "typedef" typegen IDENT
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}"
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}"
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}"
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}"
-	linkage = . "private"
-	linkage = . "public"
-	linkage = .
-	functiondefinition = . linkage "function" IDENT typespec callablebody
-	functiondefinition = . linkage "procedure" IDENT callablebody
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
-	callablebody = "(" parameterlist ")" "nothrow" "{" . statementlist "}"
-	codeblock/L1 = . "{" statementlist "}"
-	statementlist/L1 = . statement statementlist
-	statementlist/L1 = .
-	tryblock = . "try" codeblock
-	statement/L1 = . structdefinition
-	statement/L1 = . classdefinition
-	statement/L1 = . functiondefinition
-	statement/L1 = . typedefinition ";"
-	statement/L1 = . "var" variabledefinition ";"
-	statement/L1 = . expression ";"
-	statement/L1 = . "return" expression ";"
-	statement/L1 = . "return" ";"
-	statement/L1 = . "throw" expression "," expression ";"
-	statement/L1 = . "throw" expression ";"
-	statement/L1 = . tryblock catchblock
-	statement/L1 = . "delete" expression ";"
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock
-	statement/L1 = . "if" "(" expression ")" codeblock
-	statement/L1 = . "while" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" ";"
-	statement/L1 = . codeblock
-	expression/L1 = . "{" expressionlist "}"
-	expression/L1 = . "{" "}"
-	expression/L1 = . "new" typespec ":" expression
-	expression/L1 = . "cast" typespec ":" expression
-	expression/L2 = . IDENT
-	expression/L2 = . BOOLEAN
-	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
-	expression/L2 = . FLOAT
-	expression/L2 = . "null"
-	expression/L2 = . DQSTRING
-	expression/L2 = . SQSTRING
-	expression/L2 = . "(" expression ")"
-	expression/L3 = . expression "=" expression
-	expression/L3 = . expression "+=" expression
-	expression/L3 = . expression "-=" expression
-	expression/L3 = . expression "*=" expression
-	expression/L3 = . expression "/=" expression
-	expression/L3 = . expression "^=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "%=" expression
-	expression/L3 = . expression "&&=" expression
-	expression/L3 = . expression "||=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "|=" expression
-	expression/L3 = . expression "<<=" expression
-	expression/L3 = . expression ">>=" expression
-	expression/L4 = . expression "||" expression
-	expression/L5 = . expression "&&" expression
-	expression/L6 = . expression "|" expression
-	expression/L7 = . expression "^" expression
-	expression/L7 = . expression "&" expression
-	expression/L8 = . expression "==" expression
-	expression/L8 = . expression "!=" expression
-	expression/L8 = . expression "<=" expression
-	expression/L8 = . expression "<" expression
-	expression/L8 = . expression ">=" expression
-	expression/L8 = . expression ">" expression
-	expression/L9 = . expression "+" expression
-	expression/L9 = . expression "-" expression
-	expression/L9 = . "&" expression
-	expression/L9 = . "-" expression
-	expression/L9 = . "+" expression
-	expression/L9 = . "~" expression
-	expression/L9 = . "!" expression
-	expression/L10 = . expression "*" expression
-	expression/L10 = . expression "/" expression
-	expression/L10 = . expression "%" expression
-	expression/L11 = . expression "<<" expression
-	expression/L11 = . expression ">>" expression
-	expression/L12 = . iexpression
-	expression/L12 = . expression "." IDENT
-	expression/L12 = . "*" expression
-	expression/L13 = . expression "(" expressionlist ")"
-	expression/L13 = . expression "(" ")"
-	expression/L13 = . expression "[" expressionlist "]"
-	iexpression/L14 = . expression indirection IDENT
+	funcattribute = "const" funcattribute .
 [XX]
-	callablebody = "(" parameterlist ")" "{" statementlist . "}"
+	funcattribute = "nothrow" funcattribute .
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec callablebody .
 [XX]
@@ -7976,10 +7758,7 @@ expressionlist/L0 = expression
 	extern_parameters = typespec IDENT "," extern_parameters .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec . callablebody
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}"
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody .
 [XX]
@@ -8023,110 +7802,7 @@ expressionlist/L0 = expression
 	codeblock/L1 = . "{" statementlist "}"
 	elseblock/L1 = "else" . codeblock
 [XX]
-	typedefinition = . "typedef" typegen IDENT
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}"
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}"
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}"
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}"
-	linkage = . "private"
-	linkage = . "public"
-	linkage = .
-	functiondefinition = . linkage "function" IDENT typespec callablebody
-	functiondefinition = . linkage "procedure" IDENT callablebody
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" . statementlist "}"
-	codeblock/L1 = . "{" statementlist "}"
-	statementlist/L1 = . statement statementlist
-	statementlist/L1 = .
-	tryblock = . "try" codeblock
-	statement/L1 = . structdefinition
-	statement/L1 = . classdefinition
-	statement/L1 = . functiondefinition
-	statement/L1 = . typedefinition ";"
-	statement/L1 = . "var" variabledefinition ";"
-	statement/L1 = . expression ";"
-	statement/L1 = . "return" expression ";"
-	statement/L1 = . "return" ";"
-	statement/L1 = . "throw" expression "," expression ";"
-	statement/L1 = . "throw" expression ";"
-	statement/L1 = . tryblock catchblock
-	statement/L1 = . "delete" expression ";"
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock
-	statement/L1 = . "if" "(" expression ")" codeblock
-	statement/L1 = . "while" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" ";"
-	statement/L1 = . codeblock
-	expression/L1 = . "{" expressionlist "}"
-	expression/L1 = . "{" "}"
-	expression/L1 = . "new" typespec ":" expression
-	expression/L1 = . "cast" typespec ":" expression
-	expression/L2 = . IDENT
-	expression/L2 = . BOOLEAN
-	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
-	expression/L2 = . FLOAT
-	expression/L2 = . "null"
-	expression/L2 = . DQSTRING
-	expression/L2 = . SQSTRING
-	expression/L2 = . "(" expression ")"
-	expression/L3 = . expression "=" expression
-	expression/L3 = . expression "+=" expression
-	expression/L3 = . expression "-=" expression
-	expression/L3 = . expression "*=" expression
-	expression/L3 = . expression "/=" expression
-	expression/L3 = . expression "^=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "%=" expression
-	expression/L3 = . expression "&&=" expression
-	expression/L3 = . expression "||=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "|=" expression
-	expression/L3 = . expression "<<=" expression
-	expression/L3 = . expression ">>=" expression
-	expression/L4 = . expression "||" expression
-	expression/L5 = . expression "&&" expression
-	expression/L6 = . expression "|" expression
-	expression/L7 = . expression "^" expression
-	expression/L7 = . expression "&" expression
-	expression/L8 = . expression "==" expression
-	expression/L8 = . expression "!=" expression
-	expression/L8 = . expression "<=" expression
-	expression/L8 = . expression "<" expression
-	expression/L8 = . expression ">=" expression
-	expression/L8 = . expression ">" expression
-	expression/L9 = . expression "+" expression
-	expression/L9 = . expression "-" expression
-	expression/L9 = . "&" expression
-	expression/L9 = . "-" expression
-	expression/L9 = . "+" expression
-	expression/L9 = . "~" expression
-	expression/L9 = . "!" expression
-	expression/L10 = . expression "*" expression
-	expression/L10 = . expression "/" expression
-	expression/L10 = . expression "%" expression
-	expression/L11 = . expression "<<" expression
-	expression/L11 = . expression ">>" expression
-	expression/L12 = . iexpression
-	expression/L12 = . expression "." IDENT
-	expression/L12 = . "*" expression
-	expression/L13 = . expression "(" expressionlist ")"
-	expression/L13 = . expression "(" ")"
-	expression/L13 = . expression "[" expressionlist "]"
-	iexpression/L14 = . expression indirection IDENT
-[XX]
-	callablebody = "(" parameterlist ")" "const" "{" statementlist . "}"
-[XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" statementlist . "}"
-[XX]
-	callablebody = "(" parameterlist ")" "{" statementlist "}" .
+	callablebody = "(" parameterlist ")" funcattribute "{" statementlist . "}"
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody .
 [XX]
@@ -8196,16 +7872,6 @@ expressionlist/L0 = expression
 	funcattribute = .
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist ")" funcattribute . ";"
-[XX]
-	funcattribute = . "const" funcattribute
-	funcattribute = "const" . funcattribute
-	funcattribute = . "nothrow" funcattribute
-	funcattribute = .
-[XX]
-	funcattribute = . "const" funcattribute
-	funcattribute = . "nothrow" funcattribute
-	funcattribute = "nothrow" . funcattribute
-	funcattribute = .
 [XX]
 	ininterf_definition = "operator" operatordecl typespec "(" extern_paramlist ")" . funcattribute ";"
 	funcattribute = . "const" funcattribute
@@ -8278,21 +7944,13 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" codeblock .
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist . "}"
-[XX]
-	callablebody = "(" parameterlist ")" "const" "{" statementlist "}" .
-[XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" statementlist "}" .
+	callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" .
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist . "}"
 [XX]
 	ininterf_definition = "function" IDENT typespec "(" extern_paramlist ")" funcattribute . ";"
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist ")" funcattribute ";" .
-[XX]
-	funcattribute = "const" funcattribute .
-[XX]
-	funcattribute = "nothrow" funcattribute .
 [XX]
 	ininterf_definition = "operator" operatordecl typespec "(" extern_paramlist ")" funcattribute . ";"
 [XX]
@@ -8339,8 +7997,6 @@ expressionlist/L0 = expression
 	iexpression/L14 = expression . indirection IDENT
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
-[XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist "}" .
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" .
 [XX]
@@ -8752,10 +8408,7 @@ expressionlist/L0 = expression
 [XX]
 	functiondefinition = linkage "procedure" IDENT callablebody .
 [XX]
-	callablebody = "(" . parameterlist ")" "nothrow" "{" statementlist "}"
-	callablebody = "(" . parameterlist ")" "{" statementlist "}"
-	callablebody = "(" . parameterlist ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = "(" . parameterlist ")" "const" "{" statementlist "}"
+	callablebody = "(" . parameterlist ")" funcattribute "{" statementlist "}"
 [XX]
 	typehdr/L1 = "any" "const" "class" "^" .
 [XX]
@@ -9447,10 +9100,7 @@ expressionlist/L0 = expression
 [XX]
 	paramdecl = typespec . IDENT
 [XX]
-	callablebody = "(" parameterlist . ")" "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist . ")" "{" statementlist "}"
-	callablebody = "(" parameterlist . ")" "const" "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist . ")" "const" "{" statementlist "}"
+	callablebody = "(" parameterlist . ")" funcattribute "{" statementlist "}"
 [XX]
 	parameterlist = parameters .
 [XX]
@@ -10951,10 +10601,7 @@ expressionlist/L0 = expression
 [XX]
 	paramdecl = typespec IDENT .
 [XX]
-	callablebody = "(" parameterlist ")" . "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist ")" . "{" statementlist "}"
-	callablebody = "(" parameterlist ")" . "const" "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist ")" . "const" "{" statementlist "}"
+	callablebody = "(" parameterlist ")" . funcattribute "{" statementlist "}"
 [XX]
 	parameters = paramdecl "," . parameters
 [XX]
@@ -11147,12 +10794,11 @@ expressionlist/L0 = expression
 	expression/L13 = expression . "[" expressionlist "]"
 	iexpression/L14 = expression . indirection IDENT
 [XX]
-	callablebody = "(" parameterlist ")" "const" . "nothrow" "{" statementlist "}"
-	callablebody = "(" parameterlist ")" "const" . "{" statementlist "}"
+	callablebody = "(" parameterlist ")" funcattribute . "{" statementlist "}"
 [XX]
-	callablebody = "(" parameterlist ")" "nothrow" . "{" statementlist "}"
+	funcattribute = "const" . funcattribute
 [XX]
-	callablebody = "(" parameterlist ")" "{" . statementlist "}"
+	funcattribute = "nothrow" . funcattribute
 [XX]
 	parameters = paramdecl "," parameters .
 [XX]
@@ -11220,13 +10866,11 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" .
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" . "{" statementlist "}"
+	callablebody = "(" parameterlist ")" funcattribute "{" . statementlist "}"
 [XX]
-	callablebody = "(" parameterlist ")" "const" "{" . statementlist "}"
+	funcattribute = "const" funcattribute .
 [XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" . statementlist "}"
-[XX]
-	callablebody = "(" parameterlist ")" "{" statementlist . "}"
+	funcattribute = "nothrow" funcattribute .
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec callablebody .
 [XX]
@@ -11269,13 +10913,7 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" . codeblock
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" . statementlist "}"
-[XX]
-	callablebody = "(" parameterlist ")" "const" "{" statementlist . "}"
-[XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" statementlist . "}"
-[XX]
-	callablebody = "(" parameterlist ")" "{" statementlist "}" .
+	callablebody = "(" parameterlist ")" funcattribute "{" statementlist . "}"
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody .
 [XX]
@@ -11294,10 +10932,6 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist ")" funcattribute . ";"
 [XX]
-	funcattribute = "const" . funcattribute
-[XX]
-	funcattribute = "nothrow" . funcattribute
-[XX]
 	ininterf_definition = "operator" operatordecl typespec "(" extern_paramlist ")" . funcattribute ";"
 [XX]
 	ininterf_definition = "operator" operatordecl "(" extern_paramlist ")" funcattribute . ";"
@@ -11309,21 +10943,13 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" codeblock .
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist . "}"
-[XX]
-	callablebody = "(" parameterlist ")" "const" "{" statementlist "}" .
-[XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" statementlist "}" .
+	callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" .
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist . "}"
 [XX]
 	ininterf_definition = "function" IDENT typespec "(" extern_paramlist ")" funcattribute . ";"
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist ")" funcattribute ";" .
-[XX]
-	funcattribute = "const" funcattribute .
-[XX]
-	funcattribute = "nothrow" funcattribute .
 [XX]
 	ininterf_definition = "operator" operatordecl typespec "(" extern_paramlist ")" funcattribute . ";"
 [XX]
@@ -11368,8 +10994,6 @@ expressionlist/L0 = expression
 	expression/L13 = expression . "(" ")"
 	expression/L13 = expression . "[" expressionlist "]"
 	iexpression/L14 = expression . indirection IDENT
-[XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist "}" .
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" .
 [XX]
@@ -11428,13 +11052,14 @@ expressionlist/L0 = expression
 [XX]: {'(' ')' ';' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
 [XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "elseif" "else" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' ')' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
-[XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' ']' '&' '{' ':'}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {')' ']' '}'}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' ']' '&' '{' ':'}
+[XX]: {';' '{'}
 [XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' '&' ':'}
 [XX]: {IDENT '(' ')' "..." ',' ':'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 
 -- LALR(XX) states (merged LR(XX) elements assigned to LR(XX) states):
 [XX]
@@ -11680,7 +11305,7 @@ expressionlist/L0 = expression
 	typespec/L1 = typegen "&" . (XX), FOLLOW [XX] -> REDUCE typespec #2 CALL typespec_ref
 [XX]
 	variabledefinition = typespec IDENT . "=" expression, FOLLOW [XX] -> SHIFT '=' GOTO XX
-	variabledefinition = typespec IDENT . (step:103), FOLLOW [XX] -> REDUCE variabledefinition #2 CALL vardef
+	variabledefinition = typespec IDENT . (step:100), FOLLOW [XX] -> REDUCE variabledefinition #2 CALL vardef
 [XX]
 	free_definition = typedefinition ";" . (XX), FOLLOW [XX] -> REDUCE free_definition #2 CALL definition 1
 [XX]
@@ -11929,10 +11554,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 [XX]
 	functiondefinition = linkage "procedure" IDENT . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	typename/L1 = IDENT "::" typename ., FOLLOW [XX] -> REDUCE typename #3
 [XX]
@@ -13137,7 +12759,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	variabledefinition = typespec IDENT "=" expression . (step:104), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef_assign
+	variabledefinition = typespec IDENT "=" expression . (step:101), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef_assign
 [XX]
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -13202,10 +12824,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
 	functiondefinition = linkage "function" IDENT typespec . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	functiondefinition = linkage "procedure" IDENT callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #4 CALL procdef
 [XX]
@@ -13217,10 +12836,7 @@ expressionlist/L0 = expression
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
 	paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" . parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> GOTO XX
-	callablebody = "(" . parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> GOTO XX
-	callablebody = "(" . parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> GOTO XX
-	callablebody = "(" . parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> GOTO XX
+	callablebody = "(" . parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> GOTO XX
 	parameterlist = . parameters, FOLLOW [XX] -> GOTO XX
 	parameters = . paramdecl "," parameters, FOLLOW [XX] -> GOTO XX
 	parameters = . paramdecl, FOLLOW [XX] -> GOTO XX
@@ -13524,9 +13140,9 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = typedefinition ";" . (XX), FOLLOW [XX] -> REDUCE statement #2 CALL definition 1
 [XX]
-	codeblock/L1 = "{" statementlist "}" . (scope:89), FOLLOW [XX] -> REDUCE codeblock #3 CALL codeblock
+	codeblock/L1 = "{" statementlist "}" . (scope:86), FOLLOW [XX] -> REDUCE codeblock #3 CALL codeblock
 [XX]
-	statement/L1 = tryblock catchblock . (scope:98), FOLLOW [XX] -> REDUCE statement #2 CALL trycatch
+	statement/L1 = tryblock catchblock . (scope:95), FOLLOW [XX] -> REDUCE statement #2 CALL trycatch
 [XX]
 	catchblock = "catch" . IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	catchblock = "catch" . IDENT "," IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
@@ -15876,7 +15492,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 [XX]
-	statement/L1 = "return" ";" . (step:96), FOLLOW [XX] -> REDUCE statement #2 CALL return_void
+	statement/L1 = "return" ";" . (step:93), FOLLOW [XX] -> REDUCE statement #2 CALL return_void
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16194,10 +15810,7 @@ expressionlist/L0 = expression
 [XX]
 	paramdecl = typespec . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
-	callablebody = "(" parameterlist . ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
-	callablebody = "(" parameterlist . ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
-	callablebody = "(" parameterlist . ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
-	callablebody = "(" parameterlist . ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
+	callablebody = "(" parameterlist . ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
 	parameterlist = parameters . (XX), FOLLOW [XX] -> REDUCE parameterlist #1 CALL paramdeflist
 [XX]
@@ -16237,10 +15850,7 @@ expressionlist/L0 = expression
 	operatordecl = . "<", FOLLOW [XX] -> SHIFT '<' GOTO XX
 [XX]
 	constructordefinition = linkage "constructor" . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	inclass_definition = variabledefinition ";" . (XX), FOLLOW [XX] -> REDUCE inclass_definition #2 CALL definition 2
 [XX]
@@ -16639,7 +16249,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
+	expression/L3 = expression "=" expression . (step:113), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17336,7 +16946,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "+=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
+	expression/L3 = expression "+=" expression . (step:114), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17377,7 +16987,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "-=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
+	expression/L3 = expression "-=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17418,7 +17028,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "*=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
+	expression/L3 = expression "*=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17459,7 +17069,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "/=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
+	expression/L3 = expression "/=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17500,7 +17110,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "^=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
+	expression/L3 = expression "^=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17541,7 +17151,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
+	expression/L3 = expression "&=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17582,7 +17192,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "%=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
+	expression/L3 = expression "%=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17623,7 +17233,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&&=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
+	expression/L3 = expression "&&=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17664,7 +17274,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "||=" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
+	expression/L3 = expression "||=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17705,7 +17315,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "|=" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
+	expression/L3 = expression "|=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17746,7 +17356,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "<<=" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
+	expression/L3 = expression "<<=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17787,7 +17397,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression ">>=" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
+	expression/L3 = expression ">>=" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
 [XX]
 	expression/L12 = expression "." IDENT . (XX), FOLLOW [XX] -> REDUCE expression #3 CALL member
 [XX]
@@ -17858,7 +17468,7 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "var" variabledefinition ";" . (step:16), FOLLOW [XX] -> REDUCE statement #3 CALL definition 1
 [XX]
-	statement/L1 = "return" expression ";" . (step:95), FOLLOW [XX] -> REDUCE statement #3 CALL return_value
+	statement/L1 = "return" expression ";" . (step:92), FOLLOW [XX] -> REDUCE statement #3 CALL return_value
 [XX]
 	statement/L1 = "throw" expression ";" . (XX), FOLLOW [XX] -> REDUCE statement #3 CALL throw_exception
 [XX]
@@ -18168,10 +17778,10 @@ expressionlist/L0 = expression
 [XX]
 	paramdecl = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE paramdecl #2 CALL paramdef
 [XX]
-	callablebody = "(" parameterlist ")" . "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT "const" GOTO XX
-	callablebody = "(" parameterlist ")" . "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT "const" GOTO XX
-	callablebody = "(" parameterlist ")" . "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	callablebody = "(" parameterlist ")" . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	callablebody = "(" parameterlist ")" . funcattribute "{" statementlist "}", FOLLOW [XX] -> GOTO XX
+	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
+	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
+	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
 [XX]
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
@@ -18203,10 +17813,7 @@ expressionlist/L0 = expression
 	operatordefinition = linkage "operator" operatordecl . callablebody, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
 	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
@@ -18483,117 +18090,22 @@ expressionlist/L0 = expression
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 	expression/L1 = "cast" typespec ":" expression . (XX), FOLLOW [XX] -> REDUCE expression #4 CALL typecast
 [XX]
-	callablebody = "(" parameterlist ")" "const" . "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	callablebody = "(" parameterlist ")" "const" . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	callablebody = "(" parameterlist ")" funcattribute . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
-	callablebody = "(" parameterlist ")" "nothrow" . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	funcattribute = "const" . funcattribute, FOLLOW [XX] -> GOTO XX
+	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
+	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
+	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
 [XX]
-	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" parameterlist ")" "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
-	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "*=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "/=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "^=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "%=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "||=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "|=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "<<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression ">>=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L4 = . expression "||" expression, FOLLOW [XX] -> GOTO XX
-	expression/L5 = . expression "&&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L6 = . expression "|" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "^" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "==" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "!=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "+" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "-" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "*" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "/" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "%" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression "<<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression ">>" expression, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . expression "." IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" expressionlist ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "[" expressionlist "]", FOLLOW [XX] -> GOTO XX
-	iexpression/L14 = . expression indirection IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . iexpression, FOLLOW [XX] -> GOTO XX
-	expression/L2 = . BOOLEAN, FOLLOW [XX] -> SHIFT BOOLEAN GOTO XX
-	expression/L2 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
-	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
-	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
-	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
-	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "struct" GOTO XX
-	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
-	typedefinition = . "typedef" typegen IDENT, FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" expressionlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	linkage = . "private", FOLLOW [XX] -> SHIFT "private" GOTO XX
-	linkage = . "public", FOLLOW [XX] -> SHIFT "public" GOTO XX
-	expression/L9 = . "+" expression, FOLLOW [XX] -> SHIFT '+' GOTO XX
-	expression/L9 = . "-" expression, FOLLOW [XX] -> SHIFT '-' GOTO XX
-	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
-	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
-	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
-	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
-	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
-	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "return" ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "throw" expression "," expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "throw" expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "delete" expression ";", FOLLOW [XX] -> SHIFT "delete" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "while" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "while" GOTO XX
-	statement/L1 = . "with" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "with" GOTO XX
-	statement/L1 = . "with" "(" expression ")" ";", FOLLOW [XX] -> SHIFT "with" GOTO XX
-	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
-	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
-	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
-	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
-	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
+	funcattribute = "nothrow" . funcattribute, FOLLOW [XX] -> GOTO XX
+	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
+	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
+	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
 [XX]
 	parameters = paramdecl "," parameters ., FOLLOW [XX] -> REDUCE parameters #3
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	operatordefinition = linkage "operator" operatordecl callablebody . (XX), FOLLOW [XX] -> REDUCE operatordefinition #4 CALL operator_procdef
 [XX]
@@ -18643,10 +18155,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" "{" . inclass_definitionlist "}", FOLLOW [XX] -> GOTO XX
 	inclass_definitionlist = . inclass_definition inclass_definitionlist, FOLLOW [XX] -> GOTO XX
@@ -18828,8 +18337,6 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" . (XX), FOLLOW [XX] -> REDUCE statement #5 CALL with_do
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-[XX]
 	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
@@ -18837,7 +18344,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" parameterlist ")" "const" "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
+	callablebody = "(" parameterlist ")" funcattribute "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
 	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
@@ -18929,106 +18436,9 @@ expressionlist/L0 = expression
 	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
 	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
 [XX]
-	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" parameterlist ")" "nothrow" "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
-	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "*=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "/=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "^=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "%=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "||=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "|=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "<<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression ">>=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L4 = . expression "||" expression, FOLLOW [XX] -> GOTO XX
-	expression/L5 = . expression "&&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L6 = . expression "|" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "^" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "==" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "!=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "+" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "-" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "*" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "/" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "%" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression "<<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression ">>" expression, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . expression "." IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" expressionlist ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "[" expressionlist "]", FOLLOW [XX] -> GOTO XX
-	iexpression/L14 = . expression indirection IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . iexpression, FOLLOW [XX] -> GOTO XX
-	expression/L2 = . BOOLEAN, FOLLOW [XX] -> SHIFT BOOLEAN GOTO XX
-	expression/L2 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
-	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
-	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
-	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
-	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "struct" GOTO XX
-	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
-	typedefinition = . "typedef" typegen IDENT, FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" expressionlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	linkage = . "private", FOLLOW [XX] -> SHIFT "private" GOTO XX
-	linkage = . "public", FOLLOW [XX] -> SHIFT "public" GOTO XX
-	expression/L9 = . "+" expression, FOLLOW [XX] -> SHIFT '+' GOTO XX
-	expression/L9 = . "-" expression, FOLLOW [XX] -> SHIFT '-' GOTO XX
-	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
-	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
-	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
-	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
-	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
-	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "return" ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "throw" expression "," expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "throw" expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "delete" expression ";", FOLLOW [XX] -> SHIFT "delete" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "while" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "while" GOTO XX
-	statement/L1 = . "with" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "with" GOTO XX
-	statement/L1 = . "with" "(" expression ")" ";", FOLLOW [XX] -> SHIFT "with" GOTO XX
-	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
-	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
-	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
-	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
-	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
+	funcattribute = "const" funcattribute . (XX), FOLLOW [XX] -> REDUCE funcattribute #2 CALL funcattribute {const=true}
 [XX]
-	callablebody = "(" parameterlist ")" "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
+	funcattribute = "nothrow" funcattribute . (XX), FOLLOW [XX] -> REDUCE funcattribute #2 CALL funcattribute {throws=false}
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec callablebody . (XX), FOLLOW [XX] -> REDUCE operatordefinition #5 CALL operator_funcdef
 [XX]
@@ -19037,10 +18447,7 @@ expressionlist/L0 = expression
 	extern_parameters = typespec IDENT "," extern_parameters . (XX), FOLLOW [XX] -> REDUCE extern_parameters #4 CALL extern_paramdef
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "nothrow" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	callablebody = . "(" parameterlist ")" "const" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #8 CALL generic_procdef
 [XX]
@@ -19084,110 +18491,7 @@ expressionlist/L0 = expression
 	elseblock/L1 = "else" . codeblock, FOLLOW [XX] -> GOTO XX
 	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
-	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
-	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "*=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "/=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "^=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "%=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "||=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "|=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "<<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression ">>=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L4 = . expression "||" expression, FOLLOW [XX] -> GOTO XX
-	expression/L5 = . expression "&&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L6 = . expression "|" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "^" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "==" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "!=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "+" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "-" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "*" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "/" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "%" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression "<<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression ">>" expression, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . expression "." IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" expressionlist ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "[" expressionlist "]", FOLLOW [XX] -> GOTO XX
-	iexpression/L14 = . expression indirection IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . iexpression, FOLLOW [XX] -> GOTO XX
-	expression/L2 = . BOOLEAN, FOLLOW [XX] -> SHIFT BOOLEAN GOTO XX
-	expression/L2 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
-	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
-	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
-	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
-	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "struct" GOTO XX
-	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
-	typedefinition = . "typedef" typegen IDENT, FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" expressionlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	linkage = . "private", FOLLOW [XX] -> SHIFT "private" GOTO XX
-	linkage = . "public", FOLLOW [XX] -> SHIFT "public" GOTO XX
-	expression/L9 = . "+" expression, FOLLOW [XX] -> SHIFT '+' GOTO XX
-	expression/L9 = . "-" expression, FOLLOW [XX] -> SHIFT '-' GOTO XX
-	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
-	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
-	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
-	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
-	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
-	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "return" ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "throw" expression "," expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "throw" expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "delete" expression ";", FOLLOW [XX] -> SHIFT "delete" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "while" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "while" GOTO XX
-	statement/L1 = . "with" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "with" GOTO XX
-	statement/L1 = . "with" "(" expression ")" ";", FOLLOW [XX] -> SHIFT "with" GOTO XX
-	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
-	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
-	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
-	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
-	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
-[XX]
-	callablebody = "(" parameterlist ")" "const" "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
-[XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
-[XX]
-	callablebody = "(" parameterlist ")" "{" statementlist "}" . (scope:83), FOLLOW [XX] -> REDUCE callablebody #6 CALL callablebody {throws=true,const=false}
+	callablebody = "(" parameterlist ")" funcattribute "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #9 CALL generic_funcdef
 [XX]
@@ -19257,16 +18561,6 @@ expressionlist/L0 = expression
 	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist ")" funcattribute . ";", FOLLOW [XX] -> SHIFT ';' GOTO XX
-[XX]
-	funcattribute = "const" . funcattribute, FOLLOW [XX] -> GOTO XX
-	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
-	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
-[XX]
-	funcattribute = "nothrow" . funcattribute, FOLLOW [XX] -> GOTO XX
-	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
-	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
 [XX]
 	ininterf_definition = "operator" operatordecl typespec "(" extern_paramlist ")" . funcattribute ";", FOLLOW [XX] -> GOTO XX
 	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -19339,21 +18633,13 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" codeblock . (XX), FOLLOW [XX] -> REDUCE elseblock #2 CALL conditional_else
 [XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
-[XX]
-	callablebody = "(" parameterlist ")" "const" "{" statementlist "}" . (scope:85), FOLLOW [XX] -> REDUCE callablebody #7 CALL callablebody {throws=true,const=true}
-[XX]
-	callablebody = "(" parameterlist ")" "nothrow" "{" statementlist "}" . (scope:82), FOLLOW [XX] -> REDUCE callablebody #7 CALL callablebody {throws=false,const=false}
+	callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" . (scope:82), FOLLOW [XX] -> REDUCE callablebody #7 CALL callablebody
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
 	ininterf_definition = "function" IDENT typespec "(" extern_paramlist ")" funcattribute . ";", FOLLOW [XX] -> SHIFT ';' GOTO XX
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist ")" funcattribute ";" . (XX), FOLLOW [XX] -> REDUCE ininterf_definition #7 CALL interface_procdef
-[XX]
-	funcattribute = "const" funcattribute . (XX), FOLLOW [XX] -> REDUCE funcattribute #2 CALL funcattribute {const=true}
-[XX]
-	funcattribute = "nothrow" funcattribute . (XX), FOLLOW [XX] -> REDUCE funcattribute #2 CALL funcattribute {throws=false}
 [XX]
 	ininterf_definition = "operator" operatordecl typespec "(" extern_paramlist ")" funcattribute . ";", FOLLOW [XX] -> SHIFT ';' GOTO XX
 [XX]
@@ -19400,8 +18686,6 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-[XX]
-	callablebody = "(" parameterlist ")" "const" "nothrow" "{" statementlist "}" . (scope:84), FOLLOW [XX] -> REDUCE callablebody #8 CALL callablebody {throws=false,const=true}
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" . (step:41), FOLLOW [XX] -> REDUCE classdefinition #11 CALL generic_classdef
 [XX]
@@ -19503,10 +18787,7 @@ expressionlist/L0 = expression
 (XX) generic_header_ident_type
 (XX) generic_header_ident
 (XX) generic_header
-(XX) callablebody, {throws=false,const=false}
-(XX) callablebody, {throws=true,const=false}
-(XX) callablebody, {throws=false,const=true}
-(XX) callablebody, {throws=true,const=true}
+(XX) callablebody
 (XX) main_procdef
 (XX) paramdeflist
 (XX) paramdef
@@ -25209,7 +24490,7 @@ expressionlist/L0 = expression
 [XX]
 	"const" => Shift goto XX
 	"nothrow" => Shift goto XX
-	'{' => Shift goto XX
+	'{' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
 [XX]
 	IDENT => Shift goto XX
 	"const" => Shift goto XX
@@ -25552,46 +24833,17 @@ expressionlist/L0 = expression
 	">>=" => Shift goto XX
 	'.' => Shift goto XX
 [XX]
+	'{' => Shift goto XX
+[XX]
+	';' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
+	"const" => Shift goto XX
 	"nothrow" => Shift goto XX
-	'{' => Shift goto XX
+	'{' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
 [XX]
-	'{' => Shift goto XX
-[XX]
-	BOOLEAN => Shift goto XX
-	IDENT => Shift goto XX
-	DQSTRING => Shift goto XX
-	SQSTRING => Shift goto XX
-	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
-	FLOAT => Shift goto XX
-	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	'(' => Shift goto XX
-	"procedure" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	"class" => Shift goto XX
-	"struct" => Shift goto XX
-	'&' => Shift goto XX
-	"typedef" => Shift goto XX
-	'{' => Shift goto XX
-	'}' => Reduce #0 statementlist
-	"generic" => Shift goto XX
-	"private" => Shift goto XX
-	"public" => Shift goto XX
-	'+' => Shift goto XX
-	'-' => Shift goto XX
-	'*' => Shift goto XX
-	'~' => Shift goto XX
-	'!' => Shift goto XX
-	"try" => Shift goto XX
-	"var" => Shift goto XX
-	"return" => Shift goto XX
-	"throw" => Shift goto XX
-	"delete" => Shift goto XX
-	"if" => Shift goto XX
-	"while" => Shift goto XX
-	"with" => Shift goto XX
-	"new" => Shift goto XX
-	"cast" => Shift goto XX
-	"null" => Shift goto XX
+	';' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
+	"const" => Shift goto XX
+	"nothrow" => Shift goto XX
+	'{' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
 [XX]
 	')' => Reduce #3 parameters
 [XX]
@@ -25943,8 +25195,6 @@ expressionlist/L0 = expression
 	"cast" => Reduce #5 statement call with_do
 	"null" => Reduce #5 statement call with_do
 [XX]
-	'{' => Shift goto XX
-[XX]
 	BOOLEAN => Shift goto XX
 	IDENT => Shift goto XX
 	DQSTRING => Shift goto XX
@@ -25981,43 +25231,11 @@ expressionlist/L0 = expression
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
 [XX]
-	BOOLEAN => Shift goto XX
-	IDENT => Shift goto XX
-	DQSTRING => Shift goto XX
-	SQSTRING => Shift goto XX
-	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
-	FLOAT => Shift goto XX
-	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	'(' => Shift goto XX
-	"procedure" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	"class" => Shift goto XX
-	"struct" => Shift goto XX
-	'&' => Shift goto XX
-	"typedef" => Shift goto XX
-	'{' => Shift goto XX
-	'}' => Reduce #0 statementlist
-	"generic" => Shift goto XX
-	"private" => Shift goto XX
-	"public" => Shift goto XX
-	'+' => Shift goto XX
-	'-' => Shift goto XX
-	'*' => Shift goto XX
-	'~' => Shift goto XX
-	'!' => Shift goto XX
-	"try" => Shift goto XX
-	"var" => Shift goto XX
-	"return" => Shift goto XX
-	"throw" => Shift goto XX
-	"delete" => Shift goto XX
-	"if" => Shift goto XX
-	"while" => Shift goto XX
-	"with" => Shift goto XX
-	"new" => Shift goto XX
-	"cast" => Shift goto XX
-	"null" => Shift goto XX
+	';' => Reduce #2 funcattribute call funcattribute {const=true}
+	'{' => Reduce #2 funcattribute call funcattribute {const=true}
 [XX]
-	'}' => Shift goto XX
+	';' => Reduce #2 funcattribute call funcattribute {throws=false}
+	'{' => Reduce #2 funcattribute call funcattribute {throws=false}
 [XX]
 	$ => Reduce #5 operatordefinition call operator_funcdef
 	IDENT => Reduce #5 operatordefinition call operator_funcdef
@@ -26223,90 +25441,7 @@ expressionlist/L0 = expression
 [XX]
 	'{' => Shift goto XX
 [XX]
-	BOOLEAN => Shift goto XX
-	IDENT => Shift goto XX
-	DQSTRING => Shift goto XX
-	SQSTRING => Shift goto XX
-	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
-	FLOAT => Shift goto XX
-	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	'(' => Shift goto XX
-	"procedure" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	"class" => Shift goto XX
-	"struct" => Shift goto XX
-	'&' => Shift goto XX
-	"typedef" => Shift goto XX
-	'{' => Shift goto XX
-	'}' => Reduce #0 statementlist
-	"generic" => Shift goto XX
-	"private" => Shift goto XX
-	"public" => Shift goto XX
-	'+' => Shift goto XX
-	'-' => Shift goto XX
-	'*' => Shift goto XX
-	'~' => Shift goto XX
-	'!' => Shift goto XX
-	"try" => Shift goto XX
-	"var" => Shift goto XX
-	"return" => Shift goto XX
-	"throw" => Shift goto XX
-	"delete" => Shift goto XX
-	"if" => Shift goto XX
-	"while" => Shift goto XX
-	"with" => Shift goto XX
-	"new" => Shift goto XX
-	"cast" => Shift goto XX
-	"null" => Shift goto XX
-[XX]
 	'}' => Shift goto XX
-[XX]
-	'}' => Shift goto XX
-[XX]
-	$ => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	BOOLEAN => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	IDENT => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	DQSTRING => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	SQSTRING => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	UINTEGER => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	SINTEGER => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	FLOAT => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"function" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'(' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"procedure" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"operator" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"const" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"any" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"class" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"struct" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'&' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"typedef" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'{' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'}' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"generic" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"interface" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"namespace" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"private" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"public" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"constructor" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"destructor" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'+' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'-' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'*' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'~' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	'!' => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"main" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"try" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"var" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"return" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"throw" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"delete" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"if" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"while" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"with" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"new" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"cast" => Reduce #6 callablebody call callablebody {throws=true,const=false}
-	"null" => Reduce #6 callablebody call callablebody {throws=true,const=false}
 [XX]
 	$ => Reduce #9 functiondefinition call generic_funcdef
 	BOOLEAN => Reduce #9 functiondefinition call generic_funcdef
@@ -26474,14 +25609,6 @@ expressionlist/L0 = expression
 	"const" => Shift goto XX
 	"nothrow" => Shift goto XX
 [XX]
-	';' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
-	"const" => Shift goto XX
-	"nothrow" => Shift goto XX
-[XX]
-	';' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
-	"const" => Shift goto XX
-	"nothrow" => Shift goto XX
-[XX]
 	';' => Shift goto XX
 [XX]
 	$ => Reduce #10 extern_definition call extern_funcdef_vararg
@@ -26557,97 +25684,50 @@ expressionlist/L0 = expression
 	"cast" => Reduce #2 elseblock call conditional_else
 	"null" => Reduce #2 elseblock call conditional_else
 [XX]
-	'}' => Shift goto XX
-[XX]
-	$ => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	BOOLEAN => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	IDENT => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	DQSTRING => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	SQSTRING => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	UINTEGER => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	SINTEGER => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	FLOAT => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"function" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'(' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"procedure" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"operator" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"const" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"any" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"class" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"struct" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'&' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"typedef" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'{' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'}' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"generic" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"interface" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"namespace" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"private" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"public" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"constructor" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"destructor" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'+' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'-' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'*' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'~' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	'!' => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"main" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"try" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"var" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"return" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"throw" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"delete" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"if" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"while" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"with" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"new" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"cast" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-	"null" => Reduce #7 callablebody call callablebody {throws=true,const=true}
-[XX]
-	$ => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	BOOLEAN => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	IDENT => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	DQSTRING => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	SQSTRING => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	UINTEGER => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	SINTEGER => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	FLOAT => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"function" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'(' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"procedure" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"operator" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"const" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"any" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"class" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"struct" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'&' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"typedef" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'{' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'}' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"generic" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"interface" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"namespace" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"private" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"public" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"constructor" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"destructor" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'+' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'-' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'*' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'~' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	'!' => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"main" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"try" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"var" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"return" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"throw" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"delete" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"if" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"while" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"with" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"new" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"cast" => Reduce #7 callablebody call callablebody {throws=false,const=false}
-	"null" => Reduce #7 callablebody call callablebody {throws=false,const=false}
+	$ => Reduce #7 callablebody call callablebody
+	BOOLEAN => Reduce #7 callablebody call callablebody
+	IDENT => Reduce #7 callablebody call callablebody
+	DQSTRING => Reduce #7 callablebody call callablebody
+	SQSTRING => Reduce #7 callablebody call callablebody
+	UINTEGER => Reduce #7 callablebody call callablebody
+	SINTEGER => Reduce #7 callablebody call callablebody
+	FLOAT => Reduce #7 callablebody call callablebody
+	"function" => Reduce #7 callablebody call callablebody
+	'(' => Reduce #7 callablebody call callablebody
+	"procedure" => Reduce #7 callablebody call callablebody
+	"operator" => Reduce #7 callablebody call callablebody
+	"const" => Reduce #7 callablebody call callablebody
+	"any" => Reduce #7 callablebody call callablebody
+	"class" => Reduce #7 callablebody call callablebody
+	"struct" => Reduce #7 callablebody call callablebody
+	'&' => Reduce #7 callablebody call callablebody
+	"typedef" => Reduce #7 callablebody call callablebody
+	'{' => Reduce #7 callablebody call callablebody
+	'}' => Reduce #7 callablebody call callablebody
+	"generic" => Reduce #7 callablebody call callablebody
+	"interface" => Reduce #7 callablebody call callablebody
+	"namespace" => Reduce #7 callablebody call callablebody
+	"private" => Reduce #7 callablebody call callablebody
+	"public" => Reduce #7 callablebody call callablebody
+	"constructor" => Reduce #7 callablebody call callablebody
+	"destructor" => Reduce #7 callablebody call callablebody
+	'+' => Reduce #7 callablebody call callablebody
+	'-' => Reduce #7 callablebody call callablebody
+	'*' => Reduce #7 callablebody call callablebody
+	'~' => Reduce #7 callablebody call callablebody
+	'!' => Reduce #7 callablebody call callablebody
+	"main" => Reduce #7 callablebody call callablebody
+	"try" => Reduce #7 callablebody call callablebody
+	"var" => Reduce #7 callablebody call callablebody
+	"return" => Reduce #7 callablebody call callablebody
+	"throw" => Reduce #7 callablebody call callablebody
+	"delete" => Reduce #7 callablebody call callablebody
+	"if" => Reduce #7 callablebody call callablebody
+	"while" => Reduce #7 callablebody call callablebody
+	"with" => Reduce #7 callablebody call callablebody
+	"new" => Reduce #7 callablebody call callablebody
+	"cast" => Reduce #7 callablebody call callablebody
+	"null" => Reduce #7 callablebody call callablebody
 [XX]
 	'}' => Shift goto XX
 [XX]
@@ -26658,10 +25738,6 @@ expressionlist/L0 = expression
 	"procedure" => Reduce #7 ininterf_definition call interface_procdef
 	"operator" => Reduce #7 ininterf_definition call interface_procdef
 	'}' => Reduce #7 ininterf_definition call interface_procdef
-[XX]
-	';' => Reduce #2 funcattribute call funcattribute {const=true}
-[XX]
-	';' => Reduce #2 funcattribute call funcattribute {throws=false}
 [XX]
 	';' => Shift goto XX
 [XX]
@@ -26707,51 +25783,6 @@ expressionlist/L0 = expression
 	"<<=" => Shift goto XX
 	">>=" => Shift goto XX
 	'.' => Shift goto XX
-[XX]
-	$ => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	BOOLEAN => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	IDENT => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	DQSTRING => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	SQSTRING => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	UINTEGER => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	SINTEGER => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	FLOAT => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"function" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'(' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"procedure" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"operator" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"const" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"any" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"class" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"struct" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'&' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"typedef" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'{' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'}' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"generic" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"interface" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"namespace" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"private" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"public" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"constructor" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"destructor" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'+' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'-' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'*' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'~' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	'!' => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"main" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"try" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"var" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"return" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"throw" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"delete" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"if" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"while" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"with" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"new" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"cast" => Reduce #8 callablebody call callablebody {throws=false,const=true}
-	"null" => Reduce #8 callablebody call callablebody {throws=false,const=true}
 [XX]
 	$ => Reduce #11 classdefinition call generic_classdef
 	BOOLEAN => Reduce #11 classdefinition call generic_classdef
@@ -27466,6 +26497,8 @@ expressionlist/L0 = expression
 	expression => XX
 	iexpression => XX
 [XX]
+	funcattribute => XX
+[XX]
 	typename => XX
 	typehdr => XX
 	typegen => XX
@@ -27518,17 +26551,9 @@ expressionlist/L0 = expression
 [XX]
 	indirection => XX
 [XX]
-	typedefinition => XX
-	structdefinition => XX
-	classdefinition => XX
-	linkage => XX
-	functiondefinition => XX
-	codeblock => XX
-	statementlist => XX
-	tryblock => XX
-	statement => XX
-	expression => XX
-	iexpression => XX
+	funcattribute => XX
+[XX]
+	funcattribute => XX
 [XX]
 	callablebody => XX
 [XX]
@@ -27606,18 +26631,6 @@ expressionlist/L0 = expression
 	expression => XX
 	iexpression => XX
 [XX]
-	typedefinition => XX
-	structdefinition => XX
-	classdefinition => XX
-	linkage => XX
-	functiondefinition => XX
-	codeblock => XX
-	statementlist => XX
-	tryblock => XX
-	statement => XX
-	expression => XX
-	iexpression => XX
-[XX]
 	callablebody => XX
 [XX]
 	generic_defaultlist => XX
@@ -27627,18 +26640,6 @@ expressionlist/L0 = expression
 	funcattribute => XX
 [XX]
 	codeblock => XX
-[XX]
-	typedefinition => XX
-	structdefinition => XX
-	classdefinition => XX
-	linkage => XX
-	functiondefinition => XX
-	codeblock => XX
-	statementlist => XX
-	tryblock => XX
-	statement => XX
-	expression => XX
-	iexpression => XX
 [XX]
 	inclass_definitionlist => XX
 	inclass_definition => XX
@@ -27655,10 +26656,6 @@ expressionlist/L0 = expression
 	constructordefinition => XX
 	operatordefinition => XX
 	variabledefinition => XX
-[XX]
-	funcattribute => XX
-[XX]
-	funcattribute => XX
 [XX]
 	funcattribute => XX
 [XX]

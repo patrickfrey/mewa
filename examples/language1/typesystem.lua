@@ -127,14 +127,16 @@ end
 --	initstate	: Initialization state counter in case of constructor, otherwise undefined
 --	partial_dtor	: Call of partial dtor in case of an exception, used in exception handling code in the case of a constructor, otherwise undefined
 --	initcontext	: Context of the class in case of a constructor, otherwise undefined
+--	throws		: True if the function is declared as potentially throwing exceptions
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
 	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
-function defineCallableEnvironment( node, name, rtype)
+function defineCallableEnvironment( node, name, rtype, throws)
 	local env = createCallableEnvironment( name, rtype)
 	env.line = node.line
+	env.throws = throws
 	if typedb:this_instance( currentCallableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
 	typedb:set_instance( currentCallableEnvKey, env)
 	return env
@@ -308,6 +310,9 @@ end
 -- Constructor of a function call generalized
 function functionCallConstructor( env, code, func, argstr, descr)
 	local out,fmt,subst
+	if not env.throws and descr.throws then
+		utils.errorMessage( env.line or 0, "Calling throwing function inside a callable declared as nothrow: %s", func)
+	end
 	if descr.ret then
 		if doReturnValueAsReferenceParameter( descr.ret) then
 			local reftypesubst; if argstr == "" then reftypesubst = "{RVAL}" else reftypesubst = "{RVAL}, " end
@@ -359,11 +364,11 @@ function interfaceMethodCallConstructor( descr)
 end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
-	local function initArrayElementCode( node, env, refTypeId, fmtLoadRef, this_inp, arg, ai)
+	local function initArrayElementCode( node, env, refTypeId, fmtLoadRef, this_inp, args, ai)
 		local out = env.register()
 		local code = utils.constructor_format( fmtLoadRef, {out = out, this = this_inp, index=ai-1}, env.register)
-		local res = applyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", arg)
-		return res.constructor.code
+		local res = tryApplyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", args)
+		if res then return res.constructor.code end
 	end
 	return function( this, args)
 		if #args > nofElements then
@@ -374,7 +379,11 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local refTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
 		local env = getCallableEnvironment()
 		local this_inp,res_code = constructorParts( this)
-		for ai=1,#args do res_code = res_code .. initArrayElementCode( node, env, refTypeId, descr.loadelemref, this_inp, {args[ai]}, ai) end
+		for ai=1,#args do
+			local elem_init = initArrayElementCode( node, env, refTypeId, descr.loadelemref, this_inp, {args[ai]}, ai)
+			if not elem_init then return nil end
+			res_code = res_code .. elem_init
+		end
 		if #args < nofElements then
 			local init = applyCallable( node, typeConstructorStruct( refTypeId, "%ths", ""), ":=", {})
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
@@ -389,7 +398,7 @@ function tryConstexprStructureReductionConstructorArray( node, thisTypeId, eleme
 	local initconstructor = memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( args) -- constructor of a constexpr structure type passed is a list of type constructor pairs
 		local rt = initconstructor( {out="{RVAL}"}, args);
-		rt.out = "RVAL";
+		if rt then rt.out = "RVAL"; end
 		return rt
 	end
 end
@@ -902,20 +911,19 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( arrayDescr.dtor))
 
-	if init and copy then
-		local redu_constructor_l = tryConstexprStructureReductionConstructorArray( node, qualitype.valtype, elementTypeId, arraySize)
-		local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_valtype, elementTypeId, arraySize)
-		typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
-		typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
-	end
+	local redu_constructor_l = tryConstexprStructureReductionConstructorArray( node, qualitype.valtype, elementTypeId, arraySize)
+	local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_valtype, elementTypeId, arraySize)
+	if redu_constructor_l then typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
+	if redu_constructor_c then typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
+
 	instantCallableEnvironment = nil
 end
 -- Define initialization from an initializer structure
 function defineInitializationFromStructure( node, qualitype)
 	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.valtype)
 	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_valtype)
-	typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv)
-	typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv)
+	if redu_constructor_l then typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
+	if redu_constructor_c then typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
 end
 -- Get the code of a class/struct destructor that calls the member destructors, for struct it is the complete constructor, for classes the final part
 function getStructMemberDestructorCode( env, descr, members)
@@ -1521,7 +1529,7 @@ function completeInitializationAndReturnThis(this)
 	local frame = getAllocationFrame()
 	local env = frame.env
 	local initcode = getImplicitInitCode( env, frame.initstate, #env.initcontext.members)
-	this.code = this.code .. initcode
+	this.code = (this.code or "") .. initcode
 	return this
 end
 -- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
@@ -2464,7 +2472,7 @@ function defineInterfaceOperator( node, descr, context)
 end
 -- Define the execution context of the body of any function/procedure/operator except the main function
 function defineCallableBodyContext( node, context, descr)
-	local env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret)
+	local env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, descr.throws)
 	if context.domain == "member" then
 		local privateConstThisReferenceType = getFunctionThisType( true, true, context.qualitype.reftype)
 		local privateThisReferenceType = getFunctionThisType( true, false, context.qualitype.reftype)
@@ -3149,16 +3157,18 @@ function typesystem.destructordef( node, lnk, context, pass)
 		printFunctionDeclaration( node, descr)
 	end
 end
-function typesystem.callablebody( node, decl, context, descr, selectid)
-	if selectid == 0 then return decl end
+function typesystem.callablebody( node, context, descr, selectid)
 	local rt
 	local subcontext = {domain="local"}
-	if selectid == 1 then -- parameter declarations
+	if selectid == 0 then -- function attributes {const,nothrow}
+		rt = utils.traverseRange( typedb, node, {2,2}, subcontext)[2]
+		return rt
+	elseif selectid == 1 then -- parameter declarations
 		defineCallableBodyContext( node, context, descr)
 		rt = utils.traverseRange( typedb, node, {1,1}, subcontext)[1]
 	elseif selectid == 2 then -- statements in body
 		local env = getCallableEnvironment()
-		local args = utils.traverseRange( typedb, node, {2,#node.arg,1}, subcontext)
+		local args = utils.traverseRange( typedb, node, {3,#node.arg,1}, subcontext)
 		local block = collectCode( node, args)
 		local code = block.code
 		if descr.ret then
@@ -3351,7 +3361,7 @@ end
 function typesystem.main_procdef( node)
 	local context = {domain="local"}
 	local scope_bk = typedb:scope( node.arg[1].scope)
-	local env = defineCallableEnvironment( node, "main ", scalarIntegerType)
+	local env = defineCallableEnvironment( node, "main ", scalarIntegerType, true)
 	local exitlabel = env.label()
 	local retvaladr = env.register()
 	local retvalinit = utils.constructor_format( typeDescriptionMap[ scalarIntegerType].def_local, {out=retvaladr}, env.register)

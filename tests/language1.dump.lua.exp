@@ -41,7 +41,7 @@
 		"expression", "iexpression", "indirection", "expressionlist"},
 	action = {
 		[XX] = YY,	[XX] = YY,	[XX] = YY,	[XX] = YY,
-		[XX] = YY,	[XX] = YY,	[XX] = YY,	[XX] = YY},
+		[XX] = YY},
 	gto = {
 		[XX] = YY,	[XX] = YY,	[XX] = YY,	[XX] = YY,
 		[XX] = YY,	[XX] = YY,	[XX] = YY},
@@ -127,10 +127,7 @@
 		{ name="generic_header_ident_type", proc=typesystem.generic_header_ident_type},
 		{ name="generic_header_ident", proc=typesystem.generic_header_ident},
 		{ name="generic_header", proc=typesystem.generic_header},
-		{ name="callablebody {throws=false,const=false}", proc=typesystem.callablebody, obj={throws=false,const=false}},
-		{ name="callablebody {throws=true,const=false}", proc=typesystem.callablebody, obj={throws=true,const=false}},
-		{ name="callablebody {throws=false,const=true}", proc=typesystem.callablebody, obj={throws=false,const=true}},
-		{ name="callablebody {throws=true,const=true}", proc=typesystem.callablebody, obj={throws=true,const=true}},
+		{ name="callablebody", proc=typesystem.callablebody},
 		{ name="main_procdef", proc=typesystem.main_procdef},
 		{ name="paramdeflist", proc=typesystem.paramdeflist},
 		{ name="paramdef", proc=typesystem.paramdef},

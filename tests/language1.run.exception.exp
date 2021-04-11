@@ -1,1 +1,78 @@
+Get string
+Constructor string [Hello world!]
+DEBUG
+Get string
+Constructor string [H]
+Get string
+Constructor string [e]
+Get string
+Constructor string [l]
+Get string
+Constructor string [l]
+Get string
+Constructor string [o]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [w]
+Get string
+Constructor string [o]
+Get string
+Constructor string [r]
+Get string
+Constructor string [l]
+Get string
+Constructor string [d!]
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
 Hello world!
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string [d!]
+Get string
+Destructor string [l]
+Get string
+Destructor string [r]
+Get string
+Destructor string [o]
+Get string
+Destructor string [w]
+Get string
+Destructor string [ ]
+Get string
+Destructor string [o]
+Get string
+Destructor string [l]
+Get string
+Destructor string [l]
+Get string
+Destructor string [e]
+Get string
+Destructor string [H]
+Get string
+Destructor string [Hello world!]

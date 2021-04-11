@@ -13,8 +13,10 @@ enter:
 %ths_top = getelementptr inbounds [3 x double], [3 x double]* %ar, i32 0, i32 3
 br label %loop
 loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %cond]
 store double 0.00000, double* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds double, double* %ths, i64 1
 %A3 = icmp eq double* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -28,10 +30,12 @@ enter:
 %oth_base = getelementptr inbounds [3 x double], [3 x double]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
-%oth = phi double* [%oth_base, %enter], [%A3, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %cond]
+%oth = phi double* [%oth_base, %enter], [%A3, %cond]
 %r1 = load double, double* %oth
 store double %r1, double* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds double, double* %ths, i64 1
 %A3 = getelementptr inbounds double, double* %oth, i64 1
 %A4 = icmp eq double* %A2, %ths_top
@@ -62,8 +66,10 @@ enter:
 %ths_top = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %ar, i32 0, i32 4
 br label %loop
 loop:
-%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
+%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %cond]
 call void @__ctor_init_3__double( [3 x double]* %ths, i32 0)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
 %A3 = icmp eq [3 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -77,9 +83,11 @@ enter:
 %oth_base = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [3 x double]* [%oth_base, %enter], [%A3, %loop]
+%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %cond]
+%oth = phi [3 x double]* [%oth_base, %enter], [%A3, %cond]
 call void @__ctor_copy_3__double( [3 x double]* %ths, [3 x double]* %oth)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
 %A3 = getelementptr inbounds [3 x double], [3 x double]* %oth, i64 1
 %A4 = icmp eq [3 x double]* %A2, %ths_top
@@ -111,8 +119,10 @@ enter:
 %ths_top = getelementptr inbounds [4 x double], [4 x double]* %ar, i32 0, i32 4
 br label %loop
 loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %cond]
 store double 0.00000, double* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds double, double* %ths, i64 1
 %A3 = icmp eq double* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -126,10 +136,12 @@ enter:
 %oth_base = getelementptr inbounds [4 x double], [4 x double]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
-%oth = phi double* [%oth_base, %enter], [%A3, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %cond]
+%oth = phi double* [%oth_base, %enter], [%A3, %cond]
 %r1 = load double, double* %oth
 store double %r1, double* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds double, double* %ths, i64 1
 %A3 = getelementptr inbounds double, double* %oth, i64 1
 %A4 = icmp eq double* %A2, %ths_top
@@ -160,8 +172,10 @@ enter:
 %ths_top = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %ar, i32 0, i32 4
 br label %loop
 loop:
-%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
+%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %cond]
 call void @__ctor_init_4__double( [4 x double]* %ths, i32 0)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
 %A3 = icmp eq [4 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -175,9 +189,11 @@ enter:
 %oth_base = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [4 x double]* [%oth_base, %enter], [%A3, %loop]
+%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %cond]
+%oth = phi [4 x double]* [%oth_base, %enter], [%A3, %cond]
 call void @__ctor_copy_4__double( [4 x double]* %ths, [4 x double]* %oth)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
 %A3 = getelementptr inbounds [4 x double], [4 x double]* %oth, i64 1
 %A4 = icmp eq [4 x double]* %A2, %ths_top
@@ -230,8 +246,10 @@ enter:
 %ths_top = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %ar, i32 0, i32 3
 br label %loop
 loop:
-%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
+%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %cond]
 call void @__ctor_init_4__double( [4 x double]* %ths, i32 0)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
 %A3 = icmp eq [4 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -245,9 +263,11 @@ enter:
 %oth_base = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [4 x double]* [%oth_base, %enter], [%A3, %loop]
+%ths = phi [4 x double]* [%ths_base, %enter], [%A2, %cond]
+%oth = phi [4 x double]* [%oth_base, %enter], [%A3, %cond]
 call void @__ctor_copy_4__double( [4 x double]* %ths, [4 x double]* %oth)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [4 x double], [4 x double]* %ths, i64 1
 %A3 = getelementptr inbounds [4 x double], [4 x double]* %oth, i64 1
 %A4 = icmp eq [4 x double]* %A2, %ths_top
@@ -279,8 +299,10 @@ enter:
 %ths_top = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %ar, i32 0, i32 3
 br label %loop
 loop:
-%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
+%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %cond]
 call void @__ctor_init_3__double( [3 x double]* %ths, i32 0)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
 %A3 = icmp eq [3 x double]* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -294,9 +316,11 @@ enter:
 %oth_base = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %loop]
-%oth = phi [3 x double]* [%oth_base, %enter], [%A3, %loop]
+%ths = phi [3 x double]* [%ths_base, %enter], [%A2, %cond]
+%oth = phi [3 x double]* [%oth_base, %enter], [%A3, %cond]
 call void @__ctor_copy_3__double( [3 x double]* %ths, [3 x double]* %oth)
+br label %cond
+cond:
 %A2 = getelementptr inbounds [3 x double], [3 x double]* %ths, i64 1
 %A3 = getelementptr inbounds [3 x double], [3 x double]* %oth, i64 1
 %A4 = icmp eq [3 x double]* %A2, %ths_top

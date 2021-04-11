@@ -61,10 +61,12 @@ Shift token '(' at line 8 in state XXX, goto XXX
 Reduce #0 to parameterlist by token ')' at line 8 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 8 in state XXX, goto XXX
 Shift token "nothrow" at line 8 in state XXX, goto XXX
+Reduce #0 to funcattribute by token '{' at line 8 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
+Reduce #2 to funcattribute by token '{' at line 8 in state XXX, call funcattribute {throws=false}, goto XXX
 Shift token '{' at line 8 in state XXX, goto XXX
 Reduce #0 to statementlist by token '}' at line 8 in state XXX, goto XXX
 Shift token '}' at line 8 in state XXX, goto XXX
-Reduce #7 to callablebody by token "constructor" at line 9 in state XXX, call callablebody {throws=false,const=false}, goto XXX
+Reduce #7 to callablebody by token "constructor" at line 9 in state XXX, call callablebody, goto XXX
 Reduce #3 to constructordefinition by token "constructor" at line 9 in state XXX, call constructordef, goto XXX
 Reduce #1 to inclass_definition by token "constructor" at line 9 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Reduce #0 to linkage by token "constructor" at line 9 in state XXX, call linkage {private=false,linkage="external",explicit=false}, goto XXX
@@ -92,6 +94,8 @@ Reduce #1 to parameters by token ')' at line 9 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 9 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 9 in state XXX, goto XXX
 Shift token "nothrow" at line 9 in state XXX, goto XXX
+Reduce #0 to funcattribute by token '{' at line 10 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
+Reduce #2 to funcattribute by token '{' at line 10 in state XXX, call funcattribute {throws=false}, goto XXX
 Shift token '{' at line 10 in state XXX, goto XXX
 Shift token IDENT = "m_ar" at line 11 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 11 in state XXX, call variable, goto XXX
@@ -104,7 +108,7 @@ Reduce #2 to statement by token '}' at line 12 in state XXX, call free_expressio
 Reduce #0 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Shift token '}' at line 12 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 13 in state XXX, call callablebody {throws=false,const=false}, goto XXX
+Reduce #7 to callablebody by token "public" at line 13 in state XXX, call callablebody, goto XXX
 Reduce #3 to constructordefinition by token "public" at line 13 in state XXX, call constructordef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 13 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 13 in state XXX, goto XXX
@@ -131,6 +135,8 @@ Reduce #1 to parameters by token ')' at line 13 in state XXX, goto XXX
 Reduce #1 to parameterlist by token ')' at line 13 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 13 in state XXX, goto XXX
 Shift token "nothrow" at line 13 in state XXX, goto XXX
+Reduce #0 to funcattribute by token '{' at line 14 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
+Reduce #2 to funcattribute by token '{' at line 14 in state XXX, call funcattribute {throws=false}, goto XXX
 Shift token '{' at line 14 in state XXX, goto XXX
 Shift token "return" at line 15 in state XXX, goto XXX
 Shift token IDENT = "m_ar" at line 15 in state XXX, goto XXX
@@ -146,7 +152,7 @@ Reduce #3 to statement by token '}' at line 16 in state XXX, call return_value, 
 Reduce #0 to statementlist by token '}' at line 16 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 16 in state XXX, goto XXX
 Shift token '}' at line 16 in state XXX, goto XXX
-Reduce #7 to callablebody by token "public" at line 17 in state XXX, call callablebody {throws=false,const=false}, goto XXX
+Reduce #7 to callablebody by token "public" at line 17 in state XXX, call callablebody, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 17 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token "public" at line 17 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token "public" at line 17 in state XXX, goto XXX
@@ -175,6 +181,9 @@ Reduce #1 to parameterlist by token ')' at line 17 in state XXX, call paramdefli
 Shift token ')' at line 17 in state XXX, goto XXX
 Shift token "const" at line 17 in state XXX, goto XXX
 Shift token "nothrow" at line 17 in state XXX, goto XXX
+Reduce #0 to funcattribute by token '{' at line 18 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
+Reduce #2 to funcattribute by token '{' at line 18 in state XXX, call funcattribute {throws=false}, goto XXX
+Reduce #2 to funcattribute by token '{' at line 18 in state XXX, call funcattribute {const=true}, goto XXX
 Shift token '{' at line 18 in state XXX, goto XXX
 Shift token "return" at line 19 in state XXX, goto XXX
 Shift token IDENT = "m_ar" at line 19 in state XXX, goto XXX
@@ -190,7 +199,7 @@ Reduce #3 to statement by token '}' at line 20 in state XXX, call return_value, 
 Reduce #0 to statementlist by token '}' at line 20 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 20 in state XXX, goto XXX
 Shift token '}' at line 20 in state XXX, goto XXX
-Reduce #8 to callablebody by token IDENT = "ELEMENT" at line 21 in state XXX, call callablebody {throws=false,const=true}, goto XXX
+Reduce #7 to callablebody by token IDENT = "ELEMENT" at line 21 in state XXX, call callablebody, goto XXX
 Reduce #5 to operatordefinition by token IDENT = "ELEMENT" at line 21 in state XXX, call operator_funcdef, goto XXX
 Reduce #1 to inclass_definition by token IDENT = "ELEMENT" at line 21 in state XXX, call definition_decl_impl_pass 4, goto XXX
 Shift token IDENT = "ELEMENT" at line 21 in state XXX, goto XXX
@@ -571,12 +580,28 @@ Lua call result [1]
                             name = "paramdeflist",
                             proc = <function>},
                           line = 6,
+                          step = 0},
+                        {
+                          arg = {
+                            {
+                              arg = {},
+                              call = {
+                                name = "funcattribute {const=false,throws=true}",
+                                obj = {
+                                  const = false,
+                                  throws = true},
+                                proc = <function>},
+                              line = 6,
+                              step = 0}},
+                          call = {
+                            name = "funcattribute {throws=false}",
+                            obj = {
+                              throws = false},
+                            proc = <function>},
+                          line = 6,
                           step = 0}},
                       call = {
-                        name = "callablebody {throws=false,const=false}",
-                        obj = {
-                          const = false,
-                          throws = false},
+                        name = "callablebody",
                         proc = <function>},
                       line = 6,
                       scope = {
@@ -686,6 +711,25 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {},
+                              call = {
+                                name = "funcattribute {const=false,throws=true}",
+                                obj = {
+                                  const = false,
+                                  throws = true},
+                                proc = <function>},
+                              line = 9,
+                              step = 1}},
+                          call = {
+                            name = "funcattribute {throws=false}",
+                            obj = {
+                              throws = false},
+                            proc = <function>},
+                          line = 9,
+                          step = 1},
+                        {
+                          arg = {
+                            {
                               arg = {
                                 {
                                   arg = {
@@ -721,10 +765,7 @@ Lua call result [1]
                           line = 11,
                           step = 2}},
                       call = {
-                        name = "callablebody {throws=false,const=false}",
-                        obj = {
-                          const = false,
-                          throws = false},
+                        name = "callablebody",
                         proc = <function>},
                       line = 11,
                       scope = {
@@ -830,6 +871,25 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {},
+                              call = {
+                                name = "funcattribute {const=false,throws=true}",
+                                obj = {
+                                  const = false,
+                                  throws = true},
+                                proc = <function>},
+                              line = 13,
+                              step = 3}},
+                          call = {
+                            name = "funcattribute {throws=false}",
+                            obj = {
+                              throws = false},
+                            proc = <function>},
+                          line = 13,
+                          step = 3},
+                        {
+                          arg = {
+                            {
                               arg = {
                                 {
                                   arg = {
@@ -865,10 +925,7 @@ Lua call result [1]
                           line = 15,
                           step = 4}},
                       call = {
-                        name = "callablebody {throws=false,const=false}",
-                        obj = {
-                          const = false,
-                          throws = false},
+                        name = "callablebody",
                         proc = <function>},
                       line = 15,
                       scope = {
@@ -976,6 +1033,34 @@ Lua call result [1]
                             {
                               arg = {
                                 {
+                                  arg = {},
+                                  call = {
+                                    name = "funcattribute {const=false,throws=true}",
+                                    obj = {
+                                      const = false,
+                                      throws = true},
+                                    proc = <function>},
+                                  line = 17,
+                                  step = 5}},
+                              call = {
+                                name = "funcattribute {throws=false}",
+                                obj = {
+                                  throws = false},
+                                proc = <function>},
+                              line = 17,
+                              step = 5}},
+                          call = {
+                            name = "funcattribute {const=true}",
+                            obj = {
+                              const = true},
+                            proc = <function>},
+                          line = 17,
+                          step = 5},
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
                                   arg = {
                                     {
                                       line = 19,
@@ -1009,10 +1094,7 @@ Lua call result [1]
                           line = 19,
                           step = 6}},
                       call = {
-                        name = "callablebody {throws=false,const=true}",
-                        obj = {
-                          const = true,
-                          throws = false},
+                        name = "callablebody",
                         proc = <function>},
                       line = 19,
                       scope = {

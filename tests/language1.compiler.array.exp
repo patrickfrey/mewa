@@ -12,8 +12,10 @@ enter:
 %ths_top = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 5
 br label %loop
 loop:
-%ths = phi i32* [%ths_base, %enter], [%A2, %loop]
+%ths = phi i32* [%ths_base, %enter], [%A2, %cond]
 store i32 0, i32* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds i32, i32* %ths, i64 1
 %A3 = icmp eq i32* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -27,10 +29,12 @@ enter:
 %oth_base = getelementptr inbounds [5 x i32], [5 x i32]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi i32* [%ths_base, %enter], [%A2, %loop]
-%oth = phi i32* [%oth_base, %enter], [%A3, %loop]
+%ths = phi i32* [%ths_base, %enter], [%A2, %cond]
+%oth = phi i32* [%oth_base, %enter], [%A3, %cond]
 %r1 = load i32, i32* %oth
 store i32 %r1, i32* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds i32, i32* %ths, i64 1
 %A3 = getelementptr inbounds i32, i32* %oth, i64 1
 %A4 = icmp eq i32* %A2, %ths_top
@@ -82,8 +86,10 @@ enter:
 %ths_top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 5
 br label %loop
 loop:
-%ths = phi float* [%ths_base, %enter], [%A2, %loop]
+%ths = phi float* [%ths_base, %enter], [%A2, %cond]
 store float 0.00000, float* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds float, float* %ths, i64 1
 %A3 = icmp eq float* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -97,10 +103,12 @@ enter:
 %oth_base = getelementptr inbounds [5 x float], [5 x float]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi float* [%ths_base, %enter], [%A2, %loop]
-%oth = phi float* [%oth_base, %enter], [%A3, %loop]
+%ths = phi float* [%ths_base, %enter], [%A2, %cond]
+%oth = phi float* [%oth_base, %enter], [%A3, %cond]
 %r1 = load float, float* %oth
 store float %r1, float* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds float, float* %ths, i64 1
 %A3 = getelementptr inbounds float, float* %oth, i64 1
 %A4 = icmp eq float* %A2, %ths_top
@@ -152,8 +160,10 @@ enter:
 %ths_top = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 5
 br label %loop
 loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %cond]
 store double 0.00000, double* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds double, double* %ths, i64 1
 %A3 = icmp eq double* %A2, %ths_top
 br i1 %A3, label %end, label %loop
@@ -167,10 +177,12 @@ enter:
 %oth_base = getelementptr inbounds [5 x double], [5 x double]* %oth_ar, i32 0, i32 0
 br label %loop
 loop:
-%ths = phi double* [%ths_base, %enter], [%A2, %loop]
-%oth = phi double* [%oth_base, %enter], [%A3, %loop]
+%ths = phi double* [%ths_base, %enter], [%A2, %cond]
+%oth = phi double* [%oth_base, %enter], [%A3, %cond]
 %r1 = load double, double* %oth
 store double %r1, double* %ths
+br label %cond
+cond:
 %A2 = getelementptr inbounds double, double* %ths, i64 1
 %A3 = getelementptr inbounds double, double* %oth, i64 1
 %A4 = icmp eq double* %A2, %ths_top
