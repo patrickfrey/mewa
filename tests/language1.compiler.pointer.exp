@@ -40,7 +40,7 @@ ret i32 %r4
 @g_pnp = internal global void(double, i32*)* null
 @string2 = private unnamed_addr constant [14 x i8] c"RES cnt = %d\0A\00"
 @string3 = private unnamed_addr constant [13 x i8] c"Hello World!\00"
-@string4 = private unnamed_addr constant [16 x i8] c"Initials %c %c\0A\00"
+@string4 = private unnamed_addr constant [22 x i8] c"Initials %c %c %s %s\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
@@ -72,27 +72,37 @@ call void(i8*,  ...) @printf( i8* %r15, i32 %r16)
 %r18 = alloca i8*
 %r17 = getelementptr inbounds [13 x i8], [13 x i8]* @string3, i64 0, i64 0
 store i8* %r17, i8** %r18
-%r21 = alloca i8, align 1
+%r21 = alloca i8*
 %r19 = load i8*, i8** %r18
-%r20 = getelementptr i8, i8* %r19, i64 0
-%r22 = load i8, i8* %r20
-store i8 %r22, i8* %r21
-%r25 = alloca i8, align 1
-%r23 = load i8*, i8** %r18
-%r24 = getelementptr i8, i8* %r23, i64 6
-%r26 = load i8, i8* %r24
-store i8 %r26, i8* %r25
-%r27 = getelementptr inbounds [16 x i8], [16 x i8]* @string4, i64 0, i64 0
-%r28 = load i8, i8* %r21
-%r29 = zext i8 %r28 to i32
-%r30 = load i8, i8* %r25
-%r31 = zext i8 %r30 to i32
-call void(i8*,  ...) @printf( i8* %r27, i32 %r29, i32 %r31)
+%r20 = getelementptr i8, i8* %r19, i32 6
+store i8* %r20, i8** %r21
+%r24 = alloca i8*
+%r22 = load i8*, i8** %r21
+%r23 = getelementptr i8, i8* %r22, i32 -5
+store i8* %r23, i8** %r24
+%r27 = alloca i8, align 1
+%r25 = load i8*, i8** %r18
+%r26 = getelementptr i8, i8* %r25, i32 0
+%r28 = load i8, i8* %r26
+store i8 %r28, i8* %r27
+%r31 = alloca i8, align 1
+%r29 = load i8*, i8** %r18
+%r30 = getelementptr i8, i8* %r29, i32 6
+%r32 = load i8, i8* %r30
+store i8 %r32, i8* %r31
+%r33 = getelementptr inbounds [22 x i8], [22 x i8]* @string4, i64 0, i64 0
+%r34 = load i8, i8* %r27
+%r35 = zext i8 %r34 to i32
+%r36 = load i8, i8* %r31
+%r37 = zext i8 %r36 to i32
+%r38 = load i8*, i8** %r21
+%r39 = load i8*, i8** %r24
+call void(i8*,  ...) @printf( i8* %r33, i32 %r35, i32 %r37, i8* %r38, i8* %r39)
 store i32 0, i32* %r1
 br label %L1
 L1:
-%r32 = load i32, i32* %r1
-ret i32 %r32
+%r40 = load i32, i32* %r1
+ret i32 %r40
 }
 
 

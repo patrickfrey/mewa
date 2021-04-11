@@ -375,77 +375,127 @@ Reduce #4 to variabledefinition by token ';' at line 35 in state XXX, call varde
 Shift token ';' at line 35 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 36 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 36 in state XXX, goto XXX
+Shift token "const" at line 36 in state XXX, goto XXX
 Shift token IDENT = "byte" at line 36 in state XXX, goto XXX
-Reduce #1 to typename by token IDENT = "fc" at line 36 in state XXX, goto XXX
-Reduce #1 to typehdr by token IDENT = "fc" at line 36 in state XXX, call typehdr {const=false}, goto XXX
-Reduce #1 to typegen by token IDENT = "fc" at line 36 in state XXX, goto XXX
-Reduce #1 to typespec by token IDENT = "fc" at line 36 in state XXX, call typespec, goto XXX
-Shift token IDENT = "fc" at line 36 in state XXX, goto XXX
+Reduce #1 to typename by token '^' at line 36 in state XXX, goto XXX
+Reduce #2 to typehdr by token '^' at line 36 in state XXX, call typehdr {const=true}, goto XXX
+Reduce #1 to typegen by token '^' at line 36 in state XXX, goto XXX
+Shift token '^' at line 36 in state XXX, goto XXX
+Reduce #2 to typegen by token IDENT = "ptr" at line 36 in state XXX, call typegen_pointer {const=false}, goto XXX
+Reduce #1 to typespec by token IDENT = "ptr" at line 36 in state XXX, call typespec, goto XXX
+Shift token IDENT = "ptr" at line 36 in state XXX, goto XXX
 Shift token '=' at line 36 in state XXX, goto XXX
 Shift token IDENT = "str" at line 36 in state XXX, goto XXX
-Reduce #1 to expression by token '[' at line 36 in state XXX, call variable, goto XXX
-Shift token '[' at line 36 in state XXX, goto XXX
-Shift token UINTEGER = "0" at line 36 in state XXX, goto XXX
-Reduce #1 to expression by token ']' at line 36 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #1 to expressionlist by token ']' at line 36 in state XXX, goto XXX
-Shift token ']' at line 36 in state XXX, goto XXX
-Reduce #4 to expression by token ';' at line 36 in state XXX, call operator_array "[]", goto XXX
+Reduce #1 to expression by token '+' at line 36 in state XXX, call variable, goto XXX
+Shift token '+' at line 36 in state XXX, goto XXX
+Shift token UINTEGER = "6" at line 36 in state XXX, goto XXX
+Reduce #1 to expression by token ';' at line 36 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #3 to expression by token ';' at line 36 in state XXX, call binop "+", goto XXX
 Reduce #4 to variabledefinition by token ';' at line 36 in state XXX, call vardef_assign, goto XXX
 Shift token ';' at line 36 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 37 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 37 in state XXX, goto XXX
+Shift token "const" at line 37 in state XXX, goto XXX
 Shift token IDENT = "byte" at line 37 in state XXX, goto XXX
-Reduce #1 to typename by token IDENT = "sc" at line 37 in state XXX, goto XXX
-Reduce #1 to typehdr by token IDENT = "sc" at line 37 in state XXX, call typehdr {const=false}, goto XXX
-Reduce #1 to typegen by token IDENT = "sc" at line 37 in state XXX, goto XXX
-Reduce #1 to typespec by token IDENT = "sc" at line 37 in state XXX, call typespec, goto XXX
-Shift token IDENT = "sc" at line 37 in state XXX, goto XXX
+Reduce #1 to typename by token '^' at line 37 in state XXX, goto XXX
+Reduce #2 to typehdr by token '^' at line 37 in state XXX, call typehdr {const=true}, goto XXX
+Reduce #1 to typegen by token '^' at line 37 in state XXX, goto XXX
+Shift token '^' at line 37 in state XXX, goto XXX
+Reduce #2 to typegen by token IDENT = "bas" at line 37 in state XXX, call typegen_pointer {const=false}, goto XXX
+Reduce #1 to typespec by token IDENT = "bas" at line 37 in state XXX, call typespec, goto XXX
+Shift token IDENT = "bas" at line 37 in state XXX, goto XXX
 Shift token '=' at line 37 in state XXX, goto XXX
-Shift token IDENT = "str" at line 37 in state XXX, goto XXX
-Reduce #1 to expression by token '[' at line 37 in state XXX, call variable, goto XXX
-Shift token '[' at line 37 in state XXX, goto XXX
-Shift token UINTEGER = "6" at line 37 in state XXX, goto XXX
-Reduce #1 to expression by token ']' at line 37 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #1 to expressionlist by token ']' at line 37 in state XXX, goto XXX
-Shift token ']' at line 37 in state XXX, goto XXX
-Reduce #4 to expression by token ';' at line 37 in state XXX, call operator_array "[]", goto XXX
+Shift token IDENT = "ptr" at line 37 in state XXX, goto XXX
+Reduce #1 to expression by token '-' at line 37 in state XXX, call variable, goto XXX
+Shift token '-' at line 37 in state XXX, goto XXX
+Shift token UINTEGER = "5" at line 37 in state XXX, goto XXX
+Reduce #1 to expression by token ';' at line 37 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #3 to expression by token ';' at line 37 in state XXX, call binop "-", goto XXX
 Reduce #4 to variabledefinition by token ';' at line 37 in state XXX, call vardef_assign, goto XXX
 Shift token ';' at line 37 in state XXX, goto XXX
-Reduce #3 to statement by token IDENT = "printf" at line 38 in state XXX, call definition 1, goto XXX
-Shift token IDENT = "printf" at line 38 in state XXX, goto XXX
-Reduce #1 to expression by token '(' at line 38 in state XXX, call variable, goto XXX
-Shift token '(' at line 38 in state XXX, goto XXX
-Shift token DQSTRING = "Initials %c %c\n" at line 38 in state XXX, goto XXX
-Reduce #1 to expression by token ',' at line 38 in state XXX, call string_constant, goto XXX
-Shift token ',' at line 38 in state XXX, goto XXX
+Reduce #3 to statement by token "var" at line 38 in state XXX, call definition 1, goto XXX
+Shift token "var" at line 38 in state XXX, goto XXX
+Shift token IDENT = "byte" at line 38 in state XXX, goto XXX
+Reduce #1 to typename by token IDENT = "fc" at line 38 in state XXX, goto XXX
+Reduce #1 to typehdr by token IDENT = "fc" at line 38 in state XXX, call typehdr {const=false}, goto XXX
+Reduce #1 to typegen by token IDENT = "fc" at line 38 in state XXX, goto XXX
+Reduce #1 to typespec by token IDENT = "fc" at line 38 in state XXX, call typespec, goto XXX
 Shift token IDENT = "fc" at line 38 in state XXX, goto XXX
-Reduce #1 to expression by token ',' at line 38 in state XXX, call variable, goto XXX
-Shift token ',' at line 38 in state XXX, goto XXX
-Shift token IDENT = "sc" at line 38 in state XXX, goto XXX
-Reduce #1 to expression by token ')' at line 38 in state XXX, call variable, goto XXX
-Reduce #1 to expressionlist by token ')' at line 38 in state XXX, goto XXX
-Reduce #3 to expressionlist by token ')' at line 38 in state XXX, goto XXX
-Reduce #3 to expressionlist by token ')' at line 38 in state XXX, goto XXX
-Shift token ')' at line 38 in state XXX, goto XXX
-Reduce #4 to expression by token ';' at line 38 in state XXX, call operator "()", goto XXX
+Shift token '=' at line 38 in state XXX, goto XXX
+Shift token IDENT = "str" at line 38 in state XXX, goto XXX
+Reduce #1 to expression by token '[' at line 38 in state XXX, call variable, goto XXX
+Shift token '[' at line 38 in state XXX, goto XXX
+Shift token UINTEGER = "0" at line 38 in state XXX, goto XXX
+Reduce #1 to expression by token ']' at line 38 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #1 to expressionlist by token ']' at line 38 in state XXX, goto XXX
+Shift token ']' at line 38 in state XXX, goto XXX
+Reduce #4 to expression by token ';' at line 38 in state XXX, call operator_array "[]", goto XXX
+Reduce #4 to variabledefinition by token ';' at line 38 in state XXX, call vardef_assign, goto XXX
 Shift token ';' at line 38 in state XXX, goto XXX
-Reduce #2 to statement by token '}' at line 39 in state XXX, call free_expression, goto XXX
-Reduce #0 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 39 in state XXX, goto XXX
-Shift token '}' at line 39 in state XXX, goto XXX
-Reduce #2 to main_procedure by token $ at line 41 in state XXX, call main_procdef, goto XXX
+Reduce #3 to statement by token "var" at line 39 in state XXX, call definition 1, goto XXX
+Shift token "var" at line 39 in state XXX, goto XXX
+Shift token IDENT = "byte" at line 39 in state XXX, goto XXX
+Reduce #1 to typename by token IDENT = "sc" at line 39 in state XXX, goto XXX
+Reduce #1 to typehdr by token IDENT = "sc" at line 39 in state XXX, call typehdr {const=false}, goto XXX
+Reduce #1 to typegen by token IDENT = "sc" at line 39 in state XXX, goto XXX
+Reduce #1 to typespec by token IDENT = "sc" at line 39 in state XXX, call typespec, goto XXX
+Shift token IDENT = "sc" at line 39 in state XXX, goto XXX
+Shift token '=' at line 39 in state XXX, goto XXX
+Shift token IDENT = "str" at line 39 in state XXX, goto XXX
+Reduce #1 to expression by token '[' at line 39 in state XXX, call variable, goto XXX
+Shift token '[' at line 39 in state XXX, goto XXX
+Shift token UINTEGER = "6" at line 39 in state XXX, goto XXX
+Reduce #1 to expression by token ']' at line 39 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #1 to expressionlist by token ']' at line 39 in state XXX, goto XXX
+Shift token ']' at line 39 in state XXX, goto XXX
+Reduce #4 to expression by token ';' at line 39 in state XXX, call operator_array "[]", goto XXX
+Reduce #4 to variabledefinition by token ';' at line 39 in state XXX, call vardef_assign, goto XXX
+Shift token ';' at line 39 in state XXX, goto XXX
+Reduce #3 to statement by token IDENT = "printf" at line 40 in state XXX, call definition 1, goto XXX
+Shift token IDENT = "printf" at line 40 in state XXX, goto XXX
+Reduce #1 to expression by token '(' at line 40 in state XXX, call variable, goto XXX
+Shift token '(' at line 40 in state XXX, goto XXX
+Shift token DQSTRING = "Initials %c %c %s %s\n" at line 40 in state XXX, goto XXX
+Reduce #1 to expression by token ',' at line 40 in state XXX, call string_constant, goto XXX
+Shift token ',' at line 40 in state XXX, goto XXX
+Shift token IDENT = "fc" at line 40 in state XXX, goto XXX
+Reduce #1 to expression by token ',' at line 40 in state XXX, call variable, goto XXX
+Shift token ',' at line 40 in state XXX, goto XXX
+Shift token IDENT = "sc" at line 40 in state XXX, goto XXX
+Reduce #1 to expression by token ',' at line 40 in state XXX, call variable, goto XXX
+Shift token ',' at line 40 in state XXX, goto XXX
+Shift token IDENT = "ptr" at line 40 in state XXX, goto XXX
+Reduce #1 to expression by token ',' at line 40 in state XXX, call variable, goto XXX
+Shift token ',' at line 40 in state XXX, goto XXX
+Shift token IDENT = "bas" at line 40 in state XXX, goto XXX
+Reduce #1 to expression by token ')' at line 40 in state XXX, call variable, goto XXX
+Reduce #1 to expressionlist by token ')' at line 40 in state XXX, goto XXX
+Reduce #3 to expressionlist by token ')' at line 40 in state XXX, goto XXX
+Reduce #3 to expressionlist by token ')' at line 40 in state XXX, goto XXX
+Reduce #3 to expressionlist by token ')' at line 40 in state XXX, goto XXX
+Reduce #3 to expressionlist by token ')' at line 40 in state XXX, goto XXX
+Shift token ')' at line 40 in state XXX, goto XXX
+Reduce #4 to expression by token ';' at line 40 in state XXX, call operator "()", goto XXX
+Shift token ';' at line 40 in state XXX, goto XXX
+Reduce #2 to statement by token '}' at line 41 in state XXX, call free_expression, goto XXX
+Reduce #0 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 41 in state XXX, goto XXX
+Shift token '}' at line 41 in state XXX, goto XXX
+Reduce #2 to main_procedure by token $ at line 43 in state XXX, call main_procdef, goto XXX
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -1786,11 +1836,20 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {
+                                {
+                                  line = 36,
+                                  name = "IDENT",
+                                  value = "byte"}},
+                              call = {
+                                name = "typehdr {const=true}",
+                                obj = {
+                                  const = true},
+                                proc = <function>},
                               line = 36,
-                              name = "IDENT",
-                              value = "byte"}},
+                              step = 16}},
                           call = {
-                            name = "typehdr {const=false}",
+                            name = "typegen_pointer {const=false}",
                             obj = {
                               const = false},
                             proc = <function>},
@@ -1804,7 +1863,7 @@ Lua call result [1]
                     {
                       line = 36,
                       name = "IDENT",
-                      value = "fc"},
+                      value = "ptr"},
                     {
                       arg = {
                         {
@@ -1823,7 +1882,7 @@ Lua call result [1]
                             {
                               line = 36,
                               name = "UINTEGER",
-                              value = "0"}},
+                              value = "6"}},
                           call = {
                             name = "constant constexpr uint",
                             obj = "constexpr uint",
@@ -1831,8 +1890,8 @@ Lua call result [1]
                           line = 36,
                           step = 16}},
                       call = {
-                        name = "operator_array []",
-                        obj = "[]",
+                        name = "binop +",
+                        obj = "+",
                         proc = <function>},
                       line = 36,
                       step = 16}},
@@ -1856,11 +1915,20 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {
+                                {
+                                  line = 37,
+                                  name = "IDENT",
+                                  value = "byte"}},
+                              call = {
+                                name = "typehdr {const=true}",
+                                obj = {
+                                  const = true},
+                                proc = <function>},
                               line = 37,
-                              name = "IDENT",
-                              value = "byte"}},
+                              step = 18}},
                           call = {
-                            name = "typehdr {const=false}",
+                            name = "typegen_pointer {const=false}",
                             obj = {
                               const = false},
                             proc = <function>},
@@ -1874,7 +1942,7 @@ Lua call result [1]
                     {
                       line = 37,
                       name = "IDENT",
-                      value = "sc"},
+                      value = "bas"},
                     {
                       arg = {
                         {
@@ -1882,7 +1950,7 @@ Lua call result [1]
                             {
                               line = 37,
                               name = "IDENT",
-                              value = "str"}},
+                              value = "ptr"}},
                           call = {
                             name = "variable",
                             proc = <function>},
@@ -1893,7 +1961,7 @@ Lua call result [1]
                             {
                               line = 37,
                               name = "UINTEGER",
-                              value = "6"}},
+                              value = "5"}},
                           call = {
                             name = "constant constexpr uint",
                             obj = "constexpr uint",
@@ -1901,8 +1969,8 @@ Lua call result [1]
                           line = 37,
                           step = 18}},
                       call = {
-                        name = "operator_array []",
-                        obj = "[]",
+                        name = "binop -",
+                        obj = "-",
                         proc = <function>},
                       line = 37,
                       step = 18}},
@@ -1924,72 +1992,234 @@ Lua call result [1]
                     {
                       arg = {
                         {
+                          arg = {
+                            {
+                              line = 38,
+                              name = "IDENT",
+                              value = "byte"}},
+                          call = {
+                            name = "typehdr {const=false}",
+                            obj = {
+                              const = false},
+                            proc = <function>},
                           line = 38,
+                          step = 20}},
+                      call = {
+                        name = "typespec",
+                        proc = <function>},
+                      line = 38,
+                      step = 20},
+                    {
+                      line = 38,
+                      name = "IDENT",
+                      value = "fc"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              line = 38,
+                              name = "IDENT",
+                              value = "str"}},
+                          call = {
+                            name = "variable",
+                            proc = <function>},
+                          line = 38,
+                          step = 20},
+                        {
+                          arg = {
+                            {
+                              line = 38,
+                              name = "UINTEGER",
+                              value = "0"}},
+                          call = {
+                            name = "constant constexpr uint",
+                            obj = "constexpr uint",
+                            proc = <function>},
+                          line = 38,
+                          step = 20}},
+                      call = {
+                        name = "operator_array []",
+                        obj = "[]",
+                        proc = <function>},
+                      line = 38,
+                      step = 20}},
+                  call = {
+                    name = "vardef_assign",
+                    proc = <function>},
+                  line = 38,
+                  step = 21}},
+              call = {
+                name = "definition 1",
+                obj = 1,
+                proc = <function>},
+              line = 38,
+              step = 22},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              line = 39,
+                              name = "IDENT",
+                              value = "byte"}},
+                          call = {
+                            name = "typehdr {const=false}",
+                            obj = {
+                              const = false},
+                            proc = <function>},
+                          line = 39,
+                          step = 22}},
+                      call = {
+                        name = "typespec",
+                        proc = <function>},
+                      line = 39,
+                      step = 22},
+                    {
+                      line = 39,
+                      name = "IDENT",
+                      value = "sc"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              line = 39,
+                              name = "IDENT",
+                              value = "str"}},
+                          call = {
+                            name = "variable",
+                            proc = <function>},
+                          line = 39,
+                          step = 22},
+                        {
+                          arg = {
+                            {
+                              line = 39,
+                              name = "UINTEGER",
+                              value = "6"}},
+                          call = {
+                            name = "constant constexpr uint",
+                            obj = "constexpr uint",
+                            proc = <function>},
+                          line = 39,
+                          step = 22}},
+                      call = {
+                        name = "operator_array []",
+                        obj = "[]",
+                        proc = <function>},
+                      line = 39,
+                      step = 22}},
+                  call = {
+                    name = "vardef_assign",
+                    proc = <function>},
+                  line = 39,
+                  step = 23}},
+              call = {
+                name = "definition 1",
+                obj = 1,
+                proc = <function>},
+              line = 39,
+              step = 24},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 40,
                           name = "IDENT",
                           value = "printf"}},
                       call = {
                         name = "variable",
                         proc = <function>},
-                      line = 38,
-                      step = 20},
+                      line = 40,
+                      step = 24},
                     {
                       arg = {
                         {
-                          line = 38,
+                          line = 40,
                           name = "DQSTRING",
-                          value = "Initials %c %c\\n"}},
+                          value = "Initials %c %c %s %s\\n"}},
                       call = {
                         name = "string_constant",
                         proc = <function>},
-                      line = 38,
-                      step = 20},
+                      line = 40,
+                      step = 24},
                     {
                       arg = {
                         {
-                          line = 38,
+                          line = 40,
                           name = "IDENT",
                           value = "fc"}},
                       call = {
                         name = "variable",
                         proc = <function>},
-                      line = 38,
-                      step = 20},
+                      line = 40,
+                      step = 24},
                     {
                       arg = {
                         {
-                          line = 38,
+                          line = 40,
                           name = "IDENT",
                           value = "sc"}},
                       call = {
                         name = "variable",
                         proc = <function>},
-                      line = 38,
-                      step = 20}},
+                      line = 40,
+                      step = 24},
+                    {
+                      arg = {
+                        {
+                          line = 40,
+                          name = "IDENT",
+                          value = "ptr"}},
+                      call = {
+                        name = "variable",
+                        proc = <function>},
+                      line = 40,
+                      step = 24},
+                    {
+                      arg = {
+                        {
+                          line = 40,
+                          name = "IDENT",
+                          value = "bas"}},
+                      call = {
+                        name = "variable",
+                        proc = <function>},
+                      line = 40,
+                      step = 24}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
-                  line = 38,
-                  step = 20}},
+                  line = 40,
+                  step = 24}},
               call = {
                 name = "free_expression",
                 proc = <function>},
-              line = 38,
-              step = 20}},
+              line = 40,
+              step = 24}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 38,
+          line = 40,
           scope = {
             6,
-            21}}},
+            25}}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 38,
-      step = 21}},
+      line = 40,
+      step = 25}},
   call = {
     name = "program",
     proc = <function>},
-  line = 38,
-  step = 21}
+  line = 40,
+  step = 25}

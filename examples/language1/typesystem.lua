@@ -454,7 +454,7 @@ local typeClassToConstExprTypesMap = {
 	unsigned = {{type=constexprUIntegerType,weight=rdw_constexpr}}
 }
 local bits64 = bcd.bits( 64)
-local constexprOperatorMap = {
+local constexprBinaryOperatorMap = {
 	["+"] = function( this, arg) return this + arg[1] end,
 	["-"] = function( this, arg) return this - arg[1] end,
 	["*"] = function( this, arg) return this * arg[1] end,
@@ -463,10 +463,13 @@ local constexprOperatorMap = {
 	["&"] = function( this, arg) return this.bit_and( arg[1], bits64) end,
 	["|"] = function( this, arg) return this.bit_or( arg[1], bits64) end,
 	["^"] = function( this, arg) return this.bit_xor( arg[1], bits64) end,
-	["~"] = function( this, arg) return this.bit_not( bits64) end,
 	["&&"] = function( this, arg) return this == true and arg[1] == true end,
 	["||"] = function( this, arg) return this == true or arg[1] == true end,
-	["!"] = function( this, arg) return this ~= true end
+}
+local constexprUnaryOperatorMap = {
+	["~"] = function( this, arg) return this.bit_not( bits64) end,
+	["!"] = function( this, arg) return this ~= true end,
+	["-"] = function( this, arg) return -this end,
 }
 local constexprTypeOperatorMap = {
 	[constexprIntegerType]  = {"+","-","*","/","%"},
@@ -474,7 +477,6 @@ local constexprTypeOperatorMap = {
 	[constexprFloatType]    = {"+","-","*","/","%"},
 	[constexprBooleanType]  = {"&&","||","!"}
 }
-local unaryOperatorMap = {["~"]=1,["!"]=1,["-"]=2}
 
 -- Create a constexpr node from a lexem in the AST
 function createConstExpr( node, constexpr_type, lexemvalue)
@@ -508,24 +510,24 @@ end
 function defineConstExprArithmetics()
 	for constexpr_type,oprlist in pairs(constexprTypeOperatorMap) do
 		for oi,opr in ipairs(oprlist) do
-			if unaryOperatorMap[ opr] then
-				defineCall( constexpr_type, constexpr_type, opr, {}, constexprOperatorMap[ opr])
+			if constexprUnaryOperatorMap[ opr] then
+				defineCall( constexpr_type, constexpr_type, opr, {}, constexprUnaryOperatorMap[ opr])
 			end
-			if not unaryOperatorMap[ opr] or unaryOperatorMap[ opr] == 2 then
-				defineCall( constexpr_type, constexpr_type, opr, {constexpr_type}, constexprOperatorMap[ opr])
+			if constexprBinaryOperatorMap[ opr] then
+				defineCall( constexpr_type, constexpr_type, opr, {constexpr_type}, constexprBinaryOperatorMap[ opr])
 			end
 		end
 	end
 	local oprlist = constexprTypeOperatorMap[ constexprFloatType]
 	for oi,opr in ipairs(oprlist) do
-		if not unaryOperatorMap[ opr] or unaryOperatorMap[ opr] == 2 then
+		if constexprBinaryOperatorMap[ opr] then
 			definePromoteCall( constexprFloatType, constexprIntegerType, constexprFloatType, opr, {constexprFloatType},function(this) return this:tonumber() end)
 			definePromoteCall( constexprFloatType, constexprUIntegerType, constexprFloatType, opr,{constexprFloatType},function(this) return this:tonumber() end)
 		end
 	end
 	local oprlist = constexprTypeOperatorMap[ constexprUIntegerType]
 	for oi,opr in ipairs(oprlist) do
-		if not unaryOperatorMap[ opr] or unaryOperatorMap[ opr] == 2 then
+		if constexprBinaryOperatorMap[ opr] then
 			definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
 		end
 	end
@@ -682,12 +684,12 @@ function definePointerQualiTypes( node, typeId)
 	pointeeTypeMap[ valtype] = pointeeTypeId
 	pointeeTypeMap[ c_valtype] = pointeeTypeId
 
-	if typeDescription.class == "struct" then
+	if typeDescription.class == "struct" then -- define the special pointers to any instance
 		typedb:def_reduction( anyStructPointerType, valtype, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( anyConstStructPointerType, c_valtype, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( valtype, anyStructPointerType, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( c_valtype, anyConstStructPointerType, nil, tag_pointerReinterpretCast)
-	elseif typeDescription.class == "class" then
+	elseif typeDescription.class == "class" then -- define the special pointers to any instance
 		typedb:def_reduction( anyClassPointerType, valtype, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( anyConstClassPointerType, c_valtype, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( valtype, anyClassPointerType, nil, tag_pointerReinterpretCast)
@@ -702,6 +704,28 @@ function defineArrayIndexOperators( resTypeId, arTypeId, arDescr)
 	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
 		defineCall( resTypeId, arTypeId, "[]", {index_type}, callConstructor( arDescr.index[ index_typnam], true))
 	end
+	defineCall( resTypeId, arTypeId, "[]", {constexprUIntegerType}, callConstructor( arDescr.index[ scalarIntegerTypnam], true))
+	defineCall( resTypeId, arTypeId, "[]", {constexprIntegerType}, callConstructor( arDescr.index[ scalarIntegerTypnam], true))
+end
+-- Helper for pointer arithmetics
+function definePointerIncrementDecrement( ptrtype, index_typnam, index_type)
+	local descr = typeDescriptionMap[ ptrtype]
+	local index_constructor = callConstructor( descr.index[ index_typnam], true) -- Load the pointer of the element at the index given as argument
+	defineCall( ptrtype, ptrtype, "+", {index_type}, index_constructor)
+	local negop = typedb:get_type( index_type, "-", {})
+	if negop then
+		local negconstructor = typedb:type_constructor( negop)
+		local function neg_index_constructor( this, arg) return index_constructor( this, {negconstructor( arg[1])}) end -- Load the pointer of the element at index given as negative value of the argument
+		defineCall( ptrtype, ptrtype, "-", {index_type}, neg_index_constructor)
+	end
+end
+-- Define pointer arithmetics
+function definePointerArithmeticOperators( ptrtype)
+	for index_typnam, index_type in pairs(scalarIndexTypeMap) do
+		definePointerIncrementDecrement( ptrtype, index_typnam, index_type)
+	end
+	definePointerIncrementDecrement( ptrtype, scalarIntegerTypnam, constexprIntegerType)
+	definePointerIncrementDecrement( ptrtype, scalarIntegerTypnam, constexprUIntegerType)
 end
 -- Define all types related to a pointer to a base type and its const type with all relations and operations (crossed too)
 function definePointerQualiTypesCrossed( node, qualitype_pointee)
@@ -1751,15 +1775,15 @@ function initBuiltInTypes()
 		elseif scalar_descr.class == "bool" then
 			scalarBooleanType = c_valtype
 		elseif scalar_descr.class == "unsigned" then
-			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then scalarIntegerType = c_valtype end
-			if scalar_descr.llvmtype == "i64" and not scalarLongType then scalarLongType = c_valtype end
+			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then scalarIntegerType = c_valtype; scalarIntegerTypnam = typnam end
+			if scalar_descr.llvmtype == "i64" and not scalarLongType then scalarLongType = c_valtype; scalarLongTypnam = typnam end
 			if scalar_descr.llvmtype == "i8" then
 				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_valtype
 		elseif scalar_descr.class == "signed" then
-			if scalar_descr.llvmtype == "i32" then scalarIntegerType = c_valtype end
-			if scalar_descr.llvmtype == "i64" then scalarLongType = c_valtype end
+			if scalar_descr.llvmtype == "i32" then scalarIntegerType = c_valtype; scalarIntegerTypnam = typnam end
+			if scalar_descr.llvmtype == "i64" then scalarLongType = c_valtype; scalarLongTypnam = typnam end
 					local scalarFloatType = nil
 
 			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
@@ -1773,8 +1797,9 @@ function initBuiltInTypes()
 			typedb:def_reduction( qualitype.valtype, constexprType.type, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeInstantiation, weight)
 		end
 	end
+	local bytePointerQualitype_valtype,bytePointerQualitype_cval
 	if byteQualitype then
-		local bytePointerQualitype_valtype,bytePointerQualitype_cval = definePointerQualiTypesCrossed( {line=0}, byteQualitype)
+		bytePointerQualitype_valtype,bytePointerQualitype_cval = definePointerQualiTypesCrossed( {line=0}, byteQualitype)
 		stringPointerType = bytePointerQualitype_cval.valtype
 		memPointerType = bytePointerQualitype_valtype.valtype
 		typedb:def_reduction( memPointerType, stringPointerType, nil, tag_pushVararg)
@@ -1802,6 +1827,10 @@ function initBuiltInTypes()
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
 	defineConstExprArithmetics()
+	if byteQualitype then
+		definePointerArithmeticOperators( bytePointerQualitype_valtype.valtype)
+		definePointerArithmeticOperators( bytePointerQualitype_cval.valtype)
+	end
 	initControlBooleanTypes()
 end
 -- Application of a conversion constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
@@ -2002,6 +2031,8 @@ function createPointerTypeInstance( node, attr, typeId)
 	local qs = typeQualiSepMap[ typeId]
 	local qualitype_pointee = qualiTypeMap[ qs.valtype]
 	local qualitype_valtype,qualitype_cval = definePointerQualiTypesCrossed( node, qualitype_pointee)
+	definePointerArithmeticOperators( qualitype_valtype.valtype)
+	definePointerArithmeticOperators( qualitype_cval.valtype)
 	local qualitype
 	if qs.qualifier.const == true then 
 		qualitype = qualitype_cval

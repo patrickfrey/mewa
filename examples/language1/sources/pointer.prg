@@ -33,8 +33,10 @@ main {
 
 	printf("RES cnt = %d\n", cnt);
 	var const byte^ str = "Hello World!";
+	var const byte^ ptr = str + 6;
+	var const byte^ bas = ptr - 5;
 	var byte fc = str[0];
 	var byte sc = str[6];
-	printf("Initials %c %c\n", fc, sc);
+	printf("Initials %c %c %s %s\n", fc, sc, ptr, bas);
 }
 
