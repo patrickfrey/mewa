@@ -27,10 +27,11 @@ local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDedu
 
 -- Centralized list of the ordering of the reduction rules determined by their weights:
 local rdw_conv = 1.0			-- Reduction weight of conversion
-local rdw_constexpr = rdw_conv + 0.0675 -- Conversion from a const expression
-local rdw_sign = rdw_conv + 0.125	-- Conversion of integers changing sign
-local rdw_float = rdw_conv + 0.25	-- Conversion switching floating point with integers
-local rdw_bool = rdw_conv + 0.25	-- Conversion of numeric value to boolean
+local rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
+local rdw_load = 0.25			-- Reduction weight of loading a const expression
+local rdw_sign = 0.125			-- Conversion of integers changing sign
+local rdw_float = 0.25			-- Conversion switching floating point with integers
+local rdw_bool = 0.25			-- Conversion of numeric value to boolean
 local rdw_barrier = 2.0			-- Reduction weight of a reduction that invokes a state transition if used
 local rdw_strip_u_1 = 0.75 / (1*1)	-- Reduction weight of stripping unbound reftype from type having 1 qualifier 
 local rdw_strip_u_2 = 0.75 / (2*2)	-- Reduction weight of stripping unbound reftype from type having 2 qualifiers
@@ -50,7 +51,8 @@ local rdw_strip_c_3 = 0.5 / (3*3)	-- Reduction weight of changing constant quali
 local rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
 local rwd_boolean = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
-function scalarDeductionWeight( sizeweight) return 0.25*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
+function combineWeight3( w1, w2, w3) return w1 + (w2 * 127.0 / 128.0) + (w3 * 255.0 / 256.0) end -- Combining three reductions slightly less weight compared with applying them singularily
+function scalarDeductionWeight( sizeweight) return 0.125*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
 
 local weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
 local scalarQualiTypeMap = {}		-- Map of scalar type names without qualifiers to the table of type ids for all qualifiers possible
@@ -444,12 +446,12 @@ typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr
 typeDescriptionMap[ constexprBooleanType] = llvmir.constexprBooleanDescr
 typeDescriptionMap[ constexprNullType] = llvmir.constexprNullDescr
 typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr
--- Table listing the accepted constant expression/value types for each scalar type class 
+-- Table listing the accepted constant expression/value types for each scalar type class with the weight for loading it
 local typeClassToConstExprTypesMap = {
-	fp = {{type=constexprFloatType,weight=0.0}, {type=constexprIntegerType,weight=rdw_float},{type=constexprUIntegerType,weight=rdw_float}}, 
-	bool = {{type=constexprBooleanType,weight=0.0}},
-	signed = {{type=constexprIntegerType,weight=0.0},{type=constexprUIntegerType,weight=rdw_sign}},
-	unsigned = {{type=constexprUIntegerType,weight=0.0}}
+	fp = {{type=constexprFloatType,weight=rdw_constexpr}, {type=constexprIntegerType,weight=rdw_float},{type=constexprUIntegerType,weight=rdw_float}}, 
+	bool = {{type=constexprBooleanType,weight=rdw_constexpr}},
+	signed = {{type=constexprIntegerType,weight=rdw_constexpr},{type=constexprUIntegerType,weight=rdw_sign}},
+	unsigned = {{type=constexprUIntegerType,weight=rdw_constexpr}}
 }
 local bits64 = bcd.bits( 64)
 local constexprOperatorMap = {
@@ -1110,7 +1112,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 		for oth_typnam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typnam]
 			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
-			typedb:def_reduction( qualitype.valtype, oth_qualitype.c_valtype, conv_constructor, tag_typeConversion, rdw_conv + conv.weight)
+			typedb:def_reduction( qualitype.valtype, oth_qualitype.c_valtype, conv_constructor, tag_typeConversion, combineWeight( rdw_conv, conv.weight))
 		end
 	end
 end
@@ -1765,7 +1767,7 @@ function initBuiltInTypes()
 			scalarIndexTypeMap[ typnam] = c_valtype
 		end
 		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
-			local weight = constexprType.weight + scalarDeductionWeight( scalar_descr.sizeweight)
+			local weight = combineWeight3( rdw_load, constexprType.weight, scalarDeductionWeight( scalar_descr.sizeweight))
 			local valueconv = constexprLlvmConversion( c_valtype, constexprType.type)
 			typedb:def_reduction( qualitype.valtype, constexprType.type, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeInstantiation, weight)
 		end
@@ -2021,6 +2023,7 @@ function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask_
 	if redutype ~= operand.type then
 		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
 		if altpath then
+			local scope_bk,step_bk = typedb:scope({}) weight_XX = typedb:get_reduction( typedb:get_type( 0, "int"), constexprIntegerType); typedb:scope(scope_bk,step_bk); io.stderr:write(string.format("++++ WEIGHT %.4f\n", weight_XX))
 			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
 						typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
 		end

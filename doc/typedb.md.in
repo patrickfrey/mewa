@@ -278,7 +278,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | :--------- | :----------- | :------- | :------------------------------------------------------------------------------------------------------------------ |
 | 1st        | dest-type    | integer  | Resulting type to of the reduction.                                                                                 |
 | 2nd        | src-type     | integer  | Start type of the reduction.                                                                                        |
-| 3rd        | tagmask      | integer  | Set (bit-set) of tags (*) that selects the reduction classes to consider.                                           |
+| 3rd        | tagmask      | integer  | (optional) Set (bit-set) of tags (*) that selects the reduction classes to consider. No restriction if undefined.   |
 | Return 1st |              | number   | Weight of the reduction if it exists in a scope and the result is valid or *nil* if it does not exist.              |
 | Return 2nd |              | any type | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the current scope step. |
 

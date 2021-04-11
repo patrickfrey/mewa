@@ -313,6 +313,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 	local elementmap = {[srcType] = 1}
 	local elementlist = {{type=srcType, weight=0.0, pathlen=0, pred=0}}
 	local queue = {{weight=0.0, elementidx=#elementlist}}
+	local weightEpsilon = 1E-8
 	local function insertQueue( queue, weight, elementidx)
 		for qi=1,#queue do
 			if queue[ qi].weight > weight then
@@ -339,14 +340,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 			weight = weight + elementlist[ pred].weight
 		end
 		if pathlen <= max_pathlen then
-			if elementmap[ typeId] then
-				local elementidx = elementmap[ typeId]
-				local element = elementlist[ elementidx]
-				if weight < element.weight then
-					element.weight = weight
-					insertQueue( queue, weight, elementidx)
-				end
-			else
+			if not elementmap[ typeId] or weight <= elementlist[ elementmap[ typeId]].weight + weightEpsilon then
 				table.insert( elementlist, {type=typeId, weight=weight, pathlen=pathlen, pred=pred, constructor=constructor})
 				elementmap[ typeId] = #elementlist
 				insertQueue( queue, weight, #elementlist)
@@ -358,7 +352,6 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 		if element.pred > 0 then rt = rt .. " <- [" .. string.format( "%.4f", elementlist[elementidx].weight) .. "] " .. elementString( elementlist[element.pred],element.pred) end
 		return rt
 	end
-	local weightEpsilon = 1E-8
 	local result
 	local resultweight
 	local rt_bk
@@ -387,7 +380,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 	if not resultweight then 
 		rt = rt .. "NOTFOUND\n"
 	end
-	return rt_bk or rt
+	return rt
 end
 
 local function treeToString( typedb, node, indentstr, node_tostring)
