@@ -699,7 +699,7 @@ Shift token "nothrow" at line 76 in state XXX, goto XXX
 Reduce #0 to funcattribute by token '{' at line 77 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
 Reduce #2 to funcattribute by token '{' at line 77 in state XXX, call funcattribute {throws=false}, goto XXX
 Shift token '{' at line 77 in state XXX, goto XXX
-Shift token IDENT = "g_allocCnt" at line 78 in state XXX, goto XXX
+Shift token IDENT = "g_maxAllocCnt" at line 78 in state XXX, goto XXX
 Reduce #1 to expression by token '=' at line 78 in state XXX, call variable, goto XXX
 Shift token '=' at line 78 in state XXX, goto XXX
 Shift token IDENT = "allocCnt" at line 78 in state XXX, goto XXX
@@ -888,19 +888,8 @@ Reduce #1 to expressionlist by token ')' at line 95 in state XXX, goto XXX
 Shift token ')' at line 95 in state XXX, goto XXX
 Reduce #4 to expression by token ';' at line 95 in state XXX, call operator "()", goto XXX
 Shift token ';' at line 95 in state XXX, goto XXX
-Reduce #2 to statement by token IDENT = "test" at line 96 in state XXX, call free_expression, goto XXX
-Shift token IDENT = "test" at line 96 in state XXX, goto XXX
-Reduce #1 to expression by token '(' at line 96 in state XXX, call variable, goto XXX
-Shift token '(' at line 96 in state XXX, goto XXX
-Shift token UINTEGER = "1" at line 96 in state XXX, goto XXX
-Reduce #1 to expression by token ')' at line 96 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #1 to expressionlist by token ')' at line 96 in state XXX, goto XXX
-Shift token ')' at line 96 in state XXX, goto XXX
-Reduce #4 to expression by token ';' at line 96 in state XXX, call operator "()", goto XXX
-Shift token ';' at line 96 in state XXX, goto XXX
 Reduce #2 to statement by token '}' at line 97 in state XXX, call free_expression, goto XXX
 Reduce #0 to statementlist by token '}' at line 97 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 97 in state XXX, goto XXX
 Reduce #2 to statementlist by token '}' at line 97 in state XXX, goto XXX
 Shift token '}' at line 97 in state XXX, goto XXX
 Reduce #2 to main_procedure by token $ at line 101 in state XXX, call main_procdef, goto XXX
@@ -3367,7 +3356,7 @@ Lua call result [1]
                             {
                               line = 78,
                               name = "IDENT",
-                              value = "g_allocCnt"}},
+                              value = "g_maxAllocCnt"}},
                           call = {
                             name = "variable",
                             proc = <function>},
@@ -3860,33 +3849,33 @@ Lua call result [1]
                         name = "catchblock",
                         proc = <function>},
                       line = 89,
-                      step = 37}},
+                      step = 38}},
                   call = {
                     name = "trycatch",
                     proc = <function>},
                   line = 89,
                   scope = {
                     31,
-                    38}}},
+                    39}}},
               call = {
                 name = "callablebody",
                 proc = <function>},
               line = 89,
               scope = {
                 30,
-                39}}},
+                40}}},
           call = {
             name = "procdef",
             proc = <function>},
           id = 7,
           line = 89,
-          step = 39}},
+          step = 40}},
       call = {
         name = "definition 1",
         obj = 1,
         proc = <function>},
       line = 89,
-      step = 39},
+      step = 40},
     {
       arg = {
         {
@@ -3905,7 +3894,7 @@ Lua call result [1]
                         name = "variable",
                         proc = <function>},
                       line = 95,
-                      step = 39},
+                      step = 40},
                     {
                       arg = {
                         {
@@ -3917,70 +3906,32 @@ Lua call result [1]
                         obj = "constexpr uint",
                         proc = <function>},
                       line = 95,
-                      step = 39}},
+                      step = 40}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
                   line = 95,
-                  step = 39}},
+                  step = 40}},
               call = {
                 name = "free_expression",
                 proc = <function>},
               line = 95,
-              step = 39},
-            {
-              arg = {
-                {
-                  arg = {
-                    {
-                      arg = {
-                        {
-                          line = 96,
-                          name = "IDENT",
-                          value = "test"}},
-                      call = {
-                        name = "variable",
-                        proc = <function>},
-                      line = 96,
-                      step = 39},
-                    {
-                      arg = {
-                        {
-                          line = 96,
-                          name = "UINTEGER",
-                          value = "1"}},
-                      call = {
-                        name = "constant constexpr uint",
-                        obj = "constexpr uint",
-                        proc = <function>},
-                      line = 96,
-                      step = 39}},
-                  call = {
-                    name = "operator ()",
-                    obj = "()",
-                    proc = <function>},
-                  line = 96,
-                  step = 39}},
-              call = {
-                name = "free_expression",
-                proc = <function>},
-              line = 96,
-              step = 39}},
+              step = 40}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 96,
+          line = 95,
           scope = {
-            39,
-            40}}},
+            40,
+            41}}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 96,
-      step = 40}},
+      line = 95,
+      step = 41}},
   call = {
     name = "program",
     proc = <function>},
-  line = 96,
-  step = 40}
+  line = 95,
+  step = 41}

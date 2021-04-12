@@ -205,8 +205,8 @@ elseblock/L1		= "elseif" "(" expression ")" codeblock	elseblock				(conditional_
 			| "elseif" "(" expression ")" codeblock 					(conditional_elseif)
 			| "else" codeblock 								(conditional_else)
 			;
-catchblock		= "catch" IDENT	codeblock							(catchblock)
-			| "catch" IDENT	"," IDENT codeblock						(catchblock)
+catchblock		= "catch" IDENT	codeblock							(>>catchblock)
+			| "catch" IDENT	"," IDENT codeblock						(>>catchblock)
 			;
 tryblock		= "try" codeblock								(tryblock)
 			;

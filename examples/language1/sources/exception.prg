@@ -75,7 +75,7 @@ class String
 
 private procedure test( int allocCnt) nothrow
 {
-	g_allocCnt = allocCnt;
+	g_maxAllocCnt = allocCnt;
 	try
 	{
 		var std::String str = "Hello world!";
@@ -93,7 +93,7 @@ private procedure test( int allocCnt) nothrow
 main
 {
 	test( 100);
-	test( 1);
+	//test( 1);
 }
 
 

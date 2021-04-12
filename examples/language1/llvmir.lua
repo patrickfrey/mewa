@@ -338,11 +338,8 @@ llvmir.exception = {
 		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)\n"
 		.. "declare external i8* @__cxa_allocate_exception( i32)\n"
 		.. "declare external void @__cxa_throw( i8*, i8*, i8*) noreturn\n"
-		.. "@_ZTVN10__cxxabiv117__class_type_infoE = external dso_local global i8*\n"
-		.. "$__typename__L_Exception = comdat any\n"
-		.. "$__typeinfo__L_Exception = comdat any\n"
-		.. "@__typename__L_Exception = linkonce_odr dso_local constant [11 x i8] c\"9exception\\00\", comdat, align 1\n"
-		.. "@__typeinfo__L_Exception = linkonce_odr dso_local constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([11 x i8], [11 x i8]* @__typename__L_Exception, i32 0, i32 0) }, comdat, align 8\n"
+		.. "declare external i8* @__cxa_begin_catch( i8*)\n"
+		.. "declare external void @__cxa_end_catch()\n"
 		.. "define dso_local void @__L_init__Exception( %__L_Exception* %exception, i64 %code, i8* %msg) {\n"
 		.. "%ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
 		.. "store i64 %code, i64* %ObjCodeRef\n"
@@ -365,7 +362,7 @@ llvmir.exception = {
 		.. "%Obj = bitcast i8* %Mem to %__L_Exception*\n"
 		.. "%exceptionVal = load %__L_Exception, %__L_Exception* %exception\n"
 		.. "store %__L_Exception %exceptionVal, %__L_Exception* %Obj\n"
-		.. "call void @__cxa_throw( i8* %Mem, i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*), i8* null) noreturn\n"
+		.. "call void @__cxa_throw( i8* %Mem, i8* null, i8* null) noreturn\n"
 		.. "unreachable\n"
 		.. "}\n"
 		.. "define dso_local void @__L_free__ExceptionMsg( i8* %msg) {\n"
@@ -388,11 +385,13 @@ llvmir.exception = {
 		.. "{out} = load i8*, i8** {1}\n",
 	freeExceptionErrMsg = "call void @__L_free__ExceptionMsg( i8* {this})\n",
 	catch = "{landingpad}:\n"
-		.. "{1} = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)\n"
+		.. "{1} = landingpad { i8*, i32 } catch i8* null\n"
 		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
-		.. "{3} = bitcast i8* {2} to %__L_Exception*\n"
-		.. "{4} = load %__L_Exception, %__L_Exception* {3}\n"
-		.. "store %__L_Exception {4}, %__L_Exception* %exception\n"
+		.. "{3} = call i8* @__cxa_begin_catch( i8* {2})\n"
+		.. "{4} = bitcast i8* {3} to %__L_Exception*\n"
+		.. "{5} = load %__L_Exception, %__L_Exception* {4}\n"
+		.. "store %__L_Exception {5}, %__L_Exception* %exception\n"
+		.. "call void @__cxa_end_catch()\n"
 		.. "br label %{cleanup}\n",
 	cleanup_start = exception_vars.cleanup_landingpad
 		.. "br label %{cleanup}\n",

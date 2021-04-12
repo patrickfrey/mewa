@@ -287,8 +287,8 @@ statementlist/L1 =
 elseblock/L1 = "elseif" "(" expression ")" codeblock elseblock (XX)
 elseblock/L1 = "elseif" "(" expression ")" codeblock (XX)
 elseblock/L1 = "else" codeblock (XX)
-catchblock = "catch" IDENT codeblock (XX)
-catchblock = "catch" IDENT "," IDENT codeblock (XX)
+catchblock = "catch" IDENT codeblock (step:89)
+catchblock = "catch" IDENT "," IDENT codeblock (step:89)
 tryblock = "try" codeblock (XX)
 statement/L1 = structdefinition (XX)
 statement/L1 = classdefinition (XX)
@@ -17946,7 +17946,7 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." . ")" ";", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	catchblock = "catch" IDENT codeblock . (XX), FOLLOW [XX] -> REDUCE catchblock #3 CALL catchblock
+	catchblock = "catch" IDENT codeblock . (step:89), FOLLOW [XX] -> REDUCE catchblock #3 CALL catchblock
 [XX]
 	catchblock = "catch" IDENT "," . IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
@@ -18481,7 +18481,7 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";" . (XX), FOLLOW [XX] -> REDUCE extern_definition #9 CALL extern_procdef_vararg
 [XX]
-	catchblock = "catch" IDENT "," IDENT codeblock . (XX), FOLLOW [XX] -> REDUCE catchblock #5 CALL catchblock
+	catchblock = "catch" IDENT "," IDENT codeblock . (step:89), FOLLOW [XX] -> REDUCE catchblock #5 CALL catchblock
 [XX]
 	statement/L1 = "if" "(" expression ")" codeblock elseblock . (XX), FOLLOW [XX] -> REDUCE statement #6 CALL conditional_if
 [XX]

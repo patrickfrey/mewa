@@ -14,11 +14,8 @@ declare external i8* @strdup( i8* ) nounwind
 @__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)
 declare external i8* @__cxa_allocate_exception( i32)
 declare external void @__cxa_throw( i8*, i8*, i8*) noreturn
-@_ZTVN10__cxxabiv117__class_type_infoE = external dso_local global i8*
-$__typename__L_Exception = comdat any
-$__typeinfo__L_Exception = comdat any
-@__typename__L_Exception = linkonce_odr dso_local constant [11 x i8] c"9exception\00", comdat, align 1
-@__typeinfo__L_Exception = linkonce_odr dso_local constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([11 x i8], [11 x i8]* @__typename__L_Exception, i32 0, i32 0) }, comdat, align 8
+declare external i8* @__cxa_begin_catch( i8*)
+declare external void @__cxa_end_catch()
 define dso_local void @__L_init__Exception( %__L_Exception* %exception, i64 %code, i8* %msg) {
 %ObjCodeRef = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
 store i64 %code, i64* %ObjCodeRef
@@ -41,7 +38,7 @@ define dso_local void @__L_throw__Exception( %__L_Exception* %exception) {
 %Obj = bitcast i8* %Mem to %__L_Exception*
 %exceptionVal = load %__L_Exception, %__L_Exception* %exception
 store %__L_Exception %exceptionVal, %__L_Exception* %Obj
-call void @__cxa_throw( i8* %Mem, i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*), i8* null) noreturn
+call void @__cxa_throw( i8* %Mem, i8* null, i8* null) noreturn
 unreachable
 }
 define dso_local void @__L_free__ExceptionMsg( i8* %msg) {
@@ -275,164 +272,190 @@ entry:
 %exception = alloca %__L_Exception
 %excptr = alloca i8*
 %excidx = alloca i32
-store i32 %r1, i32* @g_allocCnt
+store i32 %r1, i32* @g_maxAllocCnt
 %r3 = alloca %std__String, align 8
 %r2 = getelementptr inbounds [13 x i8], [13 x i8]* @string9, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r3, i8* %r2) to label %L4 unwind label %L3
 L4:
-%r8 = getelementptr inbounds [7 x i8], [7 x i8]* @string10, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r8)
-%r20 = alloca [20 x %std__String], align 8
-%r21 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 0
-%r9 = getelementptr inbounds [2 x i8], [2 x i8]* @string11, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r21, i8* %r9) to label %L8 unwind label %L5
+%r9 = getelementptr inbounds [7 x i8], [7 x i8]* @string10, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r9)
+%r21 = alloca [20 x %std__String], align 8
+%r22 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 0
+%r10 = getelementptr inbounds [2 x i8], [2 x i8]* @string11, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r22, i8* %r10) to label %L8 unwind label %L5
 L8:
-%r26 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 1
-%r10 = getelementptr inbounds [2 x i8], [2 x i8]* @string12, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r26, i8* %r10) to label %L10 unwind label %L9
+%r28 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 1
+%r11 = getelementptr inbounds [2 x i8], [2 x i8]* @string12, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r28, i8* %r11) to label %L10 unwind label %L9
 L10:
-%r31 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 2
-%r11 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r31, i8* %r11) to label %L12 unwind label %L11
-L12:
-%r36 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 3
+%r34 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 2
 %r12 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r36, i8* %r12) to label %L14 unwind label %L13
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r34, i8* %r12) to label %L12 unwind label %L11
+L12:
+%r40 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 3
+%r13 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r40, i8* %r13) to label %L14 unwind label %L13
 L14:
-%r41 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 4
-%r13 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r41, i8* %r13) to label %L16 unwind label %L15
+%r46 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 4
+%r14 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r46, i8* %r14) to label %L16 unwind label %L15
 L16:
-%r46 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 5
-%r14 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r46, i8* %r14) to label %L18 unwind label %L17
+%r52 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 5
+%r15 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r52, i8* %r15) to label %L18 unwind label %L17
 L18:
-%r51 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 6
-%r15 = getelementptr inbounds [2 x i8], [2 x i8]* @string16, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r51, i8* %r15) to label %L20 unwind label %L19
+%r58 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 6
+%r16 = getelementptr inbounds [2 x i8], [2 x i8]* @string16, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r58, i8* %r16) to label %L20 unwind label %L19
 L20:
-%r56 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 7
-%r16 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r56, i8* %r16) to label %L22 unwind label %L21
+%r64 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 7
+%r17 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r64, i8* %r17) to label %L22 unwind label %L21
 L22:
-%r61 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 8
-%r17 = getelementptr inbounds [2 x i8], [2 x i8]* @string17, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r61, i8* %r17) to label %L24 unwind label %L23
+%r70 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 8
+%r18 = getelementptr inbounds [2 x i8], [2 x i8]* @string17, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r70, i8* %r18) to label %L24 unwind label %L23
 L24:
-%r66 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 9
-%r18 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r66, i8* %r18) to label %L26 unwind label %L25
+%r76 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 9
+%r19 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r76, i8* %r19) to label %L26 unwind label %L25
 L26:
-%r71 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r20, i32 0, i32 10
-%r19 = getelementptr inbounds [3 x i8], [3 x i8]* @string18, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r71, i8* %r19) to label %L28 unwind label %L27
+%r82 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 10
+%r20 = getelementptr inbounds [3 x i8], [3 x i8]* @string18, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r82, i8* %r20) to label %L28 unwind label %L27
 L28:
-call void @__ctor_init_20__std__String( [20 x %std__String]* %r20, i32 11)
-%r76 = getelementptr inbounds [4 x i8], [4 x i8]* @string19, i64 0, i64 0
-%r77 = call i8* @__C_std__String__c_str__const( %std__String* %r3)
-call void(i8*,  ...) @printf( i8* %r76, i8* %r77)
-br label %L1
+call void @__ctor_init_20__std__String( [20 x %std__String]* %r21, i32 11)
+%r88 = getelementptr inbounds [4 x i8], [4 x i8]* @string19, i64 0, i64 0
+%r89 = call i8* @__C_std__String__c_str__const( %std__String* %r3)
+call void(i8*,  ...) @printf( i8* %r88, i8* %r89)
+br label %L33
 L1:
-%r80 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
-%r78 = load i64, i64* %r80
-%r81 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1
-%r79 = load i8*, i8** %r81
-%r82 = getelementptr inbounds [16 x i8], [16 x i8]* @string20, i64 0, i64 0
-%r83 = load i64, i64* @g_exceptionCode
-call void(i8*,  ...) @printf( i8* %r82, i64 %r83, i64 %r78, i8* %r79)
-br label %L32
+%r92 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
+%r90 = load i64, i64* %r92
+%r93 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1
+%r91 = load i8*, i8** %r93
+%r94 = getelementptr inbounds [16 x i8], [16 x i8]* @string20, i64 0, i64 0
+%r95 = load i64, i64* @g_exceptionCode
+call void(i8*,  ...) @printf( i8* %r94, i64 %r95, i64 %r90, i8* %r91)
+br label %L33
+L33:
+br label %L34
 L2:
 br label %L1
 L3:
-%r4 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
+%r4 = landingpad { i8*, i32 } catch i8* null
 %r5 = extractvalue { i8*, i32 } %r4, 0
-%r6 = bitcast i8* %r5 to %__L_Exception*
-%r7 = load %__L_Exception, %__L_Exception* %r6
-store %__L_Exception %r7, %__L_Exception* %exception
+%r6 = call i8* @__cxa_begin_catch( i8* %r5)
+%r7 = bitcast i8* %r6 to %__L_Exception*
+%r8 = load %__L_Exception, %__L_Exception* %r7
+store %__L_Exception %r8, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L2
 L5:
-%r22 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r23 = extractvalue { i8*, i32 } %r22, 0
-%r24 = bitcast i8* %r23 to %__L_Exception*
-%r25 = load %__L_Exception, %__L_Exception* %r24
-store %__L_Exception %r25, %__L_Exception* %exception
+%r23 = landingpad { i8*, i32 } catch i8* null
+%r24 = extractvalue { i8*, i32 } %r23, 0
+%r25 = call i8* @__cxa_begin_catch( i8* %r24)
+%r26 = bitcast i8* %r25 to %__L_Exception*
+%r27 = load %__L_Exception, %__L_Exception* %r26
+store %__L_Exception %r27, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L9:
-%r27 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r28 = extractvalue { i8*, i32 } %r27, 0
-%r29 = bitcast i8* %r28 to %__L_Exception*
-%r30 = load %__L_Exception, %__L_Exception* %r29
-store %__L_Exception %r30, %__L_Exception* %exception
+%r29 = landingpad { i8*, i32 } catch i8* null
+%r30 = extractvalue { i8*, i32 } %r29, 0
+%r31 = call i8* @__cxa_begin_catch( i8* %r30)
+%r32 = bitcast i8* %r31 to %__L_Exception*
+%r33 = load %__L_Exception, %__L_Exception* %r32
+store %__L_Exception %r33, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L11:
-%r32 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r33 = extractvalue { i8*, i32 } %r32, 0
-%r34 = bitcast i8* %r33 to %__L_Exception*
-%r35 = load %__L_Exception, %__L_Exception* %r34
-store %__L_Exception %r35, %__L_Exception* %exception
+%r35 = landingpad { i8*, i32 } catch i8* null
+%r36 = extractvalue { i8*, i32 } %r35, 0
+%r37 = call i8* @__cxa_begin_catch( i8* %r36)
+%r38 = bitcast i8* %r37 to %__L_Exception*
+%r39 = load %__L_Exception, %__L_Exception* %r38
+store %__L_Exception %r39, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L13:
-%r37 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r38 = extractvalue { i8*, i32 } %r37, 0
-%r39 = bitcast i8* %r38 to %__L_Exception*
-%r40 = load %__L_Exception, %__L_Exception* %r39
-store %__L_Exception %r40, %__L_Exception* %exception
-br label %L7
-L15:
-%r42 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r43 = extractvalue { i8*, i32 } %r42, 0
+%r41 = landingpad { i8*, i32 } catch i8* null
+%r42 = extractvalue { i8*, i32 } %r41, 0
+%r43 = call i8* @__cxa_begin_catch( i8* %r42)
 %r44 = bitcast i8* %r43 to %__L_Exception*
 %r45 = load %__L_Exception, %__L_Exception* %r44
 store %__L_Exception %r45, %__L_Exception* %exception
+call void @__cxa_end_catch()
+br label %L7
+L15:
+%r47 = landingpad { i8*, i32 } catch i8* null
+%r48 = extractvalue { i8*, i32 } %r47, 0
+%r49 = call i8* @__cxa_begin_catch( i8* %r48)
+%r50 = bitcast i8* %r49 to %__L_Exception*
+%r51 = load %__L_Exception, %__L_Exception* %r50
+store %__L_Exception %r51, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L17:
-%r47 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r48 = extractvalue { i8*, i32 } %r47, 0
-%r49 = bitcast i8* %r48 to %__L_Exception*
-%r50 = load %__L_Exception, %__L_Exception* %r49
-store %__L_Exception %r50, %__L_Exception* %exception
+%r53 = landingpad { i8*, i32 } catch i8* null
+%r54 = extractvalue { i8*, i32 } %r53, 0
+%r55 = call i8* @__cxa_begin_catch( i8* %r54)
+%r56 = bitcast i8* %r55 to %__L_Exception*
+%r57 = load %__L_Exception, %__L_Exception* %r56
+store %__L_Exception %r57, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L19:
-%r52 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r53 = extractvalue { i8*, i32 } %r52, 0
-%r54 = bitcast i8* %r53 to %__L_Exception*
-%r55 = load %__L_Exception, %__L_Exception* %r54
-store %__L_Exception %r55, %__L_Exception* %exception
+%r59 = landingpad { i8*, i32 } catch i8* null
+%r60 = extractvalue { i8*, i32 } %r59, 0
+%r61 = call i8* @__cxa_begin_catch( i8* %r60)
+%r62 = bitcast i8* %r61 to %__L_Exception*
+%r63 = load %__L_Exception, %__L_Exception* %r62
+store %__L_Exception %r63, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L21:
-%r57 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r58 = extractvalue { i8*, i32 } %r57, 0
-%r59 = bitcast i8* %r58 to %__L_Exception*
-%r60 = load %__L_Exception, %__L_Exception* %r59
-store %__L_Exception %r60, %__L_Exception* %exception
+%r65 = landingpad { i8*, i32 } catch i8* null
+%r66 = extractvalue { i8*, i32 } %r65, 0
+%r67 = call i8* @__cxa_begin_catch( i8* %r66)
+%r68 = bitcast i8* %r67 to %__L_Exception*
+%r69 = load %__L_Exception, %__L_Exception* %r68
+store %__L_Exception %r69, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L23:
-%r62 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r63 = extractvalue { i8*, i32 } %r62, 0
-%r64 = bitcast i8* %r63 to %__L_Exception*
-%r65 = load %__L_Exception, %__L_Exception* %r64
-store %__L_Exception %r65, %__L_Exception* %exception
-br label %L7
-L25:
-%r67 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r68 = extractvalue { i8*, i32 } %r67, 0
-%r69 = bitcast i8* %r68 to %__L_Exception*
-%r70 = load %__L_Exception, %__L_Exception* %r69
-store %__L_Exception %r70, %__L_Exception* %exception
-br label %L7
-L27:
-%r72 = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)
-%r73 = extractvalue { i8*, i32 } %r72, 0
+%r71 = landingpad { i8*, i32 } catch i8* null
+%r72 = extractvalue { i8*, i32 } %r71, 0
+%r73 = call i8* @__cxa_begin_catch( i8* %r72)
 %r74 = bitcast i8* %r73 to %__L_Exception*
 %r75 = load %__L_Exception, %__L_Exception* %r74
 store %__L_Exception %r75, %__L_Exception* %exception
+call void @__cxa_end_catch()
+br label %L7
+L25:
+%r77 = landingpad { i8*, i32 } catch i8* null
+%r78 = extractvalue { i8*, i32 } %r77, 0
+%r79 = call i8* @__cxa_begin_catch( i8* %r78)
+%r80 = bitcast i8* %r79 to %__L_Exception*
+%r81 = load %__L_Exception, %__L_Exception* %r80
+store %__L_Exception %r81, %__L_Exception* %exception
+call void @__cxa_end_catch()
+br label %L7
+L27:
+%r83 = landingpad { i8*, i32 } catch i8* null
+%r84 = extractvalue { i8*, i32 } %r83, 0
+%r85 = call i8* @__cxa_begin_catch( i8* %r84)
+%r86 = bitcast i8* %r85 to %__L_Exception*
+%r87 = load %__L_Exception, %__L_Exception* %r86
+store %__L_Exception %r87, %__L_Exception* %exception
+call void @__cxa_end_catch()
 br label %L7
 L7:
 call void @__dtor_std__String( %std__String* %r3)
 br label %L6
 L6:
 br label %L2
-L32:
+L34:
 ret void
 }
 
@@ -441,7 +464,6 @@ define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i3
 entry:
 %r1 = alloca i32, align 4
 call void @test__i32( i32 100)
-call void @test__i32( i32 1)
 store i32 0, i32* %r1
 br label %L2
 L2:

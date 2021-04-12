@@ -1450,8 +1450,8 @@ function returnFromMainFunction( rtype, exitlabel, retvaladr)
 		return assignretcode .. doReturnFromMain( exitlabel)		
 	end
 end
--- Get the cleanup code of the current allocation frame if defined
-function getAllocationFrameCleanupCode( frame)
+-- Get the exception abort or the return statement cleanup code of an allocation frame
+function getAllocationFrameAbortCleanupCode( frame)
 	local code = frame.landingpad or ""
 	for _,ek in ipairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
@@ -1460,6 +1460,16 @@ function getAllocationFrameCleanupCode( frame)
 			code = code .. frame.dtors[di].code .. utils.constructor_format( llvmir.control.label, {inp=exit.labels[di]})
 		end
 		code = code .. exit.exitcode
+	end
+	return code
+end
+-- Get the normal exit (no explicit return or exception) cleanup code of an allocation frame
+function getAllocationFrameRegularExitCleanupCode( frame)
+	local code = ""
+	if #frame.dtors > 0 then
+		local label = frame.env.label()
+		local code = utils.constructor_format( llvmir.control.label, {inp=label})
+		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[di].code end
 	end
 	return code
 end
@@ -1475,7 +1485,7 @@ end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( env, code)
 	local rt = callableFeaturesInitCode( env) .. code
-	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameCleanupCode( frame) end
+	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameAbortCleanupCode( frame) end
 	return rt
 end
 -- Mark the scope passed as argument or the current scope as zone where initializations of member variables in a constructor are not allowed
@@ -1554,7 +1564,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local decl = {type=var, constructor={code=code,out=out}}
 		if initVal then rt = applyCallable( node, decl, ":=", {initVal}) else rt = applyCallable( node, decl, ":=", {}) end
 		local cleanup = tryApplyCallable( node, {type=var,constructor={out=out}}, ":~", {})
-		if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then setCleanupCode( name, cleanup.constructor.code, false) end
+		if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then setCleanupCode( name, cleanup.constructor.code) end
 		return rt
 	elseif context.domain == "global" then
 		instantCallableEnvironment = globalCallableEnvironment
@@ -2695,7 +2705,7 @@ function conditionalIfElseBlock( node, initstate, condition, matchblk, elseblk, 
 	local out; if elseblk then code = code .. elseblk.code; out = elseblk.out else out = cond_constructor.out end
 	return {code = code, out = out, exitLabelUsed=exitLabelUsed, nofollow=nofollow}
 end
--- Collect the code of a scope and resume the initialization state if we are in a constructor
+-- Collect the code of a scope with the destructor code for no jump exit of the frame and resume the initialization state if we are in a constructor
 function collectCode( node, args)
 	local code = ""
 	local nofollow = false
@@ -2708,7 +2718,10 @@ function collectCode( node, args)
 	end
 	local frame = typedb:this_instance( currentAllocFrameKey)
 	local initstate
-	if frame then if frame.initstate then resumeInitState( frame); initstate = frame.initstate end end
+	if frame then
+		if frame.initstate then resumeInitState( frame); initstate = frame.initstate end
+		if not nofollow then code = code .. getAllocationFrameRegularExitCleanupCode( frame) end
+	end
 	return {code=code, nofollow=nofollow, initstate=initstate}
 end
 -- AST Callbacks:
@@ -2775,7 +2788,7 @@ function typesystem.typecast( node)
 		local rt = tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
 		if rt then
 			local cleanup = tryApplyCallable( node, {type=typeId,constructor={out=out}}, ":~", {})
-			if cleanup then setCleanupCode( "cast " .. typedb:type_name(typeId), cleanup, false) end
+			if cleanup then setCleanupCode( "cast " .. typedb:type_name(typeId), cleanup) end
 		end
 		return rt
 	end
@@ -2805,9 +2818,10 @@ function typesystem.catchblock( node, context, catchlabel)
 	typedb:def_reduction( stringPointerType, errmsg_type, nil, tag_typeDeclaration)
 	local code = utils.constructor_format( llvmir.exception.loadExceptionErrCode, {out=errcode_constructor.out}, env.register)
 			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {out=errmsg_constructor.out}, env.register)
-	setCleanupCode( "exception message", utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out}), false)
+	local cleanup = utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out})
+	setCleanupCode( "exception message", cleanup)
 	local rt = utils.traverseRange( typedb, node, {#node.arg,#node.arg}, context)[#node.arg]
-	rt.code = code .. rt.code
+	rt.code = code .. rt.code 
 	return rt
 end
 function typesystem.trycatch( node, context)

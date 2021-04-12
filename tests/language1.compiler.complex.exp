@@ -431,11 +431,11 @@ call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r3
 call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r40, %__Complex__double* %r39)
 call void @printComplex__double__i8$____Complex__double$( i8* %r38, %__Complex__double* %r40)
 store i32 0, i32* %r1
+br label %L4
+L4:
+call void @__dtor___Complex__double( %__Complex__double* %r4)
 br label %L3
 L3:
-call void @__dtor___Complex__double( %__Complex__double* %r4)
-br label %L2
-L2:
 br label %L1
 L1:
 %r41 = load i32, i32* %r1
