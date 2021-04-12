@@ -9,6 +9,7 @@ extern "C" function strlen long( const byte^ str);
 
 int g_allocCnt = 0;
 int g_maxAllocCnt = 0;
+long g_exceptionCode = 0;
 
 private function allocmem byte^( long bytes)
 {
@@ -72,11 +73,27 @@ class String
 }
 }
 
-main {
-	var std::String str = "Hello world!";
-	printf( "DEBUG\n");
-	var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
-	printf( "%s\n", str.c_str());
+private procedure test( int allocCnt) nothrow
+{
+	g_allocCnt = allocCnt;
+	try
+	{
+		var std::String str = "Hello world!";
+		printf( "DEBUG\n");
+		var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
+		printf( "%s\n", str.c_str());
+	
+	}
+	catch errcode, errmsg
+	{
+		printf( "ERR %ld %ld %s\n", g_exceptionCode, errcode, errmsg);
+	}
+}
+
+main
+{
+	test( 100);
+	test( 1);
 }
 
 

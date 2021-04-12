@@ -294,6 +294,7 @@ llvmir.control = {
 	invertedControlType = "br label %{out}\n{inp}:\n",
 	terminateFalseExit = "br label %{out}\n{1}:\n",
 	terminateTrueExit = "br label %{out}\n{1}:\n",
+	gotoStatementPrefix = "br label ",
 	label = "br label %{inp}\n{inp}:\n",
 	gotoStatement = "br label %{inp}\n",
 	plainLabel = "{inp}:\n",
@@ -334,7 +335,7 @@ local exception_vars =
 
 llvmir.exception = {
 	section = "%__L_Exception = type { i64, i8* }\n"
-		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)"
+		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)\n"
 		.. "declare external i8* @__cxa_allocate_exception( i32)\n"
 		.. "declare external void @__cxa_throw( i8*, i8*, i8*) noreturn\n"
 		.. "@_ZTVN10__cxxabiv117__class_type_infoE = external dso_local global i8*\n"
@@ -384,7 +385,7 @@ llvmir.exception = {
 	loadExceptionErrCode = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
 		.. "{out} = load i64, i64* {1}\n",
 	loadExceptionErrMsg = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1\n"
-		.. "{out} = load i8*, i8** {7}\n",
+		.. "{out} = load i8*, i8** {1}\n",
 	freeExceptionErrMsg = "call void @__L_free__ExceptionMsg( i8* {this})\n",
 	catch = "{landingpad}:\n"
 		.. "{1} = landingpad { i8*, i32 } catch i8* bitcast ({ i8*, i8* }* @__typeinfo__L_Exception to i8*)\n"

@@ -310,8 +310,13 @@ end
 -- Constructor of a function call generalized
 function functionCallConstructor( env, code, func, argstr, descr)
 	local out,fmt,subst
+	local doInvoke = descr.throws
 	if not env.throws and descr.throws then
-		utils.errorMessage( env.line or 0, "Calling throwing function inside a callable declared as nothrow: %s", func)
+		if hasCatchFrame() then
+			env.throws = true 
+		else
+			utils.errorMessage( env.line or 0, "Calling throwing function inside a callable declared as nothrow without a catch handling an exception: %s", func)
+		end
 	end
 	if descr.ret then
 		if doReturnValueAsReferenceParameter( descr.ret) then
@@ -444,6 +449,7 @@ local constexprFloatType = typedb:def_type( 0, "constexpr float")	-- const expre
 local constexprBooleanType = typedb:def_type( 0, "constexpr bool")	-- const expression boolean implemented as Lua boolean
 local constexprNullType = typedb:def_type( 0, "constexpr null")		-- const expression null value implemented as nil
 local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
+function isScalarConstExprValueType( initType) return initType >= constexprIntegerType and initType <= constexprNullType end
 -- Mapping of some constant expression type naming
 hardcodedTypeMap[ "constexpr bool"] = constexprBooleanType
 hardcodedTypeMap[ "constexpr uint"] = constexprUIntegerType
@@ -498,9 +504,9 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 end
 -- Conversion of a constexpr number constant to a floating point number
 function constexprToFloat( val, typeId)
-	if typeId == constexprFloatType then return val
-	elseif typeId == constexprIntegerType then return val:tonumber()
-	elseif typeId == constexprUIntegerType then if type(val) == "string" then return tonumber(val) else return val:tonumber() end
+	if typeId == constexprFloatType then if type(val) ~= "userdata" then return tonumber(val) else return val:tonumber() end
+	elseif typeId == constexprIntegerType then if type(val) ~= "userdata" then return tonumber(val) else return val:tonumber() end
+	elseif typeId == constexprUIntegerType then if type(val) ~= "userdata" then return tonumber(val) else return val:tonumber() end
 	elseif typeId == constexprBooleanType then if val == true then return 1.0 else return 0.0 end
 	else utils.errorMessage( 0, "Can't convert constexpr value of type '%s' to number: '%s'", typedb:type_string(typeId), tostring(number))
 	end
@@ -509,7 +515,7 @@ end
 function constexprLlvmConversion( typeId, constexprType)
 	if typeDescriptionMap[ typeId].class == "fp" then
 		if typeDescriptionMap[ typeId].llvmtype == "float" then
-			return function( val) return "0x" .. mewa.llvm_float_tohex(  constexprToFloat( val, constexprType)) end
+			return function( val) return "0x" .. mewa.llvm_float_tohex( constexprToFloat( val, constexprType)) end
 		elseif typeDescriptionMap[ typeId].llvmtype == "double" then
 			return function( val) return "0x" .. mewa.llvm_double_tohex( constexprToFloat( val, constexprType)) end
 		end
@@ -749,8 +755,8 @@ end
 function defineUnboundRefTypeTypes( contextTypeId, typnam, typeDescription, qualitype)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 
-	local unbound_reftype = typedb:def_type( contextTypeId, typnam .. "&<-" )			-- unbound reference type
-	local c_unbound_reftype = typedb:def_type( contextTypeId, "const " .. typnam .. "&<-")		-- constant unbound reference type
+	local unbound_reftype = typedb:def_type( contextTypeId, typnam .. "?&" )			-- unbound reference type
+	local c_unbound_reftype = typedb:def_type( contextTypeId, "const " .. typnam .. "?&")		-- constant unbound reference type
 
 	qualitype.unbound_reftype = unbound_reftype
 	qualitype.c_unbound_reftype = c_unbound_reftype
@@ -1311,32 +1317,25 @@ function binsearchLowerboundFrameDtors( dtors, step)
 end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
 function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
+	local dtoridx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
+	local parent; if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then parent = frame.parent end
+	if dtoridx == 0 and parent then return getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel) end
 	local exit = frame.exitmap[ exitkey]
 	local env = frame.env
 	if not exit then
 		labels = {}
-		local nextlabel
-		for di=1,#frame.dtors do table.insert( labels, env.label()) end
-		if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then
-			nextlabel = getFrameCleanupLabel( frame.parent, exitkey, exitcode, exitlabel)
-			exitcode = nil
-		elseif exitcode then
-			nextlabel = env.label()
-			if exitlabel then exitcode = exitcode .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
+		for di=1,dtoridx+1 do table.insert( labels, env.label()) end
+		if parent then
+			exit = {labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)})}
 		else
-			nextlabel = exitlabel
+			if exitlabel then exitcode = (exitcode or "") .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
+			if not exitcode then utils.errorMessage( env.line, "Internal: Frame cleanup without label or code defined") end
+			exit = {labels=labels, exitcode=exitcode}
 		end
-		frame.exitmap[ exitkey] = {labels=labels, exitcode=exitcode, exitlabel=nextlabel}
-		exit = frame.exitmap[ exitkey]
+		frame.exitmap[ exitkey] = exit
 		table.insert( frame.exitkeys, exitkey)
 	end
-	local idx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
-	if idx == 0 then
-		return exit.exitlabel
-	else
-		if #exit.labels < idx then for di=#exit.labels+1,idx do table.insert( exit.labels, env.label()) end end
-		return exit.labels[ idx]
-	end
+	return exit.labels[ dtoridx+1] -- First label is the label without cleanup code, just the exit code
 end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
 	return getFrameCleanupLabel( getAllocationFrame(), exitkey, exitcode, exitlabel)
@@ -1380,6 +1379,11 @@ function initTryBlock( catchlabel)
 	frame.catch = frame
 	enableFeatureException( frame.env)
 	getFrameCleanupLabel( frame, "catch", nil, catchlabel)
+end
+-- Find out if there is a catch around the current scope step, determines if we can call a throwing function inside a non throwing function or not
+function hasCatchFrame()
+	local frame = typedb:get_instance( currentAllocFrameKey)
+	if frame and frame.catch then return true else return false end
 end
 -- Ensure that exceptions and their linkup code are defined, define them if not yet done
 function requireExceptions()
@@ -1451,16 +1455,11 @@ function getAllocationFrameCleanupCode( frame)
 	local code = frame.landingpad or ""
 	for _,ek in ipairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
-		for di=#exit.labels,1,-1 do
-			code = code .. utils.template_format( llvmir.control.plainLabel, {inp=exit.labels[di]}) .. frame.dtors[di].code
-			if di > 1 then code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.labels[di-1]}) end
+		code = code .. utils.template_format( llvmir.control.plainLabel, {inp=exit.labels[#exit.labels]})
+		for di=#exit.labels-1,1,-1 do
+			code = code .. frame.dtors[di].code .. utils.constructor_format( llvmir.control.label, {inp=exit.labels[di]})
 		end
-		if exit.exitcode then
-			local fmt; if #exit.labels > 0 then fmt = llvmir.control.label else fmt = llvmir.control.plainLabel end
-			code = code .. utils.constructor_format( fmt, {inp=exit.exitlabel}) .. exit.exitcode
-		elseif exit.exitlabel and #exit.labels > 0 then
-			code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exit.exitlabel})
-		end
+		code = code .. exit.exitcode
 	end
 	return code
 end
@@ -1563,9 +1562,9 @@ function defineVariable( node, context, typeId, name, initVal)
 		local var = typedb:def_type( 0, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
-		if descr.scalar == true and initVal and type(initVal) ~= "table" then
+		if initVal and isScalarConstExprValueType( initVal.type) then
 			valueconv = constexprLlvmConversion( typeId, initVal.type)
-			print( utils.constructor_format( descr.def_global_val, {out = out, val = valueconv(initVal)})) -- print global data declaration
+			print( utils.constructor_format( descr.def_global_val, {out = out, val = valueconv(constructorParts(initVal.constructor))})) -- print global data declaration
 		else
 			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
 			local decl = {type=var, constructor={out=out}}
@@ -1977,8 +1976,7 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 		local typeInstance = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
 		typeIdNotifyFunction( typeInstance)
 		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
-		local descr = {lnk="internal", attr=llvmir.functionAttribute( false, genericDescr.throws), signature="",
-				name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
+		local descr = {lnk="internal", signature="", name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
 		pushSeekContextType( typeInstance)
 		if genericDescr.class == "generic_function" then
 			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
@@ -2354,8 +2352,10 @@ function expandContextMethodList( node, descr, context)
 		context.methodmap[ descr.methodid] = #context.methods
 	end
 end
+-- Output of the function implementation
 function printFunctionDeclaration( node, descr)
 	local fmt; if doReturnValueAsReferenceParameter( descr.ret) then fmt = llvmir.control.sretFunctionDeclaration else fmt = llvmir.control.functionDeclaration end
+	descr.attr = llvmir.functionAttribute( descr.interface, descr.env.throws)
 	print( utils.constructor_format( fmt, descr))
 end
 -- Define a direct function call: class method call, free function call
@@ -2493,6 +2493,7 @@ function defineCallableBodyContext( node, context, descr)
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
+	if descr.throws then getAllocationFrame() end -- toplevel allocation frame if it throws
 	return env
 end
 -- Define the execution context of the body of the main function
@@ -2550,6 +2551,31 @@ function addGenericParameter( node, generic, name, typeId)
 	generic.namemap[ name] = #generic.param+1
 	table.insert( generic.param, {name=name, type=typeId} )
 end
+
+-- Structure Context (context) Fields:
+--	domain		: Describes the kind of the context that determines how declarations like variables and functions are handled
+-- Attributes in case of domain "member":
+--	qualitype	: Names all types declared for a structure
+--	descr		: LLVM IR Template parameters for mapping the structure
+--	operators	: Maps the operator name ('+','-',...) to a structure with some attributes that are used to create an instance with a structure argument if possible
+--				thisType   		: Type used as self parameter of the operator
+--				returnType 		: Return type 
+--				hasStructArgument 	: Tells if it is possible to create an operator instance with a structure argument
+--				maxNofArguments 	: Maximum number of elements in a structure argument
+--	methods		: List of methods/operators declared as members of the class/interface
+--	methodmap	: Map for associate class and interface declarations of the same method/operator
+--	llvmtype	: LLVM Declaration type string of the structure definition
+--	symbol		: LLVM identifier used when referencing the type
+-- 	const		: Declares if an interface has only const methods and therefore can be an interface of a const instance
+--	structsize	: Structure size in bytes
+--	index		: LLVM Member variable index (starting with 0)
+--	private		: True if member variables are private (class), false if they are public (struct)
+--	properties	: Structure with the flags {constructor,destructor,assignment} telling what elements are declared in a class and do not need an implicit default declaration
+
+-- Structure Description (descr) Fields:
+-- The fields methods,methodmap,const are inherited from context
+--	size 		: Size in bytes
+
 -- Traversal of an "interface" definition node
 function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.valtype)
@@ -2612,7 +2638,6 @@ function instantiateCallableDef( node, context, descr)
 	if context.domain == "member" then
 		defineClassMethod( node, descr, context)
 		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface, descr.throws)
 	else
 		local callabletype = defineFreeFunction( node, descr, context)
 		typeDescriptionMap[ callabletype] = llvmir.callableReferenceDescr( descr.symbolname, descr.ret, descr.throws)
@@ -2763,29 +2788,42 @@ function typesystem.throw_exception( node)
 	local errmsg_constructor = getRequiredTypeConstructor( node, stringPointerType, errmsg, tagmask_matchParameter, tagmask_typeConversion)
 	return {code=getThrowExceptionCode( errcode_constructor, errmsg_constructor), nofollow=true}
 end
-function typesystem.tryblock( node, catchlabel)
+function typesystem.tryblock( node, context, catchlabel)
 	initTryBlock( catchlabel)
-	return unpack( utils.traverse( typedb, node))
+	return unpack( utils.traverse( typedb, node, context))
 end
-function typesystem.catchblock( node, catchlabel)
-	local errcodevar,errmsgvar = unpack( utils.traverseRange( typedb, node, {1,#node.arg-1}))
+function typesystem.catchblock( node, context, catchlabel)
+	local errcodevar,errmsgvar = unpack( utils.traverseRange( typedb, node, {1,#node.arg-1}, context))
 	local env = getCallableEnvironment()
 	local errcode_constructor = constructorStruct( env.register())
 	local errmsg_constructor = constructorStruct( env.register())
-	typedb:def_type( localDefinitionContext, errcodevar, errcode_constructor)
-	typedb:def_type( localDefinitionContext, errmsgvar, errmsg_constructor)
-	local code = utils.constructor_format( llvmir.exception.loadExceptionErrCode, {errcode=errcode_constructor.out}, env.register)
-			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {errmsg=errmsg_constructor.out}, env.register)
+	local errcode_type = typedb:def_type( localDefinitionContext, errcodevar, errcode_constructor)
+	local errmsg_type = typedb:def_type( localDefinitionContext, errmsgvar, errmsg_constructor)
+	if errcode_type == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", errcodevar) end
+	if errmsg_type == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", errmsgvar) end
+	typedb:def_reduction( scalarLongType, errcode_type, nil, tag_typeDeclaration)
+	typedb:def_reduction( stringPointerType, errmsg_type, nil, tag_typeDeclaration)
+	local code = utils.constructor_format( llvmir.exception.loadExceptionErrCode, {out=errcode_constructor.out}, env.register)
+			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {out=errmsg_constructor.out}, env.register)
 	setCleanupCode( "exception message", utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out}), false)
-	return utils.traverseRange( typedb, node, {#node.arg,#node.arg})[#node.arg]
+	local rt = utils.traverseRange( typedb, node, {#node.arg,#node.arg}, context)[#node.arg]
+	rt.code = code .. rt.code
+	return rt
 end
-function typesystem.trycatch( node)
+function typesystem.trycatch( node, context)
 	local env = getCallableEnvironment()
 	if env.initstate then disallowInitCalls( node.line, "Member initializations not allowed in try/catch block") end
 	local catchlabel = env.label()
-	local tryblock,catchblock = unpack( utils.traverse( typedb, node, catchlabel))
-	local fmt; if tryblock.nofollow then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
-	local code = tryblock.code .. utils.constructor_format( fmt, {inp=catchlabel}) .. catchblock.code
+	local tryblock,catchblock = unpack( utils.traverse( typedb, node, context, catchlabel))
+	local code
+	if not tryblock.nofollow then 
+		local followlabel = env.label()
+		local gotoFollow = utils.constructor_format( llvmir.control.gotoStatement, {inp=followlabel}, env.register)
+		local labelFollow = utils.constructor_format( llvmir.control.label, {inp=followlabel}, env.register)
+		code = tryblock.code .. gotoFollow .. utils.constructor_format( llvmir.control.plainLabel, {inp=catchlabel}) .. catchblock.code .. labelFollow
+	else
+		code = tryblock.code .. utils.constructor_format( fmt, {inp=catchlabel}) .. catchblock.code
+	end
 	return {code=code, nofollow=catchblock.nofollow}
 end
 function typesystem.delete( node)
@@ -3036,14 +3074,15 @@ end
 --	generic 	: List of arguments of the generic, undefined for others than generics
 --	context 	: Some subset of the context where the generic was declared, undefined for others than generics
 --	seekctx 	: Seek context types at the time when the generic was declared, undefined for others than generics
+--	env		: Callable environment of the function
 
 function typesystem.funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="",
-				name=name, symbol=name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, signature="", name=name, symbol=name, 
+				private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstFunctionDeclaration( node, context, descr, 3)
 	end
@@ -3057,8 +3096,8 @@ function typesystem.procdef( node, context, pass)
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
 		local decl = utils.traverseRange( typedb, node, {3,3}, context, descr, 0)[3] -- decl {const,throws}
 		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="",
-				name = name, symbol = name, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+		local descr = {lnk = lnk.linkage, signature="", name = name, symbol = name, 
+				private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		allocNodeData( node, descr)
 		traverseAstProcedureDeclaration( node, context, descr, 3)
 	end
@@ -3090,7 +3129,6 @@ function typesystem.operator_funcdef( node, context, pass)
 				ret=ret, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {4,4}, context, descr, 1)[4]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface, decl.throws)
 		defineClassOperator( node, descr, context)
 		allocNodeData( node, descr)
 	end
@@ -3108,7 +3146,6 @@ function typesystem.operator_procdef( node, context, pass)
 				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {3,3}, context, descr, 1)[3]
 		descr.interface = isInterfaceMethod( context, descr.methodid)
-		descr.attr = llvmir.functionAttribute( descr.interface, decl.throws)
 		defineClassOperator( node, descr, context)
 		allocNodeData( node, descr)
 	end
@@ -3123,7 +3160,7 @@ function typesystem.constructordef( node, context, pass)
 		local lnk = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
 		local decl = utils.traverseRange( typedb, node, {2,2}, context, descr, 0)[2] -- decl {const,throws}
 		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, decl.throws), signature="", name = ":=", symbol = "$ctor", 
+		local descr = {lnk = lnk.linkage, signature="", name = ":=", symbol = "$ctor", 
 				ret = nil, private=lnk.private, const=false, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
@@ -3139,7 +3176,7 @@ end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
 	if not pass or pass == 1 then
-		local descr = {lnk = lnk.linkage, attr = llvmir.functionAttribute( false, false), signature="", name = ":~", symbol = "$dtor", 
+		local descr = {lnk = lnk.linkage, signature="", name = ":~", symbol = "$dtor", 
 		               ret = nil, param={}, private=false, const=false, throws=false, interface=false}
 		context.properties.destructor = true
 		defineDestructor( node, descr, context)
@@ -3153,6 +3190,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 		local code = block.code .. getStructMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
 		descr.body = getCallableEnvironmentCodeBlock( env, code)
+		descr.env = env
 		typedb:scope( scope_bk)
 		printFunctionDeclaration( node, descr)
 	end
@@ -3167,7 +3205,7 @@ function typesystem.callablebody( node, context, descr, selectid)
 		defineCallableBodyContext( node, context, descr)
 		rt = utils.traverseRange( typedb, node, {1,1}, subcontext)[1]
 	elseif selectid == 2 then -- statements in body
-		local env = getCallableEnvironment()
+		descr.env = getCallableEnvironment()
 		local args = utils.traverseRange( typedb, node, {3,#node.arg,1}, subcontext)
 		local block = collectCode( node, args)
 		local code = block.code
@@ -3176,7 +3214,7 @@ function typesystem.callablebody( node, context, descr, selectid)
 		else
 			if not block.nofollow then code = code .. doReturnVoidStatement() end
 		end
-		rt = getCallableEnvironmentCodeBlock( env, code)
+		rt = getCallableEnvironmentCodeBlock( descr.env, code)
 	end
 	return rt
 end

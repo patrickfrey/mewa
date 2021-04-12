@@ -166,9 +166,11 @@ store i32 %r21, i32* %r11
 br label %L4
 L2:
 store i32 0, i32* %r1
+br label %L6
+L6:
+call void @__dtor___Array__float__5( %__Array__float__5* %r2)
 br label %L5
 L5:
-call void @__dtor___Array__float__5( %__Array__float__5* %r2)
 br label %L1
 L1:
 %r22 = load i32, i32* %r1

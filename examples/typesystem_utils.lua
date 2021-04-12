@@ -216,7 +216,7 @@ end
 
 -- Stacktrace:
 function utils.stack( msg, lv)
-	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack"}), true) .. "\n")
+	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), true) .. "\n")
 end
 -- Error reporting:
 -- Exit with error message and line info
