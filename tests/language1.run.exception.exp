@@ -34,3 +34,5 @@ Default constructor string
 Default constructor string
 Get string
 Hello world!
+Throw: Max allowed allocations reached
+ERR 0 201 Max allowed allocations reached

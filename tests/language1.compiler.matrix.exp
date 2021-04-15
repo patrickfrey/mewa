@@ -471,122 +471,7 @@ ret void
 }
 define external void @__C___Matrix__double__4__4__$plus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [4 x double], [4 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fadd double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__4__4__$minus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [4 x double], [4 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fsub double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__4__4__$minus__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths ) #0 nounwind {
-entry:
-%r1 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r1)
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
 %r2 = alloca i32, align 4
 store i32 0, i32* %r2
 br label %L6
@@ -603,7 +488,240 @@ L3:
 %r7 = icmp slt i32 %r6, 4
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
+%r8 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [4 x double], [4 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fadd double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__4__4__$minus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [4 x double], [4 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fsub double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__4__4__$minus__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+br label %L6
+L6:
+%r2 = load i32, i32* %r1
+%r3 = icmp slt i32 %r2, 4
+br i1 %r3, label %L5, label %L4
+L5:
+%r4 = alloca i32, align 4
+store i32 0, i32* %r4
+br label %L3
+L3:
+%r5 = load i32, i32* %r4
+%r6 = icmp slt i32 %r5, 4
+br i1 %r6, label %L2, label %L1
+L2:
+%r7 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
+%r8 = load i32, i32* %r1
+%r9 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r7, i32 0, i32 %r8
+%r10 = load i32, i32* %r4
+%r11 = getelementptr inbounds [4 x double], [4 x double]* %r9, i32 0, i32 %r10
+%r12 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r1
+%r14 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r4
+%r16 = getelementptr inbounds [4 x double], [4 x double]* %r14, i32 0, i32 %r15
+%r17 = load double, double* %r16
+%r18 = fneg double %r17
+store double %r18, double* %r11
+%r19 = load i32, i32* %r4
+%r20 = add nsw i32 %r19, 1
+store i32 %r20, i32* %r4
+br label %L3
+L1:
+%r21 = load i32, i32* %r1
+%r22 = add nsw i32 %r21, 1
+store i32 %r22, i32* %r1
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__4__4__$mul____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L9
+L9:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L8, label %L7
+L8:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L6
+L6:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L5, label %L4
+L5:
+%r8 = alloca double, align 8
+store double 0x0, double* %r8
+%r9 = alloca i32, align 4
+store i32 0, i32* %r9
+br label %L3
+L3:
+%r10 = load i32, i32* %r9
+%r11 = icmp slt i32 %r10, 4
+br i1 %r11, label %L2, label %L1
+L2:
+%r25 = load double, double* %r8
+%r12 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r2
+%r14 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r9
+%r16 = getelementptr inbounds [4 x double], [4 x double]* %r14, i32 0, i32 %r15
+%r22 = load double, double* %r16
+%r17 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
+%r18 = load i32, i32* %r9
+%r19 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r17, i32 0, i32 %r18
+%r20 = load i32, i32* %r5
+%r21 = getelementptr inbounds [4 x double], [4 x double]* %r19, i32 0, i32 %r20
+%r23 = load double, double* %r21
+%r24 = fmul double %r22, %r23
+%r26 = fadd double %r25, %r24
+store double %r26, double* %r8
+%r27 = load i32, i32* %r9
+%r28 = add nsw i32 %r27, 1
+store i32 %r28, i32* %r9
+br label %L3
+L1:
+%r29 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
+%r30 = load i32, i32* %r2
+%r31 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r29, i32 0, i32 %r30
+%r32 = load i32, i32* %r5
+%r33 = getelementptr inbounds [4 x double], [4 x double]* %r31, i32 0, i32 %r32
+%r34 = load double, double* %r8
+store double %r34, double* %r33
+%r35 = load i32, i32* %r5
+%r36 = add nsw i32 %r35, 1
+store i32 %r36, i32* %r5
+br label %L6
+L4:
+%r37 = load i32, i32* %r2
+%r38 = add nsw i32 %r37, 1
+store i32 %r38, i32* %r2
+br label %L9
+L7:
+br label %L11
+L11:
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
+br label %L10
+L10:
+ret void
+}
+define external void @__C___Matrix__double__4__4__$mul__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
 %r9 = load i32, i32* %r2
 %r10 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r8, i32 0, i32 %r9
 %r11 = load i32, i32* %r5
@@ -614,7 +732,7 @@ L2:
 %r16 = load i32, i32* %r5
 %r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
 %r18 = load double, double* %r17
-%r19 = fneg double %r18
+%r19 = fmul double %r18, %r1
 store double %r19, double* %r12
 %r20 = load i32, i32* %r5
 %r21 = add nsw i32 %r20, 1
@@ -626,188 +744,58 @@ L1:
 store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r1)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r1)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__4__4__$mul____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L9
-L9:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L8, label %L7
-L8:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L6
-L6:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L5, label %L4
-L5:
-%r9 = alloca double, align 8
-store double 0x0, double* %r9
-%r10 = alloca i32, align 4
-store i32 0, i32* %r10
-br label %L3
-L3:
-%r11 = load i32, i32* %r10
-%r12 = icmp slt i32 %r11, 4
-br i1 %r12, label %L2, label %L1
-L2:
-%r26 = load double, double* %r9
-%r13 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-%r14 = load i32, i32* %r3
-%r15 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r13, i32 0, i32 %r14
-%r16 = load i32, i32* %r10
-%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
-%r23 = load double, double* %r17
-%r18 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r1, i32 0, i32 0
-%r19 = load i32, i32* %r10
-%r20 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r18, i32 0, i32 %r19
-%r21 = load i32, i32* %r6
-%r22 = getelementptr inbounds [4 x double], [4 x double]* %r20, i32 0, i32 %r21
-%r24 = load double, double* %r22
-%r25 = fmul double %r23, %r24
-%r27 = fadd double %r26, %r25
-store double %r27, double* %r9
-%r28 = load i32, i32* %r10
-%r29 = add nsw i32 %r28, 1
-store i32 %r29, i32* %r10
-br label %L3
-L1:
-%r30 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r2, i32 0, i32 0
-%r31 = load i32, i32* %r3
-%r32 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r30, i32 0, i32 %r31
-%r33 = load i32, i32* %r6
-%r34 = getelementptr inbounds [4 x double], [4 x double]* %r32, i32 0, i32 %r33
-%r35 = load double, double* %r9
-store double %r35, double* %r34
-%r36 = load i32, i32* %r6
-%r37 = add nsw i32 %r36, 1
-store i32 %r37, i32* %r6
-br label %L6
-L4:
-%r38 = load i32, i32* %r3
-%r39 = add nsw i32 %r38, 1
-store i32 %r39, i32* %r3
-br label %L9
-L7:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r2)
-br label %L11
-L11:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r2)
-br label %L10
-L10:
-ret void
-}
-define external void @__C___Matrix__double__4__4__$mul__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fmul double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
-br label %L3
-L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r2)
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
 br label %L7
 L7:
 ret void
 }
 define external void @__C___Matrix__double__4__4__$div__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
 br label %L6
 L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
 L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
 br label %L3
 L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
 L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fdiv double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
+%r8 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
+%r18 = load double, double* %r17
+%r19 = fdiv double %r18, %r1
+store double %r19, double* %r12
+%r20 = load i32, i32* %r5
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r5
 br label %L3
 L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
+%r22 = load i32, i32* %r2
+%r23 = add nsw i32 %r22, 1
+store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r2)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r2)
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
 br label %L7
 L7:
 ret void
@@ -858,122 +846,7 @@ ret void
 }
 define external void @__C___Matrix__double__3__3__$plus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [3 x double], [3 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fadd double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__3__3__$minus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [3 x double], [3 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fsub double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__3__3__$minus__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths ) #0 nounwind {
-entry:
-%r1 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r1)
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
 %r2 = alloca i32, align 4
 store i32 0, i32* %r2
 br label %L6
@@ -990,7 +863,240 @@ L3:
 %r7 = icmp slt i32 %r6, 3
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
+%r8 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [3 x double], [3 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fadd double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__3__3__$minus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [3 x double], [3 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fsub double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__3__3__$minus__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+br label %L6
+L6:
+%r2 = load i32, i32* %r1
+%r3 = icmp slt i32 %r2, 3
+br i1 %r3, label %L5, label %L4
+L5:
+%r4 = alloca i32, align 4
+store i32 0, i32* %r4
+br label %L3
+L3:
+%r5 = load i32, i32* %r4
+%r6 = icmp slt i32 %r5, 3
+br i1 %r6, label %L2, label %L1
+L2:
+%r7 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
+%r8 = load i32, i32* %r1
+%r9 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r7, i32 0, i32 %r8
+%r10 = load i32, i32* %r4
+%r11 = getelementptr inbounds [3 x double], [3 x double]* %r9, i32 0, i32 %r10
+%r12 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r1
+%r14 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r4
+%r16 = getelementptr inbounds [3 x double], [3 x double]* %r14, i32 0, i32 %r15
+%r17 = load double, double* %r16
+%r18 = fneg double %r17
+store double %r18, double* %r11
+%r19 = load i32, i32* %r4
+%r20 = add nsw i32 %r19, 1
+store i32 %r20, i32* %r4
+br label %L3
+L1:
+%r21 = load i32, i32* %r1
+%r22 = add nsw i32 %r21, 1
+store i32 %r22, i32* %r1
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__3__3__$mul____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L9
+L9:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L8, label %L7
+L8:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L6
+L6:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L5, label %L4
+L5:
+%r8 = alloca double, align 8
+store double 0x0, double* %r8
+%r9 = alloca i32, align 4
+store i32 0, i32* %r9
+br label %L3
+L3:
+%r10 = load i32, i32* %r9
+%r11 = icmp slt i32 %r10, 3
+br i1 %r11, label %L2, label %L1
+L2:
+%r25 = load double, double* %r8
+%r12 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r2
+%r14 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r9
+%r16 = getelementptr inbounds [3 x double], [3 x double]* %r14, i32 0, i32 %r15
+%r22 = load double, double* %r16
+%r17 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
+%r18 = load i32, i32* %r9
+%r19 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r17, i32 0, i32 %r18
+%r20 = load i32, i32* %r5
+%r21 = getelementptr inbounds [3 x double], [3 x double]* %r19, i32 0, i32 %r20
+%r23 = load double, double* %r21
+%r24 = fmul double %r22, %r23
+%r26 = fadd double %r25, %r24
+store double %r26, double* %r8
+%r27 = load i32, i32* %r9
+%r28 = add nsw i32 %r27, 1
+store i32 %r28, i32* %r9
+br label %L3
+L1:
+%r29 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
+%r30 = load i32, i32* %r2
+%r31 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r29, i32 0, i32 %r30
+%r32 = load i32, i32* %r5
+%r33 = getelementptr inbounds [3 x double], [3 x double]* %r31, i32 0, i32 %r32
+%r34 = load double, double* %r8
+store double %r34, double* %r33
+%r35 = load i32, i32* %r5
+%r36 = add nsw i32 %r35, 1
+store i32 %r36, i32* %r5
+br label %L6
+L4:
+%r37 = load i32, i32* %r2
+%r38 = add nsw i32 %r37, 1
+store i32 %r38, i32* %r2
+br label %L9
+L7:
+br label %L11
+L11:
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
+br label %L10
+L10:
+ret void
+}
+define external void @__C___Matrix__double__3__3__$mul__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
 %r9 = load i32, i32* %r2
 %r10 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r8, i32 0, i32 %r9
 %r11 = load i32, i32* %r5
@@ -1001,7 +1107,7 @@ L2:
 %r16 = load i32, i32* %r5
 %r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
 %r18 = load double, double* %r17
-%r19 = fneg double %r18
+%r19 = fmul double %r18, %r1
 store double %r19, double* %r12
 %r20 = load i32, i32* %r5
 %r21 = add nsw i32 %r20, 1
@@ -1013,188 +1119,58 @@ L1:
 store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r1)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r1)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__3__3__$mul____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L9
-L9:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L8, label %L7
-L8:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L6
-L6:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L5, label %L4
-L5:
-%r9 = alloca double, align 8
-store double 0x0, double* %r9
-%r10 = alloca i32, align 4
-store i32 0, i32* %r10
-br label %L3
-L3:
-%r11 = load i32, i32* %r10
-%r12 = icmp slt i32 %r11, 3
-br i1 %r12, label %L2, label %L1
-L2:
-%r26 = load double, double* %r9
-%r13 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-%r14 = load i32, i32* %r3
-%r15 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r13, i32 0, i32 %r14
-%r16 = load i32, i32* %r10
-%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
-%r23 = load double, double* %r17
-%r18 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r1, i32 0, i32 0
-%r19 = load i32, i32* %r10
-%r20 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r18, i32 0, i32 %r19
-%r21 = load i32, i32* %r6
-%r22 = getelementptr inbounds [3 x double], [3 x double]* %r20, i32 0, i32 %r21
-%r24 = load double, double* %r22
-%r25 = fmul double %r23, %r24
-%r27 = fadd double %r26, %r25
-store double %r27, double* %r9
-%r28 = load i32, i32* %r10
-%r29 = add nsw i32 %r28, 1
-store i32 %r29, i32* %r10
-br label %L3
-L1:
-%r30 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r2, i32 0, i32 0
-%r31 = load i32, i32* %r3
-%r32 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r30, i32 0, i32 %r31
-%r33 = load i32, i32* %r6
-%r34 = getelementptr inbounds [3 x double], [3 x double]* %r32, i32 0, i32 %r33
-%r35 = load double, double* %r9
-store double %r35, double* %r34
-%r36 = load i32, i32* %r6
-%r37 = add nsw i32 %r36, 1
-store i32 %r37, i32* %r6
-br label %L6
-L4:
-%r38 = load i32, i32* %r3
-%r39 = add nsw i32 %r38, 1
-store i32 %r39, i32* %r3
-br label %L9
-L7:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r2)
-br label %L11
-L11:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r2)
-br label %L10
-L10:
-ret void
-}
-define external void @__C___Matrix__double__3__3__$mul__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fmul double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
-br label %L3
-L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r2)
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
 br label %L7
 L7:
 ret void
 }
 define external void @__C___Matrix__double__3__3__$div__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
 br label %L6
 L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
 L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
 br label %L3
 L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
 L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fdiv double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
+%r8 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
+%r18 = load double, double* %r17
+%r19 = fdiv double %r18, %r1
+store double %r19, double* %r12
+%r20 = load i32, i32* %r5
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r5
 br label %L3
 L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
+%r22 = load i32, i32* %r2
+%r23 = add nsw i32 %r22, 1
+store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r2)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r2)
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
 br label %L7
 L7:
 ret void
@@ -1245,122 +1221,7 @@ ret void
 }
 define external void @__C___Matrix__double__3__4__$plus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__3__4, align 8
-call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [4 x double], [4 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fadd double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__3__4__$ctor____Matrix__double__3__4$( %__Matrix__double__3__4* %rt, %__Matrix__double__3__4* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__3__4__$minus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__3__4, align 8
-call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [4 x double], [4 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fsub double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__3__4__$ctor____Matrix__double__3__4$( %__Matrix__double__3__4* %rt, %__Matrix__double__3__4* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__3__4__$minus__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths ) #0 nounwind {
-entry:
-%r1 = alloca %__Matrix__double__3__4, align 8
-call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %r1)
+call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
 %r2 = alloca i32, align 4
 store i32 0, i32* %r2
 br label %L6
@@ -1377,7 +1238,240 @@ L3:
 %r7 = icmp slt i32 %r6, 4
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
+%r8 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [4 x double], [4 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fadd double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__3__4__$minus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [4 x double], [4 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fsub double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__3__4__$minus__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+br label %L6
+L6:
+%r2 = load i32, i32* %r1
+%r3 = icmp slt i32 %r2, 3
+br i1 %r3, label %L5, label %L4
+L5:
+%r4 = alloca i32, align 4
+store i32 0, i32* %r4
+br label %L3
+L3:
+%r5 = load i32, i32* %r4
+%r6 = icmp slt i32 %r5, 4
+br i1 %r6, label %L2, label %L1
+L2:
+%r7 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %rt, i32 0, i32 0
+%r8 = load i32, i32* %r1
+%r9 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r7, i32 0, i32 %r8
+%r10 = load i32, i32* %r4
+%r11 = getelementptr inbounds [4 x double], [4 x double]* %r9, i32 0, i32 %r10
+%r12 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r1
+%r14 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r4
+%r16 = getelementptr inbounds [4 x double], [4 x double]* %r14, i32 0, i32 %r15
+%r17 = load double, double* %r16
+%r18 = fneg double %r17
+store double %r18, double* %r11
+%r19 = load i32, i32* %r4
+%r20 = add nsw i32 %r19, 1
+store i32 %r20, i32* %r4
+br label %L3
+L1:
+%r21 = load i32, i32* %r1
+%r22 = add nsw i32 %r21, 1
+store i32 %r22, i32* %r1
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__3__4__$mul____Matrix__double__4__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L9
+L9:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L8, label %L7
+L8:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L6
+L6:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L5, label %L4
+L5:
+%r8 = alloca double, align 8
+store double 0x0, double* %r8
+%r9 = alloca i32, align 4
+store i32 0, i32* %r9
+br label %L3
+L3:
+%r10 = load i32, i32* %r9
+%r11 = icmp slt i32 %r10, 4
+br i1 %r11, label %L2, label %L1
+L2:
+%r25 = load double, double* %r8
+%r12 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r2
+%r14 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r9
+%r16 = getelementptr inbounds [4 x double], [4 x double]* %r14, i32 0, i32 %r15
+%r22 = load double, double* %r16
+%r17 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
+%r18 = load i32, i32* %r9
+%r19 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r17, i32 0, i32 %r18
+%r20 = load i32, i32* %r5
+%r21 = getelementptr inbounds [3 x double], [3 x double]* %r19, i32 0, i32 %r20
+%r23 = load double, double* %r21
+%r24 = fmul double %r22, %r23
+%r26 = fadd double %r25, %r24
+store double %r26, double* %r8
+%r27 = load i32, i32* %r9
+%r28 = add nsw i32 %r27, 1
+store i32 %r28, i32* %r9
+br label %L3
+L1:
+%r29 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %rt, i32 0, i32 0
+%r30 = load i32, i32* %r2
+%r31 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r29, i32 0, i32 %r30
+%r32 = load i32, i32* %r5
+%r33 = getelementptr inbounds [3 x double], [3 x double]* %r31, i32 0, i32 %r32
+%r34 = load double, double* %r8
+store double %r34, double* %r33
+%r35 = load i32, i32* %r5
+%r36 = add nsw i32 %r35, 1
+store i32 %r36, i32* %r5
+br label %L6
+L4:
+%r37 = load i32, i32* %r2
+%r38 = add nsw i32 %r37, 1
+store i32 %r38, i32* %r2
+br label %L9
+L7:
+br label %L11
+L11:
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %rt)
+br label %L10
+L10:
+ret void
+}
+define external void @__C___Matrix__double__3__4__$mul__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %rt, i32 0, i32 0
 %r9 = load i32, i32* %r2
 %r10 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r8, i32 0, i32 %r9
 %r11 = load i32, i32* %r5
@@ -1388,7 +1482,7 @@ L2:
 %r16 = load i32, i32* %r5
 %r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
 %r18 = load double, double* %r17
-%r19 = fneg double %r18
+%r19 = fmul double %r18, %r1
 store double %r19, double* %r12
 %r20 = load i32, i32* %r5
 %r21 = add nsw i32 %r20, 1
@@ -1400,188 +1494,58 @@ L1:
 store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__3__4__$ctor____Matrix__double__3__4$( %__Matrix__double__3__4* %rt, %__Matrix__double__3__4* %r1)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r1)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__3__4__$mul____Matrix__double__4__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L9
-L9:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L8, label %L7
-L8:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L6
-L6:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L5, label %L4
-L5:
-%r9 = alloca double, align 8
-store double 0x0, double* %r9
-%r10 = alloca i32, align 4
-store i32 0, i32* %r10
-br label %L3
-L3:
-%r11 = load i32, i32* %r10
-%r12 = icmp slt i32 %r11, 4
-br i1 %r12, label %L2, label %L1
-L2:
-%r26 = load double, double* %r9
-%r13 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-%r14 = load i32, i32* %r3
-%r15 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r13, i32 0, i32 %r14
-%r16 = load i32, i32* %r10
-%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
-%r23 = load double, double* %r17
-%r18 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
-%r19 = load i32, i32* %r10
-%r20 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r18, i32 0, i32 %r19
-%r21 = load i32, i32* %r6
-%r22 = getelementptr inbounds [3 x double], [3 x double]* %r20, i32 0, i32 %r21
-%r24 = load double, double* %r22
-%r25 = fmul double %r23, %r24
-%r27 = fadd double %r26, %r25
-store double %r27, double* %r9
-%r28 = load i32, i32* %r10
-%r29 = add nsw i32 %r28, 1
-store i32 %r29, i32* %r10
-br label %L3
-L1:
-%r30 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %r2, i32 0, i32 0
-%r31 = load i32, i32* %r3
-%r32 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r30, i32 0, i32 %r31
-%r33 = load i32, i32* %r6
-%r34 = getelementptr inbounds [3 x double], [3 x double]* %r32, i32 0, i32 %r33
-%r35 = load double, double* %r9
-store double %r35, double* %r34
-%r36 = load i32, i32* %r6
-%r37 = add nsw i32 %r36, 1
-store i32 %r37, i32* %r6
-br label %L6
-L4:
-%r38 = load i32, i32* %r3
-%r39 = add nsw i32 %r38, 1
-store i32 %r39, i32* %r3
-br label %L9
-L7:
-call void @__C___Matrix__double__3__3__$ctor____Matrix__double__3__3$( %__Matrix__double__3__3* %rt, %__Matrix__double__3__3* %r2)
-br label %L11
-L11:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r2)
-br label %L10
-L10:
-ret void
-}
-define external void @__C___Matrix__double__3__4__$mul__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__3__4, align 8
-call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fmul double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
-br label %L3
-L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__3__4__$ctor____Matrix__double__3__4$( %__Matrix__double__3__4* %rt, %__Matrix__double__3__4* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r2)
+call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %rt)
 br label %L7
 L7:
 ret void
 }
 define external void @__C___Matrix__double__3__4__$div__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__3__4, align 8
-call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
+call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
 br label %L6
 L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 3
-br i1 %r5, label %L5, label %L4
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
 L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
 br label %L3
 L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L2, label %L1
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
 L2:
-%r9 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [4 x double], [4 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [4 x double], [4 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fdiv double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
+%r8 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [4 x double], [4 x double]* %r15, i32 0, i32 %r16
+%r18 = load double, double* %r17
+%r19 = fdiv double %r18, %r1
+store double %r19, double* %r12
+%r20 = load i32, i32* %r5
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r5
 br label %L3
 L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
+%r22 = load i32, i32* %r2
+%r23 = add nsw i32 %r22, 1
+store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__3__4__$ctor____Matrix__double__3__4$( %__Matrix__double__3__4* %rt, %__Matrix__double__3__4* %r2)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r2)
+call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %rt)
 br label %L7
 L7:
 ret void
@@ -1632,122 +1596,7 @@ ret void
 }
 define external void @__C___Matrix__double__4__3__$plus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__4__3, align 8
-call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [3 x double], [3 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fadd double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__4__3__$ctor____Matrix__double__4__3$( %__Matrix__double__4__3* %rt, %__Matrix__double__4__3* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__4__3__$minus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__4__3, align 8
-call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r24 = load double, double* %r18
-%r19 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
-%r20 = load i32, i32* %r3
-%r21 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r19, i32 0, i32 %r20
-%r22 = load i32, i32* %r6
-%r23 = getelementptr inbounds [3 x double], [3 x double]* %r21, i32 0, i32 %r22
-%r25 = load double, double* %r23
-%r26 = fsub double %r24, %r25
-store double %r26, double* %r13
-%r27 = load i32, i32* %r6
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r6
-br label %L3
-L1:
-%r29 = load i32, i32* %r3
-%r30 = add nsw i32 %r29, 1
-store i32 %r30, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__4__3__$ctor____Matrix__double__4__3$( %__Matrix__double__4__3* %rt, %__Matrix__double__4__3* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r2)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__4__3__$minus__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths ) #0 nounwind {
-entry:
-%r1 = alloca %__Matrix__double__4__3, align 8
-call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %r1)
+call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
 %r2 = alloca i32, align 4
 store i32 0, i32* %r2
 br label %L6
@@ -1764,7 +1613,240 @@ L3:
 %r7 = icmp slt i32 %r6, 3
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
+%r8 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [3 x double], [3 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fadd double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__4__3__$minus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
+%r23 = load double, double* %r17
+%r18 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r1, i32 0, i32 0
+%r19 = load i32, i32* %r2
+%r20 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r18, i32 0, i32 %r19
+%r21 = load i32, i32* %r5
+%r22 = getelementptr inbounds [3 x double], [3 x double]* %r20, i32 0, i32 %r21
+%r24 = load double, double* %r22
+%r25 = fsub double %r23, %r24
+store double %r25, double* %r12
+%r26 = load i32, i32* %r5
+%r27 = add nsw i32 %r26, 1
+store i32 %r27, i32* %r5
+br label %L3
+L1:
+%r28 = load i32, i32* %r2
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r2
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__4__3__$minus__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+br label %L6
+L6:
+%r2 = load i32, i32* %r1
+%r3 = icmp slt i32 %r2, 4
+br i1 %r3, label %L5, label %L4
+L5:
+%r4 = alloca i32, align 4
+store i32 0, i32* %r4
+br label %L3
+L3:
+%r5 = load i32, i32* %r4
+%r6 = icmp slt i32 %r5, 3
+br i1 %r6, label %L2, label %L1
+L2:
+%r7 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %rt, i32 0, i32 0
+%r8 = load i32, i32* %r1
+%r9 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r7, i32 0, i32 %r8
+%r10 = load i32, i32* %r4
+%r11 = getelementptr inbounds [3 x double], [3 x double]* %r9, i32 0, i32 %r10
+%r12 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r1
+%r14 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r4
+%r16 = getelementptr inbounds [3 x double], [3 x double]* %r14, i32 0, i32 %r15
+%r17 = load double, double* %r16
+%r18 = fneg double %r17
+store double %r18, double* %r11
+%r19 = load i32, i32* %r4
+%r20 = add nsw i32 %r19, 1
+store i32 %r20, i32* %r4
+br label %L3
+L1:
+%r21 = load i32, i32* %r1
+%r22 = add nsw i32 %r21, 1
+store i32 %r22, i32* %r1
+br label %L6
+L4:
+br label %L8
+L8:
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %rt)
+br label %L7
+L7:
+ret void
+}
+define external void @__C___Matrix__double__4__3__$mul____Matrix__double__3__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L9
+L9:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L8, label %L7
+L8:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L6
+L6:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L5, label %L4
+L5:
+%r8 = alloca double, align 8
+store double 0x0, double* %r8
+%r9 = alloca i32, align 4
+store i32 0, i32* %r9
+br label %L3
+L3:
+%r10 = load i32, i32* %r9
+%r11 = icmp slt i32 %r10, 3
+br i1 %r11, label %L2, label %L1
+L2:
+%r25 = load double, double* %r8
+%r12 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+%r13 = load i32, i32* %r2
+%r14 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r12, i32 0, i32 %r13
+%r15 = load i32, i32* %r9
+%r16 = getelementptr inbounds [3 x double], [3 x double]* %r14, i32 0, i32 %r15
+%r22 = load double, double* %r16
+%r17 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
+%r18 = load i32, i32* %r9
+%r19 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r17, i32 0, i32 %r18
+%r20 = load i32, i32* %r5
+%r21 = getelementptr inbounds [4 x double], [4 x double]* %r19, i32 0, i32 %r20
+%r23 = load double, double* %r21
+%r24 = fmul double %r22, %r23
+%r26 = fadd double %r25, %r24
+store double %r26, double* %r8
+%r27 = load i32, i32* %r9
+%r28 = add nsw i32 %r27, 1
+store i32 %r28, i32* %r9
+br label %L3
+L1:
+%r29 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %rt, i32 0, i32 0
+%r30 = load i32, i32* %r2
+%r31 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r29, i32 0, i32 %r30
+%r32 = load i32, i32* %r5
+%r33 = getelementptr inbounds [4 x double], [4 x double]* %r31, i32 0, i32 %r32
+%r34 = load double, double* %r8
+store double %r34, double* %r33
+%r35 = load i32, i32* %r5
+%r36 = add nsw i32 %r35, 1
+store i32 %r36, i32* %r5
+br label %L6
+L4:
+%r37 = load i32, i32* %r2
+%r38 = add nsw i32 %r37, 1
+store i32 %r38, i32* %r2
+br label %L9
+L7:
+br label %L11
+L11:
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %rt)
+br label %L10
+L10:
+ret void
+}
+define external void @__C___Matrix__double__4__3__$mul__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
+L2:
+%r8 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %rt, i32 0, i32 0
 %r9 = load i32, i32* %r2
 %r10 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r8, i32 0, i32 %r9
 %r11 = load i32, i32* %r5
@@ -1775,7 +1857,7 @@ L2:
 %r16 = load i32, i32* %r5
 %r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
 %r18 = load double, double* %r17
-%r19 = fneg double %r18
+%r19 = fmul double %r18, %r1
 store double %r19, double* %r12
 %r20 = load i32, i32* %r5
 %r21 = add nsw i32 %r20, 1
@@ -1787,188 +1869,58 @@ L1:
 store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__4__3__$ctor____Matrix__double__4__3$( %__Matrix__double__4__3* %rt, %__Matrix__double__4__3* %r1)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r1)
-br label %L7
-L7:
-ret void
-}
-define external void @__C___Matrix__double__4__3__$mul____Matrix__double__3__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L9
-L9:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L8, label %L7
-L8:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L6
-L6:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 4
-br i1 %r8, label %L5, label %L4
-L5:
-%r9 = alloca double, align 8
-store double 0x0, double* %r9
-%r10 = alloca i32, align 4
-store i32 0, i32* %r10
-br label %L3
-L3:
-%r11 = load i32, i32* %r10
-%r12 = icmp slt i32 %r11, 3
-br i1 %r12, label %L2, label %L1
-L2:
-%r26 = load double, double* %r9
-%r13 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-%r14 = load i32, i32* %r3
-%r15 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r13, i32 0, i32 %r14
-%r16 = load i32, i32* %r10
-%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
-%r23 = load double, double* %r17
-%r18 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %r1, i32 0, i32 0
-%r19 = load i32, i32* %r10
-%r20 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r18, i32 0, i32 %r19
-%r21 = load i32, i32* %r6
-%r22 = getelementptr inbounds [4 x double], [4 x double]* %r20, i32 0, i32 %r21
-%r24 = load double, double* %r22
-%r25 = fmul double %r23, %r24
-%r27 = fadd double %r26, %r25
-store double %r27, double* %r9
-%r28 = load i32, i32* %r10
-%r29 = add nsw i32 %r28, 1
-store i32 %r29, i32* %r10
-br label %L3
-L1:
-%r30 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %r2, i32 0, i32 0
-%r31 = load i32, i32* %r3
-%r32 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r30, i32 0, i32 %r31
-%r33 = load i32, i32* %r6
-%r34 = getelementptr inbounds [4 x double], [4 x double]* %r32, i32 0, i32 %r33
-%r35 = load double, double* %r9
-store double %r35, double* %r34
-%r36 = load i32, i32* %r6
-%r37 = add nsw i32 %r36, 1
-store i32 %r37, i32* %r6
-br label %L6
-L4:
-%r38 = load i32, i32* %r3
-%r39 = add nsw i32 %r38, 1
-store i32 %r39, i32* %r3
-br label %L9
-L7:
-call void @__C___Matrix__double__4__4__$ctor____Matrix__double__4__4$( %__Matrix__double__4__4* %rt, %__Matrix__double__4__4* %r2)
-br label %L11
-L11:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r2)
-br label %L10
-L10:
-ret void
-}
-define external void @__C___Matrix__double__4__3__$mul__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
-entry:
-%r2 = alloca %__Matrix__double__4__3, align 8
-call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
-br label %L6
-L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
-L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
-br label %L3
-L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
-L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fmul double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
-br label %L3
-L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
-br label %L6
-L4:
-call void @__C___Matrix__double__4__3__$ctor____Matrix__double__4__3$( %__Matrix__double__4__3* %rt, %__Matrix__double__4__3* %r2)
-br label %L8
-L8:
-call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r2)
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %rt)
 br label %L7
 L7:
 ret void
 }
 define external void @__C___Matrix__double__4__3__$div__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
 entry:
-%r2 = alloca %__Matrix__double__4__3, align 8
-call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %r2)
-%r3 = alloca i32, align 4
-store i32 0, i32* %r3
+call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
 br label %L6
 L6:
-%r4 = load i32, i32* %r3
-%r5 = icmp slt i32 %r4, 4
-br i1 %r5, label %L5, label %L4
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
 L5:
-%r6 = alloca i32, align 4
-store i32 0, i32* %r6
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
 br label %L3
 L3:
-%r7 = load i32, i32* %r6
-%r8 = icmp slt i32 %r7, 3
-br i1 %r8, label %L2, label %L1
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
 L2:
-%r9 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %r2, i32 0, i32 0
-%r10 = load i32, i32* %r3
-%r11 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r9, i32 0, i32 %r10
-%r12 = load i32, i32* %r6
-%r13 = getelementptr inbounds [3 x double], [3 x double]* %r11, i32 0, i32 %r12
-%r14 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
-%r15 = load i32, i32* %r3
-%r16 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r14, i32 0, i32 %r15
-%r17 = load i32, i32* %r6
-%r18 = getelementptr inbounds [3 x double], [3 x double]* %r16, i32 0, i32 %r17
-%r19 = load double, double* %r18
-%r20 = fdiv double %r19, %r1
-store double %r20, double* %r13
-%r21 = load i32, i32* %r6
-%r22 = add nsw i32 %r21, 1
-store i32 %r22, i32* %r6
+%r8 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %rt, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r13 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r13, i32 0, i32 %r14
+%r16 = load i32, i32* %r5
+%r17 = getelementptr inbounds [3 x double], [3 x double]* %r15, i32 0, i32 %r16
+%r18 = load double, double* %r17
+%r19 = fdiv double %r18, %r1
+store double %r19, double* %r12
+%r20 = load i32, i32* %r5
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r5
 br label %L3
 L1:
-%r23 = load i32, i32* %r3
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r3
+%r22 = load i32, i32* %r2
+%r23 = add nsw i32 %r22, 1
+store i32 %r23, i32* %r2
 br label %L6
 L4:
-call void @__C___Matrix__double__4__3__$ctor____Matrix__double__4__3$( %__Matrix__double__4__3* %rt, %__Matrix__double__4__3* %r2)
 br label %L8
 L8:
-call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r2)
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %rt)
 br label %L7
 L7:
 ret void

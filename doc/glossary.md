@@ -71,7 +71,7 @@ These types (const and non const instance) are an internal representation of a r
 #### Private Reference Type (priv_reftype/priv_c_reftype)
 These types are used as context type for accessing private members (in class methods).
 
-#### Private Reference Type (init_reftype)
+#### Initialization Type (init_reftype)
 This type is used as *self* reference in constructors. Constructors may only initialize member variables and are not permitted to call methods.
 
 #### Control True/False Types
@@ -88,5 +88,11 @@ Constants in the source and expressions built from constants are represented by 
   * **constexprBooleanType** 	const expression boolean implemented as boolean true/false
   * **constexprNullType** 	const expression null value
   * **constexprStructureType**  const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
+
+### Allocation Frame
+The frame object defines the context for implicit cleanup of resources after the exit of the scope the allocation frame is associated to. Every form of exit has a chain of commands executed before the final exit code is executed. The allocation frame provides a label to jump to depending on the current scope step and the exit code. With the jump to this label the cleanup followed by the exit from the allocation frame is initiated.
+
+### Callable Environment
+The callable environment holds the data associated with a callable during the processing of its body. Such data are for example the generators of registers and labels, the list of allocation frames holding the code executed in case of exceptions, the return type in case of a function, the initialization state in case of a constructor, some flags that indicate some events needed for printing the function declaration, etc..
 
 

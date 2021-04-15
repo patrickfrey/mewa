@@ -56,6 +56,27 @@ class String
 		printf( "Destructor string [%s]\n", c_str());
 		freemem( m_ptr);
 	}
+	public procedure append( const byte^ cstr_, int size_)
+	{
+		var byte^ ptr_ = allocmem( m_size + size_ + 1);
+		memcpy( ptr_, m_ptr, m_size);
+		memcpy( ptr_ + m_size, cstr_, size_);
+		ptr_[ m_size + size_] = 0;
+		freemem( m_ptr);
+		m_ptr = ptr_;
+		m_size += size_;
+	}
+	public operator + String( const String o) const
+	{
+		var String rt;
+		var byte^ ptr_ = allocmem( m_size + o.m_size + 1);
+		memcpy( ptr_, m_ptr, m_size);
+		memcpy( ptr_ + m_size, o.m_ptr, o.m_size);
+		ptr_[ m_size + o.m_size] = 0;
+		rt.m_ptr = ptr_;
+		rt.m_size = m_size + o.m_size;
+		return rt;
+	}
 	public function c_str const byte^() const nothrow
 	{
 		printf( "Get string\n");
@@ -76,13 +97,19 @@ class String
 private procedure test( int allocCnt) nothrow
 {
 	g_maxAllocCnt = allocCnt;
+	g_allocCnt = 0;
 	try
 	{
 		var std::String str = "Hello world!";
 		printf( "DEBUG\n");
 		var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
 		printf( "%s\n", str.c_str());
-	
+		{
+			var std::String greeting = (cast std::String: "Hello")
+				+ (cast std::String: " ")
+				+ (cast std::String: "World!");
+			printf( "GREETING %s\n", greeting.c_str());
+		}
 	}
 	catch errcode, errmsg
 	{
@@ -93,7 +120,7 @@ private procedure test( int allocCnt) nothrow
 main
 {
 	test( 100);
-	//test( 1);
+	test( 1);
 }
 
 

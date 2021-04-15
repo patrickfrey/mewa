@@ -31,6 +31,8 @@ Keyword lexems (lexems defined as string constants in the rules of the grammar) 
 | arg     | table    | List of sub nodes, either call structures or [non keyword lexem nodes](#lexem_node).                           |
 | line    | integer  | Number of the line in the source where the last lexem was detected.                                            |
 
+##### Note
+There is one additional field reserved in a callback node to store some data shared between passes in a multipass traversal.
 
 <a name="callback_description"/>
 
@@ -45,5 +47,4 @@ They are referenced by index in the LALR(1) action table.
 | name    | string   | Name of the function and the argument object as string.          |
 | proc    | function | Lua function to call                                             |
 | obj     | any type | 2nd argument (besides node) to pass to the Lua callback function.|
-
 

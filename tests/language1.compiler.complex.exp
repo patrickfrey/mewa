@@ -348,6 +348,7 @@ ret void
 @string12 = private unnamed_addr constant [36 x i8] c"square root i = 0.7071 + 0.7071i | \00"
 @string13 = private unnamed_addr constant [38 x i8] c"square root i+1 = 1.0987 + 0.4551i | \00"
 @string14 = private unnamed_addr constant [34 x i8] c"(-8 + 6i) square root = 1 + 3i | \00"
+@string15 = private unnamed_addr constant [21 x i8] c"7 * (3 * 3.1 + 1) = \00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
@@ -430,6 +431,13 @@ call void @printComplex__double__i8$____Complex__double$( i8* %r35, %__Complex__
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r39, double 0xC020000000000000, double 0x4018000000000000)
 call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r40, %__Complex__double* %r39)
 call void @printComplex__double__i8$____Complex__double$( i8* %r38, %__Complex__double* %r40)
+%r43 = alloca double, align 8
+%r41 = fadd double 0x3FF0000000000000, 0x402299999999999A
+%r42 = fmul double %r41, 0x401C000000000000
+store double %r42, double* %r43
+%r44 = getelementptr inbounds [21 x i8], [21 x i8]* @string15, i64 0, i64 0
+%r45 = load double, double* %r43
+call void @printFloat__double__i8$__double( i8* %r44, double %r45)
 store i32 0, i32* %r1
 br label %L4
 L4:
@@ -438,8 +446,8 @@ br label %L3
 L3:
 br label %L1
 L1:
-%r41 = load i32, i32* %r1
-ret i32 %r41
+%r46 = load i32, i32* %r1
+ret i32 %r46
 }
 
 

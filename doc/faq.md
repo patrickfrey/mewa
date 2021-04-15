@@ -455,8 +455,7 @@ This is an open issue. In a compiled language where you cannot switch the stack 
 
 Copy elision, though it's making your program faster is not considered optimization, because it changes behaviour. Copy elision has to be part of your language specification and thus be implemented in the compiler front-end. In the example _language1_, I implemented two 2 cases of copy elision:
   * Construction of a return value in the return slot (LLVM sret) provided by the caller
-  * Construction of a return value in the return slot, when using a unique variable for the return value, having the same type as the return value (TODO)
-
+  * Construction of a return value in the return slot, when using only one variable for the return value in the variable declaration scope
 
 
 

@@ -132,5 +132,8 @@ main {
 	printComplex[double]( "square root i = 0.7071 + 0.7071i | ", (cast Complex[double]: { 0, 1 }).squareRoot());
 	printComplex[double]( "square root i+1 = 1.0987 + 0.4551i | ", (cast Complex[double]: { 1, 1 }).squareRoot());
 	printComplex[double]( "(-8 + 6i) square root = 1 + 3i | ", (cast Complex[double]: { -8, 6 }).squareRoot());
+
+	var double number = 7 * (3 * 3.1 + 1);
+	printFloat[double]( "7 * (3 * 3.1 + 1) = ", number);
 }
 

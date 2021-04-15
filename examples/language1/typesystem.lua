@@ -78,7 +78,7 @@ local constTypeMap = {}			-- Map of non const types to their const type
 local privateTypeMap = {}		-- Map of non private types to their private type
 local pointerTypeMap = {}		-- Map of non pointer types to their pointer type
 local pointeeTypeMap = {}		-- Map of pointer types to their pointee type
-local unboundRefTypeMap = {}		-- Map of value types with an unbound reftype type defined to their unbound reftype type
+local unboundReferenceTypeMap = {}	-- Map of value types to their unbound reftype type if it exists
 local constructorThrowingMap = {}	-- Map that tells if a constructor is throwing or not
 local typeQualiSepMap = {}		-- Map of any defined type id to a separation pair (valtype,qualifier) = valtype type, qualifier as booleans
 local typeDescriptionMap = {}		-- Map of any defined type id to its llvmir template structure
@@ -88,9 +88,10 @@ local genericInstanceTypeMap = {}	-- Map of the pair valtype,generic parameter t
 local varargFuncMap = {}		-- Map of types to true for vararg functions/procedures
 local instantCallableEnvironment = nil	-- Callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
 local globalCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
+local instantAllocationFrame = nil	-- Allocation frame created for implicitly generated code
+local globalAllocationFrame = nil	-- Allocation frame for global variables
 local instantUnwindLabelGenerator = nil -- Function to allocate a label for cleanup in case of an exception created for implicitly generated code (constructors,destructors,assignments,etc.)
 local globalInitCode = ""		-- Init code for global variables
-local globalCleanupCode = ""		-- Cleanup code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
 local nodeIdCount = 0			-- Counter for node id allocation
 local nodeDataMap = {}			-- Map of node id's to a data structure (depending on the node)
@@ -101,7 +102,7 @@ local currentCallableEnvKey = "env"	-- Current key for the callable environment 
 local currentAllocFrameKey = "frame"	-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local exceptionSectionPrinted = false	-- True if the code for throwing exceptions hat been attached to the code
 
--- Allocate a node identifier for multi-pass evaluation with structures temporarily stored
+-- Allocate a node identifier for storing results to be accessed in another pass of a multi-pass AST traversal
 function allocNodeData( node, data)
 	if not node.id then
 		nodeIdCount = nodeIdCount + 1
@@ -114,8 +115,8 @@ end
 function getNodeData( node)
 	return nodeDataMap[ node.id][ localDefinitionContext]
 end
--- Create the data structure with attributes attached to a context (referenced in body) of some callable
--- Callable Environment Fields:
+
+---- Callable Environment Fields ----
 --	name		: Name for debugging/loging/tracing
 --      scope		: Scope of the callable
 --      register	: LLVM register/slot allocator
@@ -128,6 +129,8 @@ end
 --	partial_dtor	: Call of partial dtor in case of an exception, used in exception handling code in the case of a constructor, otherwise undefined
 --	initcontext	: Context of the class in case of a constructor, otherwise undefined
 --	throws		: True if the function is declared as potentially throwing exceptions
+
+-- Create a callable environent object
 function createCallableEnvironment( name, rtype, rprefix, lprefix)
 	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
 	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
@@ -163,11 +166,17 @@ end
 function constructorStructEmpty()
 	return {code=""}
 end
+-- Build a key out of a constructor, used for the unique exit path (dtor chain) generation for an exit scenario identified by its constructor (return value, throw exception, etc.)
 function constructorKey( prefix, typeId, out)
 	return prefix .. string.format(":%x:", typeId) .. out
 end
-function typeConstructorStruct( type, out, code)
+-- Create a type/constructor pair as used by most functions constructing a type
+function typeConstructorPairStruct( type, out, code)
 	return {type=type, constructor=constructorStruct( out, code)}
+end
+-- Get the code part of a constructor of a type constructor pair (may be nil if undefined) as string or nil if not defined or empty
+function typeConstructorPairCode( tc_pair)
+	if tc_pair and tc_pair.constructor and tc_pair.constructor.code and tc_pair.constructor.code ~= "" then return tc_pair.constructor.code end
 end
 -- Constructor of a single constant value without code
 function constConstructor( val)
@@ -186,14 +195,14 @@ function buildCallArguments( out, this_inp, args)
 	end
 	return code,subst
 end
--- Constructor implementing some sort of manipulation of an object without output
+-- Constructor implementing some sort of manipulation of an object without arguments or output and without exception
 function manipConstructor( fmt)
 	return function( this)
 		local inp,code = constructorParts( this)
 		return constructorStruct( inp, code .. utils.constructor_format( fmt, {this=inp}))
 	end
 end
--- Constructor implementing a constructor of an object by a single argument
+-- Constructor implementing a constructor of an object by a single argument without exception
 function singleArgumentConstructor( fmt)
 	return function( this, arg)
 		local env = getCallableEnvironment()
@@ -216,7 +225,7 @@ function copyFunctionPointerConstructor( descr)
 		if functype and descr.throws == functypeDescr.throws then return copyFunc( this, {{out="@" .. functypeDescr.symbolname}}) end
 	end
 end
--- Binary operator with a conversion of the argument. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
+-- Binary operator with a conversion of the argument before the call of the operator. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
 function binopArgConversionConstructor( fmt, argconv)
 	return function( this, arg)
 		local env = getCallableEnvironment()
@@ -234,14 +243,24 @@ function binopSwapConstructor( constructor)
 	return function( this, args) return constructor( args[1], {this}) end
 end
 -- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
--- param[in] fmt format string, param[in] outUnboundRefType output variable in case of an unbound reference constructor
-function convConstructor( fmt, outUnboundRefType)
+function convConstructor( fmt)
 	return function( constructor)
 		local env = getCallableEnvironment()
-		local out,outsubst; if outUnboundRefType then out,outsubst = outUnboundRefType,("{"..outUnboundRefType.."}") else out = env.register(); outsubst = out end
+		local out = env.register()
 		local inp,code = constructorParts( constructor)
-		local convCode = utils.constructor_format( fmt, {this = inp, out = outsubst}, env.register)
+		local convCode = utils.constructor_format( fmt, {this = inp, out = out}, env.register)
 		return constructorStruct( out, code .. convCode)
+	end
+end
+-- Constructor imlementing a conversion of a data item to another and unbound reference type using a format string that describes the conversion operation
+function convConstructorUnboundReference( fmt)
+	return function( constructor)
+		local env = getCallableEnvironment()
+		local inp,code = constructorParts( constructor)
+		local convCode = utils.constructor_format( fmt, {this = inp, out = "{RVAL}"}, env.register)
+		local rt = constructorStruct( "RVAL", code .. convCode)
+		rt.step = typedb:step()
+		return rt;
 	end
 end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
@@ -266,32 +285,34 @@ function invokeConstructor( fmt, has_result)
 		return constructorStruct( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
 	end
 end
--- Move constructor of a reference type from an inject reference type type
+-- Move constructor of a reference type from an unbound reference type
 function unboundReferenceMoveConstructor( this, args)
 	local this_inp,this_code = constructorParts( this)
 	local arg_inp,arg_code = constructorParts( args[1])
 	return {code = this_code .. utils.template_format( arg_code, {[arg_inp] = this_inp}), out=this_inp}
 end
--- Constructor of a constant reference value from a unbound reference type, creating a temporary on the stack for it
-function constReferenceFromUnboundRefTypeConstructor( descr)
+-- Constructor of a constant reference value from a unbound reference type, creating a temporary on the stack for it and registering the cleanup function
+function constReferenceFromUnboundRefTypeConstructor( descr, refTypeId)
 	return function( constructor)
 		local env = getCallableEnvironment()
 		local out = env.register()
 		local inp,code = constructorParts( constructor)
 		code = utils.constructor_format( descr.def_local, {out = out}, env.register) .. utils.template_format( code, {[inp] = out} )
+		local cleanup = typeConstructorPairCode( tryApplyCallable( {line=env.line}, {type=refTypeId,constructor={out=out}}, ":~", {}))
+		if cleanup then setCleanupCode( "local " .. typedb:type_name(dereferenceTypeMap[ refTypeId]), cleanup, constructor.step) end
 		return {code = code, out = out}
 	end
 end
 -- Function that decides wheter a function (in the LLVM code output) should return the return value as value or via an 'sret' pointer passed as argument
 function doReturnValueAsReferenceParameter( typeId)
-	if typeId and unboundRefTypeMap[ typeId] then return true else return false end
+	if typeId and unboundReferenceTypeMap[ typeId] then return true else return false end
 end
 -- Function that decides wheter a parameter of an implicitly generated function should be passed by value or by reference
 function doPassValueAsReferenceParameter( typeId)
 	return doReturnValueAsReferenceParameter( typeId)
 end
 -- Function that decides wheter an explicit cast to a type creates a reference type or a value type
-function doCastToReferenceType( typeId)
+function doCastToUnboundReferenceType( typeId)
 	return doReturnValueAsReferenceParameter( typeId)
 end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructors
@@ -307,10 +328,11 @@ function buildFunctionCallArguments( code, argstr, args, llvmtypes)
 	if #args > 0 or argstr ~= "" then rt = rt:sub(1, -3) end
 	return code,rt
 end
--- Constructor of a function call generalized
+-- Constructor of a function/procedure call generalized. Shared part of functionDirectCallConstructor,functionIndirectCallConstructor,interfaceMethodCallConstructor
 function functionCallConstructor( env, code, func, argstr, descr)
 	local out,fmt,subst
 	local doInvoke = descr.throws
+	local step = nil
 	if not env.throws and descr.throws then
 		if hasCatchFrame() then
 			env.throws = true 
@@ -320,6 +342,7 @@ function functionCallConstructor( env, code, func, argstr, descr)
 	end
 	if descr.ret then
 		if doReturnValueAsReferenceParameter( descr.ret) then
+			step = typedb:step()
 			local reftypesubst; if argstr == "" then reftypesubst = "{RVAL}" else reftypesubst = "{RVAL}, " end
 			out = "RVAL"
 			subst = {func = func, callargstr = argstr, reftyperef = reftypesubst, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
@@ -333,7 +356,9 @@ function functionCallConstructor( env, code, func, argstr, descr)
 		subst = {func = func, callargstr = argstr, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
 		if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.procedureCallThrowing else fmt = llvmir.control.procedureCall end
 	end
-	return constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
+	local rt = constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
+	rt.step = step
+	return rt
 end
 -- Constructor implementing a direct call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
 function functionDirectCallConstructor( thisTypeId, descr)
@@ -372,7 +397,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 	local function initArrayElementCode( node, env, refTypeId, fmtLoadRef, this_inp, args, ai)
 		local out = env.register()
 		local code = utils.constructor_format( fmtLoadRef, {out = out, this = this_inp, index=ai-1}, env.register)
-		local res = tryApplyCallable( node, typeConstructorStruct( refTypeId, out, code), ":=", args)
+		local res = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, out, code), ":=", args)
 		if res then return res.constructor.code end
 	end
 	return function( this, args)
@@ -390,7 +415,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			res_code = res_code .. elem_init
 		end
 		if #args < nofElements then
-			local init = applyCallable( node, typeConstructorStruct( refTypeId, "%ths", ""), ":=", {})
+			local init = applyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}
 			res_code = res_code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
@@ -398,28 +423,28 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		return constructorStruct( this_inp, res_code)
 	end
 end
--- Constructor of an array unbound reftype type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reftype array type)
+-- Constructor of an array unbound reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference array type)
 function tryConstexprStructureReductionConstructorArray( node, thisTypeId, elementTypeId, nofElements)
 	local initconstructor = memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
-	return function( args) -- constructor of a constexpr structure type passed is a list of type constructor pairs
-		local rt = initconstructor( {out="{RVAL}"}, args);
-		if rt then rt.out = "RVAL"; end
+	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs
+		local rt = initconstructor( {out="{RVAL}"}, constructor.list);
+		if rt then rt.out = "RVAL"; rt.step = constructor.step or typedb:step() end
 		return rt
 	end
 end
--- Constructor of an unbound reftype type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reftype type)
+-- Constructor of an unbound reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference type)
 function tryConstexprStructureReductionConstructor( node, thisTypeId)
 	local this = {type=referenceTypeMap[ thisTypeId], constructor={out="{RVAL}"}}
-	return function( args) -- constructor of a constexpr structure type passed is a list of type constructor pairs
-		local res = tryApplyCallable( node, this, ":=", args) -- constexpr structure constructor is a list o arguments with type
-		if res then res.constructor.out = "RVAL"; return res.constructor end
+	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs
+		local res = tryApplyCallable( node, this, ":=", constructor.list) -- constexpr structure constructor is a list o arguments with type
+		if res then res.constructor.out = "RVAL"; res.constructor.step = constructor.step or typedb:step(); return res.constructor end
 	end
 end
 -- Constructor of an operator on a constexpr structure type as argument
 function tryConstexprStructureOperatorConstructor( node, thisTypeId, opr)
 	return function( this, args)
 		if args[1].type ~= constexprStructureType then utils.errorMessage( node.line, "Expected constexpr structure argument instead of: '%s'", typedb:type_string(args[1].type)) end
-		local res = tryApplyCallable( node, {type=thisTypeId, constructor=this}, opr, args[1]) -- constexpr structure constructor is a list o arguments with type
+		local res = tryApplyCallable( node, {type=thisTypeId, constructor=this}, opr, args[1].list) -- constexpr structure constructor is a list o arguments with type
 		if res then return res.constructor end
 	end
 end
@@ -434,14 +459,13 @@ function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, pr
 	if callType == -1 then utils.errorMessage( node.line, "Duplicate definition '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 end
--- Define an operation
+-- Define an operation generalized
 function defineCall( returnType, thisType, opr, argTypes, constructor)
 	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
 	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of call '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
 	return callType
 end
-
 -- Constant expression/value types
 local constexprIntegerType = typedb:def_type( 0, "constexpr int")	-- const expression integers implemented as arbitrary precision BCD numbers
 local constexprUIntegerType = typedb:def_type( 0, "constexpr uint")	-- const expression unsigned integer implemented as arbitrary precision BCD numbers
@@ -455,7 +479,7 @@ hardcodedTypeMap[ "constexpr bool"] = constexprBooleanType
 hardcodedTypeMap[ "constexpr uint"] = constexprUIntegerType
 hardcodedTypeMap[ "constexpr int"] = constexprIntegerType
 hardcodedTypeMap[ "constexpr float"] = constexprFloatType
--- Description records of constsexpr types
+-- Description records of constant expression types
 typeDescriptionMap[ constexprIntegerType] = llvmir.constexprIntegerDescr
 typeDescriptionMap[ constexprUIntegerType] = llvmir.constexprUIntegerDescr
 typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr
@@ -469,8 +493,9 @@ local typeClassToConstExprTypesMap = {
 	signed = {{type=constexprIntegerType,weight=rdw_constexpr},{type=constexprUIntegerType,weight=rdw_sign}},
 	unsigned = {{type=constexprUIntegerType,weight=rdw_constexpr}}
 }
-local bits64 = bcd.bits( 64)
-local constexprBinaryOperatorMap = {
+local bits64 = bcd.bits( 64) -- The example language1 has a maximum integer bit width of 64
+-- Map of all const expression binary operators to their implementation
+local constexprBinaryOperatorMap = { 
 	["+"] = function( this, arg) return this + arg[1] end,
 	["-"] = function( this, arg) return this - arg[1] end,
 	["*"] = function( this, arg) return this * arg[1] end,
@@ -482,18 +507,19 @@ local constexprBinaryOperatorMap = {
 	["&&"] = function( this, arg) return this == true and arg[1] == true end,
 	["||"] = function( this, arg) return this == true or arg[1] == true end,
 }
+-- Map of all const expression unary operators to their implementation
 local constexprUnaryOperatorMap = {
 	["~"] = function( this, arg) return this.bit_not( bits64) end,
 	["!"] = function( this, arg) return this ~= true end,
 	["-"] = function( this, arg) return -this end,
 }
+-- Define the list of unary/binary operators defined for each const expression type
 local constexprTypeOperatorMap = {
 	[constexprIntegerType]  = {"+","-","*","/","%"},
 	[constexprUIntegerType] = {"&","|","^","~"},
 	[constexprFloatType]    = {"+","-","*","/","%"},
 	[constexprBooleanType]  = {"&&","||","!"}
 }
-
 -- Create a constexpr node from a lexem in the AST
 function createConstExpr( node, constexpr_type, lexemvalue)
 	if constexpr_type == constexprIntegerType then return bcd.int(lexemvalue)
@@ -522,7 +548,7 @@ function constexprLlvmConversion( typeId, constexprType)
 	end
 	return function( val) return tostring( val) end
 end
--- Define the exaluation of expressions with only const expression arguments
+-- Define the evaluation of expressions with only const expression arguments
 function defineConstExprArithmetics()
 	for constexpr_type,oprlist in pairs(constexprTypeOperatorMap) do
 		for oi,opr in ipairs(oprlist) do
@@ -557,6 +583,7 @@ function defineConstExprArithmetics()
 	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_bool)
 end
+-- Tells if the argument type is a pointer type (implicitely generated type marked with '^')
 function isPointerType( typeId)
 	return pointeeTypeMap[ typeId]
 end
@@ -565,7 +592,7 @@ function getDeclarationType( typeId)
 	local redulist = typedb:get_reductions( typeId, tagmask_declaration)
 	for ri,redu in ipairs( redulist) do return redu.type end
 end
--- Return the raw type of a vararg argument to use for parameter passing
+-- Return the raw type of a vararg argument to use for parameter passing of variable arguments (...)
 function stripVarargType( typeId)
 	return qualiTypeMap[ typeQualiSepMap[ typeId].valtype].c_valtype
 end
@@ -602,7 +629,7 @@ function getPointerQualifierTypeName( qualifier, typnam)
 	if qualifier.reference == true then rt = rt .. "&" end
 	return rt
 end
--- Define all variations of a type alias that can explicitly  specified
+-- Define all variations of a type alias that can explicitly specified
 function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 	local qualitype = qualiTypeMap[ aliasTypeId]
 	local alias
@@ -723,7 +750,7 @@ function defineArrayIndexOperators( resTypeId, arTypeId, arDescr)
 	defineCall( resTypeId, arTypeId, "[]", {constexprUIntegerType}, callConstructor( arDescr.index[ scalarIntegerTypnam], true))
 	defineCall( resTypeId, arTypeId, "[]", {constexprIntegerType}, callConstructor( arDescr.index[ scalarIntegerTypnam], true))
 end
--- Helper for pointer arithmetics
+-- Define increment/decrement operations for a pointer type and an index type
 function definePointerIncrementDecrement( ptrtype, index_typnam, index_type)
 	local descr = typeDescriptionMap[ ptrtype]
 	local index_constructor = callConstructor( descr.index[ index_typnam], true) -- Load the pointer of the element at the index given as argument
@@ -751,8 +778,8 @@ function definePointerQualiTypesCrossed( node, qualitype_pointee)
 	typedb:def_reduction( qualitype_cval_pointer.c_valtype, qualitype_valtype_pointer.c_valtype, nil, tag_typeDeduction, rdw_strip_c_3)
 	return qualitype_valtype_pointer,qualitype_cval_pointer
 end
--- Define all unbound reftype types for type definitions representable by unbound reftype (custom defined structure types)
-function defineUnboundRefTypeTypes( contextTypeId, typnam, typeDescription, qualitype)
+-- Define all unbound reference types for type definitions representable by unbound reference (custom defined structure types)
+function defineUnboundReferenceTypes( contextTypeId, typnam, typeDescription, qualitype)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 
 	local unbound_reftype = typedb:def_type( contextTypeId, typnam .. "?&" )			-- unbound reference type
@@ -769,17 +796,17 @@ function defineUnboundRefTypeTypes( contextTypeId, typnam, typeDescription, qual
 	typeQualiSepMap[ unbound_reftype]   = {valtype=valtype,qualifier={reftyperef=true,const=false}}
 	typeQualiSepMap[ c_unbound_reftype] = {valtype=valtype,qualifier={reftyperef=true,const=true}}
 
-	unboundRefTypeMap[ qualitype.valtype] = unbound_reftype
-	unboundRefTypeMap[ qualitype.c_valtype] = c_unbound_reftype
+	unboundReferenceTypeMap[ qualitype.valtype] = unbound_reftype
+	unboundReferenceTypeMap[ qualitype.c_valtype] = c_unbound_reftype
 
 	typedb:def_reduction( c_unbound_reftype, unbound_reftype, nil, tag_typeDeduction, rdw_strip_c_3)
-	typedb:def_reduction( qualitype.c_reftype, c_unbound_reftype, constReferenceFromUnboundRefTypeConstructor( typeDescription), tag_typeDeduction, rdw_strip_u_2)
-	typedb:def_reduction( qualitype.c_reftype, unbound_reftype, constReferenceFromUnboundRefTypeConstructor( typeDescription), tag_typeDeduction, rdw_strip_u_1)
+	typedb:def_reduction( qualitype.c_reftype, c_unbound_reftype, constReferenceFromUnboundRefTypeConstructor( typeDescription, qualitype.c_reftype), tag_typeDeduction, rdw_strip_u_2)
+	typedb:def_reduction( qualitype.c_reftype, unbound_reftype, constReferenceFromUnboundRefTypeConstructor( typeDescription, qualitype.c_reftype), tag_typeDeduction, rdw_strip_u_1)
 
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {unbound_reftype}, unboundReferenceMoveConstructor)
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {c_unbound_reftype}, unboundReferenceMoveConstructor)
 end
--- Define public/private types for implementing visibility/accessibility in different contexts
+-- Define public/private types for implementing visibility/accessibility
 function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	local pointerTypeDescription = llvmir.pointerDescr( typeDescription)
 	local init_reftype = typedb:def_type( contextTypeId, getQualifierTypeName( {const=false,reference=true}, typnam, "init"))
@@ -919,8 +946,8 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 
 	local redu_constructor_l = tryConstexprStructureReductionConstructorArray( node, qualitype.valtype, elementTypeId, arraySize)
 	local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_valtype, elementTypeId, arraySize)
-	if redu_constructor_l then typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
-	if redu_constructor_c then typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
+	if redu_constructor_l then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
+	if redu_constructor_c then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
 
 	instantCallableEnvironment = nil
 end
@@ -928,8 +955,8 @@ end
 function defineInitializationFromStructure( node, qualitype)
 	local redu_constructor_l = tryConstexprStructureReductionConstructor( node, qualitype.valtype)
 	local redu_constructor_c = tryConstexprStructureReductionConstructor( node, qualitype.c_valtype)
-	if redu_constructor_l then typedb:def_reduction( unboundRefTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
-	if redu_constructor_c then typedb:def_reduction( unboundRefTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
+	if redu_constructor_l then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
+	if redu_constructor_c then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
 end
 -- Get the code of a class/struct destructor that calls the member destructors, for struct it is the complete constructor, for classes the final part
 function getStructMemberDestructorCode( env, descr, members)
@@ -1117,7 +1144,7 @@ function defineInheritedInterfaces( node, context, classTypeId)
 					{classname=cdescr.symbol, interfacename=idescr.symbol, llvmtype=vmtstr}))
 	end
 end
--- Get the type assigned to the variable 'this' or implicitly added to the context of a method in its body
+-- Get the type of the 'self' reference in the body of a method
 function getFunctionThisType( private, const, thisType)
 	if private == true then thisType = privateTypeMap[ thisType] end
 	if const == true then thisType = constTypeMap[ thisType] end
@@ -1139,7 +1166,7 @@ function defineOperatorsWithStructArgument( node, context)
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
 			local constructor = tryConstexprStructureOperatorConstructor( node, def.thisType, opr)
-			local rtval; if doReturnValueAsReferenceParameter( def.returnType) then rtval = unboundRefTypeMap[ def.returnType] else rtval = def.returnType end
+			local rtval; if doReturnValueAsReferenceParameter( def.returnType) then rtval = unboundReferenceTypeMap[ def.returnType] else rtval = def.returnType end
 			defineCall( rtval, def.thisType, opr, {constexprStructureType}, constructor)
 		end
 	end
@@ -1264,8 +1291,7 @@ function popGenericLocal( genericlocal)
 	localDefinitionContext,seekContextKey,currentCallableEnvKey,currentAllocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
 	table.remove( genericLocalStack, #genericLocalStack)
 end
--- The frame object defines constructors/destructors called implicitly at start/end of their lifetime
--- Allocation Frame Fields:
+---- Allocation Frame Fields ----
 --	parent		: Parent allocation frame, the allocation frame in which this allocation frame has been created (in the same callable environment)
 --	catch		: Allocation frame of the exception handler in the same callable environment that handles the exceptions thrown or forwarded by this allocation frame
 --	env		: The callable environment this allocation frame belongs to
@@ -1274,8 +1300,14 @@ end
 --	exitmap		: Maps different named exit scenarios (exceptions thrown, return from a function with a specific value to a cleanup code sequence)
 --	exitkeys	: List of all keys for the output in definition order (deterministic) of the exitmap entries
 --	landingpad	: Code with all landingpads defined in this frame
---	initstate	: Initialization state counter
-function getAllocationFrame()
+--	initstate	: Initialization state counter. This counter is used as second argument for the partial destructor called if a constructor fails.
+
+-- Create the allocation frame for a specific environment and scope, used for createing the allocation frame for globals
+function createAllocationFrame( env, scope)
+	return {parent=nil, catch=nil, env=env, scope=scope, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=nil}
+end
+-- Get or create the allocation frame of this scope
+function getOrCreateThisAllocationFrame()
 	local rt = typedb:this_instance( currentAllocFrameKey)
 	if not rt then
 		local parent = typedb:get_instance( currentAllocFrameKey)
@@ -1287,11 +1319,20 @@ function getAllocationFrame()
 	end
 	return rt
 end
+-- Get the allocation frame covering this scope
+function getAllocationFrame()
+	return instantAllocationFrame or typedb:get_instance( currentAllocFrameKey)
+end
+-- Get the allocation frame of this scope if it exists
+function thisAllocationFrame()
+	return instantAllocationFrame or typedb:this_instance( currentAllocFrameKey)
+end
 -- Set cleanup code for the current scope step, must be called in ascending order
-function setCleanupCode( name, code)
-	local frame = getAllocationFrame()
-	local step = typedb:step()
-	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage( 0, "Internal: Cleanup code not in added in strict ascending order") end
+function setCleanupCode( name, code, step)
+	local frame = getOrCreateThisAllocationFrame()
+	if not step then step = typedb:step() end
+	-- if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage( frame.env.line, "Internal: Cleanup code not in added in strict ascending order: %s (%d), %s (%d)", frame.dtors[#frame.dtors].name, frame.dtors[#frame.dtors].step, name, step) end
+	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then return end
 	local new_dtor = {step=step,code=code,name=name}
 	table.insert( frame.dtors, new_dtor)
 end
@@ -1302,7 +1343,7 @@ function binsearchUpperboundFrameDtors( dtors, step)
 	local mid = 1
 	if bb == 0 then return nil end
 	while bb - aa > 3 do
-		mid = tointeger( (bb+aa)/2)
+		mid = math.floor( (bb+aa)/2)
 		if dtors[ mid].step > step then bb = mid else aa = mid end
 	end
 	local val = dtors[ mid]
@@ -1323,7 +1364,7 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	local exit = frame.exitmap[ exitkey]
 	local env = frame.env
 	if not exit then
-		labels = {}
+		local labels = {}
 		for di=1,dtoridx+1 do table.insert( labels, env.label()) end
 		if parent then
 			exit = {labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)})}
@@ -1334,11 +1375,13 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 		end
 		frame.exitmap[ exitkey] = exit
 		table.insert( frame.exitkeys, exitkey)
+	else
+		for di=#exit.labels,dtoridx do table.insert( exit.labels, env.label()) end
 	end
 	return exit.labels[ dtoridx+1] -- First label is the label without cleanup code, just the exit code
 end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
-	return getFrameCleanupLabel( getAllocationFrame(), exitkey, exitcode, exitlabel)
+	return getFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
 end
 -- Get the code of a jump to the start of a cleanup chain with an ending 'ret llvmtype value' statement
 function doReturnTypeStatement( typeId, constructor)
@@ -1375,14 +1418,14 @@ function enableFeatureLandingpad( env)
 end
 -- Initialize a frame that catches exceptions
 function initTryBlock( catchlabel)
-	local frame = getAllocationFrame()
+	local frame = getOrCreateThisAllocationFrame()
 	frame.catch = frame
 	enableFeatureException( frame.env)
 	getFrameCleanupLabel( frame, "catch", nil, catchlabel)
 end
 -- Find out if there is a catch around the current scope step, determines if we can call a throwing function inside a non throwing function or not
 function hasCatchFrame()
-	local frame = typedb:get_instance( currentAllocFrameKey)
+	local frame = getAllocationFrame()
 	if frame and frame.catch then return true else return false end
 end
 -- Ensure that exceptions and their linkup code are defined, define them if not yet done
@@ -1399,7 +1442,7 @@ end
 -- Get the label to unwind a throwing call in case of an exception
 function getInvokeUnwindLabel( skipHandler)
 	if not skipHandler and instantUnwindLabelGenerator then return instantUnwindLabelGenerator() end
-	local frame = getAllocationFrame()
+	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
 	local rt = env.label()
 	requireExceptions()
@@ -1423,7 +1466,7 @@ function getInvokeUnwindLabel( skipHandler)
 end
 -- Get the code that throws an exception
 function getThrowExceptionCode( errcode, errmsg)
-	local frame = getAllocationFrame()
+	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
 	local rt = frame.env.label()
 	local errcode_out,errcode_code = constructorParts( errcode)
@@ -1488,7 +1531,7 @@ function getCallableEnvironmentCodeBlock( env, code)
 	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameAbortCleanupCode( frame) end
 	return rt
 end
--- Mark the scope passed as argument or the current scope as zone where initializations of member variables in a constructor are not allowed
+-- Mark the scope passed as argument or the current scope as zone where initializations of member variables in a constructor are not allowed (for example inside a loop)
 function disallowInitCalls( line, msg, scope)
 	if scope then
 		local scope_bk = typedb:scope()
@@ -1498,16 +1541,16 @@ function disallowInitCalls( line, msg, scope)
 		if not typedb:get_instance("noinit") then typedb:set_instance("noinit",{line,msg}) end
 	end
 end
--- Log an initialization call of a member by the assignment operator '=' in a constructor
+-- Log an initialization call of a member by the assignment operator '=' in a constructor. Increments the initialization state and checks the order of initialization.
 function logInitCall( name, index)
 	local line,msg = unpack(typedb:get_instance("noinit") or {})
 	local code = ""
 	if msg then utils.errorMessage( line, msg) end
-	local frame = getAllocationFrame()
+	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
 	if frame.initstate >= index+1 then utils.errorMessage( env.line, "Multiple initializations for member '%s' or initializations not in order of definition", name)
 	else while frame.initstate ~= index do
-		code = code .. getImplicitInitCode( env, frame.initstate, index)
+		code = code .. getImplicitInitCode( node, env, frame.initstate, index)
 		frame.initstate = index+1
 	end end
 	frame.initstate = index+1
@@ -1518,36 +1561,48 @@ function resumeInitState( frame)
 	if frame.parent then if frame.parent.initstate < frame.initstate then frame.parent.initstate = frame.initstate end else frame.env.initstate = frame.initstate end
 end
 -- Get the code of the default initialization constructor
-function defaultInitConstructorCode( env, member)
+function defaultInitConstructorCode( node, env, member)
 	local membervar,memberconstructor = selectNoArgumentType( node, member.name, typedb:resolve_type( getSeekContextTypes(), member.name, tagmask_resolveType))
 	local res = tryApplyCallable( node, {type=membervar,constructor=memberconstructor}, ":=", {})
 	if not res then utils.errorMessage( env.line, "No default constructor available for member '%s', need explicit initialization for every case", member.name) end
 	return res.constructor.code
 end
 -- Get the code of the default initialization constructors from state initstate to state initstateTo, needed top level up initialization states of different branches
-function getImplicitInitCode( env, initstate, initstateTo)
+function getImplicitInitCode( node, env, initstate, initstateTo)
 	local rt = ""
 	while initstate < initstateTo do
 		initstate = initstate + 1
-		rt = rt .. defaultInitConstructorCode( env, env.initcontext.members[ initstate])
+		rt = rt .. defaultInitConstructorCode( node, env, env.initcontext.members[ initstate])
 	end
 	return rt
 end
--- Constructor that returns the input with implicit completion of the initialization of the class in a constructor
-function completeInitializationAndReturnThis(this)
-	local frame = getAllocationFrame()
+-- Constructor that returns the input with implicit completion of the initialization of the class in a constructor. Used to ensure that a class initialization in a constructor is complete before any method is called or any member is read.
+function completeInitializationAndReturnThis( this)
+	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
-	local initcode = getImplicitInitCode( env, frame.initstate, #env.initcontext.members)
+	local initcode = getImplicitInitCode( {line=env.line}, env, frame.initstate, #env.initcontext.members)
 	this.code = (this.code or "") .. initcode
 	return this
 end
--- Hardcoded variable definition (variable not declared in source, but implicitly declared, for example the 'this' pointer in a method body context)
-function defineVariableHardcoded( node, context, typeId, name, reg)
+-- Implicitly declared variable that does not appear as definition in source, for example the 'self' reference in a method body
+function defineImplicitVariable( node, context, typeId, name, reg)
 	local contextTypeId = getDeclarationContextTypeId( context)
 	local var = typedb:def_type( contextTypeId, name, reg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", typeDeclarationString( typeId, name)) end
 	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
 	return var
+end
+-- Tells if a variable is the only return value in its declaration scope
+function variableIsOnlyReturnValueInScope( typeId, name)
+	local declnode = typedb:get_instance( "node")
+	if declnode then
+		local decllist = utils.findNodes( declnode, typesystem.return_value)
+		for _,decl in ipairs(decllist) do
+			if not decl.arg[1].call or decl.arg[1].call.proc ~= typesystem.variable or decl.arg[1].arg[1].value ~= name then return false end
+		end
+		return #decllist > 0
+	end
+	return false
 end
 -- Define a free variable or a member variable (depending on the context)
 function defineVariable( node, context, typeId, name, initVal)
@@ -1556,18 +1611,31 @@ function defineVariable( node, context, typeId, name, initVal)
 	if not refTypeId then utils.errorMessage( node.line, "References not allowed in variable declarations, use pointer instead: %s", typedb:type_string(typeId)) end
 	if context.domain == "local" then
 		local env = getCallableEnvironment()
-		local out = env.register()
-		local code = utils.constructor_format( descr.def_local, {out = out}, env.register)
+		local out,code
+		if env.returntype == typeId and doReturnValueAsReferenceParameter(typeId) and variableIsOnlyReturnValueInScope( typeId, name) then -- do try copy elision by in-place return value construction if the variable is the only instance returned in the declaration scope
+			out = "%rt"
+			code = ""
+			local var2 = typedb:resolve_type( getSeekContextTypes(), name)
+			if var2 then
+				local scope2 = typedb:type_scope( var2)
+				if scope2[1] ~= 0 and scope2[1] >= env.scope[1] then utils.errorMessage( node.line, "Redeclaration of variable '%s' that is subject to copy elision in nested scope", name) end
+			end
+		else
+			out = env.register()
+			code = utils.constructor_format( descr.def_local, {out = out}, env.register)
+		end
 		local var = typedb:def_type( localDefinitionContext, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		local decl = {type=var, constructor={code=code,out=out}}
-		if initVal then rt = applyCallable( node, decl, ":=", {initVal}) else rt = applyCallable( node, decl, ":=", {}) end
-		local cleanup = tryApplyCallable( node, {type=var,constructor={out=out}}, ":~", {})
-		if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then setCleanupCode( name, cleanup.constructor.code) end
-		return rt
+		local init = applyCallable( node, decl, ":=", {initVal})
+		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
+		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step else step = nil end
+		if cleanup then setCleanupCode( "local variable " .. name, cleanup, step) end
+		return init
 	elseif context.domain == "global" then
 		instantCallableEnvironment = globalCallableEnvironment
+		instantAllocationFrame = globalAllocationFrame
 		out = "@" .. name
 		local var = typedb:def_type( 0, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
@@ -1577,12 +1645,14 @@ function defineVariable( node, context, typeId, name, initVal)
 			print( utils.constructor_format( descr.def_global_val, {out = out, val = valueconv(constructorParts(initVal.constructor))})) -- print global data declaration
 		else
 			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
-			local decl = {type=var, constructor={out=out}}
-			local init; if initVal then init = applyCallable( node, decl, ":=", {initVal}) else init = applyCallable( node, decl, ":=", {}) end
-			local cleanup = tryApplyCallable( node, decl, ":~", {})
+			local decl = {type=var, constructor={code=code,out=out}}
+			local init = applyCallable( node, decl, ":=", {initVal})
 			if init.constructor then globalInitCode = globalInitCode .. init.constructor.code end
-			if cleanup and cleanup.constructor and cleanup.constructor.code ~= "" then globalCleanupCode = cleanup.constructor.code .. globalCleanupCode end
 		end
+		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
+		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step else step = nil end
+		if cleanup then setCleanupCode( "global variable " .. name, cleanup, step) end
+		instantAllocationFrame = nil
 		instantCallableEnvironment = nil
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
@@ -1595,7 +1665,7 @@ end
 function expandContextLlvmMember( descr, context)
 	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
 end
--- Define a constructor invoked by an assignment in the constructor (via the init type of the class)
+-- Define the assignment operators of the class members accessed via the init type of the class (self type in a constructor) as ctor instance
 function defineConstructorInitAssignments( refType, initType, name, index, load_ref)
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
 	local items = typedb:get_types( refType, ":=")
@@ -1648,13 +1718,13 @@ function defineVariableMember( node, descr, context, typeId, name, private)
 		defineConstructorInitAssignments( r_typeId, context.qualitype.init_reftype, name, index, load_ref)
 	end
 end
--- Define an inherited interface in a class as a member variable
+-- Define an inherited interface in a class as a member variable. The interface object is constructed in the destination, therefore we use the mechanism of unbound reference types, that are constructed when used.
 function defineInterfaceMember( node, context, typeId, typnam, private)
 	local descr = typeDescriptionMap[ typeId]
 	table.insert( context.interfaces, typeId)
 	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.symbol})
 	local thisType = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
-	defineCall( unboundRefTypeMap[ typeId], thisType, typnam, {}, convConstructor( fmt, "RVAL"))
+	defineCall( unboundReferenceTypeMap[ typeId], thisType, typnam, {}, convConstructorUnboundReference( fmt))
 end
 -- Define a reduction to a member variable to implement class/interface inheritance
 function defineReductionToMember( objTypeId, name)
@@ -1672,7 +1742,7 @@ function defineInterfaceInheritanceReductions( context, name, private, const)
 	local contextType = getFunctionThisType( private, const, context.qualitype.reftype)
 	defineReductionToMember( contextType, name)
 end
--- Make a function/procedure/operator parameter addressable by name in the callable body
+-- Make a function/procedure/operator/constructor parameter addressable by name in the callable body
 function defineParameter( node, context, typeId, name, env)
 	local descr = typeDescriptionMap[ typeId]
 	local paramreg = env.register()
@@ -1851,7 +1921,7 @@ function initBuiltInTypes()
 	end
 	initControlBooleanTypes()
 end
--- Application of a conversion constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
+-- Application of a constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
 function tryApplyConstructor( node, typeId, constructor, arg)
 	if constructor then
 		if (type(constructor) == "function") then
@@ -1866,7 +1936,7 @@ function tryApplyConstructor( node, typeId, constructor, arg)
 		return arg, true
 	end
 end
--- Application of a conversion constructor depending on its type and its argument type, throw error on failure
+-- Application of a constructor depending on its type and its argument type, throw error on failure
 function applyConstructor( node, typeId, constructor, arg)
 	local result_constructor,success = tryApplyConstructor( node, typeId, constructor, arg)
 	if not success then utils.errorMessage( node.line, "Failed to create type '%s'", typedb:type_string(typeId)) end
@@ -1918,7 +1988,7 @@ function selectNoConstructorNoArgumentType( node, typeName, resolveContextTypeId
 end
 -- Issue an error if the argument does not refer to a value
 function expectValueType( node, item)
-	if not item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a value", typedb:type_string(typeId)) end
+	if not item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a value", typedb:type_string(item.type)) end
 end
 -- Get the type handle of a type defined as a path
 function resolveTypeFromNamePath( node, qualifier, arg)
@@ -2019,7 +2089,7 @@ function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arr
 	local arrayDescr = llvmir.arrayDescr( elementDescr, arraySize)
 	local qualitype = defineQualiTypes( node, elementTypeId, typnam, arrayDescr)
 	local arrayTypeId = qualitype.valtype
-	defineUnboundRefTypeTypes( elementTypeId, typnam, arrayDescr, qualitype)
+	defineUnboundReferenceTypes( elementTypeId, typnam, arrayDescr, qualitype)
 	defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	getAssignmentsFromConstructors( node, qualitype, arrayDescr)
 	local qualitype_element = qualiTypeMap[ elementTypeId]
@@ -2175,7 +2245,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 		if #bestmatch ~= 0 then return bestmatch,bestweight end
 	end
 end
--- Find a callable identified by name and its arguments (parameter matching) in the context of the 'this' operand
+-- Find a callable identified by name and its arguments (parameter matching) in the context of a type (this)
 function findApplyCallable( node, this, callable, args)
 	local mask; if callable == ":=" then mask = tagmask_declaration else mask = tagmask_resolveType end
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
@@ -2362,7 +2432,7 @@ function expandContextMethodList( node, descr, context)
 		context.methodmap[ descr.methodid] = #context.methods
 	end
 end
--- Output of the function implementation
+-- Output of the function implementation (header + body)
 function printFunctionDeclaration( node, descr)
 	local fmt; if doReturnValueAsReferenceParameter( descr.ret) then fmt = llvmir.control.sretFunctionDeclaration else fmt = llvmir.control.functionDeclaration end
 	descr.attr = llvmir.functionAttribute( descr.interface, descr.env.throws)
@@ -2370,19 +2440,19 @@ function printFunctionDeclaration( node, descr)
 end
 -- Define a direct function call: class method call, free function call
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundRefTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundReferenceTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionDirectCallConstructor( thisTypeId, descr))
 	if descr.vararg then varargFuncMap[ functype] = true end
 	return functype
 end
 -- Define an indirect function call over a variable containing the function address
 function defineFunctionVariableCall( thisTypeId, contextTypeId, opr, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundRefTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundReferenceTypeMap[ descr.ret] else rtype = descr.ret end
 	return defineCall( rtype, contextTypeId, opr, descr.param, functionIndirectCallConstructor( thisTypeId, descr))
 end
 -- Define an indirect function call over an interface method table (VMT)
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundRefTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundReferenceTypeMap[ descr.ret] else rtype = descr.ret end
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( descr))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
@@ -2440,7 +2510,7 @@ function defineClassOperator( node, descr, context)
 	defineOperatorAttributes( context, descr)
 	if descr.name == "=" then context.properties.assignment = true end
 end
--- Define a constructor
+-- Define a ctor procedure
 function defineConstructor( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
 	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
@@ -2448,7 +2518,7 @@ function defineConstructor( node, descr, context)
 	local c_calltype = defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr)
 	if descr.throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 end
--- Define a destructor
+-- Define a dtor procedure
 function defineDestructor( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
 	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
@@ -2498,18 +2568,18 @@ function defineCallableBodyContext( node, context, descr)
 		else
 			selfTypeId = privateThisReferenceType 
 		end
-		local classvar = defineVariableHardcoded( node, context, selfTypeId, "self", "%ths")
+		local classvar = defineImplicitVariable( node, context, selfTypeId, "self", "%ths")
 		typedb:def_reduction( privateConstThisReferenceType, publicConstThisReferenceType, nil, tag_typeDeduction) -- make const private members of other instances of this class accessible
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 	end
-	if descr.throws then getAllocationFrame() end -- toplevel allocation frame if it throws
+	if descr.throws then getOrCreateThisAllocationFrame() end -- toplevel allocation frame if it throws
 	return env
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node, context)
-	defineVariableHardcoded( node, context, stringPointerType, "argc", "%argc")
-	defineVariableHardcoded( node, context, scalarIntegerType, "argv", "%argv")
+	defineImplicitVariable( node, context, stringPointerType, "argc", "%argc")
+	defineImplicitVariable( node, context, scalarIntegerType, "argv", "%argv")
 end
 -- Create a string constant pointer type/constructor
 function getStringConstant( value)
@@ -2562,9 +2632,9 @@ function addGenericParameter( node, generic, name, typeId)
 	table.insert( generic.param, {name=name, type=typeId} )
 end
 
--- Structure Context (context) Fields:
+---- Structure Context (context) Fields ----
 --	domain		: Describes the kind of the context that determines how declarations like variables and functions are handled
--- Attributes in case of domain "member":
+--   Attributes in case of domain "member":
 --	qualitype	: Names all types declared for a structure
 --	descr		: LLVM IR Template parameters for mapping the structure
 --	operators	: Maps the operator name ('+','-',...) to a structure with some attributes that are used to create an instance with a structure argument if possible
@@ -2577,8 +2647,8 @@ end
 --	llvmtype	: LLVM Declaration type string of the structure definition
 --	symbol		: LLVM identifier used when referencing the type
 -- 	const		: Declares if an interface has only const methods and therefore can be an interface of a const instance
---	structsize	: Structure size in bytes
---	index		: LLVM Member variable index (starting with 0)
+--	structsize	: Structure size in bytes for class and struct
+--	index		: LLVM Member variable index (starting with 0) for class and struct
 --	private		: True if member variables are private (class), false if they are public (struct)
 --	properties	: Structure with the flags {constructor,destructor,assignment} telling what elements are declared in a class and do not need an implicit default declaration
 
@@ -2586,10 +2656,10 @@ end
 -- The fields methods,methodmap,const are inherited from context
 --	size 		: Size in bytes
 
--- Traversal of an "interface" definition node
+-- Traversal of an "interface" definition node, for interfaces there are no generics possible
 function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.valtype)
-	defineUnboundRefTypeTypes( declContextTypeId, typnam, descr, qualitype)
+	defineUnboundReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	local context = {domain="member", qualitype=qualitype, descr=descr, operators={}, methods={}, methodmap={},
 				llvmtype="", symbol=descr.symbol, const=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context)
@@ -2605,7 +2675,7 @@ end
 -- Traversal of a "class" definition node, either directly in case of an ordinary class or on demand in case of a generic class
 function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.valtype)
-	defineUnboundRefTypeTypes( declContextTypeId, typnam, descr, qualitype)
+	defineUnboundReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	local context = {domain="member", qualitype=qualitype, descr=descr,
 				members={}, properties={}, operators={}, methods={}, methodmap={}, interfaces={}, 
@@ -2629,7 +2699,7 @@ end
 -- Traversal of a "struct" definition node, either directly in case of an ordinary structure or on demand in case of a generic structure
 function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype, nodeidx)
 	pushSeekContextType( qualitype.valtype)
-	defineUnboundRefTypeTypes( declContextTypeId, typnam, descr, qualitype)
+	defineUnboundReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	local context = {domain="member", qualitype=qualitype, descr=descr, members={}, properties={},
 				llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=false}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,structures
@@ -2682,12 +2752,12 @@ function conditionalIfElseBlock( node, initstate, condition, matchblk, elseblk, 
 	if initstate then -- in a constructor
 		if elseblk then -- we level up the initialization state by adding default init constructors for the members missing initialization
 			if elseblk.initstate > matchblk.initstate then
-				matchblk.code = matchblk.code .. getImplicitInitCode( env, matchblk.initstate, elseblk.initstate)
+				matchblk.code = matchblk.code .. getImplicitInitCode( node, env, matchblk.initstate, elseblk.initstate)
 			elseif elseblk.initstate < matchblk.initstate then
-				elseblk.code = elseblk.code .. getImplicitInitCode( env, elseblk.initstate, matchblk.initstate)
+				elseblk.code = elseblk.code .. getImplicitInitCode( node, env, elseblk.initstate, matchblk.initstate)
 			end
 		elseif initstate < matchblk.initstate then -- no else block available, but initializations in matchblk, then create an elseblk with initializations leveled up by adding default init constructors
-			elseblk = {code = getImplicitInitCode( env, initstate, matchblk.initstate)}
+			elseblk = {code = getImplicitInitCode( node, env, initstate, matchblk.initstate)}
 		end
 	end
 	local exitLabelUsed
@@ -2716,7 +2786,7 @@ function collectCode( node, args)
 			code = code .. arg.code
 		end
 	end
-	local frame = typedb:this_instance( currentAllocFrameKey)
+	local frame = thisAllocationFrame()
 	local initstate
 	if frame then
 		if frame.initstate then resumeInitState( frame); initstate = frame.initstate end
@@ -2753,16 +2823,15 @@ function typesystem.funcattribute( node, decl)
 	return rt
 end
 function typesystem.structure( node)
-	local arg = utils.traverse( typedb, node)
-	return {type=constexprStructureType, constructor=arg}
+	local args = utils.traverse( typedb, node)
+	return {type=constexprStructureType, constructor={list=args,step=node.step}}
 end
 function typesystem.allocate( node)
 	local env = getCallableEnvironment()
 	local typeId,expression = table.unpack( utils.traverse( typedb, node))
 	local pointerTypeId = pointerTypeMap[typeId]
-	if not pointerTypeId then utils.errorMessage( node.line, "Only non pointer type allowed in %s", "new") end
 	local refTypeId = referenceTypeMap[ typeId]
-	if not refTypeId then utils.errorMessage( node.line, "Only non reference type allowed in %s", "new") end
+	if not refTypeId then utils.errorMessage( node.line, "Only non reference type allowed in %s (%s)", "new", typedb:type_string(typeId or 0)) end
 	local descr = typeDescriptionMap[ typeId]
 	local memblk = callFunction( node, {0}, "allocmem", {{type=constexprUIntegerType, constructor=bcd.int(descr.size)}})
 	local ww,ptr_constructor = typedb:get_reduction( memPointerType, memblk.type, tagmask_resolveType)
@@ -2776,22 +2845,29 @@ function typesystem.allocate( node)
 	return rt
 end
 function typesystem.typecast( node)
+	local rt
 	local env = getCallableEnvironment()
 	local typeId,operand = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, operand)
+	local refTypeId = referenceTypeMap[ typeId]
+	if not refTypeId then utils.errorMessage( node.line, "Only non reference type allowed in %s", "cast") end
 	local descr = typeDescriptionMap[ typeId]
-	if doCastToReferenceType( typeId) then typeId = referenceTypeMap[ constTypeMap[ typeId]] end
-	if operand then
-		return {type=typeId, constructor=getRequiredTypeConstructor( node, typeId, operand, tagmask_typeCast, tagmask_typeConversion)}
+	if doCastToUnboundReferenceType( typeId) then 
+		local out = "{RVAL}"
+		rt = tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":=", {operand})
+		if not rt then utils.errorMessage( node.line, "Failed to cast '%s' from '%s'", typedb:type_string(typeId), typedb:type_string(operand.type)) end
+		rt.constructor.out = "RVAL"
+		rt.type = unboundReferenceTypeMap[ constTypeMap[ typeId] or typeId]
+		rt.constructor.step = typedb:step()
 	else
 		local out = env.register()
 		local code = utils.constructor_format( descr.def_local, {out=out}, env.register)
-		local rt = tryApplyCallable( node, {type=typeId,constructor={out=out,code=code}}, ":=", {})
-		if rt then
-			local cleanup = tryApplyCallable( node, {type=typeId,constructor={out=out}}, ":~", {})
-			if cleanup then setCleanupCode( "cast " .. typedb:type_name(typeId), cleanup) end
-		end
-		return rt
+		rt = tryApplyCallable( node, {type=refTypeId,constructor={out=out,code=code}}, ":=", {operand})
+		if not rt then utils.errorMessage( node.line, "Failed to cast '%s' from '%s'", typedb:type_string(typeId), typedb:type_string(operand.type)) end
+		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
+		if cleanup then setCleanupCode( "cast " .. typedb:type_name(typeId), cleanup, operand.constructor.step) end
 	end
+	return rt
 end
 function typesystem.throw_exception( node)
 	local errcode,errmsg = unpack( utils.traverse( typedb, node))
@@ -2870,7 +2946,8 @@ end
 function typesystem.assign_operator( node, operator)
 	local target,operand = table.unpack( utils.traverse( typedb, node))
 	local assign_operand = applyCallable( node, target, operator, {operand})
-	return applyCallable( node, target, "=", {assign_operand})
+	expectValueType( node, target)
+	return applyCallable( node, typeConstructorPairStruct( target.type, (constructorParts( target.constructor))), "=", {assign_operand})
 end
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
@@ -2928,7 +3005,12 @@ function typesystem.return_value( node)
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
 	if doReturnValueAsReferenceParameter( rtype) then
 		local reftype = referenceTypeMap[ rtype]
-		local rt = applyCallable( node, typeConstructorStruct( reftype, "%rt", ""), ":=", {operand})
+		local rt
+		if operand.constructor.out == "%rt" then
+			rt = operand -- copy elision through in-place construction done in 'defineVariable(..)'
+		else
+			rt = applyCallable( node, typeConstructorPairStruct( reftype, "%rt", ""), ":=", {operand})
+		end
 		return {code = rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
@@ -2949,7 +3031,7 @@ function typesystem.conditional_elseif( node, context, exitLabel)
 	local env = getCallableEnvironment()
 	local initstate
 	if env.initstate then -- we are in a constructor, so we calculate the init state to pass it to conditionalIfElseBlock
-		local frame = typedb:get_instance( currentAllocFrameKey)
+		local frame = getAllocationFrame()
 		if frame then initstate = frame.initstate else initstate = env.initstate end
 	end
 	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
@@ -2960,7 +3042,7 @@ function typesystem.conditional_if( node, context)
 	local exitLabel; if #node.arg >= 3 then exitLabel = env.label() else exitLabel = nil end
 	local initstate
 	if env.initstate then -- we are in a constructor, so we calculate the init state to pass it to conditionalIfElseBlock
-		local frame = typedb:get_instance( currentAllocFrameKey)
+		local frame = getAllocationFrame()
 		if frame then initstate = frame.initstate else initstate = env.initstate end
 	end
 	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
@@ -3067,7 +3149,7 @@ function typesystem.linkage( node, llvm_linkage, context)
 	end
 	return llvm_linkage
 end
--- Callable Description (descr) Fields:
+---- Callable Description (descr) Fields ----
 --	externtype	: Identifier for extern function defitions that determine some properties like the calling convention, currently only "C" known.
 --	name		: Name of the callable that may contain non alphanumeric characters, not suitable for output, but comprehensible for tracing/debugging
 --	symbol		: Symbol name of the callable, suitable for output
@@ -3316,7 +3398,9 @@ function typesystem.namespacedef( node, context)
 	local scope_bk,step_bk = typedb:scope( {} ) -- set global scope
 	local namespace = typedb:get_type( declContextTypeId, typnam) or typedb:def_type( declContextTypeId, typnam)
 	typedb:scope( scope_bk,step_bk)
+	pushSeekContextType( namespace)
 	utils.traverseRange( typedb, node, {2,2}, {domain="global", namespace = namespace})
+	popSeekContextType( namespace)
 end
 function typesystem.structdef( node, context)
 	local typnam = node.arg[1].value
@@ -3424,8 +3508,9 @@ function typesystem.main_procdef( node)
 	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end
 	local body = getCallableEnvironmentCodeBlock( env, code)
 		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel}) 
-		.. globalCleanupCode
+		.. getAllocationFrameRegularExitCleanupCode( globalAllocationFrame)
 		.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
+		.. getAllocationFrameAbortCleanupCode( globalAllocationFrame)
 	typedb:scope( scope_bk)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
 end
@@ -3433,6 +3518,7 @@ function typesystem.program( node)
 	llvmir.init()
 	initBuiltInTypes()
 	globalCallableEnvironment = createCallableEnvironment( "globals ", nil, "%ir", "IL")
+	globalAllocationFrame = createAllocationFrame( globalCallableEnvironment, typedb:scope())
 	utils.traverse( typedb, node, {domain="global"})
 	return node
 end

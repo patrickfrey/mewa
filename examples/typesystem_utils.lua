@@ -129,13 +129,13 @@ end
 function utils.register_allocator( prefix)
 	return utils.name_allocator( prefix or "%r")
 end
-
 -- Tree traversal:
 function processSubnode( typedb, subnode, ...)
 	local rt
 	if subnode.call then
 		if (subnode.scope) then
 			local scope_bk = typedb:scope( subnode.scope)
+			typedb:set_instance( "node", subnode)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
 			typedb:scope( scope_bk)
 		elseif (subnode.step) then
@@ -160,7 +160,6 @@ function utils.traverseRange( typedb, node, range, ...)
 		return node.value
 	end
 end
-
 -- Tree traversal, define scope/step and do the traversal call
 function utils.traverse( typedb, node, ...)
 	if node.arg then
@@ -171,7 +170,21 @@ function utils.traverse( typedb, node, ...)
 		return node.value
 	end
 end
-
+-- Find all top subnodes with a specific function (does not seek in children of matches)
+function utils.findNodes( node, func)
+	function findSubNodes_( res, node, func)
+		if node.call then
+			if node.call.proc == func then
+				table.insert( res, node)
+			elseif node.arg then
+				for ii,subnode in ipairs(node.arg) do findSubNodes_( res, subnode, func) end
+			end
+		end
+	end
+	local rt = {}
+	findSubNodes_( rt, node, func)
+	return rt
+end
 -- [3] Node visitor doing a traversal and returning the tree structure with the name and scope of the node
 function utils.abstractSyntaxTree( typedb, node)
 	return {name=node.call.name, scope=node.scope, arg=utils.traverse( typedb, node)}
