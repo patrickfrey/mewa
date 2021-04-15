@@ -114,31 +114,31 @@ The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexems expl
 
 ### How to handle lexical scopes?
 
-The _Scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type,reduction,instance) has a _scope_ definition attached. Depending on the current _scope step_ (an integer number) only the subset of definitions having a _scope_ covering it are visible when resolving a type. The current _scope_ and the current _scope step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. _Scope_ is usually used to envelop code blocks. Substructures on the other hand are preferrably implemented with a context type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context type to it. Every resolve type query can contain a set of context type candidates.
+The _Scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type,reduction,instance) has a _scope_ definition attached. Depending on the current _scope step_ (an integer number) only the subset of definitions having a _scope_ covering it are visible when resolving or deriving a type. The current _scope_ and the current _scope step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. _Scope_ is usually used to envelop code blocks. Substructures on the other hand are preferrably implemented with a context type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context type to it. Every resolve type query can contain a set of context type candidates.
 
 <a name="scopeInstanceAndAllocators"/>
 
 ### How to store and access scope bound data?
 
-_Scope_ bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and with inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
+_Scope_ bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and implying inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
 
 <a name="tracing"/>
 
 ### How to debug/trace the _Mewa_ functions?
 
 A developer of a compiler front-end with Lua using _Mewa_ should not have to debug a program with a C/C++ debugger if something goes wrong.
-Fortunately the _Mewa_ code for the important functions like typedb:resolve_type and typedb:derive_type is so simple that I wrote parallel implementations in Lua that do the same. The _typedb_ API has been extended with convenient functions that make such parallel implementations possible. You find them in examples/typesystem_utils.lua:
+Fortunately, the _Mewa_ code for the important functions like typedb:resolve_type and typedb:derive_type is simple. I wrote parallel implementations in Lua that do the same. The _typedb_ API has been extended with convenient functions that make such parallel implementations possible. You find them in examples/typesystem_utils.lua:
 
  * utils.getResolveTypeTrace( typedb, contextType, typeName, tagmask) is the equivalent of typedb:resolve_type 
  * utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_pathlen, max_pathlen) is the equivalent of typedb:derive_type 
 
  Both functions are not returning a result though, but just printing a trace of the search and returning this trace as dump.
 
-Besides that you find 2 functions in examples/typesystem_utils.lua that dump the scope tree of definitions:
+Besides that you find two functions in examples/typesystem_utils.lua that dump the scope tree of definitions:
  * function utils.getTypeTreeDump( typedb) dumps all reductions defined, arranges the definitions in in a tree where the nodes correspond to scopes
  * function utils.getReductionTreeDump( typedb) dumps all types defined, arranges the definitions in in a tree where the nodes correspond to scopes
 
-I must admit that I have rarely used the tree dump functions. They are tested though. I just found that the trace functions of typedb:resolve_type and typedb:derive_type showed to be much more useful in practice.
+I must admit that I have rarely used the tree dump functions. They are tested though. I just found that the trace functions for typedb:resolve_type and typedb:derive_type showed to be much more useful in practice.
  
 <a name="typeQualifiers"/>
 
@@ -150,13 +150,13 @@ Qualifiers are not considered to be attached to the type but part of the type de
 
 ### How to implement pointers and arrays?
 
-Pointers and arrays are types on its own. Because there are no attributes attached to types in the typedb, you have to declare an array of size 40 as own type that differs from the array of size 20. For arrays you need a mechanism for definition on demand. Such a mechanism you need for generics too.
+Pointers and arrays are types on their own. Because there are no attributes attached to types in the typedb, you have to declare an array of size 40 as own type that differs from the array of size 20. For arrays you need a mechanism for definition on demand. Such a mechanism you need for generics too.
 
 <a name="namespaces"/>
 
 ### How to implement namespaces?
 
-Namespaces are implementd as types. A namespace type can then be used as context type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context types or a single context type as argument. 
+Namespaces are implemented as types. A namespace type can then be used as context type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context types or a single context type as argument. 
 
 <a name="initializerLists"/>
 
@@ -177,10 +177,10 @@ the subexpression ```expr->data != NULL``` is not evaluated if ```expr != NULL``
 For control structures two new types have been defined in the example _language1_:
 1. Control True Type that represents a constructor as structure with 2 members: 
     1. **code** containing the code that is executed in the case the expression evaluates to **true** and 
-    1. **out** the name of a free label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and 
+    1. **out** the name of an unbound label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and 
 1. Control False Type
     1. **code** containing the code that is executed in the case the expression evaluates to **false** and 
-    1. **out** the name of a free label (not appearing in the code yet) where the evaluation jumps to in the case the expression evaluates to **true** and 
+    1. **out** the name of an unbound label (not appearing in the code yet) where the evaluation jumps to in the case the expression evaluates to **true** and 
 
 An expression with the operator ```||``` is evaluated to a control false type.
 An expression with the operator ```&&``` is evaluated to a control true type.
@@ -254,6 +254,8 @@ new context member to it.
 
 You define the inherited class as member and define a reduction from the inheriting class to the inherited class with the loading of this member as constructor.
 
+##### Note
+With multiple class inheritance and virtual methods in contrast to pure interface inheritance where all methods are implemented by the same class, there are some issues around the base pointer of the class. The first implementation decides what is the base pointer passed to the method. Every implementation of an inheriting class has then to calculate its base pointer from the base pointer passed.
 
 <a name="virtualMethodTables"/>
 
@@ -396,8 +398,15 @@ where variableScope scope is the value of ```typedb:type_scope``` of the variabl
 
 ### How to implement exception handling?
 
-Exception handling and especially zero-cost exception handling is a subject of further investigation in _Mewa_. As I broadly understood it you define a block with destructors to be executed in case of a thrown exception and LLVM builds the tables needed. This can be be implemented without any support needed from _typedb_.
+In the example _language1_ I implemented a very primitive exception handling. The only thing you can throw is an error code plus optionally a string. Besides simplicity this solution has also the advantage that exceptions could potentially be thrown accross shared library borders.
 
+Every call that can potentially raise an exception needs a label to be jumped at in the case. The first instructions at this label are launching the exception handling and extracting the exception data, storing them into local variables reserved for that. In the following the code goes through a sequence of cleanup calls. After cleanup the exception structure is rebuilt and rethrown with the LLVM 'resume' instruction or the exception is processed. The instructions for launching the exception handling and ending it are different for the two cases. LLVM calls the case of rethrowing the exception with resume 'cleanup' and the case where the exception is processed 'catch'.
+
+The templates I used for implementing it are defined in ```llvmir.exception``` in the Lua module llvmir.lua. I will provide more documentation later.
+
+The most difficult about exception handling is the cleanup. In the example _language1_ I pair every constructor call where a destructor exists with a call registering a cleanup call with the current _scope step_ in the current _allocation frame_. The _scope step_ is the identifer that helps to figure out a label where to jump into the chain of cleanup commands from any possible location identified by a _scope step_. Every cleanup chain of an _allocation frame_ ends with the jump to a label of the enclosing _allocation frame_ (called parent). For every exit case (return with a specific value, throwing an exception, handling an exception) there exists an own chain of cleanup calls with entry labels for any possible location to come from. 
+
+To figure this out was one of the most complicated things in the example _language1_. Expect to spend some time there.
 
 <a name="templates"/>
 
@@ -405,7 +414,7 @@ Exception handling and especially zero-cost exception handling is a subject of f
 
 Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
 
-If a template type ```TPL<A1,A2,...>``` is referenced we define a type ```T = TPL<t1,t2,...>``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
+If a generic type ```TPL[A1,A2,...]``` is referenced we define a type ```T = TPL[t1,t2,...]``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
 For each template argument ```Ai``` without a value constructor attached, we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. For types with an own constructor representing the value, we define a type ```Ai``` with the constructor and a reduction from this type to the generic argument type. With ```T``` as context type we then call the traversal of the generic class, structure or function. 
 
 The lazy evaluation used in generics requires multiple traversal of the same AST node. The types defined in each traversal may differ and definitions with context type 0 (free locals, globals) may interfere. How to handle this is answered [here](#multipleTraversal).
@@ -425,7 +434,7 @@ Generics use definition scopes multiple times with differing declarations inside
 
 ### How to implement concepts like in C++?
 
-I did not implement concepts in the example _langauge1_. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context type. In the concept definition AST node functions you can use typedb:resolve_type to retrieve properties as types to check as sub condition of the concept.
+I did not implement concepts in the example _language1_. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context type. In the concept definition AST node functions you can use typedb:resolve_type to retrieve properties as types to check as sub condition of the concept.
 
 In other words, the concept is implemented as generic with a the type to check the concept against as argument, with the difference that it doesn't produce code. It is just used to check if the concept structure can be succesfully traversed with the argument type.
 
@@ -433,7 +442,7 @@ In other words, the concept is implemented as generic with a the type to check t
 
 ### How to implement lambdas?
 
-This is an open issue. One idea would be to pass the lambda as type that refers to a AST node that is traversed when referenced. It's related to generics, it is a form of evaluation on demand too, but not exactly the same thing.
+I will implement lambdas for the example _language1_ in the next days.
 
 <a name="cLibraryCalls"/>
 
@@ -446,7 +455,7 @@ LLVM supports extern calls. In the specification of the example _language1_, I s
 
 ### How to implement coroutines?
 
-This is an open issue. In a compiled language where you cannot switch the stack easily, you have to implement a yielding function as statemachine. The states are the entry point of the function and the continuation entry points after yields. All temporary values in a yielding routine appearing in the scope after the yield have to be represented as part of the state data and not on the stack. I plan to implement coroutines in the example _language1_.
+I will implement coroutines for the example _language1_ in the next days.
 
 
 <a name="copyElision"/>
