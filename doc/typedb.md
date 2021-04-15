@@ -374,7 +374,7 @@ The scope step of the search that defines the valid reduction candidates has bee
 | :--------- | :-------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------- |
 | 1st        | context-type(s) | integer/table     | Single type or array of types or type/constructor pairs referring to the context of the type (*)                   |
 | 2nd        | name            | string            | Name of the type searched                                                                                          |
-| 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No used reductions if not specified.   |
+| 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used. No reductions applied if not specified.|
 | Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.         |
 | Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
 | Return 3rd |                 | table             | List of candidates types found, differing in the parameters. The list has to be filtered by the caller (***).      |

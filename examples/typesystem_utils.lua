@@ -134,13 +134,14 @@ function processSubnode( typedb, subnode, ...)
 	local rt
 	if subnode.call then
 		if (subnode.scope) then
-			local scope_bk = typedb:scope( subnode.scope)
+			local scope_bk,step_bk = typedb:scope( subnode.scope)
 			typedb:set_instance( "node", subnode)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
-			typedb:scope( scope_bk)
+			typedb:scope( scope_bk,step_bk)
 		elseif (subnode.step) then
-			typedb:step( subnode.step)
+			local step_bk = typedb:step( subnode.step)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+			typedb:step( step_bk)
 		else
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
 		end

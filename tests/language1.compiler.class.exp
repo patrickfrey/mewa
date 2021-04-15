@@ -274,11 +274,11 @@ call void(i8*,  ...) @printf( i8* %r76, i32 %r83)
 %r91 = call i32 %r85( i8* %r86)
 call void(i8*,  ...) @printf( i8* %r84, i32 %r91)
 store i32 0, i32* %r1
-br label %L3
-L3:
-call void @__dtor_Line( %Line* %r3)
 br label %L2
 L2:
+call void @__dtor_Line( %Line* %r3)
+br label %L3
+L3:
 br label %L1
 L1:
 %r92 = load i32, i32* %r1

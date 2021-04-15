@@ -1331,10 +1331,12 @@ end
 function setCleanupCode( name, code, step)
 	local frame = getOrCreateThisAllocationFrame()
 	if not step then step = typedb:step() end
-	-- if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then utils.errorMessage( frame.env.line, "Internal: Cleanup code not in added in strict ascending order: %s (%d), %s (%d)", frame.dtors[#frame.dtors].name, frame.dtors[#frame.dtors].step, name, step) end
-	if #frame.dtors > 0 and frame.dtors[#frame.dtors].step >= step then return end
+	local di = #frame.dtors
+	while di > 0 and frame.dtors[di].step > step do di = di - 1 end
+	if di > 0 and frame.dtors[di].step == step then utils.errorMessage( frame.env.line, "Internal: More than one cleanup per scope step: %s %d", name, step) end
 	local new_dtor = {step=step,code=code,name=name}
-	table.insert( frame.dtors, new_dtor)
+	table.insert( frame.dtors, di+1, new_dtor)
+	for exitkey,exit in pairs(frame.exitmap) do exit.labels[ step] = {label=frame.env.label(),used=false} end -- Add a label for each cleanup step
 end
 -- Binary search for scope step that is greater than the argument step in a frame dtors list passed as argument
 function binsearchUpperboundFrameDtors( dtors, step)
@@ -1365,20 +1367,24 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	local env = frame.env
 	if not exit then
 		local labels = {}
-		for di=1,dtoridx+1 do table.insert( labels, env.label()) end
+		for _,dtor in ipairs(frame.dtors) do labels[ dtor.step] = {label=env.label(),used=false} end
 		if parent then
-			exit = {labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)})}
+			exit = {endlabel=env.label(), labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)})}
 		else
 			if exitlabel then exitcode = (exitcode or "") .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
 			if not exitcode then utils.errorMessage( env.line, "Internal: Frame cleanup without label or code defined") end
-			exit = {labels=labels, exitcode=exitcode}
+			exit = {endlabel=env.label(), labels=labels, exitcode=exitcode}
 		end
 		frame.exitmap[ exitkey] = exit
 		table.insert( frame.exitkeys, exitkey)
-	else
-		for di=#exit.labels,dtoridx do table.insert( exit.labels, env.label()) end
 	end
-	return exit.labels[ dtoridx+1] -- First label is the label without cleanup code, just the exit code
+	if dtoridx == 0 then
+		return exit.endlabel
+	else
+		local jmp = exit.labels[ frame.dtors[ dtoridx].step]
+		jmp.used = true
+		return jmp.label
+	end
 end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
 	return getFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
@@ -1498,11 +1504,18 @@ function getAllocationFrameAbortCleanupCode( frame)
 	local code = frame.landingpad or ""
 	for _,ek in ipairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
-		code = code .. utils.template_format( llvmir.control.plainLabel, {inp=exit.labels[#exit.labels]})
-		for di=#exit.labels-1,1,-1 do
-			code = code .. frame.dtors[di].code .. utils.constructor_format( llvmir.control.label, {inp=exit.labels[di]})
+		local di = #frame.dtors
+		while di >= 1 and not exit.labels[ frame.dtors[ di].step].used do di = di -1 end
+		local first = true
+		while di >= 1 do
+			local label = exit.labels[ frame.dtors[ di].step].label
+			if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+			code = code .. utils.constructor_format( fmt, {inp=label}) .. frame.dtors[di].code
+			di = di - 1
+			first = false
 		end
-		code = code .. exit.exitcode
+		if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+		code = code .. utils.template_format( fmt, {inp=exit.endlabel}) .. exit.exitcode
 	end
 	return code
 end
@@ -1512,7 +1525,7 @@ function getAllocationFrameRegularExitCleanupCode( frame)
 	if #frame.dtors > 0 then
 		local label = frame.env.label()
 		local code = utils.constructor_format( llvmir.control.label, {inp=label})
-		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[di].code end
+		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[ di].code end
 	end
 	return code
 end
