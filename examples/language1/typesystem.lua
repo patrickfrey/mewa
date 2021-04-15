@@ -1308,7 +1308,7 @@ function createAllocationFrame( env, scope)
 end
 -- Get or create the allocation frame of this scope
 function getOrCreateThisAllocationFrame()
-	local rt = typedb:this_instance( currentAllocFrameKey)
+	local rt = instantAllocationFrame or typedb:this_instance( currentAllocFrameKey)
 	if not rt then
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
@@ -1524,15 +1524,15 @@ function getAllocationFrameRegularExitCleanupCode( frame)
 	local code = ""
 	if #frame.dtors > 0 then
 		local label = frame.env.label()
-		local code = utils.constructor_format( llvmir.control.label, {inp=label})
-		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[ di].code end
+		code = code .. utils.constructor_format( llvmir.control.label, {inp=label})
+		for di=#frame.dtors,1,-1 do code = utils.constructor_format( llvmir.control.label, {inp=label}) .. frame.dtors[ di].code end
 	end
 	return code
 end
 -- For debugging: Print the contents of an allocation frame to string without following parents
 function allocationFrameToString( frame)
 	local rt = ""
-	rt = rt .. mewa.tostring({envname=frame.env.name,scope=frame.scope,dtors=frame.dtors}) .. "\n"
+	rt = rt .. mewa.tostring({env_name=frame.env.name,scope=frame.scope,dtors=frame.dtors}) .. "\n"
 	for _,ek in ipairs( frame.exitkeys) do
 		rt = rt .. ek .. " => " .. mewa.tostring({frame.exitmap[ ek]}) .. "\n"
 	end
@@ -2803,7 +2803,7 @@ function collectCode( node, args)
 	local initstate
 	if frame then
 		if frame.initstate then resumeInitState( frame); initstate = frame.initstate end
-		if not nofollow then code = code .. getAllocationFrameRegularExitCleanupCode( frame) end
+		if not nofollow and frame.parent then code = code .. getAllocationFrameRegularExitCleanupCode( frame) end
 	end
 	return {code=code, nofollow=nofollow, initstate=initstate}
 end

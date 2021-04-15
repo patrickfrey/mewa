@@ -370,11 +370,11 @@ call void(i8*,  ...) @printf( i8* %r11, i32 %r14, i32 %r15)
 store i32 %r17, i32* %r8
 br label %L3
 L1:
+br label %L4
+L4:
+call void @__dtor_IntArray( %IntArray* %r1)
 br label %L5
 L5:
-call void @__dtor_IntArray( %IntArray* %r1)
-br label %L6
-L6:
 ret void
 }
 @string2 = private unnamed_addr constant [12 x i8] c"FL = %f %f\0A\00"
@@ -425,11 +425,11 @@ call void(i8*,  ...) @printf( i8* %r19, i32 %r22, double %r24)
 store i32 %r26, i32* %r16
 br label %L3
 L1:
+br label %L4
+L4:
+call void @__dtor_FloatArray( %FloatArray* %r9)
 br label %L5
 L5:
-call void @__dtor_FloatArray( %FloatArray* %r9)
-br label %L6
-L6:
 ret void
 }
 @string4 = private unnamed_addr constant [12 x i8] c"DB = %f %f\0A\00"
@@ -476,11 +476,11 @@ call void(i8*,  ...) @printf( i8* %r17, i32 %r20, double %r21)
 store i32 %r23, i32* %r14
 br label %L3
 L1:
+br label %L4
+L4:
+call void @__dtor_DoubleArray( %DoubleArray* %r7)
 br label %L5
 L5:
-call void @__dtor_DoubleArray( %DoubleArray* %r7)
-br label %L6
-L6:
 ret void
 }
 

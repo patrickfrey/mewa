@@ -2202,20 +2202,20 @@ call void @printMatrix__3__3____Matrix__double__3__3$( %__Matrix__double__3__3* 
 %r50 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
 call void(i8*,  ...) @printf( i8* %r50)
 store i32 0, i32* %r1
-br label %L6
-L6:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r47)
 br label %L5
 L5:
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r43)
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r47)
 br label %L4
 L4:
-call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r23)
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r43)
 br label %L3
 L3:
+call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r23)
+br label %L2
+L2:
 call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r2)
-br label %L7
-L7:
+br label %L6
+L6:
 br label %L1
 L1:
 %r51 = load i32, i32* %r1
