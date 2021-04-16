@@ -78,10 +78,10 @@ local arrayTemplate = {
 		.. "%A4 = icmp eq {element}* %A2, %ths_top\n"
 		.. "br i1 %A4, label %end, label %loop\n{rewind}"
 		.. "end:\nret void\n}\n",
-	memberwise_start = "{cnt} = alloca i32, align 4\nstore i32 0, i32* {cnt}\n"
+	memberwise_start = "{cnt} = alloca i32, align 4\nstore i32 -1, i32* {cnt}\n"
 		.. "{base} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 0\n",
 	memberwise_next = "{1} = load i32, i32* {cnt}\n{2} = add nsw i32 {1}, 1\nstore i32 {2}, i32* {cnt}\n"
-		.. "{out} = getelementptr inbounds {element}, {element}* {base}, i32 {1}\n",
+		.. "{out} = getelementptr inbounds {element}, {element}* {base}, i32 {2}\n",
 	memberwise_index = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
 	memberwise_cleanup = "{1} = load i32, i32* {cnt}\ncall void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* {this}, i32 {1})\n",
 	dtorproc = "define private dso_local void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* %ar, i32 %arsize) alwaysinline {\n"

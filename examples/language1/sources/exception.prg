@@ -119,7 +119,6 @@ private procedure test( int allocCnt) nothrow
 		var std::String astr = getGreetingA1();
 		var std::String str = "Hello world!";
 		/*
-		printf( "DEBUG\n");
 		var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
 		printf( "%s\n", str.c_str());
 		{
@@ -144,8 +143,6 @@ main
 	test( 1000);
 	printf( "ALLOCS %d\n", g_allocCnt);
 
-	test( 7);
-	/*
 	var int ii = 1;
 	var int nn = g_allocCnt;
 	while (ii < nn) {
@@ -153,6 +150,5 @@ main
 		test( ii);
 		ii = ii + 1;
 	}
-	*/
 }
 
