@@ -1,3 +1,120 @@
+----- NO EXCEPTION
+Get string
+Constructor string [Hello world!]
+DEBUG
+Get string
+Constructor string [H]
+Get string
+Constructor string [e]
+Get string
+Constructor string [l]
+Get string
+Constructor string [l]
+Get string
+Constructor string [o]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [w]
+Get string
+Constructor string [o]
+Get string
+Constructor string [r]
+Get string
+Constructor string [l]
+Get string
+Constructor string [d!]
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
+Hello world!
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Default constructor string
+Get string
+Constructor string [World!]
+Default constructor string
+Get string
+GREETING Hello World!
+Get string
+Destructor string [Hello World!]
+Free mem: [Hello World!]
+Get string
+Destructor string [World!]
+Free mem: [World!]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string [d!]
+Free mem: [d!]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [r]
+Free mem: [r]
+Get string
+Destructor string [o]
+Free mem: [o]
+Get string
+Destructor string [w]
+Free mem: [w]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [o]
+Free mem: [o]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [e]
+Free mem: [e]
+Get string
+Destructor string [H]
+Free mem: [H]
+Get string
+Destructor string [Hello world!]
+Free mem: [Hello world!]
+ALLOCS 17
 Get string
 Constructor string [Hello world!]
 DEBUG
@@ -35,4 +152,58 @@ Default constructor string
 Get string
 Hello world!
 Throw: Max allowed allocations reached
-ERR 0 201 Max allowed allocations reached
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string [d!]
+Free mem: [d!]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [r]
+Free mem: [r]
+Get string
+Destructor string [o]
+Free mem: [o]
+Get string
+Destructor string [w]
+Free mem: [w]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [o]
+Free mem: [o]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [e]
+Free mem: [e]
+Get string
+Destructor string [H]
+Free mem: [H]
+Get string
+Destructor string [Hello world!]
+Free mem: [Hello world!]
+ERR 201 Max allowed allocations reached

@@ -5,87 +5,86 @@ TOKEN IDENT [a-zA-Z_]+[a-zA-Z_0-9]* 0 [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO
 TOKEN DQSTRING ["]((([^\\"\n]+)|([\\][^"\n]))*)["] 1 ["]  ~ 3
 TOKEN SQSTRING [']((([^\\'\n]+)|([\\][^'\n]))*)['] 1 [']  ~ 4
 TOKEN UINTEGER [0123456789]+ 0 [0123456789]  ~ 5
-TOKEN SINTEGER [-][0123456789]+ 0 [-]  ~ 6
-TOKEN FLOAT [-]{0,1}[0123456789]+[.][0123456789]+ 0 [-0123456789]  ~ 7
-TOKEN FLOAT [-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+ 0 [-0123456789]  ~ 7
-KEYWORD extern [e] ~ 8
-KEYWORD function [f] ~ 9
-KEYWORD ( [(] ~ 10
-KEYWORD ) [)] ~ 11
-KEYWORD ; [;] ~ 12
-KEYWORD procedure [p] ~ 13
-KEYWORD ... [.] ~ 14
-KEYWORD , [,] ~ 15
-KEYWORD operator [o] ~ 16
-KEYWORD const [c] ~ 17
-KEYWORD nothrow [n] ~ 18
-KEYWORD :: [:] ~ 19
-KEYWORD any [a] ~ 20
-KEYWORD class [c] ~ 21
-KEYWORD ^ [^] ~ 22
-KEYWORD struct [s] ~ 23
-KEYWORD [ [[] ~ 24
-KEYWORD ] []] ~ 25
-KEYWORD & [&] ~ 26
-KEYWORD typedef [t] ~ 27
-KEYWORD { [{] ~ 28
-KEYWORD } [}] ~ 29
-KEYWORD generic [g] ~ 30
-KEYWORD interface [i] ~ 31
-KEYWORD namespace [n] ~ 32
-KEYWORD : [:] ~ 33
-KEYWORD private [p] ~ 34
-KEYWORD public [p] ~ 35
-KEYWORD constructor [c] ~ 36
-KEYWORD destructor [d] ~ 37
-KEYWORD -> [-] ~ 38
-KEYWORD = [=] ~ 39
-KEYWORD + [+] ~ 40
-KEYWORD - [-] ~ 41
-KEYWORD * [*] ~ 42
-KEYWORD / [/] ~ 43
-KEYWORD % [%] ~ 44
-KEYWORD && [&] ~ 45
-KEYWORD || [|] ~ 46
-KEYWORD | [|] ~ 47
-KEYWORD << [<] ~ 48
-KEYWORD >> [>] ~ 49
-KEYWORD ~ [~] ~ 50
-KEYWORD ! [!] ~ 51
-KEYWORD == [=] ~ 52
-KEYWORD != [!] ~ 53
-KEYWORD >= [>] ~ 54
-KEYWORD <= [<] ~ 55
-KEYWORD > [>] ~ 56
-KEYWORD < [<] ~ 57
-KEYWORD main [m] ~ 58
-KEYWORD elseif [e] ~ 59
-KEYWORD else [e] ~ 60
-KEYWORD catch [c] ~ 61
-KEYWORD try [t] ~ 62
-KEYWORD var [v] ~ 63
-KEYWORD return [r] ~ 64
-KEYWORD throw [t] ~ 65
-KEYWORD delete [d] ~ 66
-KEYWORD if [i] ~ 67
-KEYWORD while [w] ~ 68
-KEYWORD with [w] ~ 69
-KEYWORD new [n] ~ 70
-KEYWORD cast [c] ~ 71
-KEYWORD null [n] ~ 72
-KEYWORD += [+] ~ 73
-KEYWORD -= [-] ~ 74
-KEYWORD *= [*] ~ 75
-KEYWORD /= [/] ~ 76
-KEYWORD ^= [^] ~ 77
-KEYWORD &= [&] ~ 78
-KEYWORD %= [%] ~ 79
-KEYWORD &&= [&] ~ 80
-KEYWORD ||= [|] ~ 81
-KEYWORD |= [|] ~ 82
-KEYWORD <<= [<] ~ 83
-KEYWORD >>= [>] ~ 84
-KEYWORD . [.] ~ 85
+TOKEN FLOAT [0123456789]*[.][0123456789]+ 0 [0123456789.]  ~ 6
+TOKEN FLOAT [0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+ 0 [0123456789.]  ~ 6
+KEYWORD extern [e] ~ 7
+KEYWORD function [f] ~ 8
+KEYWORD ( [(] ~ 9
+KEYWORD ) [)] ~ 10
+KEYWORD ; [;] ~ 11
+KEYWORD procedure [p] ~ 12
+KEYWORD ... [.] ~ 13
+KEYWORD , [,] ~ 14
+KEYWORD operator [o] ~ 15
+KEYWORD const [c] ~ 16
+KEYWORD nothrow [n] ~ 17
+KEYWORD :: [:] ~ 18
+KEYWORD any [a] ~ 19
+KEYWORD class [c] ~ 20
+KEYWORD ^ [^] ~ 21
+KEYWORD struct [s] ~ 22
+KEYWORD [ [[] ~ 23
+KEYWORD ] []] ~ 24
+KEYWORD & [&] ~ 25
+KEYWORD typedef [t] ~ 26
+KEYWORD { [{] ~ 27
+KEYWORD } [}] ~ 28
+KEYWORD generic [g] ~ 29
+KEYWORD interface [i] ~ 30
+KEYWORD namespace [n] ~ 31
+KEYWORD : [:] ~ 32
+KEYWORD private [p] ~ 33
+KEYWORD public [p] ~ 34
+KEYWORD constructor [c] ~ 35
+KEYWORD destructor [d] ~ 36
+KEYWORD -> [-] ~ 37
+KEYWORD = [=] ~ 38
+KEYWORD + [+] ~ 39
+KEYWORD - [-] ~ 40
+KEYWORD * [*] ~ 41
+KEYWORD / [/] ~ 42
+KEYWORD % [%] ~ 43
+KEYWORD && [&] ~ 44
+KEYWORD || [|] ~ 45
+KEYWORD | [|] ~ 46
+KEYWORD << [<] ~ 47
+KEYWORD >> [>] ~ 48
+KEYWORD ~ [~] ~ 49
+KEYWORD ! [!] ~ 50
+KEYWORD == [=] ~ 51
+KEYWORD != [!] ~ 52
+KEYWORD >= [>] ~ 53
+KEYWORD <= [<] ~ 54
+KEYWORD > [>] ~ 55
+KEYWORD < [<] ~ 56
+KEYWORD main [m] ~ 57
+KEYWORD elseif [e] ~ 58
+KEYWORD else [e] ~ 59
+KEYWORD catch [c] ~ 60
+KEYWORD try [t] ~ 61
+KEYWORD var [v] ~ 62
+KEYWORD return [r] ~ 63
+KEYWORD throw [t] ~ 64
+KEYWORD delete [d] ~ 65
+KEYWORD if [i] ~ 66
+KEYWORD while [w] ~ 67
+KEYWORD with [w] ~ 68
+KEYWORD new [n] ~ 69
+KEYWORD cast [c] ~ 70
+KEYWORD null [n] ~ 71
+KEYWORD += [+] ~ 72
+KEYWORD -= [-] ~ 73
+KEYWORD *= [*] ~ 74
+KEYWORD /= [/] ~ 75
+KEYWORD ^= [^] ~ 76
+KEYWORD &= [&] ~ 77
+KEYWORD %= [%] ~ 78
+KEYWORD &&= [&] ~ 79
+KEYWORD ||= [|] ~ 80
+KEYWORD |= [|] ~ 81
+KEYWORD <<= [<] ~ 82
+KEYWORD >>= [>] ~ 83
+KEYWORD . [.] ~ 84
 COMMENT /* */ [/]
 COMMENT // [/]
 
@@ -317,55 +316,54 @@ expression/L1 = "cast" typespec ":" expression (step:104)
 expression/L2 = IDENT (XX)
 expression/L2 = BOOLEAN (XX)
 expression/L2 = UINTEGER (XX)
-expression/L2 = SINTEGER (XX)
 expression/L2 = FLOAT (XX)
 expression/L2 = "null" (XX)
 expression/L2 = DQSTRING (XX)
 expression/L2 = SQSTRING (XX)
 expression/L2 = "(" expression ")"
-expression/L3 = expression "=" expression (step:113)
-expression/L3 = expression "+=" expression (step:114)
-expression/L3 = expression "-=" expression (step:115)
-expression/L3 = expression "*=" expression (step:116)
-expression/L3 = expression "/=" expression (step:117)
-expression/L3 = expression "^=" expression (step:118)
-expression/L3 = expression "&=" expression (step:119)
-expression/L3 = expression "%=" expression (step:120)
-expression/L3 = expression "&&=" expression (step:121)
-expression/L3 = expression "||=" expression (step:122)
-expression/L3 = expression "&=" expression (step:119)
-expression/L3 = expression "|=" expression (step:123)
-expression/L3 = expression "<<=" expression (step:124)
-expression/L3 = expression ">>=" expression (step:125)
-expression/L4 = expression "||" expression (step:126)
-expression/L5 = expression "&&" expression (step:127)
-expression/L6 = expression "|" expression (step:128)
-expression/L7 = expression "^" expression (step:129)
-expression/L7 = expression "&" expression (step:130)
-expression/L8 = expression "==" expression (step:131)
-expression/L8 = expression "!=" expression (step:132)
-expression/L8 = expression "<=" expression (step:133)
-expression/L8 = expression "<" expression (step:134)
-expression/L8 = expression ">=" expression (step:135)
-expression/L8 = expression ">" expression (step:136)
-expression/L9 = expression "+" expression (step:137)
-expression/L9 = expression "-" expression (step:138)
+expression/L3 = expression "=" expression (step:112)
+expression/L3 = expression "+=" expression (step:113)
+expression/L3 = expression "-=" expression (step:114)
+expression/L3 = expression "*=" expression (step:115)
+expression/L3 = expression "/=" expression (step:116)
+expression/L3 = expression "^=" expression (step:117)
+expression/L3 = expression "&=" expression (step:118)
+expression/L3 = expression "%=" expression (step:119)
+expression/L3 = expression "&&=" expression (step:120)
+expression/L3 = expression "||=" expression (step:121)
+expression/L3 = expression "&=" expression (step:118)
+expression/L3 = expression "|=" expression (step:122)
+expression/L3 = expression "<<=" expression (step:123)
+expression/L3 = expression ">>=" expression (step:124)
+expression/L4 = expression "||" expression (step:125)
+expression/L5 = expression "&&" expression (step:126)
+expression/L6 = expression "|" expression (step:127)
+expression/L7 = expression "^" expression (step:128)
+expression/L7 = expression "&" expression (step:129)
+expression/L8 = expression "==" expression (step:130)
+expression/L8 = expression "!=" expression (step:131)
+expression/L8 = expression "<=" expression (step:132)
+expression/L8 = expression "<" expression (step:133)
+expression/L8 = expression ">=" expression (step:134)
+expression/L8 = expression ">" expression (step:135)
+expression/L9 = expression "+" expression (step:136)
+expression/L9 = expression "-" expression (step:137)
 expression/L9 = "&" expression (XX)
-expression/L9 = "-" expression (step:140)
-expression/L9 = "+" expression (step:141)
-expression/L9 = "~" expression (step:142)
-expression/L9 = "!" expression (step:143)
-expression/L10 = expression "*" expression (step:144)
-expression/L10 = expression "/" expression (step:145)
-expression/L10 = expression "%" expression (step:146)
-expression/L11 = expression "<<" expression (step:147)
-expression/L11 = expression ">>" expression (step:148)
+expression/L9 = "-" expression (step:139)
+expression/L9 = "+" expression (step:140)
+expression/L9 = "~" expression (step:141)
+expression/L9 = "!" expression (step:142)
+expression/L10 = expression "*" expression (step:143)
+expression/L10 = expression "/" expression (step:144)
+expression/L10 = expression "%" expression (step:145)
+expression/L11 = expression "<<" expression (step:146)
+expression/L11 = expression ">>" expression (step:147)
 expression/L12 = iexpression
 expression/L12 = expression "." IDENT (XX)
-expression/L12 = "*" expression (step:150)
-expression/L13 = expression "(" expressionlist ")" (step:151)
-expression/L13 = expression "(" ")" (step:151)
-expression/L13 = expression "[" expressionlist "]" (step:152)
+expression/L12 = "*" expression (step:149)
+expression/L13 = expression "(" expressionlist ")" (step:150)
+expression/L13 = expression "(" ")" (step:150)
+expression/L13 = expression "[" expressionlist "]" (step:151)
 iexpression/L14 = expression indirection IDENT (XX)
 indirection/L14 = "->" indirection (XX)
 indirection/L14 = "->" (XX)
@@ -722,7 +720,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -796,7 +793,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1126,7 +1122,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1230,8 +1225,6 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = UINTEGER .
 [XX]
-	expression/L2 = SINTEGER .
-[XX]
 	expression/L2 = FLOAT .
 [XX]
 	expression/L1 = . "{" expressionlist "}"
@@ -1241,7 +1234,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1300,7 +1292,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1402,7 +1393,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1462,7 +1452,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1521,7 +1510,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1580,7 +1568,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1639,7 +1626,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1698,7 +1684,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1780,7 +1765,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1840,7 +1824,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -1899,7 +1882,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2080,7 +2062,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2468,7 +2449,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2532,7 +2512,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2591,7 +2570,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2652,7 +2630,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2716,7 +2693,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2775,7 +2751,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2834,7 +2809,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2893,7 +2867,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -2952,7 +2925,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3011,7 +2983,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3070,7 +3041,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3129,7 +3099,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3188,7 +3157,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3247,7 +3215,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3306,7 +3273,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3365,7 +3331,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3424,7 +3389,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3483,7 +3447,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3542,7 +3505,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3601,7 +3563,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3660,7 +3621,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3719,7 +3679,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3778,7 +3737,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3837,7 +3795,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3896,7 +3853,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -3955,7 +3911,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4014,7 +3969,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4074,7 +4028,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4133,7 +4086,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4192,7 +4144,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4251,7 +4202,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4310,7 +4260,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4369,7 +4318,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4896,7 +4844,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -4955,7 +4902,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -5015,7 +4961,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -6721,7 +6666,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -6791,7 +6735,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -6977,7 +6920,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -7036,7 +6978,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -7696,7 +7637,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -7891,7 +7831,6 @@ expressionlist/L0 = expression
 	expression/L2 = . IDENT
 	expression/L2 = . BOOLEAN
 	expression/L2 = . UINTEGER
-	expression/L2 = . SINTEGER
 	expression/L2 = . FLOAT
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
@@ -8307,8 +8246,6 @@ expressionlist/L0 = expression
 	expression/L2 = SQSTRING .
 [XX]
 	expression/L2 = UINTEGER .
-[XX]
-	expression/L2 = SINTEGER .
 [XX]
 	expression/L2 = FLOAT .
 [XX]
@@ -11027,7 +10964,7 @@ expressionlist/L0 = expression
 [XX]: {IDENT "const" '^' '[' '&'}
 [XX]: {IDENT "const" '^' '['}
 [XX]: {'(' ';' '^' '[' '&' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' "const" '^' '[' '&'}
 [XX]: {"function" "procedure" "operator" "constructor"}
 [XX]: {$ IDENT "function" "procedure" "operator" "const" "any" "class" "struct" "typedef" '}' "generic" "interface" "private" "public" "constructor" "destructor"}
@@ -11050,16 +10987,16 @@ expressionlist/L0 = expression
 [XX]: {IDENT ')' "..." ',' "const" '^' '[' '&'}
 [XX]: {'(' ')' '^' '[' '&' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
 [XX]: {'(' ')' ';' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "elseif" "else" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "elseif" "else" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' ')' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {')' ']' '}'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER SINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' ']' '&' '{' ':'}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {IDENT '(' ')' "..." ',' ':'}
 [XX]: {';' '{'}
 [XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' '&' ':'}
-[XX]: {IDENT '(' ')' "..." ',' ':'}
 
 -- LALR(XX) states (merged LR(XX) elements assigned to LR(XX) states):
 [XX]
@@ -11418,7 +11355,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
@@ -11522,7 +11458,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -11822,7 +11757,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
@@ -11920,8 +11854,6 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = UINTEGER . (XX), FOLLOW [XX] -> REDUCE expression #1 CALL constant "constexpr uint"
 [XX]
-	expression/L2 = SINTEGER . (XX), FOLLOW [XX] -> REDUCE expression #1 CALL constant "constexpr int"
-[XX]
 	expression/L2 = FLOAT . (XX), FOLLOW [XX] -> REDUCE expression #1 CALL constant "constexpr float"
 [XX]
 	expression/L2 = "(" . expression ")", FOLLOW [XX] -> GOTO XX
@@ -11968,7 +11900,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12027,7 +11958,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12099,7 +12029,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
@@ -12189,7 +12118,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12248,7 +12176,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12307,7 +12234,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12366,7 +12292,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12425,7 +12350,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12505,7 +12429,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	statement/L1 = "return" . ";", FOLLOW [XX] -> SHIFT ';' GOTO XX
@@ -12566,7 +12489,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12625,7 +12547,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -12807,7 +12728,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13197,7 +13117,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L13 = expression "(" . ")", FOLLOW [XX] -> SHIFT ')' GOTO XX
@@ -13259,7 +13178,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13320,7 +13238,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13379,7 +13296,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13443,7 +13359,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13502,7 +13417,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13561,7 +13475,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13620,7 +13533,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13679,7 +13591,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13738,7 +13649,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13797,7 +13707,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13856,7 +13765,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13915,7 +13823,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -13974,7 +13881,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14033,7 +13939,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14092,7 +13997,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14151,7 +14055,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14210,7 +14113,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14269,7 +14171,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14328,7 +14229,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14387,7 +14287,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14446,7 +14345,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14505,7 +14403,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14564,7 +14461,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14623,7 +14519,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14682,7 +14577,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14742,7 +14636,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14801,7 +14694,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14860,7 +14752,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14919,7 +14810,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -14978,7 +14868,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -15037,7 +14926,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -15096,7 +14984,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -15281,7 +15168,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "+" expression . (step:141), FOLLOW [XX] -> REDUCE expression #2 CALL unop "+"
+	expression/L9 = "+" expression . (step:140), FOLLOW [XX] -> REDUCE expression #2 CALL unop "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15322,7 +15209,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "-" expression . (step:140), FOLLOW [XX] -> REDUCE expression #2 CALL unop "-"
+	expression/L9 = "-" expression . (step:139), FOLLOW [XX] -> REDUCE expression #2 CALL unop "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15363,7 +15250,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L12 = "*" expression . (step:150), FOLLOW [XX] -> REDUCE expression #2 CALL unop "->"
+	expression/L12 = "*" expression . (step:149), FOLLOW [XX] -> REDUCE expression #2 CALL unop "->"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15404,7 +15291,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "~" expression . (step:142), FOLLOW [XX] -> REDUCE expression #2 CALL unop "~"
+	expression/L9 = "~" expression . (step:141), FOLLOW [XX] -> REDUCE expression #2 CALL unop "~"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15445,7 +15332,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "!" expression . (step:143), FOLLOW [XX] -> REDUCE expression #2 CALL unop "!"
+	expression/L9 = "!" expression . (step:142), FOLLOW [XX] -> REDUCE expression #2 CALL unop "!"
 [XX]
 	tryblock = "try" codeblock . (XX), FOLLOW [XX] -> REDUCE tryblock #2 CALL tryblock
 [XX]
@@ -15622,7 +15509,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -15681,7 +15567,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -15741,7 +15626,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -16122,7 +16006,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L13 = expression "(" expressionlist . ")", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	expression/L13 = expression "(" ")" . (step:151), FOLLOW [XX] -> REDUCE expression #3 CALL operator "()"
+	expression/L13 = expression "(" ")" . (step:150), FOLLOW [XX] -> REDUCE expression #3 CALL operator "()"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16163,7 +16047,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L7 = expression "^" expression . (step:129), FOLLOW [XX] -> REDUCE expression #3 CALL binop "^"
+	expression/L7 = expression "^" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL binop "^"
 [XX]
 	expression/L13 = expression "[" expressionlist . "]", FOLLOW [XX] -> SHIFT ']' GOTO XX
 [XX]
@@ -16206,7 +16090,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L7 = expression "&" expression . (step:130), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&"
+	expression/L7 = expression "&" expression . (step:129), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&"
 [XX]
 	indirection/L14 = "->" indirection . (XX), FOLLOW [XX] -> REDUCE indirection #2 CALL count
 [XX]
@@ -16249,7 +16133,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "=" expression . (step:113), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
+	expression/L3 = expression "=" expression . (step:112), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16290,7 +16174,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = expression "+" expression . (step:137), FOLLOW [XX] -> REDUCE expression #3 CALL binop "+"
+	expression/L9 = expression "+" expression . (step:136), FOLLOW [XX] -> REDUCE expression #3 CALL binop "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16331,7 +16215,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = expression "-" expression . (step:138), FOLLOW [XX] -> REDUCE expression #3 CALL binop "-"
+	expression/L9 = expression "-" expression . (step:137), FOLLOW [XX] -> REDUCE expression #3 CALL binop "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16372,7 +16256,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "*" expression . (step:144), FOLLOW [XX] -> REDUCE expression #3 CALL binop "*"
+	expression/L10 = expression "*" expression . (step:143), FOLLOW [XX] -> REDUCE expression #3 CALL binop "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16413,7 +16297,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "/" expression . (step:145), FOLLOW [XX] -> REDUCE expression #3 CALL binop "/"
+	expression/L10 = expression "/" expression . (step:144), FOLLOW [XX] -> REDUCE expression #3 CALL binop "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16454,7 +16338,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "%" expression . (step:146), FOLLOW [XX] -> REDUCE expression #3 CALL binop "%"
+	expression/L10 = expression "%" expression . (step:145), FOLLOW [XX] -> REDUCE expression #3 CALL binop "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16495,7 +16379,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L5 = expression "&&" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&&"
+	expression/L5 = expression "&&" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16536,7 +16420,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L4 = expression "||" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL binop "||"
+	expression/L4 = expression "||" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL binop "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16577,7 +16461,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L6 = expression "|" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL binop "|"
+	expression/L6 = expression "|" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL binop "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16618,7 +16502,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L11 = expression "<<" expression . (step:147), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<<"
+	expression/L11 = expression "<<" expression . (step:146), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16659,7 +16543,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L11 = expression ">>" expression . (step:148), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">>"
+	expression/L11 = expression ">>" expression . (step:147), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">>"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16700,7 +16584,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "==" expression . (step:131), FOLLOW [XX] -> REDUCE expression #3 CALL binop "=="
+	expression/L8 = expression "==" expression . (step:130), FOLLOW [XX] -> REDUCE expression #3 CALL binop "=="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16741,7 +16625,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "!=" expression . (step:132), FOLLOW [XX] -> REDUCE expression #3 CALL binop "!="
+	expression/L8 = expression "!=" expression . (step:131), FOLLOW [XX] -> REDUCE expression #3 CALL binop "!="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16782,7 +16666,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression ">=" expression . (step:135), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">="
+	expression/L8 = expression ">=" expression . (step:134), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16823,7 +16707,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "<=" expression . (step:133), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<="
+	expression/L8 = expression "<=" expression . (step:132), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16864,7 +16748,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression ">" expression . (step:136), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">"
+	expression/L8 = expression ">" expression . (step:135), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16905,7 +16789,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "<" expression . (step:134), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<"
+	expression/L8 = expression "<" expression . (step:133), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16946,7 +16830,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "+=" expression . (step:114), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
+	expression/L3 = expression "+=" expression . (step:113), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16987,7 +16871,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "-=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
+	expression/L3 = expression "-=" expression . (step:114), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17028,7 +16912,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "*=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
+	expression/L3 = expression "*=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17069,7 +16953,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "/=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
+	expression/L3 = expression "/=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17110,7 +16994,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "^=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
+	expression/L3 = expression "^=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17151,7 +17035,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
+	expression/L3 = expression "&=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17192,7 +17076,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "%=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
+	expression/L3 = expression "%=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17233,7 +17117,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&&=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
+	expression/L3 = expression "&&=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17274,7 +17158,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "||=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
+	expression/L3 = expression "||=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17315,7 +17199,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "|=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
+	expression/L3 = expression "|=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17356,7 +17240,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "<<=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
+	expression/L3 = expression "<<=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17397,7 +17281,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression ">>=" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
+	expression/L3 = expression ">>=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
 [XX]
 	expression/L12 = expression "." IDENT . (XX), FOLLOW [XX] -> REDUCE expression #3 CALL member
 [XX]
@@ -17449,7 +17333,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -17516,7 +17399,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -17702,7 +17584,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -17761,7 +17642,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -17950,9 +17830,9 @@ expressionlist/L0 = expression
 [XX]
 	catchblock = "catch" IDENT "," . IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
-	expression/L13 = expression "(" expressionlist ")" . (step:151), FOLLOW [XX] -> REDUCE expression #4 CALL operator "()"
+	expression/L13 = expression "(" expressionlist ")" . (step:150), FOLLOW [XX] -> REDUCE expression #4 CALL operator "()"
 [XX]
-	expression/L13 = expression "[" expressionlist "]" . (step:152), FOLLOW [XX] -> REDUCE expression #4 CALL operator_array "[]"
+	expression/L13 = expression "[" expressionlist "]" . (step:151), FOLLOW [XX] -> REDUCE expression #4 CALL operator_array "[]"
 [XX]
 	expressionlist/L0 = expression "," expressionlist ., FOLLOW [XX] -> REDUCE expressionlist #3
 [XX]
@@ -18391,7 +18271,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
@@ -18616,7 +18495,6 @@ expressionlist/L0 = expression
 	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
 	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
 	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . SINTEGER, FOLLOW [XX] -> SHIFT SINTEGER GOTO XX
 	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
 	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
@@ -18813,7 +18691,6 @@ expressionlist/L0 = expression
 (XX) variable
 (XX) constant, "constexpr bool"
 (XX) constant, "constexpr uint"
-(XX) constant, "constexpr int"
 (XX) constant, "constexpr float"
 (XX) null
 (XX) string_constant
@@ -19261,7 +19138,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
 	'(' => Shift goto XX
@@ -19323,7 +19199,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -19462,7 +19337,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #1 statement call definition 1
 	SQSTRING => Reduce #1 statement call definition 1
 	UINTEGER => Reduce #1 statement call definition 1
-	SINTEGER => Reduce #1 statement call definition 1
 	FLOAT => Reduce #1 statement call definition 1
 	"function" => Reduce #1 statement call definition 1
 	'(' => Reduce #1 statement call definition 1
@@ -19499,7 +19373,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #1 statement call definition 1
 	SQSTRING => Reduce #1 statement call definition 1
 	UINTEGER => Reduce #1 statement call definition 1
-	SINTEGER => Reduce #1 statement call definition 1
 	FLOAT => Reduce #1 statement call definition 1
 	"function" => Reduce #1 statement call definition 1
 	'(' => Reduce #1 statement call definition 1
@@ -19536,7 +19409,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #1 statement call definition 1
 	SQSTRING => Reduce #1 statement call definition 1
 	UINTEGER => Reduce #1 statement call definition 1
-	SINTEGER => Reduce #1 statement call definition 1
 	FLOAT => Reduce #1 statement call definition 1
 	"function" => Reduce #1 statement call definition 1
 	'(' => Reduce #1 statement call definition 1
@@ -19573,7 +19445,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #1 statement
 	SQSTRING => Reduce #1 statement
 	UINTEGER => Reduce #1 statement
-	SINTEGER => Reduce #1 statement
 	FLOAT => Reduce #1 statement
 	"function" => Reduce #1 statement
 	'(' => Reduce #1 statement
@@ -19613,7 +19484,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
 	'(' => Shift goto XX
@@ -19927,47 +19797,6 @@ expressionlist/L0 = expression
 	">>=" => Reduce #1 expression call constant "constexpr uint"
 	'.' => Reduce #1 expression call constant "constexpr uint"
 [XX]
-	'(' => Reduce #1 expression call constant "constexpr int"
-	')' => Reduce #1 expression call constant "constexpr int"
-	';' => Reduce #1 expression call constant "constexpr int"
-	',' => Reduce #1 expression call constant "constexpr int"
-	'^' => Reduce #1 expression call constant "constexpr int"
-	'[' => Reduce #1 expression call constant "constexpr int"
-	']' => Reduce #1 expression call constant "constexpr int"
-	'&' => Reduce #1 expression call constant "constexpr int"
-	'}' => Reduce #1 expression call constant "constexpr int"
-	"->" => Reduce #1 expression call constant "constexpr int"
-	'=' => Reduce #1 expression call constant "constexpr int"
-	'+' => Reduce #1 expression call constant "constexpr int"
-	'-' => Reduce #1 expression call constant "constexpr int"
-	'*' => Reduce #1 expression call constant "constexpr int"
-	'/' => Reduce #1 expression call constant "constexpr int"
-	'%' => Reduce #1 expression call constant "constexpr int"
-	"&&" => Reduce #1 expression call constant "constexpr int"
-	"||" => Reduce #1 expression call constant "constexpr int"
-	'|' => Reduce #1 expression call constant "constexpr int"
-	"<<" => Reduce #1 expression call constant "constexpr int"
-	">>" => Reduce #1 expression call constant "constexpr int"
-	"==" => Reduce #1 expression call constant "constexpr int"
-	"!=" => Reduce #1 expression call constant "constexpr int"
-	">=" => Reduce #1 expression call constant "constexpr int"
-	"<=" => Reduce #1 expression call constant "constexpr int"
-	'>' => Reduce #1 expression call constant "constexpr int"
-	'<' => Reduce #1 expression call constant "constexpr int"
-	"+=" => Reduce #1 expression call constant "constexpr int"
-	"-=" => Reduce #1 expression call constant "constexpr int"
-	"*=" => Reduce #1 expression call constant "constexpr int"
-	"/=" => Reduce #1 expression call constant "constexpr int"
-	"^=" => Reduce #1 expression call constant "constexpr int"
-	"&=" => Reduce #1 expression call constant "constexpr int"
-	"%=" => Reduce #1 expression call constant "constexpr int"
-	"&&=" => Reduce #1 expression call constant "constexpr int"
-	"||=" => Reduce #1 expression call constant "constexpr int"
-	"|=" => Reduce #1 expression call constant "constexpr int"
-	"<<=" => Reduce #1 expression call constant "constexpr int"
-	">>=" => Reduce #1 expression call constant "constexpr int"
-	'.' => Reduce #1 expression call constant "constexpr int"
-[XX]
 	'(' => Reduce #1 expression call constant "constexpr float"
 	')' => Reduce #1 expression call constant "constexpr float"
 	';' => Reduce #1 expression call constant "constexpr float"
@@ -20014,7 +19843,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20033,7 +19861,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20052,7 +19879,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
 	'(' => Shift goto XX
@@ -20088,7 +19914,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20107,7 +19932,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20126,7 +19950,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20145,7 +19968,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20164,7 +19986,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20189,7 +20010,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	';' => Shift goto XX
@@ -20209,7 +20029,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20228,7 +20047,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20362,7 +20180,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20385,7 +20202,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #4 functiondefinition call procdef
 	SQSTRING => Reduce #4 functiondefinition call procdef
 	UINTEGER => Reduce #4 functiondefinition call procdef
-	SINTEGER => Reduce #4 functiondefinition call procdef
 	FLOAT => Reduce #4 functiondefinition call procdef
 	"function" => Reduce #4 functiondefinition call procdef
 	'(' => Reduce #4 functiondefinition call procdef
@@ -20771,7 +20587,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #2 statement call definition 1
 	SQSTRING => Reduce #2 statement call definition 1
 	UINTEGER => Reduce #2 statement call definition 1
-	SINTEGER => Reduce #2 statement call definition 1
 	FLOAT => Reduce #2 statement call definition 1
 	"function" => Reduce #2 statement call definition 1
 	'(' => Reduce #2 statement call definition 1
@@ -20808,7 +20623,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #3 codeblock call codeblock
 	SQSTRING => Reduce #3 codeblock call codeblock
 	UINTEGER => Reduce #3 codeblock call codeblock
-	SINTEGER => Reduce #3 codeblock call codeblock
 	FLOAT => Reduce #3 codeblock call codeblock
 	"function" => Reduce #3 codeblock call codeblock
 	'(' => Reduce #3 codeblock call codeblock
@@ -20854,7 +20668,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #2 statement call trycatch
 	SQSTRING => Reduce #2 statement call trycatch
 	UINTEGER => Reduce #2 statement call trycatch
-	SINTEGER => Reduce #2 statement call trycatch
 	FLOAT => Reduce #2 statement call trycatch
 	"function" => Reduce #2 statement call trycatch
 	'(' => Reduce #2 statement call trycatch
@@ -20896,7 +20709,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	')' => Shift goto XX
@@ -20917,7 +20729,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #2 statement call free_expression
 	SQSTRING => Reduce #2 statement call free_expression
 	UINTEGER => Reduce #2 statement call free_expression
-	SINTEGER => Reduce #2 statement call free_expression
 	FLOAT => Reduce #2 statement call free_expression
 	"function" => Reduce #2 statement call free_expression
 	'(' => Reduce #2 statement call free_expression
@@ -20953,7 +20764,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20972,7 +20782,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -20991,7 +20800,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21013,7 +20821,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21032,7 +20839,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21051,7 +20857,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21070,7 +20875,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21089,7 +20893,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21108,7 +20911,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21127,7 +20929,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21146,7 +20947,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21165,7 +20965,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21184,7 +20983,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21203,7 +21001,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21222,7 +21019,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21241,7 +21037,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21260,7 +21055,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21279,7 +21073,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21298,7 +21091,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21317,7 +21109,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21336,7 +21127,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21355,7 +21145,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21374,7 +21163,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21393,7 +21181,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21412,7 +21199,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21431,7 +21217,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21450,7 +21235,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21469,7 +21253,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21488,7 +21271,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21507,7 +21289,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21526,7 +21307,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21545,7 +21325,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -21973,7 +21752,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #2 statement call return_void
 	SQSTRING => Reduce #2 statement call return_void
 	UINTEGER => Reduce #2 statement call return_void
-	SINTEGER => Reduce #2 statement call return_void
 	FLOAT => Reduce #2 statement call return_void
 	"function" => Reduce #2 statement call return_void
 	'(' => Reduce #2 statement call return_void
@@ -22084,7 +21862,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -22103,7 +21880,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -22122,7 +21898,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -22190,7 +21965,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 functiondefinition call funcdef
 	SQSTRING => Reduce #5 functiondefinition call funcdef
 	UINTEGER => Reduce #5 functiondefinition call funcdef
-	SINTEGER => Reduce #5 functiondefinition call funcdef
 	FLOAT => Reduce #5 functiondefinition call funcdef
 	"function" => Reduce #5 functiondefinition call funcdef
 	'(' => Reduce #5 functiondefinition call funcdef
@@ -22244,7 +22018,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 classdefinition call classdef
 	SQSTRING => Reduce #5 classdefinition call classdef
 	UINTEGER => Reduce #5 classdefinition call classdef
-	SINTEGER => Reduce #5 classdefinition call classdef
 	FLOAT => Reduce #5 classdefinition call classdef
 	"function" => Reduce #5 classdefinition call classdef
 	'(' => Reduce #5 classdefinition call classdef
@@ -22392,7 +22165,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 structdefinition call structdef
 	SQSTRING => Reduce #5 structdefinition call structdef
 	UINTEGER => Reduce #5 structdefinition call structdef
-	SINTEGER => Reduce #5 structdefinition call structdef
 	FLOAT => Reduce #5 structdefinition call structdef
 	"function" => Reduce #5 structdefinition call structdef
 	'(' => Reduce #5 structdefinition call structdef
@@ -24114,7 +23886,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -24175,7 +23946,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #3 statement call definition 1
 	SQSTRING => Reduce #3 statement call definition 1
 	UINTEGER => Reduce #3 statement call definition 1
-	SINTEGER => Reduce #3 statement call definition 1
 	FLOAT => Reduce #3 statement call definition 1
 	"function" => Reduce #3 statement call definition 1
 	'(' => Reduce #3 statement call definition 1
@@ -24212,7 +23982,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #3 statement call return_value
 	SQSTRING => Reduce #3 statement call return_value
 	UINTEGER => Reduce #3 statement call return_value
-	SINTEGER => Reduce #3 statement call return_value
 	FLOAT => Reduce #3 statement call return_value
 	"function" => Reduce #3 statement call return_value
 	'(' => Reduce #3 statement call return_value
@@ -24249,7 +24018,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #3 statement call throw_exception
 	SQSTRING => Reduce #3 statement call throw_exception
 	UINTEGER => Reduce #3 statement call throw_exception
-	SINTEGER => Reduce #3 statement call throw_exception
 	FLOAT => Reduce #3 statement call throw_exception
 	"function" => Reduce #3 statement call throw_exception
 	'(' => Reduce #3 statement call throw_exception
@@ -24285,7 +24053,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -24305,7 +24072,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #3 statement call delete
 	SQSTRING => Reduce #3 statement call delete
 	UINTEGER => Reduce #3 statement call delete
-	SINTEGER => Reduce #3 statement call delete
 	FLOAT => Reduce #3 statement call delete
 	"function" => Reduce #3 statement call delete
 	'(' => Reduce #3 statement call delete
@@ -24452,7 +24218,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -24471,7 +24236,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -24588,7 +24352,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #3 catchblock call catchblock
 	SQSTRING => Reduce #3 catchblock call catchblock
 	UINTEGER => Reduce #3 catchblock call catchblock
-	SINTEGER => Reduce #3 catchblock call catchblock
 	FLOAT => Reduce #3 catchblock call catchblock
 	"function" => Reduce #3 catchblock call catchblock
 	'(' => Reduce #3 catchblock call catchblock
@@ -24873,7 +24636,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #7 classdefinition call classdef
 	SQSTRING => Reduce #7 classdefinition call classdef
 	UINTEGER => Reduce #7 classdefinition call classdef
-	SINTEGER => Reduce #7 classdefinition call classdef
 	FLOAT => Reduce #7 classdefinition call classdef
 	"function" => Reduce #7 classdefinition call classdef
 	'(' => Reduce #7 classdefinition call classdef
@@ -25014,7 +24776,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 statement call throw_exception
 	SQSTRING => Reduce #5 statement call throw_exception
 	UINTEGER => Reduce #5 statement call throw_exception
-	SINTEGER => Reduce #5 statement call throw_exception
 	FLOAT => Reduce #5 statement call throw_exception
 	"function" => Reduce #5 statement call throw_exception
 	'(' => Reduce #5 statement call throw_exception
@@ -25051,7 +24812,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 statement call conditional_if
 	SQSTRING => Reduce #5 statement call conditional_if
 	UINTEGER => Reduce #5 statement call conditional_if
-	SINTEGER => Reduce #5 statement call conditional_if
 	FLOAT => Reduce #5 statement call conditional_if
 	"function" => Reduce #5 statement call conditional_if
 	'(' => Reduce #5 statement call conditional_if
@@ -25090,7 +24850,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 statement call conditional_while
 	SQSTRING => Reduce #5 statement call conditional_while
 	UINTEGER => Reduce #5 statement call conditional_while
-	SINTEGER => Reduce #5 statement call conditional_while
 	FLOAT => Reduce #5 statement call conditional_while
 	"function" => Reduce #5 statement call conditional_while
 	'(' => Reduce #5 statement call conditional_while
@@ -25127,7 +24886,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 statement call with_do
 	SQSTRING => Reduce #5 statement call with_do
 	UINTEGER => Reduce #5 statement call with_do
-	SINTEGER => Reduce #5 statement call with_do
 	FLOAT => Reduce #5 statement call with_do
 	"function" => Reduce #5 statement call with_do
 	'(' => Reduce #5 statement call with_do
@@ -25164,7 +24922,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 statement call with_do
 	SQSTRING => Reduce #5 statement call with_do
 	UINTEGER => Reduce #5 statement call with_do
-	SINTEGER => Reduce #5 statement call with_do
 	FLOAT => Reduce #5 statement call with_do
 	"function" => Reduce #5 statement call with_do
 	'(' => Reduce #5 statement call with_do
@@ -25200,7 +24957,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
 	'(' => Shift goto XX
@@ -25268,7 +25024,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #8 functiondefinition call generic_procdef
 	SQSTRING => Reduce #8 functiondefinition call generic_procdef
 	UINTEGER => Reduce #8 functiondefinition call generic_procdef
-	SINTEGER => Reduce #8 functiondefinition call generic_procdef
 	FLOAT => Reduce #8 functiondefinition call generic_procdef
 	"function" => Reduce #8 functiondefinition call generic_procdef
 	'(' => Reduce #8 functiondefinition call generic_procdef
@@ -25369,7 +25124,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 catchblock call catchblock
 	SQSTRING => Reduce #5 catchblock call catchblock
 	UINTEGER => Reduce #5 catchblock call catchblock
-	SINTEGER => Reduce #5 catchblock call catchblock
 	FLOAT => Reduce #5 catchblock call catchblock
 	"function" => Reduce #5 catchblock call catchblock
 	'(' => Reduce #5 catchblock call catchblock
@@ -25406,7 +25160,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #6 statement call conditional_if
 	SQSTRING => Reduce #6 statement call conditional_if
 	UINTEGER => Reduce #6 statement call conditional_if
-	SINTEGER => Reduce #6 statement call conditional_if
 	FLOAT => Reduce #6 statement call conditional_if
 	"function" => Reduce #6 statement call conditional_if
 	'(' => Reduce #6 statement call conditional_if
@@ -25449,7 +25202,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #9 functiondefinition call generic_funcdef
 	SQSTRING => Reduce #9 functiondefinition call generic_funcdef
 	UINTEGER => Reduce #9 functiondefinition call generic_funcdef
-	SINTEGER => Reduce #9 functiondefinition call generic_funcdef
 	FLOAT => Reduce #9 functiondefinition call generic_funcdef
 	"function" => Reduce #9 functiondefinition call generic_funcdef
 	'(' => Reduce #9 functiondefinition call generic_funcdef
@@ -25494,7 +25246,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #9 classdefinition call generic_classdef
 	SQSTRING => Reduce #9 classdefinition call generic_classdef
 	UINTEGER => Reduce #9 classdefinition call generic_classdef
-	SINTEGER => Reduce #9 classdefinition call generic_classdef
 	FLOAT => Reduce #9 classdefinition call generic_classdef
 	"function" => Reduce #9 classdefinition call generic_classdef
 	'(' => Reduce #9 classdefinition call generic_classdef
@@ -25560,7 +25311,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #9 structdefinition call generic_structdef
 	SQSTRING => Reduce #9 structdefinition call generic_structdef
 	UINTEGER => Reduce #9 structdefinition call generic_structdef
-	SINTEGER => Reduce #9 structdefinition call generic_structdef
 	FLOAT => Reduce #9 structdefinition call generic_structdef
 	"function" => Reduce #9 structdefinition call generic_structdef
 	'(' => Reduce #9 structdefinition call generic_structdef
@@ -25633,7 +25383,6 @@ expressionlist/L0 = expression
 	DQSTRING => Shift goto XX
 	SQSTRING => Shift goto XX
 	UINTEGER => Shift goto XX
-	SINTEGER => Shift goto XX
 	FLOAT => Shift goto XX
 	'(' => Shift goto XX
 	'&' => Shift goto XX
@@ -25653,7 +25402,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #2 elseblock call conditional_else
 	SQSTRING => Reduce #2 elseblock call conditional_else
 	UINTEGER => Reduce #2 elseblock call conditional_else
-	SINTEGER => Reduce #2 elseblock call conditional_else
 	FLOAT => Reduce #2 elseblock call conditional_else
 	"function" => Reduce #2 elseblock call conditional_else
 	'(' => Reduce #2 elseblock call conditional_else
@@ -25690,7 +25438,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #7 callablebody call callablebody
 	SQSTRING => Reduce #7 callablebody call callablebody
 	UINTEGER => Reduce #7 callablebody call callablebody
-	SINTEGER => Reduce #7 callablebody call callablebody
 	FLOAT => Reduce #7 callablebody call callablebody
 	"function" => Reduce #7 callablebody call callablebody
 	'(' => Reduce #7 callablebody call callablebody
@@ -25790,7 +25537,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #11 classdefinition call generic_classdef
 	SQSTRING => Reduce #11 classdefinition call generic_classdef
 	UINTEGER => Reduce #11 classdefinition call generic_classdef
-	SINTEGER => Reduce #11 classdefinition call generic_classdef
 	FLOAT => Reduce #11 classdefinition call generic_classdef
 	"function" => Reduce #11 classdefinition call generic_classdef
 	'(' => Reduce #11 classdefinition call generic_classdef
@@ -25849,7 +25595,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #5 elseblock call conditional_elseif
 	SQSTRING => Reduce #5 elseblock call conditional_elseif
 	UINTEGER => Reduce #5 elseblock call conditional_elseif
-	SINTEGER => Reduce #5 elseblock call conditional_elseif
 	FLOAT => Reduce #5 elseblock call conditional_elseif
 	"function" => Reduce #5 elseblock call conditional_elseif
 	'(' => Reduce #5 elseblock call conditional_elseif
@@ -25888,7 +25633,6 @@ expressionlist/L0 = expression
 	DQSTRING => Reduce #6 elseblock call conditional_elseif
 	SQSTRING => Reduce #6 elseblock call conditional_elseif
 	UINTEGER => Reduce #6 elseblock call conditional_elseif
-	SINTEGER => Reduce #6 elseblock call conditional_elseif
 	FLOAT => Reduce #6 elseblock call conditional_elseif
 	"function" => Reduce #6 elseblock call conditional_elseif
 	'(' => Reduce #6 elseblock call conditional_elseif

@@ -9,7 +9,6 @@ extern "C" function strlen long( const byte^ str);
 
 int g_allocCnt = 0;
 int g_maxAllocCnt = 0;
-long g_exceptionCode = 0;
 
 private function allocmem byte^( long bytes)
 {
@@ -29,6 +28,7 @@ private function allocmem byte^( long bytes)
 }
 private procedure freemem( byte^ ptr) nothrow
 {
+	printf( "Free mem: [%s]\n", ptr);
 	free( ptr);
 }
 
@@ -54,7 +54,10 @@ class String
 	destructor
 	{
 		printf( "Destructor string [%s]\n", c_str());
-		freemem( m_ptr);
+		if (m_ptr != null)
+		{
+			freemem( m_ptr);
+		}
 	}
 	public procedure append( const byte^ cstr_, int size_)
 	{
@@ -94,34 +97,62 @@ class String
 }
 }
 
+private function getGreeting std::String()
+{
+	var std::String rt = (cast std::String: "Hello Universe") + (cast std::String: "!");
+	return rt;
+}
+
+private function getGreetingA1 std::String()
+{
+	var std::String[4] ar = {"Hello", " ", "Universe", "!"};
+	return ar[0] + ar[1] + ar[2] + ar[3];
+}
+
 private procedure test( int allocCnt) nothrow
 {
 	g_maxAllocCnt = allocCnt;
 	g_allocCnt = 0;
 	try
 	{
+		var std::String fstr = getGreeting();
+		var std::String astr = getGreetingA1();
 		var std::String str = "Hello world!";
+		/*
 		printf( "DEBUG\n");
 		var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
 		printf( "%s\n", str.c_str());
 		{
-			var std::String greeting = (cast std::String: "Hello")
+			var std::String greeting =
+				  (cast std::String: "Hello")
 				+ (cast std::String: " ")
 				+ (cast std::String: "World!");
 			printf( "GREETING %s\n", greeting.c_str());
 		}
+		*/
+		printf( "GREET1 %s GREET2 %s GREET3 %s\n", fstr.c_str(), astr.c_str(), str.c_str());
 	}
 	catch errcode, errmsg
 	{
-		printf( "ERR %ld %ld %s\n", g_exceptionCode, errcode, errmsg);
+		printf( "ERR %ld %s\n", errcode, errmsg);
 	}
 }
 
 main
 {
-	test( 100);
-	test( 1);
+	printf( "----- NO EXCEPTION\n");
+	test( 1000);
+	printf( "ALLOCS %d\n", g_allocCnt);
+
+	test( 7);
+	/*
+	var int ii = 1;
+	var int nn = g_allocCnt;
+	while (ii < nn) {
+		printf( "----- TEST %d\n", ii);
+		test( ii);
+		ii = ii + 1;
+	}
+	*/
 }
-
-
 

@@ -9,9 +9,8 @@ IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
 DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
 SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1;
 UINTEGER: '[0123456789]+';
-SINTEGER: '[-][0123456789]+';
-FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+';
-FLOAT	: '[-]{0,1}[0123456789]+[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+FLOAT	: '[0123456789]*[.][0123456789]+';
+FLOAT	: '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
 
 program		   	= extern_definitionlist free_definitionlist main_procedure			(program)
 			;
@@ -240,7 +239,6 @@ expression/L1		= "{" expressionlist "}"							(>>structure)
 expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
 			| UINTEGER									(constant "constexpr uint")
-			| SINTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
 			| "null"									(null)
 			| DQSTRING									(string_constant)

@@ -394,33 +394,60 @@ function interfaceMethodCallConstructor( descr)
 end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
-	local function initArrayElementCode( node, env, refTypeId, fmtLoadRef, this_inp, args, ai)
-		local out = env.register()
-		local code = utils.constructor_format( fmtLoadRef, {out = out, this = this_inp, index=ai-1}, env.register)
-		local res = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, out, code), ":=", args)
-		if res then return res.constructor.code end
-	end
 	return function( this, args)
 		if #args > nofElements then
 			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
 		local descr = typeDescriptionMap[ thisTypeId]
-		local descr_element = typeDescriptionMap[ elementTypeId]
 		local refTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
 		local env = getCallableEnvironment()
 		local this_inp,res_code = constructorParts( this)
-		for ai=1,#args do
-			local elem_init = initArrayElementCode( node, env, refTypeId, descr.loadelemref, this_inp, {args[ai]}, ai)
-			if not elem_init then return nil end
-			res_code = res_code .. elem_init
+		local cntreg = env.register()
+		local cleanupLabel = env.label()
+		local basereg = env.register()
+		local memberwise_start = utils.constructor_format( descr.memberwise_start, {cnt=cntreg,this=this_inp,base=basereg})
+		local code = nil
+		local init_nofThrows = 0
+		for ai,arg in ipairs(args) do
+			local elemreg = env.register()
+			local elem = {type=refTypeId,constructor={out=elemreg}}
+			local init,init_throws = tryApplyCallableWithCleanup( node, elem, ":=", {arg}, cleanupLabel)
+			if init_throws then init_nofThrows = init_nofThrows + 1 end
+			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
+			local memberwise_next
+			if init_throws then
+				memberwise_next = utils.constructor_format( descr.memberwise_next, {cnt=cntreg,base=basereg,out=elemreg}, env.register)
+			else
+				memberwise_next = utils.constructor_format( descr.memberwise_index, {index=ai-1,this=this_inp,out=elemreg}, env.register)
+			end
+			if not code then if init_throws then code = memberwise_start else code = "" end end
+			code = code .. memberwise_next .. typeConstructorPairCode(init)
 		end
 		if #args < nofElements then
-			local init = applyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
+			local descr_element = typeDescriptionMap[ elementTypeId]
+			local init,init_throws = tryApplyCallableWithCleanup( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {}, cleanupLabel)
+			if init_throws then init_nofThrows = init_nofThrows + 1 end
+			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
-						this=this_inp, ctors=init.constructor.code}
-			res_code = res_code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
+						this=this_inp, ctors=init.constructor.code, cleanup=cleanupLabel}
+			if not code then if init_throws then code = memberwise_start else code = "" end end
+			if init_throws then
+				fmtdescr.success = env.label()
+				code = code .. utils.constructor_format( descr.ctor_rest_throwing, fmtdescr, env.register)
+			else
+				code = code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
+			end
 		end
-		return constructorStruct( this_inp, res_code)
+		local entercode,rewind,constructorFunc
+		if init_nofThrows > 0 then
+			enableFeatureLandingpad( env)
+			local finishLabel = env.label()
+			local doneLabel = env.label()
+			local rewind_ctor = utils.constructor_format( descr.memberwise_cleanup, {this=this_inp,cnt=cntreg}, env.register)
+			rewind = getDefaultConstructorCleanupResumeCode( env, {{label=cleanupLabel, code=rewind_ctor}}, finishLabel)
+			code = code .. utils.template_format( llvmir.control.gotoStatement, {inp=doneLabel}) .. rewind .. utils.template_format( llvmir.control.plainLabel, {inp=doneLabel})
+		end
+		return constructorStruct( this_inp, code)
 	end
 end
 -- Constructor of an array unbound reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference array type)
@@ -550,6 +577,7 @@ function constexprLlvmConversion( typeId, constexprType)
 end
 -- Define the evaluation of expressions with only const expression arguments
 function defineConstExprArithmetics()
+	defineCall( constexprIntegerType, constexprUIntegerType, "-", {}, constexprUnaryOperatorMap["-"])
 	for constexpr_type,oprlist in pairs(constexprTypeOperatorMap) do
 		for oi,opr in ipairs(oprlist) do
 			if constexprUnaryOperatorMap[ opr] then
@@ -827,7 +855,7 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	typeQualiSepMap[ priv_reftype] = {valtype=qualitype.valtype,qualifier={reference=true,const=false,private=true}}
 	typeQualiSepMap[ priv_c_reftype] = {valtype=qualitype.valtype,qualifier={reference=true,const=true,private=true}}
 
-	typedb:def_reduction( priv_reftype, init_reftype, completeInitializationAndReturnThis, tag_typeDeduction, rdw_barrier)
+	typedb:def_reduction( priv_reftype, init_reftype, completeCtorInitializationAndReturnThis, tag_typeDeduction, rdw_barrier)
 	typedb:def_reduction( priv_c_reftype, priv_reftype, nil, tag_typeDeduction, rdw_strip_c_3)
 	typedb:def_reduction( qualitype.reftype, priv_reftype, nil, tag_typeDeduction, rdw_strip_v_2)
 	typedb:def_reduction( qualitype.c_reftype, priv_c_reftype, nil, tag_typeDeduction, rdw_strip_v_3)
@@ -874,15 +902,15 @@ function getAssignmentsFromConstructors( node, qualitype, descr)
 	end
 	typedb:scope( scope_bk,step_bk)
 end
--- Get the invoke landingpad resume code of a default constructor
-function getDefaultConstructorCleanupResumeCode( env, codelist)
+-- Get the landingpad resume code of a constructor with a fixed list of defined cleanup functions
+function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 	local partial_dtor = ""
 	for ci=#codelist,1,-1 do 
 		local label = codelist[ ci].label
 		local code = codelist[ ci].code
 		local dtor_label = label .. "_dtor"
 		local dtor_next = nil; local ni=ci; while ni > 1 do ni = ni-1; cd = codelist[ni].code; if cd and cd ~= "" then dtor_next = codelist[ ni].label .. "_dtor"; break end end
-		if not dtor_next then dtor_next = "finish" end
+		if not dtor_next then dtor_next = finishLabel end
 		if code then
 			partial_dtor = partial_dtor
 				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label,cleanup=dtor_label}, env.register)
@@ -894,9 +922,9 @@ function getDefaultConstructorCleanupResumeCode( env, codelist)
 		end
 	end
 	partial_dtor = partial_dtor
-				.. utils.constructor_format( llvmir.control.plainLabel, {inp="finish"}, env.register)
+				.. utils.constructor_format( llvmir.control.plainLabel, {inp=finishLabel}, env.register)
 				.. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
-	return llvmir.exception.allocLandingpad,partial_dtor
+	return partial_dtor
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
@@ -909,16 +937,17 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	local oth = {type=cr_elementTypeId, constructor={out="%oth"}}
 	local init,init_throws = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
 	local copy,copy_throws = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
-	local destroy = tryApplyCallable( node, ths, ":~", {} )
+	local dtor_code = typeConstructorPairCode( tryApplyCallable( node, ths, ":~", {})) or ""
 	if init then
 		local attributes = llvmir.functionAttribute( false, init_throws)
 		local entercode,rewind,constructorFunc
 		if init_throws == true then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}})
+			entercode = llvmir.exception.allocLandingpad
+			rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_init_throwing)
 		else
 			entercode,rewind = "",""
-			constructorFunc = callConstructor( arrayDescr.ctor_init)
+			constructorFunc = callConstructor( arrayDescr.ctor_init, false)
 		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_init, {ctors=init.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
 		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
@@ -928,8 +957,9 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	if copy then
 		local attributes = llvmir.functionAttribute( false, copy_throws)
 		local entercode,rewind,constructorFunc
-		if copy_throws == true then 
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}})
+		if copy_throws == true then
+			entercode = llvmir.exception.allocLandingpad
+			rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_copy_throwing)
 		else
 			entercode,rewind = "",""
@@ -940,7 +970,6 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, constructorFunc)
 		if copy_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
-	local dtor_code; if destroy then dtor_code = destroy.constructor.code else dtor_code = "" end
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( arrayDescr.dtor))
 
@@ -1006,7 +1035,7 @@ end
 function defineStructConstructors( node, qualitype, descr)
 	instantCallableEnvironment = createCallableEnvironment( "ctor " .. descr.symbol)
 	local env = instantCallableEnvironment
-	local ctors,ctors_copy,ctors_elements = "","",""
+	local ctors_init,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
 	local cleanupLabel = "cleanup_0"
 	local rewindlist = {{label=cleanupLabel}}
@@ -1040,21 +1069,22 @@ function defineStructConstructors( node, qualitype, descr)
 
 		cleanupLabel = "cleanup_" .. mi
 		if member_destroy_code ~= "" and mi ~= #descr.members then table.insert( rewindlist,{label=cleanupLabel, code=member_destroy_code}) end
-		if member_init and ctors then ctors = ctors .. member_init.constructor.code else ctors = nil end
+		if member_init and ctors_init then ctors_init = ctors_init .. member_init.constructor.code else ctors_init = nil end
 		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end 
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
 	end
-	if ctors then
+	if ctors_init then
 		local attributes = llvmir.functionAttribute( false, init_nofThrows > 0)
 		local entercode,rewind,constructorFunc
 		if init_nofThrows > 0 then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist)
+			entercode = llvmir.exception.allocLandingpad
+			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( descr.ctor_init_throwing)
 		else
 			entercode,rewind = "",""
 			constructorFunc = callConstructor( descr.ctor_init)
 		end
-		print_section( "Auto", utils.template_format( descr.ctorproc_init, {ctors=ctors, rewind=rewind, entercode=entercode, attributes=attributes}))
+		print_section( "Auto", utils.template_format( descr.ctorproc_init, {ctors=ctors_init, rewind=rewind, entercode=entercode, attributes=attributes}))
 		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
 		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, constructorFunc)
 		if init_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
@@ -1063,7 +1093,8 @@ function defineStructConstructors( node, qualitype, descr)
 		local attributes = llvmir.functionAttribute( false, copy_nofThrows > 0)
 		local entercode,rewind,constructorFunc
 		if copy_nofThrows > 0 then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist)
+			entercode = llvmir.exception.allocLandingpad
+			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( descr.ctor_copy_throwing)
 		else
 			entercode,rewind = "",""
@@ -1078,7 +1109,8 @@ function defineStructConstructors( node, qualitype, descr)
 		local attributes = llvmir.functionAttribute( false, element_nofThrows > 0)
 		local entercode,rewind,constructorFunc
 		if element_nofThrows > 0 then
-			entercode,rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist)
+			entercode = llvmir.exception.allocLandingpad
+			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( utils.template_format( descr.ctor_elements_throwing, {args=argstr}))
 			
 		else
@@ -1525,7 +1557,7 @@ function getAllocationFrameRegularExitCleanupCode( frame)
 	if #frame.dtors > 0 then
 		local label = frame.env.label()
 		code = code .. utils.constructor_format( llvmir.control.label, {inp=label})
-		for di=#frame.dtors,1,-1 do code = utils.constructor_format( llvmir.control.label, {inp=label}) .. frame.dtors[ di].code end
+		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[ di].code end
 	end
 	return code
 end
@@ -1589,12 +1621,18 @@ function getImplicitInitCode( node, env, initstate, initstateTo)
 	end
 	return rt
 end
--- Constructor that returns the input with implicit completion of the initialization of the class in a constructor. Used to ensure that a class initialization in a constructor is complete before any method is called or any member is read.
-function completeInitializationAndReturnThis( this)
+-- Code needed for completion of the initialization of a class in its constructor
+function completeCtorInitializationCode( nofollow)
 	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
-	local initcode = getImplicitInitCode( {line=env.line}, env, frame.initstate, #env.initcontext.members)
-	this.code = (this.code or "") .. initcode
+	if nofollow and frame.initstate ~= #env.initcontext.members then utils.errorMessage( node, "Internal: Can't complete initialization") end
+	local rt = getImplicitInitCode( {line=env.line}, env, frame.initstate, #env.initcontext.members)
+	frame.initstate = #env.initcontext.members
+	return rt
+end
+-- Constructor that returns the input with implicit completion of the initialization of the class in a constructor. Used to ensure that a class initialization in a constructor is complete before any method is called or any member is read.
+function completeCtorInitializationAndReturnThis( this)
+	this.code = (this.code or "") .. completeCtorInitializationCode( this.nofollow)
 	return this
 end
 -- Implicitly declared variable that does not appear as definition in source, for example the 'self' reference in a method body
@@ -1642,9 +1680,11 @@ function defineVariable( node, context, typeId, name, initVal)
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		local decl = {type=var, constructor={code=code,out=out}}
 		local init = applyCallable( node, decl, ":=", {initVal})
-		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step else step = nil end
-		if cleanup then setCleanupCode( "local variable " .. name, cleanup, step) end
+		if out ~= "%rt" then -- no copy elision
+			local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
+			local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step else step = nil end
+			if cleanup then setCleanupCode( "local variable " .. name, cleanup, step) end
+		end
 		return init
 	elseif context.domain == "global" then
 		instantCallableEnvironment = globalCallableEnvironment
@@ -1695,7 +1735,7 @@ function defineConstructorInitAssignments( refType, initType, name, index, load_
 		defineCall( loadType, loadType, "=", params, loggedConstructor)
 		if #params == 0 then defineCall( loadType, loadType, ":=", {}, constructor) end -- declare default constructor
 	end
-	typedb:def_reduction( refType, loadType, completeInitializationAndReturnThis, tag_typeDeduction, rdw_barrier) -- define phase change to completed initialization if used otherwise
+	typedb:def_reduction( refType, loadType, completeCtorInitializationAndReturnThis, tag_typeDeduction, rdw_barrier) -- define phase change to completed initialization if used otherwise
 end
 -- Define a member variable of a class or a structure
 function defineVariableMember( node, descr, context, typeId, name, private)
@@ -2908,7 +2948,9 @@ function typesystem.catchblock( node, context, catchlabel)
 	local code = utils.constructor_format( llvmir.exception.loadExceptionErrCode, {out=errcode_constructor.out}, env.register)
 			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {out=errmsg_constructor.out}, env.register)
 	local cleanup = utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out})
+	local scope_bk = typedb:scope( node.arg[ #node.arg].scope)
 	setCleanupCode( "exception message", cleanup)
+	typedb:scope( scope_bk)
 	local rt = utils.traverseRange( typedb, node, {#node.arg,#node.arg}, context)[#node.arg]
 	rt.code = code .. rt.code 
 	return rt
@@ -3035,7 +3077,9 @@ function typesystem.return_void( node)
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
 	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
-	return {code = doReturnVoidStatement(), nofollow=true}
+	local code = ""
+	if env.initstate then code = code .. completeCtorInitializationCode( false) end
+	return {code = code .. doReturnVoidStatement(), nofollow=true}
 end
 function typesystem.conditional_else( node, context, exitLabel)
 	return utils.traverse( typedb, node, context)[1]
@@ -3314,16 +3358,18 @@ function typesystem.callablebody( node, context, descr, selectid)
 		defineCallableBodyContext( node, context, descr)
 		rt = utils.traverseRange( typedb, node, {1,1}, subcontext)[1]
 	elseif selectid == 2 then -- statements in body
-		descr.env = getCallableEnvironment()
+		local env = getCallableEnvironment()
+		descr.env = env
 		local args = utils.traverseRange( typedb, node, {3,#node.arg,1}, subcontext)
 		local block = collectCode( node, args)
 		local code = block.code
 		if descr.ret then
 			if not block.nofollow then utils.errorMessage( node.line, "Missing return value") end
 		else
+			if env.initstate then code = code .. completeCtorInitializationCode( block.nofollow) end
 			if not block.nofollow then code = code .. doReturnVoidStatement() end
 		end
-		rt = getCallableEnvironmentCodeBlock( descr.env, code)
+		rt = getCallableEnvironmentCodeBlock( env, code)
 	end
 	return rt
 end

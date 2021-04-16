@@ -106,7 +106,8 @@ do
 			lli build/language1.compiler.$tst.llr > build/language1.run.$tst.out
 		verify_test_result "Lua test ($tst run) interprete program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
 		echo "Build object file build/language1.compiler.$tst.o"
-		llc -filetype=obj build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.o
+		llc -O=3 -filetype=obj build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.o
+		llc -O=3 -filetype=asm build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.asm
 		echo "Build executable file build/language1.compiler.$tst"
 		clang -lm -lstdc++ -o build/language1.compiler.$tst build/language1.compiler.$tst.o
 		echo "Run executable file build/language1.compiler.$tst"

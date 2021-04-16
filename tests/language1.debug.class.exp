@@ -836,8 +836,10 @@ Shift token '.' at line 92 in state XXX, goto XXX
 Shift token IDENT = "ofs_x" at line 92 in state XXX, goto XXX
 Reduce #3 to expression by token '(' at line 92 in state XXX, call member, goto XXX
 Shift token '(' at line 92 in state XXX, goto XXX
-Shift token SINTEGER = "-13" at line 92 in state XXX, goto XXX
-Reduce #1 to expression by token ')' at line 92 in state XXX, call constant "constexpr int", goto XXX
+Shift token '-' at line 92 in state XXX, goto XXX
+Shift token UINTEGER = "13" at line 92 in state XXX, goto XXX
+Reduce #1 to expression by token ')' at line 92 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #2 to expression by token ')' at line 92 in state XXX, call unop "-", goto XXX
 Reduce #1 to expressionlist by token ')' at line 92 in state XXX, goto XXX
 Shift token ')' at line 92 in state XXX, goto XXX
 Reduce #4 to expression by token ')' at line 92 in state XXX, call operator "()", goto XXX
@@ -911,8 +913,10 @@ Shift token '.' at line 96 in state XXX, goto XXX
 Shift token IDENT = "ofs_x" at line 96 in state XXX, goto XXX
 Reduce #3 to expression by token '(' at line 96 in state XXX, call member, goto XXX
 Shift token '(' at line 96 in state XXX, goto XXX
-Shift token SINTEGER = "-11" at line 96 in state XXX, goto XXX
-Reduce #1 to expression by token ')' at line 96 in state XXX, call constant "constexpr int", goto XXX
+Shift token '-' at line 96 in state XXX, goto XXX
+Shift token UINTEGER = "11" at line 96 in state XXX, goto XXX
+Reduce #1 to expression by token ')' at line 96 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #2 to expression by token ')' at line 96 in state XXX, call unop "-", goto XXX
 Reduce #1 to expressionlist by token ')' at line 96 in state XXX, goto XXX
 Shift token ')' at line 96 in state XXX, goto XXX
 Reduce #4 to expression by token ')' at line 96 in state XXX, call operator "()", goto XXX
@@ -4021,32 +4025,40 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {
+                                {
+                                  line = 92,
+                                  name = "UINTEGER",
+                                  value = "13"}},
+                              call = {
+                                name = "constant constexpr uint",
+                                obj = "constexpr uint",
+                                proc = <function>},
                               line = 92,
-                              name = "SINTEGER",
-                              value = "-13"}},
+                              step = 59}},
                           call = {
-                            name = "constant constexpr int",
-                            obj = "constexpr int",
+                            name = "unop -",
+                            obj = "-",
                             proc = <function>},
                           line = 92,
-                          step = 59}},
+                          step = 60}},
                       call = {
                         name = "operator ()",
                         obj = "()",
                         proc = <function>},
                       line = 92,
-                      step = 60}},
+                      step = 61}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
                   line = 92,
-                  step = 61}},
+                  step = 62}},
               call = {
                 name = "free_expression",
                 proc = <function>},
               line = 92,
-              step = 61},
+              step = 62},
             {
               arg = {
                 {
@@ -4061,7 +4073,7 @@ Lua call result [1]
                         name = "variable",
                         proc = <function>},
                       line = 93,
-                      step = 61},
+                      step = 62},
                     {
                       arg = {
                         {
@@ -4072,7 +4084,7 @@ Lua call result [1]
                         name = "string_constant",
                         proc = <function>},
                       line = 93,
-                      step = 61},
+                      step = 62},
                     {
                       arg = {
                         {
@@ -4087,7 +4099,7 @@ Lua call result [1]
                                 name = "variable",
                                 proc = <function>},
                               line = 93,
-                              step = 61},
+                              step = 62},
                             {
                               line = 93,
                               name = "IDENT",
@@ -4096,7 +4108,7 @@ Lua call result [1]
                             name = "member",
                             proc = <function>},
                           line = 93,
-                          step = 61},
+                          step = 62},
                         {
                           arg = {
                             {
@@ -4108,24 +4120,24 @@ Lua call result [1]
                             obj = "constexpr uint",
                             proc = <function>},
                           line = 93,
-                          step = 61}},
+                          step = 62}},
                       call = {
                         name = "operator ()",
                         obj = "()",
                         proc = <function>},
                       line = 93,
-                      step = 62}},
+                      step = 63}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
                   line = 93,
-                  step = 63}},
+                  step = 64}},
               call = {
                 name = "free_expression",
                 proc = <function>},
               line = 93,
-              step = 63},
+              step = 64},
             {
               arg = {
                 {
@@ -4144,12 +4156,12 @@ Lua call result [1]
                               const = false},
                             proc = <function>},
                           line = 94,
-                          step = 63}},
+                          step = 64}},
                       call = {
                         name = "typespec",
                         proc = <function>},
                       line = 94,
-                      step = 63},
+                      step = 64},
                     {
                       line = 94,
                       name = "IDENT",
@@ -4164,18 +4176,18 @@ Lua call result [1]
                         name = "variable",
                         proc = <function>},
                       line = 94,
-                      step = 63}},
+                      step = 64}},
                   call = {
                     name = "vardef_assign",
                     proc = <function>},
                   line = 94,
-                  step = 64}},
+                  step = 65}},
               call = {
                 name = "definition 1",
                 obj = 1,
                 proc = <function>},
               line = 94,
-              step = 65},
+              step = 66},
             {
               arg = {
                 {
@@ -4190,7 +4202,7 @@ Lua call result [1]
                         name = "variable",
                         proc = <function>},
                       line = 95,
-                      step = 65},
+                      step = 66},
                     {
                       arg = {
                         {
@@ -4204,7 +4216,7 @@ Lua call result [1]
                             obj = "constexpr uint",
                             proc = <function>},
                           line = 95,
-                          step = 65},
+                          step = 66},
                         {
                           arg = {
                             {
@@ -4216,23 +4228,23 @@ Lua call result [1]
                             obj = "constexpr uint",
                             proc = <function>},
                           line = 95,
-                          step = 65}},
+                          step = 66}},
                       call = {
                         name = "structure",
                         proc = <function>},
                       line = 95,
-                      step = 66}},
+                      step = 67}},
                   call = {
                     name = "binop =",
                     obj = "=",
                     proc = <function>},
                   line = 95,
-                  step = 67}},
+                  step = 68}},
               call = {
                 name = "free_expression",
                 proc = <function>},
               line = 95,
-              step = 67},
+              step = 68},
             {
               arg = {
                 {
@@ -4247,7 +4259,7 @@ Lua call result [1]
                         name = "variable",
                         proc = <function>},
                       line = 96,
-                      step = 67},
+                      step = 68},
                     {
                       arg = {
                         {
@@ -4258,7 +4270,7 @@ Lua call result [1]
                         name = "string_constant",
                         proc = <function>},
                       line = 96,
-                      step = 67},
+                      step = 68},
                     {
                       arg = {
                         {
@@ -4273,7 +4285,7 @@ Lua call result [1]
                                 name = "variable",
                                 proc = <function>},
                               line = 96,
-                              step = 67},
+                              step = 68},
                             {
                               line = 96,
                               name = "IDENT",
@@ -4282,36 +4294,44 @@ Lua call result [1]
                             name = "member",
                             proc = <function>},
                           line = 96,
-                          step = 67},
+                          step = 68},
                         {
                           arg = {
                             {
+                              arg = {
+                                {
+                                  line = 96,
+                                  name = "UINTEGER",
+                                  value = "11"}},
+                              call = {
+                                name = "constant constexpr uint",
+                                obj = "constexpr uint",
+                                proc = <function>},
                               line = 96,
-                              name = "SINTEGER",
-                              value = "-11"}},
+                              step = 68}},
                           call = {
-                            name = "constant constexpr int",
-                            obj = "constexpr int",
+                            name = "unop -",
+                            obj = "-",
                             proc = <function>},
                           line = 96,
-                          step = 67}},
+                          step = 69}},
                       call = {
                         name = "operator ()",
                         obj = "()",
                         proc = <function>},
                       line = 96,
-                      step = 68}},
+                      step = 70}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
                   line = 96,
-                  step = 69}},
+                  step = 71}},
               call = {
                 name = "free_expression",
                 proc = <function>},
               line = 96,
-              step = 69},
+              step = 71},
             {
               arg = {
                 {
@@ -4326,7 +4346,7 @@ Lua call result [1]
                         name = "variable",
                         proc = <function>},
                       line = 97,
-                      step = 69},
+                      step = 71},
                     {
                       arg = {
                         {
@@ -4337,7 +4357,7 @@ Lua call result [1]
                         name = "string_constant",
                         proc = <function>},
                       line = 97,
-                      step = 69},
+                      step = 71},
                     {
                       arg = {
                         {
@@ -4352,7 +4372,7 @@ Lua call result [1]
                                 name = "variable",
                                 proc = <function>},
                               line = 97,
-                              step = 69},
+                              step = 71},
                             {
                               line = 97,
                               name = "IDENT",
@@ -4361,24 +4381,24 @@ Lua call result [1]
                             name = "member",
                             proc = <function>},
                           line = 97,
-                          step = 69}},
+                          step = 71}},
                       call = {
                         name = "operator ()",
                         obj = "()",
                         proc = <function>},
                       line = 97,
-                      step = 70}},
+                      step = 72}},
                   call = {
                     name = "operator ()",
                     obj = "()",
                     proc = <function>},
                   line = 97,
-                  step = 71}},
+                  step = 73}},
               call = {
                 name = "free_expression",
                 proc = <function>},
               line = 97,
-              step = 71},
+              step = 73},
             {
               arg = {
                 {
@@ -4392,26 +4412,26 @@ Lua call result [1]
                     obj = "constexpr uint",
                     proc = <function>},
                   line = 98,
-                  step = 71}},
+                  step = 73}},
               call = {
                 name = "return_value",
                 proc = <function>},
               line = 98,
-              step = 72}},
+              step = 74}},
           call = {
             name = "codeblock",
             proc = <function>},
           line = 98,
           scope = {
             36,
-            73}}},
+            75}}},
       call = {
         name = "main_procdef",
         proc = <function>},
       line = 98,
-      step = 73}},
+      step = 75}},
   call = {
     name = "program",
     proc = <function>},
   line = 98,
-  step = 73}
+  step = 75}
