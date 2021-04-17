@@ -129,6 +129,7 @@ end
 function utils.register_allocator( prefix)
 	return utils.name_allocator( prefix or "%r")
 end
+utils.doLogging = false
 -- Tree traversal:
 function processSubnode( typedb, subnode, ...)
 	local rt
@@ -139,6 +140,7 @@ function processSubnode( typedb, subnode, ...)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
 			typedb:scope( scope_bk,step_bk)
 		elseif (subnode.step) then
+			-- if subnode.step >= XX and subnode.step <= YY then utils.doLogging = true else utils.doLogging = false end -- DO COMMENT OUT IF NOT DEBUGGING
 			local step_bk = typedb:step( subnode.step)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
 			typedb:step( step_bk)
@@ -231,6 +233,25 @@ end
 -- Stacktrace:
 function utils.stack( msg, lv)
 	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), true) .. "\n")
+end
+-- Monitor global variable access (thanks to https://stackoverflow.com/users/3080396/mblanc):
+function utils.logGlobalVariableAccess()
+    -- Use local variables
+    local old_G, new_G = _G, {}
+
+    for k, v in pairs(old_G) do new_G[k] = v end
+    setmetatable(new_G, {
+        __index = function (t, key)
+            print("Read> " .. tostring(key))
+            return old_G[key]
+        end,
+        __newindex = function (t, key, val)
+            print("Write> " .. tostring(key) .. ' = ' .. tostring(val))
+            old_G[key] = val
+        end,
+    })
+    -- Set it at level 1 (top-level function)
+    setfenv( 1, new_G)
 end
 -- Error reporting:
 -- Exit with error message and line info

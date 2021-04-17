@@ -1391,17 +1391,18 @@ function binsearchLowerboundFrameDtors( dtors, step)
 	return idx
 end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
-function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
+function getAllocationFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	local dtoridx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
 	local parent; if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then parent = frame.parent end
-	if dtoridx == 0 and parent then return getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel) end
+	if dtoridx == 0 and parent then return getAllocationFrameCleanupLabel( parent, exitkey, exitcode, exitlabel) end
 	local exit = frame.exitmap[ exitkey]
 	local env = frame.env
 	if not exit then
 		local labels = {}
 		for _,dtor in ipairs(frame.dtors) do labels[ dtor.step] = {label=env.label(),used=false} end
 		if parent then
-			exit = {endlabel=env.label(), labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=getFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)})}
+			local parent_cleanup = getAllocationFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)
+			exit = {endlabel=env.label(), labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=parent_cleanup})}
 		else
 			if exitlabel then exitcode = (exitcode or "") .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
 			if not exitcode then utils.errorMessage( env.line, "Internal: Frame cleanup without label or code defined") end
@@ -1419,7 +1420,7 @@ function getFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 	end
 end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
-	return getFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
+	return getAllocationFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
 end
 -- Get the code of a jump to the start of a cleanup chain with an ending 'ret llvmtype value' statement
 function doReturnTypeStatement( typeId, constructor)
@@ -1459,7 +1460,7 @@ function initTryBlock( catchlabel)
 	local frame = getOrCreateThisAllocationFrame()
 	frame.catch = frame
 	enableFeatureException( frame.env)
-	getFrameCleanupLabel( frame, "catch", nil, catchlabel)
+	getAllocationFrameCleanupLabel( frame, "catch", nil, catchlabel)
 end
 -- Find out if there is a catch around the current scope step, determines if we can call a throwing function inside a non throwing function or not
 function hasCatchFrame()
@@ -1486,16 +1487,16 @@ function getInvokeUnwindLabel( skipHandler)
 	requireExceptions()
 	enableFeatureLandingpad( env)
 	if frame.catch then
-		local cleanup = getFrameCleanupLabel( frame, "catch")
+		local cleanup = getAllocationFrameCleanupLabel( frame, "catch")
 		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, env.register)
 	else
 		local cleanup
 		if frame.exitmap[ "catch"] then
-			cleanup = getFrameCleanupLabel( frame, "catch")
+			cleanup = getAllocationFrameCleanupLabel( frame, "catch")
 		else
 			local exitcode; if env.partial_dtor then exitcode = utils.constructor_format( env.partial_dtor, {}, env.register) else exitcode = "" end
 			exitcode = exitcode .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
-			cleanup = getFrameCleanupLabel( frame, "catch", exitcode)
+			cleanup = getAllocationFrameCleanupLabel( frame, "catch", exitcode)
 		end
 		local cleanup_start_fmt; if frame.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
 		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=frame.initstate}, env.register)
@@ -1513,9 +1514,9 @@ function getThrowExceptionCode( errcode, errmsg)
 	requireExceptions()
 	enableFeatureException( env)
 	if frame.catch then
-		cleanup = getFrameCleanupLabel( frame, "catch")
+		cleanup = getAllocationFrameCleanupLabel( frame, "catch")
 	else
-		cleanup = getFrameCleanupLabel( frame, "throw", (env.partial_dtor or "") .. llvmir.exception.throwExceptionLocal)
+		cleanup = getAllocationFrameCleanupLabel( frame, "throw", (env.partial_dtor or "") .. llvmir.exception.throwExceptionLocal)
 	end
 	local code = errcode_code .. errmsg_code
 	if frame.initstate then code = code .. utils.template_format( llvmir.exception.set_constructor_initstate, {initstate=frame.initstate}) end

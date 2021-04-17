@@ -479,9 +479,11 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	end
 	return arrayDescr
 end
-
 function llvmir.init()
 	print_section( "Typedefs", llvmir.externFunctionDeclaration( "C", "i32", "__gxx_personality_v0", "", true))
+end
+function llvmir.comment( msg)
+	return "; " .. msg .. "\n"
 end
 return llvmir
 

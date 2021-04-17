@@ -1,40 +1,46 @@
 ----- NO EXCEPTION
 Get string
-Constructor string [Hello world!]
-DEBUG
+Constructor string [Hello Universe]
 Get string
-Constructor string [H]
+Constructor string [!]
+Default constructor string
 Get string
-Constructor string [e]
+Destructor string [!]
+Free mem: [!]
 Get string
-Constructor string [l]
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
 Get string
-Constructor string [l]
-Get string
-Constructor string [o]
+Constructor string [Hello]
 Get string
 Constructor string [ ]
 Get string
-Constructor string [w]
+Constructor string [Universe]
 Get string
-Constructor string [o]
-Get string
-Constructor string [r]
-Get string
-Constructor string [l]
-Get string
-Constructor string [d!]
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
+Constructor string [!]
 Default constructor string
 Default constructor string
 Default constructor string
 Get string
-Hello world!
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Constructor string [Hello world!]
 Get string
 Constructor string [Hello]
 Get string
@@ -61,149 +67,551 @@ Get string
 Destructor string [Hello]
 Free mem: [Hello]
 Get string
-Destructor string []
 Get string
-Destructor string []
 Get string
-Destructor string []
+GREET1 Hello Universe! GREET2 Hello Universe! GREET3 Hello world!
 Get string
-Destructor string []
+Destructor string [Hello world!]
+Free mem: [Hello world!]
 Get string
-Destructor string []
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
 Get string
-Destructor string []
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ALLOCS 16
+----- TEST 1
+Throw: Max allowed allocations reached
+ERR 201 Max allowed allocations reached
+----- TEST 2
 Get string
-Destructor string []
+Constructor string [Hello Universe]
+Throw: Max allowed allocations reached
+ERR 201 Max allowed allocations reached
+----- TEST 3
 Get string
-Destructor string []
+Constructor string [Hello Universe]
 Get string
-Destructor string []
+Constructor string [!]
+Default constructor string
+Throw: Max allowed allocations reached
 Get string
-Destructor string [d!]
-Free mem: [d!]
+Destructor string [!]
+Free mem: [!]
 Get string
-Destructor string [l]
-Free mem: [l]
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+ERR 201 Max allowed allocations reached
+----- TEST 4
 Get string
-Destructor string [r]
-Free mem: [r]
+Constructor string [Hello Universe]
 Get string
-Destructor string [o]
-Free mem: [o]
+Constructor string [!]
+Default constructor string
 Get string
-Destructor string [w]
-Free mem: [w]
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 5
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 6
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Throw: Max allowed allocations reached
 Get string
 Destructor string [ ]
 Free mem: [ ]
 Get string
-Destructor string [o]
-Free mem: [o]
+Destructor string [Hello]
+Free mem: [Hello]
 Get string
-Destructor string [l]
-Free mem: [l]
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 7
 Get string
-Destructor string [l]
-Free mem: [l]
+Constructor string [Hello Universe]
 Get string
-Destructor string [e]
-Free mem: [e]
+Constructor string [!]
+Default constructor string
 Get string
-Destructor string [H]
-Free mem: [H]
+Destructor string [!]
+Free mem: [!]
 Get string
-Destructor string [Hello world!]
-Free mem: [Hello world!]
-ALLOCS 17
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
 Get string
-Constructor string [Hello world!]
-DEBUG
-Get string
-Constructor string [H]
-Get string
-Constructor string [e]
-Get string
-Constructor string [l]
-Get string
-Constructor string [l]
-Get string
-Constructor string [o]
+Constructor string [Hello]
 Get string
 Constructor string [ ]
 Get string
-Constructor string [w]
-Get string
-Constructor string [o]
-Get string
-Constructor string [r]
-Get string
-Constructor string [l]
-Get string
-Constructor string [d!]
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Default constructor string
-Get string
-Hello world!
+Constructor string [Universe]
 Throw: Max allowed allocations reached
 Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string []
-Get string
-Destructor string [d!]
-Free mem: [d!]
-Get string
-Destructor string [l]
-Free mem: [l]
-Get string
-Destructor string [r]
-Free mem: [r]
-Get string
-Destructor string [o]
-Free mem: [o]
-Get string
-Destructor string [w]
-Free mem: [w]
+Destructor string [Universe]
+Free mem: [Universe]
 Get string
 Destructor string [ ]
 Free mem: [ ]
 Get string
-Destructor string [o]
-Free mem: [o]
+Destructor string [Hello]
+Free mem: [Hello]
 Get string
-Destructor string [l]
-Free mem: [l]
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 8
 Get string
-Destructor string [l]
-Free mem: [l]
+Constructor string [Hello Universe]
 Get string
-Destructor string [e]
-Free mem: [e]
+Constructor string [!]
+Default constructor string
 Get string
-Destructor string [H]
-Free mem: [H]
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Throw: Max allowed allocations reached
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 9
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 10
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Default constructor string
+Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 11
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 12
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Constructor string [Hello world!]
+Throw: Max allowed allocations reached
 Get string
 Destructor string [Hello world!]
 Free mem: [Hello world!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 13
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Constructor string [Hello world!]
+Get string
+Constructor string [Hello]
+Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello world!]
+Free mem: [Hello world!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 14
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Constructor string [Hello world!]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Default constructor string
+Throw: Max allowed allocations reached
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string [Hello world!]
+Free mem: [Hello world!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+ERR 201 Max allowed allocations reached
+----- TEST 15
+Get string
+Constructor string [Hello Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Get string
+Constructor string [Universe]
+Get string
+Constructor string [!]
+Default constructor string
+Default constructor string
+Default constructor string
+Get string
+Destructor string [Hello Universe]
+Free mem: [Hello Universe]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Universe]
+Free mem: [Universe]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Constructor string [Hello world!]
+Get string
+Constructor string [Hello]
+Get string
+Constructor string [ ]
+Default constructor string
+Throw: Max allowed allocations reached
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor string [Hello world!]
+Free mem: [Hello world!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
+Get string
+Destructor string [Hello Universe!]
+Free mem: [Hello Universe!]
 ERR 201 Max allowed allocations reached

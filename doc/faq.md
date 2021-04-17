@@ -456,7 +456,7 @@ LLVM supports extern calls. In the specification of the example _language1_, I s
 
 ### How to implement coroutines?
 
-Coroutines are callables that store theit local variables in a structure instead of in the stack. This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time. This should not be a big deal to implement. I will do this in the example _language1_ soon. 
+Coroutines are callables that store theit local variables in a structure instead of allocating them on the stack. This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time. This should not be a big deal to implement. I will do this in the example _language1_ soon. 
 
 
 <a name="copyElision"/>
