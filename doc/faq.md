@@ -40,6 +40,7 @@
     * [How to implement calls of C-Library functions?](#cLibraryCalls)
     * [How to implement coroutines?](#coroutines)
     * [How to implement copy elision?](#copyElision)
+    * [What about optimizations?](#optimizations)
 
 
 <a name="general"/>
@@ -455,7 +456,7 @@ LLVM supports extern calls. In the specification of the example _language1_, I s
 
 ### How to implement coroutines?
 
-I will implement coroutines for the example _language1_ in the next days.
+Coroutines are callables that store theit local variables in a structure instead of in the stack. This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time. This should not be a big deal to implement. I will do this in the example _language1_ soon. 
 
 
 <a name="copyElision"/>
@@ -466,5 +467,11 @@ Copy elision, though it's making your program faster is not considered optimizat
   * Construction of a return value in the return slot (LLVM sret) provided by the caller
   * Construction of a return value in the return slot, when using only one variable for the return value in the variable declaration scope
 
+
+<a name="optimizations"/>
+
+### What about optimizations?
+
+Other compiler-frontend models are better suited for optimizations. What you can do mit _Mewa_ easily is to attach attributes to code that helps a back-end to optimize the code generated. That is the model LLVM IR encourages. 
 
 
