@@ -235,20 +235,12 @@ call void @deleteTree__Tree$( %Tree* %r21)
 %r22 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
 call void(i8*,  ...) @printf( i8* %r22)
 store i32 0, i32* %r1
-br label %L5
-L5:
-call void @__dtor_Tree__Data( %Tree__Data* %r7)
-br label %L4
-L4:
-call void @__dtor_Tree__Data( %Tree__Data* %r10)
-br label %L3
-L3:
-call void @__dtor_Tree__Data( %Tree__Data* %r4)
 br label %L2
 L2:
+call void @__dtor_Tree__Data( %Tree__Data* %r7)
+call void @__dtor_Tree__Data( %Tree__Data* %r10)
+call void @__dtor_Tree__Data( %Tree__Data* %r4)
 call void @__dtor_Tree__Data( %Tree__Data* %r13)
-br label %L6
-L6:
 br label %L1
 L1:
 br label %IL1

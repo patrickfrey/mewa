@@ -277,8 +277,6 @@ store i32 0, i32* %r1
 br label %L2
 L2:
 call void @__dtor_Line( %Line* %r3)
-br label %L3
-L3:
 br label %L1
 L1:
 %r92 = load i32, i32* %r1

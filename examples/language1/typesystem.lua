@@ -25,7 +25,7 @@ local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduct
 local tagmask_typeAlias = typedb.reduction_tagmask( tag_typeAlias)
 local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_pushVararg)
 
--- Centralized list of the ordering of the reduction rules determined by their weights:
+-- Centralized list of the ordering of the reduction rules determined by their weights, we force an order of reductions by defining the weight sums as polynomials:
 local rdw_conv = 1.0			-- Reduction weight of conversion
 local rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
 local rdw_load = 0.25			-- Reduction weight of loading a const expression
@@ -90,7 +90,7 @@ local instantCallableEnvironment = nil	-- Callable environment created for impli
 local globalCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
 local instantAllocationFrame = nil	-- Allocation frame created for implicitly generated code
 local globalAllocationFrame = nil	-- Allocation frame for global variables
-local instantUnwindLabelGenerator = nil -- Function to allocate a label for cleanup in case of an exception created for implicitly generated code (constructors,destructors,assignments,etc.)
+local instantUnwindLabel = nil 		-- label for cleanup in case of an exception created for implicitly generated code (constructors,destructors,assignments,etc.)
 local globalInitCode = ""		-- Init code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
 local nodeIdCount = 0			-- Counter for node id allocation
@@ -160,7 +160,7 @@ function constructorParts( constructor)
 end
 -- Get a constructor structure
 function constructorStruct( out, code)
-	return {out=tostring(out), code=code or ""}
+	return {out=out, code=code or ""}
 end
 -- Get an empty constructor structure
 function constructorStructEmpty()
@@ -358,6 +358,7 @@ function functionCallConstructor( env, code, func, argstr, descr)
 	end
 	local rt = constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
 	rt.step = step
+	rt.throws = descr.throws
 	return rt
 end
 -- Constructor implementing a direct call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
@@ -399,53 +400,54 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
 		local descr = typeDescriptionMap[ thisTypeId]
+		local descr_element = typeDescriptionMap[ elementTypeId]
 		local refTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
 		local env = getCallableEnvironment()
 		local this_inp,res_code = constructorParts( this)
-		local cntreg = env.register()
-		local cleanupLabel = env.label()
-		local basereg = env.register()
+		local cntreg,basereg = env.register(),env.register()
 		local memberwise_start = utils.constructor_format( descr.memberwise_start, {cnt=cntreg,this=this_inp,base=basereg})
+		local memberwise_cleanup = utils.constructor_format( descr.memberwise_cleanup, {cnt=cntreg,this=this_inp}, env.register)
 		local code = nil
 		local init_nofThrows = 0
+		registerPartialDtor()
 		for ai,arg in ipairs(args) do
 			local elemreg = env.register()
 			local elem = {type=refTypeId,constructor={out=elemreg}}
-			local init,init_throws = tryApplyCallableWithCleanup( node, elem, ":=", {arg}, cleanupLabel)
-			if init_throws then init_nofThrows = init_nofThrows + 1 end
+			local init = tryApplyCallable( node, elem, ":=", {arg})
 			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
 			local memberwise_next
-			if init_throws then
+			if init.constructor.throws then
+				init_nofThrows = init_nofThrows + 1
 				memberwise_next = utils.constructor_format( descr.memberwise_next, {cnt=cntreg,base=basereg,out=elemreg}, env.register)
 			else
 				memberwise_next = utils.constructor_format( descr.memberwise_index, {index=ai-1,this=this_inp,out=elemreg}, env.register)
 			end
-			if not code then if init_throws then code = memberwise_start else code = "" end end
+			if not code then if init.constructor.throws then code = memberwise_start else code = "" end end
 			code = code .. memberwise_next .. typeConstructorPairCode(init)
 		end
 		if #args < nofElements then
-			local descr_element = typeDescriptionMap[ elementTypeId]
-			local init,init_throws = tryApplyCallableWithCleanup( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {}, cleanupLabel)
-			if init_throws then init_nofThrows = init_nofThrows + 1 end
+			local init = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
 			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
-						this=this_inp, ctors=init.constructor.code, cleanup=cleanupLabel}
-			if not code then if init_throws then code = memberwise_start else code = "" end end
-			if init_throws then
+						this=this_inp, ctors=init.constructor.code}
+			if not code then if init.constructor.throws then code = memberwise_start else code = "" end end
+			if init.constructor.throws then
+				init_nofThrows = init_nofThrows + 1
 				fmtdescr.success = env.label()
+				fmtdescr.cleanup = getInvokeUnwindLabel()
 				code = code .. utils.constructor_format( descr.ctor_rest_throwing, fmtdescr, env.register)
 			else
 				code = code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
 			end
 		end
-		local entercode,rewind,constructorFunc
 		if init_nofThrows > 0 then
-			enableFeatureLandingpad( env)
-			local finishLabel = env.label()
-			local doneLabel = env.label()
-			local rewind_ctor = utils.constructor_format( descr.memberwise_cleanup, {this=this_inp,cnt=cntreg}, env.register)
-			rewind = getDefaultConstructorCleanupResumeCode( env, {{label=cleanupLabel, code=rewind_ctor}}, finishLabel)
-			code = code .. utils.template_format( llvmir.control.gotoStatement, {inp=doneLabel}) .. rewind .. utils.template_format( llvmir.control.plainLabel, {inp=doneLabel})
+			local startLabel,continueLabel = getPartialDtorLabels()
+			local endLabel = env.label()
+			code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=endLabel})
+				.. utils.constructor_format( llvmir.control.plainLabel, {inp=startLabel})
+				.. memberwise_cleanup
+				.. utils.constructor_format( llvmir.control.gotoStatement, {inp=continueLabel})
+				.. utils.constructor_format( llvmir.control.plainLabel, {inp=endLabel})
 		end
 		return constructorStruct( this_inp, code)
 	end
@@ -935,40 +937,42 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	local cr_elementTypeId = constTypeMap[ r_elementTypeId] or r_elementTypeId
 	local ths = {type=r_elementTypeId, constructor={out="%ths"}}
 	local oth = {type=cr_elementTypeId, constructor={out="%oth"}}
-	local init,init_throws = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
-	local copy,copy_throws = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
+	local init = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
+	local copy = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
 	local dtor_code = typeConstructorPairCode( tryApplyCallable( node, ths, ":~", {})) or ""
 	if init then
-		local attributes = llvmir.functionAttribute( false, init_throws)
-		local entercode,rewind,constructorFunc
-		if init_throws == true then
+		local attributes,entercode,rewind,constructorFunc
+		if init.constructor.throws == true then
+			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
 			rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_init_throwing)
 		else
+			attributes = llvmir.functionAttribute( false, false)
 			entercode,rewind = "",""
 			constructorFunc = callConstructor( arrayDescr.ctor_init, false)
 		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_init, {ctors=init.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
 		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
 		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, constructorFunc)
-		if init_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		if init.constructor.throws == true then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if copy then
-		local attributes = llvmir.functionAttribute( false, copy_throws)
-		local entercode,rewind,constructorFunc
-		if copy_throws == true then
+		local attributes,entercode,rewind,constructorFunc
+		if copy.constructor.throws == true then
+			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
 			rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_copy_throwing)
 		else
+			attributes = llvmir.functionAttribute( false, false)
 			entercode,rewind = "",""
 			constructorFunc = callConstructor( arrayDescr.ctor_copy)
 		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {ctors=copy.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
 		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, constructorFunc)
 		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, constructorFunc)
-		if copy_throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		if copy.constructor.throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( arrayDescr.dtor))
@@ -1059,12 +1063,12 @@ function defineStructConstructors( node, qualitype, descr)
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
 		local param = {type=etype,constructor={out="%p" .. mi}}
-		local member_init,init_throws = tryApplyCallableWithCleanup( node, ths, ":=", {}, cleanupLabel)
-		if init_throws then init_nofThrows = init_nofThrows + 1 end
-		local member_copy,copy_throws = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, cleanupLabel)
-		if init_throws then copy_nofThrows = copy_nofThrows + 1 end
-		local member_element,element_throws = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
-		if element_throws then element_nofThrows = element_nofThrows + 1 end
+		local member_init = tryApplyCallableWithCleanup( node, ths, ":=", {}, cleanupLabel)
+		if member_init and member_init.constructor.throws then init_nofThrows = init_nofThrows + 1 end
+		local member_copy = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, cleanupLabel)
+		if member_copy and member_copy.constructor.throws then copy_nofThrows = copy_nofThrows + 1 end
+		local member_element = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
+		if member_element and member_element.constructor.throws then element_nofThrows = element_nofThrows + 1 end
 		local member_destroy_code; if member.descr.dtor then member_destroy_code = utils.constructor_format( member.descr.dtor, {this=out}, env.register) else member_destroy_code = "" end
 
 		cleanupLabel = "cleanup_" .. mi
@@ -1074,13 +1078,14 @@ function defineStructConstructors( node, qualitype, descr)
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
 	end
 	if ctors_init then
-		local attributes = llvmir.functionAttribute( false, init_nofThrows > 0)
-		local entercode,rewind,constructorFunc
+		local attributes,entercode,rewind,constructorFunc
 		if init_nofThrows > 0 then
+			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
 			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( descr.ctor_init_throwing)
 		else
+			attributes = llvmir.functionAttribute( false, false)
 			entercode,rewind = "",""
 			constructorFunc = callConstructor( descr.ctor_init)
 		end
@@ -1090,13 +1095,14 @@ function defineStructConstructors( node, qualitype, descr)
 		if init_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if ctors_copy then
-		local attributes = llvmir.functionAttribute( false, copy_nofThrows > 0)
-		local entercode,rewind,constructorFunc
+		local attributes,entercode,rewind,constructorFunc
 		if copy_nofThrows > 0 then
+			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
 			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( descr.ctor_copy_throwing)
 		else
+			attributes = llvmir.functionAttribute( false, false)
 			entercode,rewind = "",""
 			constructorFunc = callConstructor( descr.ctor_copy)
 		end
@@ -1106,14 +1112,15 @@ function defineStructConstructors( node, qualitype, descr)
 		if copy_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
 	if ctors_elements then
-		local attributes = llvmir.functionAttribute( false, element_nofThrows > 0)
-		local entercode,rewind,constructorFunc
+		local attributes,entercode,rewind,constructorFunc
 		if element_nofThrows > 0 then
+			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
 			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( utils.template_format( descr.ctor_elements_throwing, {args=argstr}))
 			
 		else
+			attributes = llvmir.functionAttribute( false, false)
 			entercode,rewind = "",""
 			constructorFunc = callConstructor( utils.template_format( descr.ctor_elements, {args=argstr}))
 		end
@@ -1328,15 +1335,16 @@ end
 --	catch		: Allocation frame of the exception handler in the same callable environment that handles the exceptions thrown or forwarded by this allocation frame
 --	env		: The callable environment this allocation frame belongs to
 --	scope		: Scope of this allocation frame
+-- 	partial_dtors	: Map scope step to a partial dtor for rewinding the construction of a partially build object. The partial dtor is called on a invoke unwind label. The partial dtor has a field start, the label where to jump for calling the partial dtor and a field continue, where the execution continues after the execution of the partial dtor. The partial dtor is registered with setPartialDtor.
 --	dtors		: List of cleanup code entries, one for every object with a destructor, used to build the cleanup code sequences for different exit scenarios
 --	exitmap		: Maps different named exit scenarios (exceptions thrown, return from a function with a specific value to a cleanup code sequence)
 --	exitkeys	: List of all keys for the output in definition order (deterministic) of the exitmap entries
---	landingpad	: Code with all landingpads defined in this frame
+--	landingpad	: Landingpad table {code = code with all landingpads defined in this frame, map = maps cleanup labels to landingpad labels}
 --	initstate	: Initialization state counter. This counter is used as second argument for the partial destructor called if a constructor fails.
 
 -- Create the allocation frame for a specific environment and scope, used for createing the allocation frame for globals
 function createAllocationFrame( env, scope)
-	return {parent=nil, catch=nil, env=env, scope=scope, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=nil}
+	return {parent=nil, catch=nil, env=env, scope=scope, partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=nil}
 end
 -- Get or create the allocation frame of this scope
 function getOrCreateThisAllocationFrame()
@@ -1345,7 +1353,7 @@ function getOrCreateThisAllocationFrame()
 		local parent = typedb:get_instance( currentAllocFrameKey)
 		local env = getCallableEnvironment()
 		local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
-		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
+		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
 		table.insert( env.frames, rt)
 		typedb:set_instance( currentAllocFrameKey, rt)
 	end
@@ -1366,61 +1374,129 @@ function setCleanupCode( name, code, step)
 	local di = #frame.dtors
 	while di > 0 and frame.dtors[di].step > step do di = di - 1 end
 	if di > 0 and frame.dtors[di].step == step then utils.errorMessage( frame.env.line, "Internal: More than one cleanup per scope step: %s %d", name, step) end
-	local new_dtor = {step=step,code=code,name=name}
-	table.insert( frame.dtors, di+1, new_dtor)
-	for exitkey,exit in pairs(frame.exitmap) do exit.labels[ step] = {label=frame.env.label(),used=false} end -- Add a label for each cleanup step
+	table.insert( frame.dtors, di+1, {step=step,code=code,name=name})
 end
--- Binary search for scope step that is greater than the argument step in a frame dtors list passed as argument
-function binsearchUpperboundFrameDtors( dtors, step)
-	local aa = 1
-	local bb = #dtors
-	local mid = 1
-	if bb == 0 then return nil end
-	while bb - aa > 3 do
-		mid = math.floor( (bb+aa)/2)
-		if dtors[ mid].step > step then bb = mid else aa = mid end
+-- Tell that there exists a partial dtor that has to be referenced by an unwind landingpad code of a throwing call
+function registerPartialDtor()
+	local frame = getOrCreateThisAllocationFrame()
+	frame.partial_dtors[ typedb:step()] = true
+end
+-- Get the code jumping to the partial dtor to execute in a landingpad code of a throwing call
+function getPartialDtorCode()
+	local step = typedb:step()
+	local frame = getAllocationFrame()
+	if frame and frame.partial_dtors[ step] then
+		local dtor = frame.partial_dtors[step]
+		if type(dtor) ~= "table" then
+			dtor = {start=frame.env.label(),continue=frame.env.label()}
+			frame.partial_dtors[step] = dtor
+		end
+		return utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor.start})
+			.. utils.constructor_format( llvmir.control.plainLabel, {inp=dtor.continue})
 	end
-	local val = dtors[ mid]
-	while mid and mid <= bb and val.step < step do mid,val = next(dtors,mid) end
-	if not mid or mid > bb then return nil else return mid end
+	return ""
 end
--- Binary search for biggest scope step that is smaller than the argument step in a frame dtors list passed as argument
-function binsearchLowerboundFrameDtors( dtors, step)
-	local idx = binsearchUpperboundFrameDtors( dtors, step)
-	if not idx then idx = #dtors else idx=idx-1 end
-	return idx
+-- Get the labels to use for the code of a partial dtor in case of a throwing call
+function getPartialDtorLabels()
+	local step = typedb:step()
+	local frame = getAllocationFrame()
+	if frame and frame.partial_dtors[ step] then
+		local dtor = frame.partial_dtors[step]
+		if type(dtor) == "table" then return dtor.start,dtor.continue end
+	end
 end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
 function getAllocationFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
-	local dtoridx = binsearchLowerboundFrameDtors( frame.dtors, typedb:step()+1)
 	local parent; if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then parent = frame.parent end
-	if dtoridx == 0 and parent then return getAllocationFrameCleanupLabel( parent, exitkey, exitcode, exitlabel) end
 	local exit = frame.exitmap[ exitkey]
 	local env = frame.env
 	if not exit then
-		local labels = {}
-		for _,dtor in ipairs(frame.dtors) do labels[ dtor.step] = {label=env.label(),used=false} end
 		if parent then
 			local parent_cleanup = getAllocationFrameCleanupLabel( parent, exitkey, exitcode, exitlabel)
-			exit = {endlabel=env.label(), labels=labels, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=parent_cleanup})}
+			exit = {labels={}, labelsteps={}, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=parent_cleanup})}
 		else
 			if exitlabel then exitcode = (exitcode or "") .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
 			if not exitcode then utils.errorMessage( env.line, "Internal: Frame cleanup without label or code defined") end
-			exit = {endlabel=env.label(), labels=labels, exitcode=exitcode}
+			exit = {labels={}, labelsteps={}, exitcode=exitcode}
 		end
 		frame.exitmap[ exitkey] = exit
 		table.insert( frame.exitkeys, exitkey)
 	end
-	if dtoridx == 0 then
-		return exit.endlabel
-	else
-		local jmp = exit.labels[ frame.dtors[ dtoridx].step]
-		jmp.used = true
-		return jmp.label
+	local step = typedb:step()
+	local rt = exit.labels[ step]
+	if not rt then
+		rt = env.label()
+		exit.labels[ step] = rt
+		local li = #exit.labelsteps
+		while li >= 1 and exit.labelsteps[ li] >= step do li = li - 1 end
+		table.insert( exit.labelsteps, li+1, step) -- insert in ascending order
 	end
+	return rt
 end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
 	return getAllocationFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
+end
+-- Get the exception abort or the return statement cleanup code of an allocation frame
+function getAllocationFrameAbortCleanupCode( frame)
+	local code; if frame.landingpad then code = frame.landingpad.code else code = "" end
+	for _,ek in ipairs( frame.exitkeys) do
+		exit = frame.exitmap[ ek]
+		local labelsteps,labels,dtors = exit.labelsteps,exit.labels,frame.dtors
+		local di,li = #dtors,#labelsteps
+		local state = 0
+		while di >= 1 and li >= 1 do -- merge the labels and the cleanup code, both bound to the scope step when they happened
+			if dtors[di].step < labelsteps[ li] then
+				local fmt; if state == 0 then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+				local label = labels[ labelsteps[ li]]
+				code = code .. utils.constructor_format( fmt, {inp=label})
+				li = li - 1
+				state = 1
+			else
+				if state ~= 0 then
+					code = (code or "") .. frame.dtors[di].code
+					state = 2
+				end
+				di = di -1
+			end
+		end
+		if di >= 1 then -- last label printed, only code output
+			while di >= 1 do
+				code = code .. frame.dtors[di].code
+				di = di -1
+			end
+			code = code .. exit.exitcode
+		elseif li >= 1 then -- last code printed, print all labels left and then the exit code
+			while li >= 1 do
+				local fmt; if state == 0 then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+				local label = labels[ labelsteps[ li]]
+				code = code .. utils.constructor_format( fmt, {inp=label})
+				state = 1
+				li = li -1
+			end
+			code = code .. exit.exitcode
+		else
+		end
+	end
+	return code
+end
+-- Get the normal exit (no explicit return or exception) cleanup code of an allocation frame
+function getAllocationFrameRegularExitCleanupCode( frame)
+	local code = ""
+	if #frame.dtors > 0 then
+		local label = frame.env.label()
+		code = code .. utils.constructor_format( llvmir.control.label, {inp=label})
+		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[ di].code end
+	end
+	return code
+end
+-- For debugging: Print the contents of an allocation frame to string without following parents
+function allocationFrameToString( frame)
+	local rt = ""
+	rt = rt .. mewa.tostring({env_name=frame.env.name,scope=frame.scope,dtors=frame.dtors}) .. "\n"
+	for _,ek in ipairs( frame.exitkeys) do
+		rt = rt .. ek .. " => " .. mewa.tostring({frame.exitmap[ ek]}) .. "\n"
+	end
+	return rt
 end
 -- Get the code of a jump to the start of a cleanup chain with an ending 'ret llvmtype value' statement
 function doReturnTypeStatement( typeId, constructor)
@@ -1479,29 +1555,44 @@ function requireExceptions()
 	end
 end
 -- Get the label to unwind a throwing call in case of an exception
-function getInvokeUnwindLabel( skipHandler)
-	if not skipHandler and instantUnwindLabelGenerator then return instantUnwindLabelGenerator() end
+function getInvokeUnwindLabel()
+	if instantUnwindLabel then return instantUnwindLabel end
 	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
-	local rt = env.label()
+	local cleanupLabel,landingpadLabel,landingpadCode
 	requireExceptions()
 	enableFeatureLandingpad( env)
+	if not frame.landingpad then frame.landingpad = {code="",map={}} end
 	if frame.catch then
-		local cleanup = getAllocationFrameCleanupLabel( frame, "catch")
-		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( llvmir.exception.catch, {cleanup=cleanup, landingpad=rt}, env.register)
+		cleanupLabel = getAllocationFrameCleanupLabel( frame, "catch")
+		if frame.landingpad.map[ cleanupLabel] then
+			return frame.landingpad.map[ cleanupLabel]
+		else
+			landingpadLabel = env.label()
+			landingpadCode = utils.constructor_format( llvmir.exception.catch, {landingpad=landingpadLabel}, env.register)
+					.. getPartialDtorCode()  .. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanupLabel})
+		end
 	else
-		local cleanup
 		if frame.exitmap[ "catch"] then
-			cleanup = getAllocationFrameCleanupLabel( frame, "catch")
+			cleanupLabel = getAllocationFrameCleanupLabel( frame, "catch")
 		else
 			local exitcode; if env.partial_dtor then exitcode = utils.constructor_format( env.partial_dtor, {}, env.register) else exitcode = "" end
 			exitcode = exitcode .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
-			cleanup = getAllocationFrameCleanupLabel( frame, "catch", exitcode)
+			cleanupLabel = getAllocationFrameCleanupLabel( frame, "catch", exitcode)
 		end
-		local cleanup_start_fmt; if frame.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
-		frame.landingpad = (frame.landingpad or "") .. utils.constructor_format( cleanup_start_fmt, {cleanup=cleanup, landingpad=rt, initstate=frame.initstate}, env.register)
+		if frame.landingpad.map[ cleanupLabel] then
+			return frame.landingpad.map[ cleanupLabel]
+		else
+			local cleanup_start_fmt; if frame.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
+			landingpadLabel = env.label()
+			landingpadCode = utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=landingpadLabel}, env.register)
+			if frame.initstate then landingpadCode = landingpadCode .. utils.constructor_format( llvmir.exception.set_constructor_initstate, {initstate=frame.initstate}) end
+			landingpadCode = landingpadCode .. getPartialDtorCode()  .. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanupLabel})
+		end
 	end
-	return rt
+	frame.landingpad.code = frame.landingpad.code .. landingpadCode
+	frame.landingpad.map[ cleanupLabel] = landingpadLabel
+	return landingpadLabel
 end
 -- Get the code that throws an exception
 function getThrowExceptionCode( errcode, errmsg)
@@ -1531,45 +1622,6 @@ function returnFromMainFunction( rtype, exitlabel, retvaladr)
 		local assignretcode = code .. utils.constructor_format( assign_int_fmt, {this=retvaladr, arg1=out})
 		return assignretcode .. doReturnFromMain( exitlabel)		
 	end
-end
--- Get the exception abort or the return statement cleanup code of an allocation frame
-function getAllocationFrameAbortCleanupCode( frame)
-	local code = frame.landingpad or ""
-	for _,ek in ipairs( frame.exitkeys) do
-		exit = frame.exitmap[ ek]
-		local di = #frame.dtors
-		while di >= 1 and not exit.labels[ frame.dtors[ di].step].used do di = di -1 end
-		local first = true
-		while di >= 1 do
-			local label = exit.labels[ frame.dtors[ di].step].label
-			if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
-			code = code .. utils.constructor_format( fmt, {inp=label}) .. frame.dtors[di].code
-			di = di - 1
-			first = false
-		end
-		if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
-		code = code .. utils.template_format( fmt, {inp=exit.endlabel}) .. exit.exitcode
-	end
-	return code
-end
--- Get the normal exit (no explicit return or exception) cleanup code of an allocation frame
-function getAllocationFrameRegularExitCleanupCode( frame)
-	local code = ""
-	if #frame.dtors > 0 then
-		local label = frame.env.label()
-		code = code .. utils.constructor_format( llvmir.control.label, {inp=label})
-		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[ di].code end
-	end
-	return code
-end
--- For debugging: Print the contents of an allocation frame to string without following parents
-function allocationFrameToString( frame)
-	local rt = ""
-	rt = rt .. mewa.tostring({env_name=frame.env.name,scope=frame.scope,dtors=frame.dtors}) .. "\n"
-	for _,ek in ipairs( frame.exitkeys) do
-		rt = rt .. ek .. " => " .. mewa.tostring({frame.exitmap[ ek]}) .. "\n"
-	end
-	return rt
 end
 -- Get the whole code block of a callable including init and cleanup code 
 function getCallableEnvironmentCodeBlock( env, code)
@@ -1847,12 +1899,12 @@ function initControlBooleanTypes()
 
 	local function joinControlTrueTypeWithBool( this, arg)
 		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, getCallableEnvironment().label())
+		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
 		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	local function joinControlFalseTypeWithBool( this, arg)
 		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, getCallableEnvironment().label())
+		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
 		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
@@ -2345,13 +2397,12 @@ function tryApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end
--- Same as tryApplyCallable but with a cleanup label passed, returns a boolean as second return value telling if the cleanup has been used
+-- Same as tryApplyCallable but with a cleanup label passed as argument
 function tryApplyCallableWithCleanup( node, this, callable, args, cleanupLabel)
-	local throws = false
-	instantUnwindLabelGenerator = function() throws = true; return cleanupLabel end
+	instantUnwindLabel = cleanupLabel
 	local res = tryApplyCallable( node, this, callable, args)
-	instantUnwindLabelGenerator = nil
-	return res,throws
+	instantUnwindLabel = nil
+	return res
 end
 -- Get the symbol name for a function in the LLVM output
 function getTargetFunctionIdentifierString( descr, context)

@@ -24,6 +24,7 @@ private function allocmem byte^( long bytes)
 		printf( "Throw: %s\n", "Out of memory");
 		throw 12, "Out of memory";
 	}
+	printf( "Alloc mem: [%ld] #%d\n", bytes, g_allocCnt);
 	return rt;
 }
 private procedure freemem( byte^ ptr) nothrow
@@ -80,6 +81,18 @@ class String
 		rt.m_size = m_size + o.m_size;
 		return rt;
 	}
+	public operator [ ] byte( int idx) const nothrow
+	{
+		return m_ptr[ idx];
+	}
+	public operator [ ] byte&( int idx) nothrow
+	{
+		return m_ptr[ idx];
+	}
+	public function size int() const nothrow
+	{
+		return m_size;
+	}
 	public function c_str const byte^() const nothrow
 	{
 		printf( "Get string\n");
@@ -96,7 +109,7 @@ class String
 	int m_size;
 }
 }
-
+/*
 private function getGreeting std::String()
 {
 	var std::String rt = (cast std::String: "Hello universe") + (cast std::String: "!");
@@ -108,6 +121,7 @@ private function getGreetingA1 std::String()
 	var std::String[4] ar = {"Hello", " ", "universe", "!"};
 	return ar[0] + ar[1] + ar[2] + ar[3];
 }
+*/
 
 private procedure test( int allocCnt) nothrow
 {
@@ -115,20 +129,17 @@ private procedure test( int allocCnt) nothrow
 	g_allocCnt = 0;
 	try
 	{
-		var std::String fstr = getGreeting();
-		printf( "GREETING %s\n", fstr.c_str());
 		/*
+		var std::String fstr = getGreeting();
 		var std::String astr = getGreetingA1();
 		var std::String str = "Hello world!";
-		*/
-		/*
 		var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
+
 		var int ii = 0;
-		while (ii < 20 and ar[ii] != 0) {
+		while (ii < 20 && ar[ii].size() != 0) {
 			printf( "%s\n", ar[ii].c_str());
+			ii = ii + 1;
 		}
-		*/
-		/*
 		{
 			var std::String greeting =
 				  (cast std::String: "Hello")
@@ -138,6 +149,8 @@ private procedure test( int allocCnt) nothrow
 		}
 		printf( "GREET1 %s GREET2 %s GREET3 %s\n", fstr.c_str(), astr.c_str(), str.c_str());
 		*/
+		var std::String[4] ar = {"Hello"," ","world","!"};
+
 	}
 	catch errcode, errmsg
 	{
@@ -152,7 +165,7 @@ main
 	test( 1000);
 	printf( "ALLOCS %d\n", g_allocCnt);
 	*/
-	test( 2);
+	test(3);
 	/*
 	var int ii = 1;
 	var int nn = g_allocCnt;

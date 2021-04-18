@@ -161,8 +161,6 @@ call void @__C___Complex__double__$div__double__const( %__Complex__double* sret 
 br label %L1
 L1:
 call void @__dtor___Complex__double( %__Complex__double* %r15)
-br label %L2
-L2:
 ret void
 }
 define external void @__C___Complex__double__square__const( %__Complex__double* sret %rt, %__Complex__double* %ths ) #0 nounwind {
@@ -442,89 +440,35 @@ store double %r42, double* %r43
 %r45 = load double, double* %r43
 call void @printFloat__double__i8$__double( i8* %r44, double %r45)
 store i32 0, i32* %r1
-br label %L28
-L28:
-call void @__dtor___Complex__double( %__Complex__double* %r40)
-br label %L27
-L27:
-call void @__dtor___Complex__double( %__Complex__double* %r39)
-br label %L26
-L26:
-call void @__dtor___Complex__double( %__Complex__double* %r37)
-br label %L25
-L25:
-call void @__dtor___Complex__double( %__Complex__double* %r36)
-br label %L24
-L24:
-call void @__dtor___Complex__double( %__Complex__double* %r34)
-br label %L23
-L23:
-call void @__dtor___Complex__double( %__Complex__double* %r33)
-br label %L22
-L22:
-call void @__dtor___Complex__double( %__Complex__double* %r30)
-br label %L21
-L21:
-call void @__dtor___Complex__double( %__Complex__double* %r28)
-br label %L20
-L20:
-call void @__dtor___Complex__double( %__Complex__double* %r27)
-br label %L19
-L19:
-call void @__dtor___Complex__double( %__Complex__double* %r26)
-br label %L18
-L18:
-call void @__dtor___Complex__double( %__Complex__double* %r24)
-br label %L17
-L17:
-call void @__dtor___Complex__double( %__Complex__double* %r23)
-br label %L16
-L16:
-call void @__dtor___Complex__double( %__Complex__double* %r22)
-br label %L15
-L15:
-call void @__dtor___Complex__double( %__Complex__double* %r20)
-br label %L14
-L14:
-call void @__dtor___Complex__double( %__Complex__double* %r19)
-br label %L13
-L13:
-call void @__dtor___Complex__double( %__Complex__double* %r18)
-br label %L12
-L12:
-call void @__dtor___Complex__double( %__Complex__double* %r16)
-br label %L11
-L11:
-call void @__dtor___Complex__double( %__Complex__double* %r15)
-br label %L10
-L10:
-call void @__dtor___Complex__double( %__Complex__double* %r14)
-br label %L9
-L9:
-call void @__dtor___Complex__double( %__Complex__double* %r12)
-br label %L8
-L8:
-call void @__dtor___Complex__double( %__Complex__double* %r11)
-br label %L7
-L7:
-call void @__dtor___Complex__double( %__Complex__double* %r10)
-br label %L6
-L6:
-call void @__dtor___Complex__double( %__Complex__double* %r8)
-br label %L5
-L5:
-call void @__dtor___Complex__double( %__Complex__double* %r7)
-br label %L4
-L4:
-call void @__dtor___Complex__double( %__Complex__double* %r4)
-br label %L3
-L3:
-call void @__dtor___Complex__double( %__Complex__double* %r3)
 br label %L2
 L2:
+call void @__dtor___Complex__double( %__Complex__double* %r40)
+call void @__dtor___Complex__double( %__Complex__double* %r39)
+call void @__dtor___Complex__double( %__Complex__double* %r37)
+call void @__dtor___Complex__double( %__Complex__double* %r36)
+call void @__dtor___Complex__double( %__Complex__double* %r34)
+call void @__dtor___Complex__double( %__Complex__double* %r33)
+call void @__dtor___Complex__double( %__Complex__double* %r30)
+call void @__dtor___Complex__double( %__Complex__double* %r28)
+call void @__dtor___Complex__double( %__Complex__double* %r27)
+call void @__dtor___Complex__double( %__Complex__double* %r26)
+call void @__dtor___Complex__double( %__Complex__double* %r24)
+call void @__dtor___Complex__double( %__Complex__double* %r23)
+call void @__dtor___Complex__double( %__Complex__double* %r22)
+call void @__dtor___Complex__double( %__Complex__double* %r20)
+call void @__dtor___Complex__double( %__Complex__double* %r19)
+call void @__dtor___Complex__double( %__Complex__double* %r18)
+call void @__dtor___Complex__double( %__Complex__double* %r16)
+call void @__dtor___Complex__double( %__Complex__double* %r15)
+call void @__dtor___Complex__double( %__Complex__double* %r14)
+call void @__dtor___Complex__double( %__Complex__double* %r12)
+call void @__dtor___Complex__double( %__Complex__double* %r11)
+call void @__dtor___Complex__double( %__Complex__double* %r10)
+call void @__dtor___Complex__double( %__Complex__double* %r8)
+call void @__dtor___Complex__double( %__Complex__double* %r7)
+call void @__dtor___Complex__double( %__Complex__double* %r4)
+call void @__dtor___Complex__double( %__Complex__double* %r3)
 call void @__dtor___Complex__double( %__Complex__double* %r2)
-br label %L29
-L29:
 br label %L1
 L1:
 %r46 = load i32, i32* %r1

@@ -345,42 +345,40 @@ ret double* %r3
 define external void @printIntArray(  ) #0 nounwind {
 entry:
 %r1 = alloca %IntArray, align 8
-%r9 = alloca [5 x i32], align 8
-%r4 = getelementptr inbounds [5 x i32], [5 x i32]* %r9, i32 0, i32 0
-store i32 911, i32* %r4
-%r5 = getelementptr inbounds [5 x i32], [5 x i32]* %r9, i32 0, i32 1
-store i32 822, i32* %r5
-%r6 = getelementptr inbounds [5 x i32], [5 x i32]* %r9, i32 0, i32 2
-store i32 733, i32* %r6
-%r7 = getelementptr inbounds [5 x i32], [5 x i32]* %r9, i32 0, i32 3
-store i32 644, i32* %r7
-%r8 = getelementptr inbounds [5 x i32], [5 x i32]* %r9, i32 0, i32 4
-store i32 555, i32* %r8
-call void @__C_IntArray__$ctor__$5xi32$( %IntArray* %r1, [5 x i32]* %r9)
-%r10 = alloca i32, align 4
-store i32 0, i32* %r10
+%r10 = alloca [5 x i32], align 8
+%r5 = getelementptr inbounds [5 x i32], [5 x i32]* %r10, i32 0, i32 0
+store i32 911, i32* %r5
+%r6 = getelementptr inbounds [5 x i32], [5 x i32]* %r10, i32 0, i32 1
+store i32 822, i32* %r6
+%r7 = getelementptr inbounds [5 x i32], [5 x i32]* %r10, i32 0, i32 2
+store i32 733, i32* %r7
+%r8 = getelementptr inbounds [5 x i32], [5 x i32]* %r10, i32 0, i32 3
+store i32 644, i32* %r8
+%r9 = getelementptr inbounds [5 x i32], [5 x i32]* %r10, i32 0, i32 4
+store i32 555, i32* %r9
+call void @__C_IntArray__$ctor__$5xi32$( %IntArray* %r1, [5 x i32]* %r10)
+%r11 = alloca i32, align 4
+store i32 0, i32* %r11
+br label %L3
+L3:
+%r12 = load i32, i32* %r11
+%r13 = icmp slt i32 %r12, 5
+br i1 %r13, label %L2, label %L1
+L2:
+%r14 = getelementptr inbounds [17 x i8], [17 x i8]* @string1, i64 0, i64 0
+%r17 = load i32, i32* %r11
+%r15 = load i32, i32* %r11
+%r16 = call i32* @__C_IntArray__$get__i32( %IntArray* %r1, i32 %r15)
+%r18 = load i32, i32* %r16
+call void(i8*,  ...) @printf( i8* %r14, i32 %r17, i32 %r18)
+%r19 = load i32, i32* %r11
+%r20 = add nsw i32 %r19, 1
+store i32 %r20, i32* %r11
+br label %L3
+L1:
 br label %L4
 L4:
-%r11 = load i32, i32* %r10
-%r12 = icmp slt i32 %r11, 5
-br i1 %r12, label %L3, label %L2
-L3:
-%r13 = getelementptr inbounds [17 x i8], [17 x i8]* @string1, i64 0, i64 0
-%r16 = load i32, i32* %r10
-%r14 = load i32, i32* %r10
-%r15 = call i32* @__C_IntArray__$get__i32( %IntArray* %r1, i32 %r14)
-%r17 = load i32, i32* %r15
-call void(i8*,  ...) @printf( i8* %r13, i32 %r16, i32 %r17)
-%r18 = load i32, i32* %r10
-%r19 = add nsw i32 %r18, 1
-store i32 %r19, i32* %r10
-br label %L4
-L2:
-br label %L5
-L5:
 call void @__dtor_IntArray( %IntArray* %r1)
-br label %L6
-L6:
 ret void
 }
 @string2 = private unnamed_addr constant [12 x i8] c"FL = %f %f\0A\00"
@@ -399,43 +397,41 @@ store double %r4, double* %r2
 %r8 = load double, double* %r2
 call void(i8*,  ...) @printf( i8* %r5, double %r7, double %r8)
 %r9 = alloca %FloatArray, align 8
-%r17 = alloca [5 x float], align 8
-%r12 = getelementptr inbounds [5 x float], [5 x float]* %r17, i32 0, i32 0
-store float 0x40223851E0000000, float* %r12
-%r13 = getelementptr inbounds [5 x float], [5 x float]* %r17, i32 0, i32 1
-store float 0x402070A3E0000000, float* %r13
-%r14 = getelementptr inbounds [5 x float], [5 x float]* %r17, i32 0, i32 2
-store float 0x401D51EB80000000, float* %r14
-%r15 = getelementptr inbounds [5 x float], [5 x float]* %r17, i32 0, i32 3
-store float 0x4019C28F60000000, float* %r15
-%r16 = getelementptr inbounds [5 x float], [5 x float]* %r17, i32 0, i32 4
-store float 0x4016333340000000, float* %r16
-call void @__C_FloatArray__$ctor__$5xfloat$( %FloatArray* %r9, [5 x float]* %r17)
-%r18 = alloca i32, align 4
-store i32 0, i32* %r18
+%r18 = alloca [5 x float], align 8
+%r13 = getelementptr inbounds [5 x float], [5 x float]* %r18, i32 0, i32 0
+store float 0x40223851E0000000, float* %r13
+%r14 = getelementptr inbounds [5 x float], [5 x float]* %r18, i32 0, i32 1
+store float 0x402070A3E0000000, float* %r14
+%r15 = getelementptr inbounds [5 x float], [5 x float]* %r18, i32 0, i32 2
+store float 0x401D51EB80000000, float* %r15
+%r16 = getelementptr inbounds [5 x float], [5 x float]* %r18, i32 0, i32 3
+store float 0x4019C28F60000000, float* %r16
+%r17 = getelementptr inbounds [5 x float], [5 x float]* %r18, i32 0, i32 4
+store float 0x4016333340000000, float* %r17
+call void @__C_FloatArray__$ctor__$5xfloat$( %FloatArray* %r9, [5 x float]* %r18)
+%r19 = alloca i32, align 4
+store i32 0, i32* %r19
+br label %L3
+L3:
+%r20 = load i32, i32* %r19
+%r21 = icmp slt i32 %r20, 5
+br i1 %r21, label %L2, label %L1
+L2:
+%r22 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
+%r25 = load i32, i32* %r19
+%r23 = load i32, i32* %r19
+%r24 = call float* @__C_FloatArray__$get__i32( %FloatArray* %r9, i32 %r23)
+%r26 = load float, float* %r24
+%r27 = fpext float %r26 to double
+call void(i8*,  ...) @printf( i8* %r22, i32 %r25, double %r27)
+%r28 = load i32, i32* %r19
+%r29 = add nsw i32 %r28, 1
+store i32 %r29, i32* %r19
+br label %L3
+L1:
 br label %L4
 L4:
-%r19 = load i32, i32* %r18
-%r20 = icmp slt i32 %r19, 5
-br i1 %r20, label %L3, label %L2
-L3:
-%r21 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
-%r24 = load i32, i32* %r18
-%r22 = load i32, i32* %r18
-%r23 = call float* @__C_FloatArray__$get__i32( %FloatArray* %r9, i32 %r22)
-%r25 = load float, float* %r23
-%r26 = fpext float %r25 to double
-call void(i8*,  ...) @printf( i8* %r21, i32 %r24, double %r26)
-%r27 = load i32, i32* %r18
-%r28 = add nsw i32 %r27, 1
-store i32 %r28, i32* %r18
-br label %L4
-L2:
-br label %L5
-L5:
 call void @__dtor_FloatArray( %FloatArray* %r9)
-br label %L6
-L6:
 ret void
 }
 @string4 = private unnamed_addr constant [12 x i8] c"DB = %f %f\0A\00"
@@ -451,42 +447,40 @@ store double %r3, double* %r2
 %r6 = load double, double* %r2
 call void(i8*,  ...) @printf( i8* %r4, double %r5, double %r6)
 %r7 = alloca %DoubleArray, align 8
-%r15 = alloca [5 x double], align 8
-%r10 = getelementptr inbounds [5 x double], [5 x double]* %r15, i32 0, i32 0
-store double 0x40223851EB851EB8, double* %r10
-%r11 = getelementptr inbounds [5 x double], [5 x double]* %r15, i32 0, i32 1
-store double 0x402070A3D70A3D71, double* %r11
-%r12 = getelementptr inbounds [5 x double], [5 x double]* %r15, i32 0, i32 2
-store double 0x401D51EB851EB852, double* %r12
-%r13 = getelementptr inbounds [5 x double], [5 x double]* %r15, i32 0, i32 3
-store double 0x4019C28F5C28F5C3, double* %r13
-%r14 = getelementptr inbounds [5 x double], [5 x double]* %r15, i32 0, i32 4
-store double 0x4016333333333333, double* %r14
-call void @__C_DoubleArray__$ctor__$5xdouble$( %DoubleArray* %r7, [5 x double]* %r15)
-%r16 = alloca i32, align 4
-store i32 0, i32* %r16
+%r16 = alloca [5 x double], align 8
+%r11 = getelementptr inbounds [5 x double], [5 x double]* %r16, i32 0, i32 0
+store double 0x40223851EB851EB8, double* %r11
+%r12 = getelementptr inbounds [5 x double], [5 x double]* %r16, i32 0, i32 1
+store double 0x402070A3D70A3D71, double* %r12
+%r13 = getelementptr inbounds [5 x double], [5 x double]* %r16, i32 0, i32 2
+store double 0x401D51EB851EB852, double* %r13
+%r14 = getelementptr inbounds [5 x double], [5 x double]* %r16, i32 0, i32 3
+store double 0x4019C28F5C28F5C3, double* %r14
+%r15 = getelementptr inbounds [5 x double], [5 x double]* %r16, i32 0, i32 4
+store double 0x4016333333333333, double* %r15
+call void @__C_DoubleArray__$ctor__$5xdouble$( %DoubleArray* %r7, [5 x double]* %r16)
+%r17 = alloca i32, align 4
+store i32 0, i32* %r17
+br label %L3
+L3:
+%r18 = load i32, i32* %r17
+%r19 = icmp slt i32 %r18, 5
+br i1 %r19, label %L2, label %L1
+L2:
+%r20 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
+%r23 = load i32, i32* %r17
+%r21 = load i32, i32* %r17
+%r22 = call double* @__C_DoubleArray__$get__i32( %DoubleArray* %r7, i32 %r21)
+%r24 = load double, double* %r22
+call void(i8*,  ...) @printf( i8* %r20, i32 %r23, double %r24)
+%r25 = load i32, i32* %r17
+%r26 = add nsw i32 %r25, 1
+store i32 %r26, i32* %r17
+br label %L3
+L1:
 br label %L4
 L4:
-%r17 = load i32, i32* %r16
-%r18 = icmp slt i32 %r17, 5
-br i1 %r18, label %L3, label %L2
-L3:
-%r19 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
-%r22 = load i32, i32* %r16
-%r20 = load i32, i32* %r16
-%r21 = call double* @__C_DoubleArray__$get__i32( %DoubleArray* %r7, i32 %r20)
-%r23 = load double, double* %r21
-call void(i8*,  ...) @printf( i8* %r19, i32 %r22, double %r23)
-%r24 = load i32, i32* %r16
-%r25 = add nsw i32 %r24, 1
-store i32 %r25, i32* %r16
-br label %L4
-L2:
-br label %L5
-L5:
 call void @__dtor_DoubleArray( %DoubleArray* %r7)
-br label %L6
-L6:
 ret void
 }
 

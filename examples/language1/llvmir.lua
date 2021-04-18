@@ -328,17 +328,6 @@ llvmir.control = {
 	bytePointerCast = "{out} = bitcast {llvmtype}* {this} to i8*\n"
 }
 
-local exception_vars =
-{
-	cleanup_landingpad = "{landingpad}:\n"
-		.. "{1} = landingpad { i8*, i32 } cleanup\n"
-		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
-		.. "store i8* {2}, i8** %excptr\n"
-		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
-		.. "store i32 {3}, i32* %excidx\n",
-	set_constructor_initstate = "store i32 {initstate}, i32* %initstate\n"
-}
-
 llvmir.exception = {
 	section = "%__L_Exception = type { i64, i8* }\n"
 		.. "@__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)\n"
@@ -397,19 +386,19 @@ llvmir.exception = {
 		.. "{4} = bitcast i8* {3} to %__L_Exception*\n"
 		.. "{5} = load %__L_Exception, %__L_Exception* {4}\n"
 		.. "store %__L_Exception {5}, %__L_Exception* %exception\n"
-		.. "call void @__cxa_end_catch()\n"
-		.. "br label %{cleanup}\n",
-	cleanup_start = exception_vars.cleanup_landingpad
-		.. "br label %{cleanup}\n",
+		.. "call void @__cxa_end_catch()\n",
+	cleanup_start = "{landingpad}:\n"
+		.. "{1} = landingpad { i8*, i32 } cleanup\n"
+		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"
+		.. "store i8* {2}, i8** %excptr\n"
+		.. "{3} = extractvalue { i8*, i32 } {1}, 1\n"
+		.. "store i32 {3}, i32* %excidx\n",
 	cleanup_end = "{1} = load i8*, i8** %excptr\n"
 		.. "{2} = load i32, i32* %excidx\n"
 		.. "{3} = insertvalue { i8*, i32 } undef, i8* {1}, 0\n"
 		.. "{4} = insertvalue { i8*, i32 } {3}, i32 {2}, 1\n"
 		.. "resume { i8*, i32 } {4}\n",
-	set_constructor_initstate = exception_vars.set_constructor_initstate,
-	cleanup_start_constructor = exception_vars.cleanup_landingpad
-		.. exception_vars.set_constructor_initstate
-		.. "br label %{cleanup}\n"
+	set_constructor_initstate = "store i32 {initstate}, i32* %initstate\n"
 }
 local externFunctionReferenceMap = {}
 function llvmir.externFunctionDeclaration( lang, rtllvmtype, symbolname, argstr, vararg)
