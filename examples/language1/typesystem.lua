@@ -456,8 +456,10 @@ end
 function tryConstexprStructureReductionConstructorArray( node, thisTypeId, elementTypeId, nofElements)
 	local initconstructor = memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs
+		local step_bk = typedb:step( constructor.step)
 		local rt = initconstructor( {out="{RVAL}"}, constructor.list);
-		if rt then rt.out = "RVAL"; rt.step = constructor.step or typedb:step() end
+		typedb:step( step_bk)
+		if rt then rt.out = "RVAL"; rt.step = constructor.step end
 		return rt
 	end
 end
@@ -465,8 +467,10 @@ end
 function tryConstexprStructureReductionConstructor( node, thisTypeId)
 	local this = {type=referenceTypeMap[ thisTypeId], constructor={out="{RVAL}"}}
 	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs
+		local step_bk = typedb:step( constructor.step)
 		local res = tryApplyCallable( node, this, ":=", constructor.list) -- constexpr structure constructor is a list o arguments with type
-		if res then res.constructor.out = "RVAL"; res.constructor.step = constructor.step or typedb:step(); return res.constructor end
+		typedb:step( step_bk)		
+		if res then res.constructor.out = "RVAL"; res.constructor.step = constructor.step; return res.constructor end
 	end
 end
 -- Constructor of an operator on a constexpr structure type as argument
@@ -1373,7 +1377,7 @@ function setCleanupCode( name, code, step)
 	if not step then step = typedb:step() end
 	local di = #frame.dtors
 	while di > 0 and frame.dtors[di].step > step do di = di - 1 end
-	if di > 0 and frame.dtors[di].step == step then utils.errorMessage( frame.env.line, "Internal: More than one cleanup per scope step: %s %d", name, step) end
+	if di > 0 and frame.dtors[di].step == step then utils.errorMessage( frame.env.line, "Internal: More than one cleanup per scope step (%d): %s", step, name) end
 	table.insert( frame.dtors, di+1, {step=step,code=code,name=name})
 end
 -- Tell that there exists a partial dtor that has to be referenced by an unwind landingpad code of a throwing call
@@ -1386,7 +1390,7 @@ function getPartialDtorCode()
 	local step = typedb:step()
 	local frame = getAllocationFrame()
 	if frame and frame.partial_dtors[ step] then
-		local dtor = frame.partial_dtors[step]
+		local dtor = frame.partial_dtors[ step]
 		if type(dtor) ~= "table" then
 			dtor = {start=frame.env.label(),continue=frame.env.label()}
 			frame.partial_dtors[step] = dtor
@@ -1401,7 +1405,7 @@ function getPartialDtorLabels()
 	local step = typedb:step()
 	local frame = getAllocationFrame()
 	if frame and frame.partial_dtors[ step] then
-		local dtor = frame.partial_dtors[step]
+		local dtor = frame.partial_dtors[ step]
 		if type(dtor) == "table" then return dtor.start,dtor.continue end
 	end
 end
@@ -1735,7 +1739,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local init = applyCallable( node, decl, ":=", {initVal})
 		if out ~= "%rt" then -- no copy elision
 			local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-			local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step else step = nil end
+			local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
 			if cleanup then setCleanupCode( "local variable " .. name, cleanup, step) end
 		end
 		return init
@@ -1756,7 +1760,7 @@ function defineVariable( node, context, typeId, name, initVal)
 			if init.constructor then globalInitCode = globalInitCode .. init.constructor.code end
 		end
 		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step else step = nil end
+		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
 		if cleanup then setCleanupCode( "global variable " .. name, cleanup, step) end
 		instantAllocationFrame = nil
 		instantCallableEnvironment = nil
