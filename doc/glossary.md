@@ -3,6 +3,9 @@
 ## Name _Mewa_
 Polish name for seagull. It's difficult to find short memorizable names. I got stuck to names of birds in the polish language without non ASCII characters.
 
+## LLVM IR ##
+The intermediate representation of LLVM (https://llvm.org/). The LLVM IR has a textual representation that is used as intermediate format in the examples of _Mewa_. The tests also use the programs *lli* (interpreter) and *llc* (compiler) that can take this textual representation of LLVM IR as input and run it (*lli*) or translate it into a binary object file (*llc*).
+
 ## Type System
 A set of term rewrite rules to build structures of types and to reduce them to types and in this process construct a program that represents the entire structure defined in the program source.
 

@@ -8,10 +8,11 @@ This is a multiparadigm general purpose strongly typed programming language with
  * Classes (custom defined constructors, destructors, operators, methods, inheritance of classes and interfaces)
  * Free procedures and functions
  * Polymorphism through interface inheritance
- * Generic programming with templates (__planned__)
- * Exception handling (__planned__)
- * Backend is LLVM-IR
- * Modules (__planned__)
+ * Generic programming (generic classes and functions)
+ * Lambdas as argument of a generic class or function
+ * Exception handling with a fixed exception structure (an error code and an optional string)
+ * Backend is LLVM IR
+ * Modules (not implemented yet)
 
 ## Project Specific Files
 
@@ -23,12 +24,16 @@ The project specific files of the test language **language1** are located in [ex
  - [scalar_types.txt](../examples/language1/scalar_types.txt) Descriptions of the built-in basic first class scalar types.
  - [typesystem.lua](../examples/language1/typesystem.lua) Implements the Lua callbacks referenced in the grammar.
 
+
 ## Example Source Files
 
- - [fibo.prg](../examples/language1/sources/fibo.prg) Calculate the n-th (hardcoded) fibonacci number. Example using functions, procedures, constant string literal, and output via a C Library ```printf``` call.
- - [tree.prg](../examples/language1/sources/tree.prg) Tree structure. Build a tree as structure.
- - [class.prg](../examples/language1/sources/class.prg) Classes. Class and interface inheritance.
- - [generic.prg](../examples/language1/sources/generic.prg) Generic programming with templates.
- - [matrix.prg](../examples/language1/sources/matrix.prg) Some non trivial calculations using a bunch of features.
-
+ - [fibo.prg](../examples/language1/sources/fibo.prg) using functions, procedures, constant string literal, and output via a C Library ```printf``` call.
+ - [tree.prg](../examples/language1/sources/tree.prg) using structures.
+ - [pointer.prg](../examples/language1/sources/pointer.prg) using pointers to data and pointers to functions.
+ - [array.prg](../examples/language1/sources/array.prg) demonstrating the use of arrays.
+ - [class.prg](../examples/language1/sources/class.prg) demonstrating class and interface inheritance.
+ - [generic.prg](../examples/language1/sources/generic.prg) using some generic programming stuff.
+ - [complex.prg](../examples/language1/sources/generic.prg) implementing some calculations with complex numbers.
+ - [matrix.prg](../examples/language1/sources/matrix.prg) doing some matrix calculations.
+ - [exception.prg](../examples/language1/sources/exception.prg) testing exception handling, verified with valgrind.
  
