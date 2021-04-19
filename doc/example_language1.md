@@ -33,7 +33,7 @@ The project specific files of the test language **language1** are located in [ex
  - [array.prg](../examples/language1/sources/array.prg) demonstrating the use of arrays.
  - [class.prg](../examples/language1/sources/class.prg) demonstrating class and interface inheritance.
  - [generic.prg](../examples/language1/sources/generic.prg) using some generic programming stuff.
- - [complex.prg](../examples/language1/sources/generic.prg) implementing some calculations with complex numbers.
+ - [complex.prg](../examples/language1/sources/complex.prg) implementing some calculations with complex numbers.
  - [matrix.prg](../examples/language1/sources/matrix.prg) doing some matrix calculations.
  - [exception.prg](../examples/language1/sources/exception.prg) testing exception handling, verified with valgrind.
  
