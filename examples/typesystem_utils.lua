@@ -232,7 +232,7 @@ end
 
 -- Stacktrace:
 function utils.stack( msg, lv)
-	io.stderr:write( msg .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), true) .. "\n")
+	io.stderr:write( (msg or "") .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), true) .. "\n")
 end
 -- Monitor global variable access (thanks to https://stackoverflow.com/users/3080396/mblanc):
 function utils.logGlobalVariableAccess()

@@ -92,6 +92,7 @@ local globalCallableEnvironment = nil	-- Callable environment for constructors/d
 local instantAllocationFrame = nil	-- Allocation frame created for implicitly generated code
 local globalAllocationFrame = nil	-- Allocation frame for global variables
 local instantUnwindLabel = nil 		-- label for cleanup in case of an exception created for implicitly generated code (constructors,destructors,assignments,etc.)
+local environmentStack = {}		-- Stack used for instantCallableEnvironment, instantAllocationFrame, instantUnwindLabel defining the environment for implicitly defined code
 local globalInitCode = ""		-- Init code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
 local nodeIdCount = 0			-- Counter for node id allocation
@@ -932,22 +933,23 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	instantCallableEnvironment = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol)
+	local env = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol)
+	pushEnvironment( env, nil, "cleanup")
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
 	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
 	local cr_elementTypeId = constTypeMap[ r_elementTypeId] or r_elementTypeId
 	local ths = {type=r_elementTypeId, constructor={out="%ths"}}
 	local oth = {type=cr_elementTypeId, constructor={out="%oth"}}
-	local init = tryApplyCallableWithCleanup( node, ths, ":=", {}, "cleanup")
-	local copy = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, "cleanup")
+	local init = tryApplyCallable( node, ths, ":=", {})
+	local copy = tryApplyCallable( node, ths, ":=", {oth})
 	local dtor_code = typeConstructorPairCode( tryApplyCallable( node, ths, ":~", {})) or ""
 	if init then
 		local attributes,entercode,rewind,constructorFunc
 		if init.constructor.throws == true then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
+			rewind = getDefaultConstructorCleanupResumeCode( env, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_init_throwing)
 		else
 			attributes = llvmir.functionAttribute( false, false)
@@ -964,7 +966,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 		if copy.constructor.throws == true then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( instantCallableEnvironment, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
+			rewind = getDefaultConstructorCleanupResumeCode( env, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_copy_throwing)
 		else
 			attributes = llvmir.functionAttribute( false, false)
@@ -983,8 +985,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 	local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_valtype, elementTypeId, arraySize)
 	if redu_constructor_l then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
 	if redu_constructor_c then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
-
-	instantCallableEnvironment = nil
+	popEnvironment()
 end
 -- Define initialization from an initializer structure
 function defineInitializationFromStructure( node, qualitype)
@@ -1039,13 +1040,12 @@ function definePartialClassDestructor( node, qualitype, descr)
 end
 -- Define implicit constructors for 'struct'/'class' types
 function defineStructConstructors( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( node, "ctor " .. descr.symbol)
-	local env = instantCallableEnvironment
+	local env = createCallableEnvironment( node, "ctor " .. descr.symbol)
 	local ctors_init,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
-	local cleanupLabel = "cleanup_0"
-	local rewindlist = {{label=cleanupLabel}}
+	local rewindlist = {{label="cleanup_0"}}
 	local init_nofThrows,copy_nofThrows,element_nofThrows = 0,0,0
+	pushEnvironment( env, nil, "cleanup_0")
 
 	for mi,member in ipairs(descr.members) do
 		local out = env.register()
@@ -1065,16 +1065,16 @@ function defineStructConstructors( node, qualitype, descr)
 		local oth = {type=c_member_reftype,constructor={code=utils.constructor_format(loadref,{out=inp,this="%oth",index=mi-1, type=llvmtype}),out=inp}}
 
 		local param = {type=etype,constructor={out="%p" .. mi}}
-		local member_init = tryApplyCallableWithCleanup( node, ths, ":=", {}, cleanupLabel)
+		local member_init = tryApplyCallable( node, ths, ":=", {})
 		if member_init and member_init.constructor.throws then init_nofThrows = init_nofThrows + 1 end
-		local member_copy = tryApplyCallableWithCleanup( node, ths, ":=", {oth}, cleanupLabel)
+		local member_copy = tryApplyCallable( node, ths, ":=", {oth})
 		if member_copy and member_copy.constructor.throws then copy_nofThrows = copy_nofThrows + 1 end
-		local member_element = tryApplyCallableWithCleanup( node, ths, ":=", {param}, cleanupLabel)
+		local member_element = tryApplyCallable( node, ths, ":=", {param})
 		if member_element and member_element.constructor.throws then element_nofThrows = element_nofThrows + 1 end
 		local member_destroy_code; if member.descr.dtor then member_destroy_code = utils.constructor_format( member.descr.dtor, {this=out}, env.register) else member_destroy_code = "" end
 
-		cleanupLabel = "cleanup_" .. mi
-		if member_destroy_code ~= "" and mi ~= #descr.members then table.insert( rewindlist,{label=cleanupLabel, code=member_destroy_code}) end
+		instantUnwindLabel = "cleanup_" .. mi
+		if member_destroy_code ~= "" and mi ~= #descr.members then table.insert( rewindlist,{label=instantUnwindLabel, code=member_destroy_code}) end
 		if member_init and ctors_init then ctors_init = ctors_init .. member_init.constructor.code else ctors_init = nil end
 		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end 
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
@@ -1131,7 +1131,7 @@ function defineStructConstructors( node, qualitype, descr)
 		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, constructorFunc)
 		if element_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 	end
-	instantCallableEnvironment = nil
+	popEnvironment()
 end
 -- Define constructors/destructors for 'interface' types
 function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
@@ -1331,6 +1331,22 @@ function popGenericLocal( genericlocal)
 	if localDefinitionContext ~= genericlocal or #genericLocalStack == 0 then utils.errorMessage( 0, "Internal: corrupt generic local stack") end
 	localDefinitionContext,seekContextKey,currentCallableEnvKey,currentAllocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
 	table.remove( genericLocalStack, #genericLocalStack)
+end
+-- Temporarily change environment for implicitely defined code
+function pushEnvironment( env, frame, cleanup)
+	table.insert( environmentStack, {instantCallableEnvironment,instantAllocationFrame,instantUnwindLabel} )
+	instantCallableEnvironment = env
+	instantAllocationFrame = frame
+	instantUnwindLabel = cleanup
+end
+-- Restore temporarily changed environment for implicitely defined code
+function popEnvironment()
+	if #environmentStack == 0 then utils.errorMessage( 0, "Internal: corrupt environment stack") end
+	local glb = environmentStack[ #environmentStack]
+	table.remove( environmentStack, #environmentStack)
+	instantCallableEnvironment = glb[1]
+	instantAllocationFrame = glb[2]
+	instantUnwindLabel = glb[3]	
 end
 ---- Allocation Frame Fields ----
 --	parent		: Parent allocation frame, the allocation frame in which this allocation frame has been created (in the same callable environment)
@@ -1743,9 +1759,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		end
 		return init
 	elseif context.domain == "global" then
-		instantCallableEnvironment = globalCallableEnvironment
-		instantAllocationFrame = globalAllocationFrame
-		instantUnwindLabel = "abort"
+		pushEnvironment( globalCallableEnvironment, globalAllocationFrame, "abort")
 		out = "@" .. name
 		local var = typedb:def_type( 0, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
@@ -1757,7 +1771,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		else
 			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
 			local decl = {type=var, constructor={code=code,out=out}}
-			local init = tryApplyCallable( node, decl, ":=", {initVal}, "abort")
+			local init = tryApplyCallable( node, decl, ":=", {initVal})
 			if init.constructor then
 				globalInitCode = globalInitCode .. init.constructor.code
 				if init.constructor.throws then globalCallableEnvironment.throws = true end
@@ -1766,9 +1780,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
 		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
 		if cleanup then setCleanupCode( "global variable " .. name, cleanup, step) end
-		instantUnwindLabel = nil
-		instantAllocationFrame = nil
-		instantCallableEnvironment = nil
+		popEnvironment()
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
 		defineVariableMember( node, descr, context, typeId, name, context.private)
@@ -2424,13 +2436,6 @@ end
 function tryApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
-end
--- Same as tryApplyCallable but with a cleanup label passed as argument
-function tryApplyCallableWithCleanup( node, this, callable, args, cleanupLabel)
-	instantUnwindLabel = cleanupLabel
-	local res = tryApplyCallable( node, this, callable, args)
-	instantUnwindLabel = nil
-	return res
 end
 -- Get the symbol name for a function in the LLVM output
 function getTargetFunctionIdentifierString( descr, context)
@@ -3640,6 +3645,7 @@ function typesystem.main_procdef( node)
 	local block = table.unpack( utils.traverse( typedb, node, context))
 	local code = globalInitCode .. retvalinit .. block.code
 	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end
+	if globalCallableEnvironment.throws then enableFeatureException( env) end
 	local body = getCallableEnvironmentCodeBlock( env, code)
 		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel}) 
 		.. getAllocationFrameRegularExitCleanupCode( globalAllocationFrame)
@@ -3647,8 +3653,8 @@ function typesystem.main_procdef( node)
 		.. getAllocationFrameAbortCleanupCode( globalAllocationFrame)
 	if globalCallableEnvironment.throws then
 		local errcode = env.register()
-		body = body .. utils.constructor_format( llvmir.control.catch, {landingpad="abort"}, env.register)
-			.. utils.constructor_format( llvmir.control.storeErrCodeToRetval, {retval=retvaladr}, env.register)
+		body = body .. utils.constructor_format( llvmir.exception.catch, {landingpad="abort"}, env.register)
+			.. utils.constructor_format( llvmir.exception.storeErrCodeToRetval, {retval=retvaladr}, env.register)
 			.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
 	end
 	typedb:scope( scope_bk)
