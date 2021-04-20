@@ -1894,11 +1894,11 @@ L3:
 %r7 = icmp slt i32 %r6, 3
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-%r9 = load i32, i32* %r2
-%r10 = load i32, i32* %r5
-%r11 = call double @__C___Matrix__double__4__3__$get__i32__i32__const( %__Matrix__double__4__3* %r1, i32 %r9, i32 %r10)
-call void(i8*,  ...) @printf( i8* %r8, double %r11)
+%r11 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
+%r8 = load i32, i32* %r2
+%r9 = load i32, i32* %r5
+%r10 = call double @__C___Matrix__double__4__3__$get__i32__i32__const( %__Matrix__double__4__3* %r1, i32 %r8, i32 %r9)
+call void(i8*,  ...) @printf( i8* %r11, double %r10)
 %r12 = load i32, i32* %r5
 %r13 = add nsw i32 %r12, 1
 store i32 %r13, i32* %r5
@@ -1934,11 +1934,11 @@ L3:
 %r7 = icmp slt i32 %r6, 4
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-%r9 = load i32, i32* %r2
-%r10 = load i32, i32* %r5
-%r11 = call double @__C___Matrix__double__3__4__$get__i32__i32__const( %__Matrix__double__3__4* %r1, i32 %r9, i32 %r10)
-call void(i8*,  ...) @printf( i8* %r8, double %r11)
+%r11 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
+%r8 = load i32, i32* %r2
+%r9 = load i32, i32* %r5
+%r10 = call double @__C___Matrix__double__3__4__$get__i32__i32__const( %__Matrix__double__3__4* %r1, i32 %r8, i32 %r9)
+call void(i8*,  ...) @printf( i8* %r11, double %r10)
 %r12 = load i32, i32* %r5
 %r13 = add nsw i32 %r12, 1
 store i32 %r13, i32* %r5
@@ -1974,11 +1974,11 @@ L3:
 %r7 = icmp slt i32 %r6, 4
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-%r9 = load i32, i32* %r2
-%r10 = load i32, i32* %r5
-%r11 = call double @__C___Matrix__double__4__4__$get__i32__i32__const( %__Matrix__double__4__4* %r1, i32 %r9, i32 %r10)
-call void(i8*,  ...) @printf( i8* %r8, double %r11)
+%r11 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
+%r8 = load i32, i32* %r2
+%r9 = load i32, i32* %r5
+%r10 = call double @__C___Matrix__double__4__4__$get__i32__i32__const( %__Matrix__double__4__4* %r1, i32 %r8, i32 %r9)
+call void(i8*,  ...) @printf( i8* %r11, double %r10)
 %r12 = load i32, i32* %r5
 %r13 = add nsw i32 %r12, 1
 store i32 %r13, i32* %r5
@@ -2014,11 +2014,11 @@ L3:
 %r7 = icmp slt i32 %r6, 3
 br i1 %r7, label %L2, label %L1
 L2:
-%r8 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
-%r9 = load i32, i32* %r2
-%r10 = load i32, i32* %r5
-%r11 = call double @__C___Matrix__double__3__3__$get__i32__i32__const( %__Matrix__double__3__3* %r1, i32 %r9, i32 %r10)
-call void(i8*,  ...) @printf( i8* %r8, double %r11)
+%r11 = getelementptr inbounds [6 x i8], [6 x i8]* @string3, i64 0, i64 0
+%r8 = load i32, i32* %r2
+%r9 = load i32, i32* %r5
+%r10 = call double @__C___Matrix__double__3__3__$get__i32__i32__const( %__Matrix__double__3__3* %r1, i32 %r8, i32 %r9)
+call void(i8*,  ...) @printf( i8* %r11, double %r10)
 %r12 = load i32, i32* %r5
 %r13 = add nsw i32 %r12, 1
 store i32 %r13, i32* %r5

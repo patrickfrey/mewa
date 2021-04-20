@@ -82,6 +82,7 @@ local unboundReferenceTypeMap = {}	-- Map of value types to their unbound reftyp
 local constructorThrowingMap = {}	-- Map that tells if a constructor is throwing or not
 local typeQualiSepMap = {}		-- Map of any defined type id to a separation pair (valtype,qualifier) = valtype type, qualifier as booleans
 local typeDescriptionMap = {}		-- Map of any defined type id to its llvmir template structure
+local constVarargTypeMap = {}		-- Map of const value types to their vararg type (type used if passed as variable size argument list parameter)
 local stringConstantMap = {}		-- Map of string constant values to a structure with its attributes {fmt,name,size}
 local arrayTypeMap = {}			-- Map of the pair valtype,size to the array type valtype for an array size
 local genericInstanceTypeMap = {}	-- Map of the pair valtype,generic parameter to the generic instance type valtype for list of arguments
@@ -131,14 +132,13 @@ end
 --	throws		: True if the function is declared as potentially throwing exceptions
 
 -- Create a callable environent object
-function createCallableEnvironment( name, rtype, rprefix, lprefix)
-	return {name=name, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
+function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
+	return {name=name, line=node.line, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
 	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype, throws)
-	local env = createCallableEnvironment( name, rtype)
-	env.line = node.line
+	local env = createCallableEnvironment( node, name, rtype)
 	env.throws = throws
 	if typedb:this_instance( currentCallableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
 	typedb:set_instance( currentCallableEnvKey, env)
@@ -213,6 +213,13 @@ function singleArgumentConstructor( fmt)
 		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
  		return constructorStruct( this_inp, code)
 	end
+end
+-- Constructor of a string pointer from a string definition
+function stringPointerConstructor( stringdef)
+	local env = getCallableEnvironment()
+	local out = env.register()
+	local code = utils.template_format( llvmir.control.stringConstConstructor,{size=stringdef.size,name=stringdef.name,out=out})
+	return constructorStruct( out, code)
 end
 -- Constructor implementing an assignment of a free function callable to a function/procedure pointer
 function copyFunctionPointerConstructor( descr)
@@ -335,7 +342,7 @@ function functionCallConstructor( env, code, func, argstr, descr)
 	local step = nil
 	if not env.throws and descr.throws then
 		if hasCatchFrame() then
-			env.throws = true 
+			env.throws = true
 		else
 			utils.errorMessage( env.line or 0, "Calling throwing function inside a callable declared as nothrow without a catch handling an exception: %s", func)
 		end
@@ -519,6 +526,11 @@ typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr
 typeDescriptionMap[ constexprBooleanType] = llvmir.constexprBooleanDescr
 typeDescriptionMap[ constexprNullType] = llvmir.constexprNullDescr
 typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr
+constVarargTypeMap[ constexprIntegerType] = constexprIntegerType
+constVarargTypeMap[ constexprUIntegerType] = constexprIntegerType
+constVarargTypeMap[ constexprFloatType] = constexprFloatType
+constVarargTypeMap[ constexprBooleanType] = constexprIntegerType
+constVarargTypeMap[ constexprNullType] = constexprNullType
 -- Table listing the accepted constant expression/value types for each scalar type class with the weight for loading it
 local typeClassToConstExprTypesMap = {
 	fp = {{type=constexprFloatType,weight=rdw_constexpr}, {type=constexprIntegerType,weight=rdw_float},{type=constexprUIntegerType,weight=rdw_float}}, 
@@ -625,29 +637,14 @@ end
 function getDeclarationType( typeId)
 	local redulist = typedb:get_reductions( typeId, tagmask_declaration)
 	for ri,redu in ipairs( redulist) do return redu.type end
-end
--- Return the raw type of a vararg argument to use for parameter passing of variable arguments (...)
-function stripVarargType( typeId)
-	return qualiTypeMap[ typeQualiSepMap[ typeId].valtype].c_valtype
+	return typeId
 end
 -- Map a type used as variable argument parameter (where no explicit parameter type defined for the callee) to its type used for parameter passing
 function getVarargArgumentType( typeId)
-	local descr = typeDescriptionMap[ typeId]
-	if not descr then
-		typeId = getDeclarationType( typeId)
-		if typeId then descr = typeDescriptionMap[ stripVarargType( typeId)] end
-	end
-	if descr then
-		if descr.class == "constexpr" then
-			return typeId
-		elseif descr.class == "pointer" then
-			return memPointerType
-		elseif descr.class == "signed" or descr.class == "unsigned" or descr.class == "bool" then
-			if descr.llvmtype == "i64" then return scalarLongType else return scalarIntegerType end
-		elseif descr.class == "fp" then
-			return scalarFloatType
-		end
-	end
+	local decltype = getDeclarationType( typeId)
+	local qs = typeQualiSepMap[ decltype]
+	if qs then decltype = qualiTypeMap[ qs.valtype].c_valtype end
+	return constVarargTypeMap[ decltype]
 end
 -- Get the name used for a non pointer type with qualifiers built into the type name
 function getQualifierTypeName( qualifier, typnam, prefix)
@@ -919,12 +916,13 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 		if not dtor_next then dtor_next = finishLabel end
 		if code then
 			partial_dtor = partial_dtor
-				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label,cleanup=dtor_label}, env.register)
-				.. utils.constructor_format( llvmir.control.plainLabel, {inp=dtor_label}) .. code
+				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label}, env.register)
+				.. utils.constructor_format( llvmir.control.label, {inp=dtor_label}) .. code
 				.. utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor_next})
 		else
 			partial_dtor = partial_dtor
-				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label,cleanup=dtor_next}, env.register)
+				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label}, env.register)
+				.. utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor_next})
 		end
 	end
 	partial_dtor = partial_dtor
@@ -934,7 +932,7 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	instantCallableEnvironment = createCallableEnvironment( "ctor " .. arrayDescr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol)
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
 	if not r_elementTypeId then utils.errorMessage( node.line, "References not allowed in array declarations, use pointer instead") end
@@ -1025,7 +1023,7 @@ function getClassMemberPartialDestructorCode( env, descr, members)
 end
 -- Define implicit destructors for 'struct'/'class' types
 function defineStructDestructors( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( "dtor " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol)
 	local dtors = getStructMemberDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
@@ -1034,14 +1032,14 @@ function defineStructDestructors( node, qualitype, descr)
 end
 -- Print the code of the partial destructor for a 'class' type
 function definePartialClassDestructor( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( "dtor " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol)
 	local partial_dtors = getClassMemberPartialDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
 	instantCallableEnvironment = nil
 end
 -- Define implicit constructors for 'struct'/'class' types
 function defineStructConstructors( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( "ctor " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( node, "ctor " .. descr.symbol)
 	local env = instantCallableEnvironment
 	local ctors_init,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
@@ -1736,6 +1734,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		local decl = {type=var, constructor={code=code,out=out}}
+		if type(initVal) == "function" then initVal = initVal() end
 		local init = applyCallable( node, decl, ":=", {initVal})
 		if out ~= "%rt" then -- no copy elision
 			local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
@@ -1746,22 +1745,28 @@ function defineVariable( node, context, typeId, name, initVal)
 	elseif context.domain == "global" then
 		instantCallableEnvironment = globalCallableEnvironment
 		instantAllocationFrame = globalAllocationFrame
+		instantUnwindLabel = "abort"
 		out = "@" .. name
 		local var = typedb:def_type( 0, name, out)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
+		if type(initVal) == "function" then initVal = initVal() end
 		if initVal and isScalarConstExprValueType( initVal.type) then
 			valueconv = constexprLlvmConversion( typeId, initVal.type)
 			print( utils.constructor_format( descr.def_global_val, {out = out, val = valueconv(constructorParts(initVal.constructor))})) -- print global data declaration
 		else
 			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
 			local decl = {type=var, constructor={code=code,out=out}}
-			local init = applyCallable( node, decl, ":=", {initVal})
-			if init.constructor then globalInitCode = globalInitCode .. init.constructor.code end
+			local init = tryApplyCallable( node, decl, ":=", {initVal}, "abort")
+			if init.constructor then
+				globalInitCode = globalInitCode .. init.constructor.code
+				if init.constructor.throws then globalCallableEnvironment.throws = true end
+			end
 		end
 		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
 		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
 		if cleanup then setCleanupCode( "global variable " .. name, cleanup, step) end
+		instantUnwindLabel = nil
 		instantAllocationFrame = nil
 		instantCallableEnvironment = nil
 	elseif context.domain == "member" then
@@ -1984,7 +1989,7 @@ function initBuiltInTypes()
 			if scalar_descr.llvmtype == "i64" then scalarLongType = c_valtype; scalarLongTypnam = typnam end
 					local scalarFloatType = nil
 
-			if scalar_descr.llvmtype == "i8" and stringPointerType == 0 then
+			if scalar_descr.llvmtype == "i8" and not byteQualitype then
 				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_valtype
@@ -1995,12 +2000,27 @@ function initBuiltInTypes()
 			typedb:def_reduction( qualitype.valtype, constexprType.type, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeInstantiation, weight)
 		end
 	end
+	for typnam, scalar_descr in pairs( llvmir.scalar) do
+		local qualitype = scalarQualiTypeMap[ typnam]
+		local c_valtype = qualitype.c_valtype
+		if scalar_descr.class == "fp" then
+			constVarargTypeMap[ c_valtype] = scalarFloatType
+		elseif scalar_descr.class == "bool" then
+			constVarargTypeMap[ c_valtype] = scalarIntegerType
+		elseif scalar_descr.class == "unsigned" then
+			constVarargTypeMap[ c_valtype] = scalarIntegerType
+		elseif scalar_descr.class == "signed" then
+			constVarargTypeMap[ c_valtype] = scalarIntegerType			
+		end
+	end
 	local bytePointerQualitype_valtype,bytePointerQualitype_cval
 	if byteQualitype then
 		bytePointerQualitype_valtype,bytePointerQualitype_cval = definePointerQualiTypesCrossed( {line=0}, byteQualitype)
 		stringPointerType = bytePointerQualitype_cval.valtype
 		memPointerType = bytePointerQualitype_valtype.valtype
 		typedb:def_reduction( memPointerType, stringPointerType, nil, tag_pushVararg)
+		constVarargTypeMap[ bytePointerQualitype_valtype.c_valtype] = bytePointerQualitype_valtype.c_valtype
+		constVarargTypeMap[ bytePointerQualitype_cval.c_valtype] = bytePointerQualitype_cval.c_valtype
 	end
 	if not scalarBooleanType then utils.errorMessage( 0, "No boolean type defined in built-in scalar types") end
 	if not scalarIntegerType then utils.errorMessage( 0, "No integer type mapping to i32 defined in built-in scalar types (return value of main)") end
@@ -2029,6 +2049,9 @@ function initBuiltInTypes()
 		definePointerArithmeticOperators( bytePointerQualitype_valtype.valtype)
 		definePointerArithmeticOperators( bytePointerQualitype_cval.valtype)
 	end
+	typedb:def_reduction( stringPointerType, stringAddressType, stringPointerConstructor, tag_typeInstantiation)
+	constVarargTypeMap[ stringAddressType] = stringPointerType
+	constVarargTypeMap[ stringPointerType] = stringPointerType	
 	initControlBooleanTypes()
 end
 -- Application of a constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
@@ -2239,6 +2262,7 @@ function createPointerTypeInstance( node, attr, typeId)
 		local voidptr_cast_fmt = utils.template_format( llvmir.control.bytePointerCast, {llvmtype=descr.llvmtype})
 		typedb:def_reduction( memPointerType, qualitype.c_valtype, convConstructor(voidptr_cast_fmt), tag_pushVararg)
 	end
+	constVarargTypeMap[ qualitype.c_valtype] = memPointerType
 	if attr.const == true then return qualitype.c_valtype else return qualitype.valtype end
 end
 -- Call a function, meaning to apply operator "()" on a callable
@@ -2695,16 +2719,10 @@ function getStringConstant( value)
 	if not stringConstantMap[ value] then
 		local encval,enclen = utils.encodeLexemLlvm(value)
 		local name = utils.uniqueName( "string")
-		stringConstantMap[ value] = {fmt=utils.template_format( llvmir.control.stringConstConstructor, {name=name,size=enclen+1}),name=name,size=enclen+1}
-		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {out="@" .. name, size=enclen+1, value=encval}) .. "\n")
+		stringConstantMap[ value] = {size=enclen+1,name=name}
+		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {name=name, size=enclen+1, value=encval}) .. "\n")
 	end
-	local env = getCallableEnvironment()
-	if not env then
-		return {type=stringAddressType,constructor=stringConstantMap[ value]}
-	else
-		local out = env.register()
-		return {type=stringPointerType,constructor={code=utils.constructor_format( stringConstantMap[ value].fmt, {out=out}), out=out}}
-	end
+	return {type=stringAddressType,constructor=stringConstantMap[value]}
 end
 -- Basic structure type definition for class,struct,interface
 function defineStructureType( node, declContextTypeId, typnam, fmt)
@@ -3045,7 +3063,8 @@ function typesystem.vardef( node, context)
 	return defineVariable( node, context, datatype, varnam, nil)
 end
 function typesystem.vardef_assign( node, context)
-	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
+	local datatype,varnam = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
+	local initval = function() return utils.traverseRange( typedb, node, {3,3}, context)[3] end
 	return defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.typedef( node, context)
@@ -3626,14 +3645,21 @@ function typesystem.main_procdef( node)
 		.. getAllocationFrameRegularExitCleanupCode( globalAllocationFrame)
 		.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
 		.. getAllocationFrameAbortCleanupCode( globalAllocationFrame)
+	if globalCallableEnvironment.throws then
+		local errcode = env.register()
+		body = body .. utils.constructor_format( llvmir.control.catch, {landingpad="abort"}, env.register)
+			.. utils.constructor_format( llvmir.control.storeErrCodeToRetval, {retval=retvaladr}, env.register)
+			.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
+	end
 	typedb:scope( scope_bk)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
 end
 function typesystem.program( node)
 	llvmir.init()
 	initBuiltInTypes()
-	globalCallableEnvironment = createCallableEnvironment( "globals ", nil, "%ir", "IL")
+	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, "%ir", "IL")
 	globalAllocationFrame = createAllocationFrame( globalCallableEnvironment, typedb:scope())
+	globalAllocationFrame.catch = globalAllocationFrame -- there is not really a try/catch but we catch the exceptions of global initializations in the main (label "abort")
 	utils.traverse( typedb, node, {domain="global"})
 	return node
 end

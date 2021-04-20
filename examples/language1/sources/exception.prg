@@ -153,6 +153,9 @@ private procedure test( int allocCnt) nothrow
 	}
 }
 
+std::String g_globalGreeting = (cast std::String: "Hello") + (cast std::String: " ") + (cast std::String: "world") + (cast std::String: "!");
+// std::String[20] g_globalGreetingArray = {"H","e","l","l","o"," ","w","o","r","l","d!"};
+
 main
 {
 	printf( "----- NO EXCEPTION\n");

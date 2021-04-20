@@ -365,12 +365,12 @@ L3:
 %r13 = icmp slt i32 %r12, 5
 br i1 %r13, label %L2, label %L1
 L2:
-%r14 = getelementptr inbounds [17 x i8], [17 x i8]* @string1, i64 0, i64 0
+%r16 = getelementptr inbounds [17 x i8], [17 x i8]* @string1, i64 0, i64 0
 %r17 = load i32, i32* %r11
-%r15 = load i32, i32* %r11
-%r16 = call i32* @__C_IntArray__$get__i32( %IntArray* %r1, i32 %r15)
-%r18 = load i32, i32* %r16
-call void(i8*,  ...) @printf( i8* %r14, i32 %r17, i32 %r18)
+%r14 = load i32, i32* %r11
+%r15 = call i32* @__C_IntArray__$get__i32( %IntArray* %r1, i32 %r14)
+%r18 = load i32, i32* %r15
+call void(i8*,  ...) @printf( i8* %r16, i32 %r17, i32 %r18)
 %r19 = load i32, i32* %r11
 %r20 = add nsw i32 %r19, 1
 store i32 %r20, i32* %r11
@@ -417,13 +417,13 @@ L3:
 %r21 = icmp slt i32 %r20, 5
 br i1 %r21, label %L2, label %L1
 L2:
-%r22 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
+%r24 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
 %r25 = load i32, i32* %r19
-%r23 = load i32, i32* %r19
-%r24 = call float* @__C_FloatArray__$get__i32( %FloatArray* %r9, i32 %r23)
-%r26 = load float, float* %r24
+%r22 = load i32, i32* %r19
+%r23 = call float* @__C_FloatArray__$get__i32( %FloatArray* %r9, i32 %r22)
+%r26 = load float, float* %r23
 %r27 = fpext float %r26 to double
-call void(i8*,  ...) @printf( i8* %r22, i32 %r25, double %r27)
+call void(i8*,  ...) @printf( i8* %r24, i32 %r25, double %r27)
 %r28 = load i32, i32* %r19
 %r29 = add nsw i32 %r28, 1
 store i32 %r29, i32* %r19
@@ -467,12 +467,12 @@ L3:
 %r19 = icmp slt i32 %r18, 5
 br i1 %r19, label %L2, label %L1
 L2:
-%r20 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
+%r22 = getelementptr inbounds [17 x i8], [17 x i8]* @string3, i64 0, i64 0
 %r23 = load i32, i32* %r17
-%r21 = load i32, i32* %r17
-%r22 = call double* @__C_DoubleArray__$get__i32( %DoubleArray* %r7, i32 %r21)
-%r24 = load double, double* %r22
-call void(i8*,  ...) @printf( i8* %r20, i32 %r23, double %r24)
+%r20 = load i32, i32* %r17
+%r21 = call double* @__C_DoubleArray__$get__i32( %DoubleArray* %r7, i32 %r20)
+%r24 = load double, double* %r21
+call void(i8*,  ...) @printf( i8* %r22, i32 %r23, double %r24)
 %r25 = load i32, i32* %r17
 %r26 = add nsw i32 %r25, 1
 store i32 %r26, i32* %r17

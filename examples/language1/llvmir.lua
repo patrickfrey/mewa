@@ -318,7 +318,7 @@ llvmir.control = {
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
 	functionVarargSignature = "({argstr} ...)",
-	stringConstDeclaration = "{out} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
+	stringConstDeclaration = "@{name} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n{\nentry:\n{body}}\n",
 	vtableElement = "{interface_signature} bitcast ({class_signature} @{symbolname} to {interface_signature})",
@@ -387,6 +387,10 @@ llvmir.exception = {
 		.. "{5} = load %__L_Exception, %__L_Exception* {4}\n"
 		.. "store %__L_Exception {5}, %__L_Exception* %exception\n"
 		.. "call void @__cxa_end_catch()\n",
+	storeErrCodeToRetval = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
+		.. "{2} = load i64, i64* {1}\n"
+		.. "{3} = trunc i64 {2} to i32\n"
+		.. "store i32 {3}, i32* {retval}\n",
 	cleanup_start = "{landingpad}:\n"
 		.. "{1} = landingpad { i8*, i32 } cleanup\n"
 		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"

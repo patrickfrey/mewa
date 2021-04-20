@@ -155,13 +155,13 @@ L4:
 %r16 = icmp slt i32 %r15, 5
 br i1 %r16, label %L3, label %L2
 L3:
-%r17 = getelementptr inbounds [19 x i8], [19 x i8]* @string1, i64 0, i64 0
+%r19 = getelementptr inbounds [19 x i8], [19 x i8]* @string1, i64 0, i64 0
 %r20 = load i32, i32* %r14
-%r18 = load i32, i32* %r14
-%r19 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 %r18)
-%r21 = load float, float* %r19
+%r17 = load i32, i32* %r14
+%r18 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 %r17)
+%r21 = load float, float* %r18
 %r22 = fpext float %r21 to double
-call void(i8*,  ...) @printf( i8* %r17, i32 %r20, double %r22)
+call void(i8*,  ...) @printf( i8* %r19, i32 %r20, double %r22)
 %r23 = load i32, i32* %r14
 %r24 = add nsw i32 %r23, 1
 store i32 %r24, i32* %r14
