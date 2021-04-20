@@ -52,6 +52,14 @@ class String
 		m_ptr[ size_] = 0;
 		printf( "Constructor string [%s]\n", c_str());
 	}
+	public constructor( const std::String o)
+	{
+		m_ptr = allocmem( o.m_size + 1);
+		m_size = o.m_size;
+		memcpy( m_ptr, o.m_ptr, o.m_size);
+		m_ptr[ m_size] = 0;
+		printf( "Copy constructor string [%s]\n", c_str());
+	}
 	destructor
 	{
 		printf( "Destructor string [%s]\n", c_str());
@@ -122,16 +130,45 @@ private function getGreetingA1 std::String()
 	return ar[0] + ar[1] + ar[2] + ar[3];
 }
 
+class GreetingType
+{
+	public constructor( const byte^ str)
+	{
+		greet = "Hello";
+		who = str;
+		punct = "!";
+	}
+	public constructor()
+	{}
+	std::String greet;
+	std::String who;
+	std::String punct;
+
+	public function phrase std::String() const
+	{
+		if (greet.size() > 0)
+		{
+			return greet + (cast std::String: " ") + who + punct;
+		}
+		else
+		{
+			return {};
+		}
+	}
+}
+
 private procedure test( int allocCnt) nothrow
 {
 	g_maxAllocCnt = allocCnt;
 	g_allocCnt = 0;
+
 	try
 	{
 		var std::String fstr = getGreeting();
 		var std::String astr = getGreetingA1();
 		var std::String str = "Hello world!";
 		var std::String[20] ar = {"H","e","l","l","o"," ","w","o","r","l","d!"};
+		var GreetingType[10][10] greetingTypeArray = {{"home","world","universe"},{"abroad","anywhere"},{"aliens"}};
 
 		var int ii = 0;
 		while (ii < 20 && ar[ii].size() != 0) {
@@ -146,6 +183,7 @@ private procedure test( int allocCnt) nothrow
 			printf( "GREETING %s\n", greeting.c_str());
 		}
 		printf( "GREET1 %s GREET2 %s GREET3 %s\n", fstr.c_str(), astr.c_str(), str.c_str());
+		printf( "SELECT %s\n", greetingTypeArray[1][1].phrase().c_str());
 	}
 	catch errcode, errmsg
 	{
@@ -154,10 +192,11 @@ private procedure test( int allocCnt) nothrow
 }
 
 std::String g_globalGreeting = (cast std::String: "Hello") + (cast std::String: " ") + (cast std::String: "world") + (cast std::String: "!");
-// std::String[20] g_globalGreetingArray = {"H","e","l","l","o"," ","w","o","r","l","d!"};
+std::String[20] g_globalGreetingArray = {"H","e","l","l","o"," ","w","o","r","l","d!"};
 
 main
 {
+	printf( "INIT ALLOCS %d\n", g_allocCnt);
 	printf( "----- NO EXCEPTION\n");
 	test( 1000);
 	printf( "ALLOCS %d\n", g_allocCnt);
@@ -169,5 +208,6 @@ main
 		test( ii);
 		ii = ii + 1;
 	}
+	printf( "GLOBAL GREETING %s\n", g_globalGreeting.c_str());
 }
 

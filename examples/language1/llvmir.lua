@@ -45,10 +45,10 @@ local arrayTemplate = {
 	class = "array",
 	assign = "store [{size} x {element}] {arg1}, [{size} x {element}]* {this}\n",
 	scalar = false,
-	ctorproc_init = "define private dso_local void @__ctor_init_{size}__{elementsymbol}( [{size} x {element}]* %ar, i32 %start){attributes} {\n"
+	ctorproc_init = "define private dso_local void @__ctor_init_{size}__{elementsymbol}( [{size} x {element}]* %ths_ar, i32 %start){attributes} {\n"
 		.. "enter:\n{entercode}"
-		.. "%ths_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 %start\n"
-		.. "%ths_top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ar, i32 0, i32 {size}\n"
+		.. "%ths_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 %start\n"
+		.. "%ths_top = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 {size}\n"
 		.. "br label %loop\nloop:\n"
 		.. "%ths = phi {element}* [%ths_base, %enter], [%A2, %cond]\n"
 		.. "{ctors}br label %cond\ncond:\n"
@@ -64,7 +64,7 @@ local arrayTemplate = {
 		.. "%D6 = sub i64 %D1, %D2\n"
 		.. "%D7 = udiv exact i64 %D6, %D5\n"
 		.. "%D8 = trunc i64 %D7 to i32\n"
-		.. "call void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* %ar, i32 %D8)\n",
+		.. "call void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* %ths_ar, i32 %D8)\n",
 	ctorproc_copy = "define private dso_local void @__ctor_copy_{size}__{elementsymbol}( [{size} x {element}]* %ths_ar, [{size} x {element}]* %oth_ar){attributes} {\n"
 		.. "enter:\n{entercode}"
 		.. "%ths_base = getelementptr inbounds [{size} x {element}], [{size} x {element}]* %ths_ar, i32 0, i32 0\n"
@@ -105,7 +105,6 @@ local arrayTemplate = {
 	ctor_copy_throwing = "invoke void @__ctor_copy_{size}__{elementsymbol}( [{size} x {element}]* {this}, [{size} x {element}]* {arg1}) to label %{success} unwind label %{cleanup}\n{success}:\n",
 
 	dtor = "call void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* {this}, i32 {size})\n",
-	partial_dtor = "call void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* {this}, i32 {num})\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
 	loadelemref = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
 	loadelem = "{1} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
@@ -387,10 +386,10 @@ llvmir.exception = {
 		.. "{5} = load %__L_Exception, %__L_Exception* {4}\n"
 		.. "store %__L_Exception {5}, %__L_Exception* %exception\n"
 		.. "call void @__cxa_end_catch()\n",
-	storeErrCodeToRetval = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
+	returnExceptionErrCode = "{1} = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0\n"
 		.. "{2} = load i64, i64* {1}\n"
 		.. "{3} = trunc i64 {2} to i32\n"
-		.. "store i32 {3}, i32* {retval}\n",
+		.. "ret i32 {3}\n",
 	cleanup_start = "{landingpad}:\n"
 		.. "{1} = landingpad { i8*, i32 } cleanup\n"
 		.. "{2} = extractvalue { i8*, i32 } {1}, 0\n"

@@ -6,10 +6,10 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %IntArray = type { [5 x i32] }
 %FloatArray = type { [5 x float] }
 %DoubleArray = type { [5 x double] }
-define private dso_local void @__ctor_init_5__i32( [5 x i32]* %ar, i32 %start)#0 nounwind {
+define private dso_local void @__ctor_init_5__i32( [5 x i32]* %ths_ar, i32 %start)#0 nounwind {
 enter:
-%ths_base = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 %start
-%ths_top = getelementptr inbounds [5 x i32], [5 x i32]* %ar, i32 0, i32 5
+%ths_base = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 5
 br label %loop
 loop:
 %ths = phi i32* [%ths_base, %enter], [%A2, %cond]
@@ -80,10 +80,10 @@ br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_init_5__float( [5 x float]* %ar, i32 %start)#0 nounwind {
+define private dso_local void @__ctor_init_5__float( [5 x float]* %ths_ar, i32 %start)#0 nounwind {
 enter:
-%ths_base = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 %start
-%ths_top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 5
+%ths_base = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 5
 br label %loop
 loop:
 %ths = phi float* [%ths_base, %enter], [%A2, %cond]
@@ -154,10 +154,10 @@ br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_init_5__double( [5 x double]* %ar, i32 %start)#0 nounwind {
+define private dso_local void @__ctor_init_5__double( [5 x double]* %ths_ar, i32 %start)#0 nounwind {
 enter:
-%ths_base = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 %start
-%ths_top = getelementptr inbounds [5 x double], [5 x double]* %ar, i32 0, i32 5
+%ths_base = getelementptr inbounds [5 x double], [5 x double]* %ths_ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x double], [5 x double]* %ths_ar, i32 0, i32 5
 br label %loop
 loop:
 %ths = phi double* [%ths_base, %enter], [%A2, %cond]

@@ -9,6 +9,7 @@ declare external void @free( i8* ) nounwind
 declare external i8* @memcpy( i8*, i8*, i64 ) nounwind
 declare external i64 @strlen( i8* ) nounwind
 %std__String = type { i8*, i32 }
+%GreetingType = type { %std__String, %std__String, %std__String }
 declare external i8* @strdup( i8* ) nounwind
 %__L_Exception = type { i64, i8* }
 @__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)
@@ -56,10 +57,10 @@ br label %end
 end:
 ret void
 }
-define private dso_local void @__ctor_init_4__std__String( [4 x %std__String]* %ar, i32 %start)#0 nounwind {
+define private dso_local void @__ctor_init_4__std__String( [4 x %std__String]* %ths_ar, i32 %start)#0 nounwind {
 enter:
-%ths_base = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %ar, i32 0, i32 %start
-%ths_top = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %ar, i32 0, i32 4
+%ths_base = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %ths_ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %ths_ar, i32 0, i32 4
 br label %loop
 loop:
 %ths = phi %std__String* [%ths_base, %enter], [%A2, %cond]
@@ -69,6 +70,52 @@ cond:
 %A2 = getelementptr inbounds %std__String, %std__String* %ths, i64 1
 %A3 = icmp eq %std__String* %A2, %ths_top
 br i1 %A3, label %end, label %loop
+end:
+ret void
+}
+define private dso_local void @__ctor_copy_4__std__String( [4 x %std__String]* %ths_ar, [4 x %std__String]* %oth_ar)#0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+enter:
+%excptr = alloca i8*
+%excidx = alloca i32
+%ths_base = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %ths_ar, i32 0, i32 0
+%ths_top = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %ths_ar, i32 0, i32 4
+%oth_base = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %oth_ar, i32 0, i32 0
+br label %loop
+loop:
+%ths = phi %std__String* [%ths_base, %enter], [%A2, %cond]
+%oth = phi %std__String* [%oth_base, %enter], [%A3, %cond]
+invoke void @__C_std__String__$ctor__std__String$( %std__String* %ths, %std__String* %oth) to label %L1 unwind label %cleanup
+L1:
+br label %cond
+cond:
+%A2 = getelementptr inbounds %std__String, %std__String* %ths, i64 1
+%A3 = getelementptr inbounds %std__String, %std__String* %oth, i64 1
+%A4 = icmp eq %std__String* %A2, %ths_top
+br i1 %A4, label %end, label %loop
+cleanup:
+%r1 = landingpad { i8*, i32 } cleanup
+%r2 = extractvalue { i8*, i32 } %r1, 0
+store i8* %r2, i8** %excptr
+%r3 = extractvalue { i8*, i32 } %r1, 1
+store i32 %r3, i32* %excidx
+br label %cleanup_dtor
+cleanup_dtor:
+%D1 = ptrtoint %std__String* %ths to i64
+%D2 = ptrtoint %std__String* %ths_base to i64
+%D3 = getelementptr inbounds %std__String, %std__String* %ths_base, i64 1
+%D4 = ptrtoint %std__String* %D3 to i64
+%D5 = sub i64 %D4, %D2
+%D6 = sub i64 %D1, %D2
+%D7 = udiv exact i64 %D6, %D5
+%D8 = trunc i64 %D7 to i32
+call void @__dtor_4__std__String( [4 x %std__String]* %ths_ar, i32 %D8)
+br label %finish
+finish:
+%r4 = load i8*, i8** %excptr
+%r5 = load i32, i32* %excidx
+%r6 = insertvalue { i8*, i32 } undef, i8* %r4, 0
+%r7 = insertvalue { i8*, i32 } %r6, i32 %r5, 1
+resume { i8*, i32 } %r7
 end:
 ret void
 }
@@ -90,10 +137,49 @@ br i1 %A3, label %end, label %loop
 end:
 ret void
 }
-define private dso_local void @__ctor_init_20__std__String( [20 x %std__String]* %ar, i32 %start)#0 nounwind {
+define private dso_local void @__dtor_GreetingType( %GreetingType* %ths) {
 enter:
-%ths_base = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %ar, i32 0, i32 %start
-%ths_top = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %ar, i32 0, i32 20
+%r3 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 2
+call void @__dtor_std__String( %std__String* %r3)
+%r2 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
+call void @__dtor_std__String( %std__String* %r2)
+%r1 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 0
+call void @__dtor_std__String( %std__String* %r1)
+br label %end
+end:
+ret void
+}
+define private dso_local void @__partial_dtor_GreetingType( %GreetingType* %ths, i32 %istate) {
+enter:
+%r6 = icmp sle i32 %istate, 3
+br i1 %r6, label %L5, label %L6
+L5:
+%r5 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 2
+call void @__dtor_std__String( %std__String* %r5)
+br label %L6
+L6:
+%r4 = icmp sle i32 %istate, 2
+br i1 %r4, label %L3, label %L4
+L3:
+%r3 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
+call void @__dtor_std__String( %std__String* %r3)
+br label %L4
+L4:
+%r2 = icmp sle i32 %istate, 1
+br i1 %r2, label %L1, label %L2
+L1:
+%r1 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 0
+call void @__dtor_std__String( %std__String* %r1)
+br label %L2
+L2:
+br label %end
+end:
+ret void
+}
+define private dso_local void @__ctor_init_20__std__String( [20 x %std__String]* %ths_ar, i32 %start)#0 nounwind {
+enter:
+%ths_base = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %ths_ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %ths_ar, i32 0, i32 20
 br label %loop
 loop:
 %ths = phi %std__String* [%ths_base, %enter], [%A2, %cond]
@@ -103,6 +189,52 @@ cond:
 %A2 = getelementptr inbounds %std__String, %std__String* %ths, i64 1
 %A3 = icmp eq %std__String* %A2, %ths_top
 br i1 %A3, label %end, label %loop
+end:
+ret void
+}
+define private dso_local void @__ctor_copy_20__std__String( [20 x %std__String]* %ths_ar, [20 x %std__String]* %oth_ar)#0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+enter:
+%excptr = alloca i8*
+%excidx = alloca i32
+%ths_base = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %ths_ar, i32 0, i32 0
+%ths_top = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %ths_ar, i32 0, i32 20
+%oth_base = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %oth_ar, i32 0, i32 0
+br label %loop
+loop:
+%ths = phi %std__String* [%ths_base, %enter], [%A2, %cond]
+%oth = phi %std__String* [%oth_base, %enter], [%A3, %cond]
+invoke void @__C_std__String__$ctor__std__String$( %std__String* %ths, %std__String* %oth) to label %L1 unwind label %cleanup
+L1:
+br label %cond
+cond:
+%A2 = getelementptr inbounds %std__String, %std__String* %ths, i64 1
+%A3 = getelementptr inbounds %std__String, %std__String* %oth, i64 1
+%A4 = icmp eq %std__String* %A2, %ths_top
+br i1 %A4, label %end, label %loop
+cleanup:
+%r1 = landingpad { i8*, i32 } cleanup
+%r2 = extractvalue { i8*, i32 } %r1, 0
+store i8* %r2, i8** %excptr
+%r3 = extractvalue { i8*, i32 } %r1, 1
+store i32 %r3, i32* %excidx
+br label %cleanup_dtor
+cleanup_dtor:
+%D1 = ptrtoint %std__String* %ths to i64
+%D2 = ptrtoint %std__String* %ths_base to i64
+%D3 = getelementptr inbounds %std__String, %std__String* %ths_base, i64 1
+%D4 = ptrtoint %std__String* %D3 to i64
+%D5 = sub i64 %D4, %D2
+%D6 = sub i64 %D1, %D2
+%D7 = udiv exact i64 %D6, %D5
+%D8 = trunc i64 %D7 to i32
+call void @__dtor_20__std__String( [20 x %std__String]* %ths_ar, i32 %D8)
+br label %finish
+finish:
+%r4 = load i8*, i8** %excptr
+%r5 = load i32, i32* %excidx
+%r6 = insertvalue { i8*, i32 } undef, i8* %r4, 0
+%r7 = insertvalue { i8*, i32 } %r6, i32 %r5, 1
+resume { i8*, i32 } %r7
 end:
 ret void
 }
@@ -159,10 +291,10 @@ call void(i8*,  ...) @printf( i8* %r7, i8* %r8)
 call void @__L_init__Exception( %__L_Exception* %exception, i64 201, i8* %r9)
 br label %L3
 L4:
-%r11 = alloca i8*
-%r10 = call i8* @malloc( i64 %r1)
-store i8* %r10, i8** %r11
-%r12 = load i8*, i8** %r11
+%r10 = alloca i8*
+%r11 = call i8* @malloc( i64 %r1)
+store i8* %r11, i8** %r10
+%r12 = load i8*, i8** %r10
 %r13 = icmp eq i8* %r12, null
 br i1 %r13, label %L10, label %L9
 L10:
@@ -174,9 +306,10 @@ call void @__L_init__Exception( %__L_Exception* %exception, i64 12, i8* %r16)
 br label %L8
 L9:
 %r17 = getelementptr inbounds [22 x i8], [22 x i8]* @string4, i64 0, i64 0
-%r18 = load i32, i32* @g_allocCnt
-call void(i8*,  ...) @printf( i8* %r17, i64 %r1, i32 %r18)
-%r19 = load i8*, i8** %r11
+%r18 = trunc i64 %r1 to i32
+%r19 = load i32, i32* @g_allocCnt
+call void(i8*,  ...) @printf( i8* %r17, i32 %r18, i32 %r19)
+%r20 = load i8*, i8** %r10
 br label %L11
 L7:
 br label %L2
@@ -184,7 +317,7 @@ L2:
 call void @__L_throw__Exception( %__L_Exception* %exception)
 unreachable
 L11:
-ret i8* %r19
+ret i8* %r20
 L3:
 br label %L2
 L8:
@@ -219,33 +352,33 @@ entry:
 %excptr = alloca i8*
 %excidx = alloca i32
 %initstate = alloca i32
-%r3 = alloca i32, align 4
-%r2 = call i64 @strlen( i8* %r1)
-%r4 = trunc i64 %r2 to i32
-store i32 %r4, i32* %r3
+%r2 = alloca i32, align 4
+%r3 = call i64 @strlen( i8* %r1)
+%r4 = trunc i64 %r3 to i32
+store i32 %r4, i32* %r2
 %r5 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
-%r6 = load i32, i32* %r3
+%r6 = load i32, i32* %r2
 %r7 = add nsw i32 %r6, 1
 %r8 = sext i32 %r7 to i64
 %r9 = invoke i8* @allocmem__i64( i64 %r8) to label %L3 unwind label %L2
 L3:
 store i8* %r9, i8** %r5
 %r18 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r19 = load i32, i32* %r3
+%r19 = load i32, i32* %r2
 store i32 %r19, i32* %r18
 %r20 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
 %r21 = load i8*, i8** %r20
-%r22 = load i32, i32* %r3
+%r22 = load i32, i32* %r2
 %r23 = sext i32 %r22 to i64
 %r24 = call i8* @memcpy( i8* %r21, i8* %r1, i64 %r23)
 %r25 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
 %r26 = load i8*, i8** %r25
-%r27 = load i32, i32* %r3
+%r27 = load i32, i32* %r2
 %r28 = getelementptr i8, i8* %r26, i32 %r27
 store i8 0, i8* %r28
-%r29 = getelementptr inbounds [25 x i8], [25 x i8]* @string7, i64 0, i64 0
-%r30 = call i8* @__C_std__String__c_str__const( %std__String* %ths)
-call void(i8*,  ...) @printf( i8* %r29, i8* %r30)
+%r30 = getelementptr inbounds [25 x i8], [25 x i8]* @string7, i64 0, i64 0
+%r29 = call i8* @__C_std__String__c_str__const( %std__String* %ths)
+call void(i8*,  ...) @printf( i8* %r30, i8* %r29)
 br label %L4
 L2:
 %r15 = landingpad { i8*, i32 } cleanup
@@ -266,12 +399,67 @@ resume { i8*, i32 } %r14
 L4:
 ret void
 }
-@string8 = private unnamed_addr constant [24 x i8] c"Destructor string [%s]\0A\00"
+@string8 = private unnamed_addr constant [30 x i8] c"Copy constructor string [%s]\0A\00"
+define external void @__C_std__String__$ctor__std__String$( %std__String* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%excptr = alloca i8*
+%excidx = alloca i32
+%initstate = alloca i32
+%r2 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r3 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r4 = load i32, i32* %r3
+%r5 = add nsw i32 %r4, 1
+%r6 = sext i32 %r5 to i64
+%r7 = invoke i8* @allocmem__i64( i64 %r6) to label %L3 unwind label %L2
+L3:
+store i8* %r7, i8** %r2
+%r16 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r17 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r18 = load i32, i32* %r17
+store i32 %r18, i32* %r16
+%r19 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r22 = load i8*, i8** %r19
+%r20 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 0
+%r23 = load i8*, i8** %r20
+%r21 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r24 = load i32, i32* %r21
+%r25 = sext i32 %r24 to i64
+%r26 = call i8* @memcpy( i8* %r22, i8* %r23, i64 %r25)
+%r27 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r29 = load i8*, i8** %r27
+%r28 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r30 = load i32, i32* %r28
+%r31 = getelementptr i8, i8* %r29, i32 %r30
+store i8 0, i8* %r31
+%r33 = getelementptr inbounds [30 x i8], [30 x i8]* @string8, i64 0, i64 0
+%r32 = call i8* @__C_std__String__c_str__const( %std__String* %ths)
+call void(i8*,  ...) @printf( i8* %r33, i8* %r32)
+br label %L4
+L2:
+%r13 = landingpad { i8*, i32 } cleanup
+%r14 = extractvalue { i8*, i32 } %r13, 0
+store i8* %r14, i8** %excptr
+%r15 = extractvalue { i8*, i32 } %r13, 1
+store i32 %r15, i32* %excidx
+store i32 0, i32* %initstate
+br label %L1
+L1:
+%r8 = load i32, i32* %initstate
+call void @__partial_dtor_std__String( %std__String* %ths, i32 %r8)
+%r9 = load i8*, i8** %excptr
+%r10 = load i32, i32* %excidx
+%r11 = insertvalue { i8*, i32 } undef, i8* %r9, 0
+%r12 = insertvalue { i8*, i32 } %r11, i32 %r10, 1
+resume { i8*, i32 } %r12
+L4:
+ret void
+}
+@string9 = private unnamed_addr constant [24 x i8] c"Destructor string [%s]\0A\00"
 define external void @__dtor_std__String( %std__String* %ths ) #0 nounwind {
 entry:
-%r1 = getelementptr inbounds [24 x i8], [24 x i8]* @string8, i64 0, i64 0
-%r2 = call i8* @__C_std__String__c_str__const( %std__String* %ths)
-call void(i8*,  ...) @printf( i8* %r1, i8* %r2)
+%r2 = getelementptr inbounds [24 x i8], [24 x i8]* @string9, i64 0, i64 0
+%r1 = call i8* @__C_std__String__c_str__const( %std__String* %ths)
+call void(i8*,  ...) @printf( i8* %r2, i8* %r1)
 %r3 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
 %r4 = load i8*, i8** %r3
 %r5 = icmp ne i8* %r4, null
@@ -290,29 +478,29 @@ define external void @__C_std__String__append__i8$__i32( %std__String* %ths, i8*
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
-%r16 = alloca i8*
-%r3 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r4 = load i32, i32* %r3
-%r5 = add nsw i32 %r4, %r2
-%r6 = add nsw i32 %r5, 1
-%r7 = sext i32 %r6 to i64
-%r8 = invoke i8* @allocmem__i64( i64 %r7) to label %L3 unwind label %L2
+%r3 = alloca i8*
+%r4 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r5 = load i32, i32* %r4
+%r6 = add nsw i32 %r5, %r2
+%r7 = add nsw i32 %r6, 1
+%r8 = sext i32 %r7 to i64
+%r9 = invoke i8* @allocmem__i64( i64 %r8) to label %L3 unwind label %L2
 L3:
-store i8* %r8, i8** %r16
-%r19 = load i8*, i8** %r16
+store i8* %r9, i8** %r3
+%r19 = load i8*, i8** %r3
 %r17 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
 %r20 = load i8*, i8** %r17
 %r18 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
 %r21 = load i32, i32* %r18
 %r22 = sext i32 %r21 to i64
 %r23 = call i8* @memcpy( i8* %r19, i8* %r20, i64 %r22)
-%r25 = load i8*, i8** %r16
+%r25 = load i8*, i8** %r3
 %r24 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
 %r26 = load i32, i32* %r24
 %r27 = getelementptr i8, i8* %r25, i32 %r26
 %r28 = sext i32 %r2 to i64
 %r29 = call i8* @memcpy( i8* %r27, i8* %r1, i64 %r28)
-%r33 = load i8*, i8** %r16
+%r33 = load i8*, i8** %r3
 %r30 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
 %r31 = load i32, i32* %r30
 %r32 = add nsw i32 %r31, %r2
@@ -322,80 +510,12 @@ store i8 0, i8* %r34
 %r36 = load i8*, i8** %r35
 call void @freemem__i8$( i8* %r36)
 %r37 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
-%r38 = load i8*, i8** %r16
+%r38 = load i8*, i8** %r3
 store i8* %r38, i8** %r37
 %r39 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
 %r40 = load i32, i32* %r39
 %r41 = add nsw i32 %r40, %r2
 store i32 %r41, i32* %r39
-br label %L4
-L2:
-%r13 = landingpad { i8*, i32 } cleanup
-%r14 = extractvalue { i8*, i32 } %r13, 0
-store i8* %r14, i8** %excptr
-%r15 = extractvalue { i8*, i32 } %r13, 1
-store i32 %r15, i32* %excidx
-br label %L1
-L1:
-%r9 = load i8*, i8** %excptr
-%r10 = load i32, i32* %excidx
-%r11 = insertvalue { i8*, i32 } undef, i8* %r9, 0
-%r12 = insertvalue { i8*, i32 } %r11, i32 %r10, 1
-resume { i8*, i32 } %r12
-L4:
-ret void
-}
-define external void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
-entry:
-%excptr = alloca i8*
-%excidx = alloca i32
-call void @__C_std__String__$ctor( %std__String* %rt)
-%r17 = alloca i8*
-%r2 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r4 = load i32, i32* %r2
-%r3 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
-%r5 = load i32, i32* %r3
-%r6 = add nsw i32 %r4, %r5
-%r7 = add nsw i32 %r6, 1
-%r8 = sext i32 %r7 to i64
-%r9 = invoke i8* @allocmem__i64( i64 %r8) to label %L3 unwind label %L2
-L3:
-store i8* %r9, i8** %r17
-%r20 = load i8*, i8** %r17
-%r18 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
-%r21 = load i8*, i8** %r18
-%r19 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r22 = load i32, i32* %r19
-%r23 = sext i32 %r22 to i64
-%r24 = call i8* @memcpy( i8* %r20, i8* %r21, i64 %r23)
-%r26 = load i8*, i8** %r17
-%r25 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r27 = load i32, i32* %r25
-%r28 = getelementptr i8, i8* %r26, i32 %r27
-%r29 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 0
-%r31 = load i8*, i8** %r29
-%r30 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
-%r32 = load i32, i32* %r30
-%r33 = sext i32 %r32 to i64
-%r34 = call i8* @memcpy( i8* %r28, i8* %r31, i64 %r33)
-%r40 = load i8*, i8** %r17
-%r35 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r37 = load i32, i32* %r35
-%r36 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
-%r38 = load i32, i32* %r36
-%r39 = add nsw i32 %r37, %r38
-%r41 = getelementptr i8, i8* %r40, i32 %r39
-store i8 0, i8* %r41
-%r42 = getelementptr inbounds %std__String, %std__String* %rt, i32 0, i32 0
-%r43 = load i8*, i8** %r17
-store i8* %r43, i8** %r42
-%r44 = getelementptr inbounds %std__String, %std__String* %rt, i32 0, i32 1
-%r45 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
-%r47 = load i32, i32* %r45
-%r46 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
-%r48 = load i32, i32* %r46
-%r49 = add nsw i32 %r47, %r48
-store i32 %r49, i32* %r44
 br label %L4
 L2:
 %r14 = landingpad { i8*, i32 } cleanup
@@ -410,6 +530,74 @@ L1:
 %r12 = insertvalue { i8*, i32 } undef, i8* %r10, 0
 %r13 = insertvalue { i8*, i32 } %r12, i32 %r11, 1
 resume { i8*, i32 } %r13
+L4:
+ret void
+}
+define external void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%excptr = alloca i8*
+%excidx = alloca i32
+call void @__C_std__String__$ctor( %std__String* %rt)
+%r2 = alloca i8*
+%r3 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r5 = load i32, i32* %r3
+%r4 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r6 = load i32, i32* %r4
+%r7 = add nsw i32 %r5, %r6
+%r8 = add nsw i32 %r7, 1
+%r9 = sext i32 %r8 to i64
+%r10 = invoke i8* @allocmem__i64( i64 %r9) to label %L3 unwind label %L2
+L3:
+store i8* %r10, i8** %r2
+%r20 = load i8*, i8** %r2
+%r18 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
+%r21 = load i8*, i8** %r18
+%r19 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r22 = load i32, i32* %r19
+%r23 = sext i32 %r22 to i64
+%r24 = call i8* @memcpy( i8* %r20, i8* %r21, i64 %r23)
+%r26 = load i8*, i8** %r2
+%r25 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r27 = load i32, i32* %r25
+%r28 = getelementptr i8, i8* %r26, i32 %r27
+%r29 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 0
+%r31 = load i8*, i8** %r29
+%r30 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r32 = load i32, i32* %r30
+%r33 = sext i32 %r32 to i64
+%r34 = call i8* @memcpy( i8* %r28, i8* %r31, i64 %r33)
+%r40 = load i8*, i8** %r2
+%r35 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r37 = load i32, i32* %r35
+%r36 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r38 = load i32, i32* %r36
+%r39 = add nsw i32 %r37, %r38
+%r41 = getelementptr i8, i8* %r40, i32 %r39
+store i8 0, i8* %r41
+%r42 = getelementptr inbounds %std__String, %std__String* %rt, i32 0, i32 0
+%r43 = load i8*, i8** %r2
+store i8* %r43, i8** %r42
+%r44 = getelementptr inbounds %std__String, %std__String* %rt, i32 0, i32 1
+%r45 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
+%r47 = load i32, i32* %r45
+%r46 = getelementptr inbounds %std__String, %std__String* %r1, i32 0, i32 1
+%r48 = load i32, i32* %r46
+%r49 = add nsw i32 %r47, %r48
+store i32 %r49, i32* %r44
+br label %L4
+L2:
+%r15 = landingpad { i8*, i32 } cleanup
+%r16 = extractvalue { i8*, i32 } %r15, 0
+store i8* %r16, i8** %excptr
+%r17 = extractvalue { i8*, i32 } %r15, 1
+store i32 %r17, i32* %excidx
+br label %L1
+L1:
+%r11 = load i8*, i8** %excptr
+%r12 = load i32, i32* %excidx
+%r13 = insertvalue { i8*, i32 } undef, i8* %r11, 0
+%r14 = insertvalue { i8*, i32 } %r13, i32 %r12, 1
+resume { i8*, i32 } %r14
 L4:
 ret void
 }
@@ -440,11 +628,11 @@ br label %L1
 L1:
 ret i32 %r2
 }
-@string9 = private unnamed_addr constant [12 x i8] c"Get string\0A\00"
-@string10 = private unnamed_addr constant [1 x i8] c"\00"
+@string10 = private unnamed_addr constant [12 x i8] c"Get string\0A\00"
+@string11 = private unnamed_addr constant [1 x i8] c"\00"
 define external i8* @__C_std__String__c_str__const( %std__String* %ths ) #0 nounwind {
 entry:
-%r1 = getelementptr inbounds [12 x i8], [12 x i8]* @string9, i64 0, i64 0
+%r1 = getelementptr inbounds [12 x i8], [12 x i8]* @string10, i64 0, i64 0
 call void(i8*,  ...) @printf( i8* %r1)
 %r2 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 0
 %r3 = load i8*, i8** %r2
@@ -455,25 +643,25 @@ L5:
 %r6 = load i8*, i8** %r5
 br label %L2
 L4:
-%r7 = getelementptr inbounds [1 x i8], [1 x i8]* @string10, i64 0, i64 0
+%r7 = getelementptr inbounds [1 x i8], [1 x i8]* @string11, i64 0, i64 0
 br label %L3
 L2:
 ret i8* %r6
 L3:
 ret i8* %r7
 }
-@string11 = private unnamed_addr constant [15 x i8] c"Hello universe\00"
-@string12 = private unnamed_addr constant [2 x i8] c"!\00"
+@string12 = private unnamed_addr constant [15 x i8] c"Hello universe\00"
+@string13 = private unnamed_addr constant [2 x i8] c"!\00"
 define internal void @getGreeting( %std__String* sret %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
 %r13 = alloca %std__String, align 8
-%r1 = getelementptr inbounds [15 x i8], [15 x i8]* @string11, i64 0, i64 0
+%r1 = getelementptr inbounds [15 x i8], [15 x i8]* @string12, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r13, i8* %r1) to label %L3 unwind label %L2
 L3:
 %r14 = alloca %std__String, align 8
-%r9 = getelementptr inbounds [2 x i8], [2 x i8]* @string12, i64 0, i64 0
+%r9 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r14, i8* %r9) to label %L6 unwind label %L5
 L6:
 invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %r13, %std__String* %r14) to label %L9 unwind label %L8
@@ -517,70 +705,70 @@ call void @__dtor_std__String( %std__String* %r14)
 call void @__dtor_std__String( %std__String* %r13)
 ret void
 }
-@string13 = private unnamed_addr constant [6 x i8] c"Hello\00"
-@string14 = private unnamed_addr constant [2 x i8] c" \00"
-@string15 = private unnamed_addr constant [9 x i8] c"universe\00"
+@string14 = private unnamed_addr constant [6 x i8] c"Hello\00"
+@string15 = private unnamed_addr constant [2 x i8] c" \00"
+@string16 = private unnamed_addr constant [9 x i8] c"universe\00"
 define internal void @getGreetingA1( %std__String* sret %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
-%r5 = alloca [4 x %std__String], align 8
-%r6 = alloca i32, align 4
-store i32 -1, i32* %r6
-%r7 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r5, i32 0, i32 0
-%r17 = load i32, i32* %r6
-%r18 = add nsw i32 %r17, 1
-store i32 %r18, i32* %r6
-%r9 = getelementptr inbounds %std__String, %std__String* %r7, i32 %r18
-%r1 = getelementptr inbounds [6 x i8], [6 x i8]* @string13, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r9, i8* %r1) to label %L5 unwind label %L2
+%r1 = alloca [4 x %std__String], align 8
+%r2 = alloca i32, align 4
+store i32 -1, i32* %r2
+%r3 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 0
+%r14 = load i32, i32* %r2
+%r15 = add nsw i32 %r14, 1
+store i32 %r15, i32* %r2
+%r5 = getelementptr inbounds %std__String, %std__String* %r3, i32 %r15
+%r6 = getelementptr inbounds [6 x i8], [6 x i8]* @string14, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r5, i8* %r6) to label %L5 unwind label %L2
 L5:
-%r20 = load i32, i32* %r6
-%r21 = add nsw i32 %r20, 1
-store i32 %r21, i32* %r6
-%r19 = getelementptr inbounds %std__String, %std__String* %r7, i32 %r21
-%r2 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r19, i8* %r2) to label %L6 unwind label %L2
+%r18 = load i32, i32* %r2
+%r19 = add nsw i32 %r18, 1
+store i32 %r19, i32* %r2
+%r16 = getelementptr inbounds %std__String, %std__String* %r3, i32 %r19
+%r17 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r16, i8* %r17) to label %L6 unwind label %L2
 L6:
-%r23 = load i32, i32* %r6
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r6
-%r22 = getelementptr inbounds %std__String, %std__String* %r7, i32 %r24
-%r3 = getelementptr inbounds [9 x i8], [9 x i8]* @string15, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r22, i8* %r3) to label %L7 unwind label %L2
+%r22 = load i32, i32* %r2
+%r23 = add nsw i32 %r22, 1
+store i32 %r23, i32* %r2
+%r20 = getelementptr inbounds %std__String, %std__String* %r3, i32 %r23
+%r21 = getelementptr inbounds [9 x i8], [9 x i8]* @string16, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r20, i8* %r21) to label %L7 unwind label %L2
 L7:
-%r26 = load i32, i32* %r6
+%r26 = load i32, i32* %r2
 %r27 = add nsw i32 %r26, 1
-store i32 %r27, i32* %r6
-%r25 = getelementptr inbounds %std__String, %std__String* %r7, i32 %r27
-%r4 = getelementptr inbounds [2 x i8], [2 x i8]* @string12, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r25, i8* %r4) to label %L8 unwind label %L2
+store i32 %r27, i32* %r2
+%r24 = getelementptr inbounds %std__String, %std__String* %r3, i32 %r27
+%r25 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r24, i8* %r25) to label %L8 unwind label %L2
 L8:
 br label %L9
 L3:
-%r8 = load i32, i32* %r6
-call void @__dtor_4__std__String( [4 x %std__String]* %r5, i32 %r8)
+%r4 = load i32, i32* %r2
+call void @__dtor_4__std__String( [4 x %std__String]* %r1, i32 %r4)
 br label %L4
 L9:
 %r39 = alloca %std__String, align 8
 %r34 = alloca %std__String, align 8
-%r28 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r5, i32 0, i32 0
-%r29 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r5, i32 0, i32 1
+%r28 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 0
+%r29 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 1
 invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r34, %std__String* %r28, %std__String* %r29) to label %L12 unwind label %L11
 L12:
-%r33 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r5, i32 0, i32 2
+%r33 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 2
 invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r39, %std__String* %r34, %std__String* %r33) to label %L15 unwind label %L14
 L15:
-%r38 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r5, i32 0, i32 3
+%r38 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 3
 invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %r39, %std__String* %r38) to label %L18 unwind label %L17
 L18:
 br label %L19
 L2:
-%r14 = landingpad { i8*, i32 } cleanup
-%r15 = extractvalue { i8*, i32 } %r14, 0
-store i8* %r15, i8** %excptr
-%r16 = extractvalue { i8*, i32 } %r14, 1
-store i32 %r16, i32* %excidx
+%r11 = landingpad { i8*, i32 } cleanup
+%r12 = extractvalue { i8*, i32 } %r11, 0
+store i8* %r12, i8** %excptr
+%r13 = extractvalue { i8*, i32 } %r11, 1
+store i32 %r13, i32* %excidx
 br label %L3
 L4:
 br label %L1
@@ -612,33 +800,186 @@ L13:
 call void @__dtor_std__String( %std__String* %r34)
 br label %L10
 L10:
-call void @__dtor_4__std__String( [4 x %std__String]* %r5, i32 4)
+call void @__dtor_4__std__String( [4 x %std__String]* %r1, i32 4)
 br label %L1
 L1:
-%r10 = load i8*, i8** %excptr
-%r11 = load i32, i32* %excidx
-%r12 = insertvalue { i8*, i32 } undef, i8* %r10, 0
-%r13 = insertvalue { i8*, i32 } %r12, i32 %r11, 1
-resume { i8*, i32 } %r13
+%r7 = load i8*, i8** %excptr
+%r8 = load i32, i32* %excidx
+%r9 = insertvalue { i8*, i32 } undef, i8* %r7, 0
+%r10 = insertvalue { i8*, i32 } %r9, i32 %r8, 1
+resume { i8*, i32 } %r10
 L19:
 call void @__dtor_std__String( %std__String* %r39)
 call void @__dtor_std__String( %std__String* %r34)
-call void @__dtor_4__std__String( [4 x %std__String]* %r5, i32 4)
+call void @__dtor_4__std__String( [4 x %std__String]* %r1, i32 4)
 ret void
 }
-@string16 = private unnamed_addr constant [13 x i8] c"Hello world!\00"
-@string17 = private unnamed_addr constant [2 x i8] c"H\00"
-@string18 = private unnamed_addr constant [2 x i8] c"e\00"
-@string19 = private unnamed_addr constant [2 x i8] c"l\00"
-@string20 = private unnamed_addr constant [2 x i8] c"o\00"
-@string21 = private unnamed_addr constant [2 x i8] c"w\00"
-@string22 = private unnamed_addr constant [2 x i8] c"r\00"
-@string23 = private unnamed_addr constant [3 x i8] c"d!\00"
-@string24 = private unnamed_addr constant [4 x i8] c"%s\0A\00"
-@string25 = private unnamed_addr constant [7 x i8] c"world!\00"
-@string26 = private unnamed_addr constant [13 x i8] c"GREETING %s\0A\00"
-@string27 = private unnamed_addr constant [31 x i8] c"GREET1 %s GREET2 %s GREET3 %s\0A\00"
-@string28 = private unnamed_addr constant [12 x i8] c"ERR %ld %s\0A\00"
+define external void @__C_GreetingType__$ctor__std__String$( %GreetingType* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%excptr = alloca i8*
+%excidx = alloca i32
+%initstate = alloca i32
+%r2 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 0
+%r3 = getelementptr inbounds [6 x i8], [6 x i8]* @string14, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r2, i8* %r3) to label %L3 unwind label %L2
+L3:
+%r12 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
+invoke void @__C_std__String__$ctor__std__String$( %std__String* %r12, %std__String* %r1) to label %L6 unwind label %L5
+L6:
+%r16 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 2
+%r17 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r16, i8* %r17) to label %L9 unwind label %L8
+L9:
+br label %L10
+L2:
+%r9 = landingpad { i8*, i32 } cleanup
+%r10 = extractvalue { i8*, i32 } %r9, 0
+store i8* %r10, i8** %excptr
+%r11 = extractvalue { i8*, i32 } %r9, 1
+store i32 %r11, i32* %excidx
+store i32 0, i32* %initstate
+br label %L1
+L5:
+%r13 = landingpad { i8*, i32 } cleanup
+%r14 = extractvalue { i8*, i32 } %r13, 0
+store i8* %r14, i8** %excptr
+%r15 = extractvalue { i8*, i32 } %r13, 1
+store i32 %r15, i32* %excidx
+store i32 1, i32* %initstate
+br label %L4
+L8:
+%r18 = landingpad { i8*, i32 } cleanup
+%r19 = extractvalue { i8*, i32 } %r18, 0
+store i8* %r19, i8** %excptr
+%r20 = extractvalue { i8*, i32 } %r18, 1
+store i32 %r20, i32* %excidx
+store i32 2, i32* %initstate
+br label %L7
+L7:
+br label %L4
+L4:
+br label %L1
+L1:
+%r4 = load i32, i32* %initstate
+call void @__partial_dtor_GreetingType( %GreetingType* %ths, i32 %r4)
+%r5 = load i8*, i8** %excptr
+%r6 = load i32, i32* %excidx
+%r7 = insertvalue { i8*, i32 } undef, i8* %r5, 0
+%r8 = insertvalue { i8*, i32 } %r7, i32 %r6, 1
+resume { i8*, i32 } %r8
+L10:
+ret void
+}
+define external void @__C_GreetingType__$ctor( %GreetingType* %ths ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%r1 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 0
+call void @__C_std__String__$ctor( %std__String* %r1)
+%r2 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
+call void @__C_std__String__$ctor( %std__String* %r2)
+%r3 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 2
+call void @__C_std__String__$ctor( %std__String* %r3)
+br label %L1
+L1:
+ret void
+}
+define external void @__C_GreetingType__phrase__const( %std__String* sret %rt, %GreetingType* %ths ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+entry:
+%excptr = alloca i8*
+%excidx = alloca i32
+%r1 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 0
+%r2 = call i32 @__C_std__String__size__const( %std__String* %r1)
+%r3 = icmp sgt i32 %r2, 0
+br i1 %r3, label %L20, label %L19
+L20:
+%r23 = alloca %std__String, align 8
+%r18 = alloca %std__String, align 8
+%r4 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 0
+%r13 = alloca %std__String, align 8
+%r5 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r13, i8* %r5) to label %L5 unwind label %L4
+L5:
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r18, %std__String* %r4, %std__String* %r13) to label %L8 unwind label %L7
+L8:
+%r17 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r23, %std__String* %r18, %std__String* %r17) to label %L11 unwind label %L10
+L11:
+%r22 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 2
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %r23, %std__String* %r22) to label %L14 unwind label %L13
+L14:
+br label %L16
+L19:
+call void @__C_std__String__$ctor( %std__String* %rt)
+br label %L18
+L2:
+%r6 = load i8*, i8** %excptr
+%r7 = load i32, i32* %excidx
+%r8 = insertvalue { i8*, i32 } undef, i8* %r6, 0
+%r9 = insertvalue { i8*, i32 } %r8, i32 %r7, 1
+resume { i8*, i32 } %r9
+L17:
+br label %L15
+L15:
+ret void
+L4:
+%r10 = landingpad { i8*, i32 } cleanup
+%r11 = extractvalue { i8*, i32 } %r10, 0
+store i8* %r11, i8** %excptr
+%r12 = extractvalue { i8*, i32 } %r10, 1
+store i32 %r12, i32* %excidx
+br label %L3
+L7:
+%r14 = landingpad { i8*, i32 } cleanup
+%r15 = extractvalue { i8*, i32 } %r14, 0
+store i8* %r15, i8** %excptr
+%r16 = extractvalue { i8*, i32 } %r14, 1
+store i32 %r16, i32* %excidx
+br label %L6
+L10:
+%r19 = landingpad { i8*, i32 } cleanup
+%r20 = extractvalue { i8*, i32 } %r19, 0
+store i8* %r20, i8** %excptr
+%r21 = extractvalue { i8*, i32 } %r19, 1
+store i32 %r21, i32* %excidx
+br label %L9
+L13:
+%r24 = landingpad { i8*, i32 } cleanup
+%r25 = extractvalue { i8*, i32 } %r24, 0
+store i8* %r25, i8** %excptr
+%r26 = extractvalue { i8*, i32 } %r24, 1
+store i32 %r26, i32* %excidx
+br label %L12
+L12:
+call void @__dtor_std__String( %std__String* %r23)
+br label %L9
+L9:
+call void @__dtor_std__String( %std__String* %r18)
+br label %L6
+L6:
+call void @__dtor_std__String( %std__String* %r13)
+br label %L3
+L3:
+br label %L2
+L16:
+call void @__dtor_std__String( %std__String* %r23)
+call void @__dtor_std__String( %std__String* %r18)
+call void @__dtor_std__String( %std__String* %r13)
+br label %L15
+L18:
+br label %L17
+}
+@string17 = private unnamed_addr constant [13 x i8] c"Hello world!\00"
+@string18 = private unnamed_addr constant [2 x i8] c"H\00"
+@string19 = private unnamed_addr constant [2 x i8] c"e\00"
+@string20 = private unnamed_addr constant [2 x i8] c"l\00"
+@string21 = private unnamed_addr constant [2 x i8] c"o\00"
+@string22 = private unnamed_addr constant [2 x i8] c"w\00"
+@string23 = private unnamed_addr constant [2 x i8] c"r\00"
+@string24 = private unnamed_addr constant [3 x i8] c"d!\00"
+@string25 = private unnamed_addr constant [4 x i8] c"%s\0A\00"
+@string26 = private unnamed_addr constant [7 x i8] c"world!\00"
+@string27 = private unnamed_addr constant [13 x i8] c"GREETING %s\0A\00"
+@string28 = private unnamed_addr constant [31 x i8] c"GREET1 %s GREET2 %s GREET3 %s\0A\00"
+@string29 = private unnamed_addr constant [12 x i8] c"ERR %ld %s\0A\00"
 define internal void @test__i32( i32 %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %exception = alloca %__L_Exception
@@ -646,102 +987,102 @@ entry:
 %excidx = alloca i32
 store i32 %r1, i32* @g_maxAllocCnt
 store i32 0, i32* @g_allocCnt
-%r7 = alloca %std__String, align 8
-invoke void @getGreeting( %std__String* sret %r7) to label %L6 unwind label %L5
+%r2 = alloca %std__String, align 8
+invoke void @getGreeting( %std__String* sret %r2) to label %L6 unwind label %L5
 L6:
-%r13 = alloca %std__String, align 8
-invoke void @getGreetingA1( %std__String* sret %r13) to label %L9 unwind label %L8
+%r8 = alloca %std__String, align 8
+invoke void @getGreetingA1( %std__String* sret %r8) to label %L9 unwind label %L8
 L9:
-%r15 = alloca %std__String, align 8
-%r14 = getelementptr inbounds [13 x i8], [13 x i8]* @string16, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r15, i8* %r14) to label %L12 unwind label %L11
+%r14 = alloca %std__String, align 8
+%r15 = getelementptr inbounds [13 x i8], [13 x i8]* @string17, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r14, i8* %r15) to label %L12 unwind label %L11
 L12:
-%r32 = alloca [20 x %std__String], align 8
-%r33 = alloca i32, align 4
-store i32 -1, i32* %r33
-%r34 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r32, i32 0, i32 0
-%r42 = load i32, i32* %r33
-%r43 = add nsw i32 %r42, 1
-store i32 %r43, i32* %r33
-%r36 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r43
-%r21 = getelementptr inbounds [2 x i8], [2 x i8]* @string17, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r36, i8* %r21) to label %L17 unwind label %L14
+%r21 = alloca [20 x %std__String], align 8
+%r22 = alloca i32, align 4
+store i32 -1, i32* %r22
+%r23 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 0
+%r32 = load i32, i32* %r22
+%r33 = add nsw i32 %r32, 1
+store i32 %r33, i32* %r22
+%r25 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r33
+%r26 = getelementptr inbounds [2 x i8], [2 x i8]* @string18, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r25, i8* %r26) to label %L17 unwind label %L14
 L17:
-%r45 = load i32, i32* %r33
-%r46 = add nsw i32 %r45, 1
-store i32 %r46, i32* %r33
-%r44 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r46
-%r22 = getelementptr inbounds [2 x i8], [2 x i8]* @string18, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r44, i8* %r22) to label %L18 unwind label %L14
+%r36 = load i32, i32* %r22
+%r37 = add nsw i32 %r36, 1
+store i32 %r37, i32* %r22
+%r34 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r37
+%r35 = getelementptr inbounds [2 x i8], [2 x i8]* @string19, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r34, i8* %r35) to label %L18 unwind label %L14
 L18:
-%r48 = load i32, i32* %r33
-%r49 = add nsw i32 %r48, 1
-store i32 %r49, i32* %r33
-%r47 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r49
-%r23 = getelementptr inbounds [2 x i8], [2 x i8]* @string19, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r47, i8* %r23) to label %L19 unwind label %L14
+%r40 = load i32, i32* %r22
+%r41 = add nsw i32 %r40, 1
+store i32 %r41, i32* %r22
+%r38 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r41
+%r39 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r38, i8* %r39) to label %L19 unwind label %L14
 L19:
-%r51 = load i32, i32* %r33
-%r52 = add nsw i32 %r51, 1
-store i32 %r52, i32* %r33
-%r50 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r52
-%r24 = getelementptr inbounds [2 x i8], [2 x i8]* @string19, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r50, i8* %r24) to label %L20 unwind label %L14
+%r44 = load i32, i32* %r22
+%r45 = add nsw i32 %r44, 1
+store i32 %r45, i32* %r22
+%r42 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r45
+%r43 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r42, i8* %r43) to label %L20 unwind label %L14
 L20:
-%r54 = load i32, i32* %r33
-%r55 = add nsw i32 %r54, 1
-store i32 %r55, i32* %r33
-%r53 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r55
-%r25 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r53, i8* %r25) to label %L21 unwind label %L14
+%r48 = load i32, i32* %r22
+%r49 = add nsw i32 %r48, 1
+store i32 %r49, i32* %r22
+%r46 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r49
+%r47 = getelementptr inbounds [2 x i8], [2 x i8]* @string21, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r46, i8* %r47) to label %L21 unwind label %L14
 L21:
-%r57 = load i32, i32* %r33
-%r58 = add nsw i32 %r57, 1
-store i32 %r58, i32* %r33
-%r56 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r58
-%r26 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r56, i8* %r26) to label %L22 unwind label %L14
+%r52 = load i32, i32* %r22
+%r53 = add nsw i32 %r52, 1
+store i32 %r53, i32* %r22
+%r50 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r53
+%r51 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r50, i8* %r51) to label %L22 unwind label %L14
 L22:
-%r60 = load i32, i32* %r33
-%r61 = add nsw i32 %r60, 1
-store i32 %r61, i32* %r33
-%r59 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r61
-%r27 = getelementptr inbounds [2 x i8], [2 x i8]* @string21, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r59, i8* %r27) to label %L23 unwind label %L14
+%r56 = load i32, i32* %r22
+%r57 = add nsw i32 %r56, 1
+store i32 %r57, i32* %r22
+%r54 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r57
+%r55 = getelementptr inbounds [2 x i8], [2 x i8]* @string22, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r54, i8* %r55) to label %L23 unwind label %L14
 L23:
-%r63 = load i32, i32* %r33
-%r64 = add nsw i32 %r63, 1
-store i32 %r64, i32* %r33
-%r62 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r64
-%r28 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r62, i8* %r28) to label %L24 unwind label %L14
+%r60 = load i32, i32* %r22
+%r61 = add nsw i32 %r60, 1
+store i32 %r61, i32* %r22
+%r58 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r61
+%r59 = getelementptr inbounds [2 x i8], [2 x i8]* @string21, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r58, i8* %r59) to label %L24 unwind label %L14
 L24:
-%r66 = load i32, i32* %r33
-%r67 = add nsw i32 %r66, 1
-store i32 %r67, i32* %r33
-%r65 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r67
-%r29 = getelementptr inbounds [2 x i8], [2 x i8]* @string22, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r65, i8* %r29) to label %L25 unwind label %L14
+%r64 = load i32, i32* %r22
+%r65 = add nsw i32 %r64, 1
+store i32 %r65, i32* %r22
+%r62 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r65
+%r63 = getelementptr inbounds [2 x i8], [2 x i8]* @string23, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r62, i8* %r63) to label %L25 unwind label %L14
 L25:
-%r69 = load i32, i32* %r33
-%r70 = add nsw i32 %r69, 1
-store i32 %r70, i32* %r33
-%r68 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r70
-%r30 = getelementptr inbounds [2 x i8], [2 x i8]* @string19, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r68, i8* %r30) to label %L26 unwind label %L14
+%r68 = load i32, i32* %r22
+%r69 = add nsw i32 %r68, 1
+store i32 %r69, i32* %r22
+%r66 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r69
+%r67 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r66, i8* %r67) to label %L26 unwind label %L14
 L26:
-%r72 = load i32, i32* %r33
+%r72 = load i32, i32* %r22
 %r73 = add nsw i32 %r72, 1
-store i32 %r73, i32* %r33
-%r71 = getelementptr inbounds %std__String, %std__String* %r34, i32 %r73
-%r31 = getelementptr inbounds [3 x i8], [3 x i8]* @string23, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r71, i8* %r31) to label %L27 unwind label %L14
+store i32 %r73, i32* %r22
+%r70 = getelementptr inbounds %std__String, %std__String* %r23, i32 %r73
+%r71 = getelementptr inbounds [3 x i8], [3 x i8]* @string24, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r70, i8* %r71) to label %L27 unwind label %L14
 L27:
-call void @__ctor_init_20__std__String( [20 x %std__String]* %r32, i32 11)
+call void @__ctor_init_20__std__String( [20 x %std__String]* %r21, i32 11)
 br label %L31
 L15:
-%r35 = load i32, i32* %r33
-call void @__dtor_20__std__String( [20 x %std__String]* %r32, i32 %r35)
+%r24 = load i32, i32* %r22
+call void @__dtor_20__std__String( [20 x %std__String]* %r21, i32 %r24)
 br label %L16
 L31:
 %r74 = alloca i32, align 4
@@ -753,68 +1094,69 @@ L35:
 br i1 %r76, label %L33, label %L32
 L33:
 %r77 = load i32, i32* %r74
-%r78 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r32, i32 0, i32 %r77
+%r78 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 %r77
 %r79 = call i32 @__C_std__String__size__const( %std__String* %r78)
 %r80 = icmp ne i32 %r79, 0
 br i1 %r80, label %L34, label %L32
 L34:
-%r81 = getelementptr inbounds [4 x i8], [4 x i8]* @string24, i64 0, i64 0
-%r82 = load i32, i32* %r74
-%r83 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r32, i32 0, i32 %r82
-%r84 = call i8* @__C_std__String__c_str__const( %std__String* %r83)
-call void(i8*,  ...) @printf( i8* %r81, i8* %r84)
+%r84 = getelementptr inbounds [4 x i8], [4 x i8]* @string25, i64 0, i64 0
+%r81 = load i32, i32* %r74
+%r82 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* %r21, i32 0, i32 %r81
+%r83 = call i8* @__C_std__String__c_str__const( %std__String* %r82)
+call void(i8*,  ...) @printf( i8* %r84, i8* %r83)
 %r85 = load i32, i32* %r74
 %r86 = add nsw i32 %r85, 1
 store i32 %r86, i32* %r74
 br label %L35
 L32:
-%r119 = alloca %std__String, align 8
-%r112 = alloca %std__String, align 8
-%r99 = alloca %std__String, align 8
-%r87 = getelementptr inbounds [6 x i8], [6 x i8]* @string13, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r99, i8* %r87) to label %L39 unwind label %L38
-L39:
-%r100 = alloca %std__String, align 8
-%r93 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r100, i8* %r93) to label %L42 unwind label %L41
-L42:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r112, %std__String* %r99, %std__String* %r100) to label %L45 unwind label %L44
-L45:
+%r87 = alloca %std__String, align 8
 %r113 = alloca %std__String, align 8
-%r106 = getelementptr inbounds [7 x i8], [7 x i8]* @string25, i64 0, i64 0
-invoke void @__C_std__String__$ctor__i8$( %std__String* %r113, i8* %r106) to label %L48 unwind label %L47
+%r100 = alloca %std__String, align 8
+%r88 = getelementptr inbounds [6 x i8], [6 x i8]* @string14, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r100, i8* %r88) to label %L39 unwind label %L38
+L39:
+%r101 = alloca %std__String, align 8
+%r94 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r101, i8* %r94) to label %L42 unwind label %L41
+L42:
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r113, %std__String* %r100, %std__String* %r101) to label %L45 unwind label %L44
+L45:
+%r114 = alloca %std__String, align 8
+%r107 = getelementptr inbounds [7 x i8], [7 x i8]* @string26, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %r114, i8* %r107) to label %L48 unwind label %L47
 L48:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r119, %std__String* %r112, %std__String* %r113) to label %L51 unwind label %L50
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r87, %std__String* %r113, %std__String* %r114) to label %L51 unwind label %L50
 L51:
-%r120 = getelementptr inbounds [13 x i8], [13 x i8]* @string26, i64 0, i64 0
-%r121 = call i8* @__C_std__String__c_str__const( %std__String* %r119)
-call void(i8*,  ...) @printf( i8* %r120, i8* %r121)
+%r121 = getelementptr inbounds [13 x i8], [13 x i8]* @string27, i64 0, i64 0
+%r120 = call i8* @__C_std__String__c_str__const( %std__String* %r87)
+call void(i8*,  ...) @printf( i8* %r121, i8* %r120)
 br label %L52
 L52:
-call void @__dtor_std__String( %std__String* %r119)
+call void @__dtor_std__String( %std__String* %r87)
+call void @__dtor_std__String( %std__String* %r114)
 call void @__dtor_std__String( %std__String* %r113)
-call void @__dtor_std__String( %std__String* %r112)
+call void @__dtor_std__String( %std__String* %r101)
 call void @__dtor_std__String( %std__String* %r100)
-call void @__dtor_std__String( %std__String* %r99)
-%r122 = getelementptr inbounds [31 x i8], [31 x i8]* @string27, i64 0, i64 0
-%r123 = call i8* @__C_std__String__c_str__const( %std__String* %r7)
-%r124 = call i8* @__C_std__String__c_str__const( %std__String* %r13)
-%r125 = call i8* @__C_std__String__c_str__const( %std__String* %r15)
-call void(i8*,  ...) @printf( i8* %r122, i8* %r123, i8* %r124, i8* %r125)
+%r125 = getelementptr inbounds [31 x i8], [31 x i8]* @string28, i64 0, i64 0
+%r122 = call i8* @__C_std__String__c_str__const( %std__String* %r2)
+%r123 = call i8* @__C_std__String__c_str__const( %std__String* %r8)
+%r124 = call i8* @__C_std__String__c_str__const( %std__String* %r14)
+call void(i8*,  ...) @printf( i8* %r125, i8* %r122, i8* %r123, i8* %r124)
 br label %L53
 L53:
-call void @__dtor_20__std__String( [20 x %std__String]* %r32, i32 20)
-call void @__dtor_std__String( %std__String* %r15)
-call void @__dtor_std__String( %std__String* %r13)
-call void @__dtor_std__String( %std__String* %r7)
+call void @__dtor_20__std__String( [20 x %std__String]* %r21, i32 20)
+call void @__dtor_std__String( %std__String* %r14)
+call void @__dtor_std__String( %std__String* %r8)
+call void @__dtor_std__String( %std__String* %r2)
 br label %L55
 L1:
 %r128 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
 %r126 = load i64, i64* %r128
 %r129 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 1
 %r127 = load i8*, i8** %r129
-%r130 = getelementptr inbounds [12 x i8], [12 x i8]* @string28, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r130, i64 %r126, i8* %r127)
+%r130 = getelementptr inbounds [12 x i8], [12 x i8]* @string29, i64 0, i64 0
+%r131 = trunc i64 %r126 to i32
+call void(i8*,  ...) @printf( i8* %r130, i32 %r131, i8* %r127)
 br label %L54
 L54:
 call void @__L_free__ExceptionMsg( i8* %r127)
@@ -826,21 +1168,21 @@ br label %L3
 L3:
 br label %L1
 L5:
-%r2 = landingpad { i8*, i32 } catch i8* null
-%r3 = extractvalue { i8*, i32 } %r2, 0
-%r4 = call i8* @__cxa_begin_catch( i8* %r3)
-%r5 = bitcast i8* %r4 to %__L_Exception*
-%r6 = load %__L_Exception, %__L_Exception* %r5
-store %__L_Exception %r6, %__L_Exception* %exception
+%r3 = landingpad { i8*, i32 } catch i8* null
+%r4 = extractvalue { i8*, i32 } %r3, 0
+%r5 = call i8* @__cxa_begin_catch( i8* %r4)
+%r6 = bitcast i8* %r5 to %__L_Exception*
+%r7 = load %__L_Exception, %__L_Exception* %r6
+store %__L_Exception %r7, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L4
 L8:
-%r8 = landingpad { i8*, i32 } catch i8* null
-%r9 = extractvalue { i8*, i32 } %r8, 0
-%r10 = call i8* @__cxa_begin_catch( i8* %r9)
-%r11 = bitcast i8* %r10 to %__L_Exception*
-%r12 = load %__L_Exception, %__L_Exception* %r11
-store %__L_Exception %r12, %__L_Exception* %exception
+%r9 = landingpad { i8*, i32 } catch i8* null
+%r10 = extractvalue { i8*, i32 } %r9, 0
+%r11 = call i8* @__cxa_begin_catch( i8* %r10)
+%r12 = bitcast i8* %r11 to %__L_Exception*
+%r13 = load %__L_Exception, %__L_Exception* %r12
+store %__L_Exception %r13, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L7
 L11:
@@ -853,135 +1195,274 @@ store %__L_Exception %r20, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L10
 L14:
-%r37 = landingpad { i8*, i32 } catch i8* null
-%r38 = extractvalue { i8*, i32 } %r37, 0
-%r39 = call i8* @__cxa_begin_catch( i8* %r38)
-%r40 = bitcast i8* %r39 to %__L_Exception*
-%r41 = load %__L_Exception, %__L_Exception* %r40
-store %__L_Exception %r41, %__L_Exception* %exception
+%r27 = landingpad { i8*, i32 } catch i8* null
+%r28 = extractvalue { i8*, i32 } %r27, 0
+%r29 = call i8* @__cxa_begin_catch( i8* %r28)
+%r30 = bitcast i8* %r29 to %__L_Exception*
+%r31 = load %__L_Exception, %__L_Exception* %r30
+store %__L_Exception %r31, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L15
 L16:
 br label %L13
 L36:
-call void @__dtor_20__std__String( [20 x %std__String]* %r32, i32 20)
+call void @__dtor_20__std__String( [20 x %std__String]* %r21, i32 20)
 br label %L13
 L13:
-call void @__dtor_std__String( %std__String* %r15)
+call void @__dtor_std__String( %std__String* %r14)
 br label %L10
 L10:
-call void @__dtor_std__String( %std__String* %r13)
+call void @__dtor_std__String( %std__String* %r8)
 br label %L7
 L7:
-call void @__dtor_std__String( %std__String* %r7)
+call void @__dtor_std__String( %std__String* %r2)
 br label %L4
 L4:
 br label %L3
 L38:
-%r88 = landingpad { i8*, i32 } catch i8* null
-%r89 = extractvalue { i8*, i32 } %r88, 0
-%r90 = call i8* @__cxa_begin_catch( i8* %r89)
-%r91 = bitcast i8* %r90 to %__L_Exception*
-%r92 = load %__L_Exception, %__L_Exception* %r91
-store %__L_Exception %r92, %__L_Exception* %exception
+%r89 = landingpad { i8*, i32 } catch i8* null
+%r90 = extractvalue { i8*, i32 } %r89, 0
+%r91 = call i8* @__cxa_begin_catch( i8* %r90)
+%r92 = bitcast i8* %r91 to %__L_Exception*
+%r93 = load %__L_Exception, %__L_Exception* %r92
+store %__L_Exception %r93, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L37
 L41:
-%r94 = landingpad { i8*, i32 } catch i8* null
-%r95 = extractvalue { i8*, i32 } %r94, 0
-%r96 = call i8* @__cxa_begin_catch( i8* %r95)
-%r97 = bitcast i8* %r96 to %__L_Exception*
-%r98 = load %__L_Exception, %__L_Exception* %r97
-store %__L_Exception %r98, %__L_Exception* %exception
+%r95 = landingpad { i8*, i32 } catch i8* null
+%r96 = extractvalue { i8*, i32 } %r95, 0
+%r97 = call i8* @__cxa_begin_catch( i8* %r96)
+%r98 = bitcast i8* %r97 to %__L_Exception*
+%r99 = load %__L_Exception, %__L_Exception* %r98
+store %__L_Exception %r99, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L40
 L44:
-%r101 = landingpad { i8*, i32 } catch i8* null
-%r102 = extractvalue { i8*, i32 } %r101, 0
-%r103 = call i8* @__cxa_begin_catch( i8* %r102)
-%r104 = bitcast i8* %r103 to %__L_Exception*
-%r105 = load %__L_Exception, %__L_Exception* %r104
-store %__L_Exception %r105, %__L_Exception* %exception
+%r102 = landingpad { i8*, i32 } catch i8* null
+%r103 = extractvalue { i8*, i32 } %r102, 0
+%r104 = call i8* @__cxa_begin_catch( i8* %r103)
+%r105 = bitcast i8* %r104 to %__L_Exception*
+%r106 = load %__L_Exception, %__L_Exception* %r105
+store %__L_Exception %r106, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L43
 L47:
-%r107 = landingpad { i8*, i32 } catch i8* null
-%r108 = extractvalue { i8*, i32 } %r107, 0
-%r109 = call i8* @__cxa_begin_catch( i8* %r108)
-%r110 = bitcast i8* %r109 to %__L_Exception*
-%r111 = load %__L_Exception, %__L_Exception* %r110
-store %__L_Exception %r111, %__L_Exception* %exception
+%r108 = landingpad { i8*, i32 } catch i8* null
+%r109 = extractvalue { i8*, i32 } %r108, 0
+%r110 = call i8* @__cxa_begin_catch( i8* %r109)
+%r111 = bitcast i8* %r110 to %__L_Exception*
+%r112 = load %__L_Exception, %__L_Exception* %r111
+store %__L_Exception %r112, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L46
 L50:
-%r114 = landingpad { i8*, i32 } catch i8* null
-%r115 = extractvalue { i8*, i32 } %r114, 0
-%r116 = call i8* @__cxa_begin_catch( i8* %r115)
-%r117 = bitcast i8* %r116 to %__L_Exception*
-%r118 = load %__L_Exception, %__L_Exception* %r117
-store %__L_Exception %r118, %__L_Exception* %exception
+%r115 = landingpad { i8*, i32 } catch i8* null
+%r116 = extractvalue { i8*, i32 } %r115, 0
+%r117 = call i8* @__cxa_begin_catch( i8* %r116)
+%r118 = bitcast i8* %r117 to %__L_Exception*
+%r119 = load %__L_Exception, %__L_Exception* %r118
+store %__L_Exception %r119, %__L_Exception* %exception
 call void @__cxa_end_catch()
 br label %L49
 L49:
-call void @__dtor_std__String( %std__String* %r113)
+call void @__dtor_std__String( %std__String* %r114)
 br label %L46
 L46:
-call void @__dtor_std__String( %std__String* %r112)
+call void @__dtor_std__String( %std__String* %r113)
 br label %L43
 L43:
-call void @__dtor_std__String( %std__String* %r100)
+call void @__dtor_std__String( %std__String* %r101)
 br label %L40
 L40:
-call void @__dtor_std__String( %std__String* %r99)
+call void @__dtor_std__String( %std__String* %r100)
 br label %L37
 L37:
 br label %L36
 L56:
 ret void
 }
-@string29 = private unnamed_addr constant [20 x i8] c"----- NO EXCEPTION\0A\00"
-@string30 = private unnamed_addr constant [11 x i8] c"ALLOCS %d\0A\00"
-@string31 = private unnamed_addr constant [15 x i8] c"----- TEST %d\0A\00"
+@string30 = private unnamed_addr constant [6 x i8] c"world\00"
+@g_globalGreeting = internal global %std__String zeroinitializer, align 8
+@g_globalGreetingArray = internal global [20 x %std__String] zeroinitializer, align 8
+@string31 = private unnamed_addr constant [16 x i8] c"INIT ALLOCS %d\0A\00"
+@string32 = private unnamed_addr constant [20 x i8] c"----- NO EXCEPTION\0A\00"
+@string33 = private unnamed_addr constant [11 x i8] c"ALLOCS %d\0A\00"
+@string34 = private unnamed_addr constant [15 x i8] c"----- TEST %d\0A\00"
+@string35 = private unnamed_addr constant [20 x i8] c"GLOBAL GREETING %s\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
 entry:
+%exception = alloca %__L_Exception
+%ir9 = alloca %std__String, align 8
+%ir6 = alloca %std__String, align 8
+%ir3 = alloca %std__String, align 8
+%ir1 = getelementptr inbounds [6 x i8], [6 x i8]* @string14, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir3, i8* %ir1) to label %IL1 unwind label %abort
+IL1:
+%ir4 = alloca %std__String, align 8
+%ir2 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir4, i8* %ir2) to label %IL2 unwind label %abort
+IL2:
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %ir6, %std__String* %ir3, %std__String* %ir4) to label %IL3 unwind label %abort
+IL3:
+%ir7 = alloca %std__String, align 8
+%ir5 = getelementptr inbounds [6 x i8], [6 x i8]* @string30, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir7, i8* %ir5) to label %IL4 unwind label %abort
+IL4:
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %ir9, %std__String* %ir6, %std__String* %ir7) to label %IL5 unwind label %abort
+IL5:
+%ir10 = alloca %std__String, align 8
+%ir8 = getelementptr inbounds [2 x i8], [2 x i8]* @string13, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir10, i8* %ir8) to label %IL6 unwind label %abort
+IL6:
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret @g_globalGreeting, %std__String* %ir9, %std__String* %ir10) to label %IL7 unwind label %abort
+IL7:
+%ir11 = alloca i32, align 4
+store i32 -1, i32* %ir11
+%ir12 = getelementptr inbounds [20 x %std__String], [20 x %std__String]* @g_globalGreetingArray, i32 0, i32 0
+%ir16 = load i32, i32* %ir11
+%ir17 = add nsw i32 %ir16, 1
+store i32 %ir17, i32* %ir11
+%ir14 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir17
+%ir15 = getelementptr inbounds [2 x i8], [2 x i8]* @string18, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir14, i8* %ir15) to label %IL8 unwind label %abort
+IL8:
+%ir20 = load i32, i32* %ir11
+%ir21 = add nsw i32 %ir20, 1
+store i32 %ir21, i32* %ir11
+%ir18 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir21
+%ir19 = getelementptr inbounds [2 x i8], [2 x i8]* @string19, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir18, i8* %ir19) to label %IL9 unwind label %abort
+IL9:
+%ir24 = load i32, i32* %ir11
+%ir25 = add nsw i32 %ir24, 1
+store i32 %ir25, i32* %ir11
+%ir22 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir25
+%ir23 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir22, i8* %ir23) to label %IL10 unwind label %abort
+IL10:
+%ir28 = load i32, i32* %ir11
+%ir29 = add nsw i32 %ir28, 1
+store i32 %ir29, i32* %ir11
+%ir26 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir29
+%ir27 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir26, i8* %ir27) to label %IL11 unwind label %abort
+IL11:
+%ir32 = load i32, i32* %ir11
+%ir33 = add nsw i32 %ir32, 1
+store i32 %ir33, i32* %ir11
+%ir30 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir33
+%ir31 = getelementptr inbounds [2 x i8], [2 x i8]* @string21, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir30, i8* %ir31) to label %IL12 unwind label %abort
+IL12:
+%ir36 = load i32, i32* %ir11
+%ir37 = add nsw i32 %ir36, 1
+store i32 %ir37, i32* %ir11
+%ir34 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir37
+%ir35 = getelementptr inbounds [2 x i8], [2 x i8]* @string15, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir34, i8* %ir35) to label %IL13 unwind label %abort
+IL13:
+%ir40 = load i32, i32* %ir11
+%ir41 = add nsw i32 %ir40, 1
+store i32 %ir41, i32* %ir11
+%ir38 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir41
+%ir39 = getelementptr inbounds [2 x i8], [2 x i8]* @string22, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir38, i8* %ir39) to label %IL14 unwind label %abort
+IL14:
+%ir44 = load i32, i32* %ir11
+%ir45 = add nsw i32 %ir44, 1
+store i32 %ir45, i32* %ir11
+%ir42 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir45
+%ir43 = getelementptr inbounds [2 x i8], [2 x i8]* @string21, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir42, i8* %ir43) to label %IL15 unwind label %abort
+IL15:
+%ir48 = load i32, i32* %ir11
+%ir49 = add nsw i32 %ir48, 1
+store i32 %ir49, i32* %ir11
+%ir46 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir49
+%ir47 = getelementptr inbounds [2 x i8], [2 x i8]* @string23, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir46, i8* %ir47) to label %IL16 unwind label %abort
+IL16:
+%ir52 = load i32, i32* %ir11
+%ir53 = add nsw i32 %ir52, 1
+store i32 %ir53, i32* %ir11
+%ir50 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir53
+%ir51 = getelementptr inbounds [2 x i8], [2 x i8]* @string20, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir50, i8* %ir51) to label %IL17 unwind label %abort
+IL17:
+%ir56 = load i32, i32* %ir11
+%ir57 = add nsw i32 %ir56, 1
+store i32 %ir57, i32* %ir11
+%ir54 = getelementptr inbounds %std__String, %std__String* %ir12, i32 %ir57
+%ir55 = getelementptr inbounds [3 x i8], [3 x i8]* @string24, i64 0, i64 0
+invoke void @__C_std__String__$ctor__i8$( %std__String* %ir54, i8* %ir55) to label %IL18 unwind label %abort
+IL18:
+call void @__ctor_init_20__std__String( [20 x %std__String]* @g_globalGreetingArray, i32 11)
 %r1 = alloca i32, align 4
-%r2 = getelementptr inbounds [20 x i8], [20 x i8]* @string29, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r2)
+%r2 = getelementptr inbounds [16 x i8], [16 x i8]* @string31, i64 0, i64 0
+%r3 = load i32, i32* @g_allocCnt
+call void(i8*,  ...) @printf( i8* %r2, i32 %r3)
+%r4 = getelementptr inbounds [20 x i8], [20 x i8]* @string32, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r4)
 call void @test__i32( i32 1000)
-%r3 = getelementptr inbounds [11 x i8], [11 x i8]* @string30, i64 0, i64 0
-%r4 = load i32, i32* @g_allocCnt
-call void(i8*,  ...) @printf( i8* %r3, i32 %r4)
-%r5 = alloca i32, align 4
-store i32 1, i32* %r5
-%r6 = alloca i32, align 4
-%r7 = load i32, i32* @g_allocCnt
-store i32 %r7, i32* %r6
+%r5 = getelementptr inbounds [11 x i8], [11 x i8]* @string33, i64 0, i64 0
+%r6 = load i32, i32* @g_allocCnt
+call void(i8*,  ...) @printf( i8* %r5, i32 %r6)
+%r7 = alloca i32, align 4
+store i32 1, i32* %r7
+%r8 = alloca i32, align 4
+%r9 = load i32, i32* @g_allocCnt
+store i32 %r9, i32* %r8
 br label %L4
 L4:
-%r8 = load i32, i32* %r5
-%r9 = load i32, i32* %r6
-%r10 = icmp slt i32 %r8, %r9
-br i1 %r10, label %L3, label %L2
+%r10 = load i32, i32* %r7
+%r11 = load i32, i32* %r8
+%r12 = icmp slt i32 %r10, %r11
+br i1 %r12, label %L3, label %L2
 L3:
-%r11 = getelementptr inbounds [15 x i8], [15 x i8]* @string31, i64 0, i64 0
-%r12 = load i32, i32* %r5
-call void(i8*,  ...) @printf( i8* %r11, i32 %r12)
-%r13 = load i32, i32* %r5
-call void @test__i32( i32 %r13)
-%r14 = load i32, i32* %r5
-%r15 = add nsw i32 %r14, 1
-store i32 %r15, i32* %r5
+%r13 = getelementptr inbounds [15 x i8], [15 x i8]* @string34, i64 0, i64 0
+%r14 = load i32, i32* %r7
+call void(i8*,  ...) @printf( i8* %r13, i32 %r14)
+%r15 = load i32, i32* %r7
+call void @test__i32( i32 %r15)
+%r16 = load i32, i32* %r7
+%r17 = add nsw i32 %r16, 1
+store i32 %r17, i32* %r7
 br label %L4
 L2:
+%r19 = getelementptr inbounds [20 x i8], [20 x i8]* @string35, i64 0, i64 0
+%r18 = call i8* @__C_std__String__c_str__const( %std__String* @g_globalGreeting)
+call void(i8*,  ...) @printf( i8* %r19, i8* %r18)
 store i32 0, i32* %r1
 br label %L5
 L5:
 br label %L1
 L1:
-%r16 = load i32, i32* %r1
-ret i32 %r16
+br label %IL22
+IL22:
+call void @__dtor_20__std__String( [20 x %std__String]* @g_globalGreetingArray, i32 20)
+call void @__dtor_std__String( %std__String* @g_globalGreeting)
+call void @__dtor_std__String( %std__String* %ir10)
+call void @__dtor_std__String( %std__String* %ir9)
+call void @__dtor_std__String( %std__String* %ir7)
+call void @__dtor_std__String( %std__String* %ir6)
+call void @__dtor_std__String( %std__String* %ir4)
+call void @__dtor_std__String( %std__String* %ir3)
+%r20 = load i32, i32* %r1
+ret i32 %r20
+abort:
+%r22 = landingpad { i8*, i32 } catch i8* null
+%r23 = extractvalue { i8*, i32 } %r22, 0
+%r24 = call i8* @__cxa_begin_catch( i8* %r23)
+%r25 = bitcast i8* %r24 to %__L_Exception*
+%r26 = load %__L_Exception, %__L_Exception* %r25
+store %__L_Exception %r26, %__L_Exception* %exception
+call void @__cxa_end_catch()
+%r27 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
+%r28 = load i64, i64* %r27
+%r29 = trunc i64 %r28 to i32
+ret i32 %r29
 }
 
 

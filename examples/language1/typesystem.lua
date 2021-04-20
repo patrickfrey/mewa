@@ -133,14 +133,13 @@ end
 --	throws		: True if the function is declared as potentially throwing exceptions
 
 -- Create a callable environent object
-function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
-	return {name=name, line=node.line, scope=typedb:scope(), register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
+function createCallableEnvironment( node, name, rtype, throws, rprefix, lprefix)
+	return {name=name, line=node.line, scope=typedb:scope(), throws=throws, register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
 	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype, throws)
-	local env = createCallableEnvironment( node, name, rtype)
-	env.throws = throws
+	local env = createCallableEnvironment( node, name, rtype, throws)
 	if typedb:this_instance( currentCallableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
 	typedb:set_instance( currentCallableEnvKey, env)
 	return env
@@ -162,6 +161,9 @@ end
 -- Get a constructor structure
 function constructorStruct( out, code)
 	return {out=out, code=code or ""}
+end
+function constructorStructCall( out, code, step, throws)
+	return {out=out, code=code or "", step=step, throws=throws}
 end
 -- Get an empty constructor structure
 function constructorStructEmpty()
@@ -278,7 +280,7 @@ function callConstructor( fmt, has_result)
 		local this_inp,this_code = constructorParts( this)
 		local out,res; if has_result then out = env.register(); res = out else res = this_inp end
 		local code,subst = buildCallArguments( out, this_inp, args)
-		return constructorStruct( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
+		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, false)
 	end
 end
 -- Call constructor that might throw an exception
@@ -290,7 +292,7 @@ function invokeConstructor( fmt, has_result)
 		local code,subst = buildCallArguments( out, this_inp, args)
 		subst.success = env.label()
 		subst.cleanup = getInvokeUnwindLabel()
-		return constructorStruct( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register))
+		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, true)
 	end
 end
 -- Move constructor of a reference type from an unbound reference type
@@ -364,10 +366,7 @@ function functionCallConstructor( env, code, func, argstr, descr)
 		subst = {func = func, callargstr = argstr, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
 		if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.procedureCallThrowing else fmt = llvmir.control.procedureCall end
 	end
-	local rt = constructorStruct( out, code .. utils.constructor_format( fmt, subst, env.register))
-	rt.step = step
-	rt.throws = descr.throws
-	return rt
+	return constructorStructCall( out, code .. utils.constructor_format( fmt, subst, env.register), step, descr.throws)
 end
 -- Constructor implementing a direct call of a function with an arbitrary number of arguments built as one string with LLVM typeinfo attributes as needed for function calls
 function functionDirectCallConstructor( thisTypeId, descr)
@@ -403,7 +402,7 @@ function interfaceMethodCallConstructor( descr)
 end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
-	return function( this, args)
+	return function( this, args, step)
 		if #args > nofElements then
 			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
@@ -415,7 +414,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local cntreg,basereg = env.register(),env.register()
 		local memberwise_start = utils.constructor_format( descr.memberwise_start, {cnt=cntreg,this=this_inp,base=basereg})
 		local memberwise_cleanup = utils.constructor_format( descr.memberwise_cleanup, {cnt=cntreg,this=this_inp}, env.register)
-		local code = nil
+		local code = ""
 		local init_nofThrows = 0
 		registerPartialDtor()
 		for ai,arg in ipairs(args) do
@@ -430,7 +429,6 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			else
 				memberwise_next = utils.constructor_format( descr.memberwise_index, {index=ai-1,this=this_inp,out=elemreg}, env.register)
 			end
-			if not code then if init.constructor.throws then code = memberwise_start else code = "" end end
 			code = code .. memberwise_next .. typeConstructorPairCode(init)
 		end
 		if #args < nofElements then
@@ -438,7 +436,6 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}
-			if not code then if init.constructor.throws then code = memberwise_start else code = "" end end
 			if init.constructor.throws then
 				init_nofThrows = init_nofThrows + 1
 				fmtdescr.success = env.label()
@@ -449,15 +446,18 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			end
 		end
 		if init_nofThrows > 0 then
+			code = memberwise_start .. code
 			local startLabel,continueLabel = getPartialDtorLabels()
-			local endLabel = env.label()
-			code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=endLabel})
-				.. utils.constructor_format( llvmir.control.plainLabel, {inp=startLabel})
-				.. memberwise_cleanup
-				.. utils.constructor_format( llvmir.control.gotoStatement, {inp=continueLabel})
-				.. utils.constructor_format( llvmir.control.plainLabel, {inp=endLabel})
+			if startLabel and continueLabel then
+				local endLabel = env.label()
+				code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=endLabel})
+					.. utils.constructor_format( llvmir.control.plainLabel, {inp=startLabel})
+					.. memberwise_cleanup
+					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=continueLabel})
+					.. utils.constructor_format( llvmir.control.plainLabel, {inp=endLabel})
+			end
 		end
-		return constructorStruct( this_inp, code)
+		return constructorStructCall( this_inp, code, nil, init_nofThrows > 0)
 	end
 end
 -- Constructor of an array unbound reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference array type)
@@ -895,7 +895,7 @@ function getAssignmentsFromConstructors( node, qualitype, descr)
 				local destroy = utils.constructor_format( descr.dtor, {this=this_inp}, env.register)
 				local copy_res = ctorfunc( this, args)
 				local code = this_code .. destroy .. copy_res.code
-				return constructorStruct( this_inp, code)
+				return constructorStructCall( this_inp, code, copy_res.step, copy_res.throws)
 			end
 		end
 	end
@@ -933,7 +933,7 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	local env = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol)
+	local env = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol, nil, true)
 	pushEnvironment( env, nil, "cleanup")
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
 	local c_elementTypeId = constTypeMap[ elementTypeId]
@@ -1024,7 +1024,7 @@ function getClassMemberPartialDestructorCode( env, descr, members)
 end
 -- Define implicit destructors for 'struct'/'class' types
 function defineStructDestructors( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol, nil, false)
 	local dtors = getStructMemberDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
@@ -1033,14 +1033,14 @@ function defineStructDestructors( node, qualitype, descr)
 end
 -- Print the code of the partial destructor for a 'class' type
 function definePartialClassDestructor( node, qualitype, descr)
-	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol)
+	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol, nil, false)
 	local partial_dtors = getClassMemberPartialDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
 	instantCallableEnvironment = nil
 end
 -- Define implicit constructors for 'struct'/'class' types
 function defineStructConstructors( node, qualitype, descr)
-	local env = createCallableEnvironment( node, "ctor " .. descr.symbol)
+	local env = createCallableEnvironment( node, "ctor " .. descr.symbol, nil, true)
 	local ctors_init,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
 	local rewindlist = {{label="cleanup_0"}}
@@ -1800,8 +1800,8 @@ function defineConstructorInitAssignments( refType, initType, name, index, load_
 	local loadType = typedb:def_type( initType, name, callConstructor( load_ref, true), {})
 	for _,item in ipairs(items) do
 		local constructor = typedb:type_constructor(item)
-		local function loggedConstructor( this, args) -- increment the state after successful constructor call, that is the info for the partial cleanup, if the constructor throws
-			local rt = constructor(this,args)
+		local function loggedConstructor( this, args, llvmtypes) -- increment the state after successful constructor call, that is the info for the partial cleanup, if the constructor throws
+			local rt = constructor( this, args, llvmtypes)
 			rt.code = logInitCall( name, index) .. rt.code
 			return rt
 		end
@@ -3654,8 +3654,7 @@ function typesystem.main_procdef( node)
 	if globalCallableEnvironment.throws then
 		local errcode = env.register()
 		body = body .. utils.constructor_format( llvmir.exception.catch, {landingpad="abort"}, env.register)
-			.. utils.constructor_format( llvmir.exception.storeErrCodeToRetval, {retval=retvaladr}, env.register)
-			.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
+			.. utils.constructor_format( llvmir.exception.returnExceptionErrCode, {}, env.register)
 	end
 	typedb:scope( scope_bk)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
@@ -3663,7 +3662,7 @@ end
 function typesystem.program( node)
 	llvmir.init()
 	initBuiltInTypes()
-	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, "%ir", "IL")
+	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, false, "%ir", "IL")
 	globalAllocationFrame = createAllocationFrame( globalCallableEnvironment, typedb:scope())
 	globalAllocationFrame.catch = globalAllocationFrame -- there is not really a try/catch but we catch the exceptions of global initializations in the main (label "abort")
 	utils.traverse( typedb, node, {domain="global"})

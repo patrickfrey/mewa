@@ -1,3 +1,64 @@
+Alloc mem: [6] #1
+Get string
+Constructor string [Hello]
+Alloc mem: [2] #2
+Get string
+Constructor string [ ]
+Default constructor string
+Alloc mem: [7] #3
+Alloc mem: [6] #4
+Get string
+Constructor string [world]
+Default constructor string
+Alloc mem: [12] #5
+Alloc mem: [2] #6
+Get string
+Constructor string [!]
+Default constructor string
+Alloc mem: [13] #7
+Alloc mem: [2] #8
+Get string
+Constructor string [H]
+Alloc mem: [2] #9
+Get string
+Constructor string [e]
+Alloc mem: [2] #10
+Get string
+Constructor string [l]
+Alloc mem: [2] #11
+Get string
+Constructor string [l]
+Alloc mem: [2] #12
+Get string
+Constructor string [o]
+Alloc mem: [2] #13
+Get string
+Constructor string [ ]
+Alloc mem: [2] #14
+Get string
+Constructor string [w]
+Alloc mem: [2] #15
+Get string
+Constructor string [o]
+Alloc mem: [2] #16
+Get string
+Constructor string [r]
+Alloc mem: [2] #17
+Get string
+Constructor string [l]
+Alloc mem: [3] #18
+Get string
+Constructor string [d!]
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+Default constructor string
+INIT ALLOCS 18
 ----- NO EXCEPTION
 Alloc mem: [15] #1
 Get string
@@ -2365,3 +2426,77 @@ Get string
 Destructor string [Hello universe!]
 Free mem: [Hello universe!]
 ERR 201 Max allowed allocations reached
+Get string
+GLOBAL GREETING Hello world!
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string []
+Get string
+Destructor string [d!]
+Free mem: [d!]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [r]
+Free mem: [r]
+Get string
+Destructor string [o]
+Free mem: [o]
+Get string
+Destructor string [w]
+Free mem: [w]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [o]
+Free mem: [o]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [l]
+Free mem: [l]
+Get string
+Destructor string [e]
+Free mem: [e]
+Get string
+Destructor string [H]
+Free mem: [H]
+Get string
+Destructor string [Hello world!]
+Free mem: [Hello world!]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [Hello world]
+Free mem: [Hello world]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello ]
+Free mem: [Hello ]
+Get string
+Destructor string [ ]
+Free mem: [ ]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]

@@ -5,10 +5,10 @@
 declare external i32 @__gxx_personality_v0( ... ) nounwind
 declare external i8* @malloc( i64 ) nounwind
 %__Array__float__5 = type { [5 x float] }
-define private dso_local void @__ctor_init_5__float( [5 x float]* %ar, i32 %start)#0 nounwind {
+define private dso_local void @__ctor_init_5__float( [5 x float]* %ths_ar, i32 %start)#0 nounwind {
 enter:
-%ths_base = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 %start
-%ths_top = getelementptr inbounds [5 x float], [5 x float]* %ar, i32 0, i32 5
+%ths_base = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 %start
+%ths_top = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 5
 br label %loop
 loop:
 %ths = phi float* [%ths_base, %enter], [%A2, %cond]
