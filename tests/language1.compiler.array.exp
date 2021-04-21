@@ -69,7 +69,7 @@ ret void
 }
 define private dso_local void @__partial_dtor_IntArray( %IntArray* %ths, i32 %istate) {
 enter:
-%r2 = icmp sle i32 %istate, 1
+%r2 = icmp uge i32 %istate, 1
 br i1 %r2, label %L1, label %L2
 L1:
 %r1 = getelementptr inbounds %IntArray, %IntArray* %ths, i32 0, i32 0
@@ -143,7 +143,7 @@ ret void
 }
 define private dso_local void @__partial_dtor_FloatArray( %FloatArray* %ths, i32 %istate) {
 enter:
-%r2 = icmp sle i32 %istate, 1
+%r2 = icmp uge i32 %istate, 1
 br i1 %r2, label %L1, label %L2
 L1:
 %r1 = getelementptr inbounds %FloatArray, %FloatArray* %ths, i32 0, i32 0
@@ -217,7 +217,7 @@ ret void
 }
 define private dso_local void @__partial_dtor_DoubleArray( %DoubleArray* %ths, i32 %istate) {
 enter:
-%r2 = icmp sle i32 %istate, 1
+%r2 = icmp uge i32 %istate, 1
 br i1 %r2, label %L1, label %L2
 L1:
 %r1 = getelementptr inbounds %DoubleArray, %DoubleArray* %ths, i32 0, i32 0

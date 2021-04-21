@@ -34,7 +34,7 @@ ret void
 }
 define private dso_local void @__partial_dtor_Line( %Line* %ths, i32 %istate) {
 enter:
-%r2 = icmp sle i32 %istate, 1
+%r2 = icmp uge i32 %istate, 1
 br i1 %r2, label %L1, label %L2
 L1:
 %r1 = getelementptr inbounds %Line, %Line* %ths, i32 0, i32 0

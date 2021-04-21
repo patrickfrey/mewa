@@ -68,7 +68,7 @@ ret void
 }
 define private dso_local void @__partial_dtor___Array__float__5( %__Array__float__5* %ths, i32 %istate) {
 enter:
-%r2 = icmp sle i32 %istate, 1
+%r2 = icmp uge i32 %istate, 1
 br i1 %r2, label %L1, label %L2
 L1:
 %r1 = getelementptr inbounds %__Array__float__5, %__Array__float__5* %ths, i32 0, i32 0

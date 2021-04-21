@@ -154,6 +154,12 @@ function typeDeclarationString( contextTypeId, typnam, args)
 	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
 	return rt
 end
+---- Constructor Structure Fields ----
+--	out		: Output of the constructor, type depends on the constructor class (register for value constructor, unbound label for boolean control type, substitution name for unbound reference type) 
+--	code 		: LLVM code of the constructor
+--	step 		: scope step of the node creating the type the constructor is associated with, inherited when resolving an unbound reference type or building a structure from a constexpr structure
+--	throws		: true if the code of this constructor may throw an exception
+
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
 	if type(constructor) == "table" then return constructor.out,(constructor.code or "") else return tostring(constructor),"" end
@@ -414,6 +420,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local cntreg,basereg = env.register(),env.register()
 		local memberwise_start = utils.constructor_format( descr.memberwise_start, {cnt=cntreg,this=this_inp,base=basereg})
 		local memberwise_cleanup = utils.constructor_format( descr.memberwise_cleanup, {cnt=cntreg,this=this_inp}, env.register)
+		local memberwise_final = utils.constructor_format( descr.memberwise_final, {cnt=cntreg,index=#args}, env.register)
 		local code = ""
 		local init_nofThrows = 0
 		registerPartialDtor()
@@ -431,6 +438,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			end
 			code = code .. memberwise_next .. typeConstructorPairCode(init)
 		end
+		if init_nofThrows > 0 then code = code .. memberwise_final end
 		if #args < nofElements then
 			local init = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
 			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
@@ -1793,7 +1801,7 @@ function expandContextLlvmMember( descr, context)
 	if context.llvmtype == "" then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
 end
 -- Define the assignment operators of the class members accessed via the init type of the class (self type in a constructor) as ctor instance
-function defineConstructorInitAssignments( refType, initType, name, index, load_ref)
+function defineCtorInitAssignments( refType, initType, name, index, load_ref)
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
 	local items = typedb:get_types( refType, ":=")
 	typedb:scope( scope_bk,step_bk)
@@ -1842,7 +1850,7 @@ function defineVariableMember( node, descr, context, typeId, name, private)
 		defineCall( typeId, context.qualitype.c_valtype, name, {}, callConstructor( load_val, true))
 	end
 	if context.qualitype.init_reftype then
-		defineConstructorInitAssignments( r_typeId, context.qualitype.init_reftype, name, index, load_ref)
+		defineCtorInitAssignments( r_typeId, context.qualitype.init_reftype, name, index, load_ref)
 	end
 end
 -- Define an inherited interface in a class as a member variable. The interface object is constructed in the destination, therefore we use the mechanism of unbound reference types, that are constructed when used.
@@ -2649,7 +2657,7 @@ function defineClassOperator( node, descr, context)
 	if descr.name == "=" then context.properties.assignment = true end
 end
 -- Define a ctor procedure
-function defineConstructor( node, descr, context)
+function defineCtorProcedure( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
 	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
 	local calltype = defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
@@ -2657,7 +2665,7 @@ function defineConstructor( node, descr, context)
 	if descr.throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
 end
 -- Define a dtor procedure
-function defineDestructor( node, descr, context)
+function defineDtorProcedure( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
 	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
@@ -3397,7 +3405,7 @@ function typesystem.constructordef( node, context, pass)
 				ret = nil, private=lnk.private, const=false, throws=decl.throws, interface=false}
 		descr.param = utils.traverseRange( typedb, node, {2,2}, context, descr, 1)[2]
 		context.properties.constructor = true
-		defineConstructor( node, descr, context)
+		defineCtorProcedure( node, descr, context)
 		allocNodeData( node, descr)
 	end
 	if not pass or pass == 2 then
@@ -3412,7 +3420,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 		local descr = {lnk = lnk.linkage, signature="", name = ":~", symbol = "$dtor", 
 		               ret = nil, param={}, private=false, const=false, throws=false, interface=false}
 		context.properties.destructor = true
-		defineDestructor( node, descr, context)
+		defineDtorProcedure( node, descr, context)
 		allocNodeData( node, descr)
 	end
 	if not pass or pass == 2 then

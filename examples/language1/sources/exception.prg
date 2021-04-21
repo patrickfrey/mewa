@@ -39,7 +39,7 @@ class String
 {
 	public constructor() nothrow
 	{
-		printf( "Default constructor string\n");
+		printf( "Constructor empty string\n");
 		m_ptr = null;
 		m_size = 0;
 	}
@@ -62,7 +62,14 @@ class String
 	}
 	destructor
 	{
-		printf( "Destructor string [%s]\n", c_str());
+		if (m_size > 0)
+		{
+			printf( "Destructor string [%s]\n", c_str());
+		}
+		else
+		{
+			printf( "Destructor empty string []\n");
+		}
 		if (m_ptr != null)
 		{
 			freemem( m_ptr);
@@ -137,9 +144,23 @@ class GreetingType
 		greet = "Hello";
 		who = str;
 		punct = "!";
+		printf( "Constructor greeting type [%s]\n", who.c_str());
 	}
 	public constructor()
-	{}
+	{
+		printf( "Constructor empty greeting type []\n");
+	}
+	destructor
+	{
+		if (who.size() > 0)
+		{
+			printf( "Destructor greeting type [%s]\n", who.c_str());
+		}
+		else
+		{
+			printf( "Destructor empty greeting type []\n");
+		}
+	}
 	std::String greet;
 	std::String who;
 	std::String punct;
@@ -184,6 +205,7 @@ private procedure test( int allocCnt) nothrow
 		}
 		printf( "GREET1 %s GREET2 %s GREET3 %s\n", fstr.c_str(), astr.c_str(), str.c_str());
 		printf( "SELECT %s\n", greetingTypeArray[1][1].phrase().c_str());
+		var GreetingType gt = {"bubble"};
 	}
 	catch errcode, errmsg
 	{
@@ -201,8 +223,8 @@ main
 	test( 1000);
 	printf( "ALLOCS %d\n", g_allocCnt);
 
-	var int ii = 1;
-	var int nn = g_allocCnt;
+	var int ii = 40;
+	var int nn = 41;//g_allocCnt;
 	while (ii < nn) {
 		printf( "----- TEST %d\n", ii);
 		test( ii);

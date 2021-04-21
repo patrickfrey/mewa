@@ -82,6 +82,7 @@ local arrayTemplate = {
 		.. "{base} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 0\n",
 	memberwise_next = "{1} = load i32, i32* {cnt}\n{2} = add nsw i32 {1}, 1\nstore i32 {2}, i32* {cnt}\n"
 		.. "{out} = getelementptr inbounds {element}, {element}* {base}, i32 {2}\n",
+	memberwise_final = "store i32 {index}, i32* {cnt}\n",
 	memberwise_index = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
 	memberwise_cleanup = "{1} = load i32, i32* {cnt}\ncall void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* {this}, i32 {1})\n",
 	dtorproc = "define private dso_local void @__dtor_{size}__{elementsymbol}( [{size} x {element}]* %ar, i32 %arsize) alwaysinline {\n"
@@ -168,7 +169,7 @@ llvmir.classTemplate = {
 	dtorproc = llvmir.structTemplate.dtorproc,
 	partial_dtorproc = "define private dso_local void @__partial_dtor_{symbol}( %{symbol}* %ths, i32 %istate) {\n"
 		.. "enter:\n{dtors}br label %end\nend:\nret void\n}\n",
-	partial_dtorelem = "{creg} = icmp sle i32 %istate, {istate}\n"
+	partial_dtorelem = "{creg} = icmp uge i32 %istate, {istate}\n"
 		.. "br i1 {creg}, label %{1}, label %{2}\n"
 		.. "{1}:\n{dtor}br label %{2}\n{2}:\n",
 	partial_dtor = "{1} = load i32, i32* %initstate\n"
