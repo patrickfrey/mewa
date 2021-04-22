@@ -1300,24 +1300,24 @@ store i32 -1, i32* %r100
 store i32 %r111, i32* %r100
 %r103 = getelementptr inbounds %GreetingType, %GreetingType* %r101, i32 %r111
 %r104 = getelementptr inbounds [7 x i8], [7 x i8]* @string32, i64 0, i64 0
-invoke void @__C_GreetingType__$ctor__i8$( %GreetingType* %r103, i8* %r104) to label %L49 unwind label %L46
-L49:
+invoke void @__C_GreetingType__$ctor__i8$( %GreetingType* %r103, i8* %r104) to label %L51 unwind label %L48
+L51:
 %r114 = load i32, i32* %r100
 %r115 = add nsw i32 %r114, 1
 store i32 %r115, i32* %r100
 %r112 = getelementptr inbounds %GreetingType, %GreetingType* %r101, i32 %r115
 %r113 = getelementptr inbounds [9 x i8], [9 x i8]* @string33, i64 0, i64 0
-invoke void @__C_GreetingType__$ctor__i8$( %GreetingType* %r112, i8* %r113) to label %L50 unwind label %L46
-L50:
+invoke void @__C_GreetingType__$ctor__i8$( %GreetingType* %r112, i8* %r113) to label %L52 unwind label %L48
+L52:
 store i32 2, i32* %r100
-invoke void @__ctor_init_10__GreetingType( [10 x %GreetingType]* %r99, i32 2) to label %L55 unwind label %L46
-L55:
-br label %L56
-L47:
+invoke void @__ctor_init_10__GreetingType( [10 x %GreetingType]* %r99, i32 2) to label %L57 unwind label %L48
+L57:
+br label %L58
+L49:
 %r102 = load i32, i32* %r100
 call void @__dtor_10__GreetingType( [10 x %GreetingType]* %r99, i32 %r102)
-br label %L48
-L56:
+br label %L50
+L58:
 %r116 = getelementptr inbounds [10 x [10 x %GreetingType]], [10 x [10 x %GreetingType]]* %r74, i32 0, i32 2
 %r117 = alloca i32, align 4
 store i32 -1, i32* %r117
@@ -1327,24 +1327,24 @@ store i32 -1, i32* %r117
 store i32 %r128, i32* %r117
 %r120 = getelementptr inbounds %GreetingType, %GreetingType* %r118, i32 %r128
 %r121 = getelementptr inbounds [7 x i8], [7 x i8]* @string34, i64 0, i64 0
-invoke void @__C_GreetingType__$ctor__i8$( %GreetingType* %r120, i8* %r121) to label %L61 unwind label %L58
-L61:
+invoke void @__C_GreetingType__$ctor__i8$( %GreetingType* %r120, i8* %r121) to label %L63 unwind label %L60
+L63:
 store i32 1, i32* %r117
-invoke void @__ctor_init_10__GreetingType( [10 x %GreetingType]* %r116, i32 1) to label %L66 unwind label %L58
-L66:
-br label %L67
-L59:
+invoke void @__ctor_init_10__GreetingType( [10 x %GreetingType]* %r116, i32 1) to label %L68 unwind label %L60
+L68:
+br label %L69
+L61:
 %r119 = load i32, i32* %r117
 call void @__dtor_10__GreetingType( [10 x %GreetingType]* %r116, i32 %r119)
-br label %L60
-L67:
-invoke void @__ctor_init_10__10__GreetingType( [10 x [10 x %GreetingType]]* %r74, i32 3) to label %L76 unwind label %L70
+br label %L62
+L69:
+invoke void @__ctor_init_10__10__GreetingType( [10 x [10 x %GreetingType]]* %r74, i32 3) to label %L76 unwind label %L72
 L76:
 br label %L77
-L71:
+L45:
 %r77 = load i32, i32* %r75
 call void @__dtor_10__10__GreetingType( [10 x [10 x %GreetingType]]* %r74, i32 %r77)
-br label %L72
+br label %L46
 L77:
 %r134 = alloca i32, align 4
 store i32 0, i32* %r134
@@ -1492,7 +1492,7 @@ call void @__cxa_end_catch()
 br label %L34
 L35:
 br label %L32
-L46:
+L48:
 %r105 = landingpad { i8*, i32 } catch i8* null
 %r106 = extractvalue { i8*, i32 } %r105, 0
 %r107 = call i8* @__cxa_begin_catch( i8* %r106)
@@ -1500,10 +1500,10 @@ L46:
 %r109 = load %__L_Exception, %__L_Exception* %r108
 store %__L_Exception %r109, %__L_Exception* %exception
 call void @__cxa_end_catch()
+br label %L49
+L50:
 br label %L47
-L48:
-br label %L45
-L58:
+L60:
 %r122 = landingpad { i8*, i32 } catch i8* null
 %r123 = extractvalue { i8*, i32 } %r122, 0
 %r124 = call i8* @__cxa_begin_catch( i8* %r123)
@@ -1511,10 +1511,10 @@ L58:
 %r126 = load %__L_Exception, %__L_Exception* %r125
 store %__L_Exception %r126, %__L_Exception* %exception
 call void @__cxa_end_catch()
+br label %L61
+L62:
 br label %L59
-L60:
-br label %L57
-L70:
+L72:
 %r129 = landingpad { i8*, i32 } catch i8* null
 %r130 = extractvalue { i8*, i32 } %r129, 0
 %r131 = call i8* @__cxa_begin_catch( i8* %r130)
@@ -1522,9 +1522,9 @@ L70:
 %r133 = load %__L_Exception, %__L_Exception* %r132
 store %__L_Exception %r133, %__L_Exception* %exception
 call void @__cxa_end_catch()
+br label %L45
+L46:
 br label %L71
-L72:
-br label %L69
 L100:
 %r188 = landingpad { i8*, i32 } catch i8* null
 %r189 = extractvalue { i8*, i32 } %r188, 0
@@ -1550,12 +1550,12 @@ L99:
 br label %L82
 L82:
 call void @__dtor_10__10__GreetingType( [10 x [10 x %GreetingType]]* %r74, i32 10)
-br label %L69
-L69:
-br label %L57
-L57:
-br label %L45
-L45:
+br label %L71
+L71:
+br label %L59
+L59:
+br label %L47
+L47:
 br label %L32
 L32:
 call void @__dtor_20__std__String( [20 x %std__String]* %r21, i32 20)
@@ -1762,29 +1762,30 @@ call void @test__i32( i32 1000)
 %r6 = load i32, i32* @g_allocCnt
 call void(i8*,  ...) @printf( i8* %r5, i32 %r6)
 %r7 = alloca i32, align 4
-store i32 40, i32* %r7
+store i32 0, i32* %r7
 %r8 = alloca i32, align 4
-store i32 41, i32* %r8
+%r9 = load i32, i32* @g_allocCnt
+store i32 %r9, i32* %r8
 br label %L4
 L4:
-%r9 = load i32, i32* %r7
-%r10 = load i32, i32* %r8
-%r11 = icmp slt i32 %r9, %r10
-br i1 %r11, label %L3, label %L2
+%r10 = load i32, i32* %r7
+%r11 = load i32, i32* %r8
+%r12 = icmp slt i32 %r10, %r11
+br i1 %r12, label %L3, label %L2
 L3:
-%r12 = getelementptr inbounds [15 x i8], [15 x i8]* @string45, i64 0, i64 0
-%r13 = load i32, i32* %r7
-call void(i8*,  ...) @printf( i8* %r12, i32 %r13)
+%r13 = getelementptr inbounds [15 x i8], [15 x i8]* @string45, i64 0, i64 0
 %r14 = load i32, i32* %r7
-call void @test__i32( i32 %r14)
+call void(i8*,  ...) @printf( i8* %r13, i32 %r14)
 %r15 = load i32, i32* %r7
-%r16 = add nsw i32 %r15, 1
-store i32 %r16, i32* %r7
+call void @test__i32( i32 %r15)
+%r16 = load i32, i32* %r7
+%r17 = add nsw i32 %r16, 1
+store i32 %r17, i32* %r7
 br label %L4
 L2:
-%r18 = getelementptr inbounds [20 x i8], [20 x i8]* @string46, i64 0, i64 0
-%r17 = call i8* @__C_std__String__c_str__const( %std__String* @g_globalGreeting)
-call void(i8*,  ...) @printf( i8* %r18, i8* %r17)
+%r19 = getelementptr inbounds [20 x i8], [20 x i8]* @string46, i64 0, i64 0
+%r18 = call i8* @__C_std__String__c_str__const( %std__String* @g_globalGreeting)
+call void(i8*,  ...) @printf( i8* %r19, i8* %r18)
 store i32 0, i32* %r1
 br label %L5
 L5:
@@ -1800,20 +1801,20 @@ call void @__dtor_std__String( %std__String* %ir7)
 call void @__dtor_std__String( %std__String* %ir6)
 call void @__dtor_std__String( %std__String* %ir4)
 call void @__dtor_std__String( %std__String* %ir3)
-%r19 = load i32, i32* %r1
-ret i32 %r19
+%r20 = load i32, i32* %r1
+ret i32 %r20
 abort:
-%r21 = landingpad { i8*, i32 } catch i8* null
-%r22 = extractvalue { i8*, i32 } %r21, 0
-%r23 = call i8* @__cxa_begin_catch( i8* %r22)
-%r24 = bitcast i8* %r23 to %__L_Exception*
-%r25 = load %__L_Exception, %__L_Exception* %r24
-store %__L_Exception %r25, %__L_Exception* %exception
+%r22 = landingpad { i8*, i32 } catch i8* null
+%r23 = extractvalue { i8*, i32 } %r22, 0
+%r24 = call i8* @__cxa_begin_catch( i8* %r23)
+%r25 = bitcast i8* %r24 to %__L_Exception*
+%r26 = load %__L_Exception, %__L_Exception* %r25
+store %__L_Exception %r26, %__L_Exception* %exception
 call void @__cxa_end_catch()
-%r26 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
-%r27 = load i64, i64* %r26
-%r28 = trunc i64 %r27 to i32
-ret i32 %r28
+%r27 = getelementptr inbounds %__L_Exception, %__L_Exception* %exception, i32 0, i32 0
+%r28 = load i64, i64* %r27
+%r29 = trunc i64 %r28 to i32
+ret i32 %r29
 }
 
 

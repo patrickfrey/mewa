@@ -6,7 +6,9 @@
  * Implement lambdas ```lambda( a, b, c){ a = b + c }```, lambda argument type as transfer type with a constructor defining the reduction of the lambda argument name to the type transferred.
  * Implement free operators: ```operator Complex[double]( const double, const Complex[double] o)```for promote calls
  * Implement coroutines
- * Do not implement nop destructors (transitive)
+ * Implement pointer to class reduction to pointer to inherited class
+ * constexpr types into own module Integer,Float as classes
+ * Do not implement NOP destructors (transitive)
  
 # Open issues where help is welcome
  * Arbitrary precision arithmetics library for both integers and floating points used for modelling const expressions in Lua.

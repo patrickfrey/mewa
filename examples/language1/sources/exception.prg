@@ -223,8 +223,8 @@ main
 	test( 1000);
 	printf( "ALLOCS %d\n", g_allocCnt);
 
-	var int ii = 40;
-	var int nn = 41;//g_allocCnt;
+	var int ii = 0;
+	var int nn = g_allocCnt;
 	while (ii < nn) {
 		printf( "----- TEST %d\n", ii);
 		test( ii);

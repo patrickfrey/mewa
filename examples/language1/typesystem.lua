@@ -408,7 +408,7 @@ function interfaceMethodCallConstructor( descr)
 end
 -- Constructor for a memberwise assignment of a tree structure (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
-	return function( this, args, step)
+	return function( this, args, parentStep)
 		if #args > nofElements then
 			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
 		end
@@ -423,7 +423,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local memberwise_final = utils.constructor_format( descr.memberwise_final, {cnt=cntreg,index=#args}, env.register)
 		local code = ""
 		local init_nofThrows = 0
-		registerPartialDtor()
+		if env ~= globalCallableEnvironment then registerPartialDtor() end -- if the initialization of globals fail we do not go into partial cleanup
 		for ai,arg in ipairs(args) do
 			local elemreg = env.register()
 			local elem = {type=refTypeId,constructor={out=elemreg}}
@@ -455,13 +455,13 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		end
 		if init_nofThrows > 0 then
 			code = memberwise_start .. code
-			local startLabel,continueLabel = getPartialDtorLabels()
-			if startLabel and continueLabel then
+			local partialDtor = getPartialDtorLabels()
+			if partialDtor then
 				local endLabel = env.label()
 				code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=endLabel})
-					.. utils.constructor_format( llvmir.control.plainLabel, {inp=startLabel})
-					.. memberwise_cleanup
-					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=continueLabel})
+					.. utils.constructor_format( llvmir.control.plainLabel, {inp=partialDtor.start})
+					.. memberwise_cleanup -- .. getPartialDtorCode( parentStep)
+					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=partialDtor.continue})
 					.. utils.constructor_format( llvmir.control.plainLabel, {inp=endLabel})
 			end
 		end
@@ -473,7 +473,7 @@ function tryConstexprStructureReductionConstructorArray( node, thisTypeId, eleme
 	local initconstructor = memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs
 		local step_bk = typedb:step( constructor.step)
-		local rt = initconstructor( {out="{RVAL}"}, constructor.list);
+		local rt = initconstructor( {out="{RVAL}"}, constructor.list, step_bk)
 		typedb:step( step_bk)
 		if rt then rt.out = "RVAL"; rt.step = constructor.step end
 		return rt
@@ -921,7 +921,7 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 		local label = codelist[ ci].label
 		local code = codelist[ ci].code
 		local dtor_label = label .. "_dtor"
-		local dtor_next = nil; local ni=ci; while ni > 1 do ni = ni-1; cd = codelist[ni].code; if cd and cd ~= "" then dtor_next = codelist[ ni].label .. "_dtor"; break end end
+		local dtor_next; local ni=ci; while ni > 1 do ni = ni-1; cd = codelist[ni].code; if cd and cd ~= "" then dtor_next = codelist[ ni].label .. "_dtor"; break end end
 		if not dtor_next then dtor_next = finishLabel end
 		if code then
 			partial_dtor = partial_dtor
@@ -1407,29 +1407,34 @@ function registerPartialDtor()
 	local frame = getOrCreateThisAllocationFrame()
 	frame.partial_dtors[ typedb:step()] = true
 end
--- Get the code jumping to the partial dtor to execute in a landingpad code of a throwing call
-function getPartialDtorCode()
-	local step = typedb:step()
-	local frame = getAllocationFrame()
-	if frame and frame.partial_dtors[ step] then
-		local dtor = frame.partial_dtors[ step]
-		if type(dtor) ~= "table" then
-			dtor = {start=frame.env.label(),continue=frame.env.label()}
-			frame.partial_dtors[step] = dtor
-		end
-		return utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor.start})
-			.. utils.constructor_format( llvmir.control.plainLabel, {inp=dtor.continue})
+function getOrCreatePartialDtorLabels( frame, step)
+	local dtor = frame.partial_dtors[ step]
+	if type(dtor) ~= "table" then
+		dtor = {start=frame.env.label(),continue=frame.env.label()}
+		frame.partial_dtors[step] = dtor
 	end
-	return ""
+	return dtor
+end
+-- Get the code jumping to the partial dtor to execute in a landingpad code of a throwing call
+function getPartialDtorCode( step)
+	local rt = ""
+	if not step then step = typedb:step() end
+	local frame = getAllocationFrame()
+	if frame then
+		local dtor = frame.partial_dtors[ step]
+		if dtor then
+			dtor = getOrCreatePartialDtorLabels( frame, step)
+			rt = utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor.start})
+				.. utils.constructor_format( llvmir.control.plainLabel, {inp=dtor.continue})
+		end
+	end
+	return rt
 end
 -- Get the labels to use for the code of a partial dtor in case of a throwing call
 function getPartialDtorLabels()
 	local step = typedb:step()
 	local frame = getAllocationFrame()
-	if frame and frame.partial_dtors[ step] then
-		local dtor = frame.partial_dtors[ step]
-		if type(dtor) == "table" then return dtor.start,dtor.continue end
-	end
+	if frame and frame.partial_dtors[ step] then return getOrCreatePartialDtorLabels( frame, step) end
 end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
 function getAllocationFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)

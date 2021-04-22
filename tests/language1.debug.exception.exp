@@ -2571,7 +2571,7 @@ Reduce #1 to typegen by token IDENT = "ii" at line 226 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "ii" at line 226 in state XXX, call typespec, goto XXX
 Shift token IDENT = "ii" at line 226 in state XXX, goto XXX
 Shift token '=' at line 226 in state XXX, goto XXX
-Shift token UINTEGER = "40" at line 226 in state XXX, goto XXX
+Shift token UINTEGER = "0" at line 226 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 226 in state XXX, call constant "constexpr uint", goto XXX
 Reduce #4 to variabledefinition by token ';' at line 226 in state XXX, call vardef_assign, goto XXX
 Shift token ';' at line 226 in state XXX, goto XXX
@@ -2584,8 +2584,8 @@ Reduce #1 to typegen by token IDENT = "nn" at line 227 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "nn" at line 227 in state XXX, call typespec, goto XXX
 Shift token IDENT = "nn" at line 227 in state XXX, goto XXX
 Shift token '=' at line 227 in state XXX, goto XXX
-Shift token UINTEGER = "41" at line 227 in state XXX, goto XXX
-Reduce #1 to expression by token ';' at line 227 in state XXX, call constant "constexpr uint", goto XXX
+Shift token IDENT = "g_allocCnt" at line 227 in state XXX, goto XXX
+Reduce #1 to expression by token ';' at line 227 in state XXX, call variable, goto XXX
 Reduce #4 to variabledefinition by token ';' at line 227 in state XXX, call vardef_assign, goto XXX
 Shift token ';' at line 227 in state XXX, goto XXX
 Reduce #3 to statement by token "while" at line 228 in state XXX, call definition 1, goto XXX
@@ -11323,7 +11323,7 @@ Lua call result [1]
                         {
                           line = 226,
                           name = "UINTEGER",
-                          value = "40"}},
+                          value = "0"}},
                       call = {
                         name = "constant constexpr uint",
                         obj = "constexpr uint",
@@ -11373,11 +11373,10 @@ Lua call result [1]
                       arg = {
                         {
                           line = 227,
-                          name = "UINTEGER",
-                          value = "41"}},
+                          name = "IDENT",
+                          value = "g_allocCnt"}},
                       call = {
-                        name = "constant constexpr uint",
-                        obj = "constexpr uint",
+                        name = "variable",
                         proc = <function>},
                       line = 227,
                       step = 234}},
