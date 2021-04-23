@@ -5473,6 +5473,67 @@ Constructor empty string
 Constructor empty string
 Constructor empty string
 Throw: Max allowed allocations reached
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
 Destructor empty string []
 Destructor empty string []
 Destructor empty string []
@@ -5686,6 +5747,67 @@ Alloc mem: [6] #32
 Get string
 Constructor string [Hello]
 Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]
@@ -5908,6 +6030,67 @@ Throw: Max allowed allocations reached
 Get string
 Destructor string [abroad]
 Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]
@@ -6140,6 +6323,67 @@ Free mem: [!]
 Get string
 Destructor string [abroad]
 Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]
@@ -6378,6 +6622,67 @@ Free mem: [!]
 Get string
 Destructor string [abroad]
 Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]
@@ -6622,6 +6927,67 @@ Free mem: [!]
 Get string
 Destructor string [abroad]
 Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]
@@ -6889,6 +7255,121 @@ Constructor empty string
 Constructor empty string
 Constructor empty string
 Throw: Max allowed allocations reached
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [anywhere]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [anywhere]
+Free mem: [anywhere]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [abroad]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [abroad]
+Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
 Destructor empty string []
 Destructor empty string []
 Destructor empty string []
@@ -7156,6 +7637,121 @@ Alloc mem: [6] #38
 Get string
 Constructor string [Hello]
 Throw: Max allowed allocations reached
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [anywhere]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [anywhere]
+Free mem: [anywhere]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [abroad]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [abroad]
+Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]
@@ -7432,6 +8028,121 @@ Throw: Max allowed allocations reached
 Get string
 Destructor string [aliens]
 Free mem: [aliens]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [anywhere]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [anywhere]
+Free mem: [anywhere]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [abroad]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [abroad]
+Free mem: [abroad]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Destructor empty greeting type []
+Destructor empty string []
+Destructor empty string []
+Destructor empty string []
+Get string
+Destructor greeting type [universe]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [universe]
+Free mem: [universe]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [world]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [world]
+Free mem: [world]
+Get string
+Destructor string [Hello]
+Free mem: [Hello]
+Get string
+Destructor greeting type [home]
+Get string
+Destructor string [!]
+Free mem: [!]
+Get string
+Destructor string [home]
+Free mem: [home]
 Get string
 Destructor string [Hello]
 Free mem: [Hello]

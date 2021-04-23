@@ -70,7 +70,7 @@ local anyStructPointerType = nil	-- Type id of the "struct^" type
 local anyConstStructPointerType = nil	-- Type id of the "struct^" type
 local anyFreeFunctionType = nil		-- Type id of any free function/procedure callable
 local controlTrueType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
-local controlFalseType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
+local controlFalseType = nil		-- Type implementing a boolean n§ot represented as value but as peace of code (in the constructor) with a trueExit label
 local qualiTypeMap = {}			-- Map of value type without qualifier to the table of type ids for all qualifiers defined for this type
 local referenceTypeMap = {}		-- Map of value types to their reference types
 local dereferenceTypeMap = {}		-- Map of reference types to their value type with the reference qualifier (and the private flag) stripped away
@@ -79,7 +79,8 @@ local privateTypeMap = {}		-- Map of non private types to their private type
 local pointerTypeMap = {}		-- Map of non pointer types to their pointer type
 local pointeeTypeMap = {}		-- Map of pointer types to their pointee type
 local unboundReferenceTypeMap = {}	-- Map of value types to their unbound reftype type if it exists
-local constructorThrowingMap = {}	-- Map that tells if a constructor is throwing or not
+local ctorThrowingMap = {}		-- Map that tells if a constructor is throwing or not
+local typeHasCtorThrowingMap = {}	-- Map that tells if a type has a throwing constructor (true) or not (false or nil)
 local typeQualiSepMap = {}		-- Map of any defined type id to a separation pair (valtype,qualifier) = valtype type, qualifier as booleans
 local typeDescriptionMap = {}		-- Map of any defined type id to its llvmir template structure
 local constVarargTypeMap = {}		-- Map of const value types to their vararg type (type used if passed as variable size argument list parameter)
@@ -423,10 +424,10 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local this_inp,res_code = constructorParts( this)
 		local cntreg,basereg = env.register(),env.register()
 		local memberwise_start = utils.constructor_format( descr.memberwise_start, {cnt=cntreg,this=this_inp,base=basereg})
-		local memberwise_cleanup = utils.constructor_format( descr.memberwise_cleanup, {cnt=cntreg,this=this_inp}, env.register)
+		local memberwise_cleanup = utils.template_format( descr.memberwise_cleanup, {cnt=cntreg,this=this_inp}, env.register)
 		local memberwise_final = utils.constructor_format( descr.memberwise_final, {cnt=cntreg,index=#args}, env.register)
 		local code = ""
-		local init_nofThrows = 0
+		local element_throws = typeHasCtorThrowingMap[ refTypeId]
 		if env ~= globalCallableEnvironment then registerPartialDtor( "array", memberwise_cleanup, parentStep) end -- if the initialization of globals fail we do not go into partial cleanup
 		for ai,arg in ipairs(args) do
 			local elemreg = env.register()
@@ -434,22 +435,20 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			local init = tryApplyCallable( node, elem, ":=", {arg})
 			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
 			local memberwise_next
-			if init.constructor.throws then
-				init_nofThrows = init_nofThrows + 1
+			if element_throws then
 				memberwise_next = utils.constructor_format( descr.memberwise_next, {cnt=cntreg,base=basereg,out=elemreg}, env.register)
 			else
 				memberwise_next = utils.constructor_format( descr.memberwise_index, {index=ai-1,this=this_inp,out=elemreg}, env.register)
 			end
 			code = code .. memberwise_next .. typeConstructorPairCode(init)
 		end
-		if init_nofThrows > 0 then code = code .. memberwise_final end
+		if element_throws then code = code .. memberwise_final end
 		if #args < nofElements then
 			local init = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
 			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}
 			if init.constructor.throws then
-				init_nofThrows = init_nofThrows + 1
 				fmtdescr.success = env.label()
 				fmtdescr.cleanup = getInvokeUnwindLabel()
 				code = code .. utils.constructor_format( descr.ctor_rest_throwing, fmtdescr, env.register)
@@ -457,8 +456,8 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 				code = code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
 			end
 		end
-		if init_nofThrows > 0 then code = memberwise_start .. code end
-		return constructorStructCall( this_inp, code, nil, init_nofThrows > 0)
+		if element_throws then code = memberwise_start .. code end
+		return constructorStructCall( this_inp, code, nil, element_throws)
 	end
 end
 -- Constructor of an array unbound reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference array type)
@@ -903,7 +902,7 @@ function getAssignmentsFromConstructors( node, qualitype, descr)
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( qualitype.reftype))
 	local items = typedb:get_types( qualitype.reftype, ":=")
 	for _,item in ipairs(items) do
-		defineCall( qualitype.reftype, qualitype.reftype, "=", typedb:type_parameters(item), assignmentConstructorFromCtor( descr, typedb:type_constructor(item), constructorThrowingMap[ item]))
+		defineCall( qualitype.reftype, qualitype.reftype, "=", typedb:type_parameters(item), assignmentConstructorFromCtor( descr, typedb:type_constructor(item), ctorThrowingMap[ item]))
 	end
 	typedb:scope( scope_bk,step_bk)
 end
@@ -932,6 +931,17 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 				.. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
 	return partial_dtor
 end
+-- Define ctor calls (const and non const)
+function defineCtorCalls( qualitype, parameter, constructorFunc, throws)
+	local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", parameter, constructorFunc)
+	local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", parameter, constructorFunc)
+	if throws == true then
+		ctorThrowingMap[ calltype] = true
+		ctorThrowingMap[ c_calltype] = true
+		typeHasCtorThrowingMap[ qualitype.reftype] = true
+		typeHasCtorThrowingMap[ qualitype.c_reftype] = true
+	end
+end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
 function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	local env = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol, nil, true)
@@ -958,9 +968,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 			constructorFunc = callConstructor( arrayDescr.ctor_init, false)
 		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_init, {ctors=init.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, constructorFunc)
-		if init.constructor.throws == true then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		defineCtorCalls( qualitype, {}, constructorFunc, init.constructor.throws)
 	end
 	if copy then
 		local attributes,entercode,rewind,constructorFunc
@@ -975,9 +983,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 			constructorFunc = callConstructor( arrayDescr.ctor_copy)
 		end
 		print_section( "Auto", utils.template_format( arrayDescr.ctorproc_copy, {ctors=copy.constructor.code, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, constructorFunc)
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, constructorFunc)
-		if copy.constructor.throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		defineCtorCalls( qualitype, {qualitype.c_reftype}, constructorFunc, copy.constructor.throws)
 	end
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
 	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( arrayDescr.dtor))
@@ -1093,9 +1099,7 @@ function defineStructConstructors( node, qualitype, descr)
 			constructorFunc = callConstructor( descr.ctor_init)
 		end
 		print_section( "Auto", utils.template_format( descr.ctorproc_init, {ctors=ctors_init, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, constructorFunc)
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, constructorFunc)
-		if init_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		defineCtorCalls( qualitype, {}, constructorFunc, init_nofThrows > 0)
 	end
 	if ctors_copy then
 		local attributes,entercode,rewind,constructorFunc
@@ -1110,9 +1114,7 @@ function defineStructConstructors( node, qualitype, descr)
 			constructorFunc = callConstructor( descr.ctor_copy)
 		end
 		print_section( "Auto", utils.template_format( descr.ctorproc_copy, {ctors=ctors_copy, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, constructorFunc)
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, constructorFunc)
-		if copy_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		defineCtorCalls( qualitype, {qualitype.c_reftype}, constructorFunc, copy_nofThrows > 0)
 	end
 	if ctors_elements then
 		local attributes,entercode,rewind,constructorFunc
@@ -1128,9 +1130,7 @@ function defineStructConstructors( node, qualitype, descr)
 			constructorFunc = callConstructor( utils.template_format( descr.ctor_elements, {args=argstr}))
 		end
 		print_section( "Auto", utils.template_format( descr.ctorproc_elements, {ctors=ctors_elements, paramstr=paramstr, rewind=rewind, entercode=entercode, attributes=attributes}))
-		local calltype = defineCall( qualitype.reftype, qualitype.reftype, ":=", elements, constructorFunc)
-		local c_calltype = defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", elements, constructorFunc)
-		if element_nofThrows > 0 then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+		defineCtorCalls( qualitype, elements, constructorFunc, element_nofThrows > 0)
 	end
 	popEnvironment()
 end
@@ -1463,8 +1463,18 @@ end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
 	return getAllocationFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
 end
-function getPartialDtorCode( dtors, di)
-	return dtors[di].partial.code
+function getPartialDtorCode( env, dtors, di)
+	local code = utils.constructor_format( dtors[ di].partial.code, {}, env.register)
+	local step = dtors[ di].partial.parent_step
+	while di < #dtors and dtors[ di].step < step do di = di + 1 end
+	if di < #dtors and dtors[ di].step == step and dtors[ di].partial then return code .. getPartialDtorCode( env, dtors, di) else return code end
+end
+function addCodeLabel( code, label, nofollow)
+	local fmt; if nofollow then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+	return code .. utils.template_format( fmt, {inp=label}),false
+end
+function addCodeGoto( code, label, nofollow)
+	if nofollow then return code,true else return code .. utils.template_format( llvmir.control.gotoStatement, {inp=label}),true end
 end
 -- Get the exception abort or the return statement cleanup code of an allocation frame
 function getAllocationFrameAbortCleanupCode( frame)
@@ -1475,30 +1485,39 @@ function getAllocationFrameAbortCleanupCode( frame)
 		local labelsteps,labels,dtors = exit.labelsteps,exit.labels,frame.dtors
 		local di,li = #dtors,#labelsteps
 		local first = true
-		local followCodeLabel = nil
-		local followCodeMinStep = nil
+		local nofollow = true
+		local nextDtorLabel = nil
 		while di >= 1 and li >= 1 do -- merge the labels and the cleanup code, both bound to the scope step when they happened
 			local dtor = dtors[ di]
 			local lbstep = labelsteps[ li]
 			if dtor.step == lbstep and dtor.partial then
 				local label = labels[ lbstep]
-				if not followCodeLabel then followCodeLabel = label .. "_follow"; followCodeMinStep = lbstep+1 end
-				if not first then code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=followCodeLabel}) end
+				if not nextDtorLabel then nextDtorLabel = label .. "_nd" end
+				code,nofollow = addCodeGoto( code, nextDtorLabel, nofollow)
 				code = code .. utils.constructor_format( llvmir.control.plainLabel, {inp=label})
-					.. getPartialDtorCode( dtors, di)
-					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=followCodeLabel})
+					.. getPartialDtorCode( env, dtors, di)
 				li = li - 1
 				first = false
+				nofollow = false
+				if dtor.cleanup then
+					local followPartialDtorLabel = label .. "_fp"
+					code,nofollow = addCodeGoto( code, followPartialDtorLabel, nofollow)
+					code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow)
+					nextDtorLabel = nil
+					code = code .. dtor.cleanup.code
+					code,nofollow = addCodeLabel( code, followPartialDtorLabel, false)
+				end
+				di = di -1
 			elseif dtor.step < lbstep then
 				local label = labels[ lbstep]
-				local fmt; if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
-				code = code .. utils.constructor_format( fmt, {inp=label})
+				code,nofollow = addCodeLabel( code, label, nofollow)
 				li = li - 1
 				first = false
 			else
 				if not first and dtor.cleanup then
-					if followCodeLabel and dtor.step >= followCodeMinStep then code = code .. utils.constructor_format( llvmir.control.label, {inp=followCodeLabel}); followCodeLabel = nil end
+					if nextDtorLabel then code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow); nextDtorLabel = nil end
 					code = code .. dtor.cleanup.code
+					nofollow = false
 				end
 				di = di -1
 			end
@@ -1506,20 +1525,22 @@ function getAllocationFrameAbortCleanupCode( frame)
 		if di >= 1 then -- last label printed, only code output
 			while di >= 1 do
 				local dtor = frame.dtors[ di]
-				if followCodeLabel and dtor.step >= followCodeMinStep then code = code .. utils.constructor_format( llvmir.control.label, {inp=followCodeLabel}); followCodeLabel = nil end
-				if dtor.cleanup then code = code .. dtor.cleanup.code end
+				if not first and dtor.cleanup then
+					if nextDtorLabel then code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow); nextDtorLabel = nil end
+					code = code .. dtor.cleanup.code
+					nofollow = false
+				end
 				di = di -1
 			end
 		elseif li >= 1 then -- last code printed, print all labels left and then the exit code
 			while li >= 1 do
 				local label = labels[ labelsteps[ li]]
-				local fmt; if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
-				code = code .. utils.constructor_format( fmt, {inp=label})
-				first = false
+				code,nofollow = addCodeLabel( code, label, nofollow)
 				li = li -1
+				first = false
 			end
 		end
-		if followCodeLabel then code = code .. utils.constructor_format( llvmir.control.label, {inp=followCodeLabel}) end
+		if nextDtorLabel then code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow); nextDtorLabel = nil end
 		code = code .. exit.exitcode
 	end
 	return code
@@ -2681,10 +2702,16 @@ end
 -- Define a ctor procedure
 function defineCtorProcedure( node, descr, context)
 	expandDescrClassCallTemplateParameter( descr, context)
-	local contextTypeId = getFunctionThisType( descr.private, false, context.qualitype.reftype)
-	local calltype = defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
-	local c_calltype = defineFunctionCall( contextTypeId, constTypeMap[ contextTypeId], descr.name, descr)
-	if descr.throws then constructorThrowingMap[ calltype] = true; constructorThrowingMap[ c_calltype] = true end
+	local reftype = getFunctionThisType( descr.private, false, context.qualitype.reftype)
+	local c_reftype = context.qualitype.c_reftype
+	local calltype = defineFunctionCall( reftype, reftype, descr.name, descr)
+	local c_calltype = defineFunctionCall( reftype, c_reftype, descr.name, descr)
+	if descr.throws then
+		ctorThrowingMap[ calltype] = true
+		ctorThrowingMap[ c_calltype] = true
+		typeHasCtorThrowingMap[ reftype] = true
+		typeHasCtorThrowingMap[ c_reftype] = true
+	end
 end
 -- Define a dtor procedure
 function defineDtorProcedure( node, descr, context)

@@ -131,40 +131,40 @@ define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i3
 entry:
 %r1 = alloca i32, align 4
 %r2 = alloca %__Array__float__5, align 8
-%r11 = alloca [5 x float], align 8
-%r6 = getelementptr inbounds [5 x float], [5 x float]* %r11, i32 0, i32 0
-store float 0x3FF19999A0000000, float* %r6
-%r7 = getelementptr inbounds [5 x float], [5 x float]* %r11, i32 0, i32 1
-store float 0x40019999A0000000, float* %r7
-%r8 = getelementptr inbounds [5 x float], [5 x float]* %r11, i32 0, i32 2
-store float 0x400A666660000000, float* %r8
-%r9 = getelementptr inbounds [5 x float], [5 x float]* %r11, i32 0, i32 3
-store float 0x40119999A0000000, float* %r9
-%r10 = getelementptr inbounds [5 x float], [5 x float]* %r11, i32 0, i32 4
-store float 0x4016000000000000, float* %r10
-call void @__C___Array__float__5__$ctor__$5xfloat$( %__Array__float__5* %r2, [5 x float]* %r11)
-%r12 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 1)
-store float 0xC0263851E0000000, float* %r12
-%r13 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 3)
-store float 0xC040AA3D80000000, float* %r13
-%r14 = alloca i32, align 4
-store i32 0, i32* %r14
+%r10 = alloca [5 x float], align 8
+%r5 = getelementptr inbounds [5 x float], [5 x float]* %r10, i32 0, i32 0
+store float 0x3FF19999A0000000, float* %r5
+%r6 = getelementptr inbounds [5 x float], [5 x float]* %r10, i32 0, i32 1
+store float 0x40019999A0000000, float* %r6
+%r7 = getelementptr inbounds [5 x float], [5 x float]* %r10, i32 0, i32 2
+store float 0x400A666660000000, float* %r7
+%r8 = getelementptr inbounds [5 x float], [5 x float]* %r10, i32 0, i32 3
+store float 0x40119999A0000000, float* %r8
+%r9 = getelementptr inbounds [5 x float], [5 x float]* %r10, i32 0, i32 4
+store float 0x4016000000000000, float* %r9
+call void @__C___Array__float__5__$ctor__$5xfloat$( %__Array__float__5* %r2, [5 x float]* %r10)
+%r11 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 1)
+store float 0xC0263851E0000000, float* %r11
+%r12 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 3)
+store float 0xC040AA3D80000000, float* %r12
+%r13 = alloca i32, align 4
+store i32 0, i32* %r13
 br label %L4
 L4:
-%r15 = load i32, i32* %r14
-%r16 = icmp slt i32 %r15, 5
-br i1 %r16, label %L3, label %L2
+%r14 = load i32, i32* %r13
+%r15 = icmp slt i32 %r14, 5
+br i1 %r15, label %L3, label %L2
 L3:
-%r19 = getelementptr inbounds [19 x i8], [19 x i8]* @string1, i64 0, i64 0
-%r20 = load i32, i32* %r14
-%r17 = load i32, i32* %r14
-%r18 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 %r17)
-%r21 = load float, float* %r18
-%r22 = fpext float %r21 to double
-call void(i8*,  ...) @printf( i8* %r19, i32 %r20, double %r22)
-%r23 = load i32, i32* %r14
-%r24 = add nsw i32 %r23, 1
-store i32 %r24, i32* %r14
+%r18 = getelementptr inbounds [19 x i8], [19 x i8]* @string1, i64 0, i64 0
+%r19 = load i32, i32* %r13
+%r16 = load i32, i32* %r13
+%r17 = call float* @__C___Array__float__5__$get__i32( %__Array__float__5* %r2, i32 %r16)
+%r20 = load float, float* %r17
+%r21 = fpext float %r20 to double
+call void(i8*,  ...) @printf( i8* %r18, i32 %r19, double %r21)
+%r22 = load i32, i32* %r13
+%r23 = add nsw i32 %r22, 1
+store i32 %r23, i32* %r13
 br label %L4
 L2:
 store i32 0, i32* %r1
@@ -173,8 +173,8 @@ L5:
 call void @__dtor___Array__float__5( %__Array__float__5* %r2)
 br label %L1
 L1:
-%r25 = load i32, i32* %r1
-ret i32 %r25
+%r24 = load i32, i32* %r1
+ret i32 %r24
 }
 
 
