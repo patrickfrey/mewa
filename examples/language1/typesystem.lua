@@ -71,7 +71,7 @@ local anyConstStructPointerType = nil	-- Type id of the "struct^" type
 local anyFreeFunctionType = nil		-- Type id of any free function/procedure callable
 local controlTrueType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a trueExit label
-local qualiTypeMap = {}			-- Map of any defined type without qualifier to the table of type ids for all qualifiers possible
+local qualiTypeMap = {}			-- Map of value type without qualifier to the table of type ids for all qualifiers defined for this type
 local referenceTypeMap = {}		-- Map of value types to their reference types
 local dereferenceTypeMap = {}		-- Map of reference types to their value type with the reference qualifier (and the private flag) stripped away
 local constTypeMap = {}			-- Map of non const types to their const type
@@ -303,9 +303,12 @@ function invokeConstructor( fmt, has_result)
 end
 -- Move constructor of a reference type from an unbound reference type
 function unboundReferenceMoveConstructor( this, args)
+	local operand = args[1]
 	local this_inp,this_code = constructorParts( this)
-	local arg_inp,arg_code = constructorParts( args[1])
-	return {code = this_code .. utils.template_format( arg_code, {[arg_inp] = this_inp}), out=this_inp}
+	local arg_inp,arg_code = constructorParts( operand)
+	bindPartialDtor( operand.step, arg_inp, this_inp)
+	local code = this_code .. utils.template_format( arg_code, {[arg_inp]=this_inp})
+	return {code=code, out=this_inp}
 end
 -- Constructor of a constant reference value from a unbound reference type, creating a temporary on the stack for it and registering the cleanup function
 function constReferenceFromUnboundRefTypeConstructor( descr, refTypeId)
@@ -313,10 +316,11 @@ function constReferenceFromUnboundRefTypeConstructor( descr, refTypeId)
 		local env = getCallableEnvironment()
 		local out = env.register()
 		local inp,code = constructorParts( constructor)
-		code = utils.constructor_format( descr.def_local, {out = out}, env.register) .. utils.template_format( code, {[inp] = out} )
+		bindPartialDtor( constructor.step, inp, out)
+		code = utils.constructor_format( descr.def_local, {out = out}, env.register) .. utils.template_format( code, {[inp]=out} )
 		local cleanup = typeConstructorPairCode( tryApplyCallable( {line=env.line}, {type=refTypeId,constructor={out=out}}, ":~", {}))
-		if cleanup then setCleanupCode( "local " .. typedb:type_name(dereferenceTypeMap[ refTypeId]), cleanup, constructor.step) end
-		return {code = code, out = out}
+		if cleanup then registerCleanupCode( "local " .. typedb:type_name(dereferenceTypeMap[ refTypeId]), cleanup, constructor.step) end
+		return {code=code, out=out}
 	end
 end
 -- Function that decides wheter a function (in the LLVM code output) should return the return value as value or via an 'sret' pointer passed as argument
@@ -423,7 +427,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local memberwise_final = utils.constructor_format( descr.memberwise_final, {cnt=cntreg,index=#args}, env.register)
 		local code = ""
 		local init_nofThrows = 0
-		if env ~= globalCallableEnvironment then registerPartialDtor() end -- if the initialization of globals fail we do not go into partial cleanup
+		if env ~= globalCallableEnvironment then registerPartialDtor( "array", memberwise_cleanup, parentStep) end -- if the initialization of globals fail we do not go into partial cleanup
 		for ai,arg in ipairs(args) do
 			local elemreg = env.register()
 			local elem = {type=refTypeId,constructor={out=elemreg}}
@@ -453,18 +457,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 				code = code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
 			end
 		end
-		if init_nofThrows > 0 then
-			code = memberwise_start .. code
-			local partialDtor = getPartialDtorLabels()
-			if partialDtor then
-				local endLabel = env.label()
-				code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=endLabel})
-					.. utils.constructor_format( llvmir.control.plainLabel, {inp=partialDtor.start})
-					.. memberwise_cleanup -- .. getPartialDtorCode( parentStep)
-					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=partialDtor.continue})
-					.. utils.constructor_format( llvmir.control.plainLabel, {inp=endLabel})
-			end
-		end
+		if init_nofThrows > 0 then code = memberwise_start .. code end
 		return constructorStructCall( this_inp, code, nil, init_nofThrows > 0)
 	end
 end
@@ -485,7 +478,7 @@ function tryConstexprStructureReductionConstructor( node, thisTypeId)
 	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs
 		local step_bk = typedb:step( constructor.step)
 		local res = tryApplyCallable( node, this, ":=", constructor.list) -- constexpr structure constructor is a list o arguments with type
-		typedb:step( step_bk)		
+		typedb:step( step_bk)
 		if res then res.constructor.out = "RVAL"; res.constructor.step = constructor.step; return res.constructor end
 	end
 end
@@ -1393,48 +1386,51 @@ end
 function thisAllocationFrame()
 	return instantAllocationFrame or typedb:this_instance( currentAllocFrameKey)
 end
--- Set cleanup code for the current scope step, must be called in ascending order
-function setCleanupCode( name, code, step)
-	local frame = getOrCreateThisAllocationFrame()
-	if not step then step = typedb:step() end
-	local di = #frame.dtors
-	while di > 0 and frame.dtors[di].step > step do di = di - 1 end
-	if di > 0 and frame.dtors[di].step == step then utils.errorMessage( frame.env.line, "Internal: More than one cleanup per scope step (%d): %s", step, name) end
-	table.insert( frame.dtors, di+1, {step=step,code=code,name=name})
-end
--- Tell that there exists a partial dtor that has to be referenced by an unwind landingpad code of a throwing call
-function registerPartialDtor()
-	local frame = getOrCreateThisAllocationFrame()
-	frame.partial_dtors[ typedb:step()] = true
-end
-function getOrCreatePartialDtorLabels( frame, step)
-	local dtor = frame.partial_dtors[ step]
-	if type(dtor) ~= "table" then
-		dtor = {start=frame.env.label(),continue=frame.env.label()}
-		frame.partial_dtors[step] = dtor
+-- Get or create the cleanup slot for a scope step in a given allocation frame, must be called in ascending order, return the index of the dtor found or created
+function getOrCreateAllocationFrameCleanupSlot( frame, step)
+	local dtors = frame.dtors
+	local di = #dtors
+	while di > 0 and dtors[di].step > step do di = di - 1 end
+	if di > 0 and dtors[di].step == step then
+		return dtors[ di]
+	else
+		table.insert( dtors, di+1, {step=step})
+		return dtors[ di+1]
 	end
-	return dtor
 end
--- Get the code jumping to the partial dtor to execute in a landingpad code of a throwing call
-function getPartialDtorCode( step)
-	local rt = ""
+-- Get the cleanup slot for a scope step if it exists
+function getAllocationFrameCleanupSlot( frame, step)
+	local dtors = frame.dtors
+	local di = #dtors
+	while di > 0 and dtors[di].step > step do di = di - 1 end
+	if di > 0 and dtors[di].step == step then return dtors[di] end
+end
+-- Register the cleanup code for the current scope step, must be called in ascending order
+function registerCleanupCode( name, code, step)
 	if not step then step = typedb:step() end
+	local frame = getOrCreateThisAllocationFrame()
+	local dtor = getOrCreateAllocationFrameCleanupSlot( frame, step)
+	if dtor.cleanup then utils.errorMessage( frame.env.line, "Internal: More than one cleanup registered per scope step (%d): %s and %s", step, name, dtor.cleanup.name) end
+	dtor.cleanup = {name=name,code=code}
+end
+-- Register the partial dtor for the current scope step, must be called in ascending order
+function registerPartialDtor( name, code, parent_step)
+	local step = typedb:step()
+	local frame = getOrCreateThisAllocationFrame()
+	local dtor = getOrCreateAllocationFrameCleanupSlot( frame, step)
+	if dtor.partial then utils.errorMessage( frame.env.line, "Internal: More than one partial dtor registered per scope step (%d): %s and %s", step, name, dtor.partial.name) end
+	dtor.partial = {name=name,code=code,parent_step=parent_step}
+end
+-- Substitute the target in the cleanup code of an unbound reference type if there is a partial cleanup registered
+function bindPartialDtor( step, var, value)
 	local frame = getAllocationFrame()
 	if frame then
-		local dtor = frame.partial_dtors[ step]
+		local dtor = getAllocationFrameCleanupSlot( frame, step)
 		if dtor then
-			dtor = getOrCreatePartialDtorLabels( frame, step)
-			rt = utils.constructor_format( llvmir.control.gotoStatement, {inp=dtor.start})
-				.. utils.constructor_format( llvmir.control.plainLabel, {inp=dtor.continue})
+			if not dtor.partial then utils.errorMessage( frame.env.line, "Internal: No partial dtor at step (%d)", step) end
+			dtor.partial.code = utils.template_format( dtor.partial.code, {[var]=value})
 		end
 	end
-	return rt
-end
--- Get the labels to use for the code of a partial dtor in case of a throwing call
-function getPartialDtorLabels()
-	local step = typedb:step()
-	local frame = getAllocationFrame()
-	if frame and frame.partial_dtors[ step] then return getOrCreatePartialDtorLabels( frame, step) end
 end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
 function getAllocationFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
@@ -1467,46 +1463,64 @@ end
 function getCleanupLabel( exitkey, exitcode, exitlabel)
 	return getAllocationFrameCleanupLabel( getOrCreateThisAllocationFrame(), exitkey, exitcode, exitlabel)
 end
+function getPartialDtorCode( dtors, di)
+	return dtors[di].partial.code
+end
 -- Get the exception abort or the return statement cleanup code of an allocation frame
 function getAllocationFrameAbortCleanupCode( frame)
 	local code; if frame.landingpad then code = frame.landingpad.code else code = "" end
+	local env = frame.env
 	for _,ek in ipairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
 		local labelsteps,labels,dtors = exit.labelsteps,exit.labels,frame.dtors
 		local di,li = #dtors,#labelsteps
-		local state = 0
+		local first = true
+		local followCodeLabel = nil
+		local followCodeMinStep = nil
 		while di >= 1 and li >= 1 do -- merge the labels and the cleanup code, both bound to the scope step when they happened
-			if dtors[di].step < labelsteps[ li] then
-				local fmt; if state == 0 then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
-				local label = labels[ labelsteps[ li]]
+			local dtor = dtors[ di]
+			local lbstep = labelsteps[ li]
+			if dtor.step == lbstep and dtor.partial then
+				local label = labels[ lbstep]
+				if not followCodeLabel then followCodeLabel = label .. "_follow"; followCodeMinStep = lbstep+1 end
+				if not first then code = code .. utils.constructor_format( llvmir.control.gotoStatement, {inp=followCodeLabel}) end
+				code = code .. utils.constructor_format( llvmir.control.plainLabel, {inp=label})
+					.. getPartialDtorCode( dtors, di)
+					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=followCodeLabel})
+				li = li - 1
+				first = false
+			elseif dtor.step < lbstep then
+				local label = labels[ lbstep]
+				local fmt; if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
 				code = code .. utils.constructor_format( fmt, {inp=label})
 				li = li - 1
-				state = 1
+				first = false
 			else
-				if state ~= 0 then
-					code = (code or "") .. frame.dtors[di].code
-					state = 2
+				if not first and dtor.cleanup then
+					if followCodeLabel and dtor.step >= followCodeMinStep then code = code .. utils.constructor_format( llvmir.control.label, {inp=followCodeLabel}); followCodeLabel = nil end
+					code = code .. dtor.cleanup.code
 				end
 				di = di -1
 			end
 		end
 		if di >= 1 then -- last label printed, only code output
 			while di >= 1 do
-				code = code .. frame.dtors[di].code
+				local dtor = frame.dtors[ di]
+				if followCodeLabel and dtor.step >= followCodeMinStep then code = code .. utils.constructor_format( llvmir.control.label, {inp=followCodeLabel}); followCodeLabel = nil end
+				if dtor.cleanup then code = code .. dtor.cleanup.code end
 				di = di -1
 			end
-			code = code .. exit.exitcode
 		elseif li >= 1 then -- last code printed, print all labels left and then the exit code
 			while li >= 1 do
-				local fmt; if state == 0 then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
 				local label = labels[ labelsteps[ li]]
+				local fmt; if first then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
 				code = code .. utils.constructor_format( fmt, {inp=label})
-				state = 1
+				first = false
 				li = li -1
 			end
-			code = code .. exit.exitcode
-		else
 		end
+		if followCodeLabel then code = code .. utils.constructor_format( llvmir.control.label, {inp=followCodeLabel}) end
+		code = code .. exit.exitcode
 	end
 	return code
 end
@@ -1516,7 +1530,10 @@ function getAllocationFrameRegularExitCleanupCode( frame)
 	if #frame.dtors > 0 then
 		local label = frame.env.label()
 		code = code .. utils.constructor_format( llvmir.control.label, {inp=label})
-		for di=#frame.dtors,1,-1 do code = code .. frame.dtors[ di].code end
+		for di=#frame.dtors,1,-1 do 
+			local dtor = frame.dtors[ di]
+			if dtor.cleanup then code = code .. dtor.cleanup.code end
+		end
 	end
 	return code
 end
@@ -1601,7 +1618,7 @@ function getInvokeUnwindLabel()
 		else
 			landingpadLabel = env.label()
 			landingpadCode = utils.constructor_format( llvmir.exception.catch, {landingpad=landingpadLabel}, env.register)
-					.. getPartialDtorCode()  .. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanupLabel})
+					.. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanupLabel})
 		end
 	else
 		if frame.exitmap[ "catch"] then
@@ -1618,7 +1635,7 @@ function getInvokeUnwindLabel()
 			landingpadLabel = env.label()
 			landingpadCode = utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=landingpadLabel}, env.register)
 			if frame.initstate then landingpadCode = landingpadCode .. utils.constructor_format( llvmir.exception.set_constructor_initstate, {initstate=frame.initstate}) end
-			landingpadCode = landingpadCode .. getPartialDtorCode()  .. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanupLabel})
+			landingpadCode = landingpadCode .. utils.constructor_format( llvmir.control.gotoStatement, {inp=cleanupLabel})
 		end
 	end
 	frame.landingpad.code = frame.landingpad.code .. landingpadCode
@@ -1768,7 +1785,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		if out ~= "%rt" then -- no copy elision
 			local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
 			local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
-			if cleanup then setCleanupCode( "local variable " .. name, cleanup, step) end
+			if cleanup then registerCleanupCode( "local variable " .. name, cleanup, step) end
 		end
 		return init
 	elseif context.domain == "global" then
@@ -1792,7 +1809,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		end
 		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
 		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
-		if cleanup then setCleanupCode( "global variable " .. name, cleanup, step) end
+		if cleanup then registerCleanupCode( "global variable " .. name, cleanup, step) end
 		popEnvironment()
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
@@ -1826,7 +1843,7 @@ function defineCtorInitAssignments( refType, initType, name, index, load_ref)
 end
 -- Define a member variable of a class or a structure
 function defineVariableMember( node, descr, context, typeId, name, private)
-	local qualisep = typeQualiSepMap[ typeId]
+	local qs = typeQualiSepMap[ typeId]
 	local memberpos = context.structsize
 	local index = #context.members
 	local load_ref = utils.template_format( context.descr.loadelemref, {index=index, type=descr.llvmtype})
@@ -1837,8 +1854,8 @@ function defineVariableMember( node, descr, context, typeId, name, private)
 	local member = {
 		type = typeId,
 		name = name,
-		qualitype = qualiTypeMap[ qualisep.valtype],
-		qualifier = qualisep.qualifier,
+		qualitype = qualiTypeMap[ qs.valtype],
+		qualifier = qs.qualifier,
 		descr = descr,
 		bytepos = memberpos
 	}
@@ -1884,14 +1901,14 @@ function defineInterfaceInheritanceReductions( context, name, private, const)
 end
 -- Make a function/procedure/operator/constructor parameter addressable by name in the callable body
 function defineParameter( node, context, typeId, name, env)
-	local descr = typeDescriptionMap[ typeId]
 	local paramreg = env.register()
 	local var = typedb:def_type( localDefinitionContext, name, paramreg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( localDefinitionContext, name)) end
 	local ptype = typeId
-	if doPassValueAsReferenceParameter( typeId) then
-		ptype = referenceTypeMap[ typeId]
-		if constTypeMap[ typeId] then utils.errorMessage( node.line, "Passing structure parameter as value type not allowes as implicit copy is not implemented") end
+	if doPassValueAsReferenceParameter( ptype) then
+		local qs = typeQualiSepMap[ typeId]
+		if qs.valtype == typeId then utils.errorMessage( node.line, "Passing structure parameter as value type not allowed as implicit copy is not implemented yet") end
+		ptype = referenceTypeMap[ ptype]
 	end
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
@@ -3010,7 +3027,7 @@ function typesystem.typecast( node)
 		rt = tryApplyCallable( node, {type=refTypeId,constructor={out=out,code=code}}, ":=", {operand})
 		if not rt then utils.errorMessage( node.line, "Failed to cast '%s' from '%s'", typedb:type_string(typeId), typedb:type_string(operand.type)) end
 		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-		if cleanup then setCleanupCode( "cast " .. typedb:type_name(typeId), cleanup, operand.constructor.step) end
+		if cleanup then registerCleanupCode( "cast " .. typedb:type_name(typeId), cleanup, operand.constructor.step) end
 	end
 	return rt
 end
@@ -3041,7 +3058,7 @@ function typesystem.catchblock( node, context, catchlabel)
 			.. utils.constructor_format( llvmir.exception.loadExceptionErrMsg, {out=errmsg_constructor.out}, env.register)
 	local cleanup = utils.constructor_format( llvmir.exception.freeExceptionErrMsg, {this=errmsg_constructor.out})
 	local scope_bk = typedb:scope( node.arg[ #node.arg].scope)
-	setCleanupCode( "exception message", cleanup)
+	registerCleanupCode( "exception message", cleanup)
 	typedb:scope( scope_bk)
 	local rt = utils.traverseRange( typedb, node, {#node.arg,#node.arg}, context)[#node.arg]
 	rt.code = code .. rt.code 

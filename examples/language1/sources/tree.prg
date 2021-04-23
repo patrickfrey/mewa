@@ -27,7 +27,7 @@ struct Tree
 
 Tree g_tree;
 
-private procedure printTree( const Tree^ node, int indent) nothrow
+private procedure printTree( const Tree^ node, const int indent) nothrow
 {
 	var int ii = 0; 
 	while (ii < indent) 

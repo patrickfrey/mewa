@@ -242,9 +242,10 @@ Reduce #1 to typespec by token IDENT = "node" at line 30 in state XXX, call type
 Shift token IDENT = "node" at line 30 in state XXX, goto XXX
 Reduce #2 to paramdecl by token ',' at line 30 in state XXX, call paramdef, goto XXX
 Shift token ',' at line 30 in state XXX, goto XXX
+Shift token "const" at line 30 in state XXX, goto XXX
 Shift token IDENT = "int" at line 30 in state XXX, goto XXX
 Reduce #1 to typename by token IDENT = "indent" at line 30 in state XXX, goto XXX
-Reduce #1 to typehdr by token IDENT = "indent" at line 30 in state XXX, call typehdr {const=false}, goto XXX
+Reduce #2 to typehdr by token IDENT = "indent" at line 30 in state XXX, call typehdr {const=true}, goto XXX
 Reduce #1 to typegen by token IDENT = "indent" at line 30 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "indent" at line 30 in state XXX, call typespec, goto XXX
 Shift token IDENT = "indent" at line 30 in state XXX, goto XXX
@@ -1593,9 +1594,9 @@ Lua call result [1]
                                   name = "IDENT",
                                   value = "int"}},
                               call = {
-                                name = "typehdr {const=false}",
+                                name = "typehdr {const=true}",
                                 obj = {
-                                  const = false},
+                                  const = true},
                                 proc = <function>},
                               line = 30,
                               step = 12}},
