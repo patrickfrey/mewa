@@ -4,3 +4,5 @@ CALL printNumber [42] 7.220000
 CALL printNumber [42] 19.100000
 RES cnt = 43
 Initials H W World! ello World!
+PTR &cnt -> 43
+PTR &num -> 23

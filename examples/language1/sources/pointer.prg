@@ -25,6 +25,7 @@ main {
 	var PNP pnp1 = printNumber;
 	var PNF pnf1 = printNumber;
 	var int cnt = 31;
+	var const int num = 23;
 
 	pnp1( 3.11, cnt);
 	cnt += 2 * pnf1( 4.22, 4);
@@ -38,5 +39,9 @@ main {
 	var byte fc = str[0];
 	var byte sc = str[6];
 	printf("Initials %c %c %s %s\n", fc, sc, ptr, bas);
+	var int^ cntptr = &cnt;
+	var const int^ numptr = &num;
+	printf("PTR &cnt -> %d\n", *cntptr);
+	printf("PTR &num -> %d\n", *numptr);
 }
 

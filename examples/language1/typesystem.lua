@@ -49,7 +49,10 @@ local rdw_strip_c_1 = 0.5 / (1*1)	-- Reduction weight of changing constant quali
 local rdw_strip_c_2 = 0.5 / (2*2)	-- Reduction weight of changing constant qualifier in type having 2 qualifiers
 local rdw_strip_c_3 = 0.5 / (3*3)	-- Reduction weight of changing constant qualifier in type having 3 qualifiers
 local rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
+local rwd_c_inheritance = 0.125/(5*5) 	-- Reduction weight of const class inheritance
 local rwd_boolean = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
+
+function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other 
 function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
 function combineWeight3( w1, w2, w3) return w1 + (w2 * 127.0 / 128.0) + (w3 * 255.0 / 256.0) end -- Combining three reductions slightly less weight compared with applying them singularily
 function scalarDeductionWeight( sizeweight) return 0.125*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
@@ -744,8 +747,8 @@ function definePointerQualiTypes( node, typeId)
 	defineQualifiedTypeRelations( qualitype, pointerTypeDescription)
 
 	typedb:def_reduction( valtype, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
-	defineCall( pointeeTypeId, c_reftype, "&", {}, function(this) return this end)
-	defineCall( referenceTypeMap[ pointeeTypeId], c_valtype, "->", {}, function(this) return this end)
+	defineCall( c_valtype, pointeeRefTypeId, "&", {}, function(this) return this end)
+	defineCall( pointeeRefTypeId, c_valtype, "->", {}, function(this) return this end)
 
 	local dc; if typeDescription.scalar == false and typeDescription.dtor then dc = manipConstructor( typeDescription.dtor) else dc = constructorStructEmpty end
 	defineCall( valtype, valtype, " delete", {}, dc)
@@ -1905,20 +1908,32 @@ function defineInterfaceMember( node, context, typeId, typnam, private)
 	defineCall( unboundReferenceTypeMap[ typeId], thisType, typnam, {}, convConstructorUnboundReference( fmt))
 end
 -- Define a reduction to a member variable to implement class/interface inheritance
-function defineReductionToMember( objTypeId, name)
-	memberTypeId = typedb:get_type( objTypeId, name)
-	typedb:def_reduction( memberTypeId, objTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, rwd_inheritance)
+function defineReductionToMember( objTypeId, name, const)
+	local objRefTypeId = referenceTypeMap[ objTypeId]
+	memberTypeId = typedb:get_type( objRefTypeId, name)
+	typedb:def_reduction( memberTypeId, objRefTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, preferWeight( const, rwd_c_inheritance, rwd_inheritance))
+end
+-- Define a reduction from the pointer to the class to the pointer to the member variable to implement class/interface inheritance of class pointers
+function definePointerReductionToMemberPointer( classTypeId, name, inheritTypeId, const)
+	local classRefTypeId = referenceTypeMap[ classTypeId]
+	memberConstructor = typedb:type_constructor( typedb:get_type( classRefTypeId, name))
+	local inheritPointerTypeId = pointerTypeMap[ inheritTypeId]
+	local classPointerTypeId = pointerTypeMap[ classTypeId]
+	if not inheritPointerTypeId then inheritPointerTypeId = createPointerTypeInstance( node, {const=true}, inheritTypeId) end -- create pointer to member type (pointer is const)
+	if not classPointerTypeId then classPointerTypeId = createPointerTypeInstance( node, {const=true}, classTypeId) end -- create pointer to class type (pointer is const)
+	typedb:def_reduction( inheritPointerTypeId, classPointerTypeId, memberConstructor, tag_typeDeclaration, preferWeight( const, rwd_c_inheritance, rwd_inheritance))
 end
 -- Define the reductions implementing class inheritance
-function defineClassInheritanceReductions( context, name, private, const)
-	local contextType = getFunctionThisType( private, const, context.qualitype.reftype)
-	defineReductionToMember( contextType, name)
-	if private == false and const == true then defineReductionToMember( context.qualitype.c_valtype, name) end
+function defineClassInheritanceReductions( context, name, private, inheritTypeId)
+	defineReductionToMember( context.qualitype.c_valtype, name, true)
+	defineReductionToMember( context.qualitype.valtype, name, false)
+	definePointerReductionToMemberPointer( context.qualitype.c_valtype, name, constTypeMap[ inheritTypeId])
+	definePointerReductionToMemberPointer( context.qualitype.valtype, name, inheritTypeId)
 end
 -- Define the reductions implementing interface inheritance
 function defineInterfaceInheritanceReductions( context, name, private, const)
-	local contextType = getFunctionThisType( private, const, context.qualitype.reftype)
-	defineReductionToMember( contextType, name)
+	local contextType = getFunctionThisType( private, const, context.qualitype.valtype)
+	defineReductionToMember( contextType, name, const)
 end
 -- Make a function/procedure/operator/constructor parameter addressable by name in the callable body
 function defineParameter( node, context, typeId, name, env)
@@ -2447,7 +2462,9 @@ function findApplyCallable( node, this, callable, args)
 	local mask; if callable == ":=" then mask = tagmask_declaration else mask = tagmask_resolveType end
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
 	if not resolveContextType then return nil end
-	if type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
+	if type(resolveContextType) == "table" then
+		utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable)
+	end
 	local this_constructor = applyReductionList( node, reductions, this.constructor)
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight
@@ -3161,7 +3178,8 @@ function typesystem.operator_address( node, operator)
 	local this = unpack( utils.traverse( typedb, node))
 	expectValueType( node, this)
 	local declType = getDeclarationType( this.type)
-	if not pointerTypeMap[ declType] then createPointerTypeInstance( node, {const=false}, dereferenceTypeMap[ declType] or declType) end
+	local qs = typeQualiSepMap[ declType]
+	if not pointerTypeMap[ qs.valtype] then createPointerTypeInstance( node, {const=true}, qs.valtype) end -- the created pointer type is const
 	return applyCallable( node, this, operator, {})
 end
 function typesystem.operator_array( node, operator)
@@ -3664,7 +3682,7 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 		local private = false
 		if descr.class == "class" then
 			defineVariableMember( node, descr, context, typeId, typnam, private)
-			defineClassInheritanceReductions( context, typnam, private, false)
+			defineClassInheritanceReductions( context, typnam, private, typeId)
 		elseif descr.class == "interface" then
 			defineInterfaceMember( node, context, typeId, typnam, private)
 			defineInterfaceInheritanceReductions( context, typnam, private, descr.const)
