@@ -436,7 +436,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 			local elemreg = env.register()
 			local elem = {type=refTypeId,constructor={out=elemreg}}
 			local init = tryApplyCallable( node, elem, ":=", {arg})
-			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
+			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
 			local memberwise_next
 			if element_throws then
 				memberwise_next = utils.constructor_format( descr.memberwise_next, {cnt=cntreg,base=basereg,out=elemreg}, env.register)
@@ -448,7 +448,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		if element_throws then code = code .. memberwise_final end
 		if #args < nofElements then
 			local init = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
-			if not init then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
+			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}
 			if init.constructor.throws then
@@ -747,8 +747,8 @@ function definePointerQualiTypes( node, typeId)
 	defineQualifiedTypeRelations( qualitype, pointerTypeDescription)
 
 	typedb:def_reduction( valtype, constexprNullType, constConstructor("null"), tag_typeConversion, rdw_conv)
-	defineCall( c_valtype, pointeeRefTypeId, "&", {}, function(this) return this end)
-	defineCall( pointeeRefTypeId, c_valtype, "->", {}, function(this) return this end)
+	defineCall( valtype, pointeeRefTypeId, "&", {}, function(this) return this end)
+	defineCall( pointeeRefTypeId, valtype, "->", {}, function(this) return this end)
 
 	local dc; if typeDescription.scalar == false and typeDescription.dtor then dc = manipConstructor( typeDescription.dtor) else dc = constructorStructEmpty end
 	defineCall( valtype, valtype, " delete", {}, dc)
@@ -1927,8 +1927,8 @@ end
 function defineClassInheritanceReductions( context, name, private, inheritTypeId)
 	defineReductionToMember( context.qualitype.c_valtype, name, true)
 	defineReductionToMember( context.qualitype.valtype, name, false)
-	definePointerReductionToMemberPointer( context.qualitype.c_valtype, name, constTypeMap[ inheritTypeId])
-	definePointerReductionToMemberPointer( context.qualitype.valtype, name, inheritTypeId)
+	definePointerReductionToMemberPointer( context.qualitype.c_valtype, name, constTypeMap[ inheritTypeId], true)
+	definePointerReductionToMemberPointer( context.qualitype.valtype, name, inheritTypeId, false)
 end
 -- Define the reductions implementing interface inheritance
 function defineInterfaceInheritanceReductions( context, name, private, const)
@@ -2462,9 +2462,7 @@ function findApplyCallable( node, this, callable, args)
 	local mask; if callable == ":=" then mask = tagmask_declaration else mask = tagmask_resolveType end
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
 	if not resolveContextType then return nil end
-	if type(resolveContextType) == "table" then
-		utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable)
-	end
+	if type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
 	local this_constructor = applyReductionList( node, reductions, this.constructor)
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight

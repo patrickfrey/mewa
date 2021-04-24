@@ -95,9 +95,9 @@ main {
 	updater2 = {32,412};
 	printf("RESULT[4] x = %d\n", obj.ofs_x( -11));
 	printf("RESULT[4] y = %d\n", obj.y());
-	//var Point^ ptr = &ab;
-	//printf("RESULT[5] ptr->x() = %d\n", ptr->x());
-	//printf("RESULT[5] ptr->y() = %d\n", ptr->y());
+	var Point const^ ptr = &ab;
+	printf("RESULT[5] ptr->x() = %d\n", ptr->x());
+	printf("RESULT[5] ptr->y() = %d\n", ptr->y());
 	return 0;
 }
 

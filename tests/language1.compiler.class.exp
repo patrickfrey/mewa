@@ -162,6 +162,8 @@ ret void
 @string6 = private unnamed_addr constant [18 x i8] c"RESULT[3] y = %d\0A\00"
 @string7 = private unnamed_addr constant [18 x i8] c"RESULT[4] x = %d\0A\00"
 @string8 = private unnamed_addr constant [18 x i8] c"RESULT[4] y = %d\0A\00"
+@string9 = private unnamed_addr constant [25 x i8] c"RESULT[5] ptr->x() = %d\0A\00"
+@string10 = private unnamed_addr constant [25 x i8] c"RESULT[5] ptr->y() = %d\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {
@@ -273,14 +275,25 @@ call void(i8*,  ...) @printf( i8* %r83, i32 %r82)
 %r85 = load i8*, i8** %r89
 %r90 = call i32 %r84( i8* %r85)
 call void(i8*,  ...) @printf( i8* %r91, i32 %r90)
+%r92 = alloca %Point*
+%r93 = getelementptr inbounds %Line, %Line* %r3, i32 0, i32 0
+store %Point* %r93, %Point** %r92
+%r96 = getelementptr inbounds [25 x i8], [25 x i8]* @string9, i64 0, i64 0
+%r94 = load %Point*, %Point** %r92
+%r95 = call i32 @__C_Point__x__const( %Point* %r94)
+call void(i8*,  ...) @printf( i8* %r96, i32 %r95)
+%r99 = getelementptr inbounds [25 x i8], [25 x i8]* @string10, i64 0, i64 0
+%r97 = load %Point*, %Point** %r92
+%r98 = call i32 @__C_Point__y__const( %Point* %r97)
+call void(i8*,  ...) @printf( i8* %r99, i32 %r98)
 store i32 0, i32* %r1
 br label %L2
 L2:
 call void @__dtor_Line( %Line* %r3)
 br label %L1
 L1:
-%r92 = load i32, i32* %r1
-ret i32 %r92
+%r100 = load i32, i32* %r1
+ret i32 %r100
 }
 
 

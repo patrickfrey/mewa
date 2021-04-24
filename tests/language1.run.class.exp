@@ -6,3 +6,5 @@ RESULT[3] x = 58
 RESULT[3] y = 512
 RESULT[4] x = 21
 RESULT[4] y = 412
+RESULT[5] ptr->x() = 32
+RESULT[5] ptr->y() = 412

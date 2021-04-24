@@ -945,32 +945,97 @@ Reduce #3 to expressionlist by token ')' at line 97 in state XXX, goto XXX
 Shift token ')' at line 97 in state XXX, goto XXX
 Reduce #4 to expression by token ';' at line 97 in state XXX, call operator "()", goto XXX
 Shift token ';' at line 97 in state XXX, goto XXX
-Reduce #2 to statement by token "return" at line 98 in state XXX, call free_expression, goto XXX
-Shift token "return" at line 98 in state XXX, goto XXX
-Shift token UINTEGER = "0" at line 98 in state XXX, goto XXX
-Reduce #1 to expression by token ';' at line 98 in state XXX, call constant "constexpr uint", goto XXX
+Reduce #2 to statement by token "var" at line 98 in state XXX, call free_expression, goto XXX
+Shift token "var" at line 98 in state XXX, goto XXX
+Shift token IDENT = "Point" at line 98 in state XXX, goto XXX
+Reduce #1 to typename by token "const" at line 98 in state XXX, goto XXX
+Reduce #1 to typehdr by token "const" at line 98 in state XXX, call typehdr {const=false}, goto XXX
+Reduce #1 to typegen by token "const" at line 98 in state XXX, goto XXX
+Shift token "const" at line 98 in state XXX, goto XXX
+Shift token '^' at line 98 in state XXX, goto XXX
+Reduce #3 to typegen by token IDENT = "ptr" at line 98 in state XXX, call typegen_pointer {const=true}, goto XXX
+Reduce #1 to typespec by token IDENT = "ptr" at line 98 in state XXX, call typespec, goto XXX
+Shift token IDENT = "ptr" at line 98 in state XXX, goto XXX
+Shift token '=' at line 98 in state XXX, goto XXX
+Shift token '&' at line 98 in state XXX, goto XXX
+Shift token IDENT = "ab" at line 98 in state XXX, goto XXX
+Reduce #1 to expression by token ';' at line 98 in state XXX, call variable, goto XXX
+Reduce #2 to expression by token ';' at line 98 in state XXX, call operator_address "&", goto XXX
+Reduce #4 to variabledefinition by token ';' at line 98 in state XXX, call vardef_assign, goto XXX
 Shift token ';' at line 98 in state XXX, goto XXX
-Reduce #3 to statement by token '}' at line 99 in state XXX, call return_value, goto XXX
-Reduce #0 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to statementlist by token '}' at line 99 in state XXX, goto XXX
-Shift token '}' at line 99 in state XXX, goto XXX
-Reduce #2 to main_procedure by token $ at line 101 in state XXX, call main_procdef, goto XXX
+Reduce #3 to statement by token IDENT = "printf" at line 99 in state XXX, call definition 1, goto XXX
+Shift token IDENT = "printf" at line 99 in state XXX, goto XXX
+Reduce #1 to expression by token '(' at line 99 in state XXX, call variable, goto XXX
+Shift token '(' at line 99 in state XXX, goto XXX
+Shift token DQSTRING = "RESULT[5] ptr->x() = %d\n" at line 99 in state XXX, goto XXX
+Reduce #1 to expression by token ',' at line 99 in state XXX, call string_constant, goto XXX
+Shift token ',' at line 99 in state XXX, goto XXX
+Shift token IDENT = "ptr" at line 99 in state XXX, goto XXX
+Reduce #1 to expression by token "->" at line 99 in state XXX, call variable, goto XXX
+Shift token "->" at line 99 in state XXX, goto XXX
+Reduce #1 to indirection by token IDENT = "x" at line 99 in state XXX, call count, goto XXX
+Shift token IDENT = "x" at line 99 in state XXX, goto XXX
+Reduce #3 to iexpression by token '(' at line 99 in state XXX, call rep_operator "->", goto XXX
+Reduce #1 to expression by token '(' at line 99 in state XXX, goto XXX
+Shift token '(' at line 99 in state XXX, goto XXX
+Shift token ')' at line 99 in state XXX, goto XXX
+Reduce #3 to expression by token ')' at line 99 in state XXX, call operator "()", goto XXX
+Reduce #1 to expressionlist by token ')' at line 99 in state XXX, goto XXX
+Reduce #3 to expressionlist by token ')' at line 99 in state XXX, goto XXX
+Shift token ')' at line 99 in state XXX, goto XXX
+Reduce #4 to expression by token ';' at line 99 in state XXX, call operator "()", goto XXX
+Shift token ';' at line 99 in state XXX, goto XXX
+Reduce #2 to statement by token IDENT = "printf" at line 100 in state XXX, call free_expression, goto XXX
+Shift token IDENT = "printf" at line 100 in state XXX, goto XXX
+Reduce #1 to expression by token '(' at line 100 in state XXX, call variable, goto XXX
+Shift token '(' at line 100 in state XXX, goto XXX
+Shift token DQSTRING = "RESULT[5] ptr->y() = %d\n" at line 100 in state XXX, goto XXX
+Reduce #1 to expression by token ',' at line 100 in state XXX, call string_constant, goto XXX
+Shift token ',' at line 100 in state XXX, goto XXX
+Shift token IDENT = "ptr" at line 100 in state XXX, goto XXX
+Reduce #1 to expression by token "->" at line 100 in state XXX, call variable, goto XXX
+Shift token "->" at line 100 in state XXX, goto XXX
+Reduce #1 to indirection by token IDENT = "y" at line 100 in state XXX, call count, goto XXX
+Shift token IDENT = "y" at line 100 in state XXX, goto XXX
+Reduce #3 to iexpression by token '(' at line 100 in state XXX, call rep_operator "->", goto XXX
+Reduce #1 to expression by token '(' at line 100 in state XXX, goto XXX
+Shift token '(' at line 100 in state XXX, goto XXX
+Shift token ')' at line 100 in state XXX, goto XXX
+Reduce #3 to expression by token ')' at line 100 in state XXX, call operator "()", goto XXX
+Reduce #1 to expressionlist by token ')' at line 100 in state XXX, goto XXX
+Reduce #3 to expressionlist by token ')' at line 100 in state XXX, goto XXX
+Shift token ')' at line 100 in state XXX, goto XXX
+Reduce #4 to expression by token ';' at line 100 in state XXX, call operator "()", goto XXX
+Shift token ';' at line 100 in state XXX, goto XXX
+Reduce #2 to statement by token "return" at line 101 in state XXX, call free_expression, goto XXX
+Shift token "return" at line 101 in state XXX, goto XXX
+Shift token UINTEGER = "0" at line 101 in state XXX, goto XXX
+Reduce #1 to expression by token ';' at line 101 in state XXX, call constant "constexpr uint", goto XXX
+Shift token ';' at line 101 in state XXX, goto XXX
+Reduce #3 to statement by token '}' at line 102 in state XXX, call return_value, goto XXX
+Reduce #0 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to statementlist by token '}' at line 102 in state XXX, goto XXX
+Shift token '}' at line 102 in state XXX, goto XXX
+Reduce #2 to main_procedure by token $ at line 104 in state XXX, call main_procdef, goto XXX
 Accept
 Calling Lua function: program
 Lua call result [1]
@@ -4404,34 +4469,251 @@ Lua call result [1]
                 {
                   arg = {
                     {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 98,
+                                  name = "IDENT",
+                                  value = "Point"}},
+                              call = {
+                                name = "typehdr {const=false}",
+                                obj = {
+                                  const = false},
+                                proc = <function>},
+                              line = 98,
+                              step = 73}},
+                          call = {
+                            name = "typegen_pointer {const=true}",
+                            obj = {
+                              const = true},
+                            proc = <function>},
+                          line = 98,
+                          step = 73}},
+                      call = {
+                        name = "typespec",
+                        proc = <function>},
                       line = 98,
+                      step = 73},
+                    {
+                      line = 98,
+                      name = "IDENT",
+                      value = "ptr"},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              line = 98,
+                              name = "IDENT",
+                              value = "ab"}},
+                          call = {
+                            name = "variable",
+                            proc = <function>},
+                          line = 98,
+                          step = 73}},
+                      call = {
+                        name = "operator_address &",
+                        obj = "&",
+                        proc = <function>},
+                      line = 98,
+                      step = 73}},
+                  call = {
+                    name = "vardef_assign",
+                    proc = <function>},
+                  line = 98,
+                  step = 74}},
+              call = {
+                name = "definition 1",
+                obj = 1,
+                proc = <function>},
+              line = 98,
+              step = 75},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 99,
+                          name = "IDENT",
+                          value = "printf"}},
+                      call = {
+                        name = "variable",
+                        proc = <function>},
+                      line = 99,
+                      step = 75},
+                    {
+                      arg = {
+                        {
+                          line = 99,
+                          name = "DQSTRING",
+                          value = "RESULT[5] ptr->x() = %d\\n"}},
+                      call = {
+                        name = "string_constant",
+                        proc = <function>},
+                      line = 99,
+                      step = 75},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 99,
+                                  name = "IDENT",
+                                  value = "ptr"}},
+                              call = {
+                                name = "variable",
+                                proc = <function>},
+                              line = 99,
+                              step = 75},
+                            {
+                              arg = {},
+                              call = {
+                                name = "count",
+                                proc = <function>},
+                              line = 99,
+                              step = 75},
+                            {
+                              line = 99,
+                              name = "IDENT",
+                              value = "x"}},
+                          call = {
+                            name = "rep_operator ->",
+                            obj = "->",
+                            proc = <function>},
+                          line = 99,
+                          step = 75}},
+                      call = {
+                        name = "operator ()",
+                        obj = "()",
+                        proc = <function>},
+                      line = 99,
+                      step = 76}},
+                  call = {
+                    name = "operator ()",
+                    obj = "()",
+                    proc = <function>},
+                  line = 99,
+                  step = 77}},
+              call = {
+                name = "free_expression",
+                proc = <function>},
+              line = 99,
+              step = 77},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          line = 100,
+                          name = "IDENT",
+                          value = "printf"}},
+                      call = {
+                        name = "variable",
+                        proc = <function>},
+                      line = 100,
+                      step = 77},
+                    {
+                      arg = {
+                        {
+                          line = 100,
+                          name = "DQSTRING",
+                          value = "RESULT[5] ptr->y() = %d\\n"}},
+                      call = {
+                        name = "string_constant",
+                        proc = <function>},
+                      line = 100,
+                      step = 77},
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 100,
+                                  name = "IDENT",
+                                  value = "ptr"}},
+                              call = {
+                                name = "variable",
+                                proc = <function>},
+                              line = 100,
+                              step = 77},
+                            {
+                              arg = {},
+                              call = {
+                                name = "count",
+                                proc = <function>},
+                              line = 100,
+                              step = 77},
+                            {
+                              line = 100,
+                              name = "IDENT",
+                              value = "y"}},
+                          call = {
+                            name = "rep_operator ->",
+                            obj = "->",
+                            proc = <function>},
+                          line = 100,
+                          step = 77}},
+                      call = {
+                        name = "operator ()",
+                        obj = "()",
+                        proc = <function>},
+                      line = 100,
+                      step = 78}},
+                  call = {
+                    name = "operator ()",
+                    obj = "()",
+                    proc = <function>},
+                  line = 100,
+                  step = 79}},
+              call = {
+                name = "free_expression",
+                proc = <function>},
+              line = 100,
+              step = 79},
+            {
+              arg = {
+                {
+                  arg = {
+                    {
+                      line = 101,
                       name = "UINTEGER",
                       value = "0"}},
                   call = {
                     name = "constant constexpr uint",
                     obj = "constexpr uint",
                     proc = <function>},
-                  line = 98,
-                  step = 73}},
+                  line = 101,
+                  step = 79}},
               call = {
                 name = "return_value",
                 proc = <function>},
-              line = 98,
-              step = 74}},
+              line = 101,
+              step = 80}},
           call = {
             name = "codeblock",
             proc = <function>},
-          line = 98,
+          line = 101,
           scope = {
             36,
-            75}}},
+            81}}},
       call = {
         name = "main_procdef",
         proc = <function>},
-      line = 98,
-      step = 75}},
+      line = 101,
+      step = 81}},
   call = {
     name = "program",
     proc = <function>},
-  line = 98,
-  step = 75}
+  line = 101,
+  step = 81}
