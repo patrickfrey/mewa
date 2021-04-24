@@ -37,10 +37,11 @@ extern_definition	= "extern" DQSTRING "function" IDENT typespec "(" extern_param
 			| "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";"(extern_funcdef_vararg)
 			| "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";"	(extern_procdef_vararg)
 			;
-extern_parameters 	= typespec "," extern_parameters						(extern_paramdef)
-			| typespec IDENT "," extern_parameters						(extern_paramdef)
-			| typespec									(extern_paramdeftail)
-			| typespec IDENT								(extern_paramdeftail)
+extern_paramdecl	= typespec IDENT								(extern_paramdef)
+			| typespec									(extern_paramdef)
+			;
+extern_parameters 	= extern_paramdecl "," extern_parameters					(extern_paramdef_collect)
+			| extern_paramdecl								(extern_paramdef_collect)
 			;
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			| ε										(extern_paramdeflist)
@@ -165,10 +166,20 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 			| ">"										(operatordecl {name=">", symbol="gt"})
 			| "<"										(operatordecl {name="<", symbol="lt"})
 			;
-generic_instance_deflist= typegen									(generic_instance_type)
-			| typegen "," generic_instance_deflist						(generic_instance_type)
+lambda_paramlist	= lambda_parameters								(lambda_paramdeflist)
+			| ε										(lambda_paramdeflist)
+			;
+lambda_parameters	= IDENT "," impl_parameters
+			| IDENT
+			;
+lamda_expression	= "lambda" "(" lambda_paramlist ")" "{" statementlist "}"			(lambda_expression)
+			;
+generic_instance_defelem= typegen
 			| UINTEGER									(generic_instance_dimension)
-			| UINTEGER "," generic_instance_deflist						(generic_instance_dimension)
+			| lamda_expression								(generic_instance_lambda)
+			;
+generic_instance_deflist= generic_instance_defelem							(generic_instance_deflist)
+			| generic_instance_defelem "," generic_instance_deflist				(generic_instance_deflist)
 			;
 generic_instance	= generic_instance_deflist							(generic_instance)
 			;
@@ -182,18 +193,18 @@ generic_identlist	= IDENT "," generic_identlist							(generic_header_ident)
 generic_header		= generic_identlist								(generic_header)
 			| generic_defaultlist								(generic_header)
 			;
-callablebody		= "(" parameterlist ")" funcattribute "{" statementlist "}"			({}callablebody)
+callablebody		= "(" impl_paramlist ")" funcattribute "{" statementlist "}"			({}callablebody)
 			;
 main_procedure		= "main" codeblock								(main_procdef)
 			| ε
 			;
-parameterlist		= parameters									(paramdeflist)
+impl_paramlist		= impl_parameters								(paramdeflist)
 			| ε										(paramdeflist)
 			;
-parameters		= paramdecl "," parameters
-			| paramdecl
+impl_parameters		= impl_paramdecl "," impl_parameters
+			| impl_paramdecl
 			;
-paramdecl		= typespec IDENT								(paramdef)
+impl_paramdecl		= typespec IDENT								(paramdef)
 			;
 codeblock/L1		= "{" statementlist "}"								({}codeblock)
 			;

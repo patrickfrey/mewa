@@ -3527,11 +3527,11 @@ function typesystem.callablebody( node, context, descr, selectid)
 	return rt
 end
 function typesystem.extern_paramdef( node, context, args)
-	table.insert( args, utils.traverseRange( typedb, node, {1,1}, context)[1])
-	utils.traverseRange( typedb, node, {#node.arg,#node.arg}, context, args)
+	return utils.traverseRange( typedb, node, {1,1}, context)[1]
 end
-function typesystem.extern_paramdeftail( node, context, args)
+function typesystem.extern_paramdef_collect( node, context, args)
 	table.insert( args, utils.traverseRange( typedb, node, {1,1}, context)[1])
+	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, args) end
 end
 function typesystem.extern_paramdeflist( node, context)
 	local args = {}
@@ -3631,12 +3631,13 @@ function typesystem.interfacedef( node, context)
 	local descr,qualitype = defineStructureType( node, declContextTypeId, typnam, llvmir.interfaceTemplate)
 	traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualitype, 2)
 end
-function typesystem.generic_instance_type( node, context, generic_instancelist)
-	table.insert( generic_instancelist, utils.traverseRange( typedb, node, {1,1}, context)[1] )
-	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
+function typesystem.generic_instance_dimension( node, context)
+	return {type=constexprUIntegerType, constructor=node.arg[1].value}
 end
-function typesystem.generic_instance_dimension( node, context, generic_instancelist)
-	table.insert( generic_instancelist, {type=constexprUIntegerType, constructor=node.arg[1].value} )
+function typesystem.generic_instance_lambda( node, context)
+end
+function typesystem.generic_instance_deflist( node, context, generic_instancelist)
+	table.insert( generic_instancelist, utils.traverseRange( typedb, node, {1,1}, context)[1] )
 	if #node.arg > 1 then utils.traverseRange( typedb, node, {2,2}, context, generic_instancelist) end
 end
 function typesystem.generic_instance( node, context)
@@ -3658,6 +3659,11 @@ function typesystem.generic_header( node, context)
 	local generic = {param={}, namemap={}}
 	utils.traverse( typedb, node, context, generic)
 	return generic
+end
+function typesystem.lambda_paramdeflist( node)
+	return utils.traverse( typedb, node)
+end
+function typesystem.lambda_expression( node)
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value

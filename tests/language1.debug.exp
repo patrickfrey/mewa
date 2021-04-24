@@ -57,34 +57,35 @@ KEYWORD >= [>] ~ 53
 KEYWORD <= [<] ~ 54
 KEYWORD > [>] ~ 55
 KEYWORD < [<] ~ 56
-KEYWORD main [m] ~ 57
-KEYWORD elseif [e] ~ 58
-KEYWORD else [e] ~ 59
-KEYWORD catch [c] ~ 60
-KEYWORD try [t] ~ 61
-KEYWORD var [v] ~ 62
-KEYWORD return [r] ~ 63
-KEYWORD throw [t] ~ 64
-KEYWORD delete [d] ~ 65
-KEYWORD if [i] ~ 66
-KEYWORD while [w] ~ 67
-KEYWORD with [w] ~ 68
-KEYWORD new [n] ~ 69
-KEYWORD cast [c] ~ 70
-KEYWORD null [n] ~ 71
-KEYWORD += [+] ~ 72
-KEYWORD -= [-] ~ 73
-KEYWORD *= [*] ~ 74
-KEYWORD /= [/] ~ 75
-KEYWORD ^= [^] ~ 76
-KEYWORD &= [&] ~ 77
-KEYWORD %= [%] ~ 78
-KEYWORD &&= [&] ~ 79
-KEYWORD ||= [|] ~ 80
-KEYWORD |= [|] ~ 81
-KEYWORD <<= [<] ~ 82
-KEYWORD >>= [>] ~ 83
-KEYWORD . [.] ~ 84
+KEYWORD lambda [l] ~ 57
+KEYWORD main [m] ~ 58
+KEYWORD elseif [e] ~ 59
+KEYWORD else [e] ~ 60
+KEYWORD catch [c] ~ 61
+KEYWORD try [t] ~ 62
+KEYWORD var [v] ~ 63
+KEYWORD return [r] ~ 64
+KEYWORD throw [t] ~ 65
+KEYWORD delete [d] ~ 66
+KEYWORD if [i] ~ 67
+KEYWORD while [w] ~ 68
+KEYWORD with [w] ~ 69
+KEYWORD new [n] ~ 70
+KEYWORD cast [c] ~ 71
+KEYWORD null [n] ~ 72
+KEYWORD += [+] ~ 73
+KEYWORD -= [-] ~ 74
+KEYWORD *= [*] ~ 75
+KEYWORD /= [/] ~ 76
+KEYWORD ^= [^] ~ 77
+KEYWORD &= [&] ~ 78
+KEYWORD %= [%] ~ 79
+KEYWORD &&= [&] ~ 80
+KEYWORD ||= [|] ~ 81
+KEYWORD |= [|] ~ 82
+KEYWORD <<= [<] ~ 83
+KEYWORD >>= [>] ~ 84
+KEYWORD . [.] ~ 85
 COMMENT /* */ [/]
 COMMENT // [/]
 
@@ -97,6 +98,7 @@ COMMENT // [/]
 (XX) inclass_definitionlist
 (XX) ininterf_definitionlist
 (XX) extern_definition
+(XX) extern_paramdecl
 (XX) extern_parameters
 (XX) extern_paramlist
 (XX) ininterf_definition
@@ -120,6 +122,10 @@ COMMENT // [/]
 (XX) constructordefinition
 (XX) operatordefinition
 (XX) operatordecl
+(XX) lambda_paramlist
+(XX) lambda_parameters
+(XX) lamda_expression
+(XX) generic_instance_defelem
 (XX) generic_instance_deflist
 (XX) generic_instance
 (XX) generic_defaultlist
@@ -127,9 +133,9 @@ COMMENT // [/]
 (XX) generic_header
 (XX) callablebody
 (XX) main_procedure
-(XX) parameterlist
-(XX) parameters
-(XX) paramdecl
+(XX) impl_paramlist
+(XX) impl_parameters
+(XX) impl_paramdecl
 (XX) codeblock
 (XX) statementlist
 (XX) elseblock
@@ -160,10 +166,10 @@ extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_param
 extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist ")" ";" (XX)
 extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";" (XX)
 extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";" (XX)
-extern_parameters = typespec "," extern_parameters (XX)
-extern_parameters = typespec IDENT "," extern_parameters (XX)
-extern_parameters = typespec (XX)
-extern_parameters = typespec IDENT (XX)
+extern_paramdecl = typespec IDENT (XX)
+extern_paramdecl = typespec (XX)
+extern_parameters = extern_paramdecl "," extern_parameters (XX)
+extern_parameters = extern_paramdecl (XX)
 extern_paramlist = extern_parameters (XX)
 extern_paramlist =  (XX)
 ininterf_definition = "function" IDENT typespec "(" extern_paramlist ")" funcattribute ";" (XX)
@@ -260,10 +266,16 @@ operatordecl = ">=" (XX)
 operatordecl = "<=" (XX)
 operatordecl = ">" (XX)
 operatordecl = "<" (XX)
-generic_instance_deflist = typegen (XX)
-generic_instance_deflist = typegen "," generic_instance_deflist (XX)
-generic_instance_deflist = UINTEGER (XX)
-generic_instance_deflist = UINTEGER "," generic_instance_deflist (XX)
+lambda_paramlist = lambda_parameters (XX)
+lambda_paramlist =  (XX)
+lambda_parameters = IDENT "," impl_parameters
+lambda_parameters = IDENT
+lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" (XX)
+generic_instance_defelem = typegen
+generic_instance_defelem = UINTEGER (XX)
+generic_instance_defelem = lamda_expression (XX)
+generic_instance_deflist = generic_instance_defelem (XX)
+generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist (XX)
 generic_instance = generic_instance_deflist (XX)
 generic_defaultlist = IDENT "=" typegen "," generic_defaultlist (XX)
 generic_defaultlist = IDENT "=" typegen (XX)
@@ -272,22 +284,22 @@ generic_identlist = IDENT "," generic_defaultlist (XX)
 generic_identlist = IDENT (XX)
 generic_header = generic_identlist (XX)
 generic_header = generic_defaultlist (XX)
-callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" (scope:82)
+callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist "}" (scope:85)
 main_procedure = "main" codeblock (XX)
 main_procedure = 
-parameterlist = parameters (XX)
-parameterlist =  (XX)
-parameters = paramdecl "," parameters
-parameters = paramdecl
-paramdecl = typespec IDENT (XX)
-codeblock/L1 = "{" statementlist "}" (scope:86)
+impl_paramlist = impl_parameters (XX)
+impl_paramlist =  (XX)
+impl_parameters = impl_paramdecl "," impl_parameters
+impl_parameters = impl_paramdecl
+impl_paramdecl = typespec IDENT (XX)
+codeblock/L1 = "{" statementlist "}" (scope:89)
 statementlist/L1 = statement statementlist (step)
 statementlist/L1 = 
 elseblock/L1 = "elseif" "(" expression ")" codeblock elseblock (XX)
 elseblock/L1 = "elseif" "(" expression ")" codeblock (XX)
 elseblock/L1 = "else" codeblock (XX)
-catchblock = "catch" IDENT codeblock (step:89)
-catchblock = "catch" IDENT "," IDENT codeblock (step:89)
+catchblock = "catch" IDENT codeblock (step:92)
+catchblock = "catch" IDENT "," IDENT codeblock (step:92)
 tryblock = "try" codeblock (XX)
 statement/L1 = structdefinition (XX)
 statement/L1 = classdefinition (XX)
@@ -295,11 +307,11 @@ statement/L1 = functiondefinition (XX)
 statement/L1 = typedefinition ";" (XX)
 statement/L1 = "var" variabledefinition ";" (step:16)
 statement/L1 = expression ";" (XX)
-statement/L1 = "return" expression ";" (step:92)
-statement/L1 = "return" ";" (step:93)
+statement/L1 = "return" expression ";" (step:95)
+statement/L1 = "return" ";" (step:96)
 statement/L1 = "throw" expression "," expression ";" (XX)
 statement/L1 = "throw" expression ";" (XX)
-statement/L1 = tryblock catchblock (scope:95)
+statement/L1 = tryblock catchblock (scope:98)
 statement/L1 = "delete" expression ";" (XX)
 statement/L1 = "if" "(" expression ")" codeblock elseblock (XX)
 statement/L1 = "if" "(" expression ")" codeblock (XX)
@@ -307,12 +319,12 @@ statement/L1 = "while" "(" expression ")" codeblock (XX)
 statement/L1 = "with" "(" expression ")" codeblock (XX)
 statement/L1 = "with" "(" expression ")" ";" (XX)
 statement/L1 = codeblock
-variabledefinition = typespec IDENT (step:100)
-variabledefinition = typespec IDENT "=" expression (step:101)
-expression/L1 = "{" expressionlist "}" (step:102)
-expression/L1 = "{" "}" (step:102)
-expression/L1 = "new" typespec ":" expression (step:103)
-expression/L1 = "cast" typespec ":" expression (step:104)
+variabledefinition = typespec IDENT (step:103)
+variabledefinition = typespec IDENT "=" expression (step:104)
+expression/L1 = "{" expressionlist "}" (step:105)
+expression/L1 = "{" "}" (step:105)
+expression/L1 = "new" typespec ":" expression (step:106)
+expression/L1 = "cast" typespec ":" expression (step:107)
 expression/L2 = IDENT (XX)
 expression/L2 = BOOLEAN (XX)
 expression/L2 = UINTEGER (XX)
@@ -321,49 +333,49 @@ expression/L2 = "null" (XX)
 expression/L2 = DQSTRING (XX)
 expression/L2 = SQSTRING (XX)
 expression/L2 = "(" expression ")"
-expression/L3 = expression "=" expression (step:112)
-expression/L3 = expression "+=" expression (step:113)
-expression/L3 = expression "-=" expression (step:114)
-expression/L3 = expression "*=" expression (step:115)
-expression/L3 = expression "/=" expression (step:116)
-expression/L3 = expression "^=" expression (step:117)
-expression/L3 = expression "&=" expression (step:118)
-expression/L3 = expression "%=" expression (step:119)
-expression/L3 = expression "&&=" expression (step:120)
-expression/L3 = expression "||=" expression (step:121)
-expression/L3 = expression "&=" expression (step:118)
-expression/L3 = expression "|=" expression (step:122)
-expression/L3 = expression "<<=" expression (step:123)
-expression/L3 = expression ">>=" expression (step:124)
-expression/L4 = expression "||" expression (step:125)
-expression/L5 = expression "&&" expression (step:126)
-expression/L6 = expression "|" expression (step:127)
-expression/L7 = expression "^" expression (step:128)
-expression/L7 = expression "&" expression (step:129)
-expression/L8 = expression "==" expression (step:130)
-expression/L8 = expression "!=" expression (step:131)
-expression/L8 = expression "<=" expression (step:132)
-expression/L8 = expression "<" expression (step:133)
-expression/L8 = expression ">=" expression (step:134)
-expression/L8 = expression ">" expression (step:135)
-expression/L9 = expression "+" expression (step:136)
-expression/L9 = expression "-" expression (step:137)
+expression/L3 = expression "=" expression (step:115)
+expression/L3 = expression "+=" expression (step:116)
+expression/L3 = expression "-=" expression (step:117)
+expression/L3 = expression "*=" expression (step:118)
+expression/L3 = expression "/=" expression (step:119)
+expression/L3 = expression "^=" expression (step:120)
+expression/L3 = expression "&=" expression (step:121)
+expression/L3 = expression "%=" expression (step:122)
+expression/L3 = expression "&&=" expression (step:123)
+expression/L3 = expression "||=" expression (step:124)
+expression/L3 = expression "&=" expression (step:121)
+expression/L3 = expression "|=" expression (step:125)
+expression/L3 = expression "<<=" expression (step:126)
+expression/L3 = expression ">>=" expression (step:127)
+expression/L4 = expression "||" expression (step:128)
+expression/L5 = expression "&&" expression (step:129)
+expression/L6 = expression "|" expression (step:130)
+expression/L7 = expression "^" expression (step:131)
+expression/L7 = expression "&" expression (step:132)
+expression/L8 = expression "==" expression (step:133)
+expression/L8 = expression "!=" expression (step:134)
+expression/L8 = expression "<=" expression (step:135)
+expression/L8 = expression "<" expression (step:136)
+expression/L8 = expression ">=" expression (step:137)
+expression/L8 = expression ">" expression (step:138)
+expression/L9 = expression "+" expression (step:139)
+expression/L9 = expression "-" expression (step:140)
 expression/L9 = "&" expression (XX)
-expression/L9 = "-" expression (step:139)
-expression/L9 = "+" expression (step:140)
-expression/L9 = "~" expression (step:141)
-expression/L9 = "!" expression (step:142)
-expression/L10 = expression "*" expression (step:143)
-expression/L10 = expression "/" expression (step:144)
-expression/L10 = expression "%" expression (step:145)
-expression/L11 = expression "<<" expression (step:146)
-expression/L11 = expression ">>" expression (step:147)
+expression/L9 = "-" expression (step:142)
+expression/L9 = "+" expression (step:143)
+expression/L9 = "~" expression (step:144)
+expression/L9 = "!" expression (step:145)
+expression/L10 = expression "*" expression (step:146)
+expression/L10 = expression "/" expression (step:147)
+expression/L10 = expression "%" expression (step:148)
+expression/L11 = expression "<<" expression (step:149)
+expression/L11 = expression ">>" expression (step:150)
 expression/L12 = iexpression
 expression/L12 = expression "." IDENT (XX)
-expression/L12 = "*" expression (step:149)
-expression/L13 = expression "(" expressionlist ")" (step:150)
-expression/L13 = expression "(" ")" (step:150)
-expression/L13 = expression "[" expressionlist "]" (step:151)
+expression/L12 = "*" expression (step:152)
+expression/L13 = expression "(" expressionlist ")" (step:153)
+expression/L13 = expression "(" ")" (step:153)
+expression/L13 = expression "[" expressionlist "]" (step:154)
 iexpression/L14 = expression indirection IDENT (XX)
 indirection/L14 = "->" indirection (XX)
 indirection/L14 = "->" (XX)
@@ -604,10 +616,12 @@ expressionlist/L0 = expression
 	typegen/L1 = typegen "[" . generic_instance "]"
 	typegen/L1 = . typegen "^"
 	typegen/L1 = . typegen "const" "^"
-	generic_instance_deflist = . typegen
-	generic_instance_deflist = . typegen "," generic_instance_deflist
-	generic_instance_deflist = . UINTEGER
-	generic_instance_deflist = . UINTEGER "," generic_instance_deflist
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}"
+	generic_instance_defelem = . typegen
+	generic_instance_defelem = . UINTEGER
+	generic_instance_defelem = . lamda_expression
+	generic_instance_deflist = . generic_instance_defelem
+	generic_instance_deflist = . generic_instance_defelem "," generic_instance_deflist
 	generic_instance = . generic_instance_deflist
 [XX]
 	typespec/L1 = typegen "&" .
@@ -775,15 +789,20 @@ expressionlist/L0 = expression
 	typegen/L1 = typegen . "[" generic_instance "]"
 	typegen/L1 = typegen . "^"
 	typegen/L1 = typegen . "const" "^"
-	generic_instance_deflist = typegen .
-	generic_instance_deflist = typegen . "," generic_instance_deflist
+	generic_instance_defelem = typegen .
+[XX]
+	generic_instance_defelem = lamda_expression .
+[XX]
+	generic_instance_deflist = generic_instance_defelem .
+	generic_instance_deflist = generic_instance_defelem . "," generic_instance_deflist
 [XX]
 	generic_instance = generic_instance_deflist .
 [XX]
 	typegen/L1 = typegen "[" generic_instance . "]"
 [XX]
-	generic_instance_deflist = UINTEGER .
-	generic_instance_deflist = UINTEGER . "," generic_instance_deflist
+	generic_instance_defelem = UINTEGER .
+[XX]
+	lamda_expression = "lambda" . "(" lambda_paramlist ")" "{" statementlist "}"
 [XX]
 	variabledefinition = typespec IDENT "=" . expression
 	expression/L1 = . "{" expressionlist "}"
@@ -860,7 +879,7 @@ expressionlist/L0 = expression
 	functiondefinition = linkage "function" IDENT . typespec callablebody
 [XX]
 	functiondefinition = linkage "procedure" IDENT . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	typename/L1 = IDENT "::" typename .
 [XX]
@@ -1986,31 +2005,21 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "[" generic_instance "]"
 	typegen/L1 = . typegen "^"
 	typegen/L1 = . typegen "const" "^"
-	generic_instance_deflist = . typegen
-	generic_instance_deflist = . typegen "," generic_instance_deflist
-	generic_instance_deflist = typegen "," . generic_instance_deflist
-	generic_instance_deflist = . UINTEGER
-	generic_instance_deflist = . UINTEGER "," generic_instance_deflist
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}"
+	generic_instance_defelem = . typegen
+	generic_instance_defelem = . UINTEGER
+	generic_instance_defelem = . lamda_expression
+	generic_instance_deflist = . generic_instance_defelem
+	generic_instance_deflist = . generic_instance_defelem "," generic_instance_deflist
+	generic_instance_deflist = generic_instance_defelem "," . generic_instance_deflist
 [XX]
 	typegen/L1 = typegen "[" generic_instance "]" .
 [XX]
-	typename/L1 = . IDENT
-	typename/L1 = . IDENT "::" typename
-	typehdr/L1 = . typename
-	typehdr/L1 = . "const" typename
-	typehdr/L1 = . "any" "class" "^"
-	typehdr/L1 = . "any" "const" "class" "^"
-	typehdr/L1 = . "any" "struct" "^"
-	typehdr/L1 = . "any" "const" "struct" "^"
-	typegen/L1 = . typehdr
-	typegen/L1 = . typegen "[" generic_instance "]"
-	typegen/L1 = . typegen "^"
-	typegen/L1 = . typegen "const" "^"
-	generic_instance_deflist = . typegen
-	generic_instance_deflist = . typegen "," generic_instance_deflist
-	generic_instance_deflist = . UINTEGER
-	generic_instance_deflist = . UINTEGER "," generic_instance_deflist
-	generic_instance_deflist = UINTEGER "," . generic_instance_deflist
+	lambda_paramlist = . lambda_parameters
+	lambda_paramlist = .
+	lambda_parameters = . IDENT "," impl_parameters
+	lambda_parameters = . IDENT
+	lamda_expression = "lambda" "(" . lambda_paramlist ")" "{" statementlist "}"
 [XX]
 	variabledefinition = typespec IDENT "=" expression .
 	expression/L3 = expression . "=" expression
@@ -2115,7 +2124,7 @@ expressionlist/L0 = expression
 	expressionlist/L0 = . expression
 [XX]
 	functiondefinition = linkage "function" IDENT typespec . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	functiondefinition = linkage "procedure" IDENT callablebody .
 [XX]
@@ -2133,12 +2142,12 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^"
 	typespec/L1 = . typegen
 	typespec/L1 = . typegen "&"
-	callablebody = "(" . parameterlist ")" funcattribute "{" statementlist "}"
-	parameterlist = . parameters
-	parameterlist = .
-	parameters = . paramdecl "," parameters
-	parameters = . paramdecl
-	paramdecl = . typespec IDENT
+	callablebody = "(" . impl_paramlist ")" funcattribute "{" statementlist "}"
+	impl_paramlist = . impl_parameters
+	impl_paramlist = .
+	impl_parameters = . impl_paramdecl "," impl_parameters
+	impl_parameters = . impl_paramdecl
+	impl_paramdecl = . typespec IDENT
 [XX]
 	typehdr/L1 = "any" "const" "class" "^" .
 [XX]
@@ -2273,10 +2282,10 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec . "(" extern_paramlist ")"
 	typedefinition = "typedef" "function" IDENT typespec . "(" extern_paramlist ")" "nothrow"
 [XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	typename/L1 = . IDENT
@@ -2408,10 +2417,10 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" . extern_paramlist ")" ";"
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" . extern_paramlist "..." ")" ";"
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	typename/L1 = . IDENT
@@ -5015,9 +5024,14 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "cast" typespec . ":" expression
 [XX]
-	generic_instance_deflist = typegen "," generic_instance_deflist .
+	generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist .
 [XX]
-	generic_instance_deflist = UINTEGER "," generic_instance_deflist .
+	lamda_expression = "lambda" "(" lambda_paramlist . ")" "{" statementlist "}"
+[XX]
+	lambda_paramlist = lambda_parameters .
+[XX]
+	lambda_parameters = IDENT . "," impl_parameters
+	lambda_parameters = IDENT .
 [XX]
 	expression/L3 = expression . "=" expression
 	expression/L3 = expression . "+=" expression
@@ -5063,14 +5077,14 @@ expressionlist/L0 = expression
 [XX]
 	functiondefinition = linkage "function" IDENT typespec callablebody .
 [XX]
-	paramdecl = typespec . IDENT
+	impl_paramdecl = typespec . IDENT
 [XX]
-	callablebody = "(" parameterlist . ")" funcattribute "{" statementlist "}"
+	callablebody = "(" impl_paramlist . ")" funcattribute "{" statementlist "}"
 [XX]
-	parameterlist = parameters .
+	impl_paramlist = impl_parameters .
 [XX]
-	parameters = paramdecl . "," parameters
-	parameters = paramdecl .
+	impl_parameters = impl_paramdecl . "," impl_parameters
+	impl_parameters = impl_paramdecl .
 [XX]
 	classdefinition = "class" IDENT "{" inclass_definitionlist "}" .
 [XX]
@@ -5105,7 +5119,7 @@ expressionlist/L0 = expression
 	operatordecl = . "<"
 [XX]
 	constructordefinition = linkage "constructor" . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	inclass_definition = variabledefinition ";" .
 [XX]
@@ -5186,10 +5200,10 @@ expressionlist/L0 = expression
 [XX]
 	instruct_definition = variabledefinition ";" .
 [XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	typename/L1 = . IDENT
@@ -5209,15 +5223,16 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" . extern_paramlist ")"
 	typedefinition = "typedef" "function" IDENT typespec "(" . extern_paramlist ")" "nothrow"
 [XX]
+	extern_parameters = extern_paramdecl . "," extern_parameters
+	extern_parameters = extern_paramdecl .
+[XX]
 	extern_paramlist = extern_parameters .
 [XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist . ")"
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist . ")" "nothrow"
 [XX]
-	extern_parameters = typespec . "," extern_parameters
-	extern_parameters = typespec . IDENT "," extern_parameters
-	extern_parameters = typespec .
-	extern_parameters = typespec . IDENT
+	extern_paramdecl = typespec . IDENT
+	extern_paramdecl = typespec .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" . generic_header "]" typespec callablebody
 	generic_defaultlist = . IDENT "=" typegen "," generic_defaultlist
@@ -5345,10 +5360,10 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" . extern_paramlist ")" ";"
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" . extern_paramlist "..." ")" ";"
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	typename/L1 = . IDENT
@@ -7028,12 +7043,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
-	paramdecl = typespec IDENT .
-[XX]
-	funcattribute = . "const" funcattribute
-	funcattribute = . "nothrow" funcattribute
-	funcattribute = .
-	callablebody = "(" parameterlist ")" . funcattribute "{" statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" . "{" statementlist "}"
 [XX]
 	typename/L1 = . IDENT
 	typename/L1 = . IDENT "::" typename
@@ -7049,10 +7059,36 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^"
 	typespec/L1 = . typegen
 	typespec/L1 = . typegen "&"
-	parameters = . paramdecl "," parameters
-	parameters = paramdecl "," . parameters
-	parameters = . paramdecl
-	paramdecl = . typespec IDENT
+	lambda_parameters = IDENT "," . impl_parameters
+	impl_parameters = . impl_paramdecl "," impl_parameters
+	impl_parameters = . impl_paramdecl
+	impl_paramdecl = . typespec IDENT
+[XX]
+	impl_paramdecl = typespec IDENT .
+[XX]
+	funcattribute = . "const" funcattribute
+	funcattribute = . "nothrow" funcattribute
+	funcattribute = .
+	callablebody = "(" impl_paramlist ")" . funcattribute "{" statementlist "}"
+[XX]
+	typename/L1 = . IDENT
+	typename/L1 = . IDENT "::" typename
+	typehdr/L1 = . typename
+	typehdr/L1 = . "const" typename
+	typehdr/L1 = . "any" "class" "^"
+	typehdr/L1 = . "any" "const" "class" "^"
+	typehdr/L1 = . "any" "struct" "^"
+	typehdr/L1 = . "any" "const" "struct" "^"
+	typegen/L1 = . typehdr
+	typegen/L1 = . typegen "[" generic_instance "]"
+	typegen/L1 = . typegen "^"
+	typegen/L1 = . typegen "const" "^"
+	typespec/L1 = . typegen
+	typespec/L1 = . typegen "&"
+	impl_parameters = . impl_paramdecl "," impl_parameters
+	impl_parameters = impl_paramdecl "," . impl_parameters
+	impl_parameters = . impl_paramdecl
+	impl_paramdecl = . typespec IDENT
 [XX]
 	typename/L1 = . IDENT
 	typename/L1 = . IDENT "::" typename
@@ -7070,7 +7106,7 @@ expressionlist/L0 = expression
 	typespec/L1 = . typegen "&"
 	operatordefinition = linkage "operator" operatordecl . typespec callablebody
 	operatordefinition = linkage "operator" operatordecl . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	constructordefinition = linkage "constructor" callablebody .
 [XX]
@@ -7081,17 +7117,11 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist . ")"
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist . ")" "nothrow"
 [XX]
-	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" .
-	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . "nothrow"
-[XX]
-	extern_parameters = typespec IDENT . "," extern_parameters
-	extern_parameters = typespec IDENT .
-[XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = typespec "," . extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = extern_paramdecl "," . extern_parameters
+	extern_parameters = . extern_paramdecl
 	typename/L1 = . IDENT
 	typename/L1 = . IDENT "::" typename
 	typehdr/L1 = . typename
@@ -7106,6 +7136,11 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^"
 	typespec/L1 = . typegen
 	typespec/L1 = . typegen "&"
+[XX]
+	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" .
+	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . "nothrow"
+[XX]
+	extern_paramdecl = typespec IDENT .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header . "]" typespec callablebody
 [XX]
@@ -7141,10 +7176,10 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "function" IDENT typespec . "(" extern_paramlist ")" funcattribute ";"
 [XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	ininterf_definition = "procedure" IDENT "(" . extern_paramlist ")" funcattribute ";"
@@ -7165,10 +7200,10 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "operator" operatordecl typespec . "(" extern_paramlist ")" funcattribute ";"
 [XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	ininterf_definition = "operator" operatordecl "(" . extern_paramlist ")" funcattribute ";"
@@ -7342,7 +7377,107 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute . "{" statementlist "}"
+	typedefinition = . "typedef" typegen IDENT
+	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
+	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
+	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow"
+	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"
+	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}"
+	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}"
+	classdefinition = . "class" IDENT "{" inclass_definitionlist "}"
+	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"
+	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}"
+	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}"
+	linkage = . "private"
+	linkage = . "public"
+	linkage = .
+	functiondefinition = . linkage "function" IDENT typespec callablebody
+	functiondefinition = . linkage "procedure" IDENT callablebody
+	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
+	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" . statementlist "}"
+	codeblock/L1 = . "{" statementlist "}"
+	statementlist/L1 = . statement statementlist
+	statementlist/L1 = .
+	tryblock = . "try" codeblock
+	statement/L1 = . structdefinition
+	statement/L1 = . classdefinition
+	statement/L1 = . functiondefinition
+	statement/L1 = . typedefinition ";"
+	statement/L1 = . "var" variabledefinition ";"
+	statement/L1 = . expression ";"
+	statement/L1 = . "return" expression ";"
+	statement/L1 = . "return" ";"
+	statement/L1 = . "throw" expression "," expression ";"
+	statement/L1 = . "throw" expression ";"
+	statement/L1 = . tryblock catchblock
+	statement/L1 = . "delete" expression ";"
+	statement/L1 = . "if" "(" expression ")" codeblock elseblock
+	statement/L1 = . "if" "(" expression ")" codeblock
+	statement/L1 = . "while" "(" expression ")" codeblock
+	statement/L1 = . "with" "(" expression ")" codeblock
+	statement/L1 = . "with" "(" expression ")" ";"
+	statement/L1 = . codeblock
+	expression/L1 = . "{" expressionlist "}"
+	expression/L1 = . "{" "}"
+	expression/L1 = . "new" typespec ":" expression
+	expression/L1 = . "cast" typespec ":" expression
+	expression/L2 = . IDENT
+	expression/L2 = . BOOLEAN
+	expression/L2 = . UINTEGER
+	expression/L2 = . FLOAT
+	expression/L2 = . "null"
+	expression/L2 = . DQSTRING
+	expression/L2 = . SQSTRING
+	expression/L2 = . "(" expression ")"
+	expression/L3 = . expression "=" expression
+	expression/L3 = . expression "+=" expression
+	expression/L3 = . expression "-=" expression
+	expression/L3 = . expression "*=" expression
+	expression/L3 = . expression "/=" expression
+	expression/L3 = . expression "^=" expression
+	expression/L3 = . expression "&=" expression
+	expression/L3 = . expression "%=" expression
+	expression/L3 = . expression "&&=" expression
+	expression/L3 = . expression "||=" expression
+	expression/L3 = . expression "&=" expression
+	expression/L3 = . expression "|=" expression
+	expression/L3 = . expression "<<=" expression
+	expression/L3 = . expression ">>=" expression
+	expression/L4 = . expression "||" expression
+	expression/L5 = . expression "&&" expression
+	expression/L6 = . expression "|" expression
+	expression/L7 = . expression "^" expression
+	expression/L7 = . expression "&" expression
+	expression/L8 = . expression "==" expression
+	expression/L8 = . expression "!=" expression
+	expression/L8 = . expression "<=" expression
+	expression/L8 = . expression "<" expression
+	expression/L8 = . expression ">=" expression
+	expression/L8 = . expression ">" expression
+	expression/L9 = . expression "+" expression
+	expression/L9 = . expression "-" expression
+	expression/L9 = . "&" expression
+	expression/L9 = . "-" expression
+	expression/L9 = . "+" expression
+	expression/L9 = . "~" expression
+	expression/L9 = . "!" expression
+	expression/L10 = . expression "*" expression
+	expression/L10 = . expression "/" expression
+	expression/L10 = . expression "%" expression
+	expression/L11 = . expression "<<" expression
+	expression/L11 = . expression ">>" expression
+	expression/L12 = . iexpression
+	expression/L12 = . expression "." IDENT
+	expression/L12 = . "*" expression
+	expression/L13 = . expression "(" expressionlist ")"
+	expression/L13 = . expression "(" ")"
+	expression/L13 = . expression "[" expressionlist "]"
+	iexpression/L14 = . expression indirection IDENT
+[XX]
+	lambda_parameters = IDENT "," impl_parameters .
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute . "{" statementlist "}"
 [XX]
 	funcattribute = . "const" funcattribute
 	funcattribute = "const" . funcattribute
@@ -7354,10 +7489,10 @@ expressionlist/L0 = expression
 	funcattribute = "nothrow" . funcattribute
 	funcattribute = .
 [XX]
-	parameters = paramdecl "," parameters .
+	impl_parameters = impl_paramdecl "," impl_parameters .
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	operatordefinition = linkage "operator" operatordecl callablebody .
 [XX]
@@ -7366,29 +7501,9 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" .
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . "nothrow"
 [XX]
+	extern_parameters = extern_paramdecl "," extern_parameters .
+[XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" .
-[XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = typespec IDENT "," . extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
-	typename/L1 = . IDENT
-	typename/L1 = . IDENT "::" typename
-	typehdr/L1 = . typename
-	typehdr/L1 = . "const" typename
-	typehdr/L1 = . "any" "class" "^"
-	typehdr/L1 = . "any" "const" "class" "^"
-	typehdr/L1 = . "any" "struct" "^"
-	typehdr/L1 = . "any" "const" "struct" "^"
-	typegen/L1 = . typehdr
-	typegen/L1 = . typegen "[" generic_instance "]"
-	typegen/L1 = . typegen "^"
-	typegen/L1 = . typegen "const" "^"
-	typespec/L1 = . typegen
-	typespec/L1 = . typegen "&"
-[XX]
-	extern_parameters = typespec "," extern_parameters .
 [XX]
 	typename/L1 = . IDENT
 	typename/L1 = . IDENT "::" typename
@@ -7407,7 +7522,7 @@ expressionlist/L0 = expression
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" . typespec callablebody
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	inclass_definitionlist = . inclass_definition inclass_definitionlist
 	inclass_definitionlist = .
@@ -7516,10 +7631,10 @@ expressionlist/L0 = expression
 	variabledefinition = . typespec IDENT
 	variabledefinition = . typespec IDENT "=" expression
 [XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	ininterf_definition = "function" IDENT typespec "(" . extern_paramlist ")" funcattribute ";"
@@ -7540,10 +7655,10 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist . ")" funcattribute ";"
 [XX]
-	extern_parameters = . typespec "," extern_parameters
-	extern_parameters = . typespec IDENT "," extern_parameters
-	extern_parameters = . typespec
-	extern_parameters = . typespec IDENT
+	extern_paramdecl = . typespec IDENT
+	extern_paramdecl = . typespec
+	extern_parameters = . extern_paramdecl "," extern_parameters
+	extern_parameters = . extern_paramdecl
 	extern_paramlist = . extern_parameters
 	extern_paramlist = .
 	ininterf_definition = "operator" operatordecl typespec "(" . extern_paramlist ")" funcattribute ";"
@@ -7589,6 +7704,8 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" .
 [XX]
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist . "}"
+[XX]
 	typedefinition = . "typedef" typegen IDENT
 	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
 	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
@@ -7607,7 +7724,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody
 	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
 	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
-	callablebody = "(" parameterlist ")" funcattribute "{" . statementlist "}"
+	callablebody = "(" impl_paramlist ")" funcattribute "{" . statementlist "}"
 	codeblock/L1 = . "{" statementlist "}"
 	statementlist/L1 = . statement statementlist
 	statementlist/L1 = .
@@ -7695,10 +7812,8 @@ expressionlist/L0 = expression
 [XX]
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" .
 [XX]
-	extern_parameters = typespec IDENT "," extern_parameters .
-[XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec . callablebody
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody .
 [XX]
@@ -7742,7 +7857,9 @@ expressionlist/L0 = expression
 	codeblock/L1 = . "{" statementlist "}"
 	elseblock/L1 = "else" . codeblock
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" statementlist . "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" .
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist . "}"
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody .
 [XX]
@@ -7883,7 +8000,7 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" codeblock .
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" .
+	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist "}" .
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist . "}"
 [XX]
@@ -8121,15 +8238,20 @@ expressionlist/L0 = expression
 	typegen/L1 = typegen . "[" generic_instance "]"
 	typegen/L1 = typegen . "^"
 	typegen/L1 = typegen . "const" "^"
-	generic_instance_deflist = typegen .
-	generic_instance_deflist = typegen . "," generic_instance_deflist
+	generic_instance_defelem = typegen .
+[XX]
+	generic_instance_defelem = lamda_expression .
+[XX]
+	generic_instance_deflist = generic_instance_defelem .
+	generic_instance_deflist = generic_instance_defelem . "," generic_instance_deflist
 [XX]
 	generic_instance = generic_instance_deflist .
 [XX]
 	typegen/L1 = typegen "[" generic_instance . "]"
 [XX]
-	generic_instance_deflist = UINTEGER .
-	generic_instance_deflist = UINTEGER . "," generic_instance_deflist
+	generic_instance_defelem = UINTEGER .
+[XX]
+	lamda_expression = "lambda" . "(" lambda_paramlist ")" "{" statementlist "}"
 [XX]
 	variabledefinition = typespec IDENT "=" . expression
 [XX]
@@ -8293,11 +8415,11 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = "null" .
 [XX]
-	generic_instance_deflist = typegen "," . generic_instance_deflist
+	generic_instance_deflist = generic_instance_defelem "," . generic_instance_deflist
 [XX]
 	typegen/L1 = typegen "[" generic_instance "]" .
 [XX]
-	generic_instance_deflist = UINTEGER "," . generic_instance_deflist
+	lamda_expression = "lambda" "(" . lambda_paramlist ")" "{" statementlist "}"
 [XX]
 	variabledefinition = typespec IDENT "=" expression .
 	expression/L3 = expression . "=" expression
@@ -8345,7 +8467,7 @@ expressionlist/L0 = expression
 [XX]
 	functiondefinition = linkage "procedure" IDENT callablebody .
 [XX]
-	callablebody = "(" . parameterlist ")" funcattribute "{" statementlist "}"
+	callablebody = "(" . impl_paramlist ")" funcattribute "{" statementlist "}"
 [XX]
 	typehdr/L1 = "any" "const" "class" "^" .
 [XX]
@@ -8989,9 +9111,14 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "cast" typespec . ":" expression
 [XX]
-	generic_instance_deflist = typegen "," generic_instance_deflist .
+	generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist .
 [XX]
-	generic_instance_deflist = UINTEGER "," generic_instance_deflist .
+	lamda_expression = "lambda" "(" lambda_paramlist . ")" "{" statementlist "}"
+[XX]
+	lambda_paramlist = lambda_parameters .
+[XX]
+	lambda_parameters = IDENT . "," impl_parameters
+	lambda_parameters = IDENT .
 [XX]
 	expression/L3 = expression . "=" expression
 	expression/L3 = expression . "+=" expression
@@ -9035,14 +9162,14 @@ expressionlist/L0 = expression
 [XX]
 	functiondefinition = linkage "function" IDENT typespec callablebody .
 [XX]
-	paramdecl = typespec . IDENT
+	impl_paramdecl = typespec . IDENT
 [XX]
-	callablebody = "(" parameterlist . ")" funcattribute "{" statementlist "}"
+	callablebody = "(" impl_paramlist . ")" funcattribute "{" statementlist "}"
 [XX]
-	parameterlist = parameters .
+	impl_paramlist = impl_parameters .
 [XX]
-	parameters = paramdecl . "," parameters
-	parameters = paramdecl .
+	impl_parameters = impl_paramdecl . "," impl_parameters
+	impl_parameters = impl_paramdecl .
 [XX]
 	classdefinition = "class" IDENT "{" inclass_definitionlist "}" .
 [XX]
@@ -9074,15 +9201,16 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" . extern_paramlist ")"
 	typedefinition = "typedef" "function" IDENT typespec "(" . extern_paramlist ")" "nothrow"
 [XX]
+	extern_parameters = extern_paramdecl . "," extern_parameters
+	extern_parameters = extern_paramdecl .
+[XX]
 	extern_paramlist = extern_parameters .
 [XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist . ")"
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist . ")" "nothrow"
 [XX]
-	extern_parameters = typespec . "," extern_parameters
-	extern_parameters = typespec . IDENT "," extern_parameters
-	extern_parameters = typespec .
-	extern_parameters = typespec . IDENT
+	extern_paramdecl = typespec . IDENT
+	extern_paramdecl = typespec .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" . generic_header "]" typespec callablebody
 [XX]
@@ -10536,11 +10664,15 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "cast" typespec ":" . expression
 [XX]
-	paramdecl = typespec IDENT .
+	lamda_expression = "lambda" "(" lambda_paramlist ")" . "{" statementlist "}"
 [XX]
-	callablebody = "(" parameterlist ")" . funcattribute "{" statementlist "}"
+	lambda_parameters = IDENT "," . impl_parameters
 [XX]
-	parameters = paramdecl "," . parameters
+	impl_paramdecl = typespec IDENT .
+[XX]
+	callablebody = "(" impl_paramlist ")" . funcattribute "{" statementlist "}"
+[XX]
+	impl_parameters = impl_paramdecl "," . impl_parameters
 [XX]
 	operatordefinition = linkage "operator" operatordecl . typespec callablebody
 	operatordefinition = linkage "operator" operatordecl . callablebody
@@ -10554,13 +10686,12 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist . ")"
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist . ")" "nothrow"
 [XX]
+	extern_parameters = extern_paramdecl "," . extern_parameters
+[XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" .
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . "nothrow"
 [XX]
-	extern_parameters = typespec IDENT . "," extern_parameters
-	extern_parameters = typespec IDENT .
-[XX]
-	extern_parameters = typespec "," . extern_parameters
+	extern_paramdecl = typespec IDENT .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header . "]" typespec callablebody
 [XX]
@@ -10731,13 +10862,17 @@ expressionlist/L0 = expression
 	expression/L13 = expression . "[" expressionlist "]"
 	iexpression/L14 = expression . indirection IDENT
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute . "{" statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" . statementlist "}"
+[XX]
+	lambda_parameters = IDENT "," impl_parameters .
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute . "{" statementlist "}"
 [XX]
 	funcattribute = "const" . funcattribute
 [XX]
 	funcattribute = "nothrow" . funcattribute
 [XX]
-	parameters = paramdecl "," parameters .
+	impl_parameters = impl_paramdecl "," impl_parameters .
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec . callablebody
 [XX]
@@ -10748,11 +10883,9 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" .
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . "nothrow"
 [XX]
+	extern_parameters = extern_paramdecl "," extern_parameters .
+[XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" .
-[XX]
-	extern_parameters = typespec IDENT "," . extern_parameters
-[XX]
-	extern_parameters = typespec "," extern_parameters .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" . typespec callablebody
 [XX]
@@ -10803,7 +10936,9 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" .
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" . statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist . "}"
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute "{" . statementlist "}"
 [XX]
 	funcattribute = "const" funcattribute .
 [XX]
@@ -10812,8 +10947,6 @@ expressionlist/L0 = expression
 	operatordefinition = linkage "operator" operatordecl typespec callablebody .
 [XX]
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" .
-[XX]
-	extern_parameters = typespec IDENT "," extern_parameters .
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec . callablebody
 [XX]
@@ -10850,7 +10983,9 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" . codeblock
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" statementlist . "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" .
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist . "}"
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody .
 [XX]
@@ -10880,7 +11015,7 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" codeblock .
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" .
+	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist "}" .
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist . "}"
 [XX]
@@ -10963,6 +11098,7 @@ expressionlist/L0 = expression
 [XX]: {"function" "procedure"}
 [XX]: {IDENT "const" '^' '[' '&'}
 [XX]: {IDENT "const" '^' '['}
+[XX]: {',' ']'}
 [XX]: {'(' ';' '^' '[' '&' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
 [XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' "const" '^' '[' '&'}
@@ -10983,6 +11119,7 @@ expressionlist/L0 = expression
 [XX]: {IDENT ')' ',' "const" '^' '[' '&'}
 [XX]: {IDENT '(' "const" "any"}
 [XX]: {')' "..."}
+[XX]: {')' "..." ','}
 [XX]: {IDENT ')' "..." ','}
 [XX]: {IDENT ')' "..." ',' "const" '^' '[' '&'}
 [XX]: {'(' ')' '^' '[' '&' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
@@ -10990,13 +11127,13 @@ expressionlist/L0 = expression
 [XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "elseif" "else" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' ')' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
 [XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
-[XX]: {')' ']' '}'}
-[XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' ']' '&' '{' ':'}
 [XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
-[XX]: {IDENT '(' ')' "..." ',' ':'}
+[XX]: {')' ']' '}'}
 [XX]: {';' '{'}
+[XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' ']' '&' '{' ':'}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' '&' ':'}
+[XX]: {IDENT '(' ')' "..." ',' ':'}
 
 -- LALR(XX) states (merged LR(XX) elements assigned to LR(XX) states):
 [XX]
@@ -11225,24 +11362,26 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typegen "^", FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = . typegen, FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = . typegen "," generic_instance_deflist, FOLLOW [XX] -> GOTO XX
+	generic_instance_defelem = . typegen, FOLLOW [XX] -> GOTO XX
+	generic_instance_defelem = . lamda_expression, FOLLOW [XX] -> GOTO XX
+	generic_instance_deflist = . generic_instance_defelem, FOLLOW [XX] -> GOTO XX
+	generic_instance_deflist = . generic_instance_defelem "," generic_instance_deflist, FOLLOW [XX] -> GOTO XX
 	generic_instance = . generic_instance_deflist, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = typegen "[" . generic_instance "]", FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	generic_instance_deflist = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	generic_instance_deflist = . UINTEGER "," generic_instance_deflist, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
+	generic_instance_defelem = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
 	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 [XX]
 	typespec/L1 = typegen "&" . (XX), FOLLOW [XX] -> REDUCE typespec #2 CALL typespec_ref
 [XX]
 	variabledefinition = typespec IDENT . "=" expression, FOLLOW [XX] -> SHIFT '=' GOTO XX
-	variabledefinition = typespec IDENT . (step:100), FOLLOW [XX] -> REDUCE variabledefinition #2 CALL vardef
+	variabledefinition = typespec IDENT . (step:103), FOLLOW [XX] -> REDUCE variabledefinition #2 CALL vardef
 [XX]
 	free_definition = typedefinition ";" . (XX), FOLLOW [XX] -> REDUCE free_definition #2 CALL definition 1
 [XX]
@@ -11401,18 +11540,23 @@ expressionlist/L0 = expression
 [XX]
 	typegen/L1 = typegen "const" "^" . (XX), FOLLOW [XX] -> REDUCE typegen #3 CALL typegen_pointer {const=true}
 [XX]
-	generic_instance_deflist = typegen . "," generic_instance_deflist, FOLLOW [XX] -> SHIFT ',' GOTO XX
 	typegen/L1 = typegen . "const" "^", FOLLOW [XX] -> SHIFT "const" GOTO XX
 	typegen/L1 = typegen . "^", FOLLOW [XX] -> SHIFT '^' GOTO XX
 	typegen/L1 = typegen . "[" generic_instance "]", FOLLOW [XX] -> SHIFT '[' GOTO XX
-	generic_instance_deflist = typegen . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #1 CALL generic_instance_type
+	generic_instance_defelem = typegen ., FOLLOW [XX] -> REDUCE generic_instance_defelem #1
+[XX]
+	generic_instance_defelem = lamda_expression . (XX), FOLLOW [XX] -> REDUCE generic_instance_defelem #1 CALL generic_instance_lambda
+[XX]
+	generic_instance_deflist = generic_instance_defelem . "," generic_instance_deflist, FOLLOW [XX] -> SHIFT ',' GOTO XX
+	generic_instance_deflist = generic_instance_defelem . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #1 CALL generic_instance_deflist
 [XX]
 	generic_instance = generic_instance_deflist . (XX), FOLLOW [XX] -> REDUCE generic_instance #1 CALL generic_instance
 [XX]
 	typegen/L1 = typegen "[" generic_instance . "]", FOLLOW [XX] -> SHIFT ']' GOTO XX
 [XX]
-	generic_instance_deflist = UINTEGER . "," generic_instance_deflist, FOLLOW [XX] -> SHIFT ',' GOTO XX
-	generic_instance_deflist = UINTEGER . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #1 CALL generic_instance_dimension
+	generic_instance_defelem = UINTEGER . (XX), FOLLOW [XX] -> REDUCE generic_instance_defelem #1 CALL generic_instance_dimension
+[XX]
+	lamda_expression = "lambda" . "(" lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	variabledefinition = typespec IDENT "=" . expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
@@ -11489,7 +11633,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 [XX]
 	functiondefinition = linkage "procedure" IDENT . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	typename/L1 = IDENT "::" typename ., FOLLOW [XX] -> REDUCE typename #3
 [XX]
@@ -12608,38 +12752,28 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typegen "^", FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = . typegen, FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = . typegen "," generic_instance_deflist, FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = typegen "," . generic_instance_deflist, FOLLOW [XX] -> GOTO XX
+	generic_instance_defelem = . typegen, FOLLOW [XX] -> GOTO XX
+	generic_instance_defelem = . lamda_expression, FOLLOW [XX] -> GOTO XX
+	generic_instance_deflist = . generic_instance_defelem, FOLLOW [XX] -> GOTO XX
+	generic_instance_deflist = . generic_instance_defelem "," generic_instance_deflist, FOLLOW [XX] -> GOTO XX
+	generic_instance_deflist = generic_instance_defelem "," . generic_instance_deflist, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	generic_instance_deflist = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	generic_instance_deflist = . UINTEGER "," generic_instance_deflist, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
+	generic_instance_defelem = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
 	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 [XX]
 	typegen/L1 = typegen "[" generic_instance "]" . (XX), FOLLOW [XX] -> REDUCE typegen #4 CALL typegen_generic
 [XX]
-	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "^", FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = . typegen, FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = . typegen "," generic_instance_deflist, FOLLOW [XX] -> GOTO XX
-	generic_instance_deflist = UINTEGER "," . generic_instance_deflist, FOLLOW [XX] -> GOTO XX
-	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	generic_instance_deflist = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	generic_instance_deflist = . UINTEGER "," generic_instance_deflist, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
-	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	lamda_expression = "lambda" "(" . lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> GOTO XX
+	lambda_paramlist = . lambda_parameters, FOLLOW [XX] -> GOTO XX
+	lambda_parameters = . IDENT "," impl_parameters, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	lambda_parameters = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	lambda_paramlist = . (XX), FOLLOW [XX] -> REDUCE lambda_paramlist #0 CALL lambda_paramdeflist
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -12680,7 +12814,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	variabledefinition = typespec IDENT "=" expression . (step:101), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef_assign
+	variabledefinition = typespec IDENT "=" expression . (step:104), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef_assign
 [XX]
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -12744,7 +12878,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
 	functiondefinition = linkage "function" IDENT typespec . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	functiondefinition = linkage "procedure" IDENT callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #4 CALL procdef
 [XX]
@@ -12755,11 +12889,11 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" . parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> GOTO XX
-	parameterlist = . parameters, FOLLOW [XX] -> GOTO XX
-	parameters = . paramdecl "," parameters, FOLLOW [XX] -> GOTO XX
-	parameters = . paramdecl, FOLLOW [XX] -> GOTO XX
+	impl_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	callablebody = "(" . impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> GOTO XX
+	impl_paramlist = . impl_parameters, FOLLOW [XX] -> GOTO XX
+	impl_parameters = . impl_paramdecl "," impl_parameters, FOLLOW [XX] -> GOTO XX
+	impl_parameters = . impl_paramdecl, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -12767,7 +12901,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	parameterlist = . (XX), FOLLOW [XX] -> REDUCE parameterlist #0 CALL paramdeflist
+	impl_paramlist = . (XX), FOLLOW [XX] -> REDUCE impl_paramlist #0 CALL paramdeflist
 [XX]
 	typehdr/L1 = "any" "const" "class" "^" . (XX), FOLLOW [XX] -> REDUCE typehdr #4 CALL typehdr_any "any const class^"
 [XX]
@@ -12902,6 +13036,8 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec . "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	typedefinition = "typedef" "function" IDENT typespec . "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	typedefinition = "typedef" "procedure" IDENT "(" . extern_paramlist ")", FOLLOW [XX] -> GOTO XX
 	typedefinition = "typedef" "procedure" IDENT "(" . extern_paramlist ")" "nothrow", FOLLOW [XX] -> GOTO XX
@@ -12912,10 +13048,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -13035,6 +13169,8 @@ expressionlist/L0 = expression
 	extern_definition = "extern" DQSTRING "function" IDENT typespec . "(" extern_paramlist ")" ";", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	extern_definition = "extern" DQSTRING "function" IDENT typespec . "(" extern_paramlist "..." ")" ";", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" . extern_paramlist ")" ";", FOLLOW [XX] -> GOTO XX
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" . extern_paramlist "..." ")" ";", FOLLOW [XX] -> GOTO XX
@@ -13045,10 +13181,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -13060,9 +13194,9 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = typedefinition ";" . (XX), FOLLOW [XX] -> REDUCE statement #2 CALL definition 1
 [XX]
-	codeblock/L1 = "{" statementlist "}" . (scope:86), FOLLOW [XX] -> REDUCE codeblock #3 CALL codeblock
+	codeblock/L1 = "{" statementlist "}" . (scope:89), FOLLOW [XX] -> REDUCE codeblock #3 CALL codeblock
 [XX]
-	statement/L1 = tryblock catchblock . (scope:95), FOLLOW [XX] -> REDUCE statement #2 CALL trycatch
+	statement/L1 = tryblock catchblock . (scope:98), FOLLOW [XX] -> REDUCE statement #2 CALL trycatch
 [XX]
 	catchblock = "catch" . IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	catchblock = "catch" . IDENT "," IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
@@ -15127,7 +15261,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "{" expressionlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
-	expression/L1 = "{" "}" . (step:102), FOLLOW [XX] -> REDUCE expression #2 CALL structure
+	expression/L1 = "{" "}" . (step:105), FOLLOW [XX] -> REDUCE expression #2 CALL structure
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15168,7 +15302,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "+" expression . (step:140), FOLLOW [XX] -> REDUCE expression #2 CALL unop "+"
+	expression/L9 = "+" expression . (step:143), FOLLOW [XX] -> REDUCE expression #2 CALL unop "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15209,7 +15343,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "-" expression . (step:139), FOLLOW [XX] -> REDUCE expression #2 CALL unop "-"
+	expression/L9 = "-" expression . (step:142), FOLLOW [XX] -> REDUCE expression #2 CALL unop "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15250,7 +15384,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L12 = "*" expression . (step:149), FOLLOW [XX] -> REDUCE expression #2 CALL unop "->"
+	expression/L12 = "*" expression . (step:152), FOLLOW [XX] -> REDUCE expression #2 CALL unop "->"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15291,7 +15425,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "~" expression . (step:141), FOLLOW [XX] -> REDUCE expression #2 CALL unop "~"
+	expression/L9 = "~" expression . (step:144), FOLLOW [XX] -> REDUCE expression #2 CALL unop "~"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15332,7 +15466,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "!" expression . (step:142), FOLLOW [XX] -> REDUCE expression #2 CALL unop "!"
+	expression/L9 = "!" expression . (step:145), FOLLOW [XX] -> REDUCE expression #2 CALL unop "!"
 [XX]
 	tryblock = "try" codeblock . (XX), FOLLOW [XX] -> REDUCE tryblock #2 CALL tryblock
 [XX]
@@ -15379,7 +15513,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 [XX]
-	statement/L1 = "return" ";" . (step:93), FOLLOW [XX] -> REDUCE statement #2 CALL return_void
+	statement/L1 = "return" ";" . (step:96), FOLLOW [XX] -> REDUCE statement #2 CALL return_void
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15644,9 +15778,14 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "cast" typespec . ":" expression, FOLLOW [XX] -> SHIFT ':' GOTO XX
 [XX]
-	generic_instance_deflist = typegen "," generic_instance_deflist . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #3 CALL generic_instance_type
+	generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #3 CALL generic_instance_deflist
 [XX]
-	generic_instance_deflist = UINTEGER "," generic_instance_deflist . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #3 CALL generic_instance_dimension
+	lamda_expression = "lambda" "(" lambda_paramlist . ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
+[XX]
+	lambda_paramlist = lambda_parameters . (XX), FOLLOW [XX] -> REDUCE lambda_paramlist #1 CALL lambda_paramdeflist
+[XX]
+	lambda_parameters = IDENT . "," impl_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
+	lambda_parameters = IDENT ., FOLLOW [XX] -> REDUCE lambda_parameters #1
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15692,14 +15831,14 @@ expressionlist/L0 = expression
 [XX]
 	functiondefinition = linkage "function" IDENT typespec callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #5 CALL funcdef
 [XX]
-	paramdecl = typespec . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	impl_paramdecl = typespec . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
-	callablebody = "(" parameterlist . ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
+	callablebody = "(" impl_paramlist . ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	parameterlist = parameters . (XX), FOLLOW [XX] -> REDUCE parameterlist #1 CALL paramdeflist
+	impl_paramlist = impl_parameters . (XX), FOLLOW [XX] -> REDUCE impl_paramlist #1 CALL paramdeflist
 [XX]
-	parameters = paramdecl . "," parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
-	parameters = paramdecl ., FOLLOW [XX] -> REDUCE parameters #1
+	impl_parameters = impl_paramdecl . "," impl_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
+	impl_parameters = impl_paramdecl ., FOLLOW [XX] -> REDUCE impl_parameters #1
 [XX]
 	classdefinition = "class" IDENT "{" inclass_definitionlist "}" . (step:40), FOLLOW [XX] -> REDUCE classdefinition #5 CALL classdef
 [XX]
@@ -15734,7 +15873,7 @@ expressionlist/L0 = expression
 	operatordecl = . "<", FOLLOW [XX] -> SHIFT '<' GOTO XX
 [XX]
 	constructordefinition = linkage "constructor" . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	inclass_definition = variabledefinition ";" . (XX), FOLLOW [XX] -> REDUCE inclass_definition #2 CALL definition 2
 [XX]
@@ -15815,6 +15954,8 @@ expressionlist/L0 = expression
 [XX]
 	instruct_definition = variabledefinition ";" . (XX), FOLLOW [XX] -> REDUCE instruct_definition #2 CALL definition 2
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	typedefinition = "typedef" "function" IDENT typespec "(" . extern_paramlist ")", FOLLOW [XX] -> GOTO XX
 	typedefinition = "typedef" "function" IDENT typespec "(" . extern_paramlist ")" "nothrow", FOLLOW [XX] -> GOTO XX
@@ -15825,10 +15966,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -15838,15 +15977,16 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	extern_paramlist = . (XX), FOLLOW [XX] -> REDUCE extern_paramlist #0 CALL extern_paramdeflist
 [XX]
+	extern_parameters = extern_paramdecl . "," extern_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
+	extern_parameters = extern_paramdecl . (XX), FOLLOW [XX] -> REDUCE extern_parameters #1 CALL extern_paramdef_collect
+[XX]
 	extern_paramlist = extern_parameters . (XX), FOLLOW [XX] -> REDUCE extern_paramlist #1 CALL extern_paramdeflist
 [XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist . ")", FOLLOW [XX] -> SHIFT ')' GOTO XX
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist . ")" "nothrow", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	extern_parameters = typespec . IDENT "," extern_parameters, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	extern_parameters = typespec . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	extern_parameters = typespec . "," extern_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
-	extern_parameters = typespec . (XX), FOLLOW [XX] -> REDUCE extern_parameters #1 CALL extern_paramdeftail
+	extern_paramdecl = typespec . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	extern_paramdecl = typespec . (XX), FOLLOW [XX] -> REDUCE extern_paramdecl #1 CALL extern_paramdef
 [XX]
 	generic_header = . generic_defaultlist, FOLLOW [XX] -> GOTO XX
 	generic_header = . generic_identlist, FOLLOW [XX] -> GOTO XX
@@ -15972,6 +16112,8 @@ expressionlist/L0 = expression
 [XX]
 	namespace_definition = typedefinition ";" . (XX), FOLLOW [XX] -> REDUCE namespace_definition #2 CALL definition 1
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" . extern_paramlist ")" ";", FOLLOW [XX] -> GOTO XX
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" . extern_paramlist "..." ")" ";", FOLLOW [XX] -> GOTO XX
@@ -15982,10 +16124,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -16006,7 +16146,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L13 = expression "(" expressionlist . ")", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	expression/L13 = expression "(" ")" . (step:150), FOLLOW [XX] -> REDUCE expression #3 CALL operator "()"
+	expression/L13 = expression "(" ")" . (step:153), FOLLOW [XX] -> REDUCE expression #3 CALL operator "()"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16047,7 +16187,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L7 = expression "^" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL binop "^"
+	expression/L7 = expression "^" expression . (step:131), FOLLOW [XX] -> REDUCE expression #3 CALL binop "^"
 [XX]
 	expression/L13 = expression "[" expressionlist . "]", FOLLOW [XX] -> SHIFT ']' GOTO XX
 [XX]
@@ -16090,7 +16230,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L7 = expression "&" expression . (step:129), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&"
+	expression/L7 = expression "&" expression . (step:132), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&"
 [XX]
 	indirection/L14 = "->" indirection . (XX), FOLLOW [XX] -> REDUCE indirection #2 CALL count
 [XX]
@@ -16133,7 +16273,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "=" expression . (step:112), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
+	expression/L3 = expression "=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16174,7 +16314,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = expression "+" expression . (step:136), FOLLOW [XX] -> REDUCE expression #3 CALL binop "+"
+	expression/L9 = expression "+" expression . (step:139), FOLLOW [XX] -> REDUCE expression #3 CALL binop "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16215,7 +16355,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = expression "-" expression . (step:137), FOLLOW [XX] -> REDUCE expression #3 CALL binop "-"
+	expression/L9 = expression "-" expression . (step:140), FOLLOW [XX] -> REDUCE expression #3 CALL binop "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16256,7 +16396,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "*" expression . (step:143), FOLLOW [XX] -> REDUCE expression #3 CALL binop "*"
+	expression/L10 = expression "*" expression . (step:146), FOLLOW [XX] -> REDUCE expression #3 CALL binop "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16297,7 +16437,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "/" expression . (step:144), FOLLOW [XX] -> REDUCE expression #3 CALL binop "/"
+	expression/L10 = expression "/" expression . (step:147), FOLLOW [XX] -> REDUCE expression #3 CALL binop "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16338,7 +16478,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "%" expression . (step:145), FOLLOW [XX] -> REDUCE expression #3 CALL binop "%"
+	expression/L10 = expression "%" expression . (step:148), FOLLOW [XX] -> REDUCE expression #3 CALL binop "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16379,7 +16519,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L5 = expression "&&" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&&"
+	expression/L5 = expression "&&" expression . (step:129), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16420,7 +16560,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L4 = expression "||" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL binop "||"
+	expression/L4 = expression "||" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL binop "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16461,7 +16601,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L6 = expression "|" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL binop "|"
+	expression/L6 = expression "|" expression . (step:130), FOLLOW [XX] -> REDUCE expression #3 CALL binop "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16502,7 +16642,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L11 = expression "<<" expression . (step:146), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<<"
+	expression/L11 = expression "<<" expression . (step:149), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16543,7 +16683,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L11 = expression ">>" expression . (step:147), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">>"
+	expression/L11 = expression ">>" expression . (step:150), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">>"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16584,7 +16724,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "==" expression . (step:130), FOLLOW [XX] -> REDUCE expression #3 CALL binop "=="
+	expression/L8 = expression "==" expression . (step:133), FOLLOW [XX] -> REDUCE expression #3 CALL binop "=="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16625,7 +16765,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "!=" expression . (step:131), FOLLOW [XX] -> REDUCE expression #3 CALL binop "!="
+	expression/L8 = expression "!=" expression . (step:134), FOLLOW [XX] -> REDUCE expression #3 CALL binop "!="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16666,7 +16806,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression ">=" expression . (step:134), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">="
+	expression/L8 = expression ">=" expression . (step:137), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16707,7 +16847,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "<=" expression . (step:132), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<="
+	expression/L8 = expression "<=" expression . (step:135), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16748,7 +16888,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression ">" expression . (step:135), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">"
+	expression/L8 = expression ">" expression . (step:138), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16789,7 +16929,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "<" expression . (step:133), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<"
+	expression/L8 = expression "<" expression . (step:136), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16830,7 +16970,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "+=" expression . (step:113), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
+	expression/L3 = expression "+=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16871,7 +17011,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "-=" expression . (step:114), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
+	expression/L3 = expression "-=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16912,7 +17052,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "*=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
+	expression/L3 = expression "*=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16953,7 +17093,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "/=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
+	expression/L3 = expression "/=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16994,7 +17134,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "^=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
+	expression/L3 = expression "^=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17035,7 +17175,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
+	expression/L3 = expression "&=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17076,7 +17216,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "%=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
+	expression/L3 = expression "%=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17117,7 +17257,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&&=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
+	expression/L3 = expression "&&=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17158,7 +17298,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "||=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
+	expression/L3 = expression "||=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17199,7 +17339,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "|=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
+	expression/L3 = expression "|=" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17240,7 +17380,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "<<=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
+	expression/L3 = expression "<<=" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17281,7 +17421,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression ">>=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
+	expression/L3 = expression ">>=" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
 [XX]
 	expression/L12 = expression "." IDENT . (XX), FOLLOW [XX] -> REDUCE expression #3 CALL member
 [XX]
@@ -17347,11 +17487,11 @@ expressionlist/L0 = expression
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
-	expression/L1 = "{" expressionlist "}" . (step:102), FOLLOW [XX] -> REDUCE expression #3 CALL structure
+	expression/L1 = "{" expressionlist "}" . (step:105), FOLLOW [XX] -> REDUCE expression #3 CALL structure
 [XX]
 	statement/L1 = "var" variabledefinition ";" . (step:16), FOLLOW [XX] -> REDUCE statement #3 CALL definition 1
 [XX]
-	statement/L1 = "return" expression ";" . (step:92), FOLLOW [XX] -> REDUCE statement #3 CALL return_value
+	statement/L1 = "return" expression ";" . (step:95), FOLLOW [XX] -> REDUCE statement #3 CALL return_value
 [XX]
 	statement/L1 = "throw" expression ";" . (XX), FOLLOW [XX] -> REDUCE statement #3 CALL throw_exception
 [XX]
@@ -17656,9 +17796,30 @@ expressionlist/L0 = expression
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
-	paramdecl = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE paramdecl #2 CALL paramdef
+	lamda_expression = "lambda" "(" lambda_paramlist ")" . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
-	callablebody = "(" parameterlist ")" . funcattribute "{" statementlist "}", FOLLOW [XX] -> GOTO XX
+	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
+	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
+	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
+	typegen/L1 = . typegen "^", FOLLOW [XX] -> GOTO XX
+	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
+	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
+	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
+	impl_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	lambda_parameters = IDENT "," . impl_parameters, FOLLOW [XX] -> GOTO XX
+	impl_parameters = . impl_paramdecl "," impl_parameters, FOLLOW [XX] -> GOTO XX
+	impl_parameters = . impl_paramdecl, FOLLOW [XX] -> GOTO XX
+	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
+	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+[XX]
+	impl_paramdecl = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE impl_paramdecl #2 CALL paramdef
+[XX]
+	callablebody = "(" impl_paramlist ")" . funcattribute "{" statementlist "}", FOLLOW [XX] -> GOTO XX
 	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
 	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
 	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
@@ -17670,10 +17831,10 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
-	parameters = paramdecl "," . parameters, FOLLOW [XX] -> GOTO XX
-	parameters = . paramdecl "," parameters, FOLLOW [XX] -> GOTO XX
-	parameters = . paramdecl, FOLLOW [XX] -> GOTO XX
+	impl_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	impl_parameters = impl_paramdecl "," . impl_parameters, FOLLOW [XX] -> GOTO XX
+	impl_parameters = . impl_paramdecl "," impl_parameters, FOLLOW [XX] -> GOTO XX
+	impl_parameters = . impl_paramdecl, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -17693,7 +17854,7 @@ expressionlist/L0 = expression
 	operatordefinition = linkage "operator" operatordecl . callablebody, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
 	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
@@ -17709,13 +17870,9 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist . ")", FOLLOW [XX] -> SHIFT ')' GOTO XX
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist . ")" "nothrow", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . "nothrow", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . (step:32), FOLLOW [XX] -> REDUCE typedefinition #6 CALL typedef_proctype {throws=true}
-[XX]
-	extern_parameters = typespec IDENT . "," extern_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
-	extern_parameters = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE extern_parameters #2 CALL extern_paramdeftail
-[XX]
-	extern_parameters = typespec "," . extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
+	extern_parameters = extern_paramdecl "," . extern_parameters, FOLLOW [XX] -> GOTO XX
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
@@ -17723,10 +17880,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -17734,6 +17889,11 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+[XX]
+	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . "nothrow", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
+	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . (step:32), FOLLOW [XX] -> REDUCE typedefinition #6 CALL typedef_proctype {throws=true}
+[XX]
+	extern_paramdecl = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE extern_paramdecl #2 CALL extern_paramdef
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header . "]" typespec callablebody, FOLLOW [XX] -> SHIFT ']' GOTO XX
 [XX]
@@ -17769,6 +17929,8 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "function" IDENT typespec . "(" extern_paramlist ")" funcattribute ";", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	ininterf_definition = "procedure" IDENT "(" . extern_paramlist ")" funcattribute ";", FOLLOW [XX] -> GOTO XX
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
@@ -17778,10 +17940,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -17793,6 +17953,8 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "operator" operatordecl typespec . "(" extern_paramlist ")" funcattribute ";", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	ininterf_definition = "operator" operatordecl "(" . extern_paramlist ")" funcattribute ";", FOLLOW [XX] -> GOTO XX
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
@@ -17802,10 +17964,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -17826,13 +17986,13 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." . ")" ";", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	catchblock = "catch" IDENT codeblock . (step:89), FOLLOW [XX] -> REDUCE catchblock #3 CALL catchblock
+	catchblock = "catch" IDENT codeblock . (step:92), FOLLOW [XX] -> REDUCE catchblock #3 CALL catchblock
 [XX]
 	catchblock = "catch" IDENT "," . IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
-	expression/L13 = expression "(" expressionlist ")" . (step:150), FOLLOW [XX] -> REDUCE expression #4 CALL operator "()"
+	expression/L13 = expression "(" expressionlist ")" . (step:153), FOLLOW [XX] -> REDUCE expression #4 CALL operator "()"
 [XX]
-	expression/L13 = expression "[" expressionlist "]" . (step:151), FOLLOW [XX] -> REDUCE expression #4 CALL operator_array "[]"
+	expression/L13 = expression "[" expressionlist "]" . (step:154), FOLLOW [XX] -> REDUCE expression #4 CALL operator_array "[]"
 [XX]
 	expressionlist/L0 = expression "," expressionlist ., FOLLOW [XX] -> REDUCE expressionlist #3
 [XX]
@@ -17927,7 +18087,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L1 = "new" typespec ":" expression . (step:103), FOLLOW [XX] -> REDUCE expression #4 CALL allocate
+	expression/L1 = "new" typespec ":" expression . (step:106), FOLLOW [XX] -> REDUCE expression #4 CALL allocate
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17968,9 +18128,109 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L1 = "cast" typespec ":" expression . (step:104), FOLLOW [XX] -> REDUCE expression #4 CALL typecast
+	expression/L1 = "cast" typespec ":" expression . (step:107), FOLLOW [XX] -> REDUCE expression #4 CALL typecast
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
+	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
+	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
+	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
+	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
+	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
+	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
+	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
+	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
+	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "*=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "/=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "^=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "%=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "&&=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "||=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "|=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression "<<=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L3 = . expression ">>=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L4 = . expression "||" expression, FOLLOW [XX] -> GOTO XX
+	expression/L5 = . expression "&&" expression, FOLLOW [XX] -> GOTO XX
+	expression/L6 = . expression "|" expression, FOLLOW [XX] -> GOTO XX
+	expression/L7 = . expression "^" expression, FOLLOW [XX] -> GOTO XX
+	expression/L7 = . expression "&" expression, FOLLOW [XX] -> GOTO XX
+	expression/L8 = . expression "==" expression, FOLLOW [XX] -> GOTO XX
+	expression/L8 = . expression "!=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L8 = . expression "<=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L8 = . expression "<" expression, FOLLOW [XX] -> GOTO XX
+	expression/L8 = . expression ">=" expression, FOLLOW [XX] -> GOTO XX
+	expression/L8 = . expression ">" expression, FOLLOW [XX] -> GOTO XX
+	expression/L9 = . expression "+" expression, FOLLOW [XX] -> GOTO XX
+	expression/L9 = . expression "-" expression, FOLLOW [XX] -> GOTO XX
+	expression/L10 = . expression "*" expression, FOLLOW [XX] -> GOTO XX
+	expression/L10 = . expression "/" expression, FOLLOW [XX] -> GOTO XX
+	expression/L10 = . expression "%" expression, FOLLOW [XX] -> GOTO XX
+	expression/L11 = . expression "<<" expression, FOLLOW [XX] -> GOTO XX
+	expression/L11 = . expression ">>" expression, FOLLOW [XX] -> GOTO XX
+	expression/L12 = . expression "." IDENT, FOLLOW [XX] -> GOTO XX
+	expression/L13 = . expression "(" expressionlist ")", FOLLOW [XX] -> GOTO XX
+	expression/L13 = . expression "(" ")", FOLLOW [XX] -> GOTO XX
+	expression/L13 = . expression "[" expressionlist "]", FOLLOW [XX] -> GOTO XX
+	iexpression/L14 = . expression indirection IDENT, FOLLOW [XX] -> GOTO XX
+	expression/L12 = . iexpression, FOLLOW [XX] -> GOTO XX
+	expression/L2 = . BOOLEAN, FOLLOW [XX] -> SHIFT BOOLEAN GOTO XX
+	expression/L2 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
+	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
+	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
+	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
+	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
+	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
+	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "struct" GOTO XX
+	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
+	typedefinition = . "typedef" typegen IDENT, FOLLOW [XX] -> SHIFT "typedef" GOTO XX
+	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
+	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
+	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
+	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
+	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	expression/L1 = . "{" expressionlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	expression/L1 = . "{" "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
+	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
+	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
+	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
+	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
+	linkage = . "private", FOLLOW [XX] -> SHIFT "private" GOTO XX
+	linkage = . "public", FOLLOW [XX] -> SHIFT "public" GOTO XX
+	expression/L9 = . "+" expression, FOLLOW [XX] -> SHIFT '+' GOTO XX
+	expression/L9 = . "-" expression, FOLLOW [XX] -> SHIFT '-' GOTO XX
+	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
+	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
+	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
+	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
+	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
+	statement/L1 = . "return" ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
+	statement/L1 = . "throw" expression "," expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
+	statement/L1 = . "throw" expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
+	statement/L1 = . "delete" expression ";", FOLLOW [XX] -> SHIFT "delete" GOTO XX
+	statement/L1 = . "if" "(" expression ")" codeblock elseblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
+	statement/L1 = . "if" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
+	statement/L1 = . "while" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "while" GOTO XX
+	statement/L1 = . "with" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "with" GOTO XX
+	statement/L1 = . "with" "(" expression ")" ";", FOLLOW [XX] -> SHIFT "with" GOTO XX
+	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
+	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
+	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
+	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
+	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
+[XX]
+	lambda_parameters = IDENT "," impl_parameters ., FOLLOW [XX] -> REDUCE lambda_parameters #3
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
 	funcattribute = "const" . funcattribute, FOLLOW [XX] -> GOTO XX
 	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -17982,10 +18242,10 @@ expressionlist/L0 = expression
 	funcattribute = . "nothrow" funcattribute, FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
 	funcattribute = . (XX), FOLLOW [XX] -> REDUCE funcattribute #0 CALL funcattribute {const=false,throws=true}
 [XX]
-	parameters = paramdecl "," parameters ., FOLLOW [XX] -> REDUCE parameters #3
+	impl_parameters = impl_paramdecl "," impl_parameters ., FOLLOW [XX] -> REDUCE impl_parameters #3
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	operatordefinition = linkage "operator" operatordecl callablebody . (XX), FOLLOW [XX] -> REDUCE operatordefinition #4 CALL operator_procdef
 [XX]
@@ -17994,29 +18254,9 @@ expressionlist/L0 = expression
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . "nothrow", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . (step:31), FOLLOW [XX] -> REDUCE typedefinition #7 CALL typedef_functype {throws=true}
 [XX]
+	extern_parameters = extern_paramdecl "," extern_parameters . (XX), FOLLOW [XX] -> REDUCE extern_parameters #3 CALL extern_paramdef_collect
+[XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" . (step:34), FOLLOW [XX] -> REDUCE typedefinition #7 CALL typedef_proctype {throws=false}
-[XX]
-	extern_parameters = typespec IDENT "," . extern_parameters, FOLLOW [XX] -> GOTO XX
-	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "^", FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
-	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
-	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
-	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
-	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-[XX]
-	extern_parameters = typespec "," extern_parameters . (XX), FOLLOW [XX] -> REDUCE extern_parameters #3 CALL extern_paramdef
 [XX]
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
@@ -18035,7 +18275,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" "{" . inclass_definitionlist "}", FOLLOW [XX] -> GOTO XX
 	inclass_definitionlist = . inclass_definition inclass_definitionlist, FOLLOW [XX] -> GOTO XX
@@ -18144,6 +18384,8 @@ expressionlist/L0 = expression
 	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
 	instruct_definitionlist = ., FOLLOW [XX] -> REDUCE instruct_definitionlist #0
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	ininterf_definition = "function" IDENT typespec "(" . extern_paramlist ")" funcattribute ";", FOLLOW [XX] -> GOTO XX
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
@@ -18153,10 +18395,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -18168,6 +18408,8 @@ expressionlist/L0 = expression
 [XX]
 	ininterf_definition = "procedure" IDENT "(" extern_paramlist . ")" funcattribute ";", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
+	extern_parameters = . extern_paramdecl "," extern_parameters, FOLLOW [XX] -> GOTO XX
+	extern_parameters = . extern_paramdecl, FOLLOW [XX] -> GOTO XX
 	extern_paramlist = . extern_parameters, FOLLOW [XX] -> GOTO XX
 	ininterf_definition = "operator" operatordecl typespec "(" . extern_paramlist ")" funcattribute ";", FOLLOW [XX] -> GOTO XX
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
@@ -18177,10 +18419,8 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
 	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT "," extern_parameters, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec, FOLLOW [XX] -> GOTO XX
-	extern_parameters = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
+	extern_paramdecl = . typespec, FOLLOW [XX] -> GOTO XX
 	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -18217,6 +18457,8 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" . (XX), FOLLOW [XX] -> REDUCE statement #5 CALL with_do
 [XX]
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
+[XX]
 	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
@@ -18224,7 +18466,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
-	callablebody = "(" parameterlist ")" funcattribute "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
+	callablebody = "(" impl_paramlist ")" funcattribute "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
 	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
@@ -18323,10 +18565,8 @@ expressionlist/L0 = expression
 [XX]
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" . (step:33), FOLLOW [XX] -> REDUCE typedefinition #8 CALL typedef_functype {throws=false}
 [XX]
-	extern_parameters = typespec IDENT "," extern_parameters . (XX), FOLLOW [XX] -> REDUCE extern_parameters #4 CALL extern_paramdef
-[XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec . callablebody, FOLLOW [XX] -> GOTO XX
-	callablebody = . "(" parameterlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
 	functiondefinition = "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #8 CALL generic_procdef
 [XX]
@@ -18360,7 +18600,7 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "procedure" IDENT "(" extern_paramlist "..." ")" ";" . (XX), FOLLOW [XX] -> REDUCE extern_definition #9 CALL extern_procdef_vararg
 [XX]
-	catchblock = "catch" IDENT "," IDENT codeblock . (step:89), FOLLOW [XX] -> REDUCE catchblock #5 CALL catchblock
+	catchblock = "catch" IDENT "," IDENT codeblock . (step:92), FOLLOW [XX] -> REDUCE catchblock #5 CALL catchblock
 [XX]
 	statement/L1 = "if" "(" expression ")" codeblock elseblock . (XX), FOLLOW [XX] -> REDUCE statement #6 CALL conditional_if
 [XX]
@@ -18370,7 +18610,9 @@ expressionlist/L0 = expression
 	elseblock/L1 = "else" . codeblock, FOLLOW [XX] -> GOTO XX
 	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
+	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" . (XX), FOLLOW [XX] -> REDUCE lamda_expression #7 CALL lambda_expression
+[XX]
+	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #9 CALL generic_funcdef
 [XX]
@@ -18511,7 +18753,7 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" codeblock . (XX), FOLLOW [XX] -> REDUCE elseblock #2 CALL conditional_else
 [XX]
-	callablebody = "(" parameterlist ")" funcattribute "{" statementlist "}" . (scope:82), FOLLOW [XX] -> REDUCE callablebody #7 CALL callablebody
+	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist "}" . (scope:85), FOLLOW [XX] -> REDUCE callablebody #7 CALL callablebody
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
@@ -18590,7 +18832,7 @@ expressionlist/L0 = expression
 (XX) extern_funcdef_vararg
 (XX) extern_procdef_vararg
 (XX) extern_paramdef
-(XX) extern_paramdeftail
+(XX) extern_paramdef_collect
 (XX) extern_paramdeflist
 (XX) interface_funcdef
 (XX) interface_procdef
@@ -18659,8 +18901,11 @@ expressionlist/L0 = expression
 (XX) operatordecl, {name="<=",symbol="le"}
 (XX) operatordecl, {name=">",symbol="gt"}
 (XX) operatordecl, {name="<",symbol="lt"}
-(XX) generic_instance_type
+(XX) lambda_paramdeflist
+(XX) lambda_expression
 (XX) generic_instance_dimension
+(XX) generic_instance_lambda
+(XX) generic_instance_deflist
 (XX) generic_instance
 (XX) generic_header_ident_type
 (XX) generic_header_ident
@@ -19033,6 +19278,7 @@ expressionlist/L0 = expression
 	UINTEGER => Shift goto XX
 	"const" => Shift goto XX
 	"any" => Shift goto XX
+	"lambda" => Shift goto XX
 [XX]
 	IDENT => Reduce #2 typespec call typespec_ref
 	'(' => Reduce #2 typespec call typespec_ref
@@ -19181,18 +19427,26 @@ expressionlist/L0 = expression
 	'{' => Reduce #3 typegen call typegen_pointer {const=true}
 	':' => Reduce #3 typegen call typegen_pointer {const=true}
 [XX]
-	',' => Shift goto XX
+	',' => Reduce #1 generic_instance_defelem
 	"const" => Shift goto XX
 	'^' => Shift goto XX
 	'[' => Shift goto XX
-	']' => Reduce #1 generic_instance_deflist call generic_instance_type
+	']' => Reduce #1 generic_instance_defelem
+[XX]
+	',' => Reduce #1 generic_instance_defelem call generic_instance_lambda
+	']' => Reduce #1 generic_instance_defelem call generic_instance_lambda
+[XX]
+	',' => Shift goto XX
+	']' => Reduce #1 generic_instance_deflist call generic_instance_deflist
 [XX]
 	']' => Reduce #1 generic_instance call generic_instance
 [XX]
 	']' => Shift goto XX
 [XX]
-	',' => Shift goto XX
-	']' => Reduce #1 generic_instance_deflist call generic_instance_dimension
+	',' => Reduce #1 generic_instance_defelem call generic_instance_dimension
+	']' => Reduce #1 generic_instance_defelem call generic_instance_dimension
+[XX]
+	'(' => Shift goto XX
 [XX]
 	BOOLEAN => Shift goto XX
 	IDENT => Shift goto XX
@@ -20119,6 +20373,7 @@ expressionlist/L0 = expression
 	UINTEGER => Shift goto XX
 	"const" => Shift goto XX
 	"any" => Shift goto XX
+	"lambda" => Shift goto XX
 [XX]
 	IDENT => Reduce #4 typegen call typegen_generic
 	'(' => Reduce #4 typegen call typegen_generic
@@ -20134,9 +20389,7 @@ expressionlist/L0 = expression
 	':' => Reduce #4 typegen call typegen_generic
 [XX]
 	IDENT => Shift goto XX
-	UINTEGER => Shift goto XX
-	"const" => Shift goto XX
-	"any" => Shift goto XX
+	')' => Reduce #0 lambda_paramlist call lambda_paramdeflist
 [XX]
 	'(' => Shift goto XX
 	';' => Reduce #4 variabledefinition call vardef_assign
@@ -20241,7 +20494,7 @@ expressionlist/L0 = expression
 	"null" => Reduce #4 functiondefinition call procdef
 [XX]
 	IDENT => Shift goto XX
-	')' => Reduce #0 parameterlist call paramdeflist
+	')' => Reduce #0 impl_paramlist call paramdeflist
 	"const" => Shift goto XX
 	"any" => Shift goto XX
 [XX]
@@ -21915,9 +22168,14 @@ expressionlist/L0 = expression
 [XX]
 	':' => Shift goto XX
 [XX]
-	']' => Reduce #3 generic_instance_deflist call generic_instance_type
+	']' => Reduce #3 generic_instance_deflist call generic_instance_deflist
 [XX]
-	']' => Reduce #3 generic_instance_deflist call generic_instance_dimension
+	')' => Shift goto XX
+[XX]
+	')' => Reduce #1 lambda_paramlist call lambda_paramdeflist
+[XX]
+	')' => Reduce #1 lambda_parameters
+	',' => Shift goto XX
 [XX]
 	'(' => Shift goto XX
 	')' => Reduce #1 expressionlist
@@ -22007,9 +22265,9 @@ expressionlist/L0 = expression
 [XX]
 	')' => Shift goto XX
 [XX]
-	')' => Reduce #1 parameterlist call paramdeflist
+	')' => Reduce #1 impl_paramlist call paramdeflist
 [XX]
-	')' => Reduce #1 parameters
+	')' => Reduce #1 impl_parameters
 	',' => Shift goto XX
 [XX]
 	$ => Reduce #5 classdefinition call classdef
@@ -22228,15 +22486,19 @@ expressionlist/L0 = expression
 	"const" => Shift goto XX
 	"any" => Shift goto XX
 [XX]
+	')' => Reduce #1 extern_parameters call extern_paramdef_collect
+	"..." => Reduce #1 extern_parameters call extern_paramdef_collect
+	',' => Shift goto XX
+[XX]
 	')' => Reduce #1 extern_paramlist call extern_paramdeflist
 	"..." => Reduce #1 extern_paramlist call extern_paramdeflist
 [XX]
 	')' => Shift goto XX
 [XX]
 	IDENT => Shift goto XX
-	')' => Reduce #1 extern_parameters call extern_paramdeftail
-	"..." => Reduce #1 extern_parameters call extern_paramdeftail
-	',' => Shift goto XX
+	')' => Reduce #1 extern_paramdecl call extern_paramdef
+	"..." => Reduce #1 extern_paramdecl call extern_paramdef
+	',' => Reduce #1 extern_paramdecl call extern_paramdef
 [XX]
 	IDENT => Shift goto XX
 [XX]
@@ -24249,8 +24511,14 @@ expressionlist/L0 = expression
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
 [XX]
-	')' => Reduce #2 paramdecl call paramdef
-	',' => Reduce #2 paramdecl call paramdef
+	'{' => Shift goto XX
+[XX]
+	IDENT => Shift goto XX
+	"const" => Shift goto XX
+	"any" => Shift goto XX
+[XX]
+	')' => Reduce #2 impl_paramdecl call paramdef
+	',' => Reduce #2 impl_paramdecl call paramdef
 [XX]
 	"const" => Shift goto XX
 	"nothrow" => Shift goto XX
@@ -24289,16 +24557,16 @@ expressionlist/L0 = expression
 [XX]
 	')' => Shift goto XX
 [XX]
-	';' => Reduce #6 typedefinition call typedef_proctype {throws=true}
-	"nothrow" => Shift goto XX
-[XX]
-	')' => Reduce #2 extern_parameters call extern_paramdeftail
-	"..." => Reduce #2 extern_parameters call extern_paramdeftail
-	',' => Shift goto XX
-[XX]
 	IDENT => Shift goto XX
 	"const" => Shift goto XX
 	"any" => Shift goto XX
+[XX]
+	';' => Reduce #6 typedefinition call typedef_proctype {throws=true}
+	"nothrow" => Shift goto XX
+[XX]
+	')' => Reduce #2 extern_paramdecl call extern_paramdef
+	"..." => Reduce #2 extern_paramdecl call extern_paramdef
+	',' => Reduce #2 extern_paramdecl call extern_paramdef
 [XX]
 	']' => Shift goto XX
 [XX]
@@ -24596,6 +24864,43 @@ expressionlist/L0 = expression
 	">>=" => Shift goto XX
 	'.' => Shift goto XX
 [XX]
+	BOOLEAN => Shift goto XX
+	IDENT => Shift goto XX
+	DQSTRING => Shift goto XX
+	SQSTRING => Shift goto XX
+	UINTEGER => Shift goto XX
+	FLOAT => Shift goto XX
+	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
+	'(' => Shift goto XX
+	"procedure" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
+	"class" => Shift goto XX
+	"struct" => Shift goto XX
+	'&' => Shift goto XX
+	"typedef" => Shift goto XX
+	'{' => Shift goto XX
+	'}' => Reduce #0 statementlist
+	"generic" => Shift goto XX
+	"private" => Shift goto XX
+	"public" => Shift goto XX
+	'+' => Shift goto XX
+	'-' => Shift goto XX
+	'*' => Shift goto XX
+	'~' => Shift goto XX
+	'!' => Shift goto XX
+	"try" => Shift goto XX
+	"var" => Shift goto XX
+	"return" => Shift goto XX
+	"throw" => Shift goto XX
+	"delete" => Shift goto XX
+	"if" => Shift goto XX
+	"while" => Shift goto XX
+	"with" => Shift goto XX
+	"new" => Shift goto XX
+	"cast" => Shift goto XX
+	"null" => Shift goto XX
+[XX]
+	')' => Reduce #3 lambda_parameters
+[XX]
 	'{' => Shift goto XX
 [XX]
 	';' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
@@ -24608,7 +24913,7 @@ expressionlist/L0 = expression
 	"nothrow" => Shift goto XX
 	'{' => Reduce #0 funcattribute call funcattribute {const=false,throws=true}
 [XX]
-	')' => Reduce #3 parameters
+	')' => Reduce #3 impl_parameters
 [XX]
 	'(' => Shift goto XX
 [XX]
@@ -24677,14 +24982,10 @@ expressionlist/L0 = expression
 	';' => Reduce #7 typedefinition call typedef_functype {throws=true}
 	"nothrow" => Shift goto XX
 [XX]
+	')' => Reduce #3 extern_parameters call extern_paramdef_collect
+	"..." => Reduce #3 extern_parameters call extern_paramdef_collect
+[XX]
 	';' => Reduce #7 typedefinition call typedef_proctype {throws=false}
-[XX]
-	IDENT => Shift goto XX
-	"const" => Shift goto XX
-	"any" => Shift goto XX
-[XX]
-	')' => Reduce #3 extern_parameters call extern_paramdef
-	"..." => Reduce #3 extern_parameters call extern_paramdef
 [XX]
 	IDENT => Shift goto XX
 	"const" => Shift goto XX
@@ -24952,6 +25253,8 @@ expressionlist/L0 = expression
 	"cast" => Reduce #5 statement call with_do
 	"null" => Reduce #5 statement call with_do
 [XX]
+	'}' => Shift goto XX
+[XX]
 	BOOLEAN => Shift goto XX
 	IDENT => Shift goto XX
 	DQSTRING => Shift goto XX
@@ -25012,9 +25315,6 @@ expressionlist/L0 = expression
 	"destructor" => Reduce #5 operatordefinition call operator_funcdef
 [XX]
 	';' => Reduce #8 typedefinition call typedef_functype {throws=false}
-[XX]
-	')' => Reduce #4 extern_parameters call extern_paramdef
-	"..." => Reduce #4 extern_parameters call extern_paramdef
 [XX]
 	'(' => Shift goto XX
 [XX]
@@ -25193,6 +25493,9 @@ expressionlist/L0 = expression
 	'(' => Shift goto XX
 [XX]
 	'{' => Shift goto XX
+[XX]
+	',' => Reduce #7 lamda_expression call lambda_expression
+	']' => Reduce #7 lamda_expression call lambda_expression
 [XX]
 	'}' => Shift goto XX
 [XX]
@@ -25716,6 +26019,8 @@ expressionlist/L0 = expression
 	typename => XX
 	typehdr => XX
 	typegen => XX
+	lamda_expression => XX
+	generic_instance_defelem => XX
 	generic_instance_deflist => XX
 	generic_instance => XX
 [XX]
@@ -25877,12 +26182,12 @@ expressionlist/L0 = expression
 	typename => XX
 	typehdr => XX
 	typegen => XX
+	lamda_expression => XX
+	generic_instance_defelem => XX
 	generic_instance_deflist => XX
 [XX]
-	typename => XX
-	typehdr => XX
-	typegen => XX
-	generic_instance_deflist => XX
+	lambda_paramlist => XX
+	lambda_parameters => XX
 [XX]
 	indirection => XX
 [XX]
@@ -25896,9 +26201,9 @@ expressionlist/L0 = expression
 	typehdr => XX
 	typegen => XX
 	typespec => XX
-	parameterlist => XX
-	parameters => XX
-	paramdecl => XX
+	impl_paramlist => XX
+	impl_parameters => XX
+	impl_paramdecl => XX
 [XX]
 	inclass_definitionlist => XX
 	inclass_definition => XX
@@ -25928,6 +26233,7 @@ expressionlist/L0 = expression
 	structdefinition => XX
 	variabledefinition => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -25958,6 +26264,7 @@ expressionlist/L0 = expression
 	linkage => XX
 	functiondefinition => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -26126,6 +26433,7 @@ expressionlist/L0 = expression
 	operatordefinition => XX
 	variabledefinition => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -26151,6 +26459,7 @@ expressionlist/L0 = expression
 	typegen => XX
 	typespec => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -26241,14 +26550,21 @@ expressionlist/L0 = expression
 	expression => XX
 	iexpression => XX
 [XX]
+	typename => XX
+	typehdr => XX
+	typegen => XX
+	typespec => XX
+	impl_parameters => XX
+	impl_paramdecl => XX
+[XX]
 	funcattribute => XX
 [XX]
 	typename => XX
 	typehdr => XX
 	typegen => XX
 	typespec => XX
-	parameters => XX
-	paramdecl => XX
+	impl_parameters => XX
+	impl_paramdecl => XX
 [XX]
 	typename => XX
 	typehdr => XX
@@ -26256,6 +26572,7 @@ expressionlist/L0 = expression
 	typespec => XX
 	callablebody => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	typename => XX
 	typehdr => XX
@@ -26269,6 +26586,7 @@ expressionlist/L0 = expression
 	typehdr => XX
 	typegen => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -26276,6 +26594,7 @@ expressionlist/L0 = expression
 	typegen => XX
 	typespec => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -26294,18 +26613,24 @@ expressionlist/L0 = expression
 	indirection => XX
 [XX]
 	indirection => XX
+[XX]
+	typedefinition => XX
+	structdefinition => XX
+	classdefinition => XX
+	linkage => XX
+	functiondefinition => XX
+	codeblock => XX
+	statementlist => XX
+	tryblock => XX
+	statement => XX
+	expression => XX
+	iexpression => XX
 [XX]
 	funcattribute => XX
 [XX]
 	funcattribute => XX
 [XX]
 	callablebody => XX
-[XX]
-	extern_parameters => XX
-	typename => XX
-	typehdr => XX
-	typegen => XX
-	typespec => XX
 [XX]
 	typename => XX
 	typehdr => XX
@@ -26345,6 +26670,7 @@ expressionlist/L0 = expression
 	structdefinition => XX
 	variabledefinition => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX
@@ -26352,6 +26678,7 @@ expressionlist/L0 = expression
 	typegen => XX
 	typespec => XX
 [XX]
+	extern_paramdecl => XX
 	extern_parameters => XX
 	extern_paramlist => XX
 	typename => XX

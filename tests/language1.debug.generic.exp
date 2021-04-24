@@ -12,7 +12,8 @@ Shift token '^' at line 3 in state XXX, goto XXX
 Reduce #2 to typegen by token IDENT = "fmt" at line 3 in state XXX, call typegen_pointer {const=false}, goto XXX
 Reduce #1 to typespec by token IDENT = "fmt" at line 3 in state XXX, call typespec, goto XXX
 Shift token IDENT = "fmt" at line 3 in state XXX, goto XXX
-Reduce #2 to extern_parameters by token "..." at line 3 in state XXX, call extern_paramdeftail, goto XXX
+Reduce #2 to extern_paramdecl by token "..." at line 3 in state XXX, call extern_paramdef, goto XXX
+Reduce #1 to extern_parameters by token "..." at line 3 in state XXX, call extern_paramdef_collect, goto XXX
 Reduce #1 to extern_paramlist by token "..." at line 3 in state XXX, call extern_paramdeflist, goto XXX
 Shift token "..." at line 3 in state XXX, goto XXX
 Shift token ')' at line 3 in state XXX, goto XXX
@@ -35,7 +36,8 @@ Reduce #1 to typename by token ')' at line 4 in state XXX, goto XXX
 Reduce #1 to typehdr by token ')' at line 4 in state XXX, call typehdr {const=false}, goto XXX
 Reduce #1 to typegen by token ')' at line 4 in state XXX, goto XXX
 Reduce #1 to typespec by token ')' at line 4 in state XXX, call typespec, goto XXX
-Reduce #1 to extern_parameters by token ')' at line 4 in state XXX, call extern_paramdeftail, goto XXX
+Reduce #1 to extern_paramdecl by token ')' at line 4 in state XXX, call extern_paramdef, goto XXX
+Reduce #1 to extern_parameters by token ')' at line 4 in state XXX, call extern_paramdef_collect, goto XXX
 Reduce #1 to extern_paramlist by token ')' at line 4 in state XXX, call extern_paramdeflist, goto XXX
 Shift token ')' at line 4 in state XXX, goto XXX
 Shift token ';' at line 4 in state XXX, goto XXX
@@ -58,7 +60,7 @@ Shift token '{' at line 7 in state XXX, goto XXX
 Reduce #0 to linkage by token "constructor" at line 8 in state XXX, call linkage {private=false,linkage="external",explicit=false}, goto XXX
 Shift token "constructor" at line 8 in state XXX, goto XXX
 Shift token '(' at line 8 in state XXX, goto XXX
-Reduce #0 to parameterlist by token ')' at line 8 in state XXX, call paramdeflist, goto XXX
+Reduce #0 to impl_paramlist by token ')' at line 8 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 8 in state XXX, goto XXX
 Shift token "nothrow" at line 8 in state XXX, goto XXX
 Reduce #0 to funcattribute by token '{' at line 8 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
@@ -82,16 +84,17 @@ Shift token IDENT = "SIZE" at line 9 in state XXX, goto XXX
 Reduce #1 to typename by token ']' at line 9 in state XXX, goto XXX
 Reduce #1 to typehdr by token ']' at line 9 in state XXX, call typehdr {const=false}, goto XXX
 Reduce #1 to typegen by token ']' at line 9 in state XXX, goto XXX
-Reduce #1 to generic_instance_deflist by token ']' at line 9 in state XXX, call generic_instance_type, goto XXX
+Reduce #1 to generic_instance_defelem by token ']' at line 9 in state XXX, goto XXX
+Reduce #1 to generic_instance_deflist by token ']' at line 9 in state XXX, call generic_instance_deflist, goto XXX
 Reduce #1 to generic_instance by token ']' at line 9 in state XXX, call generic_instance, goto XXX
 Shift token ']' at line 9 in state XXX, goto XXX
 Reduce #4 to typegen by token '&' at line 9 in state XXX, call typegen_generic, goto XXX
 Shift token '&' at line 9 in state XXX, goto XXX
 Reduce #2 to typespec by token IDENT = "ar_" at line 9 in state XXX, call typespec_ref, goto XXX
 Shift token IDENT = "ar_" at line 9 in state XXX, goto XXX
-Reduce #2 to paramdecl by token ')' at line 9 in state XXX, call paramdef, goto XXX
-Reduce #1 to parameters by token ')' at line 9 in state XXX, goto XXX
-Reduce #1 to parameterlist by token ')' at line 9 in state XXX, call paramdeflist, goto XXX
+Reduce #2 to impl_paramdecl by token ')' at line 9 in state XXX, call paramdef, goto XXX
+Reduce #1 to impl_parameters by token ')' at line 9 in state XXX, goto XXX
+Reduce #1 to impl_paramlist by token ')' at line 9 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 9 in state XXX, goto XXX
 Shift token "nothrow" at line 9 in state XXX, goto XXX
 Reduce #0 to funcattribute by token '{' at line 10 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
@@ -130,9 +133,9 @@ Reduce #1 to typehdr by token IDENT = "idx" at line 13 in state XXX, call typehd
 Reduce #1 to typegen by token IDENT = "idx" at line 13 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "idx" at line 13 in state XXX, call typespec, goto XXX
 Shift token IDENT = "idx" at line 13 in state XXX, goto XXX
-Reduce #2 to paramdecl by token ')' at line 13 in state XXX, call paramdef, goto XXX
-Reduce #1 to parameters by token ')' at line 13 in state XXX, goto XXX
-Reduce #1 to parameterlist by token ')' at line 13 in state XXX, call paramdeflist, goto XXX
+Reduce #2 to impl_paramdecl by token ')' at line 13 in state XXX, call paramdef, goto XXX
+Reduce #1 to impl_parameters by token ')' at line 13 in state XXX, goto XXX
+Reduce #1 to impl_paramlist by token ')' at line 13 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 13 in state XXX, goto XXX
 Shift token "nothrow" at line 13 in state XXX, goto XXX
 Reduce #0 to funcattribute by token '{' at line 14 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
@@ -175,9 +178,9 @@ Reduce #1 to typehdr by token IDENT = "idx" at line 17 in state XXX, call typehd
 Reduce #1 to typegen by token IDENT = "idx" at line 17 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "idx" at line 17 in state XXX, call typespec, goto XXX
 Shift token IDENT = "idx" at line 17 in state XXX, goto XXX
-Reduce #2 to paramdecl by token ')' at line 17 in state XXX, call paramdef, goto XXX
-Reduce #1 to parameters by token ')' at line 17 in state XXX, goto XXX
-Reduce #1 to parameterlist by token ')' at line 17 in state XXX, call paramdeflist, goto XXX
+Reduce #2 to impl_paramdecl by token ')' at line 17 in state XXX, call paramdef, goto XXX
+Reduce #1 to impl_parameters by token ')' at line 17 in state XXX, goto XXX
+Reduce #1 to impl_paramlist by token ')' at line 17 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 17 in state XXX, goto XXX
 Shift token "const" at line 17 in state XXX, goto XXX
 Shift token "nothrow" at line 17 in state XXX, goto XXX
@@ -211,7 +214,8 @@ Shift token IDENT = "SIZE" at line 21 in state XXX, goto XXX
 Reduce #1 to typename by token ']' at line 21 in state XXX, goto XXX
 Reduce #1 to typehdr by token ']' at line 21 in state XXX, call typehdr {const=false}, goto XXX
 Reduce #1 to typegen by token ']' at line 21 in state XXX, goto XXX
-Reduce #1 to generic_instance_deflist by token ']' at line 21 in state XXX, call generic_instance_type, goto XXX
+Reduce #1 to generic_instance_defelem by token ']' at line 21 in state XXX, goto XXX
+Reduce #1 to generic_instance_deflist by token ']' at line 21 in state XXX, call generic_instance_deflist, goto XXX
 Reduce #1 to generic_instance by token ']' at line 21 in state XXX, call generic_instance, goto XXX
 Shift token ']' at line 21 in state XXX, goto XXX
 Reduce #4 to typegen by token IDENT = "m_ar" at line 21 in state XXX, call typegen_generic, goto XXX
@@ -243,10 +247,12 @@ Shift token IDENT = "float" at line 25 in state XXX, goto XXX
 Reduce #1 to typename by token ',' at line 25 in state XXX, goto XXX
 Reduce #1 to typehdr by token ',' at line 25 in state XXX, call typehdr {const=false}, goto XXX
 Reduce #1 to typegen by token ',' at line 25 in state XXX, goto XXX
+Reduce #1 to generic_instance_defelem by token ',' at line 25 in state XXX, goto XXX
 Shift token ',' at line 25 in state XXX, goto XXX
 Shift token UINTEGER = "5" at line 25 in state XXX, goto XXX
-Reduce #1 to generic_instance_deflist by token ']' at line 25 in state XXX, call generic_instance_dimension, goto XXX
-Reduce #3 to generic_instance_deflist by token ']' at line 25 in state XXX, call generic_instance_type, goto XXX
+Reduce #1 to generic_instance_defelem by token ']' at line 25 in state XXX, call generic_instance_dimension, goto XXX
+Reduce #1 to generic_instance_deflist by token ']' at line 25 in state XXX, call generic_instance_deflist, goto XXX
+Reduce #3 to generic_instance_deflist by token ']' at line 25 in state XXX, call generic_instance_deflist, goto XXX
 Reduce #1 to generic_instance by token ']' at line 25 in state XXX, call generic_instance, goto XXX
 Shift token ']' at line 25 in state XXX, goto XXX
 Reduce #4 to typegen by token IDENT = "array" at line 25 in state XXX, call typegen_generic, goto XXX
@@ -405,34 +411,41 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {
+                                {
+                                  line = 3,
+                                  name = "IDENT",
+                                  value = "byte"}},
+                              call = {
+                                name = "typehdr {const=true}",
+                                obj = {
+                                  const = true},
+                                proc = <function>},
                               line = 3,
-                              name = "IDENT",
-                              value = "byte"}},
+                              step = 0}},
                           call = {
-                            name = "typehdr {const=true}",
+                            name = "typegen_pointer {const=false}",
                             obj = {
-                              const = true},
+                              const = false},
                             proc = <function>},
                           line = 3,
                           step = 0}},
                       call = {
-                        name = "typegen_pointer {const=false}",
-                        obj = {
-                          const = false},
+                        name = "typespec",
                         proc = <function>},
                       line = 3,
-                      step = 0}},
+                      step = 0},
+                    {
+                      line = 3,
+                      name = "IDENT",
+                      value = "fmt"}},
                   call = {
-                    name = "typespec",
+                    name = "extern_paramdef",
                     proc = <function>},
                   line = 3,
-                  step = 0},
-                {
-                  line = 3,
-                  name = "IDENT",
-                  value = "fmt"}},
+                  step = 0}},
               call = {
-                name = "extern_paramdeftail",
+                name = "extern_paramdef_collect",
                 proc = <function>},
               line = 3,
               step = 0}},
@@ -494,23 +507,30 @@ Lua call result [1]
                     {
                       arg = {
                         {
+                          arg = {
+                            {
+                              line = 4,
+                              name = "IDENT",
+                              value = "long"}},
+                          call = {
+                            name = "typehdr {const=false}",
+                            obj = {
+                              const = false},
+                            proc = <function>},
                           line = 4,
-                          name = "IDENT",
-                          value = "long"}},
+                          step = 0}},
                       call = {
-                        name = "typehdr {const=false}",
-                        obj = {
-                          const = false},
+                        name = "typespec",
                         proc = <function>},
                       line = 4,
                       step = 0}},
                   call = {
-                    name = "typespec",
+                    name = "extern_paramdef",
                     proc = <function>},
                   line = 4,
                   step = 0}},
               call = {
-                name = "extern_paramdeftail",
+                name = "extern_paramdef_collect",
                 proc = <function>},
               line = 4,
               step = 0}},
@@ -679,7 +699,7 @@ Lua call result [1]
                                                   line = 9,
                                                   step = 1}},
                                               call = {
-                                                name = "generic_instance_type",
+                                                name = "generic_instance_deflist",
                                                 proc = <function>},
                                               line = 9,
                                               step = 1}},
@@ -1155,7 +1175,7 @@ Lua call result [1]
                                       line = 21,
                                       step = 9}},
                                   call = {
-                                    name = "generic_instance_type",
+                                    name = "generic_instance_deflist",
                                     proc = <function>},
                                   line = 21,
                                   step = 9}},
@@ -1245,16 +1265,23 @@ Lua call result [1]
                                     {
                                       arg = {
                                         {
+                                          arg = {
+                                            {
+                                              line = 25,
+                                              name = "UINTEGER",
+                                              value = "5"}},
+                                          call = {
+                                            name = "generic_instance_dimension",
+                                            proc = <function>},
                                           line = 25,
-                                          name = "UINTEGER",
-                                          value = "5"}},
+                                          step = 11}},
                                       call = {
-                                        name = "generic_instance_dimension",
+                                        name = "generic_instance_deflist",
                                         proc = <function>},
                                       line = 25,
                                       step = 11}},
                                   call = {
-                                    name = "generic_instance_type",
+                                    name = "generic_instance_deflist",
                                     proc = <function>},
                                   line = 25,
                                   step = 11}},

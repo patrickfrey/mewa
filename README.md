@@ -13,7 +13,7 @@ The examples provided here use the [intermediate representation (IR) of LLVM](ht
 For reading more see the [collected links](doc/links.md).
 
 # Status
-The project development is currently ongoing. First release will be in April.
+The project development is currently ongoing. First release will be in a few days.
 
 # Portability
 

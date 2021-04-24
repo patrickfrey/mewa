@@ -12,6 +12,7 @@ Shift token '^' at line 3 in state XXX, goto XXX
 Reduce #2 to typegen by token IDENT = "fmt" at line 3 in state XXX, call typegen_pointer {const=false}, goto XXX
 Reduce #1 to typespec by token IDENT = "fmt" at line 3 in state XXX, call typespec, goto XXX
 Shift token IDENT = "fmt" at line 3 in state XXX, goto XXX
+Reduce #2 to extern_paramdecl by token ',' at line 3 in state XXX, call extern_paramdef, goto XXX
 Shift token ',' at line 3 in state XXX, goto XXX
 Shift token IDENT = "int" at line 3 in state XXX, goto XXX
 Reduce #1 to typename by token IDENT = "arg" at line 3 in state XXX, goto XXX
@@ -19,8 +20,9 @@ Reduce #1 to typehdr by token IDENT = "arg" at line 3 in state XXX, call typehdr
 Reduce #1 to typegen by token IDENT = "arg" at line 3 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "arg" at line 3 in state XXX, call typespec, goto XXX
 Shift token IDENT = "arg" at line 3 in state XXX, goto XXX
-Reduce #2 to extern_parameters by token ')' at line 3 in state XXX, call extern_paramdeftail, goto XXX
-Reduce #4 to extern_parameters by token ')' at line 3 in state XXX, call extern_paramdef, goto XXX
+Reduce #2 to extern_paramdecl by token ')' at line 3 in state XXX, call extern_paramdef, goto XXX
+Reduce #1 to extern_parameters by token ')' at line 3 in state XXX, call extern_paramdef_collect, goto XXX
+Reduce #3 to extern_parameters by token ')' at line 3 in state XXX, call extern_paramdef_collect, goto XXX
 Reduce #1 to extern_paramlist by token ')' at line 3 in state XXX, call extern_paramdeflist, goto XXX
 Shift token ')' at line 3 in state XXX, goto XXX
 Shift token ';' at line 3 in state XXX, goto XXX
@@ -43,9 +45,9 @@ Reduce #1 to typehdr by token IDENT = "n" at line 5 in state XXX, call typehdr {
 Reduce #1 to typegen by token IDENT = "n" at line 5 in state XXX, goto XXX
 Reduce #1 to typespec by token IDENT = "n" at line 5 in state XXX, call typespec, goto XXX
 Shift token IDENT = "n" at line 5 in state XXX, goto XXX
-Reduce #2 to paramdecl by token ')' at line 5 in state XXX, call paramdef, goto XXX
-Reduce #1 to parameters by token ')' at line 5 in state XXX, goto XXX
-Reduce #1 to parameterlist by token ')' at line 5 in state XXX, call paramdeflist, goto XXX
+Reduce #2 to impl_paramdecl by token ')' at line 5 in state XXX, call paramdef, goto XXX
+Reduce #1 to impl_parameters by token ')' at line 5 in state XXX, goto XXX
+Reduce #1 to impl_paramlist by token ')' at line 5 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 5 in state XXX, goto XXX
 Shift token "nothrow" at line 5 in state XXX, goto XXX
 Reduce #0 to funcattribute by token '{' at line 6 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
@@ -62,7 +64,7 @@ Reduce #1 to typegen by token '&' at line 7 in state XXX, goto XXX
 Shift token '&' at line 7 in state XXX, goto XXX
 Reduce #2 to typespec by token IDENT = "a" at line 7 in state XXX, call typespec_ref, goto XXX
 Shift token IDENT = "a" at line 7 in state XXX, goto XXX
-Reduce #2 to paramdecl by token ',' at line 7 in state XXX, call paramdef, goto XXX
+Reduce #2 to impl_paramdecl by token ',' at line 7 in state XXX, call paramdef, goto XXX
 Shift token ',' at line 7 in state XXX, goto XXX
 Shift token IDENT = "int" at line 7 in state XXX, goto XXX
 Reduce #1 to typename by token '&' at line 7 in state XXX, goto XXX
@@ -71,10 +73,10 @@ Reduce #1 to typegen by token '&' at line 7 in state XXX, goto XXX
 Shift token '&' at line 7 in state XXX, goto XXX
 Reduce #2 to typespec by token IDENT = "b" at line 7 in state XXX, call typespec_ref, goto XXX
 Shift token IDENT = "b" at line 7 in state XXX, goto XXX
-Reduce #2 to paramdecl by token ')' at line 7 in state XXX, call paramdef, goto XXX
-Reduce #1 to parameters by token ')' at line 7 in state XXX, goto XXX
-Reduce #3 to parameters by token ')' at line 7 in state XXX, goto XXX
-Reduce #1 to parameterlist by token ')' at line 7 in state XXX, call paramdeflist, goto XXX
+Reduce #2 to impl_paramdecl by token ')' at line 7 in state XXX, call paramdef, goto XXX
+Reduce #1 to impl_parameters by token ')' at line 7 in state XXX, goto XXX
+Reduce #3 to impl_parameters by token ')' at line 7 in state XXX, goto XXX
+Reduce #1 to impl_paramlist by token ')' at line 7 in state XXX, call paramdeflist, goto XXX
 Shift token ')' at line 7 in state XXX, goto XXX
 Shift token "nothrow" at line 7 in state XXX, goto XXX
 Reduce #0 to funcattribute by token '{' at line 8 in state XXX, call funcattribute {const=false,throws=true}, goto XXX
@@ -291,44 +293,20 @@ Lua call result [1]
                         {
                           arg = {
                             {
+                              arg = {
+                                {
+                                  line = 3,
+                                  name = "IDENT",
+                                  value = "byte"}},
+                              call = {
+                                name = "typehdr {const=true}",
+                                obj = {
+                                  const = true},
+                                proc = <function>},
                               line = 3,
-                              name = "IDENT",
-                              value = "byte"}},
+                              step = 0}},
                           call = {
-                            name = "typehdr {const=true}",
-                            obj = {
-                              const = true},
-                            proc = <function>},
-                          line = 3,
-                          step = 0}},
-                      call = {
-                        name = "typegen_pointer {const=false}",
-                        obj = {
-                          const = false},
-                        proc = <function>},
-                      line = 3,
-                      step = 0}},
-                  call = {
-                    name = "typespec",
-                    proc = <function>},
-                  line = 3,
-                  step = 0},
-                {
-                  line = 3,
-                  name = "IDENT",
-                  value = "fmt"},
-                {
-                  arg = {
-                    {
-                      arg = {
-                        {
-                          arg = {
-                            {
-                              line = 3,
-                              name = "IDENT",
-                              value = "int"}},
-                          call = {
-                            name = "typehdr {const=false}",
+                            name = "typegen_pointer {const=false}",
                             obj = {
                               const = false},
                             proc = <function>},
@@ -342,14 +320,52 @@ Lua call result [1]
                     {
                       line = 3,
                       name = "IDENT",
-                      value = "arg"}},
+                      value = "fmt"}},
                   call = {
-                    name = "extern_paramdeftail",
+                    name = "extern_paramdef",
+                    proc = <function>},
+                  line = 3,
+                  step = 0},
+                {
+                  arg = {
+                    {
+                      arg = {
+                        {
+                          arg = {
+                            {
+                              arg = {
+                                {
+                                  line = 3,
+                                  name = "IDENT",
+                                  value = "int"}},
+                              call = {
+                                name = "typehdr {const=false}",
+                                obj = {
+                                  const = false},
+                                proc = <function>},
+                              line = 3,
+                              step = 0}},
+                          call = {
+                            name = "typespec",
+                            proc = <function>},
+                          line = 3,
+                          step = 0},
+                        {
+                          line = 3,
+                          name = "IDENT",
+                          value = "arg"}},
+                      call = {
+                        name = "extern_paramdef",
+                        proc = <function>},
+                      line = 3,
+                      step = 0}},
+                  call = {
+                    name = "extern_paramdef_collect",
                     proc = <function>},
                   line = 3,
                   step = 0}},
               call = {
-                name = "extern_paramdef",
+                name = "extern_paramdef_collect",
                 proc = <function>},
               line = 3,
               step = 0}},
