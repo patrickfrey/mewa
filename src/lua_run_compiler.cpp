@@ -534,7 +534,11 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 	lua_getglobal( ls, calltable);					// STK: [CALLTABLE]
 
 	int calltableref = lua_gettop( ls);
+#if !defined LUA_VERSION_NUM || LUA_VERSION_NUM==501
+	int calltablesize = lua_objlen( ls, calltableref);;
+#else
 	int calltablesize = lua_rawlen( ls, calltableref);;
+#endif
 	if (!lua_istable( ls, calltableref)) throw mewa::Error( mewa::Error::LogicError, string_format( "%s line %d", __FILE__, (int)__LINE__));
 
 	int nofLuaStackElements = lua_gettop( ls);

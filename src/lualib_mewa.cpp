@@ -14,6 +14,7 @@
 #include "lua_serialize.hpp"
 #include "lua_userdata.hpp"
 #include "lua_parameter.hpp"
+#include "lua_5_1.hpp"
 #include "automaton.hpp"
 #include "typedb.hpp"
 #include "lexer.hpp"

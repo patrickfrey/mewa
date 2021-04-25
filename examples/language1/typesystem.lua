@@ -3751,6 +3751,7 @@ function typesystem.main_procdef( node)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
 end
 function typesystem.program( node)
+	utils.logGlobalVariableAccess() --++++
 	llvmir.init()
 	initBuiltInTypes()
 	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, false, "%ir", "IL")

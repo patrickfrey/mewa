@@ -236,22 +236,32 @@ function utils.stack( msg, lv)
 end
 -- Monitor global variable access (thanks to https://stackoverflow.com/users/3080396/mblanc):
 function utils.logGlobalVariableAccess()
-    -- Use local variables
-    local old_G, new_G = _G, {}
+	-- Use local variables
+	local old_G, new_G = _G, {}
 
-    for k, v in pairs(old_G) do new_G[k] = v end
-    setmetatable(new_G, {
-        __index = function (t, key)
-            print("Read> " .. tostring(key))
-            return old_G[key]
-        end,
-        __newindex = function (t, key, val)
-            print("Write> " .. tostring(key) .. ' = ' .. tostring(val))
-            old_G[key] = val
-        end,
-    })
-    -- Set it at level 1 (top-level function)
-    setfenv( 1, new_G)
+	for k, v in pairs(old_G) do new_G[k] = v end
+	setmetatable( new_G, {
+		__index = function (t, key)
+			io.stderr:write( "Read> " .. tostring(key))
+			return old_G[key]
+		end,
+		__newindex = function (t, key, val)
+			io.stderr:write("Write> " .. tostring(key) .. ' = ' .. tostring(val))
+			old_G[key] = val
+		end,
+	})
+	if _ENV then -- version of Lua >= 5.2
+		local function setfenv(f, env)
+			local _ENV = env or {}  			-- create the _ENV upvalue
+			return function(...)
+				io.stderr:write('upvalue', _ENV)	-- address of _ENV upvalue
+				return f(...)
+			end
+		end
+		setfenv( 1, new_G)	-- Set it at level 1 (top-level function)
+	else
+		setfenv( 1, new_G)	-- Set it at level 1 (top-level function)
+	end
 end
 -- Error reporting:
 -- Exit with error message and line info
