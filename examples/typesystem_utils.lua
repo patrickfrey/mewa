@@ -234,34 +234,36 @@ end
 function utils.stack( msg, lv)
 	io.stderr:write( (msg or "") .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), true) .. "\n")
 end
--- Monitor global variable access (thanks to https://stackoverflow.com/users/3080396/mblanc):
-function utils.logGlobalVariableAccess()
-	-- Use local variables
-	local old_G, new_G = _G, {}
 
-	for k, v in pairs(old_G) do new_G[k] = v end
-	setmetatable( new_G, {
-		__index = function (t, key)
-			io.stderr:write( "Read> " .. tostring(key))
-			return old_G[key]
-		end,
-		__newindex = function (t, key, val)
-			io.stderr:write("Write> " .. tostring(key) .. ' = ' .. tostring(val))
-			old_G[key] = val
-		end,
-	})
-	if _ENV then -- version of Lua >= 5.2
-		local function setfenv(f, env)
-			local _ENV = env or {}  			-- create the _ENV upvalue
-			return function(...)
-				io.stderr:write('upvalue', _ENV)	-- address of _ENV upvalue
-				return f(...)
-			end
-		end
-		setfenv( 1, new_G)	-- Set it at level 1 (top-level function)
-	else
-		setfenv( 1, new_G)	-- Set it at level 1 (top-level function)
+if _ENV then -- version of Lua >= 5.2
+function setfenv(f, env)
+	local _ENV = env or {}  			-- create the _ENV upvalue
+	return function(...)
+		io.stderr:write('upvalue', _ENV)	-- address of _ENV upvalue
+		return f(...)
 	end
+end
+end
+
+-- Monitor global variable access (thanks to https://stackoverflow.com/users/3080396/mblanc):
+function logGlobalVariableAccess() -- replace "function logGlobalVariableAccess()" by "do" to enable it
+-- Use local variables
+local old_G, new_G = _G, {}
+local g_duplicateMap = {}
+for k, v in pairs(old_G) do new_G[k] = v end
+setmetatable( new_G, {
+	__index = function (t, key)
+		local keystr = tostring(key)
+		if not g_duplicateMap[ keystr] then io.stderr:write( "Read> " .. keystr .. "\n"); g_duplicateMap[ keystr] = true end
+		return old_G[ key]
+	end,
+	__newindex = function (t, key, val)
+		local keystr = tostring(key)
+		if not g_duplicateMap[ keystr] then io.stderr:write("Write> " .. tostring(key) .. ' = ' .. tostring(val) .. "\n"); g_duplicateMap[ keystr] = true end
+		old_G[ key] = val
+	end,
+})
+setfenv( 0, new_G)	-- Set it at level 1 (top-level function)
 end
 -- Error reporting:
 -- Exit with error message and line info

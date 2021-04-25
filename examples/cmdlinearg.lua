@@ -1,10 +1,8 @@
 require( 'pl')
 require( 'string')
-local mewa = require "mewa"
 local lapp = require( 'pl.lapp')
-require( 'pl.compat')
 
-function nilIfEmpty( arg)
+local function nilIfEmpty( arg)
         if arg == "" then return nil else return arg end
 end
 
