@@ -2808,26 +2808,32 @@ function defineStructureType( node, declContextTypeId, typnam, fmt)
 	local qualitype = defineQualiTypes( node, declContextTypeId, typnam, descr)
 	return descr,qualitype
 end
--- Basic type definition for generic 
-function defineGenericType( node, context, typnam, fmt, generic, const, throws, private)
+---- Generic (descr) Fields ----
+--	nodeDataMap	: AST Node where the generic type was declared
+-- 	generic 	: Generic parameter list of the generic
+--	context		: Context structure set before the traversal when instantiating the generic (created from the declaration context of the generic)
+--	seekctx		: Seek context types set before the traversal when instantiating the generic (copy of the seek context types of the declaration of the generic)
+--	const		: const attribute for generic functions/procedures
+--	private		: private attribute for generic functions/procedures
+--	throws		: throws (!nothrow) attribute for generic functions/procedures
+-- Create the type definition of a generic or lambda
+function defineGenericType( node, context, typnam, fmt, generic_param)
 	local declContextTypeId = getDeclarationContextTypeId( context)
-	local descr = utils.template_format( fmt, {})
+	local descr = utils.template_format( fmt, {name=typnam})
 	descr.node = node
-	descr.generic = generic
-	descr.const = const
-	descr.private = private
-	descr.throws = throws
+	descr.generic = generic_param
 	descr.context = {domain=context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol}
 	descr.seekctx = getSeekContextTypes()
 	local valtype = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
 	local c_valtype = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
 	if valtype == -1 or c_valtype == -1 then utils.errorMessage( node.line, "Duplicate definition of generic type '%s'", typnam) end
 	constTypeMap[ valtype] = c_valtype
-	typeQualiSepMap[ valtype]    = {valtype=valtype,qualifier={const=false}}
+	typeQualiSepMap[ valtype]    = {valtype=valtype,qualifier={const=false,reference=false,private=false}}
 	typeQualiSepMap[ c_valtype]  = {valtype=valtype,qualifier={const=true,reference=false,private=false}}
 	if valtype == -1 then utils.errorMessage( node.line, "Duplicate definition of type '%s'", typeDeclarationString( declContextTypeId, typnam)) end
 	typeDescriptionMap[ valtype] = descr
 	typeDescriptionMap[ c_valtype] = descr
+	return descr
 end
 -- Add a generic parameter to the generic parameter list
 function addGenericParameter( node, generic, name, typeId)
@@ -3416,13 +3422,19 @@ function typesystem.generic_funcdef( node, context)
 	local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
 	local decl = utils.traverseRange( typedb, node, {5,5}, context, descr, 0)[5] -- decl {const,throws}
 	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
-	defineGenericType( node, context, name, llvmir.genericFunctionDescr, generic_arg, decl.const, decl.throws, lnk.linkage.private)
+	local descr = defineGenericType( node, context, name, llvmir.genericFunctionDescr, generic_arg)
+	descr.const = decl.const
+	descr.private = lnk.linkage.private
+	descr.throws = decl.throws
 end
 function typesystem.generic_procdef( node, context)
 	local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
 	local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
 	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
-	defineGenericType( node, context, name, llvmir.genericProcedureDescr, generic_arg, decl.const, decl.throws, lnk.linkage.private)
+	local descr = defineGenericType( node, context, name, llvmir.genericProcedureDescr, generic_arg)
+	descr.const = decl.const
+	descr.private = lnk.linkage.private
+	descr.throws = decl.throws
 end
 function typesystem.operatordecl( node, opr)
 	return opr

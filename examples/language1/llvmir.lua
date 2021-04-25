@@ -246,16 +246,23 @@ llvmir.anyFunctionDescr = {
 	class = "transfer"
 }
 llvmir.genericClassDescr = {
-	class = "generic_class"
+	class = "generic_class",
+	name = "{name}"
 }
 llvmir.genericStructDescr = {
-	class = "generic_struct"
+	class = "generic_struct",
+	name = "{name}"
 }
 llvmir.genericProcedureDescr = {
-	class = "generic_procedure"
+	class = "generic_procedure",
+	name = "{name}"
 }
 llvmir.genericFunctionDescr = {
-	class = "generic_function"
+	class = "generic_function",
+	name = "{name}"
+}
+llvmir.lambdaExpressionDescr = {
+	class = "lambdaExpression"
 }
 llvmir.callableDescr = {
 	class = "callable"
