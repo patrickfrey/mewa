@@ -13,7 +13,7 @@ The examples provided here use the [intermediate representation (IR) of LLVM](ht
 For reading more see the [collected links](doc/links.md).
 
 # Status
-The project development is currently ongoing. First release will be in a few days.
+I consider the software as ready for use in projects.
 
 # Portability
 
@@ -26,7 +26,7 @@ The tests currently use a LLVM IR target template file for the following platfor
  * [Linux x86_64 (Intel 64 bit)](examples/target/x86_64-pc-linux-gnu.tpl)
  * [Linux i686 (Intel 32 bit)](examples/target/i686-pc-linux-gnu.tpl)
 
-Contributions for other platforms are appreciated.
+Contributions for other platforms are appreciated and welcome.
 
 # Documentation
 * [Examples](doc/example_compiler.md)
@@ -46,7 +46,7 @@ Contributions for other platforms are appreciated.
 * mewa at freelists
 
 # Website
-* [mewa.cc](mewa.cc)
+* [mewa.cc](http://mewa.cc)
 
 # Contact (E-Mail)
 * mail at mewa cc

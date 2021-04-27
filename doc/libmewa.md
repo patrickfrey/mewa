@@ -59,11 +59,12 @@ A documentation can be found [here](typedb.md).
 ### mewa.tostring
 
 #### Parameter
-| #      | Name     | Type              | Description                                                             |
-| :----- | :------- | :---------------- | :---------------------------------------------------------------------- |
-| 1st    | obj      | any type          | object to dump the contents from                                        |
-| 2nd    | indent   | boolean           | (optional) true if to use indentiation, false if not, Default is false. |
-| Return |          | string            | The serialized contents of the object passed as string                  |
+| #      | Name     | Type              | Description                                                                         |
+| :----- | :------- | :---------------- | :---------------------------------------------------------------------------------- |
+| 1st    | obj      | any type          | object to dump the contents from                                                    |
+| 2nd    | maxdepth | integer           | Maximum depth of the tree to print (used to handle cirular references in the table) |
+| 3rd    | indent   | boolean           | (optional) true if to use indentiation, false if not, Default is false.             |
+| Return |          | string            | The serialized contents of the object passed as string                              |
 
 #### Remark
 The serialization is not complete. Serialization is done only for raw tables, numbers and strings. It just does the job suitable for _Mewa_. 

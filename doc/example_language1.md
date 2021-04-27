@@ -9,7 +9,7 @@ This is a multiparadigm general purpose strongly typed programming language with
  * Free procedures and functions
  * Polymorphism through interface inheritance
  * Generic programming (generic classes and functions)
- * Lambdas as argument of a generic class or function
+ * Lambdas as instantiation arguments of generic classes or functions
  * Exception handling with a fixed exception structure (an error code and an optional string)
  * Backend is LLVM IR
  * Modules (not implemented yet)
