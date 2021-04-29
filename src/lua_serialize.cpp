@@ -29,7 +29,7 @@ extern "C" {
 
 using namespace mewa;
 
-static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const std::string& indent);
+static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const std::string& indent, int depth);
 
 static void serializeLuaNumber( std::ostream& out, lua_State* ls, int li)
 {
@@ -123,7 +123,7 @@ struct LuaTableKey
 	}
 };
 
-static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const std::string& indent)
+static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const std::string& indent, int depth)
 {
 	std::vector<LuaTableKey> keyvec;
 	keyvec.reserve( 1024);
@@ -180,8 +180,7 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 			out << indent;
 			key.serialize( out);
 			out << " = ";
-			serializeLuaValue( out, ls, -1, indent);
-
+			serializeLuaValue( out, ls, -1, indent, depth);
 			lua_pop( ls, 1);					// STK: [TABLE] 
 		}
 	}
@@ -195,8 +194,7 @@ static void serializeLuaTable( std::ostream& out, lua_State* ls, int li, const s
 
 			if (kidx++) out << ",";
 			out << indent;
-			serializeLuaValue( out, ls, -1, indent);
-
+			serializeLuaValue( out, ls, -1, indent, depth);
 			lua_pop( ls, 1);					// STK: [TABLE] 
 		}
 	}
@@ -250,7 +248,7 @@ static std::string encodeCString( const char* str)
 	return rt;
 }
 
-static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const std::string& indent)
+static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const std::string& indent, int depth)
 {
 	int tp = lua_type( ls, li);
 	switch (tp)
@@ -268,7 +266,21 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 			out << '"' << encodeCString( lua_tostring( ls, li)) << '"';
 			break;
 		case LUA_TTABLE:
-			serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "  "));
+			if (depth)
+			{
+				if (depth <= 1)
+				{
+					out << "...";
+				}
+				else
+				{
+					serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "  "), depth-1);
+				}
+			}
+			else
+			{
+				serializeLuaTable( out, ls, li, indent.empty() ? std::string() : (indent + "  "), depth);
+			}
 			break;
 		case LUA_TFUNCTION:
 		case LUA_TUSERDATA:
@@ -279,11 +291,11 @@ static void serializeLuaValue( std::ostream& out, lua_State* ls, int li, const s
 	}
 }
 
-std::string mewa::luaToString( lua_State* ls, int li, bool use_indent)
+std::string mewa::luaToString( lua_State* ls, int li, bool use_indent, int depth)
 {
 	std::string rt;
 	std::ostringstream out;
-	serializeLuaValue( out, ls, li, use_indent ? "\n" : "");
+	serializeLuaValue( out, ls, li, use_indent ? "\n" : "", depth);
 	rt.append( out.str());
 	return rt;
 }

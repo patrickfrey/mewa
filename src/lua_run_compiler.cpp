@@ -353,7 +353,7 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 		else if (dbgout && !lua_isnil( ls, -1))
 		{
 			printDebug( dbgout, "Lua call result [%d]\n", li-calltable);
-			std::string resstr( mewa::luaToString( ls, -1, true/*formatted*/));
+			std::string resstr( mewa::luaToString( ls, -1, true/*formatted*/, 0/*no maximum depth*/));
 			printDebug( dbgout, "%s\n", resstr.c_str());
 		}
 	}

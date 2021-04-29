@@ -85,7 +85,7 @@ function utils.constructor_format( fmt, argtable, allocator)
 		elseif argtable[ match] then
 			return argtable[ match]
 		else
-			utils.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", utils.encodeCString(fmt), match, mewa.tostring(argtable,false))
+			utils.errorMessage( 0, "Can't build constructor for '%s', having unbound variable '%s' (argument table %s)", utils.encodeCString(fmt), match, mewa.tostring(argtable,0,false))
 		end
 	end
 	return (fmt:gsub("[{]([_%d%w]*)[}]", subst))
@@ -232,7 +232,7 @@ end
 
 -- Stacktrace:
 function utils.stack( msg, lv)
-	io.stderr:write( (msg or "") .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), true) .. "\n")
+	io.stderr:write( (msg or "") .. mewa.tostring( mewa.stacktrace( lv or 7,{"utils.traverse","utils.stack","processSubnode"}), 0, true) .. "\n")
 end
 
 if _ENV then -- version of Lua >= 5.2
@@ -444,7 +444,7 @@ local function treeToString( typedb, node, indentstr, node_tostring)
 end
 function utils.getTypeTreeDump( typedb)
 	function node_tostring(nd)
-		return string.format( "%s : %s", typedb:type_string(nd), mewa.tostring(typedb:type_constructor(nd),false))
+		return string.format( "%s : %s", typedb:type_string(nd), mewa.tostring(typedb:type_constructor(nd),0,false))
 	end
 	return treeToString( typedb, typedb:type_tree(), "", node_tostring)
 end
@@ -452,7 +452,7 @@ function utils.getReductionTreeDump( typedb)
 	function node_tostring(nd)
 		return string.format( "%s <- %s [%d]/%.3f : %s",
 					typedb:type_string(nd.to), typedb:type_string(nd.from), nd.tag, nd.weight,
-					mewa.tostring(nd.constructor,false))
+					mewa.tostring(nd.constructor,0,false))
 	end
 	return treeToString( typedb, typedb:reduction_tree(), "", node_tostring)
 end

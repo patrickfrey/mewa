@@ -469,7 +469,60 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Matrix__double__4__4__$plus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
+define internal i32 @__C___Matrix__double__4__4__summate__int__const( %__Matrix__double__4__4* %ths ) #0 nounwind {
+entry:
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
+L2:
+%r13 = load i32, i32* %r1
+%r15 = sitofp i32 %r13 to double
+%r8 = getelementptr inbounds %__Matrix__double__4__4, %__Matrix__double__4__4* %ths, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [4 x double]], [4 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r14 = load double, double* %r12
+%r16 = fadd double %r15, %r14
+%r17 = fptosi double %r16 to i32
+store i32 %r17, i32* %r1
+%r18 = load i32, i32* %r5
+%r19 = add nsw i32 %r18, 1
+store i32 %r19, i32* %r5
+br label %L3
+L1:
+%r20 = load i32, i32* %r2
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r2
+br label %L6
+L4:
+%r22 = load i32, i32* %r1
+br label %L7
+L7:
+ret i32 %r22
+}
+define external i32 @__C___Matrix__double__4__4__summate_int__const( %__Matrix__double__4__4* %ths ) #0 nounwind {
+entry:
+%r1 = call i32 @__C___Matrix__double__4__4__summate__int__const( %__Matrix__double__4__4* %ths)
+br label %L1
+L1:
+ret i32 %r1
+}
+define internal void @__C___Matrix__double__4__4__elementwise___X__Matrix__double__4__4__lambda__a__b__c__1____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
 %r2 = alloca i32, align 4
@@ -521,7 +574,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__4__4__$minus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__4__4__$plus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__elementwise___X__Matrix__double__4__4__lambda__a__b__c__1____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__4__4__elementwise___X__Matrix__double__4__4__lambda__a__b__c__3____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
 %r2 = alloca i32, align 4
@@ -571,6 +631,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__4__4__$minus____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__elementwise___X__Matrix__double__4__4__lambda__a__b__c__3____Matrix__double__4__4$__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, %__Matrix__double__4__4* %r1)
+br label %L1
+L1:
 ret void
 }
 define external void @__C___Matrix__double__4__4__$minus__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths ) #0 nounwind {
@@ -690,7 +757,7 @@ br label %L10
 L10:
 ret void
 }
-define external void @__C___Matrix__double__4__4__$mul__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
+define internal void @__C___Matrix__double__4__4__elementwise_scalar___X__Matrix__double__4__4__lambda__a__b__v__1__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
 %r2 = alloca i32, align 4
@@ -736,7 +803,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__4__4__$div__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__4__4__$mul__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__elementwise_scalar___X__Matrix__double__4__4__lambda__a__b__v__1__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__4__4__elementwise_scalar___X__Matrix__double__4__4__lambda__a__b__v__3__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__4__$ctor( %__Matrix__double__4__4* %rt)
 %r2 = alloca i32, align 4
@@ -780,6 +854,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__4__4__$div__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__4__elementwise_scalar___X__Matrix__double__4__4__lambda__a__b__v__3__double__const( %__Matrix__double__4__4* sret %rt, %__Matrix__double__4__4* %ths, double %r1)
+br label %L1
+L1:
 ret void
 }
 define external double* @__C___Matrix__double__4__4__$get__i32__i32( %__Matrix__double__4__4* %ths, i32 %r1, i32 %r2 ) #0 nounwind {
@@ -826,7 +907,60 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Matrix__double__3__3__$plus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
+define internal i32 @__C___Matrix__double__3__3__summate__int__const( %__Matrix__double__3__3* %ths ) #0 nounwind {
+entry:
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
+L2:
+%r13 = load i32, i32* %r1
+%r15 = sitofp i32 %r13 to double
+%r8 = getelementptr inbounds %__Matrix__double__3__3, %__Matrix__double__3__3* %ths, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [3 x double]], [3 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r14 = load double, double* %r12
+%r16 = fadd double %r15, %r14
+%r17 = fptosi double %r16 to i32
+store i32 %r17, i32* %r1
+%r18 = load i32, i32* %r5
+%r19 = add nsw i32 %r18, 1
+store i32 %r19, i32* %r5
+br label %L3
+L1:
+%r20 = load i32, i32* %r2
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r2
+br label %L6
+L4:
+%r22 = load i32, i32* %r1
+br label %L7
+L7:
+ret i32 %r22
+}
+define external i32 @__C___Matrix__double__3__3__summate_int__const( %__Matrix__double__3__3* %ths ) #0 nounwind {
+entry:
+%r1 = call i32 @__C___Matrix__double__3__3__summate__int__const( %__Matrix__double__3__3* %ths)
+br label %L1
+L1:
+ret i32 %r1
+}
+define internal void @__C___Matrix__double__3__3__elementwise___X__Matrix__double__3__3__lambda__a__b__c__5____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
 %r2 = alloca i32, align 4
@@ -878,7 +1012,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__3__3__$minus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__3__3__$plus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__elementwise___X__Matrix__double__3__3__lambda__a__b__c__5____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__3__3__elementwise___X__Matrix__double__3__3__lambda__a__b__c__7____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
 %r2 = alloca i32, align 4
@@ -928,6 +1069,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__3__3__$minus____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__elementwise___X__Matrix__double__3__3__lambda__a__b__c__7____Matrix__double__3__3$__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, %__Matrix__double__3__3* %r1)
+br label %L1
+L1:
 ret void
 }
 define external void @__C___Matrix__double__3__3__$minus__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths ) #0 nounwind {
@@ -1047,7 +1195,7 @@ br label %L10
 L10:
 ret void
 }
-define external void @__C___Matrix__double__3__3__$mul__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
+define internal void @__C___Matrix__double__3__3__elementwise_scalar___X__Matrix__double__3__3__lambda__a__b__v__5__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
 %r2 = alloca i32, align 4
@@ -1093,7 +1241,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__3__3__$div__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__3__3__$mul__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__elementwise_scalar___X__Matrix__double__3__3__lambda__a__b__v__5__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__3__3__elementwise_scalar___X__Matrix__double__3__3__lambda__a__b__v__7__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__3__$ctor( %__Matrix__double__3__3* %rt)
 %r2 = alloca i32, align 4
@@ -1137,6 +1292,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__3__3__$div__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__3__elementwise_scalar___X__Matrix__double__3__3__lambda__a__b__v__7__double__const( %__Matrix__double__3__3* sret %rt, %__Matrix__double__3__3* %ths, double %r1)
+br label %L1
+L1:
 ret void
 }
 define external double* @__C___Matrix__double__3__3__$get__i32__i32( %__Matrix__double__3__3* %ths, i32 %r1, i32 %r2 ) #0 nounwind {
@@ -1183,7 +1345,60 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Matrix__double__3__4__$plus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
+define internal i32 @__C___Matrix__double__3__4__summate__int__const( %__Matrix__double__3__4* %ths ) #0 nounwind {
+entry:
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 3
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 4
+br i1 %r7, label %L2, label %L1
+L2:
+%r13 = load i32, i32* %r1
+%r15 = sitofp i32 %r13 to double
+%r8 = getelementptr inbounds %__Matrix__double__3__4, %__Matrix__double__3__4* %ths, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [3 x [4 x double]], [3 x [4 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [4 x double], [4 x double]* %r10, i32 0, i32 %r11
+%r14 = load double, double* %r12
+%r16 = fadd double %r15, %r14
+%r17 = fptosi double %r16 to i32
+store i32 %r17, i32* %r1
+%r18 = load i32, i32* %r5
+%r19 = add nsw i32 %r18, 1
+store i32 %r19, i32* %r5
+br label %L3
+L1:
+%r20 = load i32, i32* %r2
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r2
+br label %L6
+L4:
+%r22 = load i32, i32* %r1
+br label %L7
+L7:
+ret i32 %r22
+}
+define external i32 @__C___Matrix__double__3__4__summate_int__const( %__Matrix__double__3__4* %ths ) #0 nounwind {
+entry:
+%r1 = call i32 @__C___Matrix__double__3__4__summate__int__const( %__Matrix__double__3__4* %ths)
+br label %L1
+L1:
+ret i32 %r1
+}
+define internal void @__C___Matrix__double__3__4__elementwise___X__Matrix__double__3__4__lambda__a__b__c__9____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
 %r2 = alloca i32, align 4
@@ -1235,7 +1450,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__3__4__$minus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__3__4__$plus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__elementwise___X__Matrix__double__3__4__lambda__a__b__c__9____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__3__4__elementwise___X__Matrix__double__3__4__lambda__a__b__c__11____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
 %r2 = alloca i32, align 4
@@ -1285,6 +1507,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__3__4__$minus____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__elementwise___X__Matrix__double__3__4__lambda__a__b__c__11____Matrix__double__3__4$__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, %__Matrix__double__3__4* %r1)
+br label %L1
+L1:
 ret void
 }
 define external void @__C___Matrix__double__3__4__$minus__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths ) #0 nounwind {
@@ -1404,7 +1633,7 @@ br label %L10
 L10:
 ret void
 }
-define external void @__C___Matrix__double__3__4__$mul__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
+define internal void @__C___Matrix__double__3__4__elementwise_scalar___X__Matrix__double__3__4__lambda__a__b__v__9__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
 %r2 = alloca i32, align 4
@@ -1450,7 +1679,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__3__4__$div__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__3__4__$mul__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__elementwise_scalar___X__Matrix__double__3__4__lambda__a__b__v__9__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__3__4__elementwise_scalar___X__Matrix__double__3__4__lambda__a__b__v__11__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__3__4__$ctor( %__Matrix__double__3__4* %rt)
 %r2 = alloca i32, align 4
@@ -1494,6 +1730,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__3__4__$div__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__3__4__elementwise_scalar___X__Matrix__double__3__4__lambda__a__b__v__11__double__const( %__Matrix__double__3__4* sret %rt, %__Matrix__double__3__4* %ths, double %r1)
+br label %L1
+L1:
 ret void
 }
 define external double* @__C___Matrix__double__3__4__$get__i32__i32( %__Matrix__double__3__4* %ths, i32 %r1, i32 %r2 ) #0 nounwind {
@@ -1540,7 +1783,60 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Matrix__double__4__3__$plus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
+define internal i32 @__C___Matrix__double__4__3__summate__int__const( %__Matrix__double__4__3* %ths ) #0 nounwind {
+entry:
+%r1 = alloca i32, align 4
+store i32 0, i32* %r1
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L6
+L6:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 4
+br i1 %r4, label %L5, label %L4
+L5:
+%r5 = alloca i32, align 4
+store i32 0, i32* %r5
+br label %L3
+L3:
+%r6 = load i32, i32* %r5
+%r7 = icmp slt i32 %r6, 3
+br i1 %r7, label %L2, label %L1
+L2:
+%r13 = load i32, i32* %r1
+%r15 = sitofp i32 %r13 to double
+%r8 = getelementptr inbounds %__Matrix__double__4__3, %__Matrix__double__4__3* %ths, i32 0, i32 0
+%r9 = load i32, i32* %r2
+%r10 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r8, i32 0, i32 %r9
+%r11 = load i32, i32* %r5
+%r12 = getelementptr inbounds [3 x double], [3 x double]* %r10, i32 0, i32 %r11
+%r14 = load double, double* %r12
+%r16 = fadd double %r15, %r14
+%r17 = fptosi double %r16 to i32
+store i32 %r17, i32* %r1
+%r18 = load i32, i32* %r5
+%r19 = add nsw i32 %r18, 1
+store i32 %r19, i32* %r5
+br label %L3
+L1:
+%r20 = load i32, i32* %r2
+%r21 = add nsw i32 %r20, 1
+store i32 %r21, i32* %r2
+br label %L6
+L4:
+%r22 = load i32, i32* %r1
+br label %L7
+L7:
+ret i32 %r22
+}
+define external i32 @__C___Matrix__double__4__3__summate_int__const( %__Matrix__double__4__3* %ths ) #0 nounwind {
+entry:
+%r1 = call i32 @__C___Matrix__double__4__3__summate__int__const( %__Matrix__double__4__3* %ths)
+br label %L1
+L1:
+ret i32 %r1
+}
+define internal void @__C___Matrix__double__4__3__elementwise___X__Matrix__double__4__3__lambda__a__b__c__13____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
 %r2 = alloca i32, align 4
@@ -1592,7 +1888,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__4__3__$minus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__4__3__$plus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__elementwise___X__Matrix__double__4__3__lambda__a__b__c__13____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__4__3__elementwise___X__Matrix__double__4__3__lambda__a__b__c__15____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
 %r2 = alloca i32, align 4
@@ -1642,6 +1945,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__4__3__$minus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__elementwise___X__Matrix__double__4__3__lambda__a__b__c__15____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, %__Matrix__double__4__3* %r1)
+br label %L1
+L1:
 ret void
 }
 define external void @__C___Matrix__double__4__3__$minus__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths ) #0 nounwind {
@@ -1761,7 +2071,7 @@ br label %L10
 L10:
 ret void
 }
-define external void @__C___Matrix__double__4__3__$mul__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
+define internal void @__C___Matrix__double__4__3__elementwise_scalar___X__Matrix__double__4__3__lambda__a__b__v__13__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
 %r2 = alloca i32, align 4
@@ -1807,7 +2117,14 @@ br label %L7
 L7:
 ret void
 }
-define external void @__C___Matrix__double__4__3__$div__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
+define external void @__C___Matrix__double__4__3__$mul__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__elementwise_scalar___X__Matrix__double__4__3__lambda__a__b__v__13__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1)
+br label %L1
+L1:
+ret void
+}
+define internal void @__C___Matrix__double__4__3__elementwise_scalar___X__Matrix__double__4__3__lambda__a__b__v__15__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
 entry:
 call void @__C___Matrix__double__4__3__$ctor( %__Matrix__double__4__3* %rt)
 %r2 = alloca i32, align 4
@@ -1851,6 +2168,13 @@ br label %L6
 L4:
 br label %L7
 L7:
+ret void
+}
+define external void @__C___Matrix__double__4__3__$div__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1 ) #0 nounwind {
+entry:
+call void @__C___Matrix__double__4__3__elementwise_scalar___X__Matrix__double__4__3__lambda__a__b__v__15__double__const( %__Matrix__double__4__3* sret %rt, %__Matrix__double__4__3* %ths, double %r1)
+br label %L1
+L1:
 ret void
 }
 define external double* @__C___Matrix__double__4__3__$get__i32__i32( %__Matrix__double__4__3* %ths, i32 %r1, i32 %r2 ) #0 nounwind {
@@ -1955,7 +2279,9 @@ br label %L7
 L7:
 ret void
 }
-@string6 = private unnamed_addr constant [4 x i8] c"A*B\00"
+@string6 = private unnamed_addr constant [2 x i8] c"C\00"
+@string7 = private unnamed_addr constant [4 x i8] c"A+C\00"
+@string8 = private unnamed_addr constant [4 x i8] c"A*B\00"
 define internal void @printMatrix__4__4____Matrix__double__4__4$( %__Matrix__double__4__4* %r1 ) #0 nounwind {
 entry:
 %r2 = alloca i32, align 4
@@ -1995,7 +2321,8 @@ br label %L7
 L7:
 ret void
 }
-@string7 = private unnamed_addr constant [4 x i8] c"B*A\00"
+@string9 = private unnamed_addr constant [6 x i8] c"A*1.4\00"
+@string10 = private unnamed_addr constant [4 x i8] c"B*A\00"
 define internal void @printMatrix__3__3____Matrix__double__3__3$( %__Matrix__double__3__3* %r1 ) #0 nounwind {
 entry:
 %r2 = alloca i32, align 4
@@ -2113,33 +2440,89 @@ call void(i8*,  ...) @printf( i8* %r58, i8* %r59)
 call void @printMatrix__3__4____Matrix__double__3__4$( %__Matrix__double__3__4* %r33)
 %r60 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
 call void(i8*,  ...) @printf( i8* %r60)
-%r61 = alloca %__Matrix__double__4__4, align 8
-call void @__C___Matrix__double__4__3__$mul____Matrix__double__3__4$__const( %__Matrix__double__4__4* sret %r61, %__Matrix__double__4__3* %r2, %__Matrix__double__3__4* %r33)
-%r62 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
-%r63 = getelementptr inbounds [4 x i8], [4 x i8]* @string6, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r62, i8* %r63)
-call void @printMatrix__4__4____Matrix__double__4__4$( %__Matrix__double__4__4* %r61)
-%r64 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r64)
-%r65 = alloca %__Matrix__double__3__3, align 8
-call void @__C___Matrix__double__3__4__$mul____Matrix__double__4__3$__const( %__Matrix__double__3__3* sret %r65, %__Matrix__double__3__4* %r33, %__Matrix__double__4__3* %r2)
-%r66 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
-%r67 = getelementptr inbounds [4 x i8], [4 x i8]* @string7, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r66, i8* %r67)
-call void @printMatrix__3__3____Matrix__double__3__3$( %__Matrix__double__3__3* %r65)
-%r68 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
-call void(i8*,  ...) @printf( i8* %r68)
+%r61 = alloca %__Matrix__double__4__3, align 8
+%r88 = alloca [4 x [3 x double]], align 8
+%r64 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r88, i32 0, i32 0
+%r67 = getelementptr inbounds [3 x double], [3 x double]* %r64, i32 0, i32 0
+store double 0x3FF0000000000000, double* %r67
+%r68 = getelementptr inbounds [3 x double], [3 x double]* %r64, i32 0, i32 1
+store double 0xC000000000000000, double* %r68
+%r69 = getelementptr inbounds [3 x double], [3 x double]* %r64, i32 0, i32 2
+store double 0xBFF0000000000000, double* %r69
+%r70 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r88, i32 0, i32 1
+%r73 = getelementptr inbounds [3 x double], [3 x double]* %r70, i32 0, i32 0
+store double 0xC008000000000000, double* %r73
+%r74 = getelementptr inbounds [3 x double], [3 x double]* %r70, i32 0, i32 1
+store double 0x0, double* %r74
+%r75 = getelementptr inbounds [3 x double], [3 x double]* %r70, i32 0, i32 2
+store double 0xBFF0000000000000, double* %r75
+%r76 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r88, i32 0, i32 2
+%r79 = getelementptr inbounds [3 x double], [3 x double]* %r76, i32 0, i32 0
+store double 0xC010000000000000, double* %r79
+%r80 = getelementptr inbounds [3 x double], [3 x double]* %r76, i32 0, i32 1
+store double 0x3FF0000000000000, double* %r80
+%r81 = getelementptr inbounds [3 x double], [3 x double]* %r76, i32 0, i32 2
+store double 0xBFF0000000000000, double* %r81
+%r82 = getelementptr inbounds [4 x [3 x double]], [4 x [3 x double]]* %r88, i32 0, i32 3
+%r85 = getelementptr inbounds [3 x double], [3 x double]* %r82, i32 0, i32 0
+store double 0xBFF0000000000000, double* %r85
+%r86 = getelementptr inbounds [3 x double], [3 x double]* %r82, i32 0, i32 1
+store double 0xC014000000000000, double* %r86
+%r87 = getelementptr inbounds [3 x double], [3 x double]* %r82, i32 0, i32 2
+store double 0xBFF0000000000000, double* %r87
+call void @__C___Matrix__double__4__3__$ctor__$4x$3xdouble$( %__Matrix__double__4__3* %r61, [4 x [3 x double]]* %r88)
+%r89 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
+%r90 = getelementptr inbounds [2 x i8], [2 x i8]* @string6, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r89, i8* %r90)
+call void @printMatrix__4__3____Matrix__double__4__3$( %__Matrix__double__4__3* %r61)
+%r91 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r91)
+%r92 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
+%r93 = getelementptr inbounds [4 x i8], [4 x i8]* @string7, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r92, i8* %r93)
+%r94 = alloca %__Matrix__double__4__3, align 8
+call void @__C___Matrix__double__4__3__$plus____Matrix__double__4__3$__const( %__Matrix__double__4__3* sret %r94, %__Matrix__double__4__3* %r2, %__Matrix__double__4__3* %r61)
+call void @printMatrix__4__3____Matrix__double__4__3$( %__Matrix__double__4__3* %r94)
+%r95 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r95)
+%r96 = alloca %__Matrix__double__4__4, align 8
+call void @__C___Matrix__double__4__3__$mul____Matrix__double__3__4$__const( %__Matrix__double__4__4* sret %r96, %__Matrix__double__4__3* %r2, %__Matrix__double__3__4* %r33)
+%r97 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
+%r98 = getelementptr inbounds [4 x i8], [4 x i8]* @string8, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r97, i8* %r98)
+call void @printMatrix__4__4____Matrix__double__4__4$( %__Matrix__double__4__4* %r96)
+%r99 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r99)
+%r100 = alloca %__Matrix__double__4__3, align 8
+call void @__C___Matrix__double__4__3__$mul__double__const( %__Matrix__double__4__3* sret %r100, %__Matrix__double__4__3* %r2, double 0x3FF6666666666666)
+%r101 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
+%r102 = getelementptr inbounds [6 x i8], [6 x i8]* @string9, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r101, i8* %r102)
+call void @printMatrix__4__3____Matrix__double__4__3$( %__Matrix__double__4__3* %r100)
+%r103 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r103)
+%r104 = alloca %__Matrix__double__3__3, align 8
+call void @__C___Matrix__double__3__4__$mul____Matrix__double__4__3$__const( %__Matrix__double__3__3* sret %r104, %__Matrix__double__3__4* %r33, %__Matrix__double__4__3* %r2)
+%r105 = getelementptr inbounds [12 x i8], [12 x i8]* @string1, i64 0, i64 0
+%r106 = getelementptr inbounds [4 x i8], [4 x i8]* @string10, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r105, i8* %r106)
+call void @printMatrix__3__3____Matrix__double__3__3$( %__Matrix__double__3__3* %r104)
+%r107 = getelementptr inbounds [2 x i8], [2 x i8]* @string4, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r107)
 store i32 0, i32* %r1
 br label %L2
 L2:
-call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r65)
-call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r61)
+call void @__dtor___Matrix__double__3__3( %__Matrix__double__3__3* %r104)
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r100)
+call void @__dtor___Matrix__double__4__4( %__Matrix__double__4__4* %r96)
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r94)
+call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r61)
 call void @__dtor___Matrix__double__3__4( %__Matrix__double__3__4* %r33)
 call void @__dtor___Matrix__double__4__3( %__Matrix__double__4__3* %r2)
 br label %L1
 L1:
-%r69 = load i32, i32* %r1
-ret i32 %r69
+%r108 = load i32, i32* %r1
+ret i32 %r108
 }
 
 

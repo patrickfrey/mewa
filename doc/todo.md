@@ -1,7 +1,6 @@
 # TODO List
 
  * Implement generic var for global variables depending on a type (instead of static declarations)
- * Implement lambdas ```lambda( a, b, c){ a = b + c }```, lambda argument type as transfer type with a constructor defining the reduction of the lambda argument name to the type transferred.
  * Implement free operators: ```operator Complex[double]( const double, const Complex[double] o)```for promote calls
  * Do not implement NOP constructors/destructors (transitive)
 

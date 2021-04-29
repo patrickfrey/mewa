@@ -97,7 +97,7 @@ function testDefineResolveType()
 			rt = rt .. string.format( "%s[%d,%d]:", indentstr, scope[1], scope[2]) .. "\n"
 			for type in chld:list() do
 				local constructor = typedb:type_constructor( type)
-				rt = rt .. string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor, false)) .. "\n"
+				rt = rt .. string.format( "%s  - %s : %s", indentstr, typedb:type_string( type), mewa.tostring( constructor, 0, false)) .. "\n"
 			end
 			rt = rt .. typeTreeToString( chld, indent+1)
 		end
@@ -163,7 +163,7 @@ function testDefineResolveType()
 				prev_type = reduction.type
 			end
 			for i,item in ipairs( items) do
-				result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item) .. " : " .. mewa.tostring( typedb:type_constructor( item), false)
+				result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item) .. " : " .. mewa.tostring( typedb:type_constructor( item), 0, false)
 			end
 		else
 			error( "Failed to resolve type " .. typedb:type_string( qry[1]) .. qry[2])

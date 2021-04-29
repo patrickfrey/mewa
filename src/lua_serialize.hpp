@@ -26,7 +26,7 @@ namespace mewa {
 /// \param[in] li lua value reference
 /// \param[in] use_indent true if output with indent, false if to return everything on one line
 /// \return the result string
-std::string luaToString( lua_State* ls, int li, bool use_indent);
+std::string luaToString( lua_State* ls, int li, bool use_indent, int depth);
 
 } //namespace
 #else

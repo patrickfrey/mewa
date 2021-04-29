@@ -268,9 +268,9 @@ operatordecl = ">" (XX)
 operatordecl = "<" (XX)
 lambda_paramlist = lambda_parameters (XX)
 lambda_paramlist =  (XX)
-lambda_parameters = IDENT "," impl_parameters
+lambda_parameters = IDENT "," lambda_parameters
 lambda_parameters = IDENT
-lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" (XX)
+lamda_expression = "lambda" "(" lambda_paramlist ")" codeblock (XX)
 generic_instance_defelem = typegen
 generic_instance_defelem = UINTEGER (XX)
 generic_instance_defelem = lamda_expression (XX)
@@ -332,6 +332,7 @@ expression/L2 = FLOAT (XX)
 expression/L2 = "null" (XX)
 expression/L2 = DQSTRING (XX)
 expression/L2 = SQSTRING (XX)
+expression/L2 = lamda_expression
 expression/L2 = "(" expression ")"
 expression/L3 = expression "=" expression (step:115)
 expression/L3 = expression "+=" expression (step:116)
@@ -616,7 +617,7 @@ expressionlist/L0 = expression
 	typegen/L1 = typegen "[" . generic_instance "]"
 	typegen/L1 = . typegen "^"
 	typegen/L1 = . typegen "const" "^"
-	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}"
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	generic_instance_defelem = . typegen
 	generic_instance_defelem = . UINTEGER
 	generic_instance_defelem = . lamda_expression
@@ -704,6 +705,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody
 	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
 	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	codeblock/L1 = . "{" statementlist "}"
 	codeblock/L1 = "{" . statementlist "}"
 	statementlist/L1 = . statement statementlist
@@ -738,6 +740,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -802,8 +805,9 @@ expressionlist/L0 = expression
 [XX]
 	generic_instance_defelem = UINTEGER .
 [XX]
-	lamda_expression = "lambda" . "(" lambda_paramlist ")" "{" statementlist "}"
+	lamda_expression = "lambda" . "(" lambda_paramlist ")" codeblock
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	variabledefinition = typespec IDENT "=" . expression
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
@@ -816,6 +820,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1085,6 +1090,8 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = functiondefinition .
 [XX]
+	expression/L2 = lamda_expression .
+[XX]
 	statement/L1 = codeblock .
 [XX]
 	codeblock/L1 = "{" statementlist . "}"
@@ -1111,6 +1118,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody
 	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
 	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	codeblock/L1 = . "{" statementlist "}"
 	statementlist/L1 = . statement statementlist
 	statementlist/L1 = statement . statementlist
@@ -1145,6 +1153,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1246,6 +1255,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = FLOAT .
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1257,6 +1267,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L2 = "(" . expression ")"
 	expression/L3 = . expression "=" expression
@@ -1304,6 +1315,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1315,6 +1327,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1380,6 +1393,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody
 	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
 	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	codeblock/L1 = . "{" statementlist "}"
 	codeblock/L1 = "{" . statementlist "}"
 	statementlist/L1 = . statement statementlist
@@ -1416,6 +1430,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1464,6 +1479,7 @@ expressionlist/L0 = expression
 	expressionlist/L0 = . expression "," expressionlist
 	expressionlist/L0 = . expression
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1475,6 +1491,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1522,6 +1539,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1533,6 +1551,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1580,6 +1599,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1591,6 +1611,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1638,6 +1659,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1649,6 +1671,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1696,6 +1719,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -1707,6 +1731,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1775,6 +1800,7 @@ expressionlist/L0 = expression
 	variabledefinition = . typespec IDENT
 	variabledefinition = . typespec IDENT "=" expression
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "return" . expression ";"
 	statement/L1 = "return" . ";"
 	expression/L1 = . "{" expressionlist "}"
@@ -1788,6 +1814,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1834,6 +1861,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "throw" . expression "," expression ";"
 	statement/L1 = "throw" . expression ";"
 	expression/L1 = . "{" expressionlist "}"
@@ -1847,6 +1875,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -1893,6 +1922,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "delete" . expression ";"
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
@@ -1905,6 +1935,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2005,7 +2036,7 @@ expressionlist/L0 = expression
 	typegen/L1 = . typegen "[" generic_instance "]"
 	typegen/L1 = . typegen "^"
 	typegen/L1 = . typegen "const" "^"
-	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}"
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	generic_instance_defelem = . typegen
 	generic_instance_defelem = . UINTEGER
 	generic_instance_defelem = . lamda_expression
@@ -2017,9 +2048,9 @@ expressionlist/L0 = expression
 [XX]
 	lambda_paramlist = . lambda_parameters
 	lambda_paramlist = .
-	lambda_parameters = . IDENT "," impl_parameters
+	lambda_parameters = . IDENT "," lambda_parameters
 	lambda_parameters = . IDENT
-	lamda_expression = "lambda" "(" . lambda_paramlist ")" "{" statementlist "}"
+	lamda_expression = "lambda" "(" . lambda_paramlist ")" codeblock
 [XX]
 	variabledefinition = typespec IDENT "=" expression .
 	expression/L3 = expression . "=" expression
@@ -2062,6 +2093,7 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = "{" . expressionlist "}"
 	expression/L1 = . "{" "}"
@@ -2075,6 +2107,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2451,6 +2484,7 @@ expressionlist/L0 = expression
 [XX]
 	iexpression/L14 = expression indirection . IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2462,6 +2496,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2514,6 +2549,7 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = expression ";" .
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2525,6 +2561,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2572,6 +2609,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2583,6 +2621,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2632,6 +2671,7 @@ expressionlist/L0 = expression
 	expressionlist/L0 = . expression "," expressionlist
 	expressionlist/L0 = . expression
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2643,6 +2683,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2695,6 +2736,7 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->"
 	indirection/L14 = "->" .
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2706,6 +2748,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = expression "=" . expression
@@ -2753,6 +2796,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2764,6 +2808,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2811,6 +2856,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2822,6 +2868,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2869,6 +2916,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2880,6 +2928,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2927,6 +2976,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2938,6 +2988,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -2985,6 +3036,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -2996,6 +3048,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3043,6 +3096,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3054,6 +3108,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3101,6 +3156,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3112,6 +3168,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3159,6 +3216,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3170,6 +3228,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3217,6 +3276,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3228,6 +3288,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3275,6 +3336,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3286,6 +3348,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3333,6 +3396,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3344,6 +3408,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3391,6 +3456,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3402,6 +3468,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3449,6 +3516,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3460,6 +3528,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3507,6 +3576,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3518,6 +3588,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3565,6 +3636,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3576,6 +3648,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3623,6 +3696,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3634,6 +3708,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3681,6 +3756,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3692,6 +3768,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3739,6 +3816,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3750,6 +3828,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3797,6 +3876,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3808,6 +3888,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3855,6 +3936,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3866,6 +3948,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3913,6 +3996,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3924,6 +4008,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -3971,6 +4056,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -3982,6 +4068,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4030,6 +4117,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -4041,6 +4129,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4088,6 +4177,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -4099,6 +4189,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4146,6 +4237,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -4157,6 +4249,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4204,6 +4297,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -4215,6 +4309,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4262,6 +4357,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -4273,6 +4369,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4320,6 +4417,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -4331,6 +4429,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4844,6 +4943,7 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "if" "(" . expression ")" codeblock elseblock
 	statement/L1 = "if" "(" . expression ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
@@ -4857,6 +4957,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4903,6 +5004,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "while" "(" . expression ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
@@ -4915,6 +5017,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -4961,6 +5064,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "with" "(" . expression ")" codeblock
 	statement/L1 = "with" "(" . expression ")" ";"
 	expression/L1 = . "{" expressionlist "}"
@@ -4974,6 +5078,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -5026,11 +5131,11 @@ expressionlist/L0 = expression
 [XX]
 	generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist .
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist . ")" "{" statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist . ")" codeblock
 [XX]
 	lambda_paramlist = lambda_parameters .
 [XX]
-	lambda_parameters = IDENT . "," impl_parameters
+	lambda_parameters = IDENT . "," lambda_parameters
 	lambda_parameters = IDENT .
 [XX]
 	expression/L3 = expression . "=" expression
@@ -6674,6 +6779,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = "(" expression ")" .
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -6685,6 +6791,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -6742,6 +6849,7 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "throw" expression ";" .
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	statement/L1 = "throw" expression "," . expression ";"
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
@@ -6754,6 +6862,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -6927,6 +7036,7 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -6939,6 +7049,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -6985,6 +7096,7 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
 	expression/L1 = . "{" "}"
 	expression/L1 = . "new" typespec ":" expression
@@ -6997,6 +7109,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -7043,26 +7156,12 @@ expressionlist/L0 = expression
 	expression/L13 = . expression "[" expressionlist "]"
 	iexpression/L14 = . expression indirection IDENT
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" . "{" statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" . codeblock
+	codeblock/L1 = . "{" statementlist "}"
 [XX]
-	typename/L1 = . IDENT
-	typename/L1 = . IDENT "::" typename
-	typehdr/L1 = . typename
-	typehdr/L1 = . "const" typename
-	typehdr/L1 = . "any" "class" "^"
-	typehdr/L1 = . "any" "const" "class" "^"
-	typehdr/L1 = . "any" "struct" "^"
-	typehdr/L1 = . "any" "const" "struct" "^"
-	typegen/L1 = . typehdr
-	typegen/L1 = . typegen "[" generic_instance "]"
-	typegen/L1 = . typegen "^"
-	typegen/L1 = . typegen "const" "^"
-	typespec/L1 = . typegen
-	typespec/L1 = . typegen "&"
-	lambda_parameters = IDENT "," . impl_parameters
-	impl_parameters = . impl_paramdecl "," impl_parameters
-	impl_parameters = . impl_paramdecl
-	impl_paramdecl = . typespec IDENT
+	lambda_parameters = . IDENT "," lambda_parameters
+	lambda_parameters = IDENT "," . lambda_parameters
+	lambda_parameters = . IDENT
 [XX]
 	impl_paramdecl = typespec IDENT .
 [XX]
@@ -7377,105 +7476,9 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->" indirection
 	indirection/L14 = . "->"
 [XX]
-	typedefinition = . "typedef" typegen IDENT
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow"
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}"
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}"
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}"
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}"
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}"
-	linkage = . "private"
-	linkage = . "public"
-	linkage = .
-	functiondefinition = . linkage "function" IDENT typespec callablebody
-	functiondefinition = . linkage "procedure" IDENT callablebody
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" . statementlist "}"
-	codeblock/L1 = . "{" statementlist "}"
-	statementlist/L1 = . statement statementlist
-	statementlist/L1 = .
-	tryblock = . "try" codeblock
-	statement/L1 = . structdefinition
-	statement/L1 = . classdefinition
-	statement/L1 = . functiondefinition
-	statement/L1 = . typedefinition ";"
-	statement/L1 = . "var" variabledefinition ";"
-	statement/L1 = . expression ";"
-	statement/L1 = . "return" expression ";"
-	statement/L1 = . "return" ";"
-	statement/L1 = . "throw" expression "," expression ";"
-	statement/L1 = . "throw" expression ";"
-	statement/L1 = . tryblock catchblock
-	statement/L1 = . "delete" expression ";"
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock
-	statement/L1 = . "if" "(" expression ")" codeblock
-	statement/L1 = . "while" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" codeblock
-	statement/L1 = . "with" "(" expression ")" ";"
-	statement/L1 = . codeblock
-	expression/L1 = . "{" expressionlist "}"
-	expression/L1 = . "{" "}"
-	expression/L1 = . "new" typespec ":" expression
-	expression/L1 = . "cast" typespec ":" expression
-	expression/L2 = . IDENT
-	expression/L2 = . BOOLEAN
-	expression/L2 = . UINTEGER
-	expression/L2 = . FLOAT
-	expression/L2 = . "null"
-	expression/L2 = . DQSTRING
-	expression/L2 = . SQSTRING
-	expression/L2 = . "(" expression ")"
-	expression/L3 = . expression "=" expression
-	expression/L3 = . expression "+=" expression
-	expression/L3 = . expression "-=" expression
-	expression/L3 = . expression "*=" expression
-	expression/L3 = . expression "/=" expression
-	expression/L3 = . expression "^=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "%=" expression
-	expression/L3 = . expression "&&=" expression
-	expression/L3 = . expression "||=" expression
-	expression/L3 = . expression "&=" expression
-	expression/L3 = . expression "|=" expression
-	expression/L3 = . expression "<<=" expression
-	expression/L3 = . expression ">>=" expression
-	expression/L4 = . expression "||" expression
-	expression/L5 = . expression "&&" expression
-	expression/L6 = . expression "|" expression
-	expression/L7 = . expression "^" expression
-	expression/L7 = . expression "&" expression
-	expression/L8 = . expression "==" expression
-	expression/L8 = . expression "!=" expression
-	expression/L8 = . expression "<=" expression
-	expression/L8 = . expression "<" expression
-	expression/L8 = . expression ">=" expression
-	expression/L8 = . expression ">" expression
-	expression/L9 = . expression "+" expression
-	expression/L9 = . expression "-" expression
-	expression/L9 = . "&" expression
-	expression/L9 = . "-" expression
-	expression/L9 = . "+" expression
-	expression/L9 = . "~" expression
-	expression/L9 = . "!" expression
-	expression/L10 = . expression "*" expression
-	expression/L10 = . expression "/" expression
-	expression/L10 = . expression "%" expression
-	expression/L11 = . expression "<<" expression
-	expression/L11 = . expression ">>" expression
-	expression/L12 = . iexpression
-	expression/L12 = . expression "." IDENT
-	expression/L12 = . "*" expression
-	expression/L13 = . expression "(" expressionlist ")"
-	expression/L13 = . expression "(" ")"
-	expression/L13 = . expression "[" expressionlist "]"
-	iexpression/L14 = . expression indirection IDENT
+	lamda_expression = "lambda" "(" lambda_paramlist ")" codeblock .
 [XX]
-	lambda_parameters = IDENT "," impl_parameters .
+	lambda_parameters = IDENT "," lambda_parameters .
 [XX]
 	callablebody = "(" impl_paramlist ")" funcattribute . "{" statementlist "}"
 [XX]
@@ -7704,8 +7707,6 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" .
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist . "}"
-[XX]
 	typedefinition = . "typedef" typegen IDENT
 	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")"
 	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")"
@@ -7724,6 +7725,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "procedure" IDENT callablebody
 	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody
 	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	callablebody = "(" impl_paramlist ")" funcattribute "{" . statementlist "}"
 	codeblock/L1 = . "{" statementlist "}"
 	statementlist/L1 = . statement statementlist
@@ -7758,6 +7760,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -7857,8 +7860,6 @@ expressionlist/L0 = expression
 	codeblock/L1 = . "{" statementlist "}"
 	elseblock/L1 = "else" . codeblock
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" .
-[XX]
 	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist . "}"
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody .
@@ -7939,6 +7940,7 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";" .
 [XX]
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock
 	elseblock/L1 = "elseif" "(" . expression ")" codeblock elseblock
 	elseblock/L1 = "elseif" "(" . expression ")" codeblock
 	expression/L1 = . "{" expressionlist "}"
@@ -7952,6 +7954,7 @@ expressionlist/L0 = expression
 	expression/L2 = . "null"
 	expression/L2 = . DQSTRING
 	expression/L2 = . SQSTRING
+	expression/L2 = . lamda_expression
 	expression/L2 = . "(" expression ")"
 	expression/L3 = . expression "=" expression
 	expression/L3 = . expression "+=" expression
@@ -8251,7 +8254,7 @@ expressionlist/L0 = expression
 [XX]
 	generic_instance_defelem = UINTEGER .
 [XX]
-	lamda_expression = "lambda" . "(" lambda_paramlist ")" "{" statementlist "}"
+	lamda_expression = "lambda" . "(" lambda_paramlist ")" codeblock
 [XX]
 	variabledefinition = typespec IDENT "=" . expression
 [XX]
@@ -8309,6 +8312,8 @@ expressionlist/L0 = expression
 	statement/L1 = classdefinition .
 [XX]
 	statement/L1 = functiondefinition .
+[XX]
+	expression/L2 = lamda_expression .
 [XX]
 	statement/L1 = codeblock .
 [XX]
@@ -8419,7 +8424,7 @@ expressionlist/L0 = expression
 [XX]
 	typegen/L1 = typegen "[" generic_instance "]" .
 [XX]
-	lamda_expression = "lambda" "(" . lambda_paramlist ")" "{" statementlist "}"
+	lamda_expression = "lambda" "(" . lambda_paramlist ")" codeblock
 [XX]
 	variabledefinition = typespec IDENT "=" expression .
 	expression/L3 = expression . "=" expression
@@ -9113,11 +9118,11 @@ expressionlist/L0 = expression
 [XX]
 	generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist .
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist . ")" "{" statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist . ")" codeblock
 [XX]
 	lambda_paramlist = lambda_parameters .
 [XX]
-	lambda_parameters = IDENT . "," impl_parameters
+	lambda_parameters = IDENT . "," lambda_parameters
 	lambda_parameters = IDENT .
 [XX]
 	expression/L3 = expression . "=" expression
@@ -10664,9 +10669,9 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "cast" typespec ":" . expression
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" . "{" statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" . codeblock
 [XX]
-	lambda_parameters = IDENT "," . impl_parameters
+	lambda_parameters = IDENT "," . lambda_parameters
 [XX]
 	impl_paramdecl = typespec IDENT .
 [XX]
@@ -10862,9 +10867,9 @@ expressionlist/L0 = expression
 	expression/L13 = expression . "[" expressionlist "]"
 	iexpression/L14 = expression . indirection IDENT
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" . statementlist "}"
+	lamda_expression = "lambda" "(" lambda_paramlist ")" codeblock .
 [XX]
-	lambda_parameters = IDENT "," impl_parameters .
+	lambda_parameters = IDENT "," lambda_parameters .
 [XX]
 	callablebody = "(" impl_paramlist ")" funcattribute . "{" statementlist "}"
 [XX]
@@ -10936,8 +10941,6 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" .
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist . "}"
-[XX]
 	callablebody = "(" impl_paramlist ")" funcattribute "{" . statementlist "}"
 [XX]
 	funcattribute = "const" funcattribute .
@@ -10982,8 +10985,6 @@ expressionlist/L0 = expression
 	elseblock/L1 = "elseif" . "(" expression ")" codeblock
 [XX]
 	elseblock/L1 = "else" . codeblock
-[XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" .
 [XX]
 	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist . "}"
 [XX]
@@ -11100,7 +11101,7 @@ expressionlist/L0 = expression
 [XX]: {IDENT "const" '^' '['}
 [XX]: {',' ']'}
 [XX]: {'(' ';' '^' '[' '&' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "lambda" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' "const" '^' '[' '&'}
 [XX]: {"function" "procedure" "operator" "constructor"}
 [XX]: {$ IDENT "function" "procedure" "operator" "const" "any" "class" "struct" "typedef" '}' "generic" "interface" "private" "public" "constructor" "destructor"}
@@ -11124,15 +11125,15 @@ expressionlist/L0 = expression
 [XX]: {IDENT ')' "..." ',' "const" '^' '[' '&'}
 [XX]: {'(' ')' '^' '[' '&' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
 [XX]: {'(' ')' ';' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "elseif" "else" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "class" "struct" '&' "typedef" '{' '}' "generic" "private" "public" '+' '-' '*' '~' '!' "lambda" "elseif" "else" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {'(' ')' ',' '^' '[' ']' '&' '}' "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" "==" "!=" ">=" "<=" '>' '<' "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "lambda" "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "namespace" "private" "public" '+' '-' '*' '~' '!' "lambda" "main" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {')' ']' '}'}
 [XX]: {';' '{'}
 [XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' ']' '&' '{' ':'}
-[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' "procedure" "operator" "const" "any" "class" "struct" '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" '+' '-' '*' '~' '!' "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null"}
 [XX]: {IDENT '(' ')' "..." ',' "const" '^' '[' '&' ':'}
+[XX]: {$ BOOLEAN IDENT DQSTRING SQSTRING UINTEGER FLOAT "function" '(' ')' ';' "procedure" ',' "operator" "const" "any" "class" '^' "struct" '[' ']' '&' "typedef" '{' '}' "generic" "interface" "private" "public" "constructor" "destructor" "->" '=' '+' '-' '*' '/' '%' "&&" "||" '|' "<<" ">>" '~' '!' "==" "!=" ">=" "<=" '>' '<' "lambda" "elseif" "else" "catch" "try" "var" "return" "throw" "delete" "if" "while" "with" "new" "cast" "null" "+=" "-=" "*=" "/=" "^=" "&=" "%=" "&&=" "||=" "|=" "<<=" ">>=" '.'}
 [XX]: {IDENT '(' ')' "..." ',' ':'}
 
 -- LALR(XX) states (merged LR(XX) elements assigned to LR(XX) states):
@@ -11376,7 +11377,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT "lambda" GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 [XX]
 	typespec/L1 = typegen "&" . (XX), FOLLOW [XX] -> REDUCE typespec #2 CALL typespec_ref
 [XX]
@@ -11446,6 +11447,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
 	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
 	codeblock/L1 = "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
@@ -11520,6 +11522,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
 	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
 	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
@@ -11556,8 +11559,9 @@ expressionlist/L0 = expression
 [XX]
 	generic_instance_defelem = UINTEGER . (XX), FOLLOW [XX] -> REDUCE generic_instance_defelem #1 CALL generic_instance_dimension
 [XX]
-	lamda_expression = "lambda" . "(" lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
+	lamda_expression = "lambda" . "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT '(' GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	variabledefinition = typespec IDENT "=" . expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -11612,6 +11616,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -11839,6 +11844,8 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = functiondefinition . (XX), FOLLOW [XX] -> REDUCE statement #1 CALL definition 1
 [XX]
+	expression/L2 = lamda_expression ., FOLLOW [XX] -> REDUCE expression #1
+[XX]
 	statement/L1 = codeblock ., FOLLOW [XX] -> REDUCE statement #1
 [XX]
 	codeblock/L1 = "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
@@ -11853,6 +11860,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
 	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
 	statementlist/L1 = statement . statementlist, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
@@ -11927,6 +11935,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
 	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
 	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
@@ -12000,6 +12009,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = FLOAT . (XX), FOLLOW [XX] -> REDUCE expression #1 CALL constant "constexpr float"
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L2 = "(" . expression ")", FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -12054,10 +12064,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12112,6 +12124,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -12122,6 +12135,7 @@ expressionlist/L0 = expression
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
 	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
 	codeblock/L1 = "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
@@ -12200,6 +12214,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
 	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
 	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
@@ -12218,6 +12233,7 @@ expressionlist/L0 = expression
 	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
 	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12272,10 +12288,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12330,10 +12348,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12388,10 +12408,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12446,10 +12468,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12504,6 +12528,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -12529,6 +12554,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "return" . expression ";", FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -12584,10 +12610,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "throw" . expression "," expression ";", FOLLOW [XX] -> GOTO XX
 	statement/L1 = "throw" . expression ";", FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
@@ -12643,10 +12671,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "delete" . expression ";", FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -12701,6 +12731,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -12765,13 +12796,13 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	lamda_expression = . "lambda" "(" lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT "lambda" GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 [XX]
 	typegen/L1 = typegen "[" generic_instance "]" . (XX), FOLLOW [XX] -> REDUCE typegen #4 CALL typegen_generic
 [XX]
-	lamda_expression = "lambda" "(" . lambda_paramlist ")" "{" statementlist "}", FOLLOW [XX] -> GOTO XX
+	lamda_expression = "lambda" "(" . lambda_paramlist ")" codeblock, FOLLOW [XX] -> GOTO XX
 	lambda_paramlist = . lambda_parameters, FOLLOW [XX] -> GOTO XX
-	lambda_parameters = . IDENT "," impl_parameters, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	lambda_parameters = . IDENT "," lambda_parameters, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	lambda_parameters = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 	lambda_paramlist = . (XX), FOLLOW [XX] -> REDUCE lambda_paramlist #0 CALL lambda_paramdeflist
 [XX]
@@ -12816,6 +12847,7 @@ expressionlist/L0 = expression
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 	variabledefinition = typespec IDENT "=" expression . (step:104), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef_assign
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -12873,6 +12905,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -13205,6 +13238,7 @@ expressionlist/L0 = expression
 [XX]
 	iexpression/L14 = expression indirection . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13262,12 +13296,14 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
 	statement/L1 = expression ";" . (XX), FOLLOW [XX] -> REDUCE statement #2 CALL free_expression
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13322,10 +13358,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13382,10 +13420,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13440,6 +13480,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -13449,6 +13490,7 @@ expressionlist/L0 = expression
 	indirection/L14 = . "->", FOLLOW [XX] -> SHIFT "->" GOTO XX
 	indirection/L14 = "->" . (XX), FOLLOW [XX] -> REDUCE indirection #1 CALL count
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = expression "=" . expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -13503,10 +13545,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13561,10 +13605,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13619,10 +13665,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13677,10 +13725,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13735,10 +13785,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13793,10 +13845,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13851,10 +13905,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13909,10 +13965,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -13967,10 +14025,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14025,10 +14085,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14083,10 +14145,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14141,10 +14205,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14199,10 +14265,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14257,10 +14325,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14315,10 +14385,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14373,10 +14445,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14431,10 +14505,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = expression "+=" . expression, FOLLOW [XX] -> GOTO XX
@@ -14489,10 +14565,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14547,10 +14625,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14605,10 +14685,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14663,10 +14745,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14721,10 +14805,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14780,10 +14866,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14838,10 +14926,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14896,10 +14986,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -14954,10 +15046,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -15012,10 +15106,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -15070,10 +15166,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -15128,6 +15226,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -15598,6 +15697,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "if" "(" . expression ")" codeblock elseblock, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "if" "(" . expression ")" codeblock, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
@@ -15653,10 +15753,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "while" "(" . expression ")" codeblock, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -15711,10 +15813,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "with" "(" . expression ")" codeblock, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "with" "(" . expression ")" ";", FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
@@ -15770,6 +15874,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -15780,11 +15885,11 @@ expressionlist/L0 = expression
 [XX]
 	generic_instance_deflist = generic_instance_defelem "," generic_instance_deflist . (XX), FOLLOW [XX] -> REDUCE generic_instance_deflist #3 CALL generic_instance_deflist
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist . ")" "{" statementlist "}", FOLLOW [XX] -> SHIFT ')' GOTO XX
+	lamda_expression = "lambda" "(" lambda_paramlist . ")" codeblock, FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
 	lambda_paramlist = lambda_parameters . (XX), FOLLOW [XX] -> REDUCE lambda_paramlist #1 CALL lambda_paramdeflist
 [XX]
-	lambda_parameters = IDENT . "," impl_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
+	lambda_parameters = IDENT . "," lambda_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
 	lambda_parameters = IDENT ., FOLLOW [XX] -> REDUCE lambda_parameters #1
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
@@ -17427,6 +17532,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L2 = "(" expression ")" ., FOLLOW [XX] -> REDUCE expression #3
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
@@ -17483,6 +17589,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -17495,6 +17602,7 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "throw" expression ";" . (XX), FOLLOW [XX] -> REDUCE statement #3 CALL throw_exception
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = "throw" expression "," . expression ";", FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -17549,6 +17657,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -17680,6 +17789,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L1 = "new" typespec ":" . expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -17734,10 +17844,12 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L1 = "cast" typespec ":" . expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
@@ -17792,30 +17904,17 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
+	lamda_expression = "lambda" "(" lambda_paramlist ")" . codeblock, FOLLOW [XX] -> GOTO XX
+	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
-	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "[" generic_instance "]", FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "^", FOLLOW [XX] -> GOTO XX
-	typegen/L1 = . typegen "const" "^", FOLLOW [XX] -> GOTO XX
-	typespec/L1 = . typegen, FOLLOW [XX] -> GOTO XX
-	typespec/L1 = . typegen "&", FOLLOW [XX] -> GOTO XX
-	impl_paramdecl = . typespec IDENT, FOLLOW [XX] -> GOTO XX
-	lambda_parameters = IDENT "," . impl_parameters, FOLLOW [XX] -> GOTO XX
-	impl_parameters = . impl_paramdecl "," impl_parameters, FOLLOW [XX] -> GOTO XX
-	impl_parameters = . impl_paramdecl, FOLLOW [XX] -> GOTO XX
-	typename/L1 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	typename/L1 = . IDENT "::" typename, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	typehdr/L1 = . "const" typename, FOLLOW [XX] -> SHIFT "const" GOTO XX
-	typehdr/L1 = . "any" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "const" "class" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
-	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
+	lambda_parameters = IDENT "," . lambda_parameters, FOLLOW [XX] -> GOTO XX
+	lambda_parameters = . IDENT "," lambda_parameters, FOLLOW [XX] -> SHIFT IDENT GOTO XX
+	lambda_parameters = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
 	impl_paramdecl = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE impl_paramdecl #2 CALL paramdef
 [XX]
@@ -18130,105 +18229,9 @@ expressionlist/L0 = expression
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 	expression/L1 = "cast" typespec ":" expression . (step:107), FOLLOW [XX] -> REDUCE expression #4 CALL typecast
 [XX]
-	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
-	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
-	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
-	statementlist/L1 = . statement statementlist, FOLLOW [XX] -> GOTO XX
-	statement/L1 = . expression ";", FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "+=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "-=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "*=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "/=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "^=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "%=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "||=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "&=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "|=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression "<<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L3 = . expression ">>=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L4 = . expression "||" expression, FOLLOW [XX] -> GOTO XX
-	expression/L5 = . expression "&&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L6 = . expression "|" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "^" expression, FOLLOW [XX] -> GOTO XX
-	expression/L7 = . expression "&" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "==" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "!=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression "<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">=" expression, FOLLOW [XX] -> GOTO XX
-	expression/L8 = . expression ">" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "+" expression, FOLLOW [XX] -> GOTO XX
-	expression/L9 = . expression "-" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "*" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "/" expression, FOLLOW [XX] -> GOTO XX
-	expression/L10 = . expression "%" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression "<<" expression, FOLLOW [XX] -> GOTO XX
-	expression/L11 = . expression ">>" expression, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . expression "." IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" expressionlist ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "(" ")", FOLLOW [XX] -> GOTO XX
-	expression/L13 = . expression "[" expressionlist "]", FOLLOW [XX] -> GOTO XX
-	iexpression/L14 = . expression indirection IDENT, FOLLOW [XX] -> GOTO XX
-	expression/L12 = . iexpression, FOLLOW [XX] -> GOTO XX
-	expression/L2 = . BOOLEAN, FOLLOW [XX] -> SHIFT BOOLEAN GOTO XX
-	expression/L2 = . IDENT, FOLLOW [XX] -> SHIFT IDENT GOTO XX
-	expression/L2 = . DQSTRING, FOLLOW [XX] -> SHIFT DQSTRING GOTO XX
-	expression/L2 = . SQSTRING, FOLLOW [XX] -> SHIFT SQSTRING GOTO XX
-	expression/L2 = . UINTEGER, FOLLOW [XX] -> SHIFT UINTEGER GOTO XX
-	expression/L2 = . FLOAT, FOLLOW [XX] -> SHIFT FLOAT GOTO XX
-	expression/L2 = . "(" expression ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
-	classdefinition = . "class" IDENT "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	classdefinition = . "class" IDENT ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "class" GOTO XX
-	structdefinition = . "struct" IDENT "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "struct" GOTO XX
-	expression/L9 = . "&" expression, FOLLOW [XX] -> SHIFT '&' GOTO XX
-	typedefinition = . "typedef" typegen IDENT, FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	typedefinition = . "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow", FOLLOW [XX] -> SHIFT "typedef" GOTO XX
-	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" expressionlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	expression/L1 = . "{" "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	classdefinition = . "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	functiondefinition = . "generic" linkage "procedure" IDENT "[" generic_header "]" callablebody, FOLLOW [XX] -> SHIFT "generic" GOTO XX
-	linkage = . "private", FOLLOW [XX] -> SHIFT "private" GOTO XX
-	linkage = . "public", FOLLOW [XX] -> SHIFT "public" GOTO XX
-	expression/L9 = . "+" expression, FOLLOW [XX] -> SHIFT '+' GOTO XX
-	expression/L9 = . "-" expression, FOLLOW [XX] -> SHIFT '-' GOTO XX
-	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
-	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
-	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
-	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
-	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
-	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "return" ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
-	statement/L1 = . "throw" expression "," expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "throw" expression ";", FOLLOW [XX] -> SHIFT "throw" GOTO XX
-	statement/L1 = . "delete" expression ";", FOLLOW [XX] -> SHIFT "delete" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock elseblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "if" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "if" GOTO XX
-	statement/L1 = . "while" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "while" GOTO XX
-	statement/L1 = . "with" "(" expression ")" codeblock, FOLLOW [XX] -> SHIFT "with" GOTO XX
-	statement/L1 = . "with" "(" expression ")" ";", FOLLOW [XX] -> SHIFT "with" GOTO XX
-	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
-	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
-	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
-	statementlist/L1 = ., FOLLOW [XX] -> REDUCE statementlist #0
-	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
+	lamda_expression = "lambda" "(" lambda_paramlist ")" codeblock . (XX), FOLLOW [XX] -> REDUCE lamda_expression #5 CALL lambda_expression
 [XX]
-	lambda_parameters = IDENT "," impl_parameters ., FOLLOW [XX] -> REDUCE lambda_parameters #3
+	lambda_parameters = IDENT "," lambda_parameters ., FOLLOW [XX] -> REDUCE lambda_parameters #3
 [XX]
 	callablebody = "(" impl_paramlist ")" funcattribute . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
@@ -18457,14 +18460,13 @@ expressionlist/L0 = expression
 [XX]
 	statement/L1 = "with" "(" expression ")" ";" . (XX), FOLLOW [XX] -> REDUCE statement #5 CALL with_do
 [XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
-[XX]
 	statement/L1 = . typedefinition ";", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . structdefinition, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . classdefinition, FOLLOW [XX] -> GOTO XX
 	functiondefinition = . linkage "function" IDENT typespec callablebody, FOLLOW [XX] -> GOTO XX
 	functiondefinition = . linkage "procedure" IDENT callablebody, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . functiondefinition, FOLLOW [XX] -> GOTO XX
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	statement/L1 = . codeblock, FOLLOW [XX] -> GOTO XX
 	callablebody = "(" impl_paramlist ")" funcattribute "{" . statementlist "}", FOLLOW [XX] -> GOTO XX
 	statement/L1 = . tryblock catchblock, FOLLOW [XX] -> GOTO XX
@@ -18539,6 +18541,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	tryblock = . "try" codeblock, FOLLOW [XX] -> SHIFT "try" GOTO XX
 	statement/L1 = . "var" variabledefinition ";", FOLLOW [XX] -> SHIFT "var" GOTO XX
 	statement/L1 = . "return" expression ";", FOLLOW [XX] -> SHIFT "return" GOTO XX
@@ -18609,8 +18612,6 @@ expressionlist/L0 = expression
 [XX]
 	elseblock/L1 = "else" . codeblock, FOLLOW [XX] -> GOTO XX
 	codeblock/L1 = . "{" statementlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
-[XX]
-	lamda_expression = "lambda" "(" lambda_paramlist ")" "{" statementlist "}" . (XX), FOLLOW [XX] -> REDUCE lamda_expression #7 CALL lambda_expression
 [XX]
 	callablebody = "(" impl_paramlist ")" funcattribute "{" statementlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
@@ -18692,6 +18693,7 @@ expressionlist/L0 = expression
 [XX]
 	extern_definition = "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";" . (XX), FOLLOW [XX] -> REDUCE extern_definition #10 CALL extern_funcdef_vararg
 [XX]
+	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	elseblock/L1 = "elseif" "(" . expression ")" codeblock elseblock, FOLLOW [XX] -> GOTO XX
 	elseblock/L1 = "elseif" "(" . expression ")" codeblock, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
@@ -18747,6 +18749,7 @@ expressionlist/L0 = expression
 	expression/L12 = . "*" expression, FOLLOW [XX] -> SHIFT '*' GOTO XX
 	expression/L9 = . "~" expression, FOLLOW [XX] -> SHIFT '~' GOTO XX
 	expression/L9 = . "!" expression, FOLLOW [XX] -> SHIFT '!' GOTO XX
+	lamda_expression = . "lambda" "(" lambda_paramlist ")" codeblock, FOLLOW [XX] -> SHIFT "lambda" GOTO XX
 	expression/L1 = . "new" typespec ":" expression, FOLLOW [XX] -> SHIFT "new" GOTO XX
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
@@ -19402,6 +19405,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"try" => Shift goto XX
 	"var" => Shift goto XX
 	"return" => Shift goto XX
@@ -19462,6 +19466,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -19609,6 +19614,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #1 statement call definition 1
 	'~' => Reduce #1 statement call definition 1
 	'!' => Reduce #1 statement call definition 1
+	"lambda" => Reduce #1 statement call definition 1
 	"try" => Reduce #1 statement call definition 1
 	"var" => Reduce #1 statement call definition 1
 	"return" => Reduce #1 statement call definition 1
@@ -19645,6 +19651,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #1 statement call definition 1
 	'~' => Reduce #1 statement call definition 1
 	'!' => Reduce #1 statement call definition 1
+	"lambda" => Reduce #1 statement call definition 1
 	"try" => Reduce #1 statement call definition 1
 	"var" => Reduce #1 statement call definition 1
 	"return" => Reduce #1 statement call definition 1
@@ -19681,6 +19688,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #1 statement call definition 1
 	'~' => Reduce #1 statement call definition 1
 	'!' => Reduce #1 statement call definition 1
+	"lambda" => Reduce #1 statement call definition 1
 	"try" => Reduce #1 statement call definition 1
 	"var" => Reduce #1 statement call definition 1
 	"return" => Reduce #1 statement call definition 1
@@ -19692,6 +19700,47 @@ expressionlist/L0 = expression
 	"new" => Reduce #1 statement call definition 1
 	"cast" => Reduce #1 statement call definition 1
 	"null" => Reduce #1 statement call definition 1
+[XX]
+	'(' => Reduce #1 expression
+	')' => Reduce #1 expression
+	';' => Reduce #1 expression
+	',' => Reduce #1 expression
+	'^' => Reduce #1 expression
+	'[' => Reduce #1 expression
+	']' => Reduce #1 expression
+	'&' => Reduce #1 expression
+	'}' => Reduce #1 expression
+	"->" => Reduce #1 expression
+	'=' => Reduce #1 expression
+	'+' => Reduce #1 expression
+	'-' => Reduce #1 expression
+	'*' => Reduce #1 expression
+	'/' => Reduce #1 expression
+	'%' => Reduce #1 expression
+	"&&" => Reduce #1 expression
+	"||" => Reduce #1 expression
+	'|' => Reduce #1 expression
+	"<<" => Reduce #1 expression
+	">>" => Reduce #1 expression
+	"==" => Reduce #1 expression
+	"!=" => Reduce #1 expression
+	">=" => Reduce #1 expression
+	"<=" => Reduce #1 expression
+	'>' => Reduce #1 expression
+	'<' => Reduce #1 expression
+	"+=" => Reduce #1 expression
+	"-=" => Reduce #1 expression
+	"*=" => Reduce #1 expression
+	"/=" => Reduce #1 expression
+	"^=" => Reduce #1 expression
+	"&=" => Reduce #1 expression
+	"%=" => Reduce #1 expression
+	"&&=" => Reduce #1 expression
+	"||=" => Reduce #1 expression
+	"|=" => Reduce #1 expression
+	"<<=" => Reduce #1 expression
+	">>=" => Reduce #1 expression
+	'.' => Reduce #1 expression
 [XX]
 	$ => Reduce #1 statement
 	BOOLEAN => Reduce #1 statement
@@ -19717,6 +19766,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #1 statement
 	'~' => Reduce #1 statement
 	'!' => Reduce #1 statement
+	"lambda" => Reduce #1 statement
 	"try" => Reduce #1 statement
 	"var" => Reduce #1 statement
 	"return" => Reduce #1 statement
@@ -19756,6 +19806,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"try" => Shift goto XX
 	"var" => Shift goto XX
 	"return" => Shift goto XX
@@ -20106,6 +20157,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20124,6 +20176,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20151,6 +20204,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"try" => Shift goto XX
 	"var" => Shift goto XX
 	"return" => Shift goto XX
@@ -20177,6 +20231,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20195,6 +20250,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20213,6 +20269,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20231,6 +20288,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20249,6 +20307,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20274,6 +20333,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20292,6 +20352,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20310,6 +20371,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20443,6 +20505,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -20480,6 +20543,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #4 functiondefinition call procdef
 	'~' => Reduce #4 functiondefinition call procdef
 	'!' => Reduce #4 functiondefinition call procdef
+	"lambda" => Reduce #4 functiondefinition call procdef
 	"main" => Reduce #4 functiondefinition call procdef
 	"try" => Reduce #4 functiondefinition call procdef
 	"var" => Reduce #4 functiondefinition call procdef
@@ -20858,6 +20922,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #2 statement call definition 1
 	'~' => Reduce #2 statement call definition 1
 	'!' => Reduce #2 statement call definition 1
+	"lambda" => Reduce #2 statement call definition 1
 	"try" => Reduce #2 statement call definition 1
 	"var" => Reduce #2 statement call definition 1
 	"return" => Reduce #2 statement call definition 1
@@ -20879,12 +20944,18 @@ expressionlist/L0 = expression
 	FLOAT => Reduce #3 codeblock call codeblock
 	"function" => Reduce #3 codeblock call codeblock
 	'(' => Reduce #3 codeblock call codeblock
+	')' => Reduce #3 codeblock call codeblock
+	';' => Reduce #3 codeblock call codeblock
 	"procedure" => Reduce #3 codeblock call codeblock
+	',' => Reduce #3 codeblock call codeblock
 	"operator" => Reduce #3 codeblock call codeblock
 	"const" => Reduce #3 codeblock call codeblock
 	"any" => Reduce #3 codeblock call codeblock
 	"class" => Reduce #3 codeblock call codeblock
+	'^' => Reduce #3 codeblock call codeblock
 	"struct" => Reduce #3 codeblock call codeblock
+	'[' => Reduce #3 codeblock call codeblock
+	']' => Reduce #3 codeblock call codeblock
 	'&' => Reduce #3 codeblock call codeblock
 	"typedef" => Reduce #3 codeblock call codeblock
 	'{' => Reduce #3 codeblock call codeblock
@@ -20895,11 +20966,27 @@ expressionlist/L0 = expression
 	"public" => Reduce #3 codeblock call codeblock
 	"constructor" => Reduce #3 codeblock call codeblock
 	"destructor" => Reduce #3 codeblock call codeblock
+	"->" => Reduce #3 codeblock call codeblock
+	'=' => Reduce #3 codeblock call codeblock
 	'+' => Reduce #3 codeblock call codeblock
 	'-' => Reduce #3 codeblock call codeblock
 	'*' => Reduce #3 codeblock call codeblock
+	'/' => Reduce #3 codeblock call codeblock
+	'%' => Reduce #3 codeblock call codeblock
+	"&&" => Reduce #3 codeblock call codeblock
+	"||" => Reduce #3 codeblock call codeblock
+	'|' => Reduce #3 codeblock call codeblock
+	"<<" => Reduce #3 codeblock call codeblock
+	">>" => Reduce #3 codeblock call codeblock
 	'~' => Reduce #3 codeblock call codeblock
 	'!' => Reduce #3 codeblock call codeblock
+	"==" => Reduce #3 codeblock call codeblock
+	"!=" => Reduce #3 codeblock call codeblock
+	">=" => Reduce #3 codeblock call codeblock
+	"<=" => Reduce #3 codeblock call codeblock
+	'>' => Reduce #3 codeblock call codeblock
+	'<' => Reduce #3 codeblock call codeblock
+	"lambda" => Reduce #3 codeblock call codeblock
 	"elseif" => Reduce #3 codeblock call codeblock
 	"else" => Reduce #3 codeblock call codeblock
 	"catch" => Reduce #3 codeblock call codeblock
@@ -20914,6 +21001,19 @@ expressionlist/L0 = expression
 	"new" => Reduce #3 codeblock call codeblock
 	"cast" => Reduce #3 codeblock call codeblock
 	"null" => Reduce #3 codeblock call codeblock
+	"+=" => Reduce #3 codeblock call codeblock
+	"-=" => Reduce #3 codeblock call codeblock
+	"*=" => Reduce #3 codeblock call codeblock
+	"/=" => Reduce #3 codeblock call codeblock
+	"^=" => Reduce #3 codeblock call codeblock
+	"&=" => Reduce #3 codeblock call codeblock
+	"%=" => Reduce #3 codeblock call codeblock
+	"&&=" => Reduce #3 codeblock call codeblock
+	"||=" => Reduce #3 codeblock call codeblock
+	"|=" => Reduce #3 codeblock call codeblock
+	"<<=" => Reduce #3 codeblock call codeblock
+	">>=" => Reduce #3 codeblock call codeblock
+	'.' => Reduce #3 codeblock call codeblock
 [XX]
 	$ => Reduce #2 statement call trycatch
 	BOOLEAN => Reduce #2 statement call trycatch
@@ -20939,6 +21039,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #2 statement call trycatch
 	'~' => Reduce #2 statement call trycatch
 	'!' => Reduce #2 statement call trycatch
+	"lambda" => Reduce #2 statement call trycatch
 	"try" => Reduce #2 statement call trycatch
 	"var" => Reduce #2 statement call trycatch
 	"return" => Reduce #2 statement call trycatch
@@ -20972,6 +21073,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21000,6 +21102,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #2 statement call free_expression
 	'~' => Reduce #2 statement call free_expression
 	'!' => Reduce #2 statement call free_expression
+	"lambda" => Reduce #2 statement call free_expression
 	"try" => Reduce #2 statement call free_expression
 	"var" => Reduce #2 statement call free_expression
 	"return" => Reduce #2 statement call free_expression
@@ -21026,6 +21129,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21044,6 +21148,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21062,6 +21167,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21083,6 +21189,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21101,6 +21208,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21119,6 +21227,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21137,6 +21246,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21155,6 +21265,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21173,6 +21284,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21191,6 +21303,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21209,6 +21322,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21227,6 +21341,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21245,6 +21360,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21263,6 +21379,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21281,6 +21398,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21299,6 +21417,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21317,6 +21436,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21335,6 +21455,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21353,6 +21474,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21371,6 +21493,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21389,6 +21512,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21407,6 +21531,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21425,6 +21550,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21443,6 +21569,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21461,6 +21588,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21479,6 +21607,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21497,6 +21626,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21515,6 +21645,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21533,6 +21664,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21551,6 +21683,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21569,6 +21702,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -21587,6 +21721,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -22023,6 +22158,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #2 statement call return_void
 	'~' => Reduce #2 statement call return_void
 	'!' => Reduce #2 statement call return_void
+	"lambda" => Reduce #2 statement call return_void
 	"try" => Reduce #2 statement call return_void
 	"var" => Reduce #2 statement call return_void
 	"return" => Reduce #2 statement call return_void
@@ -22124,6 +22260,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -22142,6 +22279,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -22160,6 +22298,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -22248,6 +22387,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 functiondefinition call funcdef
 	'~' => Reduce #5 functiondefinition call funcdef
 	'!' => Reduce #5 functiondefinition call funcdef
+	"lambda" => Reduce #5 functiondefinition call funcdef
 	"main" => Reduce #5 functiondefinition call funcdef
 	"try" => Reduce #5 functiondefinition call funcdef
 	"var" => Reduce #5 functiondefinition call funcdef
@@ -22301,6 +22441,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 classdefinition call classdef
 	'~' => Reduce #5 classdefinition call classdef
 	'!' => Reduce #5 classdefinition call classdef
+	"lambda" => Reduce #5 classdefinition call classdef
 	"main" => Reduce #5 classdefinition call classdef
 	"try" => Reduce #5 classdefinition call classdef
 	"var" => Reduce #5 classdefinition call classdef
@@ -22448,6 +22589,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 structdefinition call structdef
 	'~' => Reduce #5 structdefinition call structdef
 	'!' => Reduce #5 structdefinition call structdef
+	"lambda" => Reduce #5 structdefinition call structdef
 	"main" => Reduce #5 structdefinition call structdef
 	"try" => Reduce #5 structdefinition call structdef
 	"var" => Reduce #5 structdefinition call structdef
@@ -24157,6 +24299,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -24226,6 +24369,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #3 statement call definition 1
 	'~' => Reduce #3 statement call definition 1
 	'!' => Reduce #3 statement call definition 1
+	"lambda" => Reduce #3 statement call definition 1
 	"try" => Reduce #3 statement call definition 1
 	"var" => Reduce #3 statement call definition 1
 	"return" => Reduce #3 statement call definition 1
@@ -24262,6 +24406,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #3 statement call return_value
 	'~' => Reduce #3 statement call return_value
 	'!' => Reduce #3 statement call return_value
+	"lambda" => Reduce #3 statement call return_value
 	"try" => Reduce #3 statement call return_value
 	"var" => Reduce #3 statement call return_value
 	"return" => Reduce #3 statement call return_value
@@ -24298,6 +24443,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #3 statement call throw_exception
 	'~' => Reduce #3 statement call throw_exception
 	'!' => Reduce #3 statement call throw_exception
+	"lambda" => Reduce #3 statement call throw_exception
 	"try" => Reduce #3 statement call throw_exception
 	"var" => Reduce #3 statement call throw_exception
 	"return" => Reduce #3 statement call throw_exception
@@ -24324,6 +24470,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -24352,6 +24499,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #3 statement call delete
 	'~' => Reduce #3 statement call delete
 	'!' => Reduce #3 statement call delete
+	"lambda" => Reduce #3 statement call delete
 	"try" => Reduce #3 statement call delete
 	"var" => Reduce #3 statement call delete
 	"return" => Reduce #3 statement call delete
@@ -24489,6 +24637,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -24507,6 +24656,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -24514,8 +24664,6 @@ expressionlist/L0 = expression
 	'{' => Shift goto XX
 [XX]
 	IDENT => Shift goto XX
-	"const" => Shift goto XX
-	"any" => Shift goto XX
 [XX]
 	')' => Reduce #2 impl_paramdecl call paramdef
 	',' => Reduce #2 impl_paramdecl call paramdef
@@ -24638,6 +24786,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #3 catchblock call catchblock
 	'~' => Reduce #3 catchblock call catchblock
 	'!' => Reduce #3 catchblock call catchblock
+	"lambda" => Reduce #3 catchblock call catchblock
 	"try" => Reduce #3 catchblock call catchblock
 	"var" => Reduce #3 catchblock call catchblock
 	"return" => Reduce #3 catchblock call catchblock
@@ -24864,40 +25013,46 @@ expressionlist/L0 = expression
 	">>=" => Shift goto XX
 	'.' => Shift goto XX
 [XX]
-	BOOLEAN => Shift goto XX
-	IDENT => Shift goto XX
-	DQSTRING => Shift goto XX
-	SQSTRING => Shift goto XX
-	UINTEGER => Shift goto XX
-	FLOAT => Shift goto XX
-	"function" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	'(' => Shift goto XX
-	"procedure" => Reduce #0 linkage call linkage {private=false,linkage="external",explicit=false}
-	"class" => Shift goto XX
-	"struct" => Shift goto XX
-	'&' => Shift goto XX
-	"typedef" => Shift goto XX
-	'{' => Shift goto XX
-	'}' => Reduce #0 statementlist
-	"generic" => Shift goto XX
-	"private" => Shift goto XX
-	"public" => Shift goto XX
-	'+' => Shift goto XX
-	'-' => Shift goto XX
-	'*' => Shift goto XX
-	'~' => Shift goto XX
-	'!' => Shift goto XX
-	"try" => Shift goto XX
-	"var" => Shift goto XX
-	"return" => Shift goto XX
-	"throw" => Shift goto XX
-	"delete" => Shift goto XX
-	"if" => Shift goto XX
-	"while" => Shift goto XX
-	"with" => Shift goto XX
-	"new" => Shift goto XX
-	"cast" => Shift goto XX
-	"null" => Shift goto XX
+	'(' => Reduce #5 lamda_expression call lambda_expression
+	')' => Reduce #5 lamda_expression call lambda_expression
+	';' => Reduce #5 lamda_expression call lambda_expression
+	',' => Reduce #5 lamda_expression call lambda_expression
+	'^' => Reduce #5 lamda_expression call lambda_expression
+	'[' => Reduce #5 lamda_expression call lambda_expression
+	']' => Reduce #5 lamda_expression call lambda_expression
+	'&' => Reduce #5 lamda_expression call lambda_expression
+	'}' => Reduce #5 lamda_expression call lambda_expression
+	"->" => Reduce #5 lamda_expression call lambda_expression
+	'=' => Reduce #5 lamda_expression call lambda_expression
+	'+' => Reduce #5 lamda_expression call lambda_expression
+	'-' => Reduce #5 lamda_expression call lambda_expression
+	'*' => Reduce #5 lamda_expression call lambda_expression
+	'/' => Reduce #5 lamda_expression call lambda_expression
+	'%' => Reduce #5 lamda_expression call lambda_expression
+	"&&" => Reduce #5 lamda_expression call lambda_expression
+	"||" => Reduce #5 lamda_expression call lambda_expression
+	'|' => Reduce #5 lamda_expression call lambda_expression
+	"<<" => Reduce #5 lamda_expression call lambda_expression
+	">>" => Reduce #5 lamda_expression call lambda_expression
+	"==" => Reduce #5 lamda_expression call lambda_expression
+	"!=" => Reduce #5 lamda_expression call lambda_expression
+	">=" => Reduce #5 lamda_expression call lambda_expression
+	"<=" => Reduce #5 lamda_expression call lambda_expression
+	'>' => Reduce #5 lamda_expression call lambda_expression
+	'<' => Reduce #5 lamda_expression call lambda_expression
+	"+=" => Reduce #5 lamda_expression call lambda_expression
+	"-=" => Reduce #5 lamda_expression call lambda_expression
+	"*=" => Reduce #5 lamda_expression call lambda_expression
+	"/=" => Reduce #5 lamda_expression call lambda_expression
+	"^=" => Reduce #5 lamda_expression call lambda_expression
+	"&=" => Reduce #5 lamda_expression call lambda_expression
+	"%=" => Reduce #5 lamda_expression call lambda_expression
+	"&&=" => Reduce #5 lamda_expression call lambda_expression
+	"||=" => Reduce #5 lamda_expression call lambda_expression
+	"|=" => Reduce #5 lamda_expression call lambda_expression
+	"<<=" => Reduce #5 lamda_expression call lambda_expression
+	">>=" => Reduce #5 lamda_expression call lambda_expression
+	'.' => Reduce #5 lamda_expression call lambda_expression
 [XX]
 	')' => Reduce #3 lambda_parameters
 [XX]
@@ -24966,6 +25121,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #7 classdefinition call classdef
 	'~' => Reduce #7 classdefinition call classdef
 	'!' => Reduce #7 classdefinition call classdef
+	"lambda" => Reduce #7 classdefinition call classdef
 	"main" => Reduce #7 classdefinition call classdef
 	"try" => Reduce #7 classdefinition call classdef
 	"var" => Reduce #7 classdefinition call classdef
@@ -25095,6 +25251,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 statement call throw_exception
 	'~' => Reduce #5 statement call throw_exception
 	'!' => Reduce #5 statement call throw_exception
+	"lambda" => Reduce #5 statement call throw_exception
 	"try" => Reduce #5 statement call throw_exception
 	"var" => Reduce #5 statement call throw_exception
 	"return" => Reduce #5 statement call throw_exception
@@ -25131,6 +25288,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 statement call conditional_if
 	'~' => Reduce #5 statement call conditional_if
 	'!' => Reduce #5 statement call conditional_if
+	"lambda" => Reduce #5 statement call conditional_if
 	"elseif" => Shift goto XX
 	"else" => Shift goto XX
 	"try" => Reduce #5 statement call conditional_if
@@ -25169,6 +25327,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 statement call conditional_while
 	'~' => Reduce #5 statement call conditional_while
 	'!' => Reduce #5 statement call conditional_while
+	"lambda" => Reduce #5 statement call conditional_while
 	"try" => Reduce #5 statement call conditional_while
 	"var" => Reduce #5 statement call conditional_while
 	"return" => Reduce #5 statement call conditional_while
@@ -25205,6 +25364,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 statement call with_do
 	'~' => Reduce #5 statement call with_do
 	'!' => Reduce #5 statement call with_do
+	"lambda" => Reduce #5 statement call with_do
 	"try" => Reduce #5 statement call with_do
 	"var" => Reduce #5 statement call with_do
 	"return" => Reduce #5 statement call with_do
@@ -25241,6 +25401,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 statement call with_do
 	'~' => Reduce #5 statement call with_do
 	'!' => Reduce #5 statement call with_do
+	"lambda" => Reduce #5 statement call with_do
 	"try" => Reduce #5 statement call with_do
 	"var" => Reduce #5 statement call with_do
 	"return" => Reduce #5 statement call with_do
@@ -25252,8 +25413,6 @@ expressionlist/L0 = expression
 	"new" => Reduce #5 statement call with_do
 	"cast" => Reduce #5 statement call with_do
 	"null" => Reduce #5 statement call with_do
-[XX]
-	'}' => Shift goto XX
 [XX]
 	BOOLEAN => Shift goto XX
 	IDENT => Shift goto XX
@@ -25278,6 +25437,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"try" => Shift goto XX
 	"var" => Shift goto XX
 	"return" => Shift goto XX
@@ -25349,6 +25509,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #8 functiondefinition call generic_procdef
 	'~' => Reduce #8 functiondefinition call generic_procdef
 	'!' => Reduce #8 functiondefinition call generic_procdef
+	"lambda" => Reduce #8 functiondefinition call generic_procdef
 	"main" => Reduce #8 functiondefinition call generic_procdef
 	"try" => Reduce #8 functiondefinition call generic_procdef
 	"var" => Reduce #8 functiondefinition call generic_procdef
@@ -25442,6 +25603,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 catchblock call catchblock
 	'~' => Reduce #5 catchblock call catchblock
 	'!' => Reduce #5 catchblock call catchblock
+	"lambda" => Reduce #5 catchblock call catchblock
 	"try" => Reduce #5 catchblock call catchblock
 	"var" => Reduce #5 catchblock call catchblock
 	"return" => Reduce #5 catchblock call catchblock
@@ -25478,6 +25640,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #6 statement call conditional_if
 	'~' => Reduce #6 statement call conditional_if
 	'!' => Reduce #6 statement call conditional_if
+	"lambda" => Reduce #6 statement call conditional_if
 	"try" => Reduce #6 statement call conditional_if
 	"var" => Reduce #6 statement call conditional_if
 	"return" => Reduce #6 statement call conditional_if
@@ -25493,9 +25656,6 @@ expressionlist/L0 = expression
 	'(' => Shift goto XX
 [XX]
 	'{' => Shift goto XX
-[XX]
-	',' => Reduce #7 lamda_expression call lambda_expression
-	']' => Reduce #7 lamda_expression call lambda_expression
 [XX]
 	'}' => Shift goto XX
 [XX]
@@ -25530,6 +25690,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #9 functiondefinition call generic_funcdef
 	'~' => Reduce #9 functiondefinition call generic_funcdef
 	'!' => Reduce #9 functiondefinition call generic_funcdef
+	"lambda" => Reduce #9 functiondefinition call generic_funcdef
 	"main" => Reduce #9 functiondefinition call generic_funcdef
 	"try" => Reduce #9 functiondefinition call generic_funcdef
 	"var" => Reduce #9 functiondefinition call generic_funcdef
@@ -25574,6 +25735,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #9 classdefinition call generic_classdef
 	'~' => Reduce #9 classdefinition call generic_classdef
 	'!' => Reduce #9 classdefinition call generic_classdef
+	"lambda" => Reduce #9 classdefinition call generic_classdef
 	"main" => Reduce #9 classdefinition call generic_classdef
 	"try" => Reduce #9 classdefinition call generic_classdef
 	"var" => Reduce #9 classdefinition call generic_classdef
@@ -25639,6 +25801,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #9 structdefinition call generic_structdef
 	'~' => Reduce #9 structdefinition call generic_structdef
 	'!' => Reduce #9 structdefinition call generic_structdef
+	"lambda" => Reduce #9 structdefinition call generic_structdef
 	"main" => Reduce #9 structdefinition call generic_structdef
 	"try" => Reduce #9 structdefinition call generic_structdef
 	"var" => Reduce #9 structdefinition call generic_structdef
@@ -25695,6 +25858,7 @@ expressionlist/L0 = expression
 	'*' => Shift goto XX
 	'~' => Shift goto XX
 	'!' => Shift goto XX
+	"lambda" => Shift goto XX
 	"new" => Shift goto XX
 	"cast" => Shift goto XX
 	"null" => Shift goto XX
@@ -25723,6 +25887,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #2 elseblock call conditional_else
 	'~' => Reduce #2 elseblock call conditional_else
 	'!' => Reduce #2 elseblock call conditional_else
+	"lambda" => Reduce #2 elseblock call conditional_else
 	"try" => Reduce #2 elseblock call conditional_else
 	"var" => Reduce #2 elseblock call conditional_else
 	"return" => Reduce #2 elseblock call conditional_else
@@ -25766,6 +25931,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #7 callablebody call callablebody
 	'~' => Reduce #7 callablebody call callablebody
 	'!' => Reduce #7 callablebody call callablebody
+	"lambda" => Reduce #7 callablebody call callablebody
 	"main" => Reduce #7 callablebody call callablebody
 	"try" => Reduce #7 callablebody call callablebody
 	"var" => Reduce #7 callablebody call callablebody
@@ -25865,6 +26031,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #11 classdefinition call generic_classdef
 	'~' => Reduce #11 classdefinition call generic_classdef
 	'!' => Reduce #11 classdefinition call generic_classdef
+	"lambda" => Reduce #11 classdefinition call generic_classdef
 	"main" => Reduce #11 classdefinition call generic_classdef
 	"try" => Reduce #11 classdefinition call generic_classdef
 	"var" => Reduce #11 classdefinition call generic_classdef
@@ -25916,6 +26083,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #5 elseblock call conditional_elseif
 	'~' => Reduce #5 elseblock call conditional_elseif
 	'!' => Reduce #5 elseblock call conditional_elseif
+	"lambda" => Reduce #5 elseblock call conditional_elseif
 	"elseif" => Shift goto XX
 	"else" => Shift goto XX
 	"try" => Reduce #5 elseblock call conditional_elseif
@@ -25954,6 +26122,7 @@ expressionlist/L0 = expression
 	'*' => Reduce #6 elseblock call conditional_elseif
 	'~' => Reduce #6 elseblock call conditional_elseif
 	'!' => Reduce #6 elseblock call conditional_elseif
+	"lambda" => Reduce #6 elseblock call conditional_elseif
 	"try" => Reduce #6 elseblock call conditional_elseif
 	"var" => Reduce #6 elseblock call conditional_elseif
 	"return" => Reduce #6 elseblock call conditional_elseif
@@ -26031,6 +26200,7 @@ expressionlist/L0 = expression
 	classdefinition => XX
 	linkage => XX
 	functiondefinition => XX
+	lamda_expression => XX
 	codeblock => XX
 	statementlist => XX
 	tryblock => XX
@@ -26038,6 +26208,7 @@ expressionlist/L0 = expression
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26109,6 +26280,7 @@ expressionlist/L0 = expression
 	classdefinition => XX
 	linkage => XX
 	functiondefinition => XX
+	lamda_expression => XX
 	codeblock => XX
 	statementlist => XX
 	tryblock => XX
@@ -26118,9 +26290,11 @@ expressionlist/L0 = expression
 [XX]
 	indirection => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26129,6 +26303,7 @@ expressionlist/L0 = expression
 	classdefinition => XX
 	linkage => XX
 	functiondefinition => XX
+	lamda_expression => XX
 	codeblock => XX
 	statementlist => XX
 	tryblock => XX
@@ -26137,18 +26312,23 @@ expressionlist/L0 = expression
 	iexpression => XX
 	expressionlist => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26160,12 +26340,15 @@ expressionlist/L0 = expression
 	typespec => XX
 	variabledefinition => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26191,6 +26374,7 @@ expressionlist/L0 = expression
 [XX]
 	indirection => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 	expressionlist => XX
@@ -26272,106 +26456,139 @@ expressionlist/L0 = expression
 	typegen => XX
 	typespec => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 	expressionlist => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 	expressionlist => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
 	indirection => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26397,12 +26614,15 @@ expressionlist/L0 = expression
 [XX]
 	indirection => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26531,10 +26751,12 @@ expressionlist/L0 = expression
 [XX]
 	indirection => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 	expressionlist => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
@@ -26544,18 +26766,17 @@ expressionlist/L0 = expression
 [XX]
 	indirection => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]
-	typename => XX
-	typehdr => XX
-	typegen => XX
-	typespec => XX
-	impl_parameters => XX
-	impl_paramdecl => XX
+	codeblock => XX
+[XX]
+	lambda_parameters => XX
 [XX]
 	funcattribute => XX
 [XX]
@@ -26613,18 +26834,6 @@ expressionlist/L0 = expression
 	indirection => XX
 [XX]
 	indirection => XX
-[XX]
-	typedefinition => XX
-	structdefinition => XX
-	classdefinition => XX
-	linkage => XX
-	functiondefinition => XX
-	codeblock => XX
-	statementlist => XX
-	tryblock => XX
-	statement => XX
-	expression => XX
-	iexpression => XX
 [XX]
 	funcattribute => XX
 [XX]
@@ -26695,6 +26904,7 @@ expressionlist/L0 = expression
 	classdefinition => XX
 	linkage => XX
 	functiondefinition => XX
+	lamda_expression => XX
 	codeblock => XX
 	statementlist => XX
 	tryblock => XX
@@ -26732,6 +26942,7 @@ expressionlist/L0 = expression
 [XX]
 	funcattribute => XX
 [XX]
+	lamda_expression => XX
 	expression => XX
 	iexpression => XX
 [XX]

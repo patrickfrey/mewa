@@ -169,10 +169,10 @@ operatordecl		= "->"										(operatordecl {name="->", symbol="arrow"})
 lambda_paramlist	= lambda_parameters								(lambda_paramdeflist)
 			| ε										(lambda_paramdeflist)
 			;
-lambda_parameters	= IDENT "," impl_parameters
+lambda_parameters	= IDENT "," lambda_parameters
 			| IDENT
 			;
-lamda_expression	= "lambda" "(" lambda_paramlist ")" "{" statementlist "}"			(lambda_expression)
+lamda_expression	= "lambda" "(" lambda_paramlist ")" codeblock					(lambda_expression)
 			;
 generic_instance_defelem= typegen
 			| UINTEGER									(generic_instance_dimension)
@@ -254,6 +254,7 @@ expression/L2		= IDENT										(variable)
 			| "null"									(null)
 			| DQSTRING									(string_constant)
 			| SQSTRING									(char_constant)
+			| lamda_expression
 			| "(" expression ")"
 			;
 expression/L3		= expression  "="  expression							(>>binop "=")

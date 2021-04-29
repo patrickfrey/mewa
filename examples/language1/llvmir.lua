@@ -262,7 +262,7 @@ llvmir.genericFunctionDescr = {
 	name = "{name}"
 }
 llvmir.lambdaExpressionDescr = {
-	class = "lambdaExpression"
+	class = "lambda"
 }
 llvmir.callableDescr = {
 	class = "callable"
@@ -418,7 +418,7 @@ function llvmir.externFunctionDeclaration( lang, rtllvmtype, symbolname, argstr,
 	local fmt
 	if not externFunctionReferenceMap[ key] then
 		externFunctionReferenceMap[ key] = true
-		return utils.template_format( llvmir.control.extern_functionDeclaration, {lang=lang, rtllvmtype=rtllvmtype, symbolname=symbolname, argstr=argstr})
+		return utils.template_format( llvmir.control.extern_functionDeclaration, {rtllvmtype=rtllvmtype, symbolname=symbolname, argstr=argstr})
 	else
 		return ""
 	end

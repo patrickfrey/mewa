@@ -34,23 +34,27 @@ generic class Matrix[R,DIM1,DIM2]
 	{
 		m_ar = o.m_ar;
 	}
-	public operator + Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
+	generic private function summate[TYPE] TYPE() const nothrow
 	{
-                var Matrix[R,DIM1,DIM2] rt;
+		var TYPE rt = 0;
 		var int ii = 0;
                 while (ii < DIM1)
                 {
                         var int jj = 0;
                         while (jj < DIM2)
                         {
-                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] + o.m_ar[ ii][ jj];
+                                rt += m_ar[ ii][ jj];
                                 jj += 1;
                         }
                         ii += 1;
                 }
                 return rt;
 	}
-	public operator - Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
+	public function summate_int int() const nothrow
+	{
+		return summate[ int]();
+	}
+	generic private function elementwise[LAMBDA] Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
 	{
                 var Matrix[R,DIM1,DIM2] rt;
 		var int ii = 0;
@@ -59,12 +63,36 @@ generic class Matrix[R,DIM1,DIM2]
                         var int jj = 0;
                         while (jj < DIM2)
                         {
-                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] - o.m_ar[ ii][ jj];
+                                LAMBDA[ rt.m_ar[ ii][ jj], m_ar[ ii][ jj], o.m_ar[ ii][ jj]];
                                 jj += 1;
                         }
                         ii += 1;
                 }
                 return rt;
+	}
+	generic private function elementwise_scalar[LAMBDA] Matrix[R,DIM1,DIM2]( const R scalar) const nothrow
+	{
+                var Matrix[R,DIM1,DIM2] rt;
+		var int ii = 0;
+                while (ii < DIM1)
+                {
+                        var int jj = 0;
+                        while (jj < DIM2)
+                        {
+                                LAMBDA[ rt.m_ar[ ii][ jj], m_ar[ ii][ jj], scalar];
+                                jj += 1;
+                        }
+                        ii += 1;
+                }
+                return rt;
+	}
+	public operator + Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
+	{
+		return elementwise[ lambda(a,b,c) {a=b+c;}]( o);
+	}
+	public operator - Matrix[R,DIM1,DIM2]( const Matrix[R,DIM1,DIM2] o) const nothrow
+	{
+		return elementwise[ lambda(a,b,c) {a=b-c;}]( o);
 	}
 	public operator - Matrix[R,DIM1,DIM2]() const nothrow
 	{
@@ -105,37 +133,13 @@ generic class Matrix[R,DIM1,DIM2]
                 }
                 return rt;
 	}
-	public operator * Matrix[R,DIM1,DIM2]( const R o) const nothrow
+	public operator * Matrix[R,DIM1,DIM2]( const R scalar) const nothrow
 	{
-                var Matrix[R,DIM1,DIM2] rt;
-		var int ii = 0;
-                while (ii < DIM1)
-                {
-                        var int jj = 0;
-                        while (jj < DIM2)
-                        {
-                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] * o;
-                                jj += 1;
-                        }
-                        ii += 1;
-                }
-                return rt;
+		return elementwise_scalar[ lambda(a,b,v) {a=b*v;}]( scalar);
 	}
-	public operator / Matrix[R,DIM1,DIM2]( const R o) const nothrow
+	public operator / Matrix[R,DIM1,DIM2]( const R scalar) const nothrow
 	{
-                var Matrix[R,DIM1,DIM2] rt;
-		var int ii = 0;
-                while (ii < DIM1)
-                {
-                        var int jj = 0;
-                        while (jj < DIM2)
-                        {
-                                rt.m_ar[ ii][ jj] = m_ar[ ii][ jj] / o;
-                                jj += 1;
-                        }
-                        ii += 1;
-                }
-                return rt;
+		return elementwise_scalar[ lambda(a,b,v) {a=b/v;}]( scalar);
 	}
         public operator [] R& (int i, int j) nothrow
         {
@@ -185,23 +189,46 @@ main {
 	printMatrix[3,4]( B);
 	printf( "\n");
 
+	// Matrix C:
+	//      1	-2	-1
+	//      -3	0	-1
+	//      -4	1	-1
+	//      -1	-5	-1
+	var Matrix[double,4,3] C = {{1,-2,-1},{-3,0,-1},{-4,1,-1},{-1,-5,-1}};
+	printf( "Matrix %s:\n", "C");
+	printMatrix[4,3]( C);
+	printf( "\n");
+	printf( "Matrix %s:\n", "A+C");
+	printMatrix[4,3]( A+C);
+	printf( "\n");
+
 	// Result A*B:
 	//	11	3	11	5
 	//	10	9	6	12
 	//	7	11	1	13
 	//	27	8	27	15
-	var Matrix[double,4,4] C = A * B;
+	var Matrix[double,4,4] AB = A * B;
 	printf( "Matrix %s:\n", "A*B");
-	printMatrix[4,4]( C);
+	printMatrix[4,4]( AB);
+	printf( "\n");
+
+	// Result A*1.4:
+	//      0	2.8	1.4
+	//      4.2	1.4	1.4
+	//      5.6	0	1.4
+	//      1.4	7	2.8
+	var Matrix[double,4,3] X = A * 1.4;
+	printf( "Matrix %s:\n", "A*1.4");
+	printMatrix[4,3]( X);
 	printf( "\n");
 
 	// Result B * A:
 	// 	9	19	9
 	//	22	18	13
 	//	14	14	9
-	var Matrix[double,3,3] D = B * A;
+	var Matrix[double,3,3] BA = B * A;
 	printf( "Matrix %s:\n", "B*A");
-	printMatrix[3,3]( D);
+	printMatrix[3,3]( BA);
 	printf( "\n");
 }
 

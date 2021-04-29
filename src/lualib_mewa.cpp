@@ -135,7 +135,7 @@ static int lua_print_redirected_impl( lua_State* ls, FILE* fh)
 		{
 			try
 			{
-				content = mewa::luaToString( ls, li, false/*formatted*/);
+				content = mewa::luaToString( ls, li, false/*formatted*/, 0/*no maximum depth*/);
 				len = content.size();
 				str = content.c_str();
 			}
@@ -177,7 +177,7 @@ static void append_printbuffer( lua_State* ls, int ai, int ae, std::string& buff
 		}
 		else
 		{
-			content = mewa::luaToString( ls, li, false/*formatted*/);
+			content = mewa::luaToString( ls, li, false/*formatted*/, 0/*no maximum depth*/);
 			len = content.size();
 			str = content.c_str();
 		}
@@ -244,9 +244,10 @@ static int mewa_tostring( lua_State* ls)
 	[[maybe_unused]] static const char* functionName = "mewa.tostring";
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
-		bool use_indent = (nargs >= 2 && !lua_isnil(ls,2)) ? mewa::lua::getArgumentAsBoolean( functionName, ls, 2) : false;
-		std::string rt = mewa::luaToString( ls, 1, use_indent);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 3/*maxNofArgs*/);
+		int maxdepth = (nargs >= 2 && !lua_isnil(ls,2)) ? mewa::lua::getArgumentAsInteger( functionName, ls, 2) : 8;
+		bool use_indent = (nargs >= 3 && !lua_isnil(ls,3)) ? mewa::lua::getArgumentAsBoolean( functionName, ls, 3) : false;
+		std::string rt = mewa::luaToString( ls, 1, use_indent, maxdepth);
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
 	catch (...) { lippincottFunction( ls); }

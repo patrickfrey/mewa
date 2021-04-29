@@ -74,6 +74,7 @@ local anyConstStructPointerType = nil	-- Type id of the "struct^" type
 local anyFreeFunctionType = nil		-- Type id of any free function/procedure callable
 local controlTrueType = nil		-- Type implementing a boolean not represented as value but as peace of code (in the constructor) with a falseExit label
 local controlFalseType = nil		-- Type implementing a boolean n§ot represented as value but as peace of code (in the constructor) with a trueExit label
+local lambdaResultType = nil		-- Type of a result of a lambda expression, can only be used as free expression until now
 local qualiTypeMap = {}			-- Map of value type without qualifier to the table of type ids for all qualifiers defined for this type
 local referenceTypeMap = {}		-- Map of value types to their reference types
 local dereferenceTypeMap = {}		-- Map of reference types to their value type with the reference qualifier (and the private flag) stripped away
@@ -640,7 +641,7 @@ end
 -- Get the declaration type of a variable or data member of a structure or class
 function getDeclarationType( typeId)
 	local redulist = typedb:get_reductions( typeId, tagmask_declaration)
-	for ri,redu in ipairs( redulist) do return redu.type end
+	for ri,redu in ipairs( redulist) do if not redu.constructor then return redu.type end end
 	return typeId
 end
 -- Map a type used as variable argument parameter (where no explicit parameter type defined for the callee) to its type used for parameter passing
@@ -684,6 +685,12 @@ function defineTypeAlias( node, contextTypeId, typnam, aliasTypeId)
 		alias = typedb:def_type_as( contextTypeId, typnam, aliasTypeId)
 	end
 	if alias == -1 then utils.errorMessage( 0, "Duplicate definition of alias '%s'", typeDeclarationString( contextTypeId, typnam)) end
+end
+-- Define a type alias for a type/constructor pair (a value type)
+function defineValueAlias( node, contextType, name, type, constructor)
+	local alias = typedb:def_type( contextType, name, constructor)
+	if alias == -1 then utils.errorMessage( node.line, "Duplicate definition of value type alias '%s' '%s'", typedb:type_string(contextType), name) end
+	typedb:def_reduction( type, alias, nil, tag_typeAlias)
 end
 -- Define all basic types associated with a type name
 function defineQualifiedTypeRelations( qualitype, typeDescription)
@@ -1368,18 +1375,18 @@ end
 function createAllocationFrame( env, scope)
 	return {parent=nil, catch=nil, env=env, scope=scope, partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=nil}
 end
+-- Create the allocation frame of this scope with the parent passed as argument
+function createThisAllocationFrame( parent)
+	local env; if parent then env = parent.env else env = getCallableEnvironment() end
+	local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
+	local rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
+	table.insert( env.frames, rt)
+	typedb:set_instance( currentAllocFrameKey, rt)
+	return rt
+end
 -- Get or create the allocation frame of this scope
 function getOrCreateThisAllocationFrame()
-	local rt = instantAllocationFrame or typedb:this_instance( currentAllocFrameKey)
-	if not rt then
-		local parent = typedb:get_instance( currentAllocFrameKey)
-		local env = getCallableEnvironment()
-		local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
-		rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
-		table.insert( env.frames, rt)
-		typedb:set_instance( currentAllocFrameKey, rt)
-	end
-	return rt
+	return instantAllocationFrame or typedb:this_instance( currentAllocFrameKey) or createThisAllocationFrame( typedb:get_instance( currentAllocFrameKey))
 end
 -- Get the allocation frame covering this scope
 function getAllocationFrame()
@@ -1761,9 +1768,8 @@ function completeCtorInitializationAndReturnThis( this)
 	return this
 end
 -- Implicitly declared variable that does not appear as definition in source, for example the 'self' reference in a method body
-function defineImplicitVariable( node, context, typeId, name, reg)
-	local contextTypeId = getDeclarationContextTypeId( context)
-	local var = typedb:def_type( contextTypeId, name, reg)
+function defineImplicitVariable( node, typeId, name, reg)
+	local var = typedb:def_type( localDefinitionContext, name, reg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", typeDeclarationString( typeId, name)) end
 	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
 	return var
@@ -2045,7 +2051,8 @@ function initControlBooleanTypes()
 end
 -- Initialize all built-in types
 function initBuiltInTypes()
-	stringAddressType = typedb:def_type( 0, " stringAddressType")
+	lambdaResultType = typedb:def_type( 0, "lambda result")
+	stringAddressType = typedb:def_type( 0, "string address")
 	local byteQualitype = nil
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualiTypes( {line=0}, 0, typnam, scalar_descr)
@@ -2232,23 +2239,50 @@ function matchGenericParameter( node, genericType, param, args)
 	return rt
 end
 -- For each generic argument, create an alias named as the parameter name as substitute for the generic argument specified
-function defineGenericParameterAliases( node, instanceType, generic_param, generic_arg)
-	for ii=1,#generic_arg do
-		local constructor = generic_arg[ ii].constructor 
-		if constructor then
-			local alias = typedb:def_type( instanceType, generic_param[ ii].name, generic_arg[ ii].constructor)
-			if alias == -1 then utils.errorMessage( node.line, "Duplicate definition of generic parameter '%s' '%s'", typedb:type_string(instanceType), generic_param[ ii].name) end
-			typedb:def_reduction( generic_arg[ ii].type, alias, nil, tag_typeAlias)
+function defineGenericParameterAliases( node, instanceType, param, arg)
+	for ii=1,#arg do
+		if arg[ ii].constructor then
+			defineValueAlias( node, instanceType, param[ ii].name, arg[ ii].type, arg[ ii].constructor)
 		else
-			defineTypeAlias( node, instanceType, generic_param[ ii].name, generic_arg[ ii].type)
+			defineTypeAlias( node, instanceType, param[ ii].name, arg[ ii].type)
 		end
 	end
+end
+-- For each lambda argument, create an alias named as the parameter name as substitute for the generic argument specified
+function defineLambdaParameterAliases( node, instanceType, param, arg)
+	for ii=1,#arg do		
+		if arg[ ii].constructor then
+			defineValueAlias( node, instanceType, param[ ii], arg[ ii].type, arg[ ii].constructor)
+		else
+			defineTypeAlias( node, instanceType, param[ ii], arg[ ii].type)
+		end
+	end
+end
+-- Applying a lambda expression
+function applyLambda( node, lambdaTypeId, lambdaDescr, lambdaArgs)
+	for _,arg in ipairs(lambdaArgs) do arg.type = getDeclarationType( arg.type) end -- because the lambda is implemented in a different scope reductions of local variable declarations may not be defined, therefore we assign the declaration type to the lambda parameter
+	local env = getCallableEnvironment()
+	local frame = typedb:get_instance( currentAllocFrameKey)
+	local seekctx = getSeekContextTypes()
+	local scope_bk,step_bk = typedb:scope(lambdaDescr.node.scope)
+	local genericlocal = typedb:def_type( localDefinitionContext, "_X__" .. utils.uniqueName( lambdaDescr.name .. "__"))
+	pushGenericLocal( genericlocal)
+	setSeekContextTypes( seekctx)
+	pushSeekContextType( genericlocal)
+	typedb:set_instance( currentCallableEnvKey, env)
+	frame = createThisAllocationFrame( frame)
+	if #lambdaArgs ~= #lambdaDescr.param then utils.errorMessage( node.line, "Number of lambda arguments do not match: argument %d <> %d expected", #lambdaArgs, #lambdaDescr.param) end
+	defineLambdaParameterAliases( node, genericlocal, lambdaDescr.param, lambdaArgs)
+	typedb:scope(scope_bk,step_bk)
+	local rt = utils.traverse( typedb, lambdaDescr.node)[1]
+	popGenericLocal( genericlocal)
+	return rt
 end
 -- Create an instance of a generic type with template arguments
 function createGenericTypeInstance( node, genericType, genericArg, genericDescr, typeIdNotifyFunction)
 	local declContextTypeId = typedb:type_context( genericType)
 	local typnam = getGenericTypeName( genericType, genericArg)
-	local genericlocal = typedb:def_type( declContextTypeId, "local " .. typnam)
+	local genericlocal = typedb:def_type( declContextTypeId, "_X__" .. typnam)
 	if genericlocal == -1 then utils.errorMessage( node.line, "Duplicate definition of generic '%s'", typnam) end
 	pushGenericLocal( genericlocal)
 	setSeekContextTypes( genericDescr.seekctx)
@@ -2264,10 +2298,11 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 			traverseAstStructDef( genericDescr.node, declContextTypeId, typnam, descr, qualitype, 3)
 		end
 	elseif genericDescr.class == "generic_procedure" or genericDescr.class == "generic_function" then
-		local typeInstance = getOrCreateCallableContextTypeId( declContextTypeId, typnam, llvmir.callableDescr)
+		local typeInstance = getOrCreateAnyCallableContextTypeId( genericDescr.context, typnam, genericDescr)
 		typeIdNotifyFunction( typeInstance)
 		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
-		local descr = {lnk="internal", signature="", name=typnam, symbol=typnam, private=genericDescr.private, const=genericDescr.const, interface=false}
+		local descr = {lnk="internal", signature="", name=typnam, symbol=typnam,
+		               private=genericDescr.private, const=genericDescr.const, throws=genericDescr.throws, interface=false}
 		pushSeekContextType( typeInstance)
 		if genericDescr.class == "generic_function" then
 			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
@@ -2567,7 +2602,7 @@ function getGenericParameterIdString( param)
 end
 -- Synthesized typename for generic
 function getGenericTypeName( typeId, param)
-	local rt = typedb:type_string( typeId, "__")
+	local rt = typedb:type_name( typeId)
 	for pi,arg in ipairs(param) do
 		rt = rt .. "__"; if arg.constructor then rt = rt .. getGenericConstructorIdString(arg.constructor) else rt = rt .. typedb:type_string(arg.type, "__") end
 	end
@@ -2670,6 +2705,15 @@ function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
 	end
 	return rt,false
 end
+-- Get (if already defined) or create the callable context type where we have to examine the definition context of the callable first (when it is resolved as in case of a reference to a generic)
+function getOrCreateAnyCallableContextTypeId( context, name, descr)
+	if context.domain == "member" then
+		local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
+		return getOrCreateCallableContextTypeId( thisTypeId, name, llvmir.callableDescr)
+	else
+		return getOrCreateCallableContextTypeId( getDeclarationContextTypeId(context), name, llvmir.callableDescr)
+	end
+end
 -- Common part of defineProcedureVariableType/defineFunctionVariableType
 function defineCallableVariableType( node, descr, declContextTypeId)
 	local qualitype = defineQualiTypes( node, declContextTypeId, descr.name, descr)
@@ -2692,7 +2736,7 @@ end
 -- Define a free function as callable object with "()" operator implementing the call
 function defineFreeFunction( node, descr, context)
 	expandDescrFreeCallTemplateParameter( descr, context)
-	local callablectx,newName = getOrCreateCallableContextTypeId( 0, descr.name, llvmir.callableDescr)
+	local callablectx,newName = getOrCreateCallableContextTypeId( getDeclarationContextTypeId(context), descr.name, llvmir.callableDescr)
 	local functype = defineFunctionCall( 0, callablectx, "()", descr)
 	if newName then typedb:def_reduction( anyFreeFunctionType, callablectx, function(a) return {type = callablectx} end, tag_transfer, rdw_conv) end
 	return functype
@@ -2700,9 +2744,9 @@ end
 -- Define a class method as callable object with "()" operator implementing the call
 function defineClassMethod( node, descr, context)
 	local thisTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
+	local callablectx = getOrCreateCallableContextTypeId( thisTypeId, descr.name, llvmir.callableDescr)
 	expandDescrClassCallTemplateParameter( descr, context)
 	if context.methods then expandContextMethodList( node, descr, context) end
-	local callablectx = getOrCreateCallableContextTypeId( thisTypeId, descr.name, llvmir.callableDescr)
 	defineFunctionCall( thisTypeId, callablectx, "()", descr)
 end
 -- Define an operator on the class with its arguments
@@ -2778,7 +2822,7 @@ function defineCallableBodyContext( node, context, descr)
 		else
 			selfTypeId = privateThisReferenceType 
 		end
-		local classvar = defineImplicitVariable( node, context, selfTypeId, "self", "%ths")
+		local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
 		typedb:def_reduction( privateConstThisReferenceType, publicConstThisReferenceType, nil, tag_typeDeduction) -- make const private members of other instances of this class accessible
 		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
 		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
@@ -2788,8 +2832,8 @@ function defineCallableBodyContext( node, context, descr)
 end
 -- Define the execution context of the body of the main function
 function defineMainProcContext( node, context)
-	defineImplicitVariable( node, context, stringPointerType, "argc", "%argc")
-	defineImplicitVariable( node, context, scalarIntegerType, "argv", "%argv")
+	defineImplicitVariable( node, stringPointerType, "argc", "%argc")
+	defineImplicitVariable( node, scalarIntegerType, "argv", "%argv")
 end
 -- Create a string constant pointer type/constructor
 function getStringConstant( value)
@@ -2809,20 +2853,20 @@ function defineStructureType( node, declContextTypeId, typnam, fmt)
 	return descr,qualitype
 end
 ---- Generic (descr) Fields ----
---	nodeDataMap	: AST Node where the generic type was declared
+--	node		: AST Node where the generic type was declared
 -- 	generic 	: Generic parameter list of the generic
 --	context		: Context structure set before the traversal when instantiating the generic (created from the declaration context of the generic)
 --	seekctx		: Seek context types set before the traversal when instantiating the generic (copy of the seek context types of the declaration of the generic)
 --	const		: const attribute for generic functions/procedures
 --	private		: private attribute for generic functions/procedures
 --	throws		: throws (!nothrow) attribute for generic functions/procedures
--- Create the type definition of a generic or lambda
+-- Create the type definition of a generic
 function defineGenericType( node, context, typnam, fmt, generic_param)
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local descr = utils.template_format( fmt, {name=typnam})
 	descr.node = node
 	descr.generic = generic_param
-	descr.context = {domain=context.domain, qualitype=context.qualitype, descr=context.descr, llvmtype=context.llvmtype, symbol=context.symbol}
+	descr.context = context
 	descr.seekctx = getSeekContextTypes()
 	local valtype = typedb:def_type( declContextTypeId, getQualifierTypeName( {}, typnam))
 	local c_valtype = typedb:def_type( declContextTypeId, getQualifierTypeName( {const=true}, typnam))
@@ -2834,6 +2878,23 @@ function defineGenericType( node, context, typnam, fmt, generic_param)
 	typeDescriptionMap[ valtype] = descr
 	typeDescriptionMap[ c_valtype] = descr
 	return descr
+end
+---- Lambda (descr) Fields ----
+--	node		: AST Node of the code block of the lambda (not the declaration node as in a generic)
+-- 	param	 	: Generic parameter list of the lambda
+--	name		: Artificial name of the lambda (synthesized from the generic parameter names and a counter) used for internal type definitions and debug display
+-- Create the type definition of a lambda expression
+function defineLambdaExpression( node, param)
+	local descr = utils.template_format( llvmir.lambdaExpressionDescr, {})
+	local pstr = ""; if param then for _,pp in ipairs(param) do pstr = pstr .. "__" .. pp end end
+	local name = "lambda" .. pstr
+	local typnam = utils.uniqueName( name .. "__")
+	descr.node = node
+	descr.name = name
+	descr.param = param
+	local lambdatype = typedb:def_type( localDefinitionContext, getQualifierTypeName( {}, typnam))
+	typeDescriptionMap[ lambdatype] = descr
+	return {type=lambdatype}
 end
 -- Add a generic parameter to the generic parameter list
 function addGenericParameter( node, generic, name, typeId)
@@ -3190,18 +3251,23 @@ function typesystem.operator_array( node, operator)
 	local args = utils.traverse( typedb, node)
 	local this = args[1]
 	table.remove( args, 1)
-	local qs = typeQualiSepMap[ this.type]
-	if not qs then return applyCallable( node, this, operator, args) end
-	local descr = typeDescriptionMap[ qs.valtype]
-	if not descr then return applyCallable( node, this, operator, args) end
-	if descr.class == "generic_procedure" or descr.class == "generic_function" then
-		return {type=getOrCreateGenericType( node, qs.valtype, descr, args)}
-	else
-		return applyCallable( node, this, operator, args)
+	local descr = typeDescriptionMap[ this.type]
+	if descr then
+		if descr.class == "generic_procedure" or descr.class == "generic_function" then
+			local gentype = getOrCreateGenericType( node, this.type, descr, args)
+			local gentypnam = typedb:type_name(gentype)
+			local typeId,constructor = selectNoArgumentType( node, gentypnam, typedb:resolve_type( getSeekContextTypes(), gentypnam, tagmask_resolveType))
+			return {type=typeId, constructor=constructor}
+		elseif descr.class == "lambda" then
+			local constructor = applyLambda( node, this.type, descr, args)
+			return {type=lambdaResultType, constructor=constructor}
+		end
 	end
+	return applyCallable( node, this, operator, args)
 end
 function typesystem.free_expression( node)
-	local operand = table.unpack( utils.traverse( typedb, node))
+	local arg = utils.traverse( typedb, node)
+	local operand = table.unpack( arg)
 	if operand.type == controlTrueType or operand.type == controlFalseType then
 		return {code=operand.constructor.code .. utils.constructor_format( llvmir.control.label, {inp=operand.constructor.out})}
 	else
@@ -3418,23 +3484,27 @@ function typesystem.procdef( node, context, pass)
 		traverseAstProcedureImplementation( node, context, descr, 3)
 	end
 end
-function typesystem.generic_funcdef( node, context)
-	local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
-	local decl = utils.traverseRange( typedb, node, {5,5}, context, descr, 0)[5] -- decl {const,throws}
-	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
-	local descr = defineGenericType( node, context, name, llvmir.genericFunctionDescr, generic_arg)
-	descr.const = decl.const
-	descr.private = lnk.linkage.private
-	descr.throws = decl.throws
+function typesystem.generic_funcdef( node, context, pass)
+	if not pass or pass == 1 then
+		local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
+		local decl = utils.traverseRange( typedb, node, {5,5}, context, descr, 0)[5] -- decl {const,throws}
+		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
+		local descr = defineGenericType( node, context, name, llvmir.genericFunctionDescr, generic_arg)
+		descr.const = decl.const
+		descr.private = lnk.linkage.private
+		descr.throws = decl.throws
+	end
 end
-function typesystem.generic_procdef( node, context)
-	local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
-	local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
-	if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
-	local descr = defineGenericType( node, context, name, llvmir.genericProcedureDescr, generic_arg)
-	descr.const = decl.const
-	descr.private = lnk.linkage.private
-	descr.throws = decl.throws
+function typesystem.generic_procdef( node, context, pass)
+	if not pass or pass == 1 then
+		local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
+		local decl = utils.traverseRange( typedb, node, {4,4}, context, descr, 0)[4] -- decl {const,throws}
+		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
+		local descr = defineGenericType( node, context, name, llvmir.genericProcedureDescr, generic_arg)
+		descr.const = decl.const
+		descr.private = lnk.linkage.private
+		descr.throws = decl.throws
+	end
 end
 function typesystem.operatordecl( node, opr)
 	return opr
@@ -3658,9 +3728,9 @@ function typesystem.generic_instance( node, context)
 	return rt
 end
 function typesystem.generic_header_ident_type( node, context, generic)
-	local arg = utils.traverseRange( typedb, node, {1,2}, context)
-	if arg[2].constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' as default generic parameter", typedb:type_string(arg[2].type)) end
-	addGenericParameter( node, generic, arg[1], arg[2].type)
+	local gentype,gendefault = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
+	if gendefault.constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' as default generic parameter", typedb:type_string(arg[2].type)) end
+	addGenericParameter( node, generic, gentype, gendefault.type)
 	if #arg > 2 then utils.traverseRange( typedb, node, {3,3}, context, generic) end
 end
 function typesystem.generic_header_ident( node, context, generic)
@@ -3676,6 +3746,8 @@ function typesystem.lambda_paramdeflist( node)
 	return utils.traverse( typedb, node)
 end
 function typesystem.lambda_expression( node)
+	local param = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
+	return defineLambdaExpression( node.arg[2], param)
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
@@ -3709,20 +3781,16 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 	end
 end
 function typesystem.count( node)
-	if #node.arg == 0 then return 1 else return utils.traverseCall( node)[ 1] + 1 end
+ 	if #node.arg == 0 then return 1 else return utils.traverseCall( node)[ 1] + 1 end
 end
 function typesystem.rep_operator( node)
-	local arg = utils.traverse( typedb, node)
-	local icount = arg[2]
-	local expr = arg[1]
-	for ii=1,icount do
-		expr = applyCallable( node, expr, "->")
-	end
-	return applyCallable( node, expr, arg[3])
+	local expr,icount,name = table.unpack( utils.traverse( typedb, node))
+	for ii=1,icount do expr = applyCallable( node, expr, "->") end
+	return applyCallable( node, expr, name)
 end
 function typesystem.member( node)
-	local arg = utils.traverse( typedb, node)
-	return applyCallable( node, arg[1], arg[2])
+	local struct,name = table.unpack( utils.traverse( typedb, node))
+	return applyCallable( node, struct, name)
 end
 function typesystem.main_procdef( node)
 	local context = {domain="local"}
