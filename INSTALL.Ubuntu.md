@@ -36,7 +36,7 @@ make PREFIX=/usr/local install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b `cat $VERSION`
+git checkout -b `cat VERSION`
 ```
 
 ### Configure to find Lua includes and to write the file Lua.inc included by make
