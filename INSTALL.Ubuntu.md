@@ -32,10 +32,11 @@ make
 make PREFIX=/usr/local install
 ```
 
-### Fetch sources
+### Fetch sources of latest release version
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
+git checkout -b `cat $VERSION`
 ```
 
 ### Configure to find Lua includes and to write the file Lua.inc included by make
