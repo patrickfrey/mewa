@@ -1,0 +1,56 @@
+baseURL = ""
+languageCode = "en-us"
+defaultContentLanguage = "en"
+name = "Mewa"
+license = "MIT"
+licenselink = "https://github.com/patrickfrey/mewa/blob/master/LICENSE"
+homepage = "http://mewa.cc"
+title = "Mewa CC"
+contentdir = "content"
+theme = "bootie-docs"
+copyright = "Copyright (c) 2020, Patrick Frey"
+
+[author]
+  name = "Patrick Frey"
+  homepage = "https://github.com/patrickfrey"
+
+[frontmatter]
+  date = ["date", "publishDate", "lastmod"]
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+  disableKinds = ["tags","categories"]
+
+[params]
+  description = "Use Lua to write compiler front-ends of statically-typed languages for LLVM as back-end"
+  highlightStyle = "github"
+  dateformat = "Jan 2, 2006"
+  noCategoryLink = true
+  searchDomain = "https://github.com/patrickfrey/mewa"
+  withSitePosts = false
+  repositoryUrl = "https://github.com/patrickfrey/mewa"
+
+[pages]
+  title = "/_index/"
+
+[[menu.main]]
+  name = "About"
+  url = "/about/"
+  weight = 10
+
+[[menu.main]]
+  name = "License"
+  url = "/license/"
+  weight = 20
+
+[[menu.main]]
+  name = "Links & Contact"
+  url = "/links/"
+  weight = 30
+
+[[menu.main]]
+  name = "Story"
+  url = "/story/"
+  weight = 40
+

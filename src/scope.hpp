@@ -872,7 +872,14 @@ public:
 			const ListElement& le = m_list[ li];
 			if (le.related == right && tagval == le.tagval)
 			{
-				throw Error( Error::DuplicateDefinition);
+				if (le.value == value)
+				{
+					return; // We allow and ignore duplicate definitions, if they are equal
+				}
+				else
+				{
+					throw Error( Error::DuplicateDefinition);
+				}
 			}
 			prev_li = li;
 			li = le.next;
