@@ -444,7 +444,7 @@ In other words, the concept is implemented as generic with a the type to check t
 
 ### How to implement lambdas?
 
-I will implement lambdas for the example _language1_ in the next days.
+In the example language1 I declared lambdas in a similar way as generics. The node with the code of the lambda is traversed when referenced after the assignment of the parameters as alias of the arguments passed. Because the scope of the lambda is not a subscope of the caller, the declaration type of the caller argument is assigned as alias to the lambda parameter to make it accessible in the scope of the lambda code.
 
 <a name="cLibraryCalls"/>
 
