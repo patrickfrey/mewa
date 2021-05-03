@@ -31,6 +31,17 @@ Do generate a compiler as a
 .BR Lua
 module described by the grammar in the input file.
 .TP
+\fB\-s\fR, \fB\--generate-template\fR
+Do generate a template for your
+.BR Lua
+module implementing the typesystem.
+Extracts all
+.BR Lua
+function calls fromm the grammar and print their empty implementation stubs to the output.
+No debug output here. 
+Be careful using this option. It is useful only after the initial definition of the grammar of your language.
+It overwrites previous definitions without merging with your edits in a previously generated version.
+.TP
 \fB\-o\fR, \fB\--output=\fR \fIfile\fR
 Write the output (parsing tables) to \fIfile\fR instead of stdout.  
 .TP

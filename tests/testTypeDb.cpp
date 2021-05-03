@@ -141,7 +141,7 @@ static TestDef testDef = {
 
 struct TestQueryDef
 {
-	Scope::Step step;	//< query scope step
+	Scope::Step step;	//< query scope-step
 	char const* ar[12];	//< nullptr terminated list of items
 };
 

@@ -15,6 +15,7 @@
 #endif
 
 #include "automaton.hpp"
+#include "automaton_parser.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
 #include "strings.hpp"
@@ -34,7 +35,7 @@ using namespace mewa;
 
 static void printUsage()
 {
-	std::cerr << "Usage: mewa [-h][-v][-V][-g][-b LUABIN][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
+	std::cerr << "Usage: mewa [-h][-v][-V][-s][-g][-b LUABIN][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
 	std::cerr << "Description: Build a lua module implementing a compiler described in\n";
 	std::cerr << "             a Bison/Yacc-like BNF dialect with lua callbacks implementing the type\n";
 	std::cerr << "             system and the code generation.\n";
@@ -47,6 +48,10 @@ static void printUsage()
 	std::cerr << " -V           : Do verbose output to stderr.\n";
 	std::cerr << " --generate-compiler,\n";
 	std::cerr << " -g           : Do generate a compiler as a Lua module.\n";
+	std::cerr << " --generate-template,\n";
+	std::cerr << " -s           : Do generate a template for your Lua module implementing the typesystem.\n";
+	std::cerr << "                Extracts all Lua function calls fromm the grammar and print their\n";
+	std::cerr << "                empty implementation stubs to the output. No debug output here.\n";
 	std::cerr << " --luabin <LUABIN>,\n";
 	std::cerr << " -b <LUABIN>  : Specify the path of the Lua program in the header of generated scripts.\n";
 	std::cerr << " --output <OUTF>,\n";
@@ -140,13 +145,14 @@ int main( int argc, const char* argv[] )
 		enum Command {
 			NoCommand,
 			GenerateCompilerForLua,
+			GenerateTypesystemTemplateForLua,
 		};
 		Command cmd = NoCommand;
 		std::string inputFilename;
 		std::string outputFilename;
 		std::string debugFilename;
 		std::string templat;
-		std::string luabin = "/usr/bin/lua";
+		std::string luabin;
 
 		int argi = 1;
 		for (; argi < argc; ++argi)
@@ -174,8 +180,24 @@ int main( int argc, const char* argv[] )
 				}
 				cmd = GenerateCompilerForLua;
 			}
+			else if (0==std::strcmp( argv[argi], "-s") || 0==std::strcmp( argv[argi], "--generate-template"))
+			{
+				if (cmd != NoCommand || !luabin.empty() || !templat.empty() || !debugFilename.empty())
+				{
+					std::cerr << "Conflicting options" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
+				cmd = GenerateTypesystemTemplateForLua;
+			}
 			else if (0==std::memcmp( argv[argi], "-b", 2) || 0==std::memcmp( argv[argi], "--luabin=", 9))
 			{
+				if (cmd == GenerateTypesystemTemplateForLua)
+				{
+					std::cerr << "Conflicting options" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
 				int optofs = (argv[argi][1] == '-') ? 9:2;
 				if (argv[argi][ optofs])
 				{
@@ -214,6 +236,12 @@ int main( int argc, const char* argv[] )
 			}
 			else if (0==std::memcmp( argv[argi], "-d", 2) || 0==std::memcmp( argv[argi], "--dbgout=", 9))
 			{
+				if (cmd == GenerateTypesystemTemplateForLua)
+				{
+					std::cerr << "Conflicting options" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
 				int optofs = (argv[argi][1] == '-') ? 9:2;
 				if (argv[argi][ optofs])
 				{
@@ -235,6 +263,12 @@ int main( int argc, const char* argv[] )
 			}
 			else if (0==std::memcmp( argv[argi], "-t", 2) || 0==std::memcmp( argv[argi], "--template=", 11))
 			{
+				if (cmd == GenerateTypesystemTemplateForLua)
+				{
+					std::cerr << "Conflicting options" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
 				int optofs = (argv[argi][1] == '-') ? 11:2;
 				if (argv[argi][ optofs])
 				{
@@ -268,6 +302,10 @@ int main( int argc, const char* argv[] )
 				break;
 			}
 		}
+		if (luabin.empty())
+		{
+			luabin = "/usr/bin/lua";
+		}
 		if (argi == argc)
 		{
 			std::cerr << "Too few arguments, input file expected" << std::endl << std::endl;
@@ -291,34 +329,43 @@ int main( int argc, const char* argv[] )
 
 		std::vector<Error> warnings;
 		Automaton automaton;
-		if (debugFilename.empty())
+		std::string output;
+		if (cmd == GenerateTypesystemTemplateForLua)
 		{
-			automaton.build( source, warnings, Automaton::DebugOutput().enable( verbose ? Automaton::DebugOutput::All : Automaton::DebugOutput::None));
+			LanguageDef langdef( parseLanguageDef( source));
+			output = printLuaTypeSystemStub( langdef);
 		}
 		else
 		{
-			std::stringstream dbgoutstream;
-			automaton.build( source, warnings, Automaton::DebugOutput( dbgoutstream).enable( Automaton::DebugOutput::All));
-			std::string dbgoutput = dbgoutstream.str();
-			writeFile( debugFilename, dbgoutput);
-		}
-		if (!warnings.empty())
-		{
-			for (auto warning : warnings)
+			if (debugFilename.empty())
 			{
-				printWarning( inputFilename, warning);
-			}
-			throw mewa::Error( mewa::Error::ConflictsInGrammarDef, mewa::string_format( "%zu", warnings.size()));
-		}
-		if (templat.empty())
-		{
-			if (automaton.cmdline().empty())
-			{
-				throw mewa::Error( mewa::Error::MandatoryCommandMissingInGrammarDef, "CMDLINE");
+				automaton.build( source, warnings, Automaton::DebugOutput().enable( verbose ? Automaton::DebugOutput::All : Automaton::DebugOutput::None));
 			}
 			else
 			{
-				templat = g_defaultTemplate;
+				std::stringstream dbgoutstream;
+				automaton.build( source, warnings, Automaton::DebugOutput( dbgoutstream).enable( Automaton::DebugOutput::All));
+				std::string dbgoutput = dbgoutstream.str();
+				writeFile( debugFilename, dbgoutput);
+			}
+			if (!warnings.empty())
+			{
+				for (auto warning : warnings)
+				{
+					printWarning( inputFilename, warning);
+				}
+				throw mewa::Error( mewa::Error::ConflictsInGrammarDef, mewa::string_format( "%zu", warnings.size()));
+			}
+			if (templat.empty())
+			{
+				if (automaton.cmdline().empty())
+				{
+					throw mewa::Error( mewa::Error::MandatoryCommandMissingInGrammarDef, "CMDLINE");
+				}
+				else
+				{
+					templat = g_defaultTemplate;
+				}
 			}
 		}
 		switch (cmd)
@@ -327,6 +374,16 @@ int main( int argc, const char* argv[] )
 				break;
 			case GenerateCompilerForLua:
 				printAutomaton( outputFilename, templat, automaton, luabin);
+				break;
+			case GenerateTypesystemTemplateForLua:
+				if (outputFilename.empty())
+				{
+					std::cout << output << std::endl;
+				}
+				else
+				{
+					writeFile( outputFilename, output);
+				}
 				break;
 		}
 		return 0;

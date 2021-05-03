@@ -19,7 +19,7 @@ A rule to derive a **type** from another with a description how to construct the
 A state transition occurring after the last item of a production has been parsed, replacing the right side of the production with the left side on the parser stack.
 
 ## Scope
-Pair of integer numbers that address a subtree of the AST. The first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope step of the instruction that queries the definition.
+Pair of integer numbers that address a subtree of the AST. The first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope-step of the instruction that queries the definition.
 
 ### Example
 1. Item 'ABC' defined in scope [1,123]
@@ -27,13 +27,13 @@ Pair of integer numbers that address a subtree of the AST. The first number defi
 3. Item 'ABC' defined in scope [23,77]
 4. Item 'ABC' defined in scope [81,99]
 
-The Query for a type 'ABC' in an instruction with scope step 56 assigned, returns the 3rd definition.
+The Query for a type 'ABC' in an instruction with scope-step 56 assigned, returns the 3rd definition.
 
 ### Scope and Structures
 Some other compiler models represent hierarchies of data structures by lexical scoping. In _Mewa_ best practice is considered to represent visibility in hierarchies of data structures with context types and not by scope.
 
-## Scope Step
-Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**. A **scope** starts with the scope step counter value when first entering a state with a production marked as **{}** and ends with one step after the value of the **scope step** after exit (**reduction** in the context of the parser).
+## Scope-step
+Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope-step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**. A **scope** starts with the scope-step counter value when first entering a state with a production marked as **{}** and ends with one step after the value of the **scope-step** after exit (**reduction** in the context of the parser).
 
 ## Constructor
 A constructor implements the constructon of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor result of the derived type. 
@@ -96,7 +96,7 @@ Constants in the source and expressions built from constants are represented by 
   * **constexprStructureType**  const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
 
 ### Allocation Frame
-The frame object defines the context for implicit cleanup of resources after the exit of the scope the allocation frame is associated to. Every form of exit has a chain of commands executed before the final exit code is executed. The allocation frame provides a label to jump to depending on the current scope step and the exit code. With the jump to this label the cleanup followed by the exit from the allocation frame is initiated.
+The frame object defines the context for implicit cleanup of resources after the exit of the scope the allocation frame is associated to. Every form of exit has a chain of commands executed before the final exit code is executed. The allocation frame provides a label to jump to depending on the current scope-step and the exit code. With the jump to this label the cleanup followed by the exit from the allocation frame is initiated.
 
 ### Callable Environment
 The callable environment holds the data associated with a callable during the processing of its body. Such data are for example the generators of registers and labels, the list of allocation frames holding the code executed in case of exceptions, the return type in case of a function, the initialization state in case of a constructor, some flags that indicate some events needed for printing the function declaration, etc..

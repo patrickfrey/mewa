@@ -12,6 +12,7 @@
 #ifndef _MEWA_AUTOMATON_PARSER_HPP_INCLUDED
 #define _MEWA_AUTOMATON_PARSER_HPP_INCLUDED
 #if __cplusplus >= 201703L
+#include "automaton_structs.hpp"
 #include "error.hpp"
 #include "lexer.hpp"
 #include <utility>
@@ -42,6 +43,8 @@ struct LanguageDef
 };
 
 LanguageDef parseLanguageDef( const std::string& source);
+
+std::string printLuaTypeSystemStub( const LanguageDef& langdef);
 
 }//namespace
 

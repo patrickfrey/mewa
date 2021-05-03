@@ -250,10 +250,10 @@ public:
 	/// \param[in] handle the handle (non negative integer number, negative value -1 reserved by the getter for not found) for the object given by the caller
 	void setObjectInstance( const std::string_view& name, const Scope& scope, int handle);
 
-	/// \brief Retrieve an object by its name in the innermost scope covering the specified scope step
+	/// \brief Retrieve an object by its name in the innermost scope covering the specified scope-step
 	/// \param[in] name the name of the object
-	/// \param[in] step the scope step of the search defining what are valid definitions
-	/// \return handle of the object defined by the caller in the given scope step with the name specified (setObject), or -1 if no object found
+	/// \param[in] step the scope-step of the search defining what are valid definitions
+	/// \return handle of the object defined by the caller in the given scope-step with the name specified (setObject), or -1 if no object found
 	int getObjectInstance( const std::string_view& name, const Scope::Step step) const;
 
 	/// \brief Retrieve an object by its name assigned to the scope specified as parameter
@@ -325,7 +325,7 @@ public:
 	ReductionDefinitionTree getReductionDefinitionTree() const;
 
 	/// \brief Get the weight and the constructor of a reduction of a type to another type or {0.0,0} if undefined
-	/// \param[in] step the scope step of the search defining what are valid reductions
+	/// \param[in] step the scope-step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
@@ -334,7 +334,7 @@ public:
 	GetReductionResult getReduction( const Scope::Step step, int toType, int fromType, const TagMask& selectTags) const;
 
 	/// \brief Get the list of reductions defined for a type
-	/// \param[in] step the scope step of the search defining what are valid reductions
+	/// \param[in] step the scope-step of the search defining what are valid reductions
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
 	/// \param[in] selectTagsCount set of tags (subset of selectTags) that set a count flag in a result
@@ -343,7 +343,7 @@ public:
 	GetReductionsResult getReductions( const Scope::Step step, int fromType, const TagMask& selectTags, const TagMask& selectTagsCount, ResultBuffer& resbuf) const;
 
 	/// \brief Search for the sequence of reductions with the minimal sum of weights from one type to another type
-	/// \param[in] step the scope step of the search defining what are valid reductions
+	/// \param[in] step the scope-step of the search defining what are valid reductions
 	/// \param[in] toType the target type of the reduction
 	/// \param[in] fromType the source type of the reduction
 	/// \param[in] selectTags set of tags selecting the reduction classes to use in this search
@@ -355,7 +355,7 @@ public:
 				 const TagMask& selectTags, const TagMask& selectTagsPathLength, int maxPathLengthCount, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context reducible from one of the contexts passed
-	/// \param[in] step the scope step of the search defining what are valid reductions
+	/// \param[in] step the scope-step of the search defining what are valid reductions
 	/// \param[in] contextTypes the context of the candidate query types.
 	/// 		The searched item has a context type that is reachable via a path of type reductions from an element of this list.
 	/// \param[in] name name of the type searched
@@ -366,7 +366,7 @@ public:
 				   const std::string_view& name, const TagMask& selectTags, ResultBuffer& resbuf) const;
 
 	/// \brief Resolve a type name in a context reducible from the context passed
-	/// \param[in] step the scope step of the search defining what are valid reductions
+	/// \param[in] step the scope-step of the search defining what are valid reductions
 	/// \param[in] contextType the context of the candidate query type.
 	/// 		The searched item has a context type that is reachable via a path of type reductions from this context type.
 	/// \param[in] name name of the type searched

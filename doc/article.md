@@ -1,47 +1,60 @@
 # Writing Compiler Front-Ends for LLVM with Lua using Mewa
 
+## Lead
+
+LLVM IR text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of LLVM IR and use the tools of the clang compiler for further compilation steps. This opens the doors to define compiler front-ends in different ways. Mewa tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
+
 ## Introduction
 
-Writing a Compiler is hard, but LLVM IR brought it within reach. You only have to care about the front-end now.
-The Mewa Compiler Compiler is a tool to script compiler front-ends in Lua.
-Compared with other frameworks it gives you a smaller code footprint but it is not optimised for collaborative work.
-This makes is suitable for language prototyping by a single person but less suitable as platform for a larger developer group.
+The Mewa compiler-compiler is a tool to script compiler front-ends in Lua. A compiler written with Mewa takes a source file as input and prints an intermediate representation as input for the next compilation step. The example created as a proof of concept uses the text format of LLVM IR as output.
 
-For implementing a compiler in Mewa, you define a grammar attributed with Lua function calls.
+Mewa provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend (*).
+
+##### (*)
+One optimization step that comes into my mind as assigned to the front-end is the mapping of virtual method calls to direct calls.
+In the first example language of Mewa, I circumvented this need by only implementing method call indirection on interfaces.
+
+### Goals
+
+This article first explains the typedb library used to define the type system of a language.
+The typedb library is written in C++, but I will explain it without referring explicitly to the C++ code.  If you think that Lua is not the best choice and you want to port Mewa to another language, say OCaml or Haskell, then you will find an entry point here.
+
+Then a tutorial will guide you through the definition of an example language.
+During the development of the tutorial, I will also point to elements of the larger example language I implemented as a proof of concept.
+The goal of this article is to show you how to write your own compiler front-end with Lua using Mewa.
+
+### Target Audience
+
+To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to Lua. If you have read a tutorial about LLVM IR, you will get grip on the code generation in the examples.
+
+### Deeper Digging
+
+For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions.
+
+### How Mewa Works
+
+For implementing a compiler with Mewa, you define a grammar attributed with Lua function calls.
 The program ```mewa`` will generate a Lua script that will transform any source passing the grammar specified into an AST with the specified Lua function calls attached to the nodes and then call the functions of the top level node(s) of the AST.
 
-## Goals
+The top-level AST node functions called by the compiler take the control of the further processing of the compiler front-end. The idea is that the functions called with their AST node as argument calls the functions of their subnodes. During this tree traversal, the types and data structures of the program are built and the output is printed in the process. For some nodes, the traversal can have several passes. It is up to the function attached to the node, how and how many times it calls its subnodes.
 
-In this article I will show by example how Mewa processes a grammar. Then I will describe the main data structure used in the **typedb** library that assists you defining a type system. The library is written in C++, but I will explain it without referring explicitly to the C++ code.
-Subsequently there will be some problem solving discussed by example.
-For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics and exceptions.
-
-## Target Audience of this Article
-
-To understand this article some knowledge about formal language grammars and parser generators is helpful. To understand the examples you should be familiar to some scripting languages that have a concept of closures similar to Lua. If you have read a tutorial about LLVM IR, you will get grip on the code generation in the examples.
+The typedb library of Mewa helps you to build up the types and data structures of your program. We will discuss the library in the following section.
 
 
 ## The Type Database (typedb) API
 
 ### Scope Bound Map
 
-The Type Database API of _Mewa_ implements an in memory map for 3 types of data:
+All data structures stored in the typedb are bound to a scope. A scope is represented as a pair of non-negative integer numbers. The first number is marking the start of the scope, meaning the first element in the scope, the second number is marking the end of the scope, meaning the first element that is not part of the scope anymore. These elements are called scope-steps. Scope and scope-steps are generated by a counter defined by operators in the grammar and are assigned as elements to the nodes of the AST generated in the process of the syntax analysis.
 
- * Data of any kind
- * Types 
- * Type Reduction Rules
+Every item stored in the typedb is stored with a scope attached to its key. On retrieval, a scope-step is part of the query and used as a filter for the results.
+A search result contains only elements defined in a scope that covers the scope-step of the query.
 
-All the data in the **typedb** are bound to a scope. A **scope** is defined as a pair of integer numbers, the start of the scope and the first element after the scope, and a relation that tells if a scope covers another scope:
-```
-scope_A  covers  scope_B  <=>  scope_A[1] >= scope_B[1] and scope_A[2] <= scope_B[2]
-```
-One **scope step** is a single integer number. It is incremented for every production in the grammar that is marked as **scope step**. The scope step determines the values of the scope structures assigned to the **AST** nodes. We can tell of a **scope step** if its inside a **scope** or not:
-```
-step_I  inside scope_A  <=>  step_I >= scope_A[1] and step_I < scope_A[2]
-```
-All types of data that are stored temporarily in the **typedb** have a scope and a query for data includes a **scope step**. The **typedb** result is then filtered so that the result includes only items defined with a scope attached covering the **scope step** of the query. The scope inclusion relation may not describe all we need to describe visibility in all cases. But it is allways a valid restriction. Further restrictions can be implemented up on that.
+The database is write- and read-only, there is no designated way to delete elements in the typedb during its lifetime (the compilation of one source unit).
 
-The scope bound maps are derived from the original map
+#### Implementation
+
+The scope-bound maps are derived from the original map
 ```K -> V```
 as
 ```<K,E> -> ordered list of <V,(S,E)>```
@@ -49,12 +62,30 @@ as
 E is the end of the scope of the relation K -> V.
 S is the start of the scope of the relation K -> V.
 The list <K,E> points to is ordered by the scope cover relation, the first element is covered by the second and so forth. 
-The image illustrates that. If we search in this kind of map, we do an upperbound seek for say <K,31> and we get to the key <K,35>.
-Then we follow the uplinks attached to it to find the elements to retrieve. 
+The image illustrates that. If we search in this kind of map, we do an upper bound seek for say <K,31> and we get to the key <K,35>.
+Then we follow the uplinks attached to it to find the elements to retrieve.s
 
-An update is a little bit more complicated as we have to rewire the uplinks of some predecessors and of one successor. 
-But in practice this problem is not so hard. You have to willingly construct degrading examples.
-For the audience interested in the C++ code, all scope bound data structures of the **typedb** are implemented in src/scope.hpp of the Mewa project.
+Updates are a little bit more complicated as we have to rewire the uplinks of some predecessors and of one successor. If you are interested in the C++ code, all scope-bound data structures of the typedb are implemented in src/scope.hpp of the Mewa project. It should probably be rewritten, as I was not in my best condition when I wrote it. But the fact that it is tested well with random tests gives some confidence that it works.
+
+#### Shortest Path Search
+
+The typedb library implements one core algorithm besides the scope-bound map lookup for type deduction: The shortest path search.
+The type system is represented as a directed graph with the types as vertices and the type deduction relations (called reductions) as edges.
+Each edge has a weight that implements the preference of reductions over others. In most cases the solution paths are equivalent but we want to recognize real ambiguity. For this, we implement an order of preference that picks us a unique solution from any set of equivalent paths.
+
+Every query to resolve a symbol as a type or a query to deduce a type from another is implemented as a shortest path search.
+The resulting path will be a plan for the construction of the object we were looking for. A result not found will be displayed as nil and ambiguity as a result tuple.
+
+### The API
+
+The typedb library implements an in-memory map for 3 types of data that are associated with a scope:
+
+ * Data of any kind, used to store contextual data like the return type of a function identified by its definition scope
+ * Types, all items of the language like variables, data types, generic instance arguments, functions are stored as types 
+ * Reductions, all type deduction relations like the relation of a variable to its type and the return type of a function are stored as reductions
+
+The scope inclusion relation may not describe all we need to describe visibility in all cases. But it is always a valid restriction.
+Further restrictions can be implemented on top of that.
 
 
 ## Types and Constructors

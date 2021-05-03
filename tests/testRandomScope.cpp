@@ -535,7 +535,7 @@ static void randomIdQueries( const IdSet& idset, const NodeDefTree* nd, int nofq
 		if (verbose)
 		{
 			auto const& resultScope = id2ScopeMap.at( result);
-			std::cerr << mewa::string_format( "Query scope step [%d] object query results to [%d] [%d,%d]", 
+			std::cerr << mewa::string_format( "Query scope-step [%d] object query results to [%d] [%d,%d]",
 								query, result, resultScope.start(), resultScope.end())
 					<< std::endl;
 		}
@@ -544,7 +544,7 @@ static void randomIdQueries( const IdSet& idset, const NodeDefTree* nd, int nofq
 			auto const& resultScope = id2ScopeMap.at( result);
 			auto const& expectScope = id2ScopeMap.at( expect);
 			throw std::runtime_error(
-				mewa::string_format( "Random scope step [%d] object query result [%d] in [%d,%d] not as expected [%d] in [%d,%d]",
+				mewa::string_format( "Random scope-step [%d] object query result [%d] in [%d,%d] not as expected [%d] in [%d,%d]",
 							query, result, resultScope.start(), resultScope.end(),
 							expect, expectScope.start(), expectScope.end()));
 		}

@@ -12,6 +12,7 @@
 #include "automaton.hpp"
 #include "automaton_structs.hpp"
 #include "automaton_parser.hpp"
+#include "strings.hpp"
 #include <map>
 #include <algorithm>
 #include <type_traits>
@@ -679,4 +680,23 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 	return rt;
 }
 
+std::string mewa::printLuaTypeSystemStub( const LanguageDef& langdef)
+{
+	std::string rt = mewa::string_format( "local mewa = require \"mewa\"\nlocal typedb = mewa.typedb()\nlocal %s = {}\n\n", langdef.typesystem.c_str());
+	std::set<std::string> fset;
+	for (auto call : langdef.calls)
+	{
+		auto ins = fset.insert( call.function());
+		if (ins.second == true/*insert took place*/)
+		{
+			std::string argstr;
+			if (call.argtype() != Automaton::Call::NoArg)
+			{
+				argstr.append(", decl");
+			}
+			rt.append( mewa::string_format( "function %s.%s( node%s)\nend\n", langdef.typesystem.c_str(), call.function().c_str(), argstr.c_str()));
+		}
+	}
+	return rt;
+}
 
