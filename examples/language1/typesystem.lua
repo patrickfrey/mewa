@@ -2966,22 +2966,22 @@ end
 -- Traversal of a function declaration node, either directly in case of an ordinary function or on demand in case of a generic function
 function traverseAstFunctionDeclaration( node, context, descr, nodeidx)
 	descr.ret = table.unpack( utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context))
-	descr.param = table.unpack( utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 1))
+	utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 1)
 	instantiateCallableDef( node, context, descr)
 end
 -- Traversal of a function implementation node, either directly in case of an ordinary function or on demand in case of a generic function
 function traverseAstFunctionImplementation( node, context, descr, nodeidx)
-	descr.body  = table.unpack( utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 2))
+	utils.traverseRange( typedb, node, {nodeidx+1,nodeidx+1}, context, descr, 2)
 	printFunctionDeclaration( node, descr)
 end
 -- Traversal of a procedure declaration node, either directly in case of an ordinary procedure or on demand in case of a generic procedure
 function traverseAstProcedureDeclaration( node, context, descr, nodeidx)
-	descr.param = table.unpack( utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 1))
+	utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 1)
 	instantiateCallableDef( node, context, descr)
 end
 -- Traversal of a procedure implementation node, either directly in case of an ordinary function or on demand in case of a generic function
 function traverseAstProcedureImplementation( node, context, descr, nodeidx)
-	descr.body  = table.unpack( utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 2))
+	utils.traverseRange( typedb, node, {nodeidx,nodeidx}, context, descr, 2)
 	printFunctionDeclaration( node, descr)
 end
 -- Build a conditional if/elseif block
@@ -3423,10 +3423,10 @@ end
 function typesystem.funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {4,4}, context, descr, 0)) -- decl {const,throws}
-		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
 		local descr = {lnk = lnk.linkage, signature="", name=name, symbol=name, 
-				private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+				private=lnk.private, const=false, throws=false, interface=false}
+		utils.traverseRange( typedb, node, {4,4}, context, descr, 0) -- decl {const,throws}
+		if descr.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
 		utils.allocNodeData( node, localDefinitionContext, descr)
 		traverseAstFunctionDeclaration( node, context, descr, 3)
 	end
@@ -3438,10 +3438,10 @@ end
 function typesystem.procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {3,3}, context, descr, 0)) -- decl {const,throws}
-		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
 		local descr = {lnk = lnk.linkage, signature="", name = name, symbol = name, 
-				private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
+				private=lnk.private, const=false, throws=false, interface=false}
+		utils.traverseRange( typedb, node, {3,3}, context, descr, 0) -- decl {const,throws}
+		if descr.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
 		utils.allocNodeData( node, localDefinitionContext, descr)
 		traverseAstProcedureDeclaration( node, context, descr, 3)
 	end
@@ -3453,23 +3453,19 @@ end
 function typesystem.generic_funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {5,5}, context, descr, 0)) -- decl {const,throws}
-		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
 		local descr = defineGenericType( node, context, name, llvmir.genericFunctionDescr, generic_arg)
-		descr.const = decl.const
+		utils.traverseRange( typedb, node, {5,5}, context, descr, 0) -- decl {const,throws}
+		if descr.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free function declaration") end
 		descr.private = lnk.linkage.private
-		descr.throws = decl.throws
 	end
 end
 function typesystem.generic_procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name,generic_arg = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {4,4}, context, descr, 0)) -- decl {const,throws}
-		if decl.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
 		local descr = defineGenericType( node, context, name, llvmir.genericProcedureDescr, generic_arg)
-		descr.const = decl.const
+		utils.traverseRange( typedb, node, {4,4}, context, descr, 0) -- decl {const,throws}
+		if descr.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in generic free procedure declaration") end
 		descr.private = lnk.linkage.private
-		descr.throws = decl.throws
 	end
 end
 function typesystem.operatordecl( node, opr)
@@ -3478,52 +3474,52 @@ end
 function typesystem.operator_funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl, ret = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {4,4}, context, descr, 0)) -- decl {const,throws}
 		local descr = {lnk = lnk.linkage, signature="", name=operatordecl.name, symbol ="$"..operatordecl.symbol, 
-				ret=ret, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
-		descr.param = table.unpack( utils.traverseRange( typedb, node, {4,4}, context, descr, 1))
+				ret=ret, private=lnk.private, const=false, throws=false, interface=false}
+		utils.traverseRange( typedb, node, {4,4}, context, descr, 0) -- decl {const,throws}
+		utils.traverseRange( typedb, node, {4,4}, context, descr, 1) -- parameter
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		defineClassOperator( node, descr, context)
 		utils.allocNodeData( node, localDefinitionContext, descr)
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
-		descr.body  = table.unpack( utils.traverseRange( typedb, node, {4,4}, context, descr, 2))
+		utils.traverseRange( typedb, node, {4,4}, context, descr, 2)
 		printFunctionDeclaration( node, descr)
 	end
 end
 function typesystem.operator_procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {3,3}, context, descr, 0)) -- decl {const,throws}
 		local descr = {lnk = lnk.linkage, signature="", name = operatordecl.name, symbol = "$" .. operatordecl.symbol, 
-				ret = nil, private=lnk.private, const=decl.const, throws=decl.throws, interface=false}
-		descr.param = table.unpack( utils.traverseRange( typedb, node, {3,3}, context, descr, 1))
+				ret = nil, private=lnk.private, const=false, throws=false, interface=false}
+		utils.traverseRange( typedb, node, {3,3}, context, descr, 0) -- decl {const,throws}
+		utils.traverseRange( typedb, node, {3,3}, context, descr, 1) -- parameter
 		descr.interface = isInterfaceMethod( context, descr.methodid)
 		defineClassOperator( node, descr, context)
 		utils.allocNodeData( node, localDefinitionContext, descr)
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
-		descr.body  = table.unpack( utils.traverseRange( typedb, node, {3,3}, context, descr, 2))
+		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)
 		printFunctionDeclaration( node, descr)
 	end
 end
 function typesystem.constructordef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
-		local decl = table.unpack( utils.traverseRange( typedb, node, {2,2}, context, descr, 0)) -- decl {const,throws}
-		if decl.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
 		local descr = {lnk = lnk.linkage, signature="", name = ":=", symbol = "$ctor", 
-				ret = nil, private=lnk.private, const=false, throws=decl.throws, interface=false}
-		descr.param = table.unpack( utils.traverseRange( typedb, node, {2,2}, context, descr, 1))
+				ret = nil, private=lnk.private, const=false, throws=false, interface=false}
+		utils.traverseRange( typedb, node, {2,2}, context, descr, 0) -- decl {const,throws}
+		if descr.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
+		utils.traverseRange( typedb, node, {2,2}, context, descr, 1) -- parameter
 		context.properties.constructor = true
 		defineCtorProcedure( node, descr, context)
 		utils.allocNodeData( node, localDefinitionContext, descr)
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
-		descr.body  = table.unpack( utils.traverseRange( typedb, node, {2,2}, context, descr, 2))
+		utils.traverseRange( typedb, node, {2,2}, context, descr, 2)
 		printFunctionDeclaration( node, descr)
 	end
 end
@@ -3540,7 +3536,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 		local scope_bk = typedb:scope( node.arg[1].scope)
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		local env = defineCallableBodyContext( node, context, descr)
-		local block = utils.traverse( typedb, node, subcontext)[1]
+		local block = table.unpack( utils.traverse( typedb, node, subcontext))
 		local code = block.code .. getStructMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
 		descr.body = getCallableEnvironmentCodeBlock( env, code)
@@ -3550,14 +3546,14 @@ function typesystem.destructordef( node, lnk, context, pass)
 	end
 end
 function typesystem.callablebody( node, context, descr, selectid)
-	local rt
 	local subcontext = {domain="local"}
 	if selectid == 0 then -- function attributes {const,nothrow}
-		rt = table.unpack( utils.traverseRange( typedb, node, {2,2}, subcontext))
-		return rt
+		local decl = table.unpack( utils.traverseRange( typedb, node, {2,2}, subcontext))
+		descr.const = decl.const
+		descr.throws = decl.throws
 	elseif selectid == 1 then -- parameter declarations
 		defineCallableBodyContext( node, context, descr)
-		rt = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
+		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
 	elseif selectid == 2 then -- statements in body
 		local env = getCallableEnvironment()
 		descr.env = env
@@ -3570,9 +3566,8 @@ function typesystem.callablebody( node, context, descr, selectid)
 			if env.initstate then code = code .. completeCtorInitializationCode( block.nofollow) end
 			if not block.nofollow then code = code .. doReturnVoidStatement() end
 		end
-		rt = getCallableEnvironmentCodeBlock( env, code)
+		descr.body = getCallableEnvironmentCodeBlock( env, code)
 	end
-	return rt
 end
 function typesystem.extern_paramdef( node, context, args)
 	return table.unpack( utils.traverseRange( typedb, node, {1,1}, context))

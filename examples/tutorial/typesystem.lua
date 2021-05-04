@@ -126,19 +126,30 @@ end
 function typesystem.funcdef( node, context, pass)
 	local typnam = node.arg[1].value
 	if not pass or pass == 1 then
-		local rtype = table.unpack( utils.traverseRange( typedb, node, {2,2,1}, context))
-		local param = utils.traverseRange( typedb, node, {3,3,1}, context, 1)	-- 1st pass: function declaration
-		local descr = {name=typnam,rtype=rtype,param=param}
+		local rtype = table.unpack( utils.traverseRange( typedb, node, {2,2}, context))
+		local descr = {name=typnam,rtype=rtype}
+		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
 		log_call( "typesystem.funcdef.declaration", context, {name=typnam, rtype=utils.typeString(typedb,rtype), param=utils.typeListString(typedb,param)})
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
-		utils.traverseRange( typedb, node, {3,3,1}, context, 2)			-- 2nd pass: function implementation
+		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
 		log_call( "typesystem.funcdef.implementation", context, {name=descr.name, rtype=utils.typeString(typedb,descr.rtype), param=utils.typeListString(typedb,descr.param)})
 	end
 end
-function typesystem.callablebody( node)
+function typesystem.callablebody( node, context, descr, selectid)
+	local rt
+	local subcontext = {domain="local"}
+	if selectid == 1 then -- parameter declarations
+		descr.env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, descr.throws)
+		descr.param = utils.traverseRange( typedb, node, {1,1}, subcontext)
+	elseif selectid == 2 then -- statements in body
+		local env = getCallableEnvironment()
+		descr.env = env
+		utils.traverseRange( typedb, node, {3,#node.arg}, subcontext)
+	end
+	return rt
 end
 function typesystem.main_procdef( node)
 end
