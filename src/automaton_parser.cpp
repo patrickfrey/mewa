@@ -682,7 +682,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 
 std::string mewa::printLuaTypeSystemStub( const LanguageDef& langdef)
 {
-	std::string rt = mewa::string_format( "local mewa = require \"mewa\"\nlocal typedb = mewa.typedb()\nlocal %s = {}\n\n", langdef.typesystem.c_str());
+	std::string rt = mewa::string_format( "local mewa = require \"mewa\"\nlocal typedb = mewa.typedb()\nlocal typesystem = {}\n\n");
 	std::set<std::string> fset;
 	for (auto call : langdef.calls)
 	{
@@ -694,9 +694,10 @@ std::string mewa::printLuaTypeSystemStub( const LanguageDef& langdef)
 			{
 				argstr.append(", decl");
 			}
-			rt.append( mewa::string_format( "function %s.%s( node%s)\nend\n", langdef.typesystem.c_str(), call.function().c_str(), argstr.c_str()));
+			rt.append( mewa::string_format( "function typesystem.%s( node%s)\nend\n", call.function().c_str(), argstr.c_str()));
 		}
 	}
+	rt.append( "\nreturn typesystem\n\n");
 	return rt;
 }
 

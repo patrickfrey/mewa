@@ -64,9 +64,9 @@ inclass_definition	= typedefinition ";"								(definition 1)
 			| structdefinition								(definition 1)
 			| classdefinition 								(definition 1)
 			| interfacedefinition								(definition 1)
-			| functiondefinition								(definition_decl_impl_pass 4)
-			| operatordefinition								(definition_decl_impl_pass 4)
-			| constructordefinition								(definition_decl_impl_pass 4)
+			| functiondefinition								(definition_2pass 4)
+			| operatordefinition								(definition_2pass 4)
+			| constructordefinition								(definition_2pass 4)
 			;
 free_definition		= namespacedefinition								
 			| typedefinition ";"								(definition 1)
@@ -240,7 +240,7 @@ statement/L1		= structdefinition								(definition 1)
 			| codeblock
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
-			| typespec IDENT "=" expression							(>>vardef_assign)
+			| typespec IDENT "=" expression							(>>vardef)
 			;
 expression/L1		= "{" expressionlist "}"							(>>structure)
 			| "{" "}"									(>>structure)

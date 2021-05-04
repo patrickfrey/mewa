@@ -1,78 +1,79 @@
 local mewa = require "mewa"
 local typedb = mewa.typedb()
-local tutorial/typesystem = {}
+local typesystem = {}
 
-function tutorial/typesystem.program( node)
+function typesystem.program( node)
 end
-function tutorial/typesystem.extern_funcdef( node)
+function typesystem.extern_funcdef( node)
 end
-function tutorial/typesystem.extern_funcdef_vararg( node)
+function typesystem.extern_funcdef_vararg( node)
 end
-function tutorial/typesystem.extern_paramdef( node)
+function typesystem.extern_paramdef( node)
 end
-function tutorial/typesystem.extern_paramdef_collect( node)
+function typesystem.extern_paramdef_collect( node)
 end
-function tutorial/typesystem.extern_paramdeflist( node)
+function typesystem.extern_paramdeflist( node)
 end
-function tutorial/typesystem.definition( node, decl)
+function typesystem.definition( node, decl)
 end
-function tutorial/typesystem.definition_decl_impl_pass( node, decl)
+function typesystem.definition_2pass( node, decl)
 end
-function tutorial/typesystem.typehdr( node, decl)
+function typesystem.typehdr( node)
 end
-function tutorial/typesystem.typespec( node)
+function typesystem.arraytype( node)
 end
-function tutorial/typesystem.typespec_ref( node)
+function typesystem.typespec( node)
 end
-function tutorial/typesystem.inheritdef( node, decl)
+function typesystem.inheritdef( node, decl)
 end
-function tutorial/typesystem.classdef( node)
+function typesystem.classdef( node)
 end
-function tutorial/typesystem.funcdef( node)
+function typesystem.funcdef( node)
 end
-function tutorial/typesystem.callablebody( node)
+function typesystem.callablebody( node)
 end
-function tutorial/typesystem.main_procdef( node)
+function typesystem.main_procdef( node)
 end
-function tutorial/typesystem.paramdeflist( node)
+function typesystem.paramdeflist( node)
 end
-function tutorial/typesystem.paramdef( node)
+function typesystem.paramdef( node)
 end
-function tutorial/typesystem.codeblock( node)
+function typesystem.codeblock( node)
 end
-function tutorial/typesystem.conditional_elseif( node)
+function typesystem.conditional_elseif( node)
 end
-function tutorial/typesystem.conditional_else( node)
+function typesystem.conditional_else( node)
 end
-function tutorial/typesystem.free_expression( node)
+function typesystem.free_expression( node)
 end
-function tutorial/typesystem.return_value( node)
+function typesystem.return_value( node)
 end
-function tutorial/typesystem.return_void( node)
+function typesystem.return_void( node)
 end
-function tutorial/typesystem.conditional_if( node)
+function typesystem.conditional_if( node)
 end
-function tutorial/typesystem.conditional_while( node)
+function typesystem.conditional_while( node)
 end
-function tutorial/typesystem.vardef( node)
+function typesystem.vardef( node)
 end
-function tutorial/typesystem.vardef_assign( node)
+function typesystem.structure( node)
 end
-function tutorial/typesystem.structure( node)
+function typesystem.variable( node)
 end
-function tutorial/typesystem.variable( node)
+function typesystem.constant( node, decl)
 end
-function tutorial/typesystem.constant( node, decl)
+function typesystem.string_constant( node)
 end
-function tutorial/typesystem.string_constant( node)
+function typesystem.binop( node, decl)
 end
-function tutorial/typesystem.binop( node, decl)
+function typesystem.unop( node, decl)
 end
-function tutorial/typesystem.assign_operator( node, decl)
+function typesystem.member( node)
 end
-function tutorial/typesystem.unop( node, decl)
+function typesystem.operator( node, decl)
 end
-function tutorial/typesystem.member( node)
+function typesystem.operator_array( node, decl)
 end
-function tutorial/typesystem.operator( node, decl)
-end
+
+return typesystem
+

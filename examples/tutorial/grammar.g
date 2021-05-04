@@ -22,8 +22,8 @@ free_definitionlist	= free_definition free_definitionlist
 inclass_definitionlist	= inclass_definition inclass_definitionlist
 			|
 			;
-extern_definition	= "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist ")" ";"	(extern_funcdef)
-			| "extern" DQSTRING "function" IDENT typespec "(" extern_paramlist "..." ")" ";"(extern_funcdef_vararg)
+extern_definition	= "extern" "function" IDENT typespec "(" extern_paramlist ")" ";"		(extern_funcdef)
+			| "extern" "function" IDENT typespec "(" extern_paramlist "..." ")" ";"		(extern_funcdef_vararg)
 			;
 extern_paramdecl	= typespec IDENT								(extern_paramdef)
 			| typespec									(extern_paramdef)
@@ -36,7 +36,7 @@ extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			;
 inclass_definition	= variabledefinition ";"							(definition 2)
 			| classdefinition 								(definition 1)
-			| functiondefinition								(definition_decl_impl_pass 4)
+			| functiondefinition								(definition_2pass 4)
 			;
 free_definition		= variabledefinition ";"							(definition 1)
 			| classdefinition 								(definition 1)
@@ -45,11 +45,12 @@ free_definition		= variabledefinition ";"							(definition 1)
 typename/L1		= IDENT
 			| IDENT "::" typename
 			;
-typehdr/L1		= typename									(typehdr {const=false})
-			| "const" typename								(typehdr {const=true})
+typehdr/L1		= typename									(typehdr)
 			;
-typespec/L1		= typehdr									(typespec)
-			| typehdr "&"									(typespec_ref)
+typegen/L1		= typehdr
+			| typegen "[" UINTEGER "]"							(arraytype)
+			;
+typespec/L1		= typegen									(typespec)
 			;
 inheritlist		= typename "," inheritlist							(>>inheritdef 1)
 			| typename									(>>inheritdef 1)
@@ -93,7 +94,7 @@ statement/L1		= classdefinition 								(definition 1)
 			| codeblock
 			;
 variabledefinition	= typespec IDENT								(>>vardef)
-			| typespec IDENT "=" expression							(>>vardef_assign)
+			| typespec IDENT "=" expression							(>>vardef)
 			;
 expression/L1		= "{" expressionlist "}"							(>>structure)
 			| "{" "}"									(>>structure)
@@ -105,10 +106,6 @@ expression/L2		= IDENT										(variable)
 			| DQSTRING									(string_constant)
 			;
 expression/L3		= expression  "="  expression							(>>binop "=")
-			| expression  "+="  expression							(>>assign_operator "+")
-			| expression  "-="  expression							(>>assign_operator "-")
-			| expression  "*="  expression							(>>assign_operator "*")
-			| expression  "/="  expression							(>>assign_operator "/")
 			;
 expression/L4		= expression  "||"  expression							(>>binop "||")
 			;
@@ -133,6 +130,7 @@ expression/L12		= expression "." IDENT								(member)
 			;
 expression/L13		= expression  "(" expressionlist ")"						(>>operator "()")
 			| expression  "(" ")"								(>>operator "()")
+			| expression  "[" expressionlist "]"						(>>operator_array "[]")
 			;
 expressionlist/L0	= expression "," expressionlist
 			| expression

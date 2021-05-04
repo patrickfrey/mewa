@@ -4,6 +4,17 @@ local bit32 = require "bit32"
 -- Module object with all functions exported
 local utils = {}
 
+-- Deep copy of a value or structure without considering userdata
+function utils.deepCopyStruct( stu)
+	if type(stu) == "table" then
+		local rt = {}
+		for key,val in pairs(stu) do rt[ key] = utils.deepCopyStruct( val) end
+		return rt
+	else
+		return stu
+	end
+end
+
 -- Encode a name
 local encodeNameSubstMap = {
  	["*"]  = "$",
@@ -156,8 +167,9 @@ end
 function utils.traverseRange( typedb, node, range, ...)
 	if node.arg then
 		local rt = {}
-		local kk; if range[3] then kk = range[3] else kk = range[1] end
-		for ii=range[1],range[2] do rt[ kk] = processSubnode( typedb, node.arg[ ii], ...); kk = kk + 1 end
+		local start,last = table.unpack(range)
+		local lasti,ofs = last-start+1,start-1
+		for ii=1,lasti do rt[ ii] = processSubnode( typedb, node.arg[ ofs+ii], ...) end
 		return rt
 	else
 		return node.value
@@ -188,9 +200,23 @@ function utils.findNodes( node, func)
 	findSubNodes_( rt, node, func)
 	return rt
 end
--- [3] Node visitor doing a traversal and returning the tree structure with the name and scope of the node
-function utils.abstractSyntaxTree( typedb, node)
-	return {name=node.call.name, scope=node.scope, arg=utils.traverse( typedb, node)}
+
+-- Data structures defining data attached to an AST node
+local nodeIdCount = 0			-- Counter for node id allocation
+local nodeDataMap = {}			-- Map of node id's to a data structure (depending on the node)
+-- Allocate a node identifier for storing results to be accessed in another pass of a multi-pass AST traversal
+function utils.allocNodeData( node, contextTypeId, data)
+	if not node.id then
+		nodeIdCount = nodeIdCount + 1
+		node.id = nodeIdCount
+		nodeDataMap[ nodeIdCount] = {}
+	end
+	nodeDataMap[ node.id][ contextTypeId] = data
+end
+
+-- Get node data attached to a node with `allocNodeData( node, data)`
+function utils.getNodeData( node, contextTypeId)
+	return nodeDataMap[ node.id][ contextTypeId]
 end
 
 -- Types in readable form for messages
@@ -247,23 +273,23 @@ end
 
 -- Monitor global variable access (thanks to https://stackoverflow.com/users/3080396/mblanc):
 function logGlobalVariableAccess() -- replace "function logGlobalVariableAccess()" by "do" to enable it
--- Use local variables
-local old_G, new_G = _G, {}
-local g_duplicateMap = {}
-for k, v in pairs(old_G) do new_G[k] = v end
-setmetatable( new_G, {
-	__index = function (t, key)
-		local keystr = tostring(key)
-		if not g_duplicateMap[ keystr] then io.stderr:write( "Read> " .. keystr .. "\n"); g_duplicateMap[ keystr] = true end
-		return old_G[ key]
-	end,
-	__newindex = function (t, key, val)
-		local keystr = tostring(key)
-		if not g_duplicateMap[ keystr] then io.stderr:write("Write> " .. tostring(key) .. ' = ' .. tostring(val) .. "\n"); g_duplicateMap[ keystr] = true end
-		old_G[ key] = val
-	end,
-})
-setfenv( 0, new_G)	-- Set it at level 1 (top-level function)
+	-- Use local variables
+	local old_G, new_G = _G, {}
+	local g_duplicateMap = {}
+	for k, v in pairs(old_G) do new_G[k] = v end
+	setmetatable( new_G, {
+		__index = function (t, key)
+			local keystr = tostring(key)
+			if not g_duplicateMap[ keystr] then io.stderr:write( "Read> " .. keystr .. "\n"); g_duplicateMap[ keystr] = true end
+			return old_G[ key]
+		end,
+		__newindex = function (t, key, val)
+			local keystr = tostring(key)
+			if not g_duplicateMap[ keystr] then io.stderr:write("Write> " .. tostring(key) .. ' = ' .. tostring(val) .. "\n"); g_duplicateMap[ keystr] = true end
+			old_G[ key] = val
+		end,
+	})
+	setfenv( 0, new_G)	-- Set it at level 1 (top-level function)
 end
 -- Error reporting:
 -- Exit with error message and line info

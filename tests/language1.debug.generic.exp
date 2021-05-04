@@ -70,7 +70,7 @@ Reduce #0 to statementlist by token '}' at line 8 in state XXX, goto XXX
 Shift token '}' at line 8 in state XXX, goto XXX
 Reduce #7 to callablebody by token "constructor" at line 9 in state XXX, call callablebody, goto XXX
 Reduce #3 to constructordefinition by token "constructor" at line 9 in state XXX, call constructordef, goto XXX
-Reduce #1 to inclass_definition by token "constructor" at line 9 in state XXX, call definition_decl_impl_pass 4, goto XXX
+Reduce #1 to inclass_definition by token "constructor" at line 9 in state XXX, call definition_2pass 4, goto XXX
 Reduce #0 to linkage by token "constructor" at line 9 in state XXX, call linkage {private=false,linkage="external",explicit=false}, goto XXX
 Shift token "constructor" at line 9 in state XXX, goto XXX
 Shift token '(' at line 9 in state XXX, goto XXX
@@ -113,7 +113,7 @@ Reduce #2 to statementlist by token '}' at line 12 in state XXX, goto XXX
 Shift token '}' at line 12 in state XXX, goto XXX
 Reduce #7 to callablebody by token "public" at line 13 in state XXX, call callablebody, goto XXX
 Reduce #3 to constructordefinition by token "public" at line 13 in state XXX, call constructordef, goto XXX
-Reduce #1 to inclass_definition by token "public" at line 13 in state XXX, call definition_decl_impl_pass 4, goto XXX
+Reduce #1 to inclass_definition by token "public" at line 13 in state XXX, call definition_2pass 4, goto XXX
 Shift token "public" at line 13 in state XXX, goto XXX
 Reduce #1 to linkage by token "operator" at line 13 in state XXX, call linkage {private=false,linkage="external",explicit=true}, goto XXX
 Shift token "operator" at line 13 in state XXX, goto XXX
@@ -157,7 +157,7 @@ Reduce #2 to statementlist by token '}' at line 16 in state XXX, goto XXX
 Shift token '}' at line 16 in state XXX, goto XXX
 Reduce #7 to callablebody by token "public" at line 17 in state XXX, call callablebody, goto XXX
 Reduce #5 to operatordefinition by token "public" at line 17 in state XXX, call operator_funcdef, goto XXX
-Reduce #1 to inclass_definition by token "public" at line 17 in state XXX, call definition_decl_impl_pass 4, goto XXX
+Reduce #1 to inclass_definition by token "public" at line 17 in state XXX, call definition_2pass 4, goto XXX
 Shift token "public" at line 17 in state XXX, goto XXX
 Reduce #1 to linkage by token "operator" at line 17 in state XXX, call linkage {private=false,linkage="external",explicit=true}, goto XXX
 Shift token "operator" at line 17 in state XXX, goto XXX
@@ -204,7 +204,7 @@ Reduce #2 to statementlist by token '}' at line 20 in state XXX, goto XXX
 Shift token '}' at line 20 in state XXX, goto XXX
 Reduce #7 to callablebody by token IDENT = "ELEMENT" at line 21 in state XXX, call callablebody, goto XXX
 Reduce #5 to operatordefinition by token IDENT = "ELEMENT" at line 21 in state XXX, call operator_funcdef, goto XXX
-Reduce #1 to inclass_definition by token IDENT = "ELEMENT" at line 21 in state XXX, call definition_decl_impl_pass 4, goto XXX
+Reduce #1 to inclass_definition by token IDENT = "ELEMENT" at line 21 in state XXX, call definition_2pass 4, goto XXX
 Shift token IDENT = "ELEMENT" at line 21 in state XXX, goto XXX
 Reduce #1 to typename by token '[' at line 21 in state XXX, goto XXX
 Reduce #1 to typehdr by token '[' at line 21 in state XXX, call typehdr {const=false}, goto XXX
@@ -281,7 +281,7 @@ Reduce #3 to expressionlist by token '}' at line 25 in state XXX, goto XXX
 Reduce #3 to expressionlist by token '}' at line 25 in state XXX, goto XXX
 Shift token '}' at line 25 in state XXX, goto XXX
 Reduce #3 to expression by token ';' at line 25 in state XXX, call structure, goto XXX
-Reduce #4 to variabledefinition by token ';' at line 25 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 25 in state XXX, call vardef, goto XXX
 Shift token ';' at line 25 in state XXX, goto XXX
 Reduce #3 to statement by token IDENT = "array" at line 27 in state XXX, call definition 1, goto XXX
 Shift token IDENT = "array" at line 27 in state XXX, goto XXX
@@ -326,7 +326,7 @@ Shift token IDENT = "i" at line 30 in state XXX, goto XXX
 Shift token '=' at line 30 in state XXX, goto XXX
 Shift token UINTEGER = "0" at line 30 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 30 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 30 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 30 in state XXX, call vardef, goto XXX
 Shift token ';' at line 30 in state XXX, goto XXX
 Reduce #3 to statement by token "while" at line 31 in state XXX, call definition 1, goto XXX
 Shift token "while" at line 31 in state XXX, goto XXX
@@ -638,7 +638,7 @@ Lua call result [1]
                   line = 6,
                   step = 1}},
               call = {
-                name = "definition_decl_impl_pass 4",
+                name = "definition_2pass 4",
                 obj = 4,
                 proc = <function>},
               line = 6,
@@ -802,7 +802,7 @@ Lua call result [1]
                   line = 11,
                   step = 3}},
               call = {
-                name = "definition_decl_impl_pass 4",
+                name = "definition_2pass 4",
                 obj = 4,
                 proc = <function>},
               line = 11,
@@ -962,7 +962,7 @@ Lua call result [1]
                   line = 15,
                   step = 6}},
               call = {
-                name = "definition_decl_impl_pass 4",
+                name = "definition_2pass 4",
                 obj = 4,
                 proc = <function>},
               line = 15,
@@ -1131,7 +1131,7 @@ Lua call result [1]
                   line = 19,
                   step = 9}},
               call = {
-                name = "definition_decl_impl_pass 4",
+                name = "definition_2pass 4",
                 obj = 4,
                 proc = <function>},
               line = 19,
@@ -1372,7 +1372,7 @@ Lua call result [1]
                       line = 25,
                       step = 12}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 25,
                   step = 13}},
@@ -1555,7 +1555,7 @@ Lua call result [1]
                       line = 30,
                       step = 20}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 30,
                   step = 21}},

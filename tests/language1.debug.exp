@@ -320,11 +320,11 @@ statement/L1 = "with" "(" expression ")" codeblock (XX)
 statement/L1 = "with" "(" expression ")" ";" (XX)
 statement/L1 = codeblock
 variabledefinition = typespec IDENT (step:103)
-variabledefinition = typespec IDENT "=" expression (step:104)
-expression/L1 = "{" expressionlist "}" (step:105)
-expression/L1 = "{" "}" (step:105)
-expression/L1 = "new" typespec ":" expression (step:106)
-expression/L1 = "cast" typespec ":" expression (step:107)
+variabledefinition = typespec IDENT "=" expression (step:103)
+expression/L1 = "{" expressionlist "}" (step:104)
+expression/L1 = "{" "}" (step:104)
+expression/L1 = "new" typespec ":" expression (step:105)
+expression/L1 = "cast" typespec ":" expression (step:106)
 expression/L2 = IDENT (XX)
 expression/L2 = BOOLEAN (XX)
 expression/L2 = UINTEGER (XX)
@@ -334,49 +334,49 @@ expression/L2 = DQSTRING (XX)
 expression/L2 = SQSTRING (XX)
 expression/L2 = lamda_expression
 expression/L2 = "(" expression ")"
-expression/L3 = expression "=" expression (step:115)
-expression/L3 = expression "+=" expression (step:116)
-expression/L3 = expression "-=" expression (step:117)
-expression/L3 = expression "*=" expression (step:118)
-expression/L3 = expression "/=" expression (step:119)
-expression/L3 = expression "^=" expression (step:120)
-expression/L3 = expression "&=" expression (step:121)
-expression/L3 = expression "%=" expression (step:122)
-expression/L3 = expression "&&=" expression (step:123)
-expression/L3 = expression "||=" expression (step:124)
-expression/L3 = expression "&=" expression (step:121)
-expression/L3 = expression "|=" expression (step:125)
-expression/L3 = expression "<<=" expression (step:126)
-expression/L3 = expression ">>=" expression (step:127)
-expression/L4 = expression "||" expression (step:128)
-expression/L5 = expression "&&" expression (step:129)
-expression/L6 = expression "|" expression (step:130)
-expression/L7 = expression "^" expression (step:131)
-expression/L7 = expression "&" expression (step:132)
-expression/L8 = expression "==" expression (step:133)
-expression/L8 = expression "!=" expression (step:134)
-expression/L8 = expression "<=" expression (step:135)
-expression/L8 = expression "<" expression (step:136)
-expression/L8 = expression ">=" expression (step:137)
-expression/L8 = expression ">" expression (step:138)
-expression/L9 = expression "+" expression (step:139)
-expression/L9 = expression "-" expression (step:140)
+expression/L3 = expression "=" expression (step:114)
+expression/L3 = expression "+=" expression (step:115)
+expression/L3 = expression "-=" expression (step:116)
+expression/L3 = expression "*=" expression (step:117)
+expression/L3 = expression "/=" expression (step:118)
+expression/L3 = expression "^=" expression (step:119)
+expression/L3 = expression "&=" expression (step:120)
+expression/L3 = expression "%=" expression (step:121)
+expression/L3 = expression "&&=" expression (step:122)
+expression/L3 = expression "||=" expression (step:123)
+expression/L3 = expression "&=" expression (step:120)
+expression/L3 = expression "|=" expression (step:124)
+expression/L3 = expression "<<=" expression (step:125)
+expression/L3 = expression ">>=" expression (step:126)
+expression/L4 = expression "||" expression (step:127)
+expression/L5 = expression "&&" expression (step:128)
+expression/L6 = expression "|" expression (step:129)
+expression/L7 = expression "^" expression (step:130)
+expression/L7 = expression "&" expression (step:131)
+expression/L8 = expression "==" expression (step:132)
+expression/L8 = expression "!=" expression (step:133)
+expression/L8 = expression "<=" expression (step:134)
+expression/L8 = expression "<" expression (step:135)
+expression/L8 = expression ">=" expression (step:136)
+expression/L8 = expression ">" expression (step:137)
+expression/L9 = expression "+" expression (step:138)
+expression/L9 = expression "-" expression (step:139)
 expression/L9 = "&" expression (XX)
-expression/L9 = "-" expression (step:142)
-expression/L9 = "+" expression (step:143)
-expression/L9 = "~" expression (step:144)
-expression/L9 = "!" expression (step:145)
-expression/L10 = expression "*" expression (step:146)
-expression/L10 = expression "/" expression (step:147)
-expression/L10 = expression "%" expression (step:148)
-expression/L11 = expression "<<" expression (step:149)
-expression/L11 = expression ">>" expression (step:150)
+expression/L9 = "-" expression (step:141)
+expression/L9 = "+" expression (step:142)
+expression/L9 = "~" expression (step:143)
+expression/L9 = "!" expression (step:144)
+expression/L10 = expression "*" expression (step:145)
+expression/L10 = expression "/" expression (step:146)
+expression/L10 = expression "%" expression (step:147)
+expression/L11 = expression "<<" expression (step:148)
+expression/L11 = expression ">>" expression (step:149)
 expression/L12 = iexpression
 expression/L12 = expression "." IDENT (XX)
-expression/L12 = "*" expression (step:152)
-expression/L13 = expression "(" expressionlist ")" (step:153)
-expression/L13 = expression "(" ")" (step:153)
-expression/L13 = expression "[" expressionlist "]" (step:154)
+expression/L12 = "*" expression (step:151)
+expression/L13 = expression "(" expressionlist ")" (step:152)
+expression/L13 = expression "(" ")" (step:152)
+expression/L13 = expression "[" expressionlist "]" (step:153)
 iexpression/L14 = expression indirection IDENT (XX)
 indirection/L14 = "->" indirection (XX)
 indirection/L14 = "->" (XX)
@@ -12845,7 +12845,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	variabledefinition = typespec IDENT "=" expression . (step:104), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef_assign
+	variabledefinition = typespec IDENT "=" expression . (step:103), FOLLOW [XX] -> REDUCE variabledefinition #4 CALL vardef
 [XX]
 	expression/L2 = . lamda_expression, FOLLOW [XX] -> GOTO XX
 	expression/L3 = . expression "=" expression, FOLLOW [XX] -> GOTO XX
@@ -13007,11 +13007,11 @@ expressionlist/L0 = expression
 	operatordefinition = linkage . "operator" operatordecl callablebody, FOLLOW [XX] -> SHIFT "operator" GOTO XX
 	constructordefinition = linkage . "constructor" callablebody, FOLLOW [XX] -> SHIFT "constructor" GOTO XX
 [XX]
-	inclass_definition = functiondefinition . (XX), FOLLOW [XX] -> REDUCE inclass_definition #1 CALL definition_decl_impl_pass 4
+	inclass_definition = functiondefinition . (XX), FOLLOW [XX] -> REDUCE inclass_definition #1 CALL definition_2pass 4
 [XX]
-	inclass_definition = constructordefinition . (XX), FOLLOW [XX] -> REDUCE inclass_definition #1 CALL definition_decl_impl_pass 4
+	inclass_definition = constructordefinition . (XX), FOLLOW [XX] -> REDUCE inclass_definition #1 CALL definition_2pass 4
 [XX]
-	inclass_definition = operatordefinition . (XX), FOLLOW [XX] -> REDUCE inclass_definition #1 CALL definition_decl_impl_pass 4
+	inclass_definition = operatordefinition . (XX), FOLLOW [XX] -> REDUCE inclass_definition #1 CALL definition_2pass 4
 [XX]
 	inclass_definition = variabledefinition . ";", FOLLOW [XX] -> SHIFT ';' GOTO XX
 [XX]
@@ -15360,7 +15360,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L1 = "{" expressionlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
-	expression/L1 = "{" "}" . (step:105), FOLLOW [XX] -> REDUCE expression #2 CALL structure
+	expression/L1 = "{" "}" . (step:104), FOLLOW [XX] -> REDUCE expression #2 CALL structure
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15401,7 +15401,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "+" expression . (step:143), FOLLOW [XX] -> REDUCE expression #2 CALL unop "+"
+	expression/L9 = "+" expression . (step:142), FOLLOW [XX] -> REDUCE expression #2 CALL unop "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15442,7 +15442,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "-" expression . (step:142), FOLLOW [XX] -> REDUCE expression #2 CALL unop "-"
+	expression/L9 = "-" expression . (step:141), FOLLOW [XX] -> REDUCE expression #2 CALL unop "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15483,7 +15483,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L12 = "*" expression . (step:152), FOLLOW [XX] -> REDUCE expression #2 CALL unop "->"
+	expression/L12 = "*" expression . (step:151), FOLLOW [XX] -> REDUCE expression #2 CALL unop "->"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15524,7 +15524,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "~" expression . (step:144), FOLLOW [XX] -> REDUCE expression #2 CALL unop "~"
+	expression/L9 = "~" expression . (step:143), FOLLOW [XX] -> REDUCE expression #2 CALL unop "~"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -15565,7 +15565,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = "!" expression . (step:145), FOLLOW [XX] -> REDUCE expression #2 CALL unop "!"
+	expression/L9 = "!" expression . (step:144), FOLLOW [XX] -> REDUCE expression #2 CALL unop "!"
 [XX]
 	tryblock = "try" codeblock . (XX), FOLLOW [XX] -> REDUCE tryblock #2 CALL tryblock
 [XX]
@@ -16251,7 +16251,7 @@ expressionlist/L0 = expression
 [XX]
 	expression/L13 = expression "(" expressionlist . ")", FOLLOW [XX] -> SHIFT ')' GOTO XX
 [XX]
-	expression/L13 = expression "(" ")" . (step:153), FOLLOW [XX] -> REDUCE expression #3 CALL operator "()"
+	expression/L13 = expression "(" ")" . (step:152), FOLLOW [XX] -> REDUCE expression #3 CALL operator "()"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16292,7 +16292,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L7 = expression "^" expression . (step:131), FOLLOW [XX] -> REDUCE expression #3 CALL binop "^"
+	expression/L7 = expression "^" expression . (step:130), FOLLOW [XX] -> REDUCE expression #3 CALL binop "^"
 [XX]
 	expression/L13 = expression "[" expressionlist . "]", FOLLOW [XX] -> SHIFT ']' GOTO XX
 [XX]
@@ -16335,7 +16335,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L7 = expression "&" expression . (step:132), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&"
+	expression/L7 = expression "&" expression . (step:131), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&"
 [XX]
 	indirection/L14 = "->" indirection . (XX), FOLLOW [XX] -> REDUCE indirection #2 CALL count
 [XX]
@@ -16378,7 +16378,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
+	expression/L3 = expression "=" expression . (step:114), FOLLOW [XX] -> REDUCE expression #3 CALL binop "="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16419,7 +16419,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = expression "+" expression . (step:139), FOLLOW [XX] -> REDUCE expression #3 CALL binop "+"
+	expression/L9 = expression "+" expression . (step:138), FOLLOW [XX] -> REDUCE expression #3 CALL binop "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16460,7 +16460,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L9 = expression "-" expression . (step:140), FOLLOW [XX] -> REDUCE expression #3 CALL binop "-"
+	expression/L9 = expression "-" expression . (step:139), FOLLOW [XX] -> REDUCE expression #3 CALL binop "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16501,7 +16501,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "*" expression . (step:146), FOLLOW [XX] -> REDUCE expression #3 CALL binop "*"
+	expression/L10 = expression "*" expression . (step:145), FOLLOW [XX] -> REDUCE expression #3 CALL binop "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16542,7 +16542,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "/" expression . (step:147), FOLLOW [XX] -> REDUCE expression #3 CALL binop "/"
+	expression/L10 = expression "/" expression . (step:146), FOLLOW [XX] -> REDUCE expression #3 CALL binop "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16583,7 +16583,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L10 = expression "%" expression . (step:148), FOLLOW [XX] -> REDUCE expression #3 CALL binop "%"
+	expression/L10 = expression "%" expression . (step:147), FOLLOW [XX] -> REDUCE expression #3 CALL binop "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16624,7 +16624,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L5 = expression "&&" expression . (step:129), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&&"
+	expression/L5 = expression "&&" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL binop "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16665,7 +16665,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L4 = expression "||" expression . (step:128), FOLLOW [XX] -> REDUCE expression #3 CALL binop "||"
+	expression/L4 = expression "||" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL binop "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16706,7 +16706,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L6 = expression "|" expression . (step:130), FOLLOW [XX] -> REDUCE expression #3 CALL binop "|"
+	expression/L6 = expression "|" expression . (step:129), FOLLOW [XX] -> REDUCE expression #3 CALL binop "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16747,7 +16747,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L11 = expression "<<" expression . (step:149), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<<"
+	expression/L11 = expression "<<" expression . (step:148), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16788,7 +16788,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L11 = expression ">>" expression . (step:150), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">>"
+	expression/L11 = expression ">>" expression . (step:149), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">>"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16829,7 +16829,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "==" expression . (step:133), FOLLOW [XX] -> REDUCE expression #3 CALL binop "=="
+	expression/L8 = expression "==" expression . (step:132), FOLLOW [XX] -> REDUCE expression #3 CALL binop "=="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16870,7 +16870,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "!=" expression . (step:134), FOLLOW [XX] -> REDUCE expression #3 CALL binop "!="
+	expression/L8 = expression "!=" expression . (step:133), FOLLOW [XX] -> REDUCE expression #3 CALL binop "!="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16911,7 +16911,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression ">=" expression . (step:137), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">="
+	expression/L8 = expression ">=" expression . (step:136), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16952,7 +16952,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "<=" expression . (step:135), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<="
+	expression/L8 = expression "<=" expression . (step:134), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<="
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -16993,7 +16993,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression ">" expression . (step:138), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">"
+	expression/L8 = expression ">" expression . (step:137), FOLLOW [XX] -> REDUCE expression #3 CALL binop ">"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17034,7 +17034,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L8 = expression "<" expression . (step:136), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<"
+	expression/L8 = expression "<" expression . (step:135), FOLLOW [XX] -> REDUCE expression #3 CALL binop "<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17075,7 +17075,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "+=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
+	expression/L3 = expression "+=" expression . (step:115), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "+"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17116,7 +17116,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "-=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
+	expression/L3 = expression "-=" expression . (step:116), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "-"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17157,7 +17157,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "*=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
+	expression/L3 = expression "*=" expression . (step:117), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "*"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17198,7 +17198,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "/=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
+	expression/L3 = expression "/=" expression . (step:118), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "/"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17239,7 +17239,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "^=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
+	expression/L3 = expression "^=" expression . (step:119), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "^"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17280,7 +17280,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
+	expression/L3 = expression "&=" expression . (step:120), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17321,7 +17321,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "%=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
+	expression/L3 = expression "%=" expression . (step:121), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "%"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17362,7 +17362,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "&&=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
+	expression/L3 = expression "&&=" expression . (step:122), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "&&"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17403,7 +17403,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "||=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
+	expression/L3 = expression "||=" expression . (step:123), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "||"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17444,7 +17444,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "|=" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
+	expression/L3 = expression "|=" expression . (step:124), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "|"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17485,7 +17485,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression "<<=" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
+	expression/L3 = expression "<<=" expression . (step:125), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator "<<"
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -17526,7 +17526,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L3 = expression ">>=" expression . (step:127), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
+	expression/L3 = expression ">>=" expression . (step:126), FOLLOW [XX] -> REDUCE expression #3 CALL assign_operator ">>"
 [XX]
 	expression/L12 = expression "." IDENT . (XX), FOLLOW [XX] -> REDUCE expression #3 CALL member
 [XX]
@@ -17594,7 +17594,7 @@ expressionlist/L0 = expression
 	expression/L1 = . "cast" typespec ":" expression, FOLLOW [XX] -> SHIFT "cast" GOTO XX
 	expression/L2 = . "null", FOLLOW [XX] -> SHIFT "null" GOTO XX
 [XX]
-	expression/L1 = "{" expressionlist "}" . (step:105), FOLLOW [XX] -> REDUCE expression #3 CALL structure
+	expression/L1 = "{" expressionlist "}" . (step:104), FOLLOW [XX] -> REDUCE expression #3 CALL structure
 [XX]
 	statement/L1 = "var" variabledefinition ";" . (step:16), FOLLOW [XX] -> REDUCE statement #3 CALL definition 1
 [XX]
@@ -18089,9 +18089,9 @@ expressionlist/L0 = expression
 [XX]
 	catchblock = "catch" IDENT "," . IDENT codeblock, FOLLOW [XX] -> SHIFT IDENT GOTO XX
 [XX]
-	expression/L13 = expression "(" expressionlist ")" . (step:153), FOLLOW [XX] -> REDUCE expression #4 CALL operator "()"
+	expression/L13 = expression "(" expressionlist ")" . (step:152), FOLLOW [XX] -> REDUCE expression #4 CALL operator "()"
 [XX]
-	expression/L13 = expression "[" expressionlist "]" . (step:154), FOLLOW [XX] -> REDUCE expression #4 CALL operator_array "[]"
+	expression/L13 = expression "[" expressionlist "]" . (step:153), FOLLOW [XX] -> REDUCE expression #4 CALL operator_array "[]"
 [XX]
 	expressionlist/L0 = expression "," expressionlist ., FOLLOW [XX] -> REDUCE expressionlist #3
 [XX]
@@ -18186,7 +18186,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L1 = "new" typespec ":" expression . (step:106), FOLLOW [XX] -> REDUCE expression #4 CALL allocate
+	expression/L1 = "new" typespec ":" expression . (step:105), FOLLOW [XX] -> REDUCE expression #4 CALL allocate
 [XX]
 	iexpression/L14 = expression . indirection IDENT, FOLLOW [XX] -> GOTO XX
 	expression/L13 = expression . "(" expressionlist ")", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -18227,7 +18227,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . "<<=" expression, FOLLOW [XX] -> SHIFT "<<=" GOTO XX
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
-	expression/L1 = "cast" typespec ":" expression . (step:107), FOLLOW [XX] -> REDUCE expression #4 CALL typecast
+	expression/L1 = "cast" typespec ":" expression . (step:106), FOLLOW [XX] -> REDUCE expression #4 CALL typecast
 [XX]
 	lamda_expression = "lambda" "(" lambda_paramlist ")" codeblock . (XX), FOLLOW [XX] -> REDUCE lamda_expression #5 CALL lambda_expression
 [XX]
@@ -18846,7 +18846,7 @@ expressionlist/L0 = expression
 (XX) funcattribute, {const=false,throws=true}
 (XX) definition, 1
 (XX) definition, 2
-(XX) definition_decl_impl_pass, 4
+(XX) definition_2pass, 4
 (XX) typehdr, {const=false}
 (XX) typehdr, {const=true}
 (XX) typehdr_any, "any class^"
@@ -18932,7 +18932,6 @@ expressionlist/L0 = expression
 (XX) conditional_while
 (XX) with_do
 (XX) vardef
-(XX) vardef_assign
 (XX) structure
 (XX) allocate
 (XX) typecast
@@ -20454,7 +20453,7 @@ expressionlist/L0 = expression
 	')' => Reduce #0 lambda_paramlist call lambda_paramdeflist
 [XX]
 	'(' => Shift goto XX
-	';' => Reduce #4 variabledefinition call vardef_assign
+	';' => Reduce #4 variabledefinition call vardef
 	'^' => Shift goto XX
 	'[' => Shift goto XX
 	'&' => Shift goto XX
@@ -20668,59 +20667,59 @@ expressionlist/L0 = expression
 	"operator" => Shift goto XX
 	"constructor" => Shift goto XX
 [XX]
-	$ => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	IDENT => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"function" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"procedure" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"operator" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"const" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"any" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"class" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"struct" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"typedef" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	'}' => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"generic" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"interface" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"private" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"public" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"constructor" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"destructor" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
+	$ => Reduce #1 inclass_definition call definition_2pass 4
+	IDENT => Reduce #1 inclass_definition call definition_2pass 4
+	"function" => Reduce #1 inclass_definition call definition_2pass 4
+	"procedure" => Reduce #1 inclass_definition call definition_2pass 4
+	"operator" => Reduce #1 inclass_definition call definition_2pass 4
+	"const" => Reduce #1 inclass_definition call definition_2pass 4
+	"any" => Reduce #1 inclass_definition call definition_2pass 4
+	"class" => Reduce #1 inclass_definition call definition_2pass 4
+	"struct" => Reduce #1 inclass_definition call definition_2pass 4
+	"typedef" => Reduce #1 inclass_definition call definition_2pass 4
+	'}' => Reduce #1 inclass_definition call definition_2pass 4
+	"generic" => Reduce #1 inclass_definition call definition_2pass 4
+	"interface" => Reduce #1 inclass_definition call definition_2pass 4
+	"private" => Reduce #1 inclass_definition call definition_2pass 4
+	"public" => Reduce #1 inclass_definition call definition_2pass 4
+	"constructor" => Reduce #1 inclass_definition call definition_2pass 4
+	"destructor" => Reduce #1 inclass_definition call definition_2pass 4
 [XX]
-	$ => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	IDENT => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"function" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"procedure" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"operator" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"const" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"any" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"class" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"struct" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"typedef" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	'}' => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"generic" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"interface" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"private" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"public" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"constructor" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"destructor" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
+	$ => Reduce #1 inclass_definition call definition_2pass 4
+	IDENT => Reduce #1 inclass_definition call definition_2pass 4
+	"function" => Reduce #1 inclass_definition call definition_2pass 4
+	"procedure" => Reduce #1 inclass_definition call definition_2pass 4
+	"operator" => Reduce #1 inclass_definition call definition_2pass 4
+	"const" => Reduce #1 inclass_definition call definition_2pass 4
+	"any" => Reduce #1 inclass_definition call definition_2pass 4
+	"class" => Reduce #1 inclass_definition call definition_2pass 4
+	"struct" => Reduce #1 inclass_definition call definition_2pass 4
+	"typedef" => Reduce #1 inclass_definition call definition_2pass 4
+	'}' => Reduce #1 inclass_definition call definition_2pass 4
+	"generic" => Reduce #1 inclass_definition call definition_2pass 4
+	"interface" => Reduce #1 inclass_definition call definition_2pass 4
+	"private" => Reduce #1 inclass_definition call definition_2pass 4
+	"public" => Reduce #1 inclass_definition call definition_2pass 4
+	"constructor" => Reduce #1 inclass_definition call definition_2pass 4
+	"destructor" => Reduce #1 inclass_definition call definition_2pass 4
 [XX]
-	$ => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	IDENT => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"function" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"procedure" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"operator" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"const" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"any" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"class" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"struct" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"typedef" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	'}' => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"generic" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"interface" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"private" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"public" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"constructor" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
-	"destructor" => Reduce #1 inclass_definition call definition_decl_impl_pass 4
+	$ => Reduce #1 inclass_definition call definition_2pass 4
+	IDENT => Reduce #1 inclass_definition call definition_2pass 4
+	"function" => Reduce #1 inclass_definition call definition_2pass 4
+	"procedure" => Reduce #1 inclass_definition call definition_2pass 4
+	"operator" => Reduce #1 inclass_definition call definition_2pass 4
+	"const" => Reduce #1 inclass_definition call definition_2pass 4
+	"any" => Reduce #1 inclass_definition call definition_2pass 4
+	"class" => Reduce #1 inclass_definition call definition_2pass 4
+	"struct" => Reduce #1 inclass_definition call definition_2pass 4
+	"typedef" => Reduce #1 inclass_definition call definition_2pass 4
+	'}' => Reduce #1 inclass_definition call definition_2pass 4
+	"generic" => Reduce #1 inclass_definition call definition_2pass 4
+	"interface" => Reduce #1 inclass_definition call definition_2pass 4
+	"private" => Reduce #1 inclass_definition call definition_2pass 4
+	"public" => Reduce #1 inclass_definition call definition_2pass 4
+	"constructor" => Reduce #1 inclass_definition call definition_2pass 4
+	"destructor" => Reduce #1 inclass_definition call definition_2pass 4
 [XX]
 	';' => Shift goto XX
 [XX]

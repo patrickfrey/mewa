@@ -209,7 +209,7 @@ Shift token IDENT = "g_pnp" at line 20 in state XXX, goto XXX
 Shift token '=' at line 20 in state XXX, goto XXX
 Shift token IDENT = "printNumber" at line 20 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 20 in state XXX, call variable, goto XXX
-Reduce #4 to variabledefinition by token ';' at line 20 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 20 in state XXX, call vardef, goto XXX
 Shift token ';' at line 20 in state XXX, goto XXX
 Reduce #2 to free_definition by token "main" at line 22 in state XXX, call definition 1, goto XXX
 Reduce #0 to free_definitionlist by token "main" at line 22 in state XXX, goto XXX
@@ -261,7 +261,7 @@ Shift token IDENT = "pnp1" at line 25 in state XXX, goto XXX
 Shift token '=' at line 25 in state XXX, goto XXX
 Shift token IDENT = "printNumber" at line 25 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 25 in state XXX, call variable, goto XXX
-Reduce #4 to variabledefinition by token ';' at line 25 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 25 in state XXX, call vardef, goto XXX
 Shift token ';' at line 25 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 26 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 26 in state XXX, goto XXX
@@ -274,7 +274,7 @@ Shift token IDENT = "pnf1" at line 26 in state XXX, goto XXX
 Shift token '=' at line 26 in state XXX, goto XXX
 Shift token IDENT = "printNumber" at line 26 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 26 in state XXX, call variable, goto XXX
-Reduce #4 to variabledefinition by token ';' at line 26 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 26 in state XXX, call vardef, goto XXX
 Shift token ';' at line 26 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 27 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 27 in state XXX, goto XXX
@@ -287,7 +287,7 @@ Shift token IDENT = "cnt" at line 27 in state XXX, goto XXX
 Shift token '=' at line 27 in state XXX, goto XXX
 Shift token UINTEGER = "31" at line 27 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 27 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 27 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 27 in state XXX, call vardef, goto XXX
 Shift token ';' at line 27 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 28 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 28 in state XXX, goto XXX
@@ -301,7 +301,7 @@ Shift token IDENT = "num" at line 28 in state XXX, goto XXX
 Shift token '=' at line 28 in state XXX, goto XXX
 Shift token UINTEGER = "23" at line 28 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 28 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 28 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 28 in state XXX, call vardef, goto XXX
 Shift token ';' at line 28 in state XXX, goto XXX
 Reduce #3 to statement by token IDENT = "pnp1" at line 30 in state XXX, call definition 1, goto XXX
 Shift token IDENT = "pnp1" at line 30 in state XXX, goto XXX
@@ -395,7 +395,7 @@ Shift token IDENT = "str" at line 36 in state XXX, goto XXX
 Shift token '=' at line 36 in state XXX, goto XXX
 Shift token DQSTRING = "Hello World!" at line 36 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 36 in state XXX, call string_constant, goto XXX
-Reduce #4 to variabledefinition by token ';' at line 36 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 36 in state XXX, call vardef, goto XXX
 Shift token ';' at line 36 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 37 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 37 in state XXX, goto XXX
@@ -415,7 +415,7 @@ Shift token '+' at line 37 in state XXX, goto XXX
 Shift token UINTEGER = "6" at line 37 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 37 in state XXX, call constant "constexpr uint", goto XXX
 Reduce #3 to expression by token ';' at line 37 in state XXX, call binop "+", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 37 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 37 in state XXX, call vardef, goto XXX
 Shift token ';' at line 37 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 38 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 38 in state XXX, goto XXX
@@ -435,7 +435,7 @@ Shift token '-' at line 38 in state XXX, goto XXX
 Shift token UINTEGER = "5" at line 38 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 38 in state XXX, call constant "constexpr uint", goto XXX
 Reduce #3 to expression by token ';' at line 38 in state XXX, call binop "-", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 38 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 38 in state XXX, call vardef, goto XXX
 Shift token ';' at line 38 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 39 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 39 in state XXX, goto XXX
@@ -454,7 +454,7 @@ Reduce #1 to expression by token ']' at line 39 in state XXX, call constant "con
 Reduce #1 to expressionlist by token ']' at line 39 in state XXX, goto XXX
 Shift token ']' at line 39 in state XXX, goto XXX
 Reduce #4 to expression by token ';' at line 39 in state XXX, call operator_array "[]", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 39 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 39 in state XXX, call vardef, goto XXX
 Shift token ';' at line 39 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 40 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 40 in state XXX, goto XXX
@@ -473,7 +473,7 @@ Reduce #1 to expression by token ']' at line 40 in state XXX, call constant "con
 Reduce #1 to expressionlist by token ']' at line 40 in state XXX, goto XXX
 Shift token ']' at line 40 in state XXX, goto XXX
 Reduce #4 to expression by token ';' at line 40 in state XXX, call operator_array "[]", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 40 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 40 in state XXX, call vardef, goto XXX
 Shift token ';' at line 40 in state XXX, goto XXX
 Reduce #3 to statement by token IDENT = "printf" at line 41 in state XXX, call definition 1, goto XXX
 Shift token IDENT = "printf" at line 41 in state XXX, goto XXX
@@ -516,7 +516,7 @@ Shift token '&' at line 42 in state XXX, goto XXX
 Shift token IDENT = "cnt" at line 42 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 42 in state XXX, call variable, goto XXX
 Reduce #2 to expression by token ';' at line 42 in state XXX, call operator_address "&", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 42 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 42 in state XXX, call vardef, goto XXX
 Shift token ';' at line 42 in state XXX, goto XXX
 Reduce #3 to statement by token "var" at line 43 in state XXX, call definition 1, goto XXX
 Shift token "var" at line 43 in state XXX, goto XXX
@@ -534,7 +534,7 @@ Shift token '&' at line 43 in state XXX, goto XXX
 Shift token IDENT = "num" at line 43 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 43 in state XXX, call variable, goto XXX
 Reduce #2 to expression by token ';' at line 43 in state XXX, call operator_address "&", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 43 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 43 in state XXX, call vardef, goto XXX
 Shift token ';' at line 43 in state XXX, goto XXX
 Reduce #3 to statement by token IDENT = "printf" at line 44 in state XXX, call definition 1, goto XXX
 Shift token IDENT = "printf" at line 44 in state XXX, goto XXX
@@ -1365,7 +1365,7 @@ Lua call result [1]
               line = 20,
               step = 8}},
           call = {
-            name = "vardef_assign",
+            name = "vardef",
             proc = <function>},
           line = 20,
           step = 9}},
@@ -1543,7 +1543,7 @@ Lua call result [1]
                       line = 25,
                       step = 10}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 25,
                   step = 11}},
@@ -1593,7 +1593,7 @@ Lua call result [1]
                       line = 26,
                       step = 12}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 26,
                   step = 13}},
@@ -1644,7 +1644,7 @@ Lua call result [1]
                       line = 27,
                       step = 14}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 27,
                   step = 15}},
@@ -1695,7 +1695,7 @@ Lua call result [1]
                       line = 28,
                       step = 16}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 28,
                   step = 17}},
@@ -2038,7 +2038,7 @@ Lua call result [1]
                       line = 36,
                       step = 25}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 36,
                   step = 26}},
@@ -2117,7 +2117,7 @@ Lua call result [1]
                       line = 37,
                       step = 28}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 37,
                   step = 29}},
@@ -2196,7 +2196,7 @@ Lua call result [1]
                       line = 38,
                       step = 31}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 38,
                   step = 32}},
@@ -2266,7 +2266,7 @@ Lua call result [1]
                       line = 39,
                       step = 34}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 39,
                   step = 35}},
@@ -2336,7 +2336,7 @@ Lua call result [1]
                       line = 40,
                       step = 37}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 40,
                   step = 38}},
@@ -2484,7 +2484,7 @@ Lua call result [1]
                       line = 42,
                       step = 40}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 42,
                   step = 41}},
@@ -2551,7 +2551,7 @@ Lua call result [1]
                       line = 43,
                       step = 42}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 43,
                   step = 43}},

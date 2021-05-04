@@ -272,7 +272,7 @@ Shift token IDENT = "ii" at line 32 in state XXX, goto XXX
 Shift token '=' at line 32 in state XXX, goto XXX
 Shift token UINTEGER = "0" at line 32 in state XXX, goto XXX
 Reduce #1 to expression by token ';' at line 32 in state XXX, call constant "constexpr uint", goto XXX
-Reduce #4 to variabledefinition by token ';' at line 32 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 32 in state XXX, call vardef, goto XXX
 Shift token ';' at line 32 in state XXX, goto XXX
 Reduce #3 to statement by token "while" at line 33 in state XXX, call definition 1, goto XXX
 Shift token "while" at line 33 in state XXX, goto XXX
@@ -648,7 +648,7 @@ Reduce #3 to expressionlist by token '}' at line 52 in state XXX, goto XXX
 Shift token '}' at line 52 in state XXX, goto XXX
 Reduce #3 to expression by token ';' at line 52 in state XXX, call structure, goto XXX
 Reduce #4 to expression by token ';' at line 52 in state XXX, call allocate, goto XXX
-Reduce #4 to variabledefinition by token ';' at line 52 in state XXX, call vardef_assign, goto XXX
+Reduce #4 to variabledefinition by token ';' at line 52 in state XXX, call vardef, goto XXX
 Shift token ';' at line 52 in state XXX, goto XXX
 Reduce #3 to statement by token IDENT = "printf" at line 53 in state XXX, call definition 1, goto XXX
 Shift token IDENT = "printf" at line 53 in state XXX, goto XXX
@@ -1711,7 +1711,7 @@ Lua call result [1]
                           line = 32,
                           step = 12}},
                       call = {
-                        name = "vardef_assign",
+                        name = "vardef",
                         proc = <function>},
                       line = 32,
                       step = 13}},
@@ -2882,7 +2882,7 @@ Lua call result [1]
                       line = 52,
                       step = 47}},
                   call = {
-                    name = "vardef_assign",
+                    name = "vardef",
                     proc = <function>},
                   line = 52,
                   step = 48}},

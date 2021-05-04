@@ -550,7 +550,10 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 	Lexem lexem = automaton.lexer().next( scanner);
 	for (; !lexem.empty(); lexem = automaton.lexer().next( scanner))
 	{
-		if (lexem.id() <= 0) throw Error( Error::BadCharacterInGrammarDef, lexem.value());
+		if (lexem.id() <= 0)
+		{
+			throw Error( Error::BadCharacterInGrammarDef, lexem.value(), lexem.line());
+		}
 		do
 		{
 			if (dbgout) printDebugAction( dbgout, ctx, automaton, lexem);

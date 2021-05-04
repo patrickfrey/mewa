@@ -29,7 +29,8 @@ To understand this article some knowledge about formal languages and parser gene
 
 ### Deeper Digging
 
-For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions.
+For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions. There exists also an FAQ that tries to answer problem-solving questions.
+
 
 ### How Mewa Works
 
@@ -86,6 +87,10 @@ The typedb library implements an in-memory map for 3 types of data that are asso
 
 The scope inclusion relation may not describe all we need to describe visibility in all cases. But it is always a valid restriction.
 Further restrictions can be implemented on top of that.
+
+## Tutorial
+
+The tutorial walks to the implementation of a simple example programming language without any claim to completeness.
 
 
 ## Types and Constructors
