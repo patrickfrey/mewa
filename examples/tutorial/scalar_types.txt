@@ -1,0 +1,3 @@
+float;float;fp
+int;i32;signed
+bool;i1;bool

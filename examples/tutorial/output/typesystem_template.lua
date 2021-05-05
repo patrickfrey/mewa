@@ -62,8 +62,6 @@ function typesystem.variable( node)
 end
 function typesystem.constant( node, decl)
 end
-function typesystem.string_constant( node)
-end
 function typesystem.binop( node, decl)
 end
 function typesystem.unop( node, decl)

@@ -101,9 +101,9 @@ expression/L1		= "{" expressionlist "}"							(>>structure)
 			;
 expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
-			| UINTEGER									(constant "constexpr uint")
+			| UINTEGER									(constant "constexpr int")
 			| FLOAT										(constant "constexpr float")
-			| DQSTRING									(string_constant)
+			| DQSTRING									(constant "string")
 			;
 expression/L3		= expression  "="  expression							(>>binop "=")
 			;

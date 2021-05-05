@@ -2,7 +2,6 @@ local mewa = require "mewa"
 local utils = require "typesystem_utils"
 local typedb = mewa.typedb()
 
--- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
 local tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
 local tag_typeConversion = 2		-- Type conversion of parameters
 local tag_typeInstantiation = 3		-- Type value construction from const expression
@@ -10,7 +9,6 @@ local tag_namespace = 4			-- Type deduction for resolving namespaces
 local tag_pushVararg = 5		-- Type deduction for passing parameter as vararg argument
 local tag_transfer = 6			-- Transfer of information to build an object by a constructor, used in free function callable to pointer assignment
 
--- Sets of tags used for resolving a type or deriving a type, depending on the case
 local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeclaration)
 local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_transfer)
 local tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
@@ -30,16 +28,15 @@ function log_call( fname, ...)
 	io.stderr:write("CALL " .. fname .. " " .. mewa.tostring({...}) .. "\n")
 end
 
-local voidType = typedb:def_type( 0, "void")				-- the void type like in "C/C++"
-local integerType = typedb:def_type( 0, "int")				-- signed integer type
-local floatType = typedb:def_type( 0, "float")				-- single precision floating point number
-local boolType = typedb:def_type( 0, "bool")				-- boolean value, either true or false
-local stringType = typedb:def_type( 0, "string")			-- string constant, this example language knows strings only as constants
-local constexprIntegerType = typedb:def_type( 0, "constexpr int")	-- signed integer type constant value, represented as Lua number
-local constexprFloatType = typedb:def_type( 0, "constexpr float")	-- single precision floating point number constant, represented as Lua number
-local constexprBoolType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
-local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- structure initializer list
-
+local voidType = typedb:def_type( 0, "void")
+local integerType = typedb:def_type( 0, "int")
+local floatType = typedb:def_type( 0, "float")
+local boolType = typedb:def_type( 0, "bool")
+local stringType = typedb:def_type( 0, "string")
+local constexprIntegerType = typedb:def_type( 0, "constexpr int")
+local constexprFloatType = typedb:def_type( 0, "constexpr float")
+local constexprBoolType = typedb:def_type( 0, "constexpr bool")
+local constexprStructureType = typedb:def_type( 0, "constexpr struct")
 local scalarTypeMap = {
 	void=voidType, int=intType, float=floatType, bool=boolType, string=stringType,
 	["constexpr int"]=constexprIntegerType, ["constexpr float"]=constexprFloatType,
@@ -256,6 +253,7 @@ function typesystem.constant( node, decl)
 			local encval,enclen = utils.encodeLexemLlvm(value)
 			local name = utils.uniqueName( "string")
 			stringConstantMap[ value] = {size=enclen+1,name=name}
+			print( utils.constructor_format( llvmir.control.stringConstDeclaration, {name=name, size=enclen+1, value=encval}) .. "\n")
 		end
 		value = stringConstantMap[ value]
 	end

@@ -86,7 +86,7 @@ local typeHasCtorThrowingMap = {}	-- Map that tells if a type has a throwing con
 local typeQualiSepMap = {}		-- Map of any defined type id to a separation pair (valtype,qualifier) = valtype type, qualifier as booleans
 local typeDescriptionMap = {}		-- Map of any defined type id to its llvmir template structure
 local constVarargTypeMap = {}		-- Map of const value types to their vararg type (type used if passed as variable size argument list parameter)
-local stringConstantMap = {}		-- Map of string constant values to a structure with its attributes {fmt,name,size}
+local stringConstantMap = {}		-- Map of string constant values to a structure with the attributes {name,size}
 local arrayTypeMap = {}			-- Map of the pair valtype,size to the array type valtype for an array size
 local genericInstanceTypeMap = {}	-- Map of the pair valtype,generic parameter to the generic instance type valtype for list of arguments
 local varargFuncMap = {}		-- Map of types to true for vararg functions/procedures
@@ -101,8 +101,8 @@ local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
 local genericLocalStack = {}		-- Stack of values for localDefinitionContext 
 local localDefinitionContext = 0	-- The context type id used for local type definitions, to separate instances of generics using the same scope
 local seekContextKey = "seekctx"	-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
-local currentCallableEnvKey = "env"	-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
-local currentAllocFrameKey = "frame"	-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local callableEnvKey = "env"		-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
+local allocFrameKey = "frame"		-- Current key for the allocation frames (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local exceptionSectionPrinted = false	-- True if the code for throwing exceptions hat been attached to the code
 
 ---- Callable Environment Fields ----
@@ -127,13 +127,13 @@ end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype, throws)
 	local env = createCallableEnvironment( node, name, rtype, throws)
-	if typedb:this_instance( currentCallableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
-	typedb:set_instance( currentCallableEnvKey, env)
+	if typedb:this_instance( callableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
+	typedb:set_instance( callableEnvKey, env)
 	return env
 end
 -- Get the active callable instance
 function getCallableEnvironment()
-	return instantCallableEnvironment or typedb:get_instance( currentCallableEnvKey)
+	return instantCallableEnvironment or typedb:get_instance( callableEnvKey)
 end
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( contextTypeId, typnam, args)
@@ -1305,17 +1305,17 @@ function popSeekContextType( val)
 end
 -- Push an element to the generic local stack, allowing nested generic creation
 function pushGenericLocal( genericlocal)
-	table.insert( genericLocalStack, {localDefinitionContext,seekContextKey,currentCallableEnvKey,currentAllocFrameKey})
+	table.insert( genericLocalStack, {localDefinitionContext,seekContextKey,callableEnvKey,allocFrameKey})
 	localDefinitionContext = genericlocal
 	local suffix = string.format(":%x", genericlocal)
 	seekContextKey = "seekctx" .. suffix
-	currentCallableEnvKey = "env" .. suffix
-	currentAllocFrameKey = "frame" .. suffix
+	callableEnvKey = "env" .. suffix
+	allocFrameKey = "frame" .. suffix
 end
 -- Pop the top element from the generic local stack, restoring the previous localDefinitionContext value
 function popGenericLocal( genericlocal)
 	if localDefinitionContext ~= genericlocal or #genericLocalStack == 0 then utils.errorMessage( 0, "Internal: corrupt generic local stack") end
-	localDefinitionContext,seekContextKey,currentCallableEnvKey,currentAllocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
+	localDefinitionContext,seekContextKey,callableEnvKey,allocFrameKey = table.unpack(genericLocalStack[ #genericLocalStack])
 	table.remove( genericLocalStack, #genericLocalStack)
 end
 -- Temporarily change environment for implicitely defined code
@@ -1356,20 +1356,20 @@ function createThisAllocationFrame( parent)
 	local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
 	local rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
 	table.insert( env.frames, rt)
-	typedb:set_instance( currentAllocFrameKey, rt)
+	typedb:set_instance( allocFrameKey, rt)
 	return rt
 end
 -- Get or create the allocation frame of this scope
 function getOrCreateThisAllocationFrame()
-	return instantAllocationFrame or typedb:this_instance( currentAllocFrameKey) or createThisAllocationFrame( typedb:get_instance( currentAllocFrameKey))
+	return instantAllocationFrame or typedb:this_instance( allocFrameKey) or createThisAllocationFrame( typedb:get_instance( allocFrameKey))
 end
 -- Get the allocation frame covering this scope
 function getAllocationFrame()
-	return instantAllocationFrame or typedb:get_instance( currentAllocFrameKey)
+	return instantAllocationFrame or typedb:get_instance( allocFrameKey)
 end
 -- Get the allocation frame of this scope if it exists
 function thisAllocationFrame()
-	return instantAllocationFrame or typedb:this_instance( currentAllocFrameKey)
+	return instantAllocationFrame or typedb:this_instance( allocFrameKey)
 end
 -- Get or create the cleanup slot for a scope step in a given allocation frame, must be called in ascending order, return the index of the dtor found or created
 function getOrCreateAllocationFrameCleanupSlot( frame, step)
@@ -1714,7 +1714,8 @@ function resumeInitState( frame)
 end
 -- Get the code of the default initialization constructor
 function defaultInitConstructorCode( node, env, member)
-	local membervar,memberconstructor = selectNoArgumentType( node, member.name, typedb:resolve_type( getSeekContextTypes(), member.name, tagmask_resolveType))
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), member.name, tagmask_resolveType)
+	local membervar,memberconstructor = selectNoArgumentType( node, member.name, resolveContextTypeId, reductions, items)
 	local res = tryApplyCallable( node, {type=membervar,constructor=memberconstructor}, ":=", {})
 	if not res then utils.errorMessage( env.line, "No default constructor available for member '%s', need explicit initialization for every case", member.name) end
 	return res.constructor.code
@@ -2231,14 +2232,14 @@ end
 function applyLambda( node, lambdaTypeId, lambdaDescr, lambdaArgs)
 	for _,arg in ipairs(lambdaArgs) do arg.type = getDeclarationType( arg.type) end -- because the lambda is implemented in a different scope reductions of local variable declarations may not be defined, therefore we assign the declaration type to the lambda parameter
 	local env = getCallableEnvironment()
-	local frame = typedb:get_instance( currentAllocFrameKey)
+	local frame = typedb:get_instance( allocFrameKey)
 	local seekctx = getSeekContextTypes()
 	local scope_bk,step_bk = typedb:scope(lambdaDescr.node.scope)
 	local genericlocal = typedb:def_type( localDefinitionContext, "_X__" .. utils.uniqueName( lambdaDescr.name .. "__"))
 	pushGenericLocal( genericlocal)
 	setSeekContextTypes( seekctx)
 	pushSeekContextType( genericlocal)
-	typedb:set_instance( currentCallableEnvKey, env)
+	typedb:set_instance( callableEnvKey, env)
 	frame = createThisAllocationFrame( frame)
 	if #lambdaArgs ~= #lambdaDescr.param then utils.errorMessage( node.line, "Number of lambda arguments do not match: argument %d <> %d expected", #lambdaArgs, #lambdaDescr.param) end
 	defineLambdaParameterAliases( node, genericlocal, lambdaDescr.param, lambdaArgs)
@@ -2349,7 +2350,8 @@ function createPointerTypeInstance( node, attr, typeId)
 end
 -- Call a function, meaning to apply operator "()" on a callable
 function callFunction( node, contextTypes, name, args)
-	local typeId,constructor = selectNoArgumentType( node, name, typedb:resolve_type( contextTypes, name, tagmask_resolveType))
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( contextTypes, name, tagmask_resolveType)
+	local typeId,constructor = selectNoArgumentType( node, name, resolveContextTypeId, reductions, items)
 	local this = {type=typeId, constructor=constructor}
 	return applyCallable( node, this, "()", args)
 end
@@ -3222,7 +3224,8 @@ function typesystem.operator_array( node, operator)
 		if descr.class == "generic_procedure" or descr.class == "generic_function" then
 			local gentype = getOrCreateGenericType( node, this.type, descr, args)
 			local gentypnam = typedb:type_name(gentype)
-			local typeId,constructor = selectNoArgumentType( node, gentypnam, typedb:resolve_type( getSeekContextTypes(), gentypnam, tagmask_resolveType))
+			local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), gentypnam, tagmask_resolveType)
+			local typeId,constructor = selectNoArgumentType( node, gentypnam, resolveContextTypeId, reductions, items)
 			return {type=typeId, constructor=constructor}
 		elseif descr.class == "lambda" then
 			local constructor = applyLambda( node, this.type, descr, args)
@@ -3379,7 +3382,8 @@ end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
 	local env = getCallableEnvironment()
-	local typeId,constructor = selectNoArgumentType( node, typeName, typedb:resolve_type( getSeekContextTypes(), typeName, tagmask_resolveType))
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), typeName, tagmask_resolveType)
+	local typeId,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
 	local variableScope = typedb:type_scope( typeId)
 	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
 		return {type=typeId, constructor=constructor}
