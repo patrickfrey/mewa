@@ -1,114 +1,33 @@
-local mewa = require "mewa"
+mewa = require "mewa"
 local utils = require "typesystem_utils"
-local typedb = mewa.typedb()
-
--- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
-local tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
-local tag_typeConversion = 2		-- Type conversion of parameters
-local tag_typeInstantiation = 3		-- Type value construction from const expression
-local tag_namespace = 4			-- Type deduction for resolving namespaces
-local tag_pushVararg = 5		-- Type deduction for passing parameter as vararg argument
-local tag_transfer = 6			-- Transfer of information to build an object by a constructor, used in free function callable to pointer assignment
-
--- Sets of tags used for resolving a type or deriving a type, depending on the case
-local tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeclaration)
-local tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_transfer)
-local tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
-local tagmask_namespace = typedb.reduction_tagmask( tag_namespace)
-local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_pushVararg)
+llvmir = require "llvmir"
+typedb = mewa.typedb()
 
 -- Global variables
-local localDefinitionContext = 0	-- context type of local definitions
-local seekContextKey = "seekctx"	-- key for context types defined for a scope
-local callableEnvKey = "env"		-- key for current callable environment
-local typeDescriptionMap = {}		-- maps any type id to the description of the associated type
-local arrayTypeMap = {}			-- maps an array key to the array type if defined
-local stringConstantMap = {}		-- map of string constant values to a structure with the attributes {name,size}
+localDefinitionContext = 0		-- Context type of local definitions
+seekContextKey = "seekctx"		-- Key for context types defined for a scope
+callableEnvKey = "env"			-- Key for current callable environment
+typeDescriptionMap = {}			-- Map of type ids to their description
+referenceTypeMap = {}			-- Map of value type ids to their reference type if it exists
+dereferenceTypeMap = {}			-- Map of reference type ids to their value type if it exists
+arrayTypeMap = {}			-- Map array keys to their array type
+stringConstantMap = {}			-- Map of string constant values to a structure with the attributes {name,size}
+scalarTypeMap = {}			-- Map of scalar type names to the correspoding value type
 
--- Print a log message for a visited node to stderr
-function log_call( fname, ...)
-	io.stderr:write("CALL " .. fname .. " " .. mewa.tostring({...}) .. "\n")
-end
+dofile( "examples/tutorial/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
+dofile( "examples/tutorial/defineTypes.lua")			-- Functions to define types with or without arguments
+dofile( "examples/tutorial/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
+dofile( "examples/tutorial/constexprTypes.lua")			-- All constant expression types and arithmetics are defined here
+dofile( "examples/tutorial/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
+dofile( "examples/tutorial/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
+dofile( "examples/tutorial/resolveTypes.lua")			-- Methods to resolve types
 
-local voidType = typedb:def_type( 0, "void")				-- the void type like in "C/C++"
-local integerType = typedb:def_type( 0, "int")				-- signed integer type
-local floatType = typedb:def_type( 0, "float")				-- single precision floating point number
-local boolType = typedb:def_type( 0, "bool")				-- boolean value, either true or false
-local stringType = typedb:def_type( 0, "string")			-- string constant, this example language knows strings only as constants
-local constexprIntegerType = typedb:def_type( 0, "constexpr int")	-- signed integer type constant value, represented as Lua number
-local constexprFloatType = typedb:def_type( 0, "constexpr float")	-- single precision floating point number constant, represented as Lua number
-local constexprBoolType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
-local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- structure initializer list
-
-local scalarTypeMap = {
-	void=voidType, int=intType, float=floatType, bool=boolType, string=stringType,
-	["constexpr int"]=constexprIntegerType, ["constexpr float"]=constexprFloatType,
-	["constexpr bool"]=constexprBoolType, ["constexpr struct"]=constexprStructureType
-}
-
--- Get the context type for type declarations
-function getDeclarationContextTypeId( context)
-	if context.domain == "local" then return localDefinitionContext
-	elseif context.domain == "member" then return context.decltype
-	elseif context.domain == "global" then return 0
-	end
-end
--- Get an object instance and clone it if it is not stored in the current scope, making it possible to add elements to an inherited instance in the current scope
-function thisInstanceTableClone( name, emptyInst)
-	local inst = typedb:this_instance( name)
-	if not inst then
-		inst = utils.deepCopyStruct( typedb:get_instance( name) or emptyInst)
-		typedb:set_instance( name, inst)
-	end
-	return inst
-end
--- Get the list of context types associated with the current scope used for resolving types
-function getSeekContextTypes()
-	return typedb:get_instance( seekContextKey) or {0}
-end
--- Push an element to the current context type list used for resolving types
-function pushSeekContextType( val)
-	table.insert( thisInstanceTableClone( seekContextKey, {0}), val)
-end
--- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
-function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
-	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then -- not found or ambiguous
-		utils.errorResolveType( typedb, node.line, resolveContextTypeId, seekContext, typeName)
-	end
-	for _,item in ipairs(items) do if typedb:type_nof_parameters( item) == 0 then return item end end
-	utils.errorMessage( node, string.format( "Failed to find type '%s %s' without parameter", typedb:type_string(resolveContextTypeId), typeName))
-end
--- Get the type handle of a type defined as a path
-function resolveTypeFromNamePath( node, arg, argidx)
-	if not argidx then argidx = #arg end
-	local typeName = arg[ argidx]
-	local typeId,constructor
-	local seekContext
-	if argidx > 1 then seekContext = resolveTypeFromNamePath( node, arg, argidx-1) else seekContext = getSeekContextTypes() end
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekContext, typeName, tagmask_namespace)
-	return selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
-end
--- Create a callable environent object
-function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
-	return {name=name, line=node.line, scope=typedb:scope(),
-		register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-		returntype=rtype}
-end
--- Attach a newly created data structure for a callable to its scope
-function defineCallableEnvironment( node, name, rtype)
-	local env = createCallableEnvironment( node, name, rtype)
-	if typedb:this_instance( callableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
-	typedb:set_instance( callableEnvKey, env)
-	return env
-end
--- Get the active callable instance
-function getCallableEnvironment()
-	return instantCallableEnvironment or typedb:get_instance( callableEnvKey)
-end
 
 -- AST Callbacks:
 local typesystem = {}
 function typesystem.program( node)
+	defineConstExprArithmetics()
+	initBuiltInTypes()
 	local context = {domain="global"}
 	utils.traverse( typedb, node, context)
 end
@@ -125,7 +44,6 @@ end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
 		local arg = table.unpack( utils.traverse( typedb, node, context))
-		log_call( "typesystem.definition", context, {pass=pass,pass_selected=pass_selected})
 		if arg then return {code = arg.constructor.code} else return {code=""} end
 	end
 end
@@ -165,10 +83,13 @@ function typesystem.classdef( node, context)
 	local descr = {name=typnam, type=typeId}
 	typeDescriptionMap[ typeId] = descr
 	local classContext = {domain="member", decltype=typeId}
-	log_call( "typesystem.classdef", context, descr)
+	io.stderr:write("DECLARE " .. context.domain .. " class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
+	io.stderr:write("-- MEMBER VARIABLES class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
+	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: declarations
+	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: implementations
 end
 function typesystem.funcdef( node, context, pass)
@@ -178,12 +99,13 @@ function typesystem.funcdef( node, context, pass)
 		local descr = {name=typnam,rtype=rtype}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
-		log_call( "typesystem.funcdef.declaration", context, {name=typnam, rtype=utils.typeString(typedb,rtype), param=utils.typeListString(typedb,param)})
+		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.name
+				.. " (" .. utils.typeListString(typedb,param) .. ") -> " .. utils.typeString(typedb,rtype) .. "\n")
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
-		log_call( "typesystem.funcdef.implementation", context, {name=descr.name, rtype=utils.typeString(typedb,descr.rtype), param=utils.typeListString(typedb,descr.param)})
+		io.stderr:write("IMPLEMENTATION function " .. descr.name .. "\n")
 	end
 end
 function typesystem.callablebody( node, context, descr, selectid)
@@ -191,12 +113,12 @@ function typesystem.callablebody( node, context, descr, selectid)
 	local subcontext = {domain="local"}
 	if selectid == 1 then -- parameter declarations
 		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
+		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
 		descr.param = utils.traverseRange( typedb, node, {1,1}, subcontext)
-		log_call( "typesystem.callablebody.parameter", context, descr)
 	elseif selectid == 2 then -- statements in body
 		local env = getCallableEnvironment()
 		descr.env = env
-		log_call( "typesystem.callablebody.statements", subcontext, descr)
+		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
 		utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
 	end
 	return rt
@@ -226,7 +148,7 @@ function typesystem.conditional_while( node)
 end
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
-	log_call( "typesystem.vardef", context, {name=typedb:type_string(datatype),name=varnam,value=mewa.tostring(initval)})
+	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. "\n")
 end
 function typesystem.structure( node)
 	local args = utils.traverse( typedb, node)

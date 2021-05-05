@@ -25,11 +25,7 @@ local typeDescriptionMap = {}		-- maps any type id to the description of the ass
 local arrayTypeMap = {}			-- maps an array key to the array type if defined
 local stringConstantMap = {}		-- map of string constant values to a structure with the attributes {name,size}
 
--- Print a log message for a visited node to stderr
-function log_call( fname, ...)
-	io.stderr:write("CALL " .. fname .. " " .. mewa.tostring({...}) .. "\n")
-end
-
+-- Scalar first class type declarations
 local voidType = typedb:def_type( 0, "void")				-- the void type like in "C/C++"
 local integerType = typedb:def_type( 0, "int")				-- signed integer type
 local floatType = typedb:def_type( 0, "float")				-- single precision floating point number
@@ -97,7 +93,9 @@ end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype)
 	local env = createCallableEnvironment( node, name, rtype)
-	if typedb:this_instance( callableEnvKey) then utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())})) end
+	if typedb:this_instance( callableEnvKey) then
+		utils.errorMessage( node.line, "Internal: Callable environment defined twice: %s %s", name, mewa.tostring({(typedb:scope())}))
+	end
 	typedb:set_instance( callableEnvKey, env)
 	return env
 end
@@ -125,7 +123,6 @@ end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
 		local arg = table.unpack( utils.traverse( typedb, node, context))
-		log_call( "typesystem.definition", context, {pass=pass,pass_selected=pass_selected})
 		if arg then return {code = arg.constructor.code} else return {code=""} end
 	end
 end
@@ -165,10 +162,13 @@ function typesystem.classdef( node, context)
 	local descr = {name=typnam, type=typeId}
 	typeDescriptionMap[ typeId] = descr
 	local classContext = {domain="member", decltype=typeId}
-	log_call( "typesystem.classdef", context, descr)
+	io.stderr:write("DECLARE " .. context.domain .. " class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
+	io.stderr:write("-- MEMBER VARIABLES class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
+	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: declarations
+	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.name .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: implementations
 end
 function typesystem.funcdef( node, context, pass)
@@ -178,12 +178,13 @@ function typesystem.funcdef( node, context, pass)
 		local descr = {name=typnam,rtype=rtype}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
-		log_call( "typesystem.funcdef.declaration", context, {name=typnam, rtype=utils.typeString(typedb,rtype), param=utils.typeListString(typedb,param)})
+		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.name
+				.. " (" .. utils.typeListString(typedb,param) .. ") -> " .. utils.typeString(typedb,rtype) .. "\n")
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
-		log_call( "typesystem.funcdef.implementation", context, {name=descr.name, rtype=utils.typeString(typedb,descr.rtype), param=utils.typeListString(typedb,descr.param)})
+		io.stderr:write("IMPLEMENTATION function " .. descr.name .. "\n")
 	end
 end
 function typesystem.callablebody( node, context, descr, selectid)
@@ -191,12 +192,12 @@ function typesystem.callablebody( node, context, descr, selectid)
 	local subcontext = {domain="local"}
 	if selectid == 1 then -- parameter declarations
 		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
+		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
 		descr.param = utils.traverseRange( typedb, node, {1,1}, subcontext)
-		log_call( "typesystem.callablebody.parameter", context, descr)
 	elseif selectid == 2 then -- statements in body
 		local env = getCallableEnvironment()
 		descr.env = env
-		log_call( "typesystem.callablebody.statements", subcontext, descr)
+		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
 		utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
 	end
 	return rt
@@ -226,7 +227,7 @@ function typesystem.conditional_while( node)
 end
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
-	log_call( "typesystem.vardef", context, {name=typedb:type_string(datatype),name=varnam,value=mewa.tostring(initval)})
+	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. "\n")
 end
 function typesystem.structure( node)
 	local args = utils.traverse( typedb, node)

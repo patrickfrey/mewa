@@ -1,4 +1,4 @@
-extern function printf void( string ...);
+extern function printf void( string, float); // printf is a variable argument list function, but this would go beyond the scope of an example
 
 class Person
 {
