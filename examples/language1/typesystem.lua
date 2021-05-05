@@ -1695,7 +1695,7 @@ function disallowInitCalls( line, msg, scope)
 end
 -- Log an initialization call of a member by the assignment operator '=' in a constructor. Increments the initialization state and checks the order of initialization.
 function logInitCall( name, index)
-	local line,msg = unpack(typedb:get_instance("noinit") or {})
+	local line,msg = table.unpack(typedb:get_instance("noinit") or {})
 	local code = ""
 	if msg then utils.errorMessage( line, msg) end
 	local frame = getOrCreateThisAllocationFrame()
@@ -3149,7 +3149,7 @@ function typesystem.trycatch( node, context)
 	local env = getCallableEnvironment()
 	if env.initstate then disallowInitCalls( node.line, "Member initializations not allowed in try/catch block") end
 	local catchlabel = env.label()
-	local tryblock,catchblock = unpack( utils.traverse( typedb, node, context, catchlabel))
+	local tryblock,catchblock = table.unpack( utils.traverse( typedb, node, context, catchlabel))
 	local code
 	if not tryblock.nofollow then 
 		local followlabel = env.label()
@@ -3208,7 +3208,7 @@ function typesystem.operator( node, operator)
 	return applyCallable( node, this, operator, args)
 end
 function typesystem.operator_address( node, operator)
-	local this = unpack( utils.traverse( typedb, node))
+	local this = table.unpack( utils.traverse( typedb, node))
 	expectValueType( node, this)
 	local declType = getDeclarationType( this.type)
 	local qs = typeQualiSepMap[ declType]
