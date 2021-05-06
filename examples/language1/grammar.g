@@ -176,7 +176,7 @@ lamda_expression	= "lambda" "(" lambda_paramlist ")" codeblock					(lambda_expre
 			;
 generic_instance_defelem= typegen
 			| UINTEGER									(generic_instance_dimension)
-			| lamda_expression								(generic_instance_lambda)
+			| lamda_expression
 			;
 generic_instance_deflist= generic_instance_defelem							(generic_instance_deflist)
 			| generic_instance_defelem "," generic_instance_deflist				(generic_instance_deflist)

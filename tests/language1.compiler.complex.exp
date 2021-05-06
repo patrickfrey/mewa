@@ -155,7 +155,7 @@ call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r1
 %r10 = load double, double* %r9
 %r11 = load double, double* %r1
 %r12 = fadd double %r10, %r11
-%r13 = fmul double %r12, 0x4000000000000000
+%r13 = fmul double 0x4000000000000000, %r12
 %r14 = call double @sqrt( double %r13)
 call void @__C___Complex__double__$div__double__const( %__Complex__double* sret %rt, %__Complex__double* %r15, double %r14)
 br label %L1
@@ -433,12 +433,10 @@ call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r3
 call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r40, %__Complex__double* %r38)
 call void @printComplex__double__i8$____Complex__double$( i8* %r39, %__Complex__double* %r40)
 %r41 = alloca double, align 8
-%r42 = fadd double 0x3FF0000000000000, 0x402299999999999A
-%r43 = fmul double %r42, 0x401C000000000000
-store double %r43, double* %r41
-%r44 = getelementptr inbounds [21 x i8], [21 x i8]* @string15, i64 0, i64 0
-%r45 = load double, double* %r41
-call void @printFloat__double__i8$__double( i8* %r44, double %r45)
+store double 0x4052066666666667, double* %r41
+%r42 = getelementptr inbounds [21 x i8], [21 x i8]* @string15, i64 0, i64 0
+%r43 = load double, double* %r41
+call void @printFloat__double__i8$__double( i8* %r42, double %r43)
 store i32 0, i32* %r1
 br label %L2
 L2:
@@ -471,8 +469,8 @@ call void @__dtor___Complex__double( %__Complex__double* %r4)
 call void @__dtor___Complex__double( %__Complex__double* %r3)
 br label %L1
 L1:
-%r46 = load i32, i32* %r1
-ret i32 %r46
+%r44 = load i32, i32* %r1
+ret i32 %r44
 }
 
 

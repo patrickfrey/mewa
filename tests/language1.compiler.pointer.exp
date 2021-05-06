@@ -62,7 +62,7 @@ call void %r6( double 0x4008E147AE147AE1, i32* %r4)
 %r10 = load i32, i32* %r4
 %r7 = load i32(double, i32)*, i32(double, i32)** %r3
 %r8 = call i32 %r7( double 0x4010E147AE147AE1, i32 4)
-%r9 = mul nsw i32 %r8, 2
+%r9 = mul nsw i32 2, %r8
 %r11 = add nsw i32 %r10, %r9
 store i32 %r11, i32* %r4
 %r12 = load i32(double, i32)*, i32(double, i32)** %r3

@@ -125,7 +125,6 @@
 		{ name="lambda_paramdeflist", proc=typesystem.lambda_paramdeflist},
 		{ name="lambda_expression", proc=typesystem.lambda_expression},
 		{ name="generic_instance_dimension", proc=typesystem.generic_instance_dimension},
-		{ name="generic_instance_lambda", proc=typesystem.generic_instance_lambda},
 		{ name="generic_instance_deflist", proc=typesystem.generic_instance_deflist},
 		{ name="generic_instance", proc=typesystem.generic_instance},
 		{ name="generic_header_ident_type", proc=typesystem.generic_header_ident_type},

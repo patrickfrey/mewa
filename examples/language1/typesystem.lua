@@ -51,6 +51,7 @@ local rwd_c_inheritance = 0.125/(5*5) 	-- Reduction weight of const class inheri
 local rwd_boolean = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 
 function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other 
+function factorWeight( fac, w1) return fac * w1	end
 function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
 function combineWeight3( w1, w2, w3) return w1 + (w2 * 127.0 / 128.0) + (w3 * 255.0 / 256.0) end -- Combining three reductions slightly less weight compared with applying them singularily
 function scalarDeductionWeight( sizeweight) return 0.125*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
@@ -518,13 +519,6 @@ constVarargTypeMap[ constexprUIntegerType] = constexprIntegerType
 constVarargTypeMap[ constexprFloatType] = constexprFloatType
 constVarargTypeMap[ constexprBooleanType] = constexprIntegerType
 constVarargTypeMap[ constexprNullType] = constexprNullType
--- Table listing the accepted constant expression/value types for each scalar type class with the weight for loading it
-local typeClassToConstExprTypesMap = {
-	fp = {{type=constexprFloatType,weight=rdw_constexpr}, {type=constexprIntegerType,weight=rdw_float},{type=constexprUIntegerType,weight=rdw_float}}, 
-	bool = {{type=constexprBooleanType,weight=rdw_constexpr}},
-	signed = {{type=constexprIntegerType,weight=rdw_constexpr},{type=constexprUIntegerType,weight=rdw_sign}},
-	unsigned = {{type=constexprUIntegerType,weight=rdw_constexpr}}
-}
 local bits64 = bcd.bits( 64) -- The example language1 has a maximum integer bit width of 64
 -- Map of all const expression binary operators to their implementation
 local constexprBinaryOperatorMap = { 
@@ -560,31 +554,17 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
 	end
 end
--- Conversion of a constexpr number constant to a floating point number
-function constexprToFloat( val, typeId)
-	if typeId == constexprFloatType then if type(val) ~= "userdata" then return tonumber(val) else return val:tonumber() end
-	elseif typeId == constexprIntegerType then if type(val) ~= "userdata" then return tonumber(val) else return val:tonumber() end
-	elseif typeId == constexprUIntegerType then if type(val) ~= "userdata" then return tonumber(val) else return val:tonumber() end
-	elseif typeId == constexprBooleanType then if val == true then return 1.0 else return 0.0 end
-	else utils.errorMessage( 0, "Can't convert constexpr value of type '%s' to number: '%s'", typedb:type_string(typeId), tostring(number))
-	end
-end
+
 function constexprFloatToFloatConstructor( val) return constructorStruct( "0x" .. mewa.llvm_float_tohex( val)) end
 function constexprFloatToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
+function constexprFloatToIntegerConstructor( val) return constructorStruct( tostring(tointeger(val))) end
+function constexprFloatToBooleanConstructor( val) if math.abs(val) < epsilonthen then return constructorStruct( "0") else constructorStruct( "1") end end
+function constexprIntegerToFloatConstructor( val) return constructorStruct( "0x" .. mewa.llvm_float_tohex( val:tonumber())) end
+function constexprIntegerToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val:tonumber())) end
 function constexprIntegerToIntegerConstructor( val) return constructorStruct( tostring(val)) end
-function constexprBoolToBoolConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
+function constexprIntegerToBooleanConstructor( val) if val == "0" then return constructorStruct( "0") else return constructorStruct( "1") end end
+function constexprBooleanToScalarConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
 
--- Conversion of constexpr constant to representation in LLVM IR (floating point numbers need a conversion into an internal binary representation)
-function constexprLlvmConversion( typeId, constexprType)
-	if typeDescriptionMap[ typeId].class == "fp" then
-		if typeDescriptionMap[ typeId].llvmtype == "float" then
-			return function( val) return "0x" .. mewa.llvm_float_tohex( constexprToFloat( val, constexprType)) end
-		elseif typeDescriptionMap[ typeId].llvmtype == "double" then
-			return function( val) return "0x" .. mewa.llvm_double_tohex( constexprToFloat( val, constexprType)) end
-		end
-	end
-	return function( val) return tostring( val) end
-end
 -- Define the evaluation of expressions with only const expression arguments
 function defineConstExprArithmetics()
 	defineCall( constexprIntegerType, constexprUIntegerType, "-", {}, constexprUnaryOperatorMap["-"])
@@ -614,6 +594,7 @@ function defineConstExprArithmetics()
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_bool)
 	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_bool)
 	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprFloatType, constexprUIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
 	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_float)
 	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
 	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
@@ -1241,43 +1222,75 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		end
 	end
 end
+-- Define the promote calls of a const expression for a binary scalar operator
+function defineBinopConstexprPromoteCalls( resultType, operator, argtype, descr)
+	if descr.llvmtype == "double" then
+		definePromoteCall( resultType, constexprFloatType, argtype, operator, {argtype}, constexprFloatToDoubleConstructor)
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToDoubleConstructor)
+		definePromoteCall( resultType, constexprUIntegerType, argtype, operator, {argtype}, constexprIntegerToDoubleConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.llvmtype == "float" then
+		definePromoteCall( resultType, constexprFloatType, argtype, operator, {argtype}, constexprFloatToFloatConstructor)
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToFloatConstructor)
+		definePromoteCall( resultType, constexprUIntegerType, argtype, operator, {argtype}, constexprIntegerToFloatConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "bool" then
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "signed" then
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToIntegerConstructor)
+		definePromoteCall( resultType, constexprUIntegerType, argtype, operator, {argtype}, constexprIntegerToIntegerConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "unsigned" then
+		definePromoteCall( resultType, constexprUIntegerType, argtype, operator, {argtype}, constexprIntegerToIntegerConstructor)
+	end
+end
+function defineBinopConstexprArgumentConversionCalls( resultType, operator, argtype, descr, call_constructor)
+	if descr.llvmtype == "double" then
+		defineCall( resultType, argtype, operator, {constexprFloatType}, function(this,arg) return call_constructor(this,{constexprFloatToDoubleConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToDoubleConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprUIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToDoubleConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprBooleanType}, function(this,arg) return call_constructor(this,{constexprBooleanToScalarConstructor(arg[1])}) end)
+	elseif descr.llvmtype == "float" then
+		defineCall( resultType, argtype, operator, {constexprFloatType}, function(this,arg) return call_constructor(this,{constexprFloatToFloatConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToFloatConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprUIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToFloatConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprBooleanType}, function(this,arg) return call_constructor(this,{constexprBooleanToScalarConstructor(arg[1])}) end)
+	elseif descr.class == "bool" then
+		defineCall( resultType, argtype, operator, {constexprFloatType}, function(this,arg) return call_constructor(this,{constexprFloatToBooleanConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToBooleanConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprUIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToBooleanConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprBooleanType}, function(this,arg) return call_constructor(this,{constexprBooleanToScalarConstructor(arg[1])}) end)
+	elseif descr.class == "signed" or descr.class == "unsigned" then
+		defineCall( resultType, argtype, operator, {constexprFloatType}, function(this,arg) return call_constructor(this,{constexprFloatToIntegerConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToIntegerConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprUIntegerType}, function(this,arg) return call_constructor(this,{constexprIntegerToIntegerConstructor(arg[1])}) end)
+		defineCall( resultType, argtype, operator, {constexprBooleanType}, function(this,arg) return call_constructor(this,{constexprBooleanToScalarConstructor(arg[1])}) end)
+	end
+end
 -- Define built-in unary,binary operators for first class citizen scalar types
 function defineBuiltInTypeOperators( typnam, descr)
 	local qualitype = scalarQualiTypeMap[ typnam]
-	local constexprTypes = typeClassToConstExprTypesMap[ descr.class]
+	local c_valtype = qualitype.c_valtype
+	local valtype = qualitype.valtype
 	if descr.unop then
 		for operator,operator_fmt in pairs( descr.unop) do
-			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {}, callConstructor( operator_fmt, true))
+			defineCall( valtype, c_valtype, operator, {}, callConstructor( operator_fmt, true))
 		end
 	end
 	if descr.binop then
 		for operator,operator_fmt in pairs( descr.binop) do
-			defineCall( qualitype.valtype, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
-			for i,constexprType in ipairs(constexprTypes) do
-				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType.type)
-				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
-				defineCall( qualitype.valtype, qualitype.c_valtype, operator, {constexprType.type}, constructor)
-				if operator == '+' or operator == '*' then
-					defineCall( qualitype.valtype, constexprType.type, operator, {qualitype.valtype}, binopSwapConstructor(constructor))
-				else
-					definePromoteCall( qualitype.c_valtype, constexprType.type, qualitype.c_valtype, operator, {qualitype.c_valtype}, valueconv)
-				end
-			end
+			local call_constructor = callConstructor( operator_fmt, true)
+			defineCall( valtype, c_valtype, operator, {c_valtype}, call_constructor)
+			defineBinopConstexprPromoteCalls( valtype, operator, c_valtype, descr)
+			defineBinopConstexprArgumentConversionCalls( valtype, operator, c_valtype, descr, call_constructor)
 		end
 	end
 	if descr.cmpop then
 		for operator,operator_fmt in pairs( descr.cmpop) do
-			defineCall( scalarBooleanType, qualitype.c_valtype, operator, {qualitype.c_valtype}, callConstructor( operator_fmt, true))
-			for i,constexprType in ipairs(constexprTypes) do
-				local valueconv = constexprLlvmConversion( qualitype.valtype, constexprType.type)
-				local constructor = binopArgConversionConstructor( operator_fmt, valueconv)
-				defineCall( scalarBooleanType, qualitype.c_valtype, operator, {constexprType.type}, constructor)
-				if operator == "==" or operator == "!=" then
-					defineCall( scalarBooleanType, constexprType.type, operator, {qualitype.c_valtype}, binopSwapConstructor(constructor))
-				else
-					definePromoteCall( scalarBooleanType, constexprType.type, qualitype.c_valtype, operator, {qualitype.c_valtype}, valueconv)
-				end
-			end
+			local call_constructor = callConstructor( operator_fmt, true)
+			defineCall( scalarBooleanType, c_valtype, operator, {c_valtype}, call_constructor)
+			defineBinopConstexprPromoteCalls( scalarBooleanType, operator, c_valtype, descr)
+			defineBinopConstexprArgumentConversionCalls( scalarBooleanType, operator, c_valtype, descr, call_constructor)
 		end
 	end
 end
@@ -1787,7 +1800,7 @@ function defineVariable( node, context, typeId, name, initVal)
 			out = env.register()
 			code = utils.constructor_format( descr.def_local, {out = out}, env.register)
 		end
-		local var = typedb:def_type( localDefinitionContext, name, out)
+		local var = typedb:def_type( localDefinitionContext, name, constructorStruct(out))
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		local decl = {type=var, constructor={code=code,out=out}}
@@ -1806,9 +1819,9 @@ function defineVariable( node, context, typeId, name, initVal)
 		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
 		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 		if type(initVal) == "function" then initVal = initVal() end
-		if initVal and isScalarConstExprValueType( initVal.type) then
-			valueconv = constexprLlvmConversion( typeId, initVal.type)
-			print( utils.constructor_format( descr.def_global_val, {out = out, val = valueconv(constructorParts(initVal.constructor))})) -- print global data declaration
+		if initVal and descr.scalar == true and isScalarConstExprValueType( initVal.type) then
+			local initScalarConst = constructorParts( getRequiredTypeConstructor( node, typeId, initVal, tagmask_matchParameter, tagmask_typeConversion))
+			print( utils.constructor_format( descr.def_global_val, {out = out, val = initScalarConst})) -- print global data declaration
 		else
 			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
 			local decl = {type=var, constructor={code=code,out=out}}
@@ -2037,12 +2050,20 @@ function initBuiltInTypes()
 	local byteQualitype = nil
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = defineQualiTypes( {line=0}, 0, typnam, scalar_descr)
+		local valtype = qualitype.valtype
 		local c_valtype = qualitype.c_valtype
+		local constexprInitWeight = factorWeight( scalar_descr.sizeweight, rdw_constexpr)
 		scalarQualiTypeMap[ typnam] = qualitype
 		if scalar_descr.class == "fp" then
-			if scalar_descr.llvmtype == "double" then scalarFloatType = c_valtype end -- LLVM needs a double to be passed as vararg argument
+			if scalar_descr.llvmtype == "double" then
+				scalarFloatType = c_valtype -- LLVM needs a double to be passed as vararg argument
+				typedb:def_reduction( valtype, constexprFloatType, constexprFloatToDoubleConstructor, tag_typeInstantiation, constexprInitWeight)
+			else
+				typedb:def_reduction( valtype, constexprFloatType, constexprFloatToFloatConstructor, tag_typeInstantiation, constexprInitWeight)
+			end
 		elseif scalar_descr.class == "bool" then
 			scalarBooleanType = c_valtype
+			typedb:def_reduction( valtype, constexprBooleanType, constexprFloatToBooleanConstructor, tag_typeInstantiation, constexprInitWeight)
 		elseif scalar_descr.class == "unsigned" then
 			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then scalarIntegerType = c_valtype; scalarIntegerTypnam = typnam end
 			if scalar_descr.llvmtype == "i64" and not scalarLongType then scalarLongType = c_valtype; scalarLongTypnam = typnam end
@@ -2050,6 +2071,7 @@ function initBuiltInTypes()
 				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_valtype
+			typedb:def_reduction( valtype, constexprUIntegerType, constexprIntegerToIntegerConstructor, tag_typeInstantiation, constexprInitWeight)
 		elseif scalar_descr.class == "signed" then
 			if scalar_descr.llvmtype == "i32" then scalarIntegerType = c_valtype; scalarIntegerTypnam = typnam end
 			if scalar_descr.llvmtype == "i64" then scalarLongType = c_valtype; scalarLongTypnam = typnam end
@@ -2059,11 +2081,7 @@ function initBuiltInTypes()
 				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_valtype
-		end
-		for i,constexprType in ipairs( typeClassToConstExprTypesMap[ scalar_descr.class]) do
-			local weight = combineWeight3( rdw_load, constexprType.weight, scalarDeductionWeight( scalar_descr.sizeweight))
-			local valueconv = constexprLlvmConversion( c_valtype, constexprType.type)
-			typedb:def_reduction( qualitype.valtype, constexprType.type, function(arg) return constructorStruct( valueconv(arg)) end, tag_typeInstantiation, weight)
+			typedb:def_reduction( valtype, constexprIntegerType, constexprIntegerToIntegerConstructor, tag_typeInstantiation, constexprInitWeight)
 		end
 	end
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
@@ -2169,12 +2187,7 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 			local constructor = applyReductionList( node, reductions, nil)
 			local item_constructor = typedb:type_constructor( item)
 			constructor = applyConstructor( node, item, item_constructor, constructor)
-			if constructor then
-				local out,code = constructorParts( constructor)
-				return item,{code=code,out=out}
-			else
-				return item
-			end
+			return item,constructor
 		end
 	end
 	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, getSeekContextTypes(), typeName))
@@ -3685,8 +3698,6 @@ function typesystem.interfacedef( node, context)
 end
 function typesystem.generic_instance_dimension( node, context)
 	return {type=constexprUIntegerType, constructor=node.arg[1].value}
-end
-function typesystem.generic_instance_lambda( node, context)
 end
 function typesystem.generic_instance_deflist( node, context, generic_instancelist)
 	table.insert( generic_instancelist, table.unpack( utils.traverseRange( typedb, node, {1,1}, context)) )
