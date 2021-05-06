@@ -502,11 +502,13 @@ local constexprBooleanType = typedb:def_type( 0, "constexpr bool")	-- const expr
 local constexprNullType = typedb:def_type( 0, "constexpr null")		-- const expression null value implemented as nil
 local constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
 function isScalarConstExprValueType( initType) return initType >= constexprIntegerType and initType <= constexprNullType end
+
 -- Mapping of some constant expression type naming
 hardcodedTypeMap[ "constexpr bool"] = constexprBooleanType
 hardcodedTypeMap[ "constexpr uint"] = constexprUIntegerType
 hardcodedTypeMap[ "constexpr int"] = constexprIntegerType
 hardcodedTypeMap[ "constexpr float"] = constexprFloatType
+
 -- Description records of constant expression types
 typeDescriptionMap[ constexprIntegerType] = llvmir.constexprIntegerDescr
 typeDescriptionMap[ constexprUIntegerType] = llvmir.constexprUIntegerDescr
@@ -519,33 +521,9 @@ constVarargTypeMap[ constexprUIntegerType] = constexprIntegerType
 constVarargTypeMap[ constexprFloatType] = constexprFloatType
 constVarargTypeMap[ constexprBooleanType] = constexprIntegerType
 constVarargTypeMap[ constexprNullType] = constexprNullType
+
 local bits64 = bcd.bits( 64) -- The example language1 has a maximum integer bit width of 64
--- Map of all const expression binary operators to their implementation
-local constexprBinaryOperatorMap = { 
-	["+"] = function( this, arg) return this + arg[1] end,
-	["-"] = function( this, arg) return this - arg[1] end,
-	["*"] = function( this, arg) return this * arg[1] end,
-	["/"] = function( this, arg) return this / arg[1] end,
-	["%"] = function( this, arg) return this % arg[1] end,
-	["&"] = function( this, arg) return this.bit_and( arg[1], bits64) end,
-	["|"] = function( this, arg) return this.bit_or( arg[1], bits64) end,
-	["^"] = function( this, arg) return this.bit_xor( arg[1], bits64) end,
-	["&&"] = function( this, arg) return this == true and arg[1] == true end,
-	["||"] = function( this, arg) return this == true or arg[1] == true end,
-}
--- Map of all const expression unary operators to their implementation
-local constexprUnaryOperatorMap = {
-	["~"] = function( this, arg) return this.bit_not( bits64) end,
-	["!"] = function( this, arg) return this ~= true end,
-	["-"] = function( this, arg) return -this end,
-}
--- Define the list of unary/binary operators defined for each const expression type
-local constexprTypeOperatorMap = {
-	[constexprIntegerType]  = {"+","-","*","/","%"},
-	[constexprUIntegerType] = {"&","|","^","~"},
-	[constexprFloatType]    = {"+","-","*","/","%"},
-	[constexprBooleanType]  = {"&&","||","!"}
-}
+
 -- Create a constexpr node from a lexem in the AST
 function createConstExpr( node, constexpr_type, lexemvalue)
 	if constexpr_type == constexprIntegerType then return bcd.int(lexemvalue)
@@ -554,7 +532,7 @@ function createConstExpr( node, constexpr_type, lexemvalue)
 	elseif constexpr_type == constexprBooleanType then if lexemvalue == "true" then return true else return false end
 	end
 end
-
+-- List of value constructors from constexpr constructors
 function constexprFloatToFloatConstructor( val) return constructorStruct( "0x" .. mewa.llvm_float_tohex( val)) end
 function constexprFloatToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
 function constexprFloatToIntegerConstructor( val) return constructorStruct( tostring(tointeger(val))) end
@@ -565,32 +543,30 @@ function constexprIntegerToIntegerConstructor( val) return constructorStruct( to
 function constexprIntegerToBooleanConstructor( val) if val == "0" then return constructorStruct( "0") else return constructorStruct( "1") end end
 function constexprBooleanToScalarConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
 
--- Define the evaluation of expressions with only const expression arguments
-function defineConstExprArithmetics()
-	defineCall( constexprIntegerType, constexprUIntegerType, "-", {}, constexprUnaryOperatorMap["-"])
-	for constexpr_type,oprlist in pairs(constexprTypeOperatorMap) do
-		for oi,opr in ipairs(oprlist) do
-			if constexprUnaryOperatorMap[ opr] then
-				defineCall( constexpr_type, constexpr_type, opr, {}, constexprUnaryOperatorMap[ opr])
-			end
-			if constexprBinaryOperatorMap[ opr] then
-				defineCall( constexpr_type, constexpr_type, opr, {constexpr_type}, constexprBinaryOperatorMap[ opr])
-			end
-		end
-	end
-	local oprlist = constexprTypeOperatorMap[ constexprFloatType]
-	for oi,opr in ipairs(oprlist) do
-		if constexprBinaryOperatorMap[ opr] then
-			definePromoteCall( constexprFloatType, constexprIntegerType, constexprFloatType, opr, {constexprFloatType},function(this) return this:tonumber() end)
-			definePromoteCall( constexprFloatType, constexprUIntegerType, constexprFloatType, opr,{constexprFloatType},function(this) return this:tonumber() end)
-		end
-	end
-	local oprlist = constexprTypeOperatorMap[ constexprUIntegerType]
-	for oi,opr in ipairs(oprlist) do
-		if constexprBinaryOperatorMap[ opr] then
-			definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
-		end
-	end
+-- Define arithmetic operators for a constexpr type
+function defineConstExprArithmetics( constExprType)
+	defineCall( constExprType, constExprType, "-", {}, function( this, arg) return -this end)
+	defineCall( constExprType, constExprType, "+", {constExprType}, function( this, arg) return this + arg[1] end)
+	defineCall( constExprType, constExprType, "-", {constExprType}, function( this, arg) return this - arg[1] end)
+	defineCall( constExprType, constExprType, "*", {constExprType}, function( this, arg) return this * arg[1] end)
+	defineCall( constExprType, constExprType, "/", {constExprType}, function( this, arg) return this / arg[1] end)
+	defineCall( constExprType, constExprType, "%", {constExprType}, function( this, arg) return this % arg[1] end)
+end
+-- Define bitwise operators for a constexpr type
+function defineConstExprBitwiseOps( constExprType)
+	defineCall( constExprType, constExprType, "~", {}, function( this, arg) return this.bit_not( bits64) end)
+	defineCall( constExprType, constExprType, "&", {constExprType}, function( this, arg) return this.bit_and( arg[1], bits64) end)
+	defineCall( constExprType, constExprType, "|", {constExprType}, function( this, arg) return this.bit_or( arg[1], bits64) end)
+	defineCall( constExprType, constExprType, "^", {constExprType}, function( this, arg) return this.bit_xor( arg[1], bits64) end)
+end
+-- Define the boolean operators for the constexpr boolean type
+function defineConstExprBooleanOps()
+	defineCall( constexprBooleanType, constexprBooleanType, "!", {}, function( this, arg) return this ~= true end)
+	defineCall( constexprBooleanType, constexprBooleanType, "&&", {constexprBooleanType}, function( this, arg) return this == true and arg[1] == true end)
+	defineCall( constexprBooleanType, constexprBooleanType, "||", {constexprBooleanType}, function( this, arg) return this == true or arg[1] == true end)
+end
+-- Define the type conversions of const expressions to other const expression types
+function defineConstExprTypeConversions()
 	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_bool)
 	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_bool)
 	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
@@ -601,6 +577,24 @@ function defineConstExprArithmetics()
 
 	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
 	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_bool)
+end
+-- Define the operators for const expression arguments
+function defineConstExprOperators()
+	defineConstExprArithmetics( constexprIntegerType)
+	defineConstExprArithmetics( constexprFloatType)
+	defineConstExprBitwiseOps( constexprUIntegerType)
+	defineCall( constexprIntegerType, constexprUIntegerType, "-", {}, function( this, arg) return -this end)
+	defineConstExprBooleanOps()
+
+	for _,opr in ipairs({"+","-","*","/","%"}) do
+		definePromoteCall( constexprFloatType, constexprIntegerType, constexprFloatType, opr, {constexprFloatType}, function(this) return this:tonumber() end)
+		definePromoteCall( constexprFloatType, constexprUIntegerType, constexprFloatType, opr, {constexprFloatType}, function(this) return this:tonumber() end)
+	end
+	for _,opr in ipairs({"&","|","^"}) do
+		definePromoteCall( constexprUIntegerType, constexprIntegerType, constexprUIntegerType, opr, {constexprUIntegerType}, function(this) return this end)
+	end
+	defineCall( constexprBooleanType, constexprUIntegerType, "!", {}, function( this, arg) return this ~= "0" end)
+	defineCall( constexprBooleanType, constexprIntegerType, "!", {}, function( this, arg) return this ~= "0" end)
 end
 -- Tells if the argument type is a pointer type (implicitely generated type marked with '^')
 function isPointerType( typeId)
@@ -2128,7 +2122,8 @@ function initBuiltInTypes()
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
-	defineConstExprArithmetics()
+	defineConstExprOperators()
+	defineConstExprTypeConversions()
 	if byteQualitype then
 		definePointerArithmeticOperators( bytePointerQualitype_valtype.valtype)
 		definePointerArithmeticOperators( bytePointerQualitype_cval.valtype)
