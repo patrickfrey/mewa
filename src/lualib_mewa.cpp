@@ -438,11 +438,11 @@ static int mewa_compiler_run( lua_State* ls)
 
 		mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, cp->debugFileHandle);
 		{
-			std::string tripple = mewa::fileBaseName( targetfn);
+			std::string triple = mewa::fileBaseName( targetfn);
 
 			// Map output with target template:
 			cp->outputSectionMap[ "Source"] = filename;
-			cp->outputSectionMap[ "Tripple"] = tripple;
+			cp->outputSectionMap[ "Triple"] = triple;
 			cp->outputSectionMap[ "Code"].append( cp->outputBuffer);
 			std::string output = mewa::template_format( targetptr, '{', '}', cp->outputSectionMap);
 			if (outputfn == "stderr")

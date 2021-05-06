@@ -69,8 +69,8 @@ writePlatformInclude() {
 	elif [ "X$UNAM" = "Xx86_64 GNU/Linux" ]; then
 		echo "TARGET	:= x86_64-pc-linux-gnu" > Platform.inc
 	else
-		echo "TARGET	:= \"?? unknown, probing of 'target tripple' in configure failed ??\"" > Platform.inc
- 		>&2 echo "Failed to determine target tripple used for tests! Some tests with the interpreter will fail."
+		echo "TARGET	:= \"?? unknown, probing of 'target triple' in configure failed ??\"" > Platform.inc
+		>&2 echo "Failed to determine target triple used for tests! Some tests with the interpreter will fail."
 	fi
 }
 

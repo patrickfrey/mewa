@@ -33,15 +33,17 @@ function defineConstExprArithmetics()
 	definePromoteCall( constexprFloatType, constexprIntegerType, constexprFloatType, "/", {constexprFloatType},function(this) return this end)
 	definePromoteCall( constexprFloatType, constexprIntegerType, constexprFloatType, "*", {constexprFloatType},function(this) return this end)
 end
+-- Define the type conversions of const expressions to other const expression types
+function defineConstExprTypeConversions()
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprFloatType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprFloatType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprFloatType, constexprUIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprFloatType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
+	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
 
--- Conversion of constexpr constant to representation in LLVM IR (floating point numbers need a conversion into an internal binary representation)
-function constexprLlvmConversion( constexprType)
-	if constexprType == constexprFloatType then
-		return function( val) return "0x" .. mewa.llvm_float_tohex( constexprToFloat( val, constexprType)) end
-	elseif constexprType == constexprIntegerType then
-		return function( val) return string.format("%d", tointeger(val)) end
-	else
-		return function( val) return tostring( val) end
-	end
+	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_bool)
 end
 

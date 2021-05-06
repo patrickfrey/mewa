@@ -12,7 +12,7 @@ if [ "x$TARGET" = "x" ]; then
 	TARGET=`cat Platform.inc  | sed 's/TARGET//' | sed 's/:=//' | sed -E 's/\s//g'`
 fi
 
->&2 echo "Target tripple defined as $TARGET"
+>&2 echo "Target triple defined as $TARGET"
 >&2 echo "Using Lua binary $LUABIN"
 
 RED='\033[0;31m'
