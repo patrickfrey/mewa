@@ -14,14 +14,14 @@ arrayTypeMap = {}			-- Map array keys to their array type
 stringConstantMap = {}			-- Map of string constant values to a structure with the attributes {name,size}
 scalarTypeMap = {}			-- Map of scalar type names to the correspoding value type
 
-dofile( "examples/tutorial/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
-dofile( "examples/tutorial/defineTypes.lua")			-- Functions to define types with or without arguments
-dofile( "examples/tutorial/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
-dofile( "examples/tutorial/constexprTypes.lua")			-- All constant expression types and arithmetics are defined here
-dofile( "examples/tutorial/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
-dofile( "examples/tutorial/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
-dofile( "examples/tutorial/resolveTypes.lua")			-- Methods to resolve types
-
+dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
+dofile( "examples/tutorial/sections/defineTypes.lua")			-- Functions to define types with or without arguments
+dofile( "examples/tutorial/sections/constructorFunctions.lua")		-- Functions of constructors
+dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
+dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expression types and arithmetics are defined here
+dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
+dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
+dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
 
 -- AST Callbacks:
 local typesystem = {}
