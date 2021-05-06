@@ -569,6 +569,11 @@ function constexprToFloat( val, typeId)
 	else utils.errorMessage( 0, "Can't convert constexpr value of type '%s' to number: '%s'", typedb:type_string(typeId), tostring(number))
 	end
 end
+function constexprFloatToFloatConstructor( val) return constructorStruct( "0x" .. mewa.llvm_float_tohex( val)) end
+function constexprFloatToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
+function constexprIntegerToIntegerConstructor( val) return constructorStruct( tostring(val)) end
+function constexprBoolToBoolConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
+
 -- Conversion of constexpr constant to representation in LLVM IR (floating point numbers need a conversion into an internal binary representation)
 function constexprLlvmConversion( typeId, constexprType)
 	if typeDescriptionMap[ typeId].class == "fp" then
