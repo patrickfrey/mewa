@@ -2,10 +2,10 @@
 function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in ipairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
-		defineCall( resultTypeId, typeId, opr, {typeId}, callFunctionConstructor( fmt, typeId))
+		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt, typeId))
 		for _,promote in descr.promote do
 			local typeId_promote = scalarTypeMap[ promote]
-			local promoteConstructor = callFunctionConstructor( llvmir.scalar[ promote].conv[ typnam])
+			local promoteConstructor = callConstructor( llvmir.scalar[ promote].conv[ typnam])
 			local promoteResultTypeId; if resultTypeId == typeId then promoteResultTypeId = typeId_promote else promoteResultTypeId = resultTypeId end
 			definePromoteCall( promoteResultTypeId, typeId, typeId_promote, opr, {typeId_promote}, promoteConstructor)
 		end
@@ -15,7 +15,7 @@ end
 function defineBuiltInUnaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in ipairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
-		defineCall( resultTypeId, typeId, opr, {}, callFunctionConstructor( fmt, typeId))
+		defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt, typeId))
 	end
 end
 -- Initialize all built-in types
@@ -42,7 +42,7 @@ function initBuiltInTypes()
 		local typeId = scalarTypeMap[ typnam]
 		for typnam_conv,conv in ipairs(scalar_descr.conv) do
 			local typeId_conv = scalarTypeMap[ typnam_conv]
-			typedb:def_reduction( typeId, typeId_conv, callFunctionConstructor( conv.fmt, typeId), tag_typeConversion, conv.weight)
+			typedb:def_reduction( typeId, typeId_conv, callConstructor( conv.fmt, typeId), tag_typeConversion, conv.weight)
 		end
 	end
 	-- Define operators
@@ -51,6 +51,7 @@ function initBuiltInTypes()
 		defineBuiltInBinaryOperators( typnam, scalar_descr, scalar_descr.binop, typeId)
 		defineBuiltInBinaryOperators( typnam, scalar_descr, scalar_descr.cmpop, scalarBooleanType)
 		defineBuiltInUnaryOperators( typnam, scalar_descr, scalar_descr.unop, typeId)
+		defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId}, callConstructor( scalar_descr.assign, typeId))
 	end
 end
 

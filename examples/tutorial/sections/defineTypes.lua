@@ -30,3 +30,9 @@ function defineDataType( node, contextTypeId, typnam, descr)
 	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load), tag_typeConversion, rdw_load)
 	return typeId
 end
+-- Basic structure type definition for class
+function defineStructureType( node, declContextTypeId, typnam, fmt)
+	local descr = utils.template_format( fmt, {symbol=typnam})
+	local typeId = defineDataType( node, declContextTypeId, typnam, descr)
+	return descr,typeId
+end

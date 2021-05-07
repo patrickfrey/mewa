@@ -2378,7 +2378,7 @@ function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask_
 		return {},0.0
 	end
 end
--- Get the constructor of an implicitly required type with the deduction tagmasks passed as an arguments
+-- Get the constructor of a type required. The deduction tagmasks are passed as an arguments
 function getRequiredTypeConstructor( node, redutype, operand, tagmask_decl, tagmask_conv)
 	if redutype ~= operand.type then
 		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)

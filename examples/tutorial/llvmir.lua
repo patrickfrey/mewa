@@ -81,6 +81,30 @@ local arrayTemplate = {
 	}
 }
 
+llvmir.structTemplate = {
+	symbol = "{symbol}",
+	def_local = "{out} = alloca %{symbol}, align 8\n",
+	def_global = "{out} = internal global %{symbol} zeroinitializer, align 8\n",
+	llvmtype = "%{symbol}",
+	scalar = false,
+	class = "struct",
+	align = 8,
+	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
+	ctorproc_init = "define private dso_local void @__ctor_init_{symbol}( %{symbol}* %ths){attributes} {\n"
+		.. "enter:\n{entercode}{ctors}br label %end\n{rewind}end:\nret void\n}\n",
+	ctorproc_copy = "define private dso_local void @__ctor_copy_{symbol}( %{symbol}* %ths, %{symbol}* %oth){attributes} {\n"
+		.. "enter:\n{entercode}{ctors}br label %end\n{rewind}end:\nret void\n}\n",
+	ctorproc_elements = "define private dso_local void @__ctor_elements_{symbol}( %{symbol}* %ths{paramstr}){attributes} {\n"
+		.. "enter:\n{entercode}{ctors}br label %end\n{rewind}end:\nret void\n}\n",
+	ctor_init = "call void @__ctor_init_{symbol}( %{symbol}* {this})\n",
+	ctor_copy = "call void @__ctor_copy_{symbol}( %{symbol}* {this}, %{symbol}* {arg1})\n",
+	ctor_elements = "call void @__ctor_elements_{symbol}( %{symbol}* {this}{args})\n",
+	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
+	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	typedef = "%{symbol} = type { {llvmtype} }\n"
+}
+
 llvmir.string = utils.template_format( pointerTemplate, {pointee="i8"})
 
 llvmir.callableDescr = {

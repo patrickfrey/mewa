@@ -14,6 +14,7 @@ arrayTypeMap = {}			-- Map array keys to their array type
 stringConstantMap = {}			-- Map of string constant values to a structure with the attributes {name,size}
 scalarTypeMap = {}			-- Map of scalar type names to the correspoding value type
 instantCallableEnvironment = nil	-- Define a callable environment for an implicitly generated function not bound to a scope
+globalCallableEnvironment = nil		-- The environment used in implicitely generated code for the initialization of globals
 
 dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
 dofile( "examples/tutorial/sections/reductionWeights.lua")		-- Weights of reductions
@@ -25,12 +26,15 @@ dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expres
 dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
 dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
 dofile( "examples/tutorial/sections/controlBooleanTypes.lua")		-- Implementation of control boolean types
+dofile( "examples/tutorial/sections/variables.lua")			-- Define variables (globals, locals, members)
 
 -- AST Callbacks:
 local typesystem = {}
 function typesystem.program( node)
+	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, "%ir", "IL")
 	defineConstExprArithmetics()
 	initBuiltInTypes()
+	initControlBooleanTypes()
 	local context = {domain="global"}
 	utils.traverse( typedb, node, context)
 end
@@ -82,17 +86,15 @@ end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
-	local typeId = typedb:def_type( declContextTypeId, typnam)
-	local descr = {name=typnam, type=typeId}
-	typeDescriptionMap[ typeId] = descr
-	local classContext = {domain="member", decltype=typeId}
-	io.stderr:write("DECLARE " .. context.domain .. " class " .. descr.name .. "\n")
+	local descr,typeId = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
+	local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
+	io.stderr:write("DECLARE " .. context.domain .. " class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
-	io.stderr:write("-- MEMBER VARIABLES class " .. descr.name .. "\n")
+	io.stderr:write("-- MEMBER VARIABLES class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
-	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.name .. "\n")
+	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: declarations
-	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.name .. "\n")
+	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: implementations
 end
 function typesystem.funcdef( node, context, pass)
@@ -151,7 +153,8 @@ function typesystem.conditional_while( node)
 end
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
-	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. "\n")
+	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. " " .. typedb:type_string(datatype) .. "\n")
+	defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.structure( node)
 	local args = utils.traverse( typedb, node)
