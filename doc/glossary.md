@@ -80,13 +80,14 @@ These types are used as context type for accessing private members (in class met
 #### Initialization Type (init_reftype)
 This type is used as *self* reference in constructors. It redirects assignment calls to constructor calls during the initialization phase of the constructor. During this phase the elements of a class are initialized in the order of their definition as members in the class. The initialization phase is completed when the first method is called or the first member is accessed otherwise than through the assignment operator redirected to a constructor call. The initialization of members not explicitly initialized is implicitly completed in the constructor.
 
-#### Control True/False Types
+#### Control True/False Types / Control Boolean Types
 Most language specifications require the evaluation of a boolean expression to terminate as early as the result is quaranteed, even when some branches of the expressions are undefined. Thus ```if (a && a->x)``` should evaluate to false if a is _NULL_ without trying to evaluate the undefined branch ```a->x``` that would lead to a segmentation fault on most platforms. For representing boolean expressions we define the types *controlTrueType* that contains the code that is executed for the expression remaining *true* and in contains an unbound label in the out variable where the code jumps to when the expression evaluates to *false*. The mirror type of the *controlTrueType* is the type *controlFalseType* that contains the code that is executed for the expression remaining *false* and in contains an unbound label in the out variable where the code jumps to when the expression evaluates to *true*.
+As a class of types, they are also referred to as **Control Boolean Types**.
 
 #### Pointer types
 Pointer types are implicitely created types. A pointer type is created when used the first time. 
 
-#### Constant expression types
+#### Constant Expression Types
 Constants in the source and expressions built from constants are represented by the following types
   * **constexprIntegerType**	const expression integers implemented as arbitrary precision BCD numbers
   * **constexprUIntegerType** 	const expression unsigned integer implemented as arbitrary precision BCD numbers

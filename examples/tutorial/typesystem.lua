@@ -24,6 +24,7 @@ dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to
 dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expression types and arithmetics are defined here
 dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
 dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
+dofile( "examples/tutorial/sections/controlBooleanTypes.lua")		-- Implementation of control boolean types
 
 -- AST Callbacks:
 local typesystem = {}
