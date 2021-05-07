@@ -13,14 +13,16 @@ dereferenceTypeMap = {}			-- Map of reference type ids to their value type if it
 arrayTypeMap = {}			-- Map array keys to their array type
 stringConstantMap = {}			-- Map of string constant values to a structure with the attributes {name,size}
 scalarTypeMap = {}			-- Map of scalar type names to the correspoding value type
+instantCallableEnvironment = nil	-- Define a callable environment for an implicitly generated function not bound to a scope
 
 dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
+dofile( "examples/tutorial/sections/reductionWeights.lua")		-- Weights of reductions
 dofile( "examples/tutorial/sections/defineTypes.lua")			-- Functions to define types with or without arguments
+dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
 dofile( "examples/tutorial/sections/constructorFunctions.lua")		-- Functions of constructors
 dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
 dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expression types and arithmetics are defined here
 dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
-dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
 dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
 
 -- AST Callbacks:
@@ -168,20 +170,7 @@ function typesystem.variable( node)
 end
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
-	local value = node.arg[1].value
-	if typeId == constexprBoolType then
-		if value == "true" then value = true else value = false end
-	elseif typeId == constexprIntegerType or typeId == constexprFloatType then
-		value = tonumber(value)
-	elseif typeId == stringType then
-		if not stringConstantMap[ value] then
-			local encval,enclen = utils.encodeLexemLlvm(value)
-			local name = utils.uniqueName( "string")
-			stringConstantMap[ value] = {size=enclen+1,name=name}
-		end
-		value = stringConstantMap[ value]
-	end
-	return {type=typeId,constructor=value}
+	return {type=typeId,constructor=createConstexprValue( typeId, node.arg[1].value)}
 end
 function typesystem.binop( node, decl)
 end

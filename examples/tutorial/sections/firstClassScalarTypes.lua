@@ -10,23 +10,19 @@ function initBuiltInTypes()
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local typeId = defineDataType( 0, typnam, scalar_descr)
 		if typnam == "int" then
-			integerType = typeId
-			local valueconv = constexprLlvmConversion( constexprIntegerType)
-			local constructor = function(this) return constructorStruct( valueconv(this)) end
-			typedb:def_reduction( typeId, constexprIntegerType, constructor, tag_typeInstantiation)
+			scalarIntegerType = typeId
+			typedb:def_reduction( typeId, constexprIntegerType, constexprIntegerToIntegerConstructor, tag_typeInstantiation)
 		end
 		if typnam == "float" then
-			floatType = typeId
-			local valueconv = constexprLlvmConversion( constexprFloatType)
-			local constructor = function(this) return constructorStruct( valueconv(this)) end
-			typedb:def_reduction( typeId, constexprFloatType, constructor, tag_typeInstantiation)
+			scalarFloatType = typeId
+			typedb:def_reduction( typeId, constexprFloatType, constexprFloatToFloatConstructor, tag_typeInstantiation)
 		end
 		if typnam == "bool" then
-			boolType = typeId
-			local valueconv = constexprLlvmConversion( constexprBoolType)
-			local constructor = function(this) return constructorStruct( valueconv(this)) end
-			typedb:def_reduction( typeId, constexprBoolType, constructor, tag_typeInstantiation)
+			scalarBoolType = typeId
+			typedb:def_reduction( typeId, constexprBooleanType, constexprBooleanToScalarConstructor, tag_typeInstantiation)
 		end
 		scalarTypeMap[ typnam] = typeId
 	end
+	--typedb:def_reduction( valtype, constexprFloatType, constexprFloatToFloatConstructor, tag_typeInstantiation, constexprInitWeight)
 end
+

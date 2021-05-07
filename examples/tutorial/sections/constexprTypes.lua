@@ -1,18 +1,42 @@
 constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- signed integer type constant value, represented as Lua number
 constexprFloatType = typedb:def_type( 0, "constexpr float")		-- single precision floating point number constant, represented as Lua number
-constexprBoolType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
+constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
 constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- structure initializer list
 
 typeDescriptionMap[ constexprIntegerType] = llvmir.constexprIntegerDescr;
 typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr;
-typeDescriptionMap[ constexprBoolType] = llvmir.constexprBooleanDescr;
+typeDescriptionMap[ constexprBooleanType] = llvmir.constexprBooleanDescr;
 typeDescriptionMap[ stringType] = llvmir.constexprStringDescr;
 typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr;
 
 scalarTypeMap["constexpr int"] = constexprIntegerType
 scalarTypeMap["constexpr float"] = constexprFloatType
-scalarTypeMap["constexpr bool"] = constexprBoolType
+scalarTypeMap["constexpr bool"] = constexprBooleanType
 scalarTypeMap["constexpr struct"] = constexprStructureType
+
+-- Create a constexpr node from a lexem in the AST
+function createConstexprValue( typeId, value)
+	if typeId == constexprBooleanType then
+		if value == "true" then return true else return false end
+	elseif typeId == constexprIntegerType or typeId == constexprFloatType then
+		return tonumber(value)
+	elseif typeId == stringType then
+		if not stringConstantMap[ value] then
+			local encval,enclen = utils.encodeLexemLlvm(value)
+			local name = utils.uniqueName( "string")
+			stringConstantMap[ value] = {size=enclen+1,name=name}
+		end
+		return stringConstantMap[ value]
+	end
+end
+-- List of value constructors from constexpr constructors
+function constexprFloatToFloatConstructor( val) return constructorStruct( "0x" .. mewa.llvm_float_tohex( val)) end
+function constexprFloatToIntegerConstructor( val) return constructorStruct( tostring(tointeger(val))) end
+function constexprFloatToBooleanConstructor( val) if math.abs(val) < epsilonthen then return constructorStruct( "0") else constructorStruct( "1") end end
+function constexprIntegerToFloatConstructor( val) return constructorStruct( "0x" .. mewa.llvm_float_tohex( val:tonumber())) end
+function constexprIntegerToIntegerConstructor( val) return constructorStruct( tostring(val)) end
+function constexprIntegerToBooleanConstructor( val) if val == "0" then return constructorStruct( "0") else return constructorStruct( "1") end end
+function constexprBooleanToScalarConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
 
 -- Define arithmetics of constant expressions
 function defineConstExprArithmetics()

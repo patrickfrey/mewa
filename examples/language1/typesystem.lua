@@ -37,9 +37,6 @@ local rdw_strip_u_3 = 0.75 / (3*3)	-- Reduction weight of stripping unbound reft
 local rdw_strip_v_1 = 0.125 / (1*1)	-- Reduction weight of stripping private/public from type having 1 qualifier 
 local rdw_strip_v_2 = 0.125 / (2*2)	-- Reduction weight of stripping private/public from type having 2 qualifiers
 local rdw_strip_v_3 = 0.125 / (3*3)	-- Reduction weight of stripping private/public from type having 3 qualifiers
-local rdw_swap_r_p = 0.375 / (1*1)	-- Reduction weight of swapping reference with pointer on a type having 1 qualifier
-local rdw_swap_r_p = 0.375 / (2*2)	-- Reduction weight of swapping reference with pointer on a type having 2 qualifiers
-local rdw_swap_r_p = 0.375 / (3*3)	-- Reduction weight of swapping reference with pointer on a type having 3 qualifiers
 local rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch value) from type having 1 qualifier 
 local rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type having 2 qualifiers
 local rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type having 3 qualifiers
@@ -48,7 +45,7 @@ local rdw_strip_c_2 = 0.5 / (2*2)	-- Reduction weight of changing constant quali
 local rdw_strip_c_3 = 0.5 / (3*3)	-- Reduction weight of changing constant qualifier in type having 3 qualifiers
 local rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
 local rwd_c_inheritance = 0.125/(5*5) 	-- Reduction weight of const class inheritance
-local rwd_boolean = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
+local rwd_control = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 
 function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other 
 function factorWeight( fac, w1) return fac * w1	end
@@ -325,7 +322,7 @@ function doCastToUnboundReferenceType( typeId)
 end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructors
 function buildFunctionCallArguments( code, argstr, args, llvmtypes)
-	local rt = argstr; if argstr ~= "" then rt = rt .. ", " end
+	local rt; if argstr == "" then rt = "" else rt = argstr .. ", " end
 	for ii=1,#args do
 		local arg = args[ ii]
 		local llvmtype = llvmtypes[ ii]
@@ -525,7 +522,7 @@ constVarargTypeMap[ constexprNullType] = constexprNullType
 local bits64 = bcd.bits( 64) -- The example language1 has a maximum integer bit width of 64
 
 -- Create a constexpr node from a lexem in the AST
-function createConstExpr( node, constexpr_type, lexemvalue)
+function createConstexprValue( constexpr_type, lexemvalue)
 	if constexpr_type == constexprIntegerType then return bcd.int(lexemvalue)
 	elseif constexpr_type == constexprUIntegerType then return bcd.int(lexemvalue)
 	elseif constexpr_type == constexprFloatType then return tonumber(lexemvalue)
@@ -1958,8 +1955,8 @@ function initControlBooleanTypes()
 		local out = env.register()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.trueExitToBoolean,{trueExit=constructor.out,out=out},env.label),out=out}
 	end
-	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction, rwd_boolean)
-	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, rwd_control)
 
 	local function booleanToFalseExit( constructor)
 		local env = getCallableEnvironment()
@@ -1972,8 +1969,8 @@ function initControlBooleanTypes()
 		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, env.label),out=out}
 	end
 
-	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction, rwd_boolean)
-	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction, rwd_control)
 
 	local function negateControlTrueType( this) return {type=controlFalseType, constructor=this.constructor} end
 	local function negateControlFalseType( this) return {type=controlTrueType, constructor=this.constructor} end
@@ -2024,15 +2021,15 @@ function initControlBooleanTypes()
 		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label) end
 		return {code=code, out=out}
 	end
-	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, rwd_boolean)
-	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( controlTrueType, constexprBooleanType, constexprBooleanToControlTrueType, tag_typeDeduction, rwd_control)
 
 	local function invertControlBooleanType( this)
 		local out = getCallableEnvironment().label()
 		return {code = this.code .. utils.constructor_format( llvmir.control.invertedControlType, {inp=this.out, out=out}), out = out}
 	end
-	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, rwd_boolean)
-	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, rwd_boolean)
+	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, rwd_control)
 
 	definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType, "&&", {scalarBooleanType}, constexprBooleanToControlTrueType)
 	definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType, "||", {scalarBooleanType}, constexprBooleanToControlFalseType)
@@ -3377,7 +3374,7 @@ function typesystem.typespec_ref( node, qualifier)
 end
 function typesystem.constant( node, typeName)
 	local typeId = hardcodedTypeMap[ typeName]
-	return {type=typeId, constructor=createConstExpr( node, typeId, node.arg[1].value)}
+	return {type=typeId, constructor=createConstexprValue( typeId, node.arg[1].value)}
 end
 function typesystem.null( node)
 	return {type=constexprNullType, constructor="null"}

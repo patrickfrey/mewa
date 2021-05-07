@@ -3,7 +3,7 @@
 export LUABIN=/usr/bin/lua
 
 # [0] Generate scalar types for LLVM IR
-examples/gen/generateScalarLlvmir.pl -t examples/tutorial/scalar_types.txt > examples/tutorial/llvmir_scalar.lua
+echo "examples/gen/generateScalarLlvmir.pl -t examples/tutorial/scalar_types.txt > examples/tutorial/llvmir_scalar.lua"
 
 # [1] Edit your grammar:
 # ...
