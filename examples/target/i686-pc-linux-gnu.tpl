@@ -20,7 +20,7 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
 attributes #0 = {
 	"correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "frame-pointer"="all" "min-legal-vector-width"="0"
 	"no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="true"
-	"stack-protector-buffer-size"="8" "target-cpu"="pentium4" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87"
+	"stack-protector-buffer-size"="8" "target-cpu"="pentium4" "target-features"="+x87"
 	"unsafe-fp-math"="false" "use-soft-float"="false"
 }
 
