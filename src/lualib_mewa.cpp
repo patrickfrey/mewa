@@ -244,10 +244,10 @@ static int mewa_tostring( lua_State* ls)
 	[[maybe_unused]] static const char* functionName = "mewa.tostring";
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 3/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 0/*minNofArgs*/, 3/*maxNofArgs*/);
 		int maxdepth = (nargs >= 2 && !lua_isnil(ls,2)) ? mewa::lua::getArgumentAsInteger( functionName, ls, 2) : 8;
 		bool use_indent = (nargs >= 3 && !lua_isnil(ls,3)) ? mewa::lua::getArgumentAsBoolean( functionName, ls, 3) : false;
-		std::string rt = mewa::luaToString( ls, 1, use_indent, maxdepth);
+		std::string rt = (nargs >= 1 && !lua_isnil(ls,1)) ? mewa::luaToString( ls, 1, use_indent, maxdepth) : std::string();
 		lua_pushlstring( ls, rt.c_str(), rt.size());
 	}
 	catch (...) { lippincottFunction( ls); }

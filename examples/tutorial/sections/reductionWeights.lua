@@ -1,7 +1,7 @@
 -- Centralized list of the ordering of the reduction rules determined by their weights, we force an order of reductions by defining the weight sums as polynomials:
 local rdw_conv = 1.0			-- Reduction weight of conversion
 local rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
-local rdw_load = 0.25			-- Reduction weight of loading a const expression
+local rdw_load = 0.25			-- Reduction weight of loading a value
 local rdw_sign = 0.125			-- Conversion of integers changing sign
 local rdw_float = 0.25			-- Conversion switching floating point with integers
 local rdw_bool = 0.25			-- Conversion of numeric value to boolean

@@ -81,7 +81,7 @@ local arrayTemplate = {
 	}
 }
 
-llvmir.scalar.string = utils.template_format( pointerTemplate, {pointee="i8"})
+llvmir.string = utils.template_format( pointerTemplate, {pointee="i8"})
 
 llvmir.callableDescr = {
 	class = "callable"

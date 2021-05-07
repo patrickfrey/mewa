@@ -2,6 +2,11 @@ constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- signed integer t
 constexprFloatType = typedb:def_type( 0, "constexpr float")		-- single precision floating point number constant, represented as Lua number
 constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
 constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- structure initializer list
+voidType = typedb:def_type( 0, "void")					-- void type handled as no type
+stringType = defineDataType( {line=0}, 0, "string", llvmir.string)	-- string constant, this example language knows strings only as constants
+
+scalarTypeMap.void = voidType
+scalarTypeMap.string = stringType
 
 typeDescriptionMap[ constexprIntegerType] = llvmir.constexprIntegerDescr;
 typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr;

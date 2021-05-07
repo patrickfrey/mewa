@@ -17,9 +17,9 @@ instantCallableEnvironment = nil	-- Define a callable environment for an implici
 
 dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
 dofile( "examples/tutorial/sections/reductionWeights.lua")		-- Weights of reductions
+dofile( "examples/tutorial/sections/constructorFunctions.lua")		-- Functions of constructors
 dofile( "examples/tutorial/sections/defineTypes.lua")			-- Functions to define types with or without arguments
 dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
-dofile( "examples/tutorial/sections/constructorFunctions.lua")		-- Functions of constructors
 dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
 dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expression types and arithmetics are defined here
 dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
@@ -159,8 +159,9 @@ end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
 	local env = getCallableEnvironment()
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), typeName, tagmask_resolveType)
-	local typeId = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	local seekctx = getSeekContextTypes()
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, typeName, tagmask_resolveType)
+	local typeId = selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
 	local variableScope = typedb:type_scope( typeId)
 	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
 		return {type=typeId}

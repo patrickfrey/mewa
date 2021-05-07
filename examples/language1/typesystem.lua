@@ -26,7 +26,6 @@ local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDedu
 -- Centralized list of the ordering of the reduction rules determined by their weights, we force an order of reductions by defining the weight sums as polynomials:
 local rdw_conv = 1.0			-- Reduction weight of conversion
 local rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
-local rdw_load = 0.25			-- Reduction weight of loading a const expression
 local rdw_sign = 0.125			-- Conversion of integers changing sign
 local rdw_float = 0.25			-- Conversion switching floating point with integers
 local rdw_bool = 0.25			-- Conversion of numeric value to boolean
@@ -1723,8 +1722,9 @@ function resumeInitState( frame)
 end
 -- Get the code of the default initialization constructor
 function defaultInitConstructorCode( node, env, member)
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), member.name, tagmask_resolveType)
-	local membervar,memberconstructor = selectNoArgumentType( node, member.name, resolveContextTypeId, reductions, items)
+	local seekctx = getSeekContextTypes()
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, member.name, tagmask_resolveType)
+	local membervar,memberconstructor = selectNoArgumentType( node, seekctx, member.name, resolveContextTypeId, reductions, items)
 	local res = tryApplyCallable( node, {type=membervar,constructor=memberconstructor}, ":=", {})
 	if not res then utils.errorMessage( env.line, "No default constructor available for member '%s', need explicit initialization for every case", member.name) end
 	return res.constructor.code
@@ -2170,9 +2170,9 @@ function applyReductionList( node, redulist, redu_constructor)
 	return redu_constructor
 end
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
-function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+function selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
 	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then -- not found or ambiguous
-		utils.errorResolveType( typedb, node.line, resolveContextTypeId, getSeekContextTypes(), typeName)
+		utils.errorResolveType( typedb, node.line, resolveContextTypeId, seekctx, typeName)
 	end
 	for ii,item in ipairs(items) do
 		if typedb:type_nof_parameters( item) == 0 then
@@ -2182,7 +2182,7 @@ function selectNoArgumentType( node, typeName, resolveContextTypeId, reductions,
 			return item,constructor
 		end
 	end
-	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, getSeekContextTypes(), typeName))
+	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, seekctx, typeName))
 end
 -- Issue an error if the argument does not refer to a value
 function expectValueType( node, item)
@@ -2204,7 +2204,7 @@ function resolveTypeFromNamePath( node, qualifier, arg, argidx)
 		seekContextTypes = getSeekContextTypes()
 	end
 	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekContextTypes, typeName, tagmask_namespace)
-	local typeId,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	local typeId,constructor = selectNoArgumentType( node, seekContextTypes, typeName, resolveContextTypeId, reductions, items)
 	return {type=typeId, constructor=constructor}
 end
 -- Get the list of generic arguments filled with the default parameters for the ones not specified explicitly
@@ -2361,7 +2361,7 @@ end
 -- Call a function, meaning to apply operator "()" on a callable
 function callFunction( node, contextTypes, name, args)
 	local resolveContextTypeId, reductions, items = typedb:resolve_type( contextTypes, name, tagmask_resolveType)
-	local typeId,constructor = selectNoArgumentType( node, name, resolveContextTypeId, reductions, items)
+	local typeId,constructor = selectNoArgumentType( node, contextTypes, name, resolveContextTypeId, reductions, items)
 	local this = {type=typeId, constructor=constructor}
 	return applyCallable( node, this, "()", args)
 end
@@ -3234,8 +3234,9 @@ function typesystem.operator_array( node, operator)
 		if descr.class == "generic_procedure" or descr.class == "generic_function" then
 			local gentype = getOrCreateGenericType( node, this.type, descr, args)
 			local gentypnam = typedb:type_name(gentype)
-			local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), gentypnam, tagmask_resolveType)
-			local typeId,constructor = selectNoArgumentType( node, gentypnam, resolveContextTypeId, reductions, items)
+			local seekctx = getSeekContextTypes()
+			local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, gentypnam, tagmask_resolveType)
+			local typeId,constructor = selectNoArgumentType( node, seekctx, gentypnam, resolveContextTypeId, reductions, items)
 			return {type=typeId, constructor=constructor}
 		elseif descr.class == "lambda" then
 			local constructor = applyLambda( node, this.type, descr, args)
@@ -3392,8 +3393,9 @@ end
 function typesystem.variable( node)
 	local typeName = node.arg[ 1].value
 	local env = getCallableEnvironment()
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( getSeekContextTypes(), typeName, tagmask_resolveType)
-	local typeId,constructor = selectNoArgumentType( node, typeName, resolveContextTypeId, reductions, items)
+	local seekctx = getSeekContextTypes()
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, typeName, tagmask_resolveType)
+	local typeId,constructor = selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
 	local variableScope = typedb:type_scope( typeId)
 	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
 		return {type=typeId, constructor=constructor}

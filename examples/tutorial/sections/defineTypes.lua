@@ -19,12 +19,14 @@ function defineCall( returnType, thisType, opr, argTypes, constructor)
 	return callType
 end
 -- Define an operation generalized
-function defineDataType( contextTypeId, typnam, descr)
+function defineDataType( node, contextTypeId, typnam, descr)
 	local typeId = typedb:def_type( contextTypeId, typnam)
 	local refTypeId = typedb:def_type( contextTypeId, typnam .. "&")
+	if typeId <= 0 or refTypeId <= 0 then utils.errorMessage( node.line, "Duplicate definition of data type '%s'", typnam) end
 	referenceTypeMap[ typeId] = refTypeId
 	dereferenceTypeMap[ refTypeId] = typeId
 	typeDescriptionMap[ typeId] = descr
 	typeDescriptionMap[ refTypeId] = llvmir.pointerDescr(descr)
+	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load), tag_typeConversion, rdw_load)
 	return typeId
 end

@@ -241,7 +241,7 @@ function utils.typeListString( typedb, typeList, separator)
 	return rt
 end
 
--- Type to resolve as string for errir messages
+-- Type to resolve as string for error messages
 function utils.resolveTypeString( typedb, contextType, typeName)
 	local rt
 	if type(contextType) == "table" then

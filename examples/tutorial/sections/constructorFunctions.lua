@@ -30,12 +30,12 @@ function buildCallArguments( subst, thisTypeId, thisConstructor, args, types)
 	return code
 end
 -- Constructor of a call with an self argument and some additional arguments
-function callConstructorFunction( fmt, thisTypeId, argTypeIds)
+function callConstructor( fmt, thisTypeId, argTypeIds)
 	return function( this_constructor, arg_constructors)
 		env = getCallableEnvironment()
 		local out = env.register()
 		local subst = {out=out, this=this_constructor}
-		local code = buildCallArguments( subst, thisTypeId, this_constructor, arg_constructors, argTypeIds)
+		local code = buildCallArguments( subst, thisTypeId or 0, this_constructor, arg_constructors, argTypeIds)
 		code = code .. utils.constructor_format( fmt, {out=out, this=value}, env.register)
 		return {code=code,out=out}
 	end
