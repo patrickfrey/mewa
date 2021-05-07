@@ -20,18 +20,9 @@ I consider the software as ready for use in projects.
 ## Build
 Currently there is only GNU Makefile support. CMake support is not planned for this project because the project is too small to justify it and it has not many dependencies. I would rather like to have Makefiles for platforms where GNU Makefile support is not available (e.g. Windows). 
 
-## Hardware
-The tests currently use a LLVM IR target template file for the following platforms:
+## Target platforms
+Issues around target platforms are discussed [here](doc/portability.md).
 
- * [Linux x86_64 (Intel 64 bit)](examples/target/x86_64-pc-linux-gnu.tpl)
- * [Linux i686 (Intel 32 bit)](examples/target/i686-pc-linux-gnu.tpl)
-
-The target template files were created with the command 
-```sh
-echo "int main(){}" | clang -x "c" -S -emit-llvm -o - -
-```
-And some editing, removing the ```datalayout```, minimizing processor capabilities declared (```target-features``` and replacing the main program declaration with the middle section of the existing target files with the variables to substitute when generating the compiler output.
-Contributions for other platforms are appreciated and welcome. 
 
 # Documentation
 * [Examples](doc/example_compiler.md)
