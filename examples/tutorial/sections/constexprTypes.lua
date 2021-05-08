@@ -4,7 +4,6 @@ constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- boolean constan
 constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- structure initializer list
 voidType = typedb:def_type( 0, "void")					-- void type handled as no type
 stringType = defineDataType( {line=0}, 0, "string", llvmir.string)	-- string constant, this example language knows strings only as constants
-io.stderr:write( "++++ STRING REF " .. mewa.tostring(referenceTypeMap[ stringType]) .. "\n")
 scalarTypeMap.void = voidType
 scalarTypeMap.string = stringType
 

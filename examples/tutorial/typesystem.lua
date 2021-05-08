@@ -19,6 +19,8 @@ globalCallableEnvironment = nil		-- The environment used in implicitely generate
 dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
 dofile( "examples/tutorial/sections/reductionWeights.lua")		-- Weights of reductions
 dofile( "examples/tutorial/sections/constructorFunctions.lua")		-- Functions of constructors
+dofile( "examples/tutorial/sections/applyConstructors.lua")		-- Build constructors by applying constructor functions on argument constructors
+dofile( "examples/tutorial/sections/applyCallable.lua")			-- Build constructors of calls of callables (types with a "()" operator with parameters to match)
 dofile( "examples/tutorial/sections/defineTypes.lua")			-- Functions to define types with or without arguments
 dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
 dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments

@@ -2475,7 +2475,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of a type (this)
 function findApplyCallable( node, this, callable, args)
-	local mask; if callable == ":=" then mask = tagmask_declaration else mask = tagmask_resolveType end
+	local mask; if callable == ":=" or callable == "=" then mask = tagmask_declaration else mask = tagmask_resolveType end
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
 	if not resolveContextType then return nil end
 	if type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
@@ -2793,7 +2793,8 @@ function defineCallableBodyContext( node, context, descr)
 		local privateThisReferenceType = getFunctionThisType( true, false, context.qualitype.reftype)
 		local publicConstThisReferenceType = getFunctionThisType( false, true, context.qualitype.reftype)
 		local publicThisReferenceType = getFunctionThisType( false, false, context.qualitype.reftype)
-		local selfTypeId; if descr.name == ":=" then
+		local selfTypeId
+		if descr.name == ":=" then
 			selfTypeId = context.qualitype.init_reftype
 			env.initstate = 0
 			env.initcontext = context

@@ -668,7 +668,6 @@ TypeDatabase::ResolveResult TypeDatabase::resolveType_(
 				break;
 			}
 		}
-
 		int redu_buffer[ 512];
 		mewa::monotonic_buffer_resource redu_memrsc( redu_buffer, sizeof redu_buffer);
 		auto redulist = m_reduTable->get( step, elem.type, selectTags, &redu_memrsc);

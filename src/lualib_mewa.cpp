@@ -859,7 +859,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 4/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 8);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
-		mewa::TagMask selectTags( nargs >= 4 && !lua_isnil(ls,4) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchNothing());
+		mewa::TagMask selectTags( nargs >= 4 && !lua_isnil(ls,4) ? mewa::lua::getArgumentAsTagMask( functionName, ls, 4) : mewa::TagMask::matchAll());
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
 

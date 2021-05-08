@@ -18,6 +18,19 @@ function resolveTypeFromNamePath( node, arg, argidx)
 	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekContext, typeName, tagmask_namespace)
 	return selectNoArgumentType( node, seekContext, typeName, resolveContextTypeId, reductions, items)
 end
+-- Try to get the constructor and weight of a parameter passed with the deduction tagmask optionally passed as an argument
+function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask_decl, tagmask_conv)
+	if redutype ~= operand.type then
+		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
+		if altpath then
+			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
+						typedb:type_string(operand.type), utils.typeListString(typedb,altpath," =>"), utils.typeListString(typedb,redulist," =>"))
+		end
+		return redulist,weight
+	else
+		return {},0.0
+	end
+end
 -- Get the constructor of a type required. The deduction tagmasks are passed as an arguments
 function getRequiredTypeConstructor( node, redutype, operand, tagmask_decl, tagmask_conv)
 	if redutype ~= operand.type then
