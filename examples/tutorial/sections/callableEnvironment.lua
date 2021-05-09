@@ -16,3 +16,9 @@ end
 function getCallableEnvironment()
 	return instantCallableEnvironment or typedb:get_instance( callableEnvKey)
 end
+-- Set some variables needed in a class method implementation body
+function expandMethodEnvironment( node, context, descr, env)
+	local selfTypeId = referenceTypeMap[ context.decltype]
+	local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
+	pushSeekContextType( {type=classvar, constructor={out="%ths"}})
+end

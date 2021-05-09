@@ -1822,7 +1822,7 @@ function completeCtorInitializationAndReturnThis( this)
 	this.code = (this.code or "") .. completeCtorInitializationCode( this.nofollow)
 	return this
 end
--- Implicitly declared variable that does not appear as definition in source, for example the 'self' reference in a method body
+-- Declare a variable implicitly that does not appear as definition in source (for example the 'self' reference in a method body).
 function defineImplicitVariable( node, typeId, name, reg)
 	local var = typedb:def_type( localDefinitionContext, name, reg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", typeDeclarationString( typeId, name)) end
@@ -2005,7 +2005,8 @@ function defineInterfaceInheritanceReductions( context, name, private, const)
 	defineReductionToMember( contextType, name, const)
 end
 -- Make a function/procedure/operator/constructor parameter addressable by name in the callable body
-function defineParameter( node, context, typeId, name, env)
+function defineParameter( node, context, typeId, name)
+	local env = getCallableEnvironment()
 	local paramreg = env.register()
 	local var = typedb:def_type( localDefinitionContext, name, paramreg)
 	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( localDefinitionContext, name)) end
@@ -2277,9 +2278,9 @@ end
 function expectValueType( node, item)
 	if not item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a value", typedb:type_string(item.type)) end
 end
--- Issue an error if the argument does not refer to a value
+-- Issue an error if the argument does not refer to a data type
 function expectDataType( node, item)
-	if item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a value", typedb:type_string(item.type)) end
+	if item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a data type", typedb:type_string(item.type)) end
 	return item.type
 end
 -- Get the type handle of a type defined as a path
@@ -2878,35 +2879,30 @@ function defineInterfaceOperator( node, descr, context)
 	defineInterfaceMethodCall( contextTypeId, descr.name, descr)
 	defineOperatorAttributes( context, descr)
 end
--- Define the execution context of the body of any function/procedure/operator except the main function
-function defineCallableBodyContext( node, context, descr)
-	local env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, descr.throws)
-	if context.domain == "member" then
-		local privateConstThisReferenceType = getFunctionThisType( true, true, context.qualitype.reftype)
-		local privateThisReferenceType = getFunctionThisType( true, false, context.qualitype.reftype)
-		local publicConstThisReferenceType = getFunctionThisType( false, true, context.qualitype.reftype)
-		local publicThisReferenceType = getFunctionThisType( false, false, context.qualitype.reftype)
-		local selfTypeId
-		if descr.name == ":=" then
-			selfTypeId = context.qualitype.init_reftype
-			env.initstate = 0
-			env.initcontext = context
-			env.partial_dtor = utils.template_format( context.descr.partial_dtor, {symbol=context.descr.symbol,llvmtype="%" .. context.descr.symbol})
-		elseif descr.const then
-			selfTypeId = privateConstThisReferenceType
-		else
-			selfTypeId = privateThisReferenceType 
-		end
-		local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
-		typedb:def_reduction( privateConstThisReferenceType, publicConstThisReferenceType, nil, tag_typeDeduction) -- make const private members of other instances of this class accessible
-		typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
-		pushSeekContextType( {type=classvar, constructor={out="%ths"}})
+-- Initialize some callable environment variables used in method calls and implicitly define the "self" variable for the scope of the method body
+function expandMethodEnvironment( node, context, descr, env)
+	local privateConstThisReferenceType = getFunctionThisType( true, true, context.qualitype.reftype)
+	local privateThisReferenceType = getFunctionThisType( true, false, context.qualitype.reftype)
+	local publicConstThisReferenceType = getFunctionThisType( false, true, context.qualitype.reftype)
+	local publicThisReferenceType = getFunctionThisType( false, false, context.qualitype.reftype)
+	local selfTypeId
+	if descr.name == ":=" then
+		selfTypeId = context.qualitype.init_reftype
+		env.initstate = 0
+		env.initcontext = context
+		env.partial_dtor = utils.template_format( context.descr.partial_dtor, {symbol=context.descr.symbol,llvmtype="%" .. context.descr.symbol})
+	elseif descr.const then
+		selfTypeId = privateConstThisReferenceType
+	else
+		selfTypeId = privateThisReferenceType 
 	end
-	if descr.throws then getOrCreateThisAllocationFrame() end -- toplevel allocation frame if it throws
-	return env
+	local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
+	typedb:def_reduction( privateConstThisReferenceType, publicConstThisReferenceType, nil, tag_typeDeduction) -- make const private members of other instances of this class accessible
+	typedb:def_reduction( privateThisReferenceType, publicThisReferenceType, nil, tag_typeDeduction) -- make private members of other instances of this class accessible
+	pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 end
 -- Define the execution context of the body of the main function
-function defineMainProcContext( node, context)
+function defineMainProcVariables( node, context)
 	defineImplicitVariable( node, stringPointerType, "argc", "%argc")
 	defineImplicitVariable( node, scalarIntegerType, "argv", "%argv")
 end
@@ -3169,7 +3165,7 @@ function typesystem.definition_2pass( node, pass, context, pass_selected)
 end
 function typesystem.paramdef( node, context) 
 	local datatype,varname = table.unpack( utils.traverse( typedb, node, context))
-	return defineParameter( node, context, datatype, varname, getCallableEnvironment())
+	return defineParameter( node, context, datatype, varname)
 end
 function typesystem.paramdeflist( node, context)
 	return utils.traverse( typedb, node, context)
@@ -3653,7 +3649,9 @@ function typesystem.destructordef( node, lnk, context, pass)
 	if not pass or pass == 2 then
 		local scope_bk = typedb:scope( node.arg[1].scope)
 		local descr = utils.getNodeData( node, localDefinitionContext)
-		local env = defineCallableBodyContext( node, context, descr)
+		local env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, descr.throws)
+		if context.domain == "member" then expandMethodEnvironment( node, context, descr, env) end
+		if descr.throws then getOrCreateThisAllocationFrame() end -- define the toplevel allocation frame if it throws
 		local block = table.unpack( utils.traverse( typedb, node, subcontext))
 		local code = block.code .. getStructMemberDestructorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
@@ -3670,11 +3668,12 @@ function typesystem.callablebody( node, context, descr, selectid)
 		descr.const = decl.const
 		descr.throws = decl.throws
 	elseif selectid == 1 then -- parameter declarations
-		defineCallableBodyContext( node, context, descr)
+		descr.env = defineCallableEnvironment( node, "body " .. descr.symbol, descr.ret, descr.throws)
+		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
+		if descr.throws then getOrCreateThisAllocationFrame() end -- define the toplevel allocation frame if it throws
 		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
 	elseif selectid == 2 then -- statements in body
-		local env = getCallableEnvironment()
-		descr.env = env
+		local env = descr.env
 		local args = utils.traverseRange( typedb, node, {3,#node.arg}, subcontext)
 		local block = collectCode( node, args)
 		local code = block.code
@@ -3878,7 +3877,7 @@ function typesystem.main_procdef( node)
 	local retvaladr = env.register()
 	local retvalinit = utils.constructor_format( typeDescriptionMap[ scalarIntegerType].def_local, {out=retvaladr}, env.register)
 	env.returnfunction = returnFromMainFunction( scalarIntegerType, exitlabel, retvaladr)
-	defineMainProcContext( node, context)
+	defineMainProcVariables( node, context)
 	local block = table.unpack( utils.traverse( typedb, node, context))
 	local code = globalInitCode .. retvalinit .. block.code
 	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end

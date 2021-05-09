@@ -48,3 +48,12 @@ function getRequiredTypeConstructor( node, redutype, operand, tagmask_decl, tagm
 		return operand.constructor
 	end
 end
+-- Issue an error if the argument does not refer to a value type
+function expectValueType( node, item)
+	if not item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a value", typedb:type_string(item.type)) end
+end
+-- Issue an error if the argument does not refer to a data type
+function expectDataType( node, item)
+	if item.constructor then utils.errorMessage( node.line, "'%s' does not refer to a data type", typedb:type_string(item.type)) end
+	return item.type
+end

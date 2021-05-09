@@ -124,8 +124,7 @@ function typesystem.callablebody( node, context, descr, selectid)
 		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
 		descr.param = utils.traverseRange( typedb, node, {1,1}, subcontext)
 	elseif selectid == 2 then -- statements in body
-		local env = getCallableEnvironment()
-		descr.env = env
+		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
 		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
 		utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
 	end
@@ -133,9 +132,12 @@ function typesystem.callablebody( node, context, descr, selectid)
 end
 function typesystem.main_procdef( node)
 end
-function typesystem.paramdeflist( node)
+function typesystem.paramdef( node, context)
+	local datatype,varname = table.unpack( utils.traverse( typedb, node, context))
+	return defineParameter( node, context, datatype, varname)
 end
-function typesystem.paramdef( node)
+function typesystem.paramdeflist( node, context)
+	return utils.traverse( typedb, node, context)
 end
 function typesystem.codeblock( node)
 	local stmlist = utils.traverse( typedb, node)
@@ -231,6 +233,7 @@ function typesystem.constant( node, decl)
 end
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
+	io.stderr:write("++++ BINOP " .. mewa.tostring({operator=operator,this=this,operand=operand}) .. "\n")
 	expectValueType( node, this)
 	expectValueType( node, operand)
 	return applyCallable( node, this, operator, {operand})

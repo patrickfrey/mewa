@@ -60,4 +60,25 @@ function defineVariable( node, context, typeId, name, initVal)
 	end
 end
 
+-- Declare a variable implicitly that does not appear as definition in source (for example the 'self' reference in a method body).
+function defineImplicitVariable( node, typeId, name, reg)
+	local var = typedb:def_type( localDefinitionContext, name, reg)
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", typeDeclarationString( typeId, name)) end
+	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
+	return var
+end
+
+-- Make a function parameter addressable by name in the callable body
+function defineParameter( node, context, typeId, name)
+	local env = getCallableEnvironment()
+	local paramreg = env.register()
+	local var = typedb:def_type( localDefinitionContext, name, paramreg)
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of parameter '%s'", typeDeclarationString( localDefinitionContext, name)) end
+	local descr = typeDescriptionMap[ typeId]
+	local ptype = (descr.scalar or descr.class == "pointer") and typeId or referenceTypeMap[ typeId]
+	if not ptype then utils.errorMessage( node.line, "Cannot use type '%s' as parameter data type", typedb:type_string(typeId)) end
+	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
+	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
+end
+
 
