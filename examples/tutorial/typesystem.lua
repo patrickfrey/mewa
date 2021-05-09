@@ -52,7 +52,7 @@ function typesystem.extern_paramdeflist( node)
 end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
-		local arg = table.unpack( utils.traverse( typedb, node, context))
+		local arg = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
 		if arg then return {code = arg.constructor.code} else return {code=""} end
 	end
 end
@@ -98,6 +98,7 @@ function typesystem.classdef( node, context)
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: declarations
 	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: implementations
+	io.stderr:write("-- DONE class " .. descr.symbol .. "\n")
 end
 function typesystem.funcdef( node, context, pass)
 	local typnam = node.arg[1].value
@@ -139,19 +140,68 @@ end
 function typesystem.codeblock( node)
 	local stmlist = utils.traverse( typedb, node)
 end
-function typesystem.conditional_elseif( node)
+function typesystem.conditional_else( node, exitLabel)
+	return table.unpack( utils.traverse( typedb, node))
 end
-function typesystem.conditional_else( node)
+function typesystem.conditional_elseif( node, exitLabel)
+	local env = getCallableEnvironment()
+	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, exitLabel))
+	return conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
 end
 function typesystem.free_expression( node)
+	local expression = table.unpack( utils.traverse( typedb, node))
+	if expression.type == controlTrueType or expression.type == controlFalseType then
+		return {code=expression.constructor.code .. utils.constructor_format( llvmir.control.label, {inp=expression.constructor.out})}
+	else
+		return {code=expression.constructor.code}
+	end
 end
 function typesystem.return_value( node)
+	local operand = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, operand)
+	local env = getCallableEnvironment()
+	local rtype = env.returntype
+	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
+	if doReturnValueAsReferenceParameter( rtype) then
+		local reftype = referenceTypeMap[ rtype]
+		local rt
+		if operand.constructor.out == "%rt" then
+			rt = operand -- copy elision through in-place construction done in 'defineVariable(..)'
+		else
+			rt = applyCallable( node, typeConstructorPairStruct( reftype, "%rt", ""), ":=", {operand})
+		end
+		return {code = rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
+	else
+		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
+		local code; if env.returnfunction then code = env.returnfunction( constructor) else code = doReturnTypeStatement( rtype, constructor) end
+		return {code = code, nofollow=true}
+	end
 end
 function typesystem.return_void( node)
+	local env = getCallableEnvironment()
+	local rtype = env.returntype
+	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
+	local code = ""
+	if env.initstate then code = code .. completeCtorInitializationCode( false) end
+	return {code = code .. doReturnVoidStatement(), nofollow=true}
 end
 function typesystem.conditional_if( node)
+	local env = getCallableEnvironment()
+	local exitLabel = env.label()
+	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, exitLabel))
+	local rt = conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
+	rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel})
+	return rt
 end
 function typesystem.conditional_while( node)
+	local env = getCallableEnvironment()
+	local condition,yesblock = table.unpack( utils.traverse( typedb, node))
+	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
+	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
+	local start = env.label()
+	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
+	return {code = startcode .. cond_constructor.code .. yesblock.code
+			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
 end
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
@@ -179,15 +229,30 @@ function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
 	return {type=typeId,constructor=createConstexprValue( typeId, node.arg[1].value)}
 end
-function typesystem.binop( node, decl)
+function typesystem.binop( node, operator)
+	local this,operand = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, this)
+	expectValueType( node, operand)
+	return applyCallable( node, this, operator, {operand})
 end
-function typesystem.unop( node, decl)
+function typesystem.unop( node, operator)
+	local this = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, operand)
+	return applyCallable( node, this, operator, {})
 end
 function typesystem.member( node)
+	local struct,name = table.unpack( utils.traverse( typedb, node))
+	return applyCallable( node, struct, name)
 end
-function typesystem.operator( node, decl)
+function typesystem.operator( node, operator)
+	local args = utils.traverse( typedb, node)
+	local this = table.remove( args, 1)
+	return applyCallable( node, this, operator, args)
 end
-function typesystem.operator_array( node, decl)
+function typesystem.operator_array( node, operator)
+	local args = utils.traverse( typedb, node)
+	local this = table.remove( args, 1)
+	return applyCallable( node, this, operator, args)
 end
 
 return typesystem

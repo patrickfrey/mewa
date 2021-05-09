@@ -131,6 +131,29 @@ llvmir.constexprStructDescr = {
 	class = "constexpr"
 }
 
+-- Format strings for code control structures
+llvmir.control = {
+	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
+	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
+	booleanToFalseExit = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
+	booleanToTrueExit = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
+	invertedControlType = "br label %{out}\n{inp}:\n",
+	terminateFalseExit = "br label %{out}\n{1}:\n",
+	terminateTrueExit = "br label %{out}\n{1}:\n",
+	gotoStatementPrefix = "br label ",
+	label = "br label %{inp}\n{inp}:\n",
+	gotoStatement = "br label %{inp}\n",
+	plainLabel = "{inp}:\n",
+	returnStatement = "ret {type} {this}\n",
+	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
+	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
+	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
+	functionCallType = "{rtllvmtype} ({argstr})*",
+	stringConstDeclaration = "@{name} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
+	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
+	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n{\nentry:\n{body}}\n",
+}
+
 return llvmir
 
 

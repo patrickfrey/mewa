@@ -1,3 +1,5 @@
+local utils = require "typesystem_utils"
+
 -- Initialize control boolean types used for implementing control structures like 'if','while' and operators on booleans like '&&','||'
 function initControlBooleanTypes()
 	controlTrueType = typedb:def_type( 0, " controlTrueType")

@@ -1336,8 +1336,7 @@ end
 -- Restore temporarily changed environment for implicitely defined code
 function popEnvironment()
 	if #environmentStack == 0 then utils.errorMessage( 0, "Internal: corrupt environment stack") end
-	local glb = environmentStack[ #environmentStack]
-	table.remove( environmentStack, #environmentStack)
+	local glb = table.remove( environmentStack, #environmentStack)
 	instantCallableEnvironment = glb[1]
 	instantAllocationFrame = glb[2]
 	instantUnwindLabel = glb[3]	
@@ -1771,61 +1770,69 @@ function variableIsOnlyReturnValueInScope( typeId, name)
 	end
 	return false
 end
+-- Define a free local variable
+function defineLocalVariable( node, descr, context, typeId, refTypeId, name, initVal)
+	local env = getCallableEnvironment()
+	local out,code
+	if env.returntype == typeId and doReturnValueAsReferenceParameter(typeId) and variableIsOnlyReturnValueInScope( typeId, name) then -- do try copy elision by in-place return value construction if the variable is the only instance returned in the declaration scope
+		out = "%rt"
+		code = ""
+		local var2 = typedb:resolve_type( getSeekContextTypes(), name)
+		if var2 then
+			local scope2 = typedb:type_scope( var2)
+			if scope2[1] ~= 0 and scope2[1] >= env.scope[1] then utils.errorMessage( node.line, "Redeclaration of variable '%s' that is subject to copy elision in nested scope", name) end
+		end
+	else
+		out = env.register()
+		code = utils.constructor_format( descr.def_local, {out = out}, env.register)
+	end
+	local var = typedb:def_type( localDefinitionContext, name, constructorStruct(out))
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
+	typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
+	local decl = {type=var, constructor={code=code,out=out}}
+	if type(initVal) == "function" then initVal = initVal() end
+	local init = applyCallable( node, decl, ":=", {initVal})
+	if out ~= "%rt" then -- no copy elision
+		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
+		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
+		if cleanup then registerCleanupCode( "local variable " .. name, cleanup, step) end
+	end
+	return init
+end
+-- Define a free global variable
+function defineGlobalVariable( node, descr, context, typeId, refTypeId, name, initVal)
+	pushEnvironment( globalCallableEnvironment, globalAllocationFrame, "abort")
+	out = "@" .. name
+	local var = typedb:def_type( 0, name, out)
+	if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
+	typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
+	if type(initVal) == "function" then initVal = initVal() end
+	if initVal and descr.scalar == true and isScalarConstExprValueType( initVal.type) then
+		local initScalarConst = constructorParts( getRequiredTypeConstructor( node, typeId, initVal, tagmask_matchParameter, tagmask_typeConversion))
+		print( utils.constructor_format( descr.def_global_val, {out = out, val = initScalarConst})) -- print global data declaration
+	else
+		print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
+		local decl = {type=var, constructor={code=code,out=out}}
+		local init = tryApplyCallable( node, decl, ":=", {initVal})
+		if init.constructor then
+			globalInitCode = globalInitCode .. init.constructor.code
+			if init.constructor.throws then globalCallableEnvironment.throws = true end
+		end
+	end
+	local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
+	local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
+	if cleanup then registerCleanupCode( "global variable " .. name, cleanup, step) end
+	popEnvironment()
+end
 -- Define a free variable or a member variable (depending on the context)
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
 	local refTypeId = referenceTypeMap[ typeId]
 	if not refTypeId then utils.errorMessage( node.line, "References not allowed in variable declarations, use pointer instead: %s", typedb:type_string(typeId)) end
 	if context.domain == "local" then
-		local env = getCallableEnvironment()
-		local out,code
-		if env.returntype == typeId and doReturnValueAsReferenceParameter(typeId) and variableIsOnlyReturnValueInScope( typeId, name) then -- do try copy elision by in-place return value construction if the variable is the only instance returned in the declaration scope
-			out = "%rt"
-			code = ""
-			local var2 = typedb:resolve_type( getSeekContextTypes(), name)
-			if var2 then
-				local scope2 = typedb:type_scope( var2)
-				if scope2[1] ~= 0 and scope2[1] >= env.scope[1] then utils.errorMessage( node.line, "Redeclaration of variable '%s' that is subject to copy elision in nested scope", name) end
-			end
-		else
-			out = env.register()
-			code = utils.constructor_format( descr.def_local, {out = out}, env.register)
-		end
-		local var = typedb:def_type( localDefinitionContext, name, constructorStruct(out))
-		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
-		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
-		local decl = {type=var, constructor={code=code,out=out}}
-		if type(initVal) == "function" then initVal = initVal() end
-		local init = applyCallable( node, decl, ":=", {initVal})
-		if out ~= "%rt" then -- no copy elision
-			local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-			local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
-			if cleanup then registerCleanupCode( "local variable " .. name, cleanup, step) end
-		end
-		return init
+		return defineLocalVariable( node, descr, context, typeId, refTypeId, name, initVal)
 	elseif context.domain == "global" then
-		pushEnvironment( globalCallableEnvironment, globalAllocationFrame, "abort")
-		out = "@" .. name
-		local var = typedb:def_type( 0, name, out)
-		if var == -1 then utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name) end
-		typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
-		if type(initVal) == "function" then initVal = initVal() end
-		if initVal and descr.scalar == true and isScalarConstExprValueType( initVal.type) then
-			local initScalarConst = constructorParts( getRequiredTypeConstructor( node, typeId, initVal, tagmask_matchParameter, tagmask_typeConversion))
-			print( utils.constructor_format( descr.def_global_val, {out = out, val = initScalarConst})) -- print global data declaration
-		else
-			print( utils.constructor_format( descr.def_global, {out = out})) -- print global data declaration
-			local decl = {type=var, constructor={code=code,out=out}}
-			local init = tryApplyCallable( node, decl, ":=", {initVal})
-			if init.constructor then
-				globalInitCode = globalInitCode .. init.constructor.code
-				if init.constructor.throws then globalCallableEnvironment.throws = true end
-			end
-		end
-		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
-		if cleanup then registerCleanupCode( "global variable " .. name, cleanup, step) end
-		popEnvironment()
+		defineGlobalVariable( node, descr, context, typeId, refTypeId, name, initVal)
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
 		defineVariableMember( node, descr, context, typeId, name, context.private)
@@ -2254,7 +2261,7 @@ function applyLambda( node, lambdaTypeId, lambdaDescr, lambdaArgs)
 	if #lambdaArgs ~= #lambdaDescr.param then utils.errorMessage( node.line, "Number of lambda arguments do not match: argument %d <> %d expected", #lambdaArgs, #lambdaDescr.param) end
 	defineLambdaParameterAliases( node, genericlocal, lambdaDescr.param, lambdaArgs)
 	typedb:scope(scope_bk,step_bk)
-	local rt = utils.traverse( typedb, lambdaDescr.node)[1]
+	local rt = table.unpack( utils.traverse( typedb, lambdaDescr.node))
 	popGenericLocal( genericlocal)
 	return rt
 end
@@ -3051,7 +3058,7 @@ end
 local typesystem = {}
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
-		local arg = table.unpack( utils.traverse( typedb, node, context))
+		local arg = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
 		if arg then return {code = arg.constructor.code} else return {code=""} end
 	end
 end
@@ -3210,12 +3217,12 @@ function typesystem.binop( node, operator)
 end
 function typesystem.unop( node, operator)
 	local this = table.unpack( utils.traverse( typedb, node))
+	expectValueType( node, this)
 	return applyCallable( node, this, operator, {})
 end
 function typesystem.operator( node, operator)
 	local args = utils.traverse( typedb, node)
-	local this = args[1]
-	table.remove( args, 1)
+	local this = table.remove( args, 1)
 	return applyCallable( node, this, operator, args)
 end
 function typesystem.operator_address( node, operator)
@@ -3228,8 +3235,7 @@ function typesystem.operator_address( node, operator)
 end
 function typesystem.operator_array( node, operator)
 	local args = utils.traverse( typedb, node)
-	local this = args[1]
-	table.remove( args, 1)
+	local this = table.remove( args, 1)
 	local descr = typeDescriptionMap[ this.type]
 	if descr then
 		if descr.class == "generic_procedure" or descr.class == "generic_function" then
@@ -3247,16 +3253,15 @@ function typesystem.operator_array( node, operator)
 	return applyCallable( node, this, operator, args)
 end
 function typesystem.free_expression( node)
-	local arg = utils.traverse( typedb, node)
-	local operand = table.unpack( arg)
-	if operand.type == controlTrueType or operand.type == controlFalseType then
-		return {code=operand.constructor.code .. utils.constructor_format( llvmir.control.label, {inp=operand.constructor.out})}
+	local expression = table.unpack( utils.traverse( typedb, node))
+	if expression.type == controlTrueType or expression.type == controlFalseType then
+		return {code=expression.constructor.code .. utils.constructor_format( llvmir.control.label, {inp=expression.constructor.out})}
 	else
-		return {code=operand.constructor.code}
+		return {code=expression.constructor.code}
 	end
 end
-function typesystem.codeblock( node, context)
-	return collectCode( node, utils.traverse( typedb, node, context))
+function typesystem.codeblock( node)
+	return collectCode( node, utils.traverse( typedb, node))
 end
 function typesystem.return_value( node)
 	local operand = table.unpack( utils.traverse( typedb, node))
@@ -3287,20 +3292,20 @@ function typesystem.return_void( node)
 	if env.initstate then code = code .. completeCtorInitializationCode( false) end
 	return {code = code .. doReturnVoidStatement(), nofollow=true}
 end
-function typesystem.conditional_else( node, context, exitLabel)
-	return utils.traverse( typedb, node, context)[1]
+function typesystem.conditional_else( node, exitLabel)
+	return table.unpack( utils.traverse( typedb, node))
 end
-function typesystem.conditional_elseif( node, context, exitLabel)
+function typesystem.conditional_elseif( node, exitLabel)
 	local env = getCallableEnvironment()
 	local initstate
 	if env.initstate then -- we are in a constructor, so we calculate the init state to pass it to conditionalIfElseBlock
 		local frame = getAllocationFrame()
 		if frame then initstate = frame.initstate else initstate = env.initstate end
 	end
-	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
+	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, exitLabel))
 	return conditionalIfElseBlock( node, initstate, condition, yesblock, noblock, exitLabel)
 end
-function typesystem.conditional_if( node, context)
+function typesystem.conditional_if( node)
 	local env = getCallableEnvironment()
 	local exitLabel; if #node.arg >= 3 then exitLabel = env.label() else exitLabel = nil end
 	local initstate
@@ -3308,15 +3313,15 @@ function typesystem.conditional_if( node, context)
 		local frame = getAllocationFrame()
 		if frame then initstate = frame.initstate else initstate = env.initstate end
 	end
-	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, context, exitLabel))
+	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, exitLabel))
 	local rt = conditionalIfElseBlock( node, initstate, condition, yesblock, noblock, exitLabel)
 	if rt.exitLabelUsed == true then rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel}) end
 	return rt
 end
-function typesystem.conditional_while( node, context, bla)
+function typesystem.conditional_while( node)
 	local env = getCallableEnvironment()
 	if env.initstate then disallowInitCalls( node.line, "Member initializations not allowed inside a loop", node.arg[2].scope) end
-	local condition,yesblock = table.unpack( utils.traverse( typedb, node, context))
+	local condition,yesblock = table.unpack( utils.traverse( typedb, node))
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local start = env.label()
@@ -3324,10 +3329,10 @@ function typesystem.conditional_while( node, context, bla)
 	return {code = startcode .. cond_constructor.code .. yesblock.code 
 			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
 end
-function typesystem.with_do( node, context)
-	local operand = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
+function typesystem.with_do( node)
+	local operand = table.unpack( utils.traverseRange( typedb, node, {1,1}))
 	pushSeekContextType( operand)
-	if #node.arg >= 2 then return table.unpack( utils.traverseRange( typedb, node, {2,2}, context)) end
+	if #node.arg >= 2 then return table.unpack( utils.traverseRange( typedb, node, {2,2})) end
 end
 function typesystem.typehdr( node, qualifier)
 	return resolveTypeFromNamePath( node, qualifier, utils.traverse( typedb, node))
