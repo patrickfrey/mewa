@@ -81,7 +81,9 @@ function typesystem.arraytype( node)
 	return arrayTypeMap[ arrayKey]
 end
 function typesystem.typespec( node)
-	return table.unpack( utils.traverse( typedb, node))
+	local datatype = table.unpack( utils.traverse( typedb, node))
+	expectDataType( node, datatype)
+	return datatype.type
 end
 function typesystem.inheritdef( node, decl)
 end
@@ -108,7 +110,7 @@ function typesystem.funcdef( node, context, pass)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
 		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.name
-				.. " (" .. utils.typeListString(typedb,param) .. ") -> " .. utils.typeString(typedb,rtype) .. "\n")
+				.. " (" .. utils.typeListString(typedb,descr.param) .. ") -> " .. utils.typeString(typedb,descr.rtype) .. "\n")
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
@@ -122,7 +124,7 @@ function typesystem.callablebody( node, context, descr, selectid)
 	if selectid == 1 then -- parameter declarations
 		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
 		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
-		descr.param = utils.traverseRange( typedb, node, {1,1}, subcontext)
+		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
 	elseif selectid == 2 then -- statements in body
 		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
 		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
@@ -226,6 +228,18 @@ function typesystem.variable( node)
 	else
 		utils.errorMessage( node.line, "Not allowed to access variable '%s' that is not defined in local function or global scope", typedb:type_string(typeId))
 	end
+	local typeName = node.arg[ 1].value
+	local env = getCallableEnvironment()
+	local seekctx = getSeekContextTypes()
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, typeName, tagmask_resolveType)
+	local typeId,constructor = selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
+	local variableScope = typedb:type_scope( typeId)
+	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
+		return {type=typeId, constructor=constructor}
+	else
+		utils.errorMessage( node.line, "Not allowed to access variable '%s' that is not defined in local function or global scope", typedb:type_string(typeId))
+	end
+
 end
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]

@@ -3463,7 +3463,7 @@ function typesystem.typegen_pointer( node, attr, context)
 end
 function typesystem.typespec( node)
 	local datatype = table.unpack( utils.traverse( typedb, node))
-	if datatype.constructor then utils.errorMessage( node.line, "Data type expected instead of '%s' on the left hand of a variable declaration", typedb:type_string(datatype.type)) end
+	expectDataType( node, datatype)
 	return datatype.type
 end
 function typesystem.typespec_ref( node, qualifier)

@@ -5,18 +5,29 @@ function selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, re
 	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then -- not found or ambiguous
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, seekctx, typeName)
 	end
-	for _,item in ipairs(items) do if typedb:type_nof_parameters( item) == 0 then return item end end
-	utils.errorMessage( node, string.format( "Failed to find type '%s %s' without parameter", utils.resolveTypeString( typedb, resolveContextTypeId, typeName)))
+	for ii,item in ipairs(items) do
+		if typedb:type_nof_parameters( item) == 0 then
+			local constructor = applyReductionList( node, reductions, nil)
+			local item_constructor = typedb:type_constructor( item)
+			constructor = applyConstructor( node, item, item_constructor, constructor)
+			return item,constructor
+		end
+	end
+	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, seekctx, typeName))
 end
 -- Get the type handle of a type defined as a path
 function resolveTypeFromNamePath( node, arg, argidx)
 	if not argidx then argidx = #arg end
 	local typeName = arg[ argidx]
-	local typeId,constructor
-	local seekContext
-	if argidx > 1 then seekContext = resolveTypeFromNamePath( node, arg, argidx-1) else seekContext = getSeekContextTypes() end
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekContext, typeName, tagmask_namespace)
-	return selectNoArgumentType( node, seekContext, typeName, resolveContextTypeId, reductions, items)
+	local seekContextTypes
+	if argidx > 1 then
+		seekContextTypes = expectDataType( node, resolveTypeFromNamePath( node, arg, argidx-1))
+	else
+		seekContextTypes = getSeekContextTypes()
+	end
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekContextTypes, typeName, tagmask_namespace)
+	local typeId,constructor = selectNoArgumentType( node, seekContextTypes, typeName, resolveContextTypeId, reductions, items)
+	return {type=typeId, constructor=constructor}
 end
 -- Try to get the constructor and weight of a parameter passed with the deduction tagmask optionally passed as an argument
 function tryGetWeightedParameterReductionList( node, redutype, operand, tagmask_decl, tagmask_conv)
