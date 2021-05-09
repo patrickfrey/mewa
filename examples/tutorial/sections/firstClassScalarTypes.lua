@@ -6,7 +6,7 @@ function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
 		for _,promote in descr.promote do
 			local typeId_promote = scalarTypeMap[ promote]
 			local promoteConstructor = callConstructor( llvmir.scalar[ promote].conv[ typnam])
-			local promoteResultTypeId; if resultTypeId == typeId then promoteResultTypeId = typeId_promote else promoteResultTypeId = resultTypeId end
+			local promoteResultTypeId = (resultTypeId == typeId) and typeId_promote or resultTypeId
 			definePromoteCall( promoteResultTypeId, typeId, typeId_promote, opr, {typeId_promote}, promoteConstructor)
 		end
 	end

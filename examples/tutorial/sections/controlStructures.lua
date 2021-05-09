@@ -10,7 +10,13 @@ function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
 	else
 		code = code .. utils.template_format( llvmir.control.label, {inp=cond_constructor.out})
 	end
-	local out; if elseblk then code = code .. elseblk.code; out = elseblk.out else out = cond_constructor.out end
+	local out
+	if elseblk then
+		code = code .. elseblk.code
+		out = elseblk.out
+	else
+		out = cond_constructor.out
+	end
 	return {code = code, out = out}
 end
 

@@ -134,7 +134,7 @@ function getCallableEnvironment()
 end
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( contextTypeId, typnam, args)
-	local rt; if contextTypeId ~= 0 then rt = typedb:type_string(contextTypeId or 0) .. " " .. typnam else rt = typnam end
+	local rt = (contextTypeId ~= 0) and (typedb:type_string(contextTypeId or 0) .. " " .. typnam) or typnam
 	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
 	return rt
 end
@@ -260,7 +260,7 @@ function convConstructorUnboundReference( fmt)
 		local convCode = utils.constructor_format( fmt, {this = inp, out = "{RVAL}"}, env.register)
 		local rt = constructorStruct( "RVAL", code .. convCode)
 		rt.step = typedb:step()
-		return rt;
+		return rt
 	end
 end
 -- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
@@ -268,7 +268,13 @@ function callConstructor( fmt, has_result)
 	return function( this, args)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
-		local out,res; if has_result then out = env.register(); res = out else res = this_inp end
+		local out,res
+		if has_result then
+			out = env.register()
+			res = out
+		else
+			res = this_inp
+		end
 		local code,subst = buildCallArguments( out, this_inp, args)
 		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, false)
 	end
@@ -278,7 +284,13 @@ function invokeConstructor( fmt, has_result)
 	return function( this, args)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
-		local out,res; if has_result then out = env.register(); res = out else res = this_inp end
+		local out,res
+		if has_result then
+			out = env.register()
+			res = out
+		else
+			res = this_inp
+		end
 		local code,subst = buildCallArguments( out, this_inp, args)
 		subst.success = env.label()
 		subst.cleanup = getInvokeUnwindLabel()
@@ -321,7 +333,7 @@ function doCastToUnboundReferenceType( typeId)
 end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructors
 function buildFunctionCallArguments( code, argstr, args, llvmtypes)
-	local rt; if argstr == "" then rt = "" else rt = argstr .. ", " end
+	local rt = (argstr == "") and "" or (argstr .. ", ")
 	for ii=1,#args do
 		local arg = args[ ii]
 		local llvmtype = llvmtypes[ ii]
@@ -347,18 +359,36 @@ function functionCallConstructor( env, code, func, argstr, descr)
 	if descr.ret then
 		if doReturnValueAsReferenceParameter( descr.ret) then
 			step = typedb:step()
-			local reftypesubst; if argstr == "" then reftypesubst = "{RVAL}" else reftypesubst = "{RVAL}, " end
+			local reftypesubst = (argstr == "") and "{RVAL}" or "{RVAL}, "
 			out = "RVAL"
 			subst = {func = func, callargstr = argstr, reftyperef = reftypesubst, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
-			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.sretFunctionCallThrowing else fmt = llvmir.control.sretFunctionCall end
+			if descr.throws then
+				subst.cleanup = getInvokeUnwindLabel()
+				subst.success = env.label()
+				fmt = llvmir.control.sretFunctionCallThrowing
+			else
+				fmt = llvmir.control.sretFunctionCall
+			end
 		else
 			out = env.register()
 			subst = {func = func, callargstr = argstr, out = out, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
-			if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.functionCallThrowing else fmt = llvmir.control.functionCall end
+			if descr.throws then
+				subst.cleanup = getInvokeUnwindLabel()
+				subst.success = env.label()
+				fmt = llvmir.control.functionCallThrowing
+			else
+				fmt = llvmir.control.functionCall
+			end
 		end
 	else
 		subst = {func = func, callargstr = argstr, signature=descr.signature, rtllvmtype=descr.rtllvmtype}
-		if descr.throws then subst.cleanup = getInvokeUnwindLabel(); subst.success = env.label(); fmt = llvmir.control.procedureCallThrowing else fmt = llvmir.control.procedureCall end
+		if descr.throws then
+			subst.cleanup = getInvokeUnwindLabel()
+			subst.success = env.label()
+			fmt = llvmir.control.procedureCallThrowing
+		else
+			fmt = llvmir.control.procedureCall
+		end
 	end
 	return constructorStructCall( out, code .. utils.constructor_format( fmt, subst, env.register), step, descr.throws)
 end
@@ -367,7 +397,7 @@ function functionDirectCallConstructor( thisTypeId, descr)
 	return function( this, args, llvmtypes)
 		local env = getCallableEnvironment()
 		local this_inp,this_code = constructorParts( this)
-		local this_argstr; if thisTypeId ~= 0 then this_argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp else this_argstr = "" end
+		local this_argstr = (thisTypeId ~= 0) and (typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp) or ""
 		local code,argstr = buildFunctionCallArguments( this_code, this_argstr, args, llvmtypes)
 		return functionCallConstructor( env, code, "@" .. descr.symbolname, argstr, descr)
 	end
@@ -450,7 +480,10 @@ function tryConstexprStructureReductionConstructorArray( node, thisTypeId, eleme
 		local step_bk = typedb:step( constructor.step)
 		local rt = initconstructor( {out="{RVAL}"}, constructor.list, step_bk)
 		typedb:step( step_bk)
-		if rt then rt.out = "RVAL"; rt.step = constructor.step end
+		if rt then
+			rt.out = "RVAL"
+			rt.step = constructor.step
+		end
 		return rt
 	end
 end
@@ -461,7 +494,11 @@ function tryConstexprStructureReductionConstructor( node, thisTypeId)
 		local step_bk = typedb:step( constructor.step)
 		local res = tryApplyCallable( node, this, ":=", constructor.list) -- constexpr structure constructor is a list o arguments with type
 		typedb:step( step_bk)
-		if res then res.constructor.out = "RVAL"; res.constructor.step = constructor.step; return res.constructor end
+		if res then
+			res.constructor.out = "RVAL"
+			res.constructor.step = constructor.step
+			return res.constructor
+		end
 	end
 end
 -- Constructor of an operator on a constexpr structure type as argument
@@ -611,7 +648,7 @@ function getVarargArgumentType( typeId)
 end
 -- Get the name used for a non pointer type with qualifiers built into the type name
 function getQualifierTypeName( qualifier, typnam, prefix)
-	local rt; if prefix then rt = prefix .. " " .. typnam else rt = typnam end
+	local rt = prefix and (prefix .. " " .. typnam) or typnam
 	if qualifier.const == true then rt = "const " .. rt end
 	if qualifier.reference == true then rt = rt .. "&" end
 	return rt
@@ -698,7 +735,7 @@ function definePointerQualiTypes( node, typeId)
 	local qs = typeQualiSepMap[ typeId]
 	if not qs then utils.errorMessage( node.line, "Cannot define pointer of type '%s'", typedb:type_string(typeId)) end
 	local qualitype_pointee = qualiTypeMap[ qs.valtype]
-	local pointeeTypeId; if qs.qualifier.const == true then pointeeTypeId = qualitype_pointee.c_valtype else pointeeTypeId = qualitype_pointee.valtype end
+	local pointeeTypeId = (qs.qualifier.const == true) and qualitype_pointee.c_valtype or qualitype_pointee.valtype
 	local pointeeRefTypeId = referenceTypeMap[ pointeeTypeId]
 	local typnam = typedb:type_name( pointeeTypeId)
 	local contextTypeId = typedb:type_context( pointeeTypeId)
@@ -715,7 +752,7 @@ function definePointerQualiTypes( node, typeId)
 	defineCall( valtype, pointeeRefTypeId, "&", {}, function(this) return this end)
 	defineCall( pointeeRefTypeId, valtype, "->", {}, function(this) return this end)
 
-	local dc; if typeDescription.scalar == false and typeDescription.dtor then dc = manipConstructor( typeDescription.dtor) else dc = constructorStructEmpty end
+	local dc = (typeDescription.scalar == false and typeDescription.dtor) and manipConstructor( typeDescription.dtor) or constructorStructEmpty
 	defineCall( valtype, valtype, " delete", {}, dc)
 
 	defineArrayIndexOperators( pointeeRefTypeId, c_valtype, pointerTypeDescription)
@@ -881,8 +918,16 @@ function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
 		local label = codelist[ ci].label
 		local code = codelist[ ci].code
 		local dtor_label = label .. "_dtor"
-		local dtor_next; local ni=ci; while ni > 1 do ni = ni-1; cd = codelist[ni].code; if cd and cd ~= "" then dtor_next = codelist[ ni].label .. "_dtor"; break end end
-		if not dtor_next then dtor_next = finishLabel end
+		local dtor_next = finishLabel
+		local ni = ci
+		while ni > 1 do
+			ni = ni-1
+			cd = codelist[ni].code
+			if cd and cd ~= "" then
+				dtor_next = codelist[ ni].label .. "_dtor"
+				break
+			end
+		end
 		if code then
 			partial_dtor = partial_dtor
 				.. utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=label}, env.register)
@@ -977,7 +1022,7 @@ function getStructMemberDestructorCode( env, descr, members)
 		local llvmtype = member.descr.llvmtype
 		local member_reftype = referenceTypeMap[ member.type]
 		local ths = {type=member_reftype,constructor={code=utils.constructor_format(descr.loadelemref,{out=out,this="%ths",index=mi-1, type=llvmtype}),out=out}}
-		local member_destroy_code; if member.descr.dtor then member_destroy_code = utils.constructor_format( member.descr.dtor, {this=out}, env.register) else member_destroy_code = "" end
+		local member_destroy_code = member.descr.dtor and utils.constructor_format( member.descr.dtor, {this=out}, env.register) or ""
 		if member_destroy_code ~= "" then rt = ths.constructor.code .. member_destroy_code .. rt end
 	end
 	return rt
@@ -1029,7 +1074,7 @@ function defineStructConstructors( node, qualitype, descr)
 		local c_member_type = constTypeMap[ member.type] or member.type
 		local member_reftype = referenceTypeMap[ member.type]
 		local c_member_reftype = constTypeMap[ member_reftype] or member_reftype
-		local etype; if doPassValueAsReferenceParameter( member.type) then etype = c_member_reftype else etype = c_member_type end
+		local etype = doPassValueAsReferenceParameter( member.type) and c_member_reftype or c_member_type
 		table.insert( elements, etype)
 		local paramDescr = typeDescriptionMap[ etype]
 		paramstr = paramstr .. ", " .. paramDescr.llvmtype .. " %p" .. mi
@@ -1046,7 +1091,7 @@ function defineStructConstructors( node, qualitype, descr)
 		if member_copy and member_copy.constructor.throws then copy_nofThrows = copy_nofThrows + 1 end
 		local member_element = tryApplyCallable( node, ths, ":=", {param})
 		if member_element and member_element.constructor.throws then element_nofThrows = element_nofThrows + 1 end
-		local member_destroy_code; if member.descr.dtor then member_destroy_code = utils.constructor_format( member.descr.dtor, {this=out}, env.register) else member_destroy_code = "" end
+		local member_destroy_code = member.descr.dtor and utils.constructor_format( member.descr.dtor, {this=out}, env.register) or ""
 
 		instantUnwindLabel = "cleanup_" .. mi
 		if member_destroy_code ~= "" and mi ~= #descr.members then table.insert( rewindlist,{label=instantUnwindLabel, code=member_destroy_code}) end
@@ -1176,7 +1221,7 @@ function defineOperatorsWithStructArgument( node, context)
 	for opr,def in pairs( context.operators) do
 		if def.hasStructArgument == true then
 			local constructor = tryConstexprStructureOperatorConstructor( node, def.thisType, opr)
-			local rtval; if doReturnValueAsReferenceParameter( def.returnType) then rtval = unboundReferenceTypeMap[ def.returnType] else rtval = def.returnType end
+			local rtval = doReturnValueAsReferenceParameter( def.returnType) and unboundReferenceTypeMap[ def.returnType] or def.returnType
 			defineCall( rtval, def.thisType, opr, {constexprStructureType}, constructor)
 		end
 	end
@@ -1187,7 +1232,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 	if descr.conv then
 		for oth_typnam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typnam]
-			local conv_constructor; if conv.fmt then conv_constructor = convConstructor( conv.fmt) else conv_constructor = nil end
+			local conv_constructor = conv.fmt and convConstructor( conv.fmt) or nil
 			typedb:def_reduction( qualitype.valtype, oth_qualitype.c_valtype, conv_constructor, tag_typeConversion, combineWeight( rdw_conv, conv.weight))
 		end
 	end
@@ -1199,7 +1244,7 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		local promote_qualitype = scalarQualiTypeMap[ promote_typnam]
 		local promote_descr = typeDescriptionMap[ promote_qualitype.valtype]
 		local promote_conv_fmt = promote_descr.conv[ typnam].fmt
-		local promote_conv; if promote_conv_fmt then promote_conv = convConstructor( promote_conv_fmt) else promote_conv = nil end
+		local promote_conv = promote_conv_fmt and convConstructor( promote_conv_fmt) or nil
 		if promote_descr.binop then
 			for operator,operator_fmt in pairs( promote_descr.binop) do
 				definePromoteCall( promote_qualitype.valtype, qualitype.c_valtype, promote_qualitype.c_valtype, operator, {promote_qualitype.c_valtype}, promote_conv)
@@ -1359,8 +1404,15 @@ function createAllocationFrame( env, scope)
 end
 -- Create the allocation frame of this scope with the parent passed as argument
 function createThisAllocationFrame( parent)
-	local env; if parent then env = parent.env else env = getCallableEnvironment() end
-	local catch,initstate; if not parent or parent.env ~= env then parent = nil; initstate = env.initstate else catch = parent.catch; initstate = parent.initstate end
+	local env = parent and parent.env or getCallableEnvironment()
+	local catch,initstate
+	if not parent or parent.env ~= env then
+		parent = nil
+		initstate = env.initstate
+	else
+		catch = parent.catch
+		initstate = parent.initstate
+	end
 	local rt = {parent=parent, catch=catch, env=env, scope=typedb:scope(), partial_dtors={}, dtors={}, exitmap={}, exitkeys={}, landingpad=nil, initstate=initstate}
 	table.insert( env.frames, rt)
 	typedb:set_instance( allocFrameKey, rt)
@@ -1426,7 +1478,7 @@ function bindPartialDtor( step, var, value)
 end
 -- Get a label to jump to for an exit at a specific step with a specific way of exit (return with a defined value,throw,etc.) specified with a key (exitkey)
 function getAllocationFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
-	local parent; if frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) then parent = frame.parent end
+	local parent = frame.parent and not (frame.catch == frame and (exitkey == "catch" or exitkey == "throw")) and frame.parent or nil
 	local exit = frame.exitmap[ exitkey]
 	local env = frame.env
 	if not exit then
@@ -1462,7 +1514,7 @@ function getPartialDtorCode( env, dtors, di)
 	if di < #dtors and dtors[ di].step == step and dtors[ di].partial then return code .. getPartialDtorCode( env, dtors, di) else return code end
 end
 function addCodeLabel( code, label, nofollow)
-	local fmt; if nofollow then fmt = llvmir.control.plainLabel else fmt = llvmir.control.label end
+	local fmt = nofollow and llvmir.control.plainLabel or llvmir.control.label
 	return code .. utils.template_format( fmt, {inp=label}),false
 end
 function addCodeGoto( code, label, nofollow)
@@ -1470,7 +1522,7 @@ function addCodeGoto( code, label, nofollow)
 end
 -- Get the exception abort or the return statement cleanup code of an allocation frame
 function getAllocationFrameAbortCleanupCode( frame)
-	local code; if frame.landingpad then code = frame.landingpad.code else code = "" end
+	local code = frame.landingpad and frame.landingpad.code or ""
 	local env = frame.env
 	for _,ek in ipairs( frame.exitkeys) do
 		exit = frame.exitmap[ ek]
@@ -1507,7 +1559,10 @@ function getAllocationFrameAbortCleanupCode( frame)
 				first = false
 			else
 				if not first and dtor.cleanup then
-					if nextDtorLabel then code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow); nextDtorLabel = nil end
+					if nextDtorLabel then
+						code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow)
+						nextDtorLabel = nil
+					end
 					code = code .. dtor.cleanup.code
 					nofollow = false
 				end
@@ -1518,7 +1573,10 @@ function getAllocationFrameAbortCleanupCode( frame)
 			while di >= 1 do
 				local dtor = frame.dtors[ di]
 				if not first and dtor.cleanup then
-					if nextDtorLabel then code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow); nextDtorLabel = nil end
+					if nextDtorLabel then
+						code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow)
+						nextDtorLabel = nil
+					end
 					code = code .. dtor.cleanup.code
 					nofollow = false
 				end
@@ -1532,7 +1590,10 @@ function getAllocationFrameAbortCleanupCode( frame)
 				first = false
 			end
 		end
-		if nextDtorLabel then code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow); nextDtorLabel = nil end
+		if nextDtorLabel then
+			code,nofollow = addCodeLabel( code, nextDtorLabel, nofollow)
+			nextDtorLabel = nil
+		end
 		code = code .. exit.exitcode
 	end
 	return code
@@ -1587,10 +1648,20 @@ function callableFeaturesInitCode( env)
 	return rt
 end
 function enableFeatureException( env)
-	if not env.features then env.features={exception=true, landingpad=false, initstate=true} else env.features.exception = true; env.features.initstate=true end
+	if not env.features then
+		env.features={exception=true, landingpad=false, initstate=true}
+	else
+		env.features.exception = true
+		env.features.initstate = true
+	end
 end
 function enableFeatureLandingpad( env)
-	if not env.features then env.features={exception=false, landingpad=true, initstate=true} else env.features.landingpad = true; env.features.initstate=true end
+	if not env.features then
+		env.features={exception=false, landingpad=true, initstate=true}
+	else
+		env.features.landingpad = true
+		env.features.initstate=true
+	end
 end
 -- Initialize a frame that catches exceptions
 function initTryBlock( catchlabel)
@@ -1637,14 +1708,14 @@ function getInvokeUnwindLabel()
 		if frame.exitmap[ "catch"] then
 			cleanupLabel = getAllocationFrameCleanupLabel( frame, "catch")
 		else
-			local exitcode; if env.partial_dtor then exitcode = utils.constructor_format( env.partial_dtor, {}, env.register) else exitcode = "" end
+			local exitcode = env.partial_dtor and utils.constructor_format( env.partial_dtor, {}, env.register) or ""
 			exitcode = exitcode .. utils.constructor_format( llvmir.exception.cleanup_end, {}, env.register)
 			cleanupLabel = getAllocationFrameCleanupLabel( frame, "catch", exitcode)
 		end
 		if frame.landingpad.map[ cleanupLabel] then
 			return frame.landingpad.map[ cleanupLabel]
 		else
-			local cleanup_start_fmt; if frame.initstate then cleanup_start_fmt = llvmir.exception.cleanup_start_constructor else cleanup_start_fmt = llvmir.exception.cleanup_start end
+			local cleanup_start_fmt = frame.initstate and llvmir.exception.cleanup_start_constructor or llvmir.exception.cleanup_start
 			landingpadLabel = env.label()
 			landingpadCode = utils.constructor_format( llvmir.exception.cleanup_start, {landingpad=landingpadLabel}, env.register)
 			if frame.initstate then landingpadCode = landingpadCode .. utils.constructor_format( llvmir.exception.set_constructor_initstate, {initstate=frame.initstate}) end
@@ -1794,7 +1865,7 @@ function defineLocalVariable( node, descr, context, typeId, refTypeId, name, ini
 	local init = applyCallable( node, decl, ":=", {initVal})
 	if out ~= "%rt" then -- no copy elision
 		local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-		local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
+		local step = (initVal and type(initVal.constructor) == "table") and initVal.constructor.step or nil
 		if cleanup then registerCleanupCode( "local variable " .. name, cleanup, step) end
 	end
 	return init
@@ -1820,7 +1891,7 @@ function defineGlobalVariable( node, descr, context, typeId, refTypeId, name, in
 		end
 	end
 	local cleanup = typeConstructorPairCode( tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":~", {}))
-	local step; if initVal and type(initVal.constructor) == "table" then step = initVal.constructor.step end
+	local step = (initVal and type(initVal.constructor) == "table") and initVal.constructor.step or nil
 	if cleanup then registerCleanupCode( "global variable " .. name, cleanup, step) end
 	popEnvironment()
 end
@@ -2019,13 +2090,13 @@ function initControlBooleanTypes()
 	local function constexprBooleanToControlTrueType( value)
 		local env = getCallableEnvironment()
 		local out = label()
-		local code; if value == true then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label) end
+		local code = (value == true) and "" or utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label)
 		return {code=code, out=out}
 	end
 	local function constexprBooleanToControlFalseType( value)
 		local env = getCallableEnvironment()
 		local out = label()
-		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label) end
+		local code = (value == false) and "" or utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label)
 		return {code=code, out=out}
 	end
 	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, rwd_control)
@@ -2063,19 +2134,25 @@ function initBuiltInTypes()
 			scalarBooleanType = c_valtype
 			typedb:def_reduction( valtype, constexprBooleanType, constexprFloatToBooleanConstructor, tag_typeInstantiation, constexprInitWeight)
 		elseif scalar_descr.class == "unsigned" then
-			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then scalarIntegerType = c_valtype; scalarIntegerTypnam = typnam end
-			if scalar_descr.llvmtype == "i64" and not scalarLongType then scalarLongType = c_valtype; scalarLongTypnam = typnam end
-			if scalar_descr.llvmtype == "i8" then
+			if scalar_descr.llvmtype == "i32" and not scalarIntegerType then
+				scalarIntegerType = c_valtype
+				scalarIntegerTypnam = typnam
+			elseif scalar_descr.llvmtype == "i64" and not scalarLongType then
+				scalarLongType = c_valtype
+				scalarLongTypnam = typnam
+			elseif scalar_descr.llvmtype == "i8" then
 				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_valtype
 			typedb:def_reduction( valtype, constexprUIntegerType, constexprIntegerToIntegerConstructor, tag_typeInstantiation, constexprInitWeight)
 		elseif scalar_descr.class == "signed" then
-			if scalar_descr.llvmtype == "i32" then scalarIntegerType = c_valtype; scalarIntegerTypnam = typnam end
-			if scalar_descr.llvmtype == "i64" then scalarLongType = c_valtype; scalarLongTypnam = typnam end
-					local scalarFloatType = nil
-
-			if scalar_descr.llvmtype == "i8" and not byteQualitype then
+			if scalar_descr.llvmtype == "i32" then
+				scalarIntegerType = c_valtype
+				scalarIntegerTypnam = typnam
+			elseif scalar_descr.llvmtype == "i64" then
+				scalarLongType = c_valtype
+				scalarLongTypnam = typnam
+			elseif scalar_descr.llvmtype == "i8" and not byteQualitype then
 				byteQualitype = qualitype
 			end
 			scalarIndexTypeMap[ typnam] = c_valtype
@@ -2111,11 +2188,16 @@ function initBuiltInTypes()
 	local qualitype_anyclassptr = defineQualiTypes( {line=0}, 0, "any class^", llvmir.anyClassPointerDescr)
 	local qualitype_anystructptr = defineQualiTypes( {line=0}, 0, "any struct^", llvmir.anyStructPointerDescr)
 			                  
-	anyClassPointerType = qualitype_anyclassptr.valtype; hardcodedTypeMap[ "any class^"] = anyClassPointerType
-	anyConstClassPointerType = qualitype_anyclassptr.c_valtype; hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
-	anyStructPointerType = qualitype_anystructptr.valtype; hardcodedTypeMap[ "any struct^"] = anyStructPointerType
-	anyConstStructPointerType = qualitype_anystructptr.c_valtype; hardcodedTypeMap[ "any const struct^"] = anyConstStructPointerType
-	anyFreeFunctionType = typedb:def_type( 0, "any function"); typeDescriptionMap[ anyFreeFunctionType] = llvmir.anyFunctionDescr
+	anyClassPointerType = qualitype_anyclassptr.valtype
+	hardcodedTypeMap[ "any class^"] = anyClassPointerType
+	anyConstClassPointerType = qualitype_anyclassptr.c_valtype
+	hardcodedTypeMap[ "any const class^"] = anyConstClassPointerType
+	anyStructPointerType = qualitype_anystructptr.valtype
+	hardcodedTypeMap[ "any struct^"] = anyStructPointerType
+	anyConstStructPointerType = qualitype_anystructptr.c_valtype
+	hardcodedTypeMap[ "any const struct^"] = anyConstStructPointerType
+	anyFreeFunctionType = typedb:def_type( 0, "any function")
+	typeDescriptionMap[ anyFreeFunctionType] = llvmir.anyFunctionDescr
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = scalarQualiTypeMap[ typnam]
@@ -2275,7 +2357,7 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 	setSeekContextTypes( genericDescr.seekctx)
 	pushSeekContextType( genericlocal)
 	if genericDescr.class == "generic_class" or genericDescr.class == "generic_struct" then
-		local fmt; if genericDescr.class == "generic_class" then fmt = llvmir.classTemplate else fmt = llvmir.structTemplate end
+		local fmt = (genericDescr.class == "generic_class") and llvmir.classTemplate or llvmir.structTemplate
 		local descr,qualitype = defineStructureType( genericDescr.node, declContextTypeId, typnam, fmt)
 		typeIdNotifyFunction( qualitype.valtype)
 		defineGenericParameterAliases( genericDescr.node, qualitype.valtype, genericDescr.generic.param, genericArg)
@@ -2482,7 +2564,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of a type (this)
 function findApplyCallable( node, this, callable, args)
-	local mask; if callable == ":=" or callable == "=" then mask = tagmask_declaration else mask = tagmask_resolveType end
+	local mask = (callable == ":=" or callable == "=") and tagmask_declaration or tagmask_resolveType
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
 	if not resolveContextType then return nil end
 	if type(resolveContextType) == "table" then utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable) end
@@ -2533,7 +2615,7 @@ function getTargetFunctionIdentifierString( descr, context)
 	elseif descr.name == ":~" then
 		return utils.encodeName( context.descr.dtorname)
 	else
-		local pstr; if context.symbol then pstr = "__C_" .. context.symbol .. "__" .. descr.symbol else pstr = descr.symbol end
+		local pstr = context.symbol and ("__C_" .. context.symbol .. "__" .. descr.symbol) or descr.symbol
 		for ai,arg in ipairs(descr.param) do pstr = pstr .. "__" .. (arg.symbol or arg.llvmtype) end
 		if descr.const == true then pstr = pstr .. "__const" end
 		return utils.encodeName(  pstr)
@@ -2548,7 +2630,10 @@ end
 -- Get the identifier of a method for displaying interface/implementation matching
 function getInterfaceMethodNameString( name, args)
 	local pstr = name
-	for ai,arg in ipairs(args) do local sep; if ai == 1 then sep = "(" else sep = ", " end; pstr = pstr .. sep .. typedb:type_string(arg.type) end
+	for ai,arg in ipairs(args) do
+		local sep = (ai == 1) and "(" or ", "
+		pstr = pstr .. sep .. typedb:type_string(arg.type)
+	end
 	if const == true then return pstr .. ") const" else return pstr .. ")" end
 end
 -- Get the parameter string of a function declaration
@@ -2592,7 +2677,8 @@ end
 function getGenericTypeName( typeId, param)
 	local rt = typedb:type_name( typeId)
 	for pi,arg in ipairs(param) do
-		rt = rt .. "__"; if arg.constructor then rt = rt .. getGenericConstructorIdString(arg.constructor) else rt = rt .. typedb:type_string(arg.type, "__") end
+		rt = rt .. "__"
+		if arg.constructor then rt = rt .. getGenericConstructorIdString(arg.constructor) else rt = rt .. typedb:type_string(arg.type, "__") end
 	end
 	return rt
 end
@@ -2646,7 +2732,7 @@ function expandDescrExternCallTemplateParameter( descr, context)
 	end
 	if descr.ret then descr.rtllvmtype = typeDescriptionMap[ descr.ret].llvmtype else descr.rtllvmtype = "void" end
 	if descr.vararg then
-		local sep; if descr.argstr == "" then sep = "" else sep = ", " end
+		local sep = (descr.argstr == "") and "" or ", "
 		descr.signature = utils.template_format( llvmir.control.functionVarargSignature,  {argstr = descr.argstr .. sep})
 	end
 	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
@@ -2661,25 +2747,25 @@ function expandContextMethodList( node, descr, context)
 end
 -- Output of the function implementation (header + body)
 function printFunctionDeclaration( node, descr)
-	local fmt; if doReturnValueAsReferenceParameter( descr.ret) then fmt = llvmir.control.sretFunctionDeclaration else fmt = llvmir.control.functionDeclaration end
+	local fmt = doReturnValueAsReferenceParameter( descr.ret) and llvmir.control.sretFunctionDeclaration or llvmir.control.functionDeclaration
 	descr.attr = llvmir.functionAttribute( descr.interface, descr.env.throws)
 	print( utils.constructor_format( fmt, descr))
 end
 -- Define a direct function call: class method call, free function call
 function defineFunctionCall( thisTypeId, contextTypeId, opr, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundReferenceTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype = doReturnValueAsReferenceParameter( descr.ret) and unboundReferenceTypeMap[ descr.ret] or descr.ret
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, functionDirectCallConstructor( thisTypeId, descr))
 	if descr.vararg then varargFuncMap[ functype] = true end
 	return functype
 end
 -- Define an indirect function call over a variable containing the function address
 function defineFunctionVariableCall( thisTypeId, contextTypeId, opr, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundReferenceTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype = doReturnValueAsReferenceParameter( descr.ret) and unboundReferenceTypeMap[ descr.ret] or descr.ret
 	return defineCall( rtype, contextTypeId, opr, descr.param, functionIndirectCallConstructor( thisTypeId, descr))
 end
 -- Define an indirect function call over an interface method table (VMT)
 function defineInterfaceMethodCall( contextTypeId, opr, descr)
-	local rtype; if doReturnValueAsReferenceParameter( descr.ret) then rtype = unboundReferenceTypeMap[ descr.ret] else rtype = descr.ret end
+	local rtype = doReturnValueAsReferenceParameter( descr.ret) and unboundReferenceTypeMap[ descr.ret] or descr.ret
 	local functype = defineCall( rtype, contextTypeId, opr, descr.param, interfaceMethodCallConstructor( descr))
 	if descr.vararg then varargFuncMap[ functype] = true end
 end
@@ -2875,7 +2961,8 @@ end
 -- Create the type definition of a lambda expression
 function defineLambdaExpression( node, param)
 	local descr = utils.template_format( llvmir.lambdaExpressionDescr, {})
-	local pstr = ""; if param then for _,pp in ipairs(param) do pstr = pstr .. "__" .. pp end end
+	local pstr = ""
+	if param then for _,pp in ipairs(param) do pstr = pstr .. "__" .. pp end end
 	local name = "lambda" .. pstr
 	local typnam = utils.uniqueName( name .. "__")
 	descr.node = node
@@ -3031,8 +3118,14 @@ function conditionalIfElseBlock( node, initstate, condition, matchblk, elseblk, 
 		code = code .. utils.template_format( llvmir.control.invertedControlType, {inp=cond_constructor.out, out=exitLabel})
 		exitLabelUsed = true
 	end
-	local nofollow; if matchblk.nofollow and elseblk and elseblk.nofollow then nofollow = true else nofollow = false end
-	local out; if elseblk then code = code .. elseblk.code; out = elseblk.out else out = cond_constructor.out end
+	local nofollow = matchblk.nofollow and elseblk and elseblk.nofollow or false
+	local out
+	if elseblk then
+		code = code .. elseblk.code
+		out = elseblk.out
+	else
+		out = cond_constructor.out
+	end
 	return {code = code, out = out, exitLabelUsed=exitLabelUsed, nofollow=nofollow}
 end
 -- Collect the code of a scope with the destructor code for no jump exit of the frame and resume the initialization state if we are in a constructor
@@ -3049,7 +3142,10 @@ function collectCode( node, args)
 	local frame = thisAllocationFrame()
 	local initstate
 	if frame then
-		if frame.initstate then resumeInitState( frame); initstate = frame.initstate end
+		if frame.initstate then
+			resumeInitState( frame)
+			initstate = frame.initstate
+		end
 		if not nofollow and frame.parent then code = code .. getAllocationFrameRegularExitCleanupCode( frame) end
 	end
 	return {code=code, nofollow=nofollow, initstate=initstate}
@@ -3194,7 +3290,7 @@ function typesystem.delete( node)
 end
 function typesystem.vardef( node, context)
 	local datatype,varnam = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-	local initval; if #node.arg >= 3 then initval = function() return table.unpack( utils.traverseRange( typedb, node, {3,3}, context)) end end
+	local initval = (#node.arg >= 3) and function() return table.unpack( utils.traverseRange( typedb, node, {3,3}, context)) end or nil
 	return defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.typedef( node, context)
@@ -3277,11 +3373,11 @@ function typesystem.return_value( node)
 		else
 			rt = applyCallable( node, typeConstructorPairStruct( reftype, "%rt", ""), ":=", {operand})
 		end
-		return {code = rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
+		return {code= rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
-		local code; if env.returnfunction then code = env.returnfunction( constructor) else code = doReturnTypeStatement( rtype, constructor) end
-		return {code = code, nofollow=true}
+		local code = env.returnfunction and env.returnfunction( constructor) or doReturnTypeStatement( rtype, constructor)
+		return {code=code, nofollow=true}
 	end
 end
 function typesystem.return_void( node)
@@ -3307,7 +3403,7 @@ function typesystem.conditional_elseif( node, exitLabel)
 end
 function typesystem.conditional_if( node)
 	local env = getCallableEnvironment()
-	local exitLabel; if #node.arg >= 3 then exitLabel = env.label() else exitLabel = nil end
+	local exitLabel = (#node.arg >= 3) and env.label() or nil
 	local initstate
 	if env.initstate then -- we are in a constructor, so we calculate the init state to pass it to conditionalIfElseBlock
 		local frame = getAllocationFrame()
@@ -3601,7 +3697,8 @@ end
 function typesystem.extern_paramdeflist( node, context)
 	local args = {}
 	utils.traverse( typedb, node, context, args)
-	local rt = {}; for ai,arg in ipairs(args) do
+	local rt = {}
+	for ai,arg in ipairs(args) do
 		local llvmtype = typeDescriptionMap[ arg].llvmtype
 		table.insert( rt, {type=arg,llvmtype=llvmtype} )
 	end

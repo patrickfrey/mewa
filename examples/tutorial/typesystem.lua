@@ -173,7 +173,7 @@ function typesystem.return_value( node)
 		return {code = rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
 	else
 		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
-		local code; if env.returnfunction then code = env.returnfunction( constructor) else code = doReturnTypeStatement( rtype, constructor) end
+		local code = env.returnfunction and env.returnfunction( constructor) or doReturnTypeStatement( rtype, constructor)
 		return {code = code, nofollow=true}
 	end
 end

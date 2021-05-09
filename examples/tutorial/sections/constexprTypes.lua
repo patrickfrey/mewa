@@ -7,10 +7,10 @@ stringType = defineDataType( {line=0}, 0, "string", llvmir.string)	-- string con
 scalarTypeMap.void = voidType
 scalarTypeMap.string = stringType
 
-typeDescriptionMap[ constexprIntegerType] = llvmir.constexprIntegerDescr;
-typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr;
-typeDescriptionMap[ constexprBooleanType] = llvmir.constexprBooleanDescr;
-typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr;
+typeDescriptionMap[ constexprIntegerType] = llvmir.constexprIntegerDescr
+typeDescriptionMap[ constexprFloatType] = llvmir.constexprFloatDescr
+typeDescriptionMap[ constexprBooleanType] = llvmir.constexprBooleanDescr
+typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr
 
 function isScalarConstExprValueType( initType) return initType >= constexprIntegerType and initType <= stringType end
 

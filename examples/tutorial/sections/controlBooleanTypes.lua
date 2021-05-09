@@ -72,13 +72,13 @@ function initControlBooleanTypes()
 	local function constexprBooleanToControlTrueType( value)
 		local env = getCallableEnvironment()
 		local out = label()
-		local code; if value == true then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label) end
+		local code = (value == true) and "" or utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label)
 		return {code=code, out=out}
 	end
 	local function constexprBooleanToControlFalseType( value)
 		local env = getCallableEnvironment()
 		local out = label()
-		local code; if value == false then code="" else code=utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label) end
+		local code = (value == false) and "" or utils.constructor_format( llvmir.control.terminateFalseExit, {out=out}, env.label)
 		return {code=code, out=out}
 	end
 	typedb:def_reduction( controlFalseType, constexprBooleanType, constexprBooleanToControlFalseType, tag_typeDeduction, rwd_control)
