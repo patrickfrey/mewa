@@ -1,8 +1,9 @@
 local utils = require "typesystem_utils"
 
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
-function selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
+function selectNoArgumentType( node, seekctx, typeName, tagmask, resolveContextTypeId, reductions, items)
 	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then -- not found or ambiguous
+		io.stderr:write( "TRACE " .. tagmask .. "\n" .. utils.getResolveTypeTrace( typedb, seekctx, typeName, tagmask) .. "\n")
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, seekctx, typeName)
 	end
 	for ii,item in ipairs(items) do
@@ -26,7 +27,7 @@ function resolveTypeFromNamePath( node, arg, argidx)
 		seekContextTypes = getSeekContextTypes()
 	end
 	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekContextTypes, typeName, tagmask_namespace)
-	local typeId,constructor = selectNoArgumentType( node, seekContextTypes, typeName, resolveContextTypeId, reductions, items)
+	local typeId,constructor = selectNoArgumentType( node, seekContextTypes, typeName, tagmask_namespace, resolveContextTypeId, reductions, items)
 	return {type=typeId, constructor=constructor}
 end
 -- Try to get the constructor and weight of a parameter passed with the deduction tagmask optionally passed as an argument

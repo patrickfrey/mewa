@@ -25,16 +25,6 @@ local pointerTemplate = {
 		[">="] = "{out} = icmp uge {pointee}* {this}, {arg1}\n",
 		[">"] = "{out} = icmp ugt {pointee}* {this}, {arg1}\n"}
 }
-local pointerDescrMap = {}
-function llvmir.pointerDescr( pointeeDescr)
-	local llvmPointerType = pointeeDescr.llvmtype
-	local pointerDescr = pointerDescrMap[ llvmPointerType]
-	if not pointerDescr then
-		pointerDescr = utils.template_format( pointerTemplate, {pointee=llvmPointerType} )
-		pointerDescrMap[ llvmPointerType] = pointerDescr
-	end
-	return pointerDescr
-end
 
 local arrayTemplate = {
 	symbol = "{size}__{elementsymbol}",
@@ -153,6 +143,31 @@ llvmir.control = {
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
 	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n{\nentry:\n{body}}\n",
 }
+
+local pointerDescrMap = {}
+function llvmir.pointerDescr( pointeeDescr)
+	local llvmPointerType = pointeeDescr.llvmtype
+	local pointerDescr = pointerDescrMap[ llvmPointerType]
+	if not pointerDescr then
+		pointerDescr = utils.template_format( pointerTemplate, {pointee=llvmPointerType} )
+		pointerDescrMap[ llvmPointerType] = pointerDescr
+	end
+	return pointerDescr
+end
+
+local arrayDescrMap = {}
+function llvmir.arrayDescr( elementDescr, arraySize)
+	local llvmElementType = elementDescr.llvmtype
+	local arrayDescrKey = llvmElementType .. "#" .. arraySize
+	local arrayDescr = arrayDescrMap[ arrayDescrKey]
+	if not arrayDescr then
+		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType, elementsymbol=elementDescr.symbol or llvmElementType, size=arraySize})
+		arrayDescr.size = elementDescr.size * arraySize
+		arrayDescr.align = elementDescr.align
+		arrayDescrMap[ arrayDescrKey] = arrayDescr;
+	end
+	return arrayDescr
+end
 
 return llvmir
 

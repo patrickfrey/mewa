@@ -3462,9 +3462,7 @@ function typesystem.typegen_pointer( node, attr, context)
 	return {type=typeInstance}
 end
 function typesystem.typespec( node)
-	local datatype = table.unpack( utils.traverse( typedb, node))
-	expectDataType( node, datatype)
-	return datatype.type
+	return expectDataType( node, table.unpack( utils.traverse( typedb, node)))
 end
 function typesystem.typespec_ref( node, qualifier)
 	local datatype = table.unpack( utils.traverse( typedb, node))

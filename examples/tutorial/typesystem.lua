@@ -70,33 +70,25 @@ function typesystem.typehdr( node, decl)
 end
 function typesystem.arraytype( node)
 	local dim = tonumber( node.arg[2].value)
-	local elemType = table.unpack( utils.traverseRange( typedb, node, {1,1}))
-	local arraykey = string.format( "%d[%d]", elemType, dim)
-	if not arrayTypeMap[ arrayKey] then
-		local scope_bk,step_bk = typedb:scope( typedb:type_scope( elemType)) -- define the implicit array type in the same scope as the element type
-		local typnam = string.format( "[%d]", dim)
-		arrayTypeMap[ arrayKey] = typedb:def_type( elemType, typnam)
-		typedb:scope( scope_bk,step_bk)
-	end
-	return arrayTypeMap[ arrayKey]
+	local elem = table.unpack( utils.traverseRange( typedb, node, {1,1}))
+	return {type=getOrCreateArrayType( node, expectDataType( node, elem), dim)}
 end
 function typesystem.typespec( node)
-	local datatype = table.unpack( utils.traverse( typedb, node))
-	expectDataType( node, datatype)
-	return datatype.type
+	return expectDataType( node, table.unpack( utils.traverse( typedb, node)))
 end
 function typesystem.inheritdef( node, decl)
 end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
-	local descr,typeId = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
+	local typeId,descr = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
 	local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
 	io.stderr:write("DECLARE " .. context.domain .. " class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
 	io.stderr:write("-- MEMBER VARIABLES class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
 	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.symbol .. "\n")
+	descr.size = classContext.structsize
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: declarations
 	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: implementations
@@ -217,29 +209,8 @@ function typesystem.structure( node)
 	return {type=constexprStructureType, constructor={list=args}}
 end
 function typesystem.variable( node)
-	local typeName = node.arg[ 1].value
-	local env = getCallableEnvironment()
-	local seekctx = getSeekContextTypes()
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, typeName, tagmask_resolveType)
-	local typeId = selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
-	local variableScope = typedb:type_scope( typeId)
-	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
-		return {type=typeId}
-	else
-		utils.errorMessage( node.line, "Not allowed to access variable '%s' that is not defined in local function or global scope", typedb:type_string(typeId))
-	end
-	local typeName = node.arg[ 1].value
-	local env = getCallableEnvironment()
-	local seekctx = getSeekContextTypes()
-	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, typeName, tagmask_resolveType)
-	local typeId,constructor = selectNoArgumentType( node, seekctx, typeName, resolveContextTypeId, reductions, items)
-	local variableScope = typedb:type_scope( typeId)
-	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
-		return {type=typeId, constructor=constructor}
-	else
-		utils.errorMessage( node.line, "Not allowed to access variable '%s' that is not defined in local function or global scope", typedb:type_string(typeId))
-	end
-
+	local varname = node.arg[ 1].value
+	return getVariable( node, varname)
 end
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
@@ -247,7 +218,6 @@ function typesystem.constant( node, decl)
 end
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
-	io.stderr:write("++++ BINOP " .. mewa.tostring({operator=operator,this=this,operand=operand}) .. "\n")
 	expectValueType( node, this)
 	expectValueType( node, operand)
 	return applyCallable( node, this, operator, {operand})

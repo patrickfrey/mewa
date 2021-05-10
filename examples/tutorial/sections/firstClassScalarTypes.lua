@@ -1,14 +1,28 @@
+-- Define built-in promote calls for first class citizen scalar types
+function defineBuiltInTypePromoteCalls( typnam, descr)
+	local typeId = scalarTypeMap[ typnam]
+	for i,promote_typnam in ipairs( descr.promote) do
+		local promote_typeId = scalarTypeMap[ promote_typnam]
+		local promote_descr = typeDescriptionMap[ promote_typeId]
+		local promote_conv_fmt = promote_descr.conv[ typnam].fmt
+		local promote_conv = promote_conv_fmt and callConstructor( promote_conv_fmt) or nil
+		if promote_descr.binop then
+			for operator,operator_fmt in pairs( promote_descr.binop) do
+				definePromoteCall( promote_typeId, typeId, promote_typeId, operator, {promote_typeId}, promote_conv)
+			end
+		end
+		if promote_descr.cmpop then
+			for operator,operator_fmt in pairs( promote_descr.cmpop) do
+				definePromoteCall( scalarBooleanType, typeId, promote_typeId, operator, {promote_typeId}, promote_conv)
+			end
+		end
+	end
+end
 -- Helper functions to define binary operators of first class scalar types
 function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
-	for opr,fmt in ipairs(operators) do
+	for opr,fmt in pairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
 		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt, typeId))
-		for _,promote in descr.promote do
-			local typeId_promote = scalarTypeMap[ promote]
-			local promoteConstructor = callConstructor( llvmir.scalar[ promote].conv[ typnam])
-			local promoteResultTypeId = (resultTypeId == typeId) and typeId_promote or resultTypeId
-			definePromoteCall( promoteResultTypeId, typeId, typeId_promote, opr, {typeId_promote}, promoteConstructor)
-		end
 	end
 end
 -- Helper functions to define binary operators of first class scalar types
@@ -52,6 +66,10 @@ function initBuiltInTypes()
 		defineBuiltInBinaryOperators( typnam, scalar_descr, scalar_descr.cmpop, scalarBooleanType)
 		defineBuiltInUnaryOperators( typnam, scalar_descr, scalar_descr.unop, typeId)
 		defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId}, callConstructor( scalar_descr.assign, typeId))
+	end
+	-- Define operators with promoting of the left side argument
+	for typnam, scalar_descr in pairs( llvmir.scalar) do
+		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
 end
 

@@ -122,6 +122,7 @@ function applyCallable( node, this, callable, args)
 	end
 	local rt = getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
 	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
+	io.stderr:write("+++++ APPLY CALLABLE " .. getMessageFunctionSignature( this, callable, args) .. " => " .. mewa.tostring( rt) .. "\n")
 	return rt
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not

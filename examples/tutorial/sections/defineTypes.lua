@@ -27,12 +27,30 @@ function defineDataType( node, contextTypeId, typnam, descr)
 	dereferenceTypeMap[ refTypeId] = typeId
 	typeDescriptionMap[ typeId] = descr
 	typeDescriptionMap[ refTypeId] = llvmir.pointerDescr(descr)
-	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load), tag_typeConversion, rdw_load)
+	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load), tag_typeDeduction, rdw_load)
 	return typeId
 end
--- Basic structure type definition for class
+-- Structure type definition for class
 function defineStructureType( node, declContextTypeId, typnam, fmt)
 	local descr = utils.template_format( fmt, {symbol=typnam})
 	local typeId = defineDataType( node, declContextTypeId, typnam, descr)
-	return descr,typeId
+	return typeId,descr
+end
+-- Define index operator for arrays
+function defineArrayIndexOperator( elemTypeId, arTypeId, arDescr)
+	defineCall( referenceTypeMap[elemTypeId], referenceTypeMap[arTypeId], "[]", {scalarIntegerType}, callConstructor( arDescr.index[ "int"]))
+end
+-- Structure type definition for array
+function getOrCreateArrayType( node, elementType, arraySize)
+	local arrayKey = string.format( "%d[%d]", elementType, arraySize)
+	if not arrayTypeMap[ arrayKey] then
+		local scope_bk,step_bk = typedb:scope( typedb:type_scope( elementType)) -- define the implicit array type in the same scope as the element type
+		local typnam = string.format( "[%d]", arraySize)
+		local arrayDescr = llvmir.arrayDescr( typeDescriptionMap[ elementType], arraySize)
+		local arrayType = defineDataType( node, elementType, typnam, arrayDescr)
+		arrayTypeMap[ arrayKey] = arrayType
+		defineArrayIndexOperator( elementType, arrayType, arrayDescr)
+		typedb:scope( scope_bk,step_bk)
+	end
+	return arrayTypeMap[ arrayKey]
 end

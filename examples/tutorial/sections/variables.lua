@@ -14,7 +14,6 @@ function defineVariableMember( node, descr, context, typeId, refTypeId, name)
 	defineCall( refTypeId, referenceTypeMap[ context.decltype], name, {}, callConstructor( load_ref))
 	defineCall( typeId, context.decltype, name, {}, callConstructor( load_val))
 end
-
 -- Define a free global variable
 function defineGlobalVariable( node, descr, context, typeId, refTypeId, name, initVal)
 	local out = "@" .. name
@@ -28,7 +27,6 @@ function defineGlobalVariable( node, descr, context, typeId, refTypeId, name, in
 		utils.errorMessage( node.line, "Only constant scalars allowed as initializer of global variables like '%s'", name)
 	end
 end
-
 -- Define a free local variable
 function defineLocalVariable( node, descr, context, typeId, refTypeId, name, initVal)
 	local env = getCallableEnvironment()
@@ -42,7 +40,6 @@ function defineLocalVariable( node, descr, context, typeId, refTypeId, name, ini
 	local init = applyCallable( node, decl, "=", {initVal})
 	return init
 end
-
 -- Define a variable (what kind is depending on the context)
 function defineVariable( node, context, typeId, name, initVal)
 	local descr = typeDescriptionMap[ typeId]
@@ -59,7 +56,6 @@ function defineVariable( node, context, typeId, name, initVal)
 		utils.errorMessage( node.line, "Internal: Context domain undefined, context=%s", mewa.tostring(context))
 	end
 end
-
 -- Declare a variable implicitly that does not appear as definition in source (for example the 'self' reference in a method body).
 function defineImplicitVariable( node, typeId, name, reg)
 	local var = typedb:def_type( localDefinitionContext, name, reg)
@@ -67,7 +63,6 @@ function defineImplicitVariable( node, typeId, name, reg)
 	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
 	return var
 end
-
 -- Make a function parameter addressable by name in the callable body
 function defineParameter( node, context, typeId, name)
 	local env = getCallableEnvironment()
@@ -80,5 +75,17 @@ function defineParameter( node, context, typeId, name)
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
 end
-
+-- Resolve a variable by name and return ist type/constructor structure
+function getVariable( node, varname)
+	local env = getCallableEnvironment()
+	local seekctx = getSeekContextTypes()
+	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, varname, tagmask_resolveType)
+	local typeId,constructor = selectNoArgumentType( node, seekctx, varname, tagmask_resolveType, resolveContextTypeId, reductions, items)
+	local variableScope = typedb:type_scope( typeId)
+	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then -- the local variable is not belonging to another function
+		return {type=typeId, constructor=constructor}
+	else
+		utils.errorMessage( node.line, "Not allowed to access variable '%s' that is not defined in local function or global scope", typedb:type_string(typeId))
+	end
+end
 
