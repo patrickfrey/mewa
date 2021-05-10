@@ -2,6 +2,12 @@ local utils = require "typesystem_utils"
 
 -- Create a callable environent object
 function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
+	if rtype then
+		local descr = typeDescriptionMap[ rtype]
+		if not descr.scalar and not descr.class == "pointer" then
+			utils.errorMessage( node.line, "Only scalar types can be return values")
+		end
+	end
 	return {name=name, line=node.line, scope=typedb:scope(),
 		register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix), returntype=rtype}
 end

@@ -52,11 +52,7 @@ typegen/L1		= typehdr
 			;
 typespec/L1		= typegen									(typespec)
 			;
-inheritlist		= typename "," inheritlist							(>>inheritdef 1)
-			| typename									(>>inheritdef 1)
-			;
 classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(>>classdef)
-			| "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"			(>>classdef)
 			;
 functiondefinition	= "function" IDENT typespec callablebody					(funcdef)
 			;

@@ -135,6 +135,7 @@ llvmir.control = {
 	gotoStatement = "br label %{inp}\n",
 	plainLabel = "{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
+	returnVoidStatement = "ret void\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",

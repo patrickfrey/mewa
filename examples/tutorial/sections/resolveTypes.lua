@@ -3,7 +3,7 @@ local utils = require "typesystem_utils"
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
 function selectNoArgumentType( node, seekctx, typeName, tagmask, resolveContextTypeId, reductions, items)
 	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then -- not found or ambiguous
-		io.stderr:write( "TRACE " .. tagmask .. "\n" .. utils.getResolveTypeTrace( typedb, seekctx, typeName, tagmask) .. "\n")
+		io.stderr:write( "TRACE typedb:resolve_type\n" .. utils.getResolveTypeTrace( typedb, seekctx, typeName, tagmask) .. "\n")
 		utils.errorResolveType( typedb, node.line, resolveContextTypeId, seekctx, typeName)
 	end
 	for ii,item in ipairs(items) do
@@ -47,6 +47,10 @@ end
 function getRequiredTypeConstructor( node, redutype, operand, tagmask_decl, tagmask_conv)
 	if redutype ~= operand.type then
 		local redulist,weight,altpath = typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
+		if not redulist or altpath then
+			io.stderr:write( "TRACE typedb:derive_type " .. typedb:type_string(redutype) .. " <- " .. typedb:type_string(operand.type) .. "\n"
+					.. utils.getDeriveTypeTrace( typedb, redutype, operand.type, tagmask_decl, tagmask_conv) .. "\n")
+		end
 		if not redulist then
 			utils.errorMessage( node.line, "Type mismatch, required type '%s'", typedb:type_string(redutype))
 		elseif altpath then

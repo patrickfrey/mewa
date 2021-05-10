@@ -24,8 +24,6 @@ function typesystem.arraytype( node)
 end
 function typesystem.typespec( node)
 end
-function typesystem.inheritdef( node, decl)
-end
 function typesystem.classdef( node)
 end
 function typesystem.funcdef( node)

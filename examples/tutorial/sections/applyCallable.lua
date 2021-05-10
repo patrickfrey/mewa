@@ -83,7 +83,7 @@ function findApplyCallable( node, this, callable, args)
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType then return nil end
 	if type(resolveContextType) == "table" then
-		io.stderr:write( "TRACE\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
+		io.stderr:write( "TRACE typedb:resolve_type\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
 		utils.errorResolveType( typedb, node.line, resolveContextType, this.type, callable)
 	end
 	local this_constructor = applyReductionList( node, reductions, this.constructor)
@@ -117,12 +117,11 @@ end
 function applyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if not bestweight then
-		io.stderr:write( "TRACE\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
+		io.stderr:write( "TRACE typedb:resolve_type\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
 		utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( this, callable, args))
 	end
 	local rt = getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
 	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
-	io.stderr:write("+++++ APPLY CALLABLE " .. getMessageFunctionSignature( this, callable, args) .. " => " .. mewa.tostring( rt) .. "\n")
 	return rt
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not

@@ -29,6 +29,7 @@ dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declaration
 dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
 dofile( "examples/tutorial/sections/controlBooleanTypes.lua")		-- Implementation of control boolean types
 dofile( "examples/tutorial/sections/variables.lua")			-- Define variables (globals, locals, members)
+dofile( "examples/tutorial/sections/output.lua")			-- Some helper functions for output
 
 -- AST Callbacks:
 local typesystem = {}
@@ -76,8 +77,6 @@ end
 function typesystem.typespec( node)
 	return expectDataType( node, table.unpack( utils.traverse( typedb, node)))
 end
-function typesystem.inheritdef( node, decl)
-end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
@@ -98,16 +97,21 @@ function typesystem.funcdef( node, context, pass)
 	local typnam = node.arg[1].value
 	if not pass or pass == 1 then
 		local rtype = table.unpack( utils.traverseRange( typedb, node, {2,2}, context))
-		local descr = {name=typnam,rtype=rtype}
+		if rtype == voidType then rtype = nil end -- void type as return value means that we are in a procedure without return value
+		local symbolname = (context.domain == "member") and (typedb:type_name(context.decltype) .. "__" .. typnam) or typnam
+		local rtllvmtype = rtype and typeDescriptionMap[ rtype].llvmtype or "void"
+		local descr = {lnk="internal", name=typnam, symbolname=symbolname, ret=rtype, rtllvmtype=rtllvmtype, attr="#0"}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
-		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.name
-				.. " (" .. utils.typeListString(typedb,descr.param) .. ") -> " .. utils.typeString(typedb,descr.rtype) .. "\n")
+		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.symbolname
+				.. " (" .. utils.typeListString(typedb,descr.param) .. ")"
+				.. " -> " .. (rtype and utils.typeString(typedb,rtype) or "void") .. "\n")
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
 		io.stderr:write("IMPLEMENTATION function " .. descr.name .. "\n")
+		print( utils.constructor_format( llvmir.control.functionDeclaration, descr))
 	end
 end
 function typesystem.callablebody( node, context, descr, selectid)
@@ -117,10 +121,12 @@ function typesystem.callablebody( node, context, descr, selectid)
 		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
 		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
 		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
+		descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
 	elseif selectid == 2 then -- statements in body
 		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
 		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
-		utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
+		local codeblock = table.unpack( utils.traverseRange( typedb, node, {2,2}, subcontext))
+		descr.body = codeblock.code
 	end
 	return rt
 end
@@ -131,10 +137,13 @@ function typesystem.paramdef( node, context)
 	return defineParameter( node, context, datatype, varname)
 end
 function typesystem.paramdeflist( node, context)
-	return utils.traverse( typedb, node, context)
+	utils.traverse( typedb, node, context)
 end
 function typesystem.codeblock( node)
 	local stmlist = utils.traverse( typedb, node)
+	local code = ""
+	for _,stm in ipairs(stmlist) do code = code .. stm.code end
+	return {code=code}
 end
 function typesystem.conditional_else( node, exitLabel)
 	return table.unpack( utils.traverse( typedb, node))
@@ -154,32 +163,18 @@ function typesystem.free_expression( node)
 end
 function typesystem.return_value( node)
 	local operand = table.unpack( utils.traverse( typedb, node))
-	expectValueType( node, operand)
 	local env = getCallableEnvironment()
 	local rtype = env.returntype
+	local descr = typeDescriptionMap[ rtype]
+	expectValueType( node, operand)
 	if rtype == 0 then utils.errorMessage( node.line, "Can't return value from procedure") end
-	if doReturnValueAsReferenceParameter( rtype) then
-		local reftype = referenceTypeMap[ rtype]
-		local rt
-		if operand.constructor.out == "%rt" then
-			rt = operand -- copy elision through in-place construction done in 'defineVariable(..)'
-		else
-			rt = applyCallable( node, typeConstructorPairStruct( reftype, "%rt", ""), ":=", {operand})
-		end
-		return {code = rt.constructor.code .. doReturnVoidStatement(), nofollow=true}
-	else
-		local constructor = getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion)
-		local code = env.returnfunction and env.returnfunction( constructor) or doReturnTypeStatement( rtype, constructor)
-		return {code = code, nofollow=true}
-	end
+	local this,code = constructorParts( getRequiredTypeConstructor( node, rtype, operand, tagmask_matchParameter, tagmask_typeConversion))
+	return {code = code .. utils.constructor_format( llvmir.control.returnStatement, {this=this, type=descr.llvmtype})}
 end
 function typesystem.return_void( node)
 	local env = getCallableEnvironment()
-	local rtype = env.returntype
-	if rtype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
-	local code = ""
-	if env.initstate then code = code .. completeCtorInitializationCode( false) end
-	return {code = code .. doReturnVoidStatement(), nofollow=true}
+	if env.returntype ~= 0 then utils.errorMessage( node.line, "Can't return without value from function") end
+	return {code = utils.constructor_format( llvmir.control.returnVoidStatement, {})}
 end
 function typesystem.conditional_if( node)
 	local env = getCallableEnvironment()

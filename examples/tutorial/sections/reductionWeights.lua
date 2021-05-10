@@ -9,7 +9,7 @@ rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch v
 rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type having 2 qualifiers
 rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type having 3 qualifiers
 rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
-rwd_boolean = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
+rwd_control = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 
 function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other
 function factorWeight( fac, w1) return fac * w1	end

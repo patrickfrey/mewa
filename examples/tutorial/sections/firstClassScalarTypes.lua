@@ -54,7 +54,7 @@ function initBuiltInTypes()
 	-- Define the conversions between built-in types
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local typeId = scalarTypeMap[ typnam]
-		for typnam_conv,conv in ipairs(scalar_descr.conv) do
+		for typnam_conv,conv in pairs(scalar_descr.conv) do
 			local typeId_conv = scalarTypeMap[ typnam_conv]
 			typedb:def_reduction( typeId, typeId_conv, callConstructor( conv.fmt, typeId), tag_typeConversion, conv.weight)
 		end
