@@ -21,7 +21,7 @@ S is the start of the scope of the relation K -> V.
 The list <K,E> points to is ordered by the scope cover relation, the first element is covered by the second and so forth. 
 The following image illustrates that. 
 
-![Scope Related Map Search](doc/scope.jpg)
+![Scope Related Map Search](scope.jpg)
 
 If we search in this kind of map, we do an upper bound seek for say <K,31> and we get to the key <K,35>. Then we follow the uplinks attached to it to find the elements to retrieve.s
 
