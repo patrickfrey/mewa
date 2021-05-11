@@ -1,6 +1,6 @@
 {
 	mewa = "0.1.0",
-	language = "test",
+	language = "language1",
 	typesystem = "language1/typesystem",
 	cmdline = "cmdlinearg",
 	lexer = {

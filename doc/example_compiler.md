@@ -1,9 +1,9 @@
 # Examples
-Currently there exist only one example. I have split the files in non language specific and language specific. 
+Currently there exist only one real example and an incomplete language for the tutorial. I have split the files in non language specific and language specific. 
  
 ## Example Compiler Projects
  1. [language1](example_language1.md) Multiparadigm programming language (also used in tests).
- 
+ 2. [tutorial](example_tutorial_language.md) A very small subset of language1, only static structures and first class scalar types.
 
 ## Language Independent Files
 The language independent files for the example languages (currently only one) are located in [examples](../examples/). These are the following:

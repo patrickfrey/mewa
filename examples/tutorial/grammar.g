@@ -1,4 +1,4 @@
-% LANGUAGE test;
+% LANGUAGE tutolang;
 % TYPESYSTEM "tutorial/typesystem";
 % CMDLINE "cmdlinearg";
 % COMMENT "/*" "*/";

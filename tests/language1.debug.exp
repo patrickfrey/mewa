@@ -1,4 +1,4 @@
-== Language 'test', type system 'language1/typesystem' ==
+== Language 'language1', type system 'language1/typesystem' ==
 -- Lexems:
 TOKEN BOOLEAN ((true)|(false)) 0 [tf]  ~ 1
 TOKEN IDENT [a-zA-Z_]+[a-zA-Z_0-9]* 0 [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_]  ~ 2
