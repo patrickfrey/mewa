@@ -19,5 +19,5 @@ The project specific files of the tutorial language are located in [examples/tut
 
 ## Example Source Files
 
- - [program.prg](../examples/tutorial/sources/program.prg) Demo program compiled in the tutorial.
+ - [program.prg](../examples/tutorial/program.prg) Demo program compiled in the tutorial.
  
