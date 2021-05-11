@@ -432,7 +432,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		end
 		local descr = typeDescriptionMap[ thisTypeId]
 		local descr_element = typeDescriptionMap[ elementTypeId]
-		local refTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
+		local elementRefTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
 		local env = getCallableEnvironment()
 		local this_inp,res_code = constructorParts( this)
 		local cntreg,basereg = env.register(),env.register()
@@ -440,11 +440,11 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local memberwise_cleanup = utils.template_format( descr.memberwise_cleanup, {cnt=cntreg,this=this_inp}, env.register)
 		local memberwise_final = utils.constructor_format( descr.memberwise_final, {cnt=cntreg,index=#args}, env.register)
 		local code = ""
-		local element_throws = typeHasCtorThrowingMap[ refTypeId]
+		local element_throws = typeHasCtorThrowingMap[ elementRefTypeId]
 		if env ~= globalCallableEnvironment then registerPartialDtor( "array", memberwise_cleanup, parentStep) end -- if the initialization of globals fail we do not go into partial cleanup
 		for ai,arg in ipairs(args) do
 			local elemreg = env.register()
-			local elem = {type=refTypeId,constructor={out=elemreg}}
+			local elem = {type=elementRefTypeId,constructor={out=elemreg}}
 			local init = tryApplyCallable( node, elem, ":=", {arg})
 			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
 			local memberwise_next
@@ -457,7 +457,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		end
 		if element_throws then code = code .. memberwise_final end
 		if #args < nofElements then
-			local init = tryApplyCallable( node, typeConstructorPairStruct( refTypeId, "%ths", ""), ":=", {})
+			local init = tryApplyCallable( node, typeConstructorPairStruct( elementRefTypeId, "%ths", ""), ":=", {})
 			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}

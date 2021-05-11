@@ -1,3 +1,5 @@
+local utils = require "typesystem_utils"
+
 constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- signed integer type constant value, represented as Lua number
 constexprFloatType = typedb:def_type( 0, "constexpr float")		-- single precision floating point number constant, represented as Lua number
 constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- boolean constants

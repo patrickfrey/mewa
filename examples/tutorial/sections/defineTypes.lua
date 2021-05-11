@@ -40,6 +40,36 @@ end
 function defineArrayIndexOperator( elemTypeId, arTypeId, arDescr)
 	defineCall( referenceTypeMap[elemTypeId], referenceTypeMap[arTypeId], "[]", {scalarIntegerType}, callConstructor( arDescr.index[ "int"]))
 end
+-- Constructor for a memberwise assignment of a tree structure (initializing an "array")
+function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
+	return function( this, args)
+		if #args > nofElements then
+			utils.errorMessage( node.line, "Number of elements %d in init is too big for '%s' [%d]", #args, typedb:type_string( thisTypeId), nofElements)
+		end
+		local descr = typeDescriptionMap[ thisTypeId]
+		local descr_element = typeDescriptionMap[ elementTypeId]
+		local elementRefTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
+		local env = getCallableEnvironment()
+		local this_inp,res_code = constructorParts( this)
+		local code = ""
+		for ai,arg in ipairs(args) do
+			local elemreg = env.register()
+			local elem = {type=elementRefTypeId,constructor={out=elemreg}}
+			local init = tryApplyCallable( node, elem, "=", {arg})
+			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, "=", {arg})) end
+			local memberwise_next = utils.constructor_format( descr.memberwise_index, {index=ai-1,this=this_inp,out=elemreg}, env.register)
+			code = code .. memberwise_next .. typeConstructorPairCode(init)
+		end
+		if #args < nofElements then
+			local init = tryApplyCallable( node, typeConstructorPairStruct( elementRefTypeId, "%ths", ""), "=", {})
+			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, "=", {})) end
+			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
+						this=this_inp, ctors=init.constructor.code}
+			code = code .. utils.constructor_format( descr.ctor_rest, fmtdescr, env.register)
+		end
+		return {out=this_inp, code=code}
+	end
+end
 -- Structure type definition for array
 function getOrCreateArrayType( node, elementType, arraySize)
 	local arrayKey = string.format( "%d[%d]", elementType, arraySize)
@@ -48,8 +78,10 @@ function getOrCreateArrayType( node, elementType, arraySize)
 		local typnam = string.format( "[%d]", arraySize)
 		local arrayDescr = llvmir.arrayDescr( typeDescriptionMap[ elementType], arraySize)
 		local arrayType = defineDataType( node, elementType, typnam, arrayDescr)
+		local arrayRefType = referenceTypeMap[ arrayType]
 		arrayTypeMap[ arrayKey] = arrayType
 		defineArrayIndexOperator( elementType, arrayType, arrayDescr)
+		defineCall( voidType, arrayType, "=", {constexprStructureType}, memberwiseInitArrayConstructor( node, arrayRefType, elementType, arraySize))
 		typedb:scope( scope_bk,step_bk)
 	end
 	return arrayTypeMap[ arrayKey]

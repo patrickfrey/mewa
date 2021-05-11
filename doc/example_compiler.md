@@ -1,5 +1,9 @@
 # Examples
 Currently there exist only one example. I have split the files in non language specific and language specific. 
+ 
+## Example Compiler Projects
+ 1. [language1](example_language1.md) Multiparadigm programming language (also used in tests).
+ 
 
 ## Language Independent Files
 The language independent files for the example languages (currently only one) are located in [examples](../examples/). These are the following:
@@ -12,10 +16,6 @@ There is a Perl script for generating the format templates organized in structur
 
  - [generateScalarLlvmir.pl](../examples/gen/generateScalarLlvmir.pl)
 
- 
-## Example Compiler Projects
- 1. [language1](example_language1.md) Multiparadigm programming language also used in tests.
- 
  
 
  

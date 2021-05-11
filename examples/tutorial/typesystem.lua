@@ -61,8 +61,8 @@ function typesystem.extern_paramdeflist( node)
 end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
-		local arg = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
-		if arg then return {code = arg.constructor.code} else return {code=""} end
+		local statement = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
+		return {code = statement and statement.code or ""}
 	end
 end
 function typesystem.definition_2pass( node, pass, context, pass_selected)
@@ -133,19 +133,27 @@ function typesystem.callablebody( node, context, descr, selectid)
 	elseif selectid == 2 then -- statements in body
 		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
 		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
-		local codeblock = table.unpack( utils.traverseRange( typedb, node, {2,2}, subcontext))
-		descr.body = codeblock.code
+		local statementlist = utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
+		local code = ""
+		for _,statement in ipairs(statementlist) do code = code .. statement.code end
+		descr.body = code
 	end
 	return rt
 end
 function typesystem.main_procdef( node)
+	local env = defineCallableEnvironment( node, "main ", scalarIntegerType)
+	local block = table.unpack( utils.traverse( typedb, node, {domain="local"}))
+	local body = block.code .. utils.constructor_format( llvmir.control.returnStatement, {type="i32",this="0"})
+	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
 end
-function typesystem.paramdef( node, context)
-	local datatype,varname = table.unpack( utils.traverse( typedb, node, context))
-	return defineParameter( node, context, datatype, varname)
+function typesystem.paramdef( node, param)
+	local datatype,varname = table.unpack( utils.traverse( typedb, node, param))
+	table.insert( param, defineParameter( node, datatype, varname))
 end
-function typesystem.paramdeflist( node, context)
-	utils.traverse( typedb, node, context)
+function typesystem.paramdeflist( node, param)
+	local param = {}
+	utils.traverse( typedb, node, param)
+	return param
 end
 function typesystem.codeblock( node)
 	local stmlist = utils.traverse( typedb, node)
@@ -244,6 +252,4 @@ function typesystem.operator_array( node, operator)
 	local this = table.remove( args, 1)
 	return applyCallable( node, this, operator, args)
 end
-
 return typesystem
-

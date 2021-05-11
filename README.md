@@ -1,6 +1,5 @@
 # Mewa
-_Mewa_ is a **compiler compiler for prototyping** of compiler front-ends. You write the grammar in a custom language, a sort of _Bison/Yacc_-style BNF.
-Instead of actions consisting of C statements surrounded by braces in _Bison/Yacc_, you specify a _Lua_ function call. This function call is attached to the [AST](doc/ast.md) node created with it. The [parser generator program mewa](doc/program_mewa.pdf) generates a _Lua_ module implementing the parser you described in the grammar.
+_Mewa_ is a **compiler compiler for prototyping** of compiler front-ends in [Lua](https://www.lua.org). You write the grammar in a custom language, a sort of _Bison/Yacc_-style BNF. Instead of actions consisting of C statements surrounded by braces in _Bison/Yacc_, you specify a _Lua_ function call. This function call is attached to the [AST](doc/ast.md) node created with it. The [parser generator program mewa](doc/program_mewa.pdf) generates a _Lua_ module implementing the parser you described in the grammar.
 A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides some assistance to define your own type system and to generate code.
 
 # Design Philosophy and Limitations

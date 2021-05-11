@@ -64,7 +64,7 @@ function defineImplicitVariable( node, typeId, name, reg)
 	return var
 end
 -- Make a function parameter addressable by name in the callable body
-function defineParameter( node, context, typeId, name)
+function defineParameter( node, typeId, name)
 	local env = getCallableEnvironment()
 	local paramreg = env.register()
 	local var = typedb:def_type( localDefinitionContext, name, paramreg)

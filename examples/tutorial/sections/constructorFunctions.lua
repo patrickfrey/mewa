@@ -20,9 +20,9 @@ function buildCallArguments( subst, thisTypeId, thisConstructor, args, types)
 			subst[ "arg" .. ii] = arg_inp
 			if types then
 				local llvmtype = typeDescriptionMap[ types[ ii]].llvmtype
-				code = code .. arg_code
 				if llvmtype then argstr = argstr .. llvmtype .. " " .. tostring(arg_inp) .. ", " else argstr = argstr .. "i32 0, " end
 			end
+			code = code .. arg_code
 		end
 	end
 	if types and thisTypeId ~= 0 then argstr = argstr:sub(1, -3) end

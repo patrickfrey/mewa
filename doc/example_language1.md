@@ -28,12 +28,12 @@ The project specific files of the test language **language1** are located in [ex
 ## Example Source Files
 
  - [fibo.prg](../examples/language1/sources/fibo.prg) using functions, procedures, constant string literal, and output via a C Library ```printf``` call.
- - [tree.prg](../examples/language1/sources/tree.prg) using structures.
+ - [tree.prg](../examples/language1/sources/tree.prg) implementing a tree, demonstrating a recursively defined data structure.
  - [pointer.prg](../examples/language1/sources/pointer.prg) using pointers to data and pointers to functions.
  - [array.prg](../examples/language1/sources/array.prg) demonstrating the use of arrays.
  - [class.prg](../examples/language1/sources/class.prg) demonstrating class and interface inheritance.
  - [generic.prg](../examples/language1/sources/generic.prg) using some generic programming stuff.
  - [complex.prg](../examples/language1/sources/complex.prg) implementing some calculations with complex numbers.
- - [matrix.prg](../examples/language1/sources/matrix.prg) doing some matrix calculations.
+ - [matrix.prg](../examples/language1/sources/matrix.prg) implementing a matrix class using generics and lambdas.
  - [exception.prg](../examples/language1/sources/exception.prg) testing exception handling, verified with [Valgrind](https://valgrind.org).
  
