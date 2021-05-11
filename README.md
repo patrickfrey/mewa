@@ -34,6 +34,7 @@ Issues around target platforms are discussed [here](doc/portability.md).
 * [AST (Abstract Syntax Tree) Format](doc/ast.md)
 * [Error Codes](doc/errorcodes.md)
 * [FAQ](doc/faq.md)
+* [Algorithms](doc/algorithms.md)
 * [Links](doc/links.md)
 * [Wishlist for LLVM IR](doc/wishlist_llvmir.md)
 * [TODO](doc/todo.md)

@@ -23,13 +23,12 @@ inclass_definitionlist	= inclass_definition inclass_definitionlist
 			|
 			;
 extern_definition	= "extern" "function" IDENT typespec "(" extern_paramlist ")" ";"		(extern_funcdef)
-			| "extern" "function" IDENT typespec "(" extern_paramlist "..." ")" ";"		(extern_funcdef_vararg)
 			;
 extern_paramdecl	= typespec IDENT								(extern_paramdef)
 			| typespec									(extern_paramdef)
 			;
-extern_parameters 	= extern_paramdecl "," extern_parameters					(extern_paramdef_collect)
-			| extern_paramdecl								(extern_paramdef_collect)
+extern_parameters 	= extern_paramdecl "," extern_parameters
+			| extern_paramdecl
 			;
 extern_paramlist	= extern_parameters								(extern_paramdeflist)
 			|										(extern_paramdeflist)

@@ -42,14 +42,22 @@ function typesystem.program( node)
 	utils.traverse( typedb, node, context)
 end
 function typesystem.extern_funcdef( node)
+	local name,ret,param = table.unpack( utils.traverse( typedb, node, {domain="global"}))
+	local descr = {externtype="C", name=name, symbolname=name, ret=ret, param=param, signature=""}
+	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, {domain="global"})
+	descr.rtllvmtype = (ret ~= voidType) and typeDescriptionMap[ ret].llvmtype or "void"
+	print_section( "Typedefs", utils.constructor_format( llvmir.control.extern_functionDeclaration, descr))
 end
-function typesystem.extern_funcdef_vararg( node)
-end
-function typesystem.extern_paramdef( node)
-end
-function typesystem.extern_paramdef_collect( node)
+function typesystem.extern_paramdef( node, param)
+	local typeId = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
+	local descr = typeDescriptionMap[ typeId]
+	if not descr then utils.errorMessage( node.line, "Type '%s' not allowed as parameter of extern function", typedb:type_string( typeId)) end
+	table.insert( param, {type=typeId,llvmtype=descr.llvmtype})
 end
 function typesystem.extern_paramdeflist( node)
+	local param = {}
+	utils.traverse( typedb, node, param)
+	return param
 end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar

@@ -6,11 +6,7 @@ function typesystem.program( node)
 end
 function typesystem.extern_funcdef( node)
 end
-function typesystem.extern_funcdef_vararg( node)
-end
 function typesystem.extern_paramdef( node)
-end
-function typesystem.extern_paramdef_collect( node)
 end
 function typesystem.extern_paramdeflist( node)
 end
