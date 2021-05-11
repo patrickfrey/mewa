@@ -25,7 +25,7 @@ The following image illustrates that.
 
 If we search in this kind of map, we do an upper bound seek for say <K,31> and we get to the key <K,35>. Then we follow the uplinks attached to it to find the elements to retrieve.s
 
-Updates are a little bit more complicated as we have to rewire the uplinks of some predecessors and of one successor. If you are interested in the C++ code, all scope-bound data structures of the **typedb** are implemented in [src/scope.hpp](src/scope.hpp) of the Mewa project. It should probably be rewritten, as I was not in my best condition when I wrote it. But the fact that it is tested well with random tests gives some confidence that it works.
+Updates are a little bit more complicated as we have to rewire the uplinks of some predecessors and of one successor. If you are interested in the C++ code, all scope-bound data structures of the **typedb** are implemented in [src/scope.hpp](../src/scope.hpp) of the Mewa project. It should probably be rewritten, as I was not in my best condition when I wrote it. But the fact that it is tested well with random tests gives some confidence that it works.
 
 #### Shortest Path Search
 
