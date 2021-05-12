@@ -20,7 +20,7 @@ function defineCallableEnvironment( node, name, rtype)
 end
 -- Get the active callable instance
 function getCallableEnvironment()
-	return instantCallableEnvironment or typedb:get_instance( callableEnvKey)
+	return typedb:get_instance( callableEnvKey)
 end
 -- Set some variables needed in a class method implementation body
 function expandMethodEnvironment( node, context, descr, env)

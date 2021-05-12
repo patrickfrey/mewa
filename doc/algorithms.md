@@ -23,7 +23,7 @@ The following image illustrates that.
 
 ![Scope Related Map Search](scope.jpg)
 
-If we search in this kind of map, we do an upper bound seek for say <K,31> and we get to the key <K,35>. Then we follow the uplinks attached to it to find the elements to retrieve.s
+If we search in this kind of map, we do an upper bound seek for say <K,31> and we get to the key <K,35>. Then we follow the uplinks attached to it to find the elements to retrieve.
 
 Updates are a little bit more complicated as we have to rewire the uplinks of some predecessors and of one successor. If you are interested in the C++ code, all scope-bound data structures of the **typedb** are implemented in [src/scope.hpp](../src/scope.hpp) of the Mewa project. It should probably be rewritten, as I was not in my best condition when I wrote it. But the fact that it is tested well with random tests gives some confidence that it works.
 
@@ -34,5 +34,5 @@ The type system is represented as a directed graph with the types as vertices an
 Each edge has a weight that implements the preference of reductions over others. In most cases the solution paths are equivalent but we want to recognize real ambiguity. For this, we implement an order of preference by attaching a weight to each reduction that picks us a unique solution from any set of equivalent paths.
 
 Every query to resolve a symbol as a type or a query to deduce a type from another is implemented as a shortest path search.
-The resulting path will be a plan for the construction of the object we were looking for. A result not found will be displayed as nil and ambiguity as a result tuple.
+The resulting path will be a plan for the construction of the object we were looking for. A result not found will be displayed as **nil** and ambiguity as a result tuple.
 

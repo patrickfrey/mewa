@@ -13,8 +13,6 @@ dereferenceTypeMap = {}			-- Map of reference type ids to their value type if it
 arrayTypeMap = {}			-- Map array keys to their array type
 stringConstantMap = {}			-- Map of string constant values to a structure with the attributes {name,size}
 scalarTypeMap = {}			-- Map of scalar type names to the correspoding value type
-instantCallableEnvironment = nil	-- Define a callable environment for an implicitly generated function not bound to a scope
-globalCallableEnvironment = nil		-- The environment used in implicitely generated code for the initialization of globals
 
 dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
 dofile( "examples/tutorial/sections/reductionWeights.lua")		-- Weights of reductions
@@ -34,7 +32,6 @@ dofile( "examples/tutorial/sections/output.lua")			-- Some helper functions for 
 -- AST Callbacks:
 local typesystem = {}
 function typesystem.program( node)
-	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, "%ir", "IL")
 	defineConstExprArithmetics()
 	initBuiltInTypes()
 	initControlBooleanTypes()
@@ -96,9 +93,11 @@ function typesystem.classdef( node, context)
 	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
 	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.symbol .. "\n")
 	descr.size = classContext.structsize
-	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: declarations
+	descr.members = classContext.members
+	defineClassStructureAssignmentOperator( node, typeId)
+	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: method declarations
 	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.symbol .. "\n")
-	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: implementations
+	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method implementations
 	io.stderr:write("-- DONE class " .. descr.symbol .. "\n")
 end
 function typesystem.funcdef( node, context, pass)

@@ -1,3 +1,5 @@
+local utils = require "typesystem_utils"
+
 -- Define built-in promote calls for first class citizen scalar types
 function defineBuiltInTypePromoteCalls( typnam, descr)
 	local typeId = scalarTypeMap[ typnam]
@@ -22,15 +24,22 @@ end
 function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in pairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
-		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt, typeId))
+		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt))
 	end
 end
 -- Helper functions to define binary operators of first class scalar types
 function defineBuiltInUnaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in ipairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
-		defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt, typeId))
+		defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt))
 	end
+end
+-- Constructor of a string pointer from a string definition
+function stringPointerConstructor( stringdef)
+	local env = getCallableEnvironment()
+	local out = env.register()
+	local code = utils.template_format( llvmir.control.stringConstConstructor,{size=stringdef.size,name=stringdef.name,out=out})
+	return constructorStruct( out, code)
 end
 -- Initialize all built-in types
 function initBuiltInTypes()
@@ -40,12 +49,10 @@ function initBuiltInTypes()
 		if typnam == "int" then
 			scalarIntegerType = typeId
 			typedb:def_reduction( typeId, constexprIntegerType, constexprIntegerToIntegerConstructor, tag_typeInstantiation)
-		end
-		if typnam == "float" then
+		elseif typnam == "float" then
 			scalarFloatType = typeId
 			typedb:def_reduction( typeId, constexprFloatType, constexprFloatToFloatConstructor, tag_typeInstantiation)
-		end
-		if typnam == "bool" then
+		elseif typnam == "bool" then
 			scalarBooleanType = typeId
 			typedb:def_reduction( typeId, constexprBooleanType, constexprBooleanToScalarConstructor, tag_typeInstantiation)
 		end
@@ -56,7 +63,7 @@ function initBuiltInTypes()
 		local typeId = scalarTypeMap[ typnam]
 		for typnam_conv,conv in pairs(scalar_descr.conv) do
 			local typeId_conv = scalarTypeMap[ typnam_conv]
-			typedb:def_reduction( typeId, typeId_conv, callConstructor( conv.fmt, typeId), tag_typeConversion, conv.weight)
+			typedb:def_reduction( typeId, typeId_conv, callConstructor( conv.fmt), tag_typeConversion, conv.weight)
 		end
 	end
 	-- Define operators
@@ -65,11 +72,19 @@ function initBuiltInTypes()
 		defineBuiltInBinaryOperators( typnam, scalar_descr, scalar_descr.binop, typeId)
 		defineBuiltInBinaryOperators( typnam, scalar_descr, scalar_descr.cmpop, scalarBooleanType)
 		defineBuiltInUnaryOperators( typnam, scalar_descr, scalar_descr.unop, typeId)
-		defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId}, callConstructor( scalar_descr.assign, typeId))
+		defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId}, callConstructor( scalar_descr.assign))
+		defineCall( voidType, referenceTypeMap[ typeId], "=", {}, callConstructor( scalar_descr.assign, 0, nil, {arg1="0"}))
 	end
 	-- Define operators with promoting of the left side argument
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		defineBuiltInTypePromoteCalls( typnam, scalar_descr)
 	end
+	-- String type
+	local string_descr = typeDescriptionMap[ stringType]
+	local string_refType = referenceTypeMap[ stringType]
+	typedb:def_reduction( stringType, string_refType, callConstructor( string_descr.load), tag_typeInstantiation)
+	typedb:def_reduction( stringType, constexprStringType, stringPointerConstructor, tag_typeInstantiation)
+	defineCall( voidType, string_refType, "=", {stringType}, callConstructor( string_descr.assign))
+	defineCall( voidType, string_refType, "=", {}, callConstructor( string_descr.assign, 0, nil, {arg1="null"}))
 end
 

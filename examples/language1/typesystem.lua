@@ -133,8 +133,8 @@ function getCallableEnvironment()
 	return instantCallableEnvironment or typedb:get_instance( callableEnvKey)
 end
 -- Type string of a type declaration built from its parts for error messages
-function typeDeclarationString( contextTypeId, typnam, args)
-	local rt = (contextTypeId ~= 0) and (typedb:type_string(contextTypeId or 0) .. " " .. typnam) or typnam
+function typeDeclarationString( this, typnam, args)
+	local rt = (this == 0 or not this) and typnam or (typedb:type_string(type(this) == "table" and this.type or this) .. " " .. typnam)
 	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
 	return rt
 end
@@ -444,9 +444,9 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		if env ~= globalCallableEnvironment then registerPartialDtor( "array", memberwise_cleanup, parentStep) end -- if the initialization of globals fail we do not go into partial cleanup
 		for ai,arg in ipairs(args) do
 			local elemreg = env.register()
-			local elem = {type=elementRefTypeId,constructor={out=elemreg}}
+			local elem = typeConstructorPairStruct( elementRefTypeId, elemreg)
 			local init = tryApplyCallable( node, elem, ":=", {arg})
-			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, ":=", {arg})) end
+			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", typeDeclarationString( elem, ":=", {arg})) end
 			local memberwise_next
 			if element_throws then
 				memberwise_next = utils.constructor_format( descr.memberwise_next, {cnt=cntreg,base=basereg,out=elemreg}, env.register)
@@ -458,7 +458,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		if element_throws then code = code .. memberwise_final end
 		if #args < nofElements then
 			local init = tryApplyCallable( node, typeConstructorPairStruct( elementRefTypeId, "%ths", ""), ":=", {})
-			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", getMessageFunctionSignature( elem, ":=", {})) end
+			if not init then utils.errorMessage( node.line, "Failed to find ctor with signature '%s'", typeDeclarationString( elem, ":=", {})) end
 			local fmtdescr = {element=descr_element.symbol or descr_element.llvmtype, enter=env.label(), begin=env.label(), ["end"]=env.label(), index=#args,
 						this=this_inp, ctors=init.constructor.code}
 			if init.constructor.throws then
@@ -2573,12 +2573,6 @@ function findApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight
 end
--- Get the signature of a function used in error messages
-function getMessageFunctionSignature( this, callable, args)
-	local rt = utils.resolveTypeString( typedb, this.type, callable)
-	if args then rt = rt .. "(" .. utils.typeListString( typedb, args, ", ") .. ")" end
-	return rt
-end
 -- Filter best result and report error on ambiguity
 function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
 	if #bestmatch == 1 then
@@ -2593,15 +2587,15 @@ function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args
 			end
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
-		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s", getMessageFunctionSignature( this, callable, args), altmatchstr)
+		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s", typeDeclarationString( this, callable, args), altmatchstr)
 	end
 end
 -- Retrieve and apply a callable in a specified context
 function applyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
-	if not bestweight then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
+	if not bestweight then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", typeDeclarationString( this, callable, args)) end
 	local rt = getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
-	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
+	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", typeDeclarationString( this, callable, args)) end
 	return rt
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not

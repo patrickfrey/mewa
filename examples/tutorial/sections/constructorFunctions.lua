@@ -8,11 +8,15 @@ end
 function constructorStruct( out, code)
 	return {out=out, code=code or ""}
 end
+-- Create a type/constructor pair as used by most functions constructing a type
+function typeConstructorPairStruct( type, out, code)
+	return {type=type, constructor=constructorStruct( out, code)}
+end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructors
 function buildCallArguments( subst, thisTypeId, thisConstructor, args, types)
 	local this_inp,code = constructorParts(thisConstructor or "%UNDEFINED")
 	local argstr = ""
-	if thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp .. ", " end
+	if types and thisTypeId and thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp .. ", " end
 	if args then
 		for ii=1,#args do
 			local arg = args[ ii]

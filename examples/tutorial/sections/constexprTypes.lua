@@ -4,6 +4,7 @@ constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- signed integer t
 constexprFloatType = typedb:def_type( 0, "constexpr float")		-- single precision floating point number constant, represented as Lua number
 constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
 constexprStructureType = typedb:def_type( 0, "constexpr struct")	-- structure initializer list
+constexprStringType = typedb:def_type( 0, "constexpr string")		-- constant string in source, constructor is '@' operator plus name of global
 voidType = typedb:def_type( 0, "void")					-- void type handled as no type
 stringType = defineDataType( {line=0}, 0, "string", llvmir.string)	-- string constant, this example language knows strings only as constants
 scalarTypeMap.void = voidType
@@ -20,6 +21,7 @@ scalarTypeMap["constexpr int"] = constexprIntegerType
 scalarTypeMap["constexpr float"] = constexprFloatType
 scalarTypeMap["constexpr bool"] = constexprBooleanType
 scalarTypeMap["constexpr struct"] = constexprStructureType
+scalarTypeMap["constexpr string"] = constexprStringType
 
 -- Create a constexpr node from a lexem in the AST
 function createConstexprValue( typeId, value)
@@ -27,7 +29,7 @@ function createConstexprValue( typeId, value)
 		if value == "true" then return true else return false end
 	elseif typeId == constexprIntegerType or typeId == constexprFloatType then
 		return tonumber(value)
-	elseif typeId == stringType then
+	elseif typeId == constexprStringType then
 		if not stringConstantMap[ value] then
 			local encval,enclen = utils.encodeLexemLlvm(value)
 			local name = utils.uniqueName( "string")

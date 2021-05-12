@@ -51,7 +51,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 	local bestgroup = 0
 	for ii,item in ipairs(items) do
 		local nof_params = typedb:type_nof_parameters( item)
-		if nof_params == #args or (nof_params < #args and varargFuncMap[ item]) then
+		if nof_params == #args then
 			item_parameter_map[ ii] = collectItemParameter( node, item, args, typedb:type_parameters( item))
 		end
 	end
@@ -90,12 +90,6 @@ function findApplyCallable( node, this, callable, args)
 	local bestmatch,bestweight = selectItemsMatchParameters( node, items, args or {}, this_constructor)
 	return bestmatch,bestweight
 end
--- Get the signature of a function used in error messages
-function getMessageFunctionSignature( this, callable, args)
-	local rt = utils.resolveTypeString( typedb, this.type, callable)
-	if args then rt = rt .. "(" .. utils.typeListString( typedb, args, ", ") .. ")" end
-	return rt
-end
 -- Filter best result and report error on ambiguity
 function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
 	if #bestmatch == 1 then
@@ -110,7 +104,7 @@ function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args
 			end
 			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
 		end
-		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s", getMessageFunctionSignature( this, callable, args), altmatchstr)
+		utils.errorMessage( node.line, "Ambiguous matches resolving callable with signature '%s', list of candidates: %s", typeDeclarationString( this, callable, args), altmatchstr)
 	end
 end
 -- Retrieve and apply a callable in a specified context
@@ -118,10 +112,10 @@ function applyCallable( node, this, callable, args)
 	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
 	if not bestweight then
 		io.stderr:write( "TRACE typedb:resolve_type\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
-		utils.errorMessage( node.line, "Failed to find callable with signature '%s'", getMessageFunctionSignature( this, callable, args))
+		utils.errorMessage( node.line, "Failed to find callable with signature '%s'", typeDeclarationString( this, callable, args))
 	end
 	local rt = getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
-	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", getMessageFunctionSignature( this, callable, args)) end
+	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", typeDeclarationString( this, callable, args)) end
 	return rt
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not
