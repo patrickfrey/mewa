@@ -21,4 +21,4 @@ chmod +x build/tutorial.compiler.lua
 
 build/tutorial.compiler.lua -o build/tutorial.program.llr examples/tutorial/program.prg
 
-
+llc -relocation-model=pic -O=3 -filetype=obj build/tutorial.program.llr -o build/build/tutorial.program.o

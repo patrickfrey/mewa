@@ -11,6 +11,7 @@ function defineVariableMember( node, descr, context, typeId, refTypeId, name)
 	context.structsize = memberpos + descr.size
 	table.insert( context.members, { type = typeId, name = name, descr = descr, bytepos = memberpos })
 	if not context.llvmtype then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
+	io.stderr:write("++++ MEMBER " .. context.llvmtype .. "\n")
 	defineCall( refTypeId, referenceTypeMap[ context.decltype], name, {}, callConstructor( load_ref))
 	defineCall( typeId, context.decltype, name, {}, callConstructor( load_val))
 end

@@ -99,6 +99,7 @@ function typesystem.classdef( node, context)
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: method declarations
 	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method implementations
+	print_section( "Typedefs", utils.constructor_format( descr.typedef, {llvmtype=classContext.llvmtype}))
 	io.stderr:write("-- DONE class " .. descr.symbol .. "\n")
 end
 function typesystem.funcdef( node, context, pass)
