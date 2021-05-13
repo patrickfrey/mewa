@@ -32,10 +32,11 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
     * [typedb:type_nof_parameters](#type_nof_parameters)
     * [typedb:type_constructor](#type_constructor)
     * [typedb:type_scope](#type_scope)
-1. [Instrospection for Debugging](#introspection)
+1. [Introspection for Debugging](#introspection)
     * [typedb:instance_tree](#instance_tree)
     * [typedb:type_tree](#type_tree)
     * [typedb:reduction_tree](#reduction_tree)
+1. [Version of _Mewa_](#version)
 
 
 <a name="createTypeDb"/>
@@ -491,7 +492,7 @@ Also used for binding implicitly defined types to the scope of the type they are
 
 <a name="introspection"/>
 
-## Instrospection for Debugging:
+## Introspection for Debugging:
 
 <a name="instance_tree"/>
 
@@ -569,5 +570,18 @@ This is a costly operation and not intended to be used as data structure for the
 It is thought as help during development.
 
 
+<a name="version"/>
+
+## Version of _Mewa_
+
+### typedb:version
+Get the 3 parts of the version of _Mewa_.
+
+#### Parameter
+| #          | Name     | Type              | Description                                                      |
+| :--------- | :------- | :---------------- | :--------------------------------------------------------------- |
+| Return 1st |          | integer           | Major version of _Mewa_.                                         |
+| Return 2nd |          | integer           | Minor version of _Mewa_.                                         |
+| Return 3rd |          | integer           | Patch version of _Mewa_.                                         |
 
 

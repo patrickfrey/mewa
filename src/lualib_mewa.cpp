@@ -254,6 +254,20 @@ static int mewa_tostring( lua_State* ls)
 	return 1;
 }
 
+static int mewa_version( lua_State* ls)
+{
+	[[maybe_unused]] static const char* functionName = "mewa.version";
+	try
+	{
+		mewa::lua::checkNofArguments( functionName, ls, 0/*minNofArgs*/, 0/*maxNofArgs*/);
+		lua_pushinteger( ls, MEWA_MAJOR_VERSION);
+		lua_pushinteger( ls, MEWA_MINOR_VERSION);
+		lua_pushinteger( ls, MEWA_PATCH_VERSION);		
+	}
+	catch (...) { lippincottFunction( ls); }
+	return 3;
+}
+
 static int mewa_llvm_float_tohex( lua_State* ls)
 {
 	/// PF:HACK This function should not be here but in an external library
@@ -1302,6 +1316,7 @@ static const struct luaL_Reg mewa_functions[] = {
 	{ "compiler",		mewa_new_compiler },
 	{ "typedb",		mewa_new_typedb },
 	{ "tostring",		mewa_tostring },
+	{ "version",		mewa_version },
 	{ "llvm_float_tohex",	mewa_llvm_float_tohex },
 	{ "llvm_double_tohex",	mewa_llvm_double_tohex },
 	{ "stacktrace",		mewa_stacktrace },
