@@ -36,7 +36,7 @@ Some other compiler models represent hierarchies of data structures by lexical s
 Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope-step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**. A **scope** starts with the scope-step counter value when first entering a state with a production marked as **{}** and ends with one step after the value of the **scope-step** after exit (**reduction** in the context of the parser).
 
 ## Constructor
-A constructor implements the constructon of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor result of the derived type. 
+A constructor implements the constructon of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor of the derived type. 
 
 ### Ctor/Dtor
 To prevent a mess in the glossary we refer to a constructor of an object in the programming language our compiler translates as *ctor*. The corresponding destructor is called *dtor".

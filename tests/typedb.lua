@@ -77,7 +77,7 @@ function testDefineResolveType()
 	typedb = mewa.typedb()
 
 	local function pushParameter( constructor)
-		return "param " .. constructor.type
+		return "param " .. constructor
 	end
 	local function typeReduction( stu_)
 		local stu = stu_
@@ -164,6 +164,10 @@ function testDefineResolveType()
 			end
 			for i,item in ipairs( items) do
 				result = result .. "\nRESOLVE ITEM " .. typedb:type_string( item) .. " : " .. mewa.tostring( typedb:type_constructor( item), 0, false)
+				local parameter = typedb:type_parameters( item)
+				for _,param in ipairs( parameter) do
+					result = result .. "\nPARAMETER " .. param.constructor( typedb:type_name( param.type))
+				end
 			end
 		else
 			error( "Failed to resolve type " .. typedb:type_string( qry[1]) .. qry[2])
@@ -193,10 +197,14 @@ SELECT REDU short -> int /1.0000 : #int(short)
 SELECT REDU short -> float /1.0000 : #float(short)
 SELECT REDU int -> float /1.0000 : #float(int)
 RESOLVE ITEM short +(short) : {code = "short+short",op = "add",type = "short"}
+PARAMETER param short
 RESOLVE ITEM int +(int) : {code = "int+int",op = "add",type = "int"}
+PARAMETER param int
 RESOLVE ITEM float +(float) : {code = "float+float",op = "add",type = "float"}
+PARAMETER param float
 RESOLVE REDU float<-any : #float(any)
-RESOLVE ITEM float +(float) : {code = "float+float",op = "add",type = "float"}]]
+RESOLVE ITEM float +(float) : {code = "float+float",op = "add",type = "float"}
+PARAMETER param float]]
 	checkTestResult( "testDefineResolveType", result, expected)
 end
 
