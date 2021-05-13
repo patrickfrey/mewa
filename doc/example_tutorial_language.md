@@ -3,6 +3,7 @@
 ## Description
 This is a very small subset of language1, only static structures and first class scalar types.
 
+ * No memory allocation, only scalar types, constant strings and static structures (named classes) as data types
  * Classes (no constructors, no destructors, no inheritance, only methods)
  * Free procedures and functions
  * Backend is LLVM IR
