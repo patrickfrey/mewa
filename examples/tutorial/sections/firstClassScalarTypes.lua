@@ -49,9 +49,9 @@ function initBuiltInTypes()
 		if typnam == "int" then
 			scalarIntegerType = typeId
 			typedb:def_reduction( typeId, constexprIntegerType, constexprIntegerToIntegerConstructor, tag_typeInstantiation)
-		elseif typnam == "float" then
-			scalarFloatType = typeId
-			typedb:def_reduction( typeId, constexprFloatType, constexprFloatToFloatConstructor, tag_typeInstantiation)
+		elseif typnam == "double" then
+			scalarDoubleType = typeId
+			typedb:def_reduction( typeId, constexprDoubleType, constexprDoubleToDoubleConstructor, tag_typeInstantiation)
 		elseif typnam == "bool" then
 			scalarBooleanType = typeId
 			typedb:def_reduction( typeId, constexprBooleanType, constexprBooleanToScalarConstructor, tag_typeInstantiation)

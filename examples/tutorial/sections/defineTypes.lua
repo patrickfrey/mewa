@@ -6,7 +6,7 @@ function typeDeclarationString( this, typnam, args)
 	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
 	return rt
 end
--- Constructor for a promote call (implementing int + float by promoting the first argument int to float and do a float + float to get the result)
+-- Constructor for a promote call (implementing int + double by promoting the first argument int to double and do a double + double to get the result)
 function promoteCallConstructor( call_constructor, promote_constructor)
 	return function( this, arg) return call_constructor( promote_constructor( this), arg) end
 end

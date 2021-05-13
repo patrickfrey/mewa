@@ -1,29 +1,38 @@
-extern function printf void( string, float);
+extern function printf void( string, double);
 // ... printf is a variable argument list function, but this would go beyond the scope of this tutorial
 
 class Employee
 {
 	string name;
 	int age;
-	float salary;
+	double salary;
 
-	function setSalary void( float salary_)
+	function setSalary void( double salary_)
 	{
 		salary = salary_;
 	}
 }
 
-function salarySum float( Employee[10] list)
+function salarySum double( Employee[10] list)
 {
 	var int idx = 0;
-	var float sum = 0.0;
+	var double sum = 0.0;
 	while (list[idx].age)
 	{
-		list[idx].setSalary( list[idx].salary * 1.10); // Give them all a 10% raise
 		sum = sum + list[idx].salary;
 		idx = idx + 1;
 	}
 	return sum;
+}
+
+function salaryRaise void( Employee[10] list, double factor)
+{
+	var int idx = 0;
+	while (list[idx].age)
+	{
+		list[idx].setSalary( list[idx].salary * factor);
+		idx = idx + 1;
+	}
 }
 
 main
@@ -34,6 +43,7 @@ main
 		{"Doe Joe", 36, 64400},
 		{"Sandra Last", 36, 67400}
 	};
-	printf( "Salary sum: %.4f\n", salarySum( list));
+	salaryRaise( list, 1.10); // Give them all a 10% raise
+	printf( "Salary sum: %.2f\n", salarySum( list)); // Expected result = 280720
 }
 

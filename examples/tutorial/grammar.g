@@ -97,7 +97,7 @@ expression/L1		= "{" expressionlist "}"							(>>structure)
 expression/L2		= IDENT										(variable)
 			| BOOLEAN									(constant "constexpr bool")
 			| UINTEGER									(constant "constexpr int")
-			| FLOAT										(constant "constexpr float")
+			| FLOAT										(constant "constexpr double")
 			| DQSTRING									(constant "constexpr string")
 			;
 expression/L3		= expression  "="  expression							(>>binop "=")
