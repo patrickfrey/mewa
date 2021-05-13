@@ -7,6 +7,9 @@ declare external i8* @malloc( i64 ) nounwind
 declare external void @free( i8* ) nounwind
 %Tree__Data = type { i32 }
 %Tree = type { %Tree__Data, %Tree*, %Tree* }
+@string1 = private unnamed_addr constant [10 x i8] c"Node: %d\0A\00"
+@string2 = private unnamed_addr constant [8 x i8] c"VAL %d\0A\00"
+@string3 = private unnamed_addr constant [6 x i8] c"Done\0A\00"
 define private dso_local void @__ctor_init_Tree__Data( %Tree__Data* %ths)#0 nounwind {
 enter:
 %r1 = getelementptr inbounds %Tree__Data, %Tree__Data* %ths, i32 0, i32 0
@@ -114,7 +117,6 @@ L1:
 ret void
 }
 @g_tree = internal global %Tree zeroinitializer, align 8
-@string1 = private unnamed_addr constant [10 x i8] c"Node: %d\0A\00"
 define internal void @printTree__Tree$__i32( %Tree* %r1, i32 %r2 ) #0 nounwind {
 entry:
 %r3 = alloca i32, align 4
@@ -191,8 +193,6 @@ br label %L5
 L5:
 ret void
 }
-@string2 = private unnamed_addr constant [8 x i8] c"VAL %d\0A\00"
-@string3 = private unnamed_addr constant [6 x i8] c"Done\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {

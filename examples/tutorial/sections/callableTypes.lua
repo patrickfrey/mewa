@@ -32,9 +32,10 @@ end
 function defineFunctionCall( node, descr, context)
 	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
 	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
-	local thisType = getDeclarationContextTypeId(context)
+	local contextType = getDeclarationContextTypeId(context)
+	local thisType = (contextType ~= 0) and referenceTypeMap[ contextType] or 0
 	local callablectx = getOrCreateCallableContextTypeId( thisType, descr.name, llvmir.callableDescr)
-	local constructor = callConstructor( llvmir.control.functionCall, thisType, descr.param, descr)
+	local constructor = callConstructor( descr.ret and llvmir.control.functionCall or llvmir.control.procedureCall, thisType, descr.param, descr)
 	return defineCall( descr.ret, callablectx, "()", descr.param, constructor)
 end
 

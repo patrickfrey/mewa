@@ -6,6 +6,16 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %__Matrix__double__3__3 = type { [3 x [3 x double]] }
 %__Matrix__double__3__4 = type { [3 x [4 x double]] }
 %__Matrix__double__4__3 = type { [4 x [3 x double]] }
+@string1 = private unnamed_addr constant [12 x i8] c"Matrix %s:\0A\00"
+@string2 = private unnamed_addr constant [2 x i8] c"A\00"
+@string3 = private unnamed_addr constant [6 x i8] c"\09%.4f\00"
+@string4 = private unnamed_addr constant [2 x i8] c"\0A\00"
+@string5 = private unnamed_addr constant [2 x i8] c"B\00"
+@string6 = private unnamed_addr constant [2 x i8] c"C\00"
+@string7 = private unnamed_addr constant [4 x i8] c"A+C\00"
+@string8 = private unnamed_addr constant [4 x i8] c"A*B\00"
+@string9 = private unnamed_addr constant [6 x i8] c"A*1.4\00"
+@string10 = private unnamed_addr constant [4 x i8] c"B*A\00"
 define private dso_local void @__ctor_init_3__double( [3 x double]* %ths_ar, i32 %start)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [3 x double], [3 x double]* %ths_ar, i32 0, i32 %start
@@ -2195,10 +2205,6 @@ br label %L1
 L1:
 ret double %r6
 }
-@string1 = private unnamed_addr constant [12 x i8] c"Matrix %s:\0A\00"
-@string2 = private unnamed_addr constant [2 x i8] c"A\00"
-@string3 = private unnamed_addr constant [6 x i8] c"\09%.4f\00"
-@string4 = private unnamed_addr constant [2 x i8] c"\0A\00"
 define internal void @printMatrix__4__3____Matrix__double__4__3$( %__Matrix__double__4__3* %r1 ) #0 nounwind {
 entry:
 %r2 = alloca i32, align 4
@@ -2238,7 +2244,6 @@ br label %L7
 L7:
 ret void
 }
-@string5 = private unnamed_addr constant [2 x i8] c"B\00"
 define internal void @printMatrix__3__4____Matrix__double__3__4$( %__Matrix__double__3__4* %r1 ) #0 nounwind {
 entry:
 %r2 = alloca i32, align 4
@@ -2278,9 +2283,6 @@ br label %L7
 L7:
 ret void
 }
-@string6 = private unnamed_addr constant [2 x i8] c"C\00"
-@string7 = private unnamed_addr constant [4 x i8] c"A+C\00"
-@string8 = private unnamed_addr constant [4 x i8] c"A*B\00"
 define internal void @printMatrix__4__4____Matrix__double__4__4$( %__Matrix__double__4__4* %r1 ) #0 nounwind {
 entry:
 %r2 = alloca i32, align 4
@@ -2320,8 +2322,6 @@ br label %L7
 L7:
 ret void
 }
-@string9 = private unnamed_addr constant [6 x i8] c"A*1.4\00"
-@string10 = private unnamed_addr constant [4 x i8] c"B*A\00"
 define internal void @printMatrix__3__3____Matrix__double__3__3$( %__Matrix__double__3__3* %r1 ) #0 nounwind {
 entry:
 %r2 = alloca i32, align 4

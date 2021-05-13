@@ -41,8 +41,9 @@ end
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
 	local name,ret,param = table.unpack( utils.traverse( typedb, node, context))
-	local descr = {externtype="C", name=name, symbolname=name, ret=ret, param=param, signature=""}
-	descr.rtllvmtype = (ret ~= voidType) and typeDescriptionMap[ ret].llvmtype or "void"
+	if ret == voidType then ret = nil end -- void type as return value means that we are in a procedure without return value
+	local descr = {externtype="C", name=name, symbolname=name, func='@' .. name, ret=ret, param=param, signature=""}
+	descr.rtllvmtype = ret and typeDescriptionMap[ ret].llvmtype or "void"
 	defineFunctionCall( node, descr, context)
 	print_section( "Typedefs", utils.constructor_format( llvmir.control.extern_functionDeclaration, descr))
 end
@@ -60,7 +61,7 @@ end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
 		local statement = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
-		return {code = statement and statement.code or ""}
+		return statement and statement.constructor or nil
 	end
 end
 function typesystem.definition_2pass( node, pass, context, pass_selected)
@@ -109,7 +110,7 @@ function typesystem.funcdef( node, context, pass)
 		if rtype == voidType then rtype = nil end -- void type as return value means that we are in a procedure without return value
 		local symbolname = (context.domain == "member") and (typedb:type_name(context.decltype) .. "__" .. typnam) or typnam
 		local rtllvmtype = rtype and typeDescriptionMap[ rtype].llvmtype or "void"
-		local descr = {lnk="internal", name=typnam, symbolname=symbolname, ret=rtype, rtllvmtype=rtllvmtype, attr="#0"}
+		local descr = {lnk="internal", name=typnam, symbolname=symbolname, func='@'..symbolname, ret=rtype, rtllvmtype=rtllvmtype, attr="#0"}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
 		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.symbolname
@@ -121,6 +122,12 @@ function typesystem.funcdef( node, context, pass)
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
 		io.stderr:write("IMPLEMENTATION function " .. descr.name .. "\n")
+		if descr.ret then
+			local rtdescr = typeDescriptionMap[descr.ret]
+			descr.body = descr.body .. utils.constructor_format( llvmir.control.returnStatement, {type=rtdescr.llvmtype,this=rtdescr.default})
+		else
+			descr.body = descr.body .. utils.constructor_format( llvmir.control.returnVoidStatement)
+		end
 		print( utils.constructor_format( llvmir.control.functionDeclaration, descr))
 	end
 end
@@ -215,7 +222,7 @@ end
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
 	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. " " .. typedb:type_string(datatype) .. "\n")
-	defineVariable( node, context, datatype, varnam, initval)
+	return defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.structure( node)
 	local args = utils.traverse( typedb, node)

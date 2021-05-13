@@ -73,7 +73,7 @@ function initBuiltInTypes()
 		defineBuiltInBinaryOperators( typnam, scalar_descr, scalar_descr.cmpop, scalarBooleanType)
 		defineBuiltInUnaryOperators( typnam, scalar_descr, scalar_descr.unop, typeId)
 		defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId}, callConstructor( scalar_descr.assign))
-		defineCall( voidType, referenceTypeMap[ typeId], "=", {}, callConstructor( scalar_descr.assign, 0, nil, {arg1="0"}))
+		defineCall( voidType, referenceTypeMap[ typeId], "=", {}, callConstructor( scalar_descr.assign, 0, nil, {arg1=scalar_descr.default}))
 	end
 	-- Define operators with promoting of the left side argument
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
@@ -85,6 +85,6 @@ function initBuiltInTypes()
 	typedb:def_reduction( stringType, string_refType, callConstructor( string_descr.load), tag_typeInstantiation)
 	typedb:def_reduction( stringType, constexprStringType, stringPointerConstructor, tag_typeInstantiation)
 	defineCall( voidType, string_refType, "=", {stringType}, callConstructor( string_descr.assign))
-	defineCall( voidType, string_refType, "=", {}, callConstructor( string_descr.assign, 0, nil, {arg1="null"}))
+	defineCall( voidType, string_refType, "=", {}, callConstructor( string_descr.assign, 0, nil, {arg1=string_descr.default}))
 end
 

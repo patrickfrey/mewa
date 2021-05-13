@@ -4,6 +4,7 @@
 declare external i32 @__gxx_personality_v0( ... ) nounwind
 declare external i8* @malloc( i64 ) nounwind
 %__Array__float__5 = type { [5 x float] }
+@string1 = private unnamed_addr constant [19 x i8] c"ARRAY[ %d] = %.4f\0A\00"
 define private dso_local void @__ctor_init_5__float( [5 x float]* %ths_ar, i32 %start)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [5 x float], [5 x float]* %ths_ar, i32 0, i32 %start
@@ -123,7 +124,6 @@ br label %L1
 L1:
 ret float* %r3
 }
-@string1 = private unnamed_addr constant [19 x i8] c"ARRAY[ %d] = %.4f\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {

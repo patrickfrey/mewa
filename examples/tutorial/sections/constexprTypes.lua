@@ -34,6 +34,7 @@ function createConstexprValue( typeId, value)
 			local encval,enclen = utils.encodeLexemLlvm(value)
 			local name = utils.uniqueName( "string")
 			stringConstantMap[ value] = {size=enclen+1,name=name}
+			print_section( "Constants", utils.constructor_format( llvmir.control.stringConstDeclaration, {name=name, size=enclen+1, value=encval}) .. "\n")
 		end
 		return stringConstantMap[ value]
 	end

@@ -100,12 +100,13 @@ llvmir.control = {
 	returnStatement = "ret {type} {this}\n",
 	returnVoidStatement = "ret void\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
-	functionCall = "{out} = call {rtllvmtype} {symbolname}( {callargstr})\n",
+	functionCall = "{out} = call {rtllvmtype} {func}( {callargstr})\n",
+	procedureCall = "call {rtllvmtype} {func}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
 	stringConstDeclaration = "@{name} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
 	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
-	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)\n{\nentry:\n{body}}\n",
+	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0\n{\nentry:\n{body}}\n",
 }
 
 local pointerDescrMap = {}

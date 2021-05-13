@@ -3,6 +3,7 @@
 
 declare external i32 @__gxx_personality_v0( ... ) nounwind
 declare external void @printf( i8*, i32 ) nounwind
+@string1 = private unnamed_addr constant [12 x i8] c"Result: %d\0A\00"
 
 
 define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {
@@ -55,7 +56,6 @@ br label %L4
 L4:
 ret i32 %r12
 }
-@string1 = private unnamed_addr constant [12 x i8] c"Result: %d\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {

@@ -5,6 +5,10 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %IntArray = type { [5 x i32] }
 %FloatArray = type { [5 x float] }
 %DoubleArray = type { [5 x double] }
+@string1 = private unnamed_addr constant [17 x i8] c"ARRAY[ %d] = %d\0A\00"
+@string2 = private unnamed_addr constant [12 x i8] c"FL = %f %f\0A\00"
+@string3 = private unnamed_addr constant [17 x i8] c"ARRAY[ %d] = %f\0A\00"
+@string4 = private unnamed_addr constant [12 x i8] c"DB = %f %f\0A\00"
 define private dso_local void @__ctor_init_5__i32( [5 x i32]* %ths_ar, i32 %start)#0 nounwind {
 enter:
 %ths_base = getelementptr inbounds [5 x i32], [5 x i32]* %ths_ar, i32 0, i32 %start
@@ -340,7 +344,6 @@ br label %L1
 L1:
 ret double* %r3
 }
-@string1 = private unnamed_addr constant [17 x i8] c"ARRAY[ %d] = %d\0A\00"
 define external void @printIntArray(  ) #0 nounwind {
 entry:
 %r1 = alloca %IntArray, align 8
@@ -380,8 +383,6 @@ L4:
 call void @__dtor_IntArray( %IntArray* %r1)
 ret void
 }
-@string2 = private unnamed_addr constant [12 x i8] c"FL = %f %f\0A\00"
-@string3 = private unnamed_addr constant [17 x i8] c"ARRAY[ %d] = %f\0A\00"
 define external void @printFloatArray(  ) #0 nounwind {
 entry:
 %r1 = alloca float, align 4
@@ -433,7 +434,6 @@ L4:
 call void @__dtor_FloatArray( %FloatArray* %r9)
 ret void
 }
-@string4 = private unnamed_addr constant [12 x i8] c"DB = %f %f\0A\00"
 define external void @printDoubleArray(  ) #0 nounwind {
 entry:
 %r1 = alloca double, align 8

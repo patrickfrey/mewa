@@ -4,6 +4,21 @@
 declare external i32 @__gxx_personality_v0( ... ) nounwind
 declare external double @sqrt( double ) nounwind
 %__Complex__double = type { double, double }
+@string1 = private unnamed_addr constant [16 x i8] c"%s %.4f +%.4fi\0A\00"
+@string2 = private unnamed_addr constant [14 x i8] c"%s %.4f%.4fi\0A\00"
+@string3 = private unnamed_addr constant [9 x i8] c"%s %.4f\0A\00"
+@string4 = private unnamed_addr constant [41 x i8] c"square root (5 + 2i) squared = 5 + 2i | \00"
+@string5 = private unnamed_addr constant [30 x i8] c"(1 + 3i) squared = -8 + 6i | \00"
+@string6 = private unnamed_addr constant [33 x i8] c"(2 + 3i) * (4 - 7i) = 29 - 2i | \00"
+@string7 = private unnamed_addr constant [34 x i8] c"(3 - 1i) + (-4 - 3i) = -1 - 4i | \00"
+@string8 = private unnamed_addr constant [29 x i8] c"(-2 + 2i) - (-3 + 2i) = 1 | \00"
+@string9 = private unnamed_addr constant [43 x i8] c"(2 + 3i) / (3 - 3i) = -0.1666 + 0.8333i | \00"
+@string10 = private unnamed_addr constant [33 x i8] c"(2 + 2i) / (3 - 3i) = 0.6666i | \00"
+@string11 = private unnamed_addr constant [24 x i8] c"abs(5 - 1i) = 5.0990 | \00"
+@string12 = private unnamed_addr constant [36 x i8] c"square root i = 0.7071 + 0.7071i | \00"
+@string13 = private unnamed_addr constant [38 x i8] c"square root i+1 = 1.0987 + 0.4551i | \00"
+@string14 = private unnamed_addr constant [34 x i8] c"(-8 + 6i) square root = 1 + 3i | \00"
+@string15 = private unnamed_addr constant [21 x i8] c"7 * (3 * 3.1 + 1) = \00"
 define private dso_local void @__dtor___Complex__double( %__Complex__double* %ths) {
 enter:
 br label %end
@@ -291,9 +306,6 @@ br label %L1
 L1:
 ret void
 }
-@string1 = private unnamed_addr constant [16 x i8] c"%s %.4f +%.4fi\0A\00"
-@string2 = private unnamed_addr constant [14 x i8] c"%s %.4f%.4fi\0A\00"
-@string3 = private unnamed_addr constant [9 x i8] c"%s %.4f\0A\00"
 define internal void @printComplex__double__i8$____Complex__double$( i8* %r1, %__Complex__double* %r2 ) #0 nounwind {
 entry:
 %r3 = alloca i32, align 4
@@ -329,13 +341,6 @@ br label %L6
 L6:
 ret void
 }
-@string4 = private unnamed_addr constant [41 x i8] c"square root (5 + 2i) squared = 5 + 2i | \00"
-@string5 = private unnamed_addr constant [30 x i8] c"(1 + 3i) squared = -8 + 6i | \00"
-@string6 = private unnamed_addr constant [33 x i8] c"(2 + 3i) * (4 - 7i) = 29 - 2i | \00"
-@string7 = private unnamed_addr constant [34 x i8] c"(3 - 1i) + (-4 - 3i) = -1 - 4i | \00"
-@string8 = private unnamed_addr constant [29 x i8] c"(-2 + 2i) - (-3 + 2i) = 1 | \00"
-@string9 = private unnamed_addr constant [43 x i8] c"(2 + 3i) / (3 - 3i) = -0.1666 + 0.8333i | \00"
-@string10 = private unnamed_addr constant [33 x i8] c"(2 + 2i) / (3 - 3i) = 0.6666i | \00"
 define internal void @printFloat__double__i8$__double( i8* %r1, double %r2 ) #0 nounwind {
 entry:
 %r3 = getelementptr inbounds [9 x i8], [9 x i8]* @string3, i64 0, i64 0
@@ -344,11 +349,6 @@ br label %L1
 L1:
 ret void
 }
-@string11 = private unnamed_addr constant [24 x i8] c"abs(5 - 1i) = 5.0990 | \00"
-@string12 = private unnamed_addr constant [36 x i8] c"square root i = 0.7071 + 0.7071i | \00"
-@string13 = private unnamed_addr constant [38 x i8] c"square root i+1 = 1.0987 + 0.4551i | \00"
-@string14 = private unnamed_addr constant [34 x i8] c"(-8 + 6i) square root = 1 + 3i | \00"
-@string15 = private unnamed_addr constant [21 x i8] c"7 * (3 * 3.1 + 1) = \00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {

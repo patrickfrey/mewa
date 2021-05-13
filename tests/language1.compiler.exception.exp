@@ -9,6 +9,52 @@ declare external i8* @memcpy( i8*, i8*, i64 ) nounwind
 declare external i64 @strlen( i8* ) nounwind
 %std__String = type { i8*, i32 }
 %GreetingType = type { %std__String, %std__String, %std__String }
+@string1 = private unnamed_addr constant [11 x i8] c"Throw: %s\0A\00"
+@string2 = private unnamed_addr constant [32 x i8] c"Max allowed allocations reached\00"
+@string3 = private unnamed_addr constant [14 x i8] c"Out of memory\00"
+@string4 = private unnamed_addr constant [22 x i8] c"Alloc mem: [%ld] #%d\0A\00"
+@string5 = private unnamed_addr constant [16 x i8] c"Free mem: [%s]\0A\00"
+@string6 = private unnamed_addr constant [26 x i8] c"Constructor empty string\0A\00"
+@string7 = private unnamed_addr constant [25 x i8] c"Constructor string [%s]\0A\00"
+@string8 = private unnamed_addr constant [30 x i8] c"Copy constructor string [%s]\0A\00"
+@string9 = private unnamed_addr constant [24 x i8] c"Destructor string [%s]\0A\00"
+@string10 = private unnamed_addr constant [28 x i8] c"Destructor empty string []\0A\00"
+@string11 = private unnamed_addr constant [12 x i8] c"Get string\0A\00"
+@string12 = private unnamed_addr constant [1 x i8] c"\00"
+@string13 = private unnamed_addr constant [15 x i8] c"Hello universe\00"
+@string14 = private unnamed_addr constant [2 x i8] c"!\00"
+@string15 = private unnamed_addr constant [6 x i8] c"Hello\00"
+@string16 = private unnamed_addr constant [2 x i8] c" \00"
+@string17 = private unnamed_addr constant [9 x i8] c"universe\00"
+@string18 = private unnamed_addr constant [32 x i8] c"Constructor greeting type [%s]\0A\00"
+@string19 = private unnamed_addr constant [36 x i8] c"Constructor empty greeting type []\0A\00"
+@string20 = private unnamed_addr constant [31 x i8] c"Destructor greeting type [%s]\0A\00"
+@string21 = private unnamed_addr constant [35 x i8] c"Destructor empty greeting type []\0A\00"
+@string22 = private unnamed_addr constant [13 x i8] c"Hello world!\00"
+@string23 = private unnamed_addr constant [2 x i8] c"H\00"
+@string24 = private unnamed_addr constant [2 x i8] c"e\00"
+@string25 = private unnamed_addr constant [2 x i8] c"l\00"
+@string26 = private unnamed_addr constant [2 x i8] c"o\00"
+@string27 = private unnamed_addr constant [2 x i8] c"w\00"
+@string28 = private unnamed_addr constant [2 x i8] c"r\00"
+@string29 = private unnamed_addr constant [3 x i8] c"d!\00"
+@string30 = private unnamed_addr constant [5 x i8] c"home\00"
+@string31 = private unnamed_addr constant [6 x i8] c"world\00"
+@string32 = private unnamed_addr constant [7 x i8] c"abroad\00"
+@string33 = private unnamed_addr constant [9 x i8] c"anywhere\00"
+@string34 = private unnamed_addr constant [7 x i8] c"aliens\00"
+@string35 = private unnamed_addr constant [4 x i8] c"%s\0A\00"
+@string36 = private unnamed_addr constant [7 x i8] c"world!\00"
+@string37 = private unnamed_addr constant [13 x i8] c"GREETING %s\0A\00"
+@string38 = private unnamed_addr constant [31 x i8] c"GREET1 %s GREET2 %s GREET3 %s\0A\00"
+@string39 = private unnamed_addr constant [11 x i8] c"SELECT %s\0A\00"
+@string40 = private unnamed_addr constant [7 x i8] c"bubble\00"
+@string41 = private unnamed_addr constant [12 x i8] c"ERR %ld %s\0A\00"
+@string42 = private unnamed_addr constant [16 x i8] c"INIT ALLOCS %d\0A\00"
+@string43 = private unnamed_addr constant [20 x i8] c"----- NO EXCEPTION\0A\00"
+@string44 = private unnamed_addr constant [11 x i8] c"ALLOCS %d\0A\00"
+@string45 = private unnamed_addr constant [15 x i8] c"----- TEST %d\0A\00"
+@string46 = private unnamed_addr constant [20 x i8] c"GLOBAL GREETING %s\0A\00"
 declare external i8* @strdup( i8* ) nounwind
 %__L_Exception = type { i64, i8* }
 @__L_ExceptionSize = constant i32 ptrtoint(%__L_Exception* getelementptr(%__L_Exception, %__L_Exception* null, i32 1) to i32)
@@ -378,10 +424,6 @@ define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp sec
 declare external void @printf( i8*, ... ) nounwind
 @g_allocCnt = internal global i32 0, align 4
 @g_maxAllocCnt = internal global i32 0, align 4
-@string1 = private unnamed_addr constant [11 x i8] c"Throw: %s\0A\00"
-@string2 = private unnamed_addr constant [32 x i8] c"Max allowed allocations reached\00"
-@string3 = private unnamed_addr constant [14 x i8] c"Out of memory\00"
-@string4 = private unnamed_addr constant [22 x i8] c"Alloc mem: [%ld] #%d\0A\00"
 define internal i8* @allocmem__i64( i64 %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %exception = alloca %__L_Exception
@@ -432,7 +474,6 @@ br label %L2
 L8:
 br label %L7
 }
-@string5 = private unnamed_addr constant [16 x i8] c"Free mem: [%s]\0A\00"
 define internal void @freemem__i8$( i8* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds [16 x i8], [16 x i8]* @string5, i64 0, i64 0
@@ -442,7 +483,6 @@ br label %L1
 L1:
 ret void
 }
-@string6 = private unnamed_addr constant [26 x i8] c"Constructor empty string\0A\00"
 define external void @__C_std__String__$ctor( %std__String* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds [26 x i8], [26 x i8]* @string6, i64 0, i64 0
@@ -455,7 +495,6 @@ br label %L1
 L1:
 ret void
 }
-@string7 = private unnamed_addr constant [25 x i8] c"Constructor string [%s]\0A\00"
 define external void @__C_std__String__$ctor__i8$( %std__String* %ths, i8* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
@@ -508,7 +547,6 @@ resume { i8*, i32 } %r14
 L4:
 ret void
 }
-@string8 = private unnamed_addr constant [30 x i8] c"Copy constructor string [%s]\0A\00"
 define external void @__C_std__String__$ctor__std__String$( %std__String* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
@@ -563,8 +601,6 @@ resume { i8*, i32 } %r12
 L4:
 ret void
 }
-@string9 = private unnamed_addr constant [24 x i8] c"Destructor string [%s]\0A\00"
-@string10 = private unnamed_addr constant [28 x i8] c"Destructor empty string []\0A\00"
 define external void @__dtor_std__String( %std__String* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %std__String, %std__String* %ths, i32 0, i32 1
@@ -749,8 +785,6 @@ br label %L1
 L1:
 ret i32 %r2
 }
-@string11 = private unnamed_addr constant [12 x i8] c"Get string\0A\00"
-@string12 = private unnamed_addr constant [1 x i8] c"\00"
 define external i8* @__C_std__String__c_str__const( %std__String* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds [12 x i8], [12 x i8]* @string11, i64 0, i64 0
@@ -771,8 +805,6 @@ ret i8* %r6
 L3:
 ret i8* %r7
 }
-@string13 = private unnamed_addr constant [15 x i8] c"Hello universe\00"
-@string14 = private unnamed_addr constant [2 x i8] c"!\00"
 define internal void @getGreeting( %std__String* sret %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
@@ -826,9 +858,6 @@ call void @__dtor_std__String( %std__String* %r14)
 call void @__dtor_std__String( %std__String* %r13)
 ret void
 }
-@string15 = private unnamed_addr constant [6 x i8] c"Hello\00"
-@string16 = private unnamed_addr constant [2 x i8] c" \00"
-@string17 = private unnamed_addr constant [9 x i8] c"universe\00"
 define internal void @getGreetingA1( %std__String* sret %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
@@ -934,7 +963,6 @@ call void @__dtor_std__String( %std__String* %r33)
 call void @__dtor_4__std__String( [4 x %std__String]* %r1, i32 4)
 ret void
 }
-@string18 = private unnamed_addr constant [32 x i8] c"Constructor greeting type [%s]\0A\00"
 define external void @__C_GreetingType__$ctor__i8$( %GreetingType* %ths, i8* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
@@ -995,7 +1023,6 @@ resume { i8*, i32 } %r8
 L10:
 ret void
 }
-@string19 = private unnamed_addr constant [36 x i8] c"Constructor empty greeting type []\0A\00"
 define external void @__C_GreetingType__$ctor( %GreetingType* %ths ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %r1 = getelementptr inbounds [36 x i8], [36 x i8]* @string19, i64 0, i64 0
@@ -1010,8 +1037,6 @@ br label %L1
 L1:
 ret void
 }
-@string20 = private unnamed_addr constant [31 x i8] c"Destructor greeting type [%s]\0A\00"
-@string21 = private unnamed_addr constant [35 x i8] c"Destructor empty greeting type []\0A\00"
 define external void @__dtor_GreetingType( %GreetingType* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
@@ -1124,26 +1149,6 @@ br label %L15
 L18:
 br label %L17
 }
-@string22 = private unnamed_addr constant [13 x i8] c"Hello world!\00"
-@string23 = private unnamed_addr constant [2 x i8] c"H\00"
-@string24 = private unnamed_addr constant [2 x i8] c"e\00"
-@string25 = private unnamed_addr constant [2 x i8] c"l\00"
-@string26 = private unnamed_addr constant [2 x i8] c"o\00"
-@string27 = private unnamed_addr constant [2 x i8] c"w\00"
-@string28 = private unnamed_addr constant [2 x i8] c"r\00"
-@string29 = private unnamed_addr constant [3 x i8] c"d!\00"
-@string30 = private unnamed_addr constant [5 x i8] c"home\00"
-@string31 = private unnamed_addr constant [6 x i8] c"world\00"
-@string32 = private unnamed_addr constant [7 x i8] c"abroad\00"
-@string33 = private unnamed_addr constant [9 x i8] c"anywhere\00"
-@string34 = private unnamed_addr constant [7 x i8] c"aliens\00"
-@string35 = private unnamed_addr constant [4 x i8] c"%s\0A\00"
-@string36 = private unnamed_addr constant [7 x i8] c"world!\00"
-@string37 = private unnamed_addr constant [13 x i8] c"GREETING %s\0A\00"
-@string38 = private unnamed_addr constant [31 x i8] c"GREET1 %s GREET2 %s GREET3 %s\0A\00"
-@string39 = private unnamed_addr constant [11 x i8] c"SELECT %s\0A\00"
-@string40 = private unnamed_addr constant [7 x i8] c"bubble\00"
-@string41 = private unnamed_addr constant [12 x i8] c"ERR %ld %s\0A\00"
 define internal void @test__i32( i32 %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %exception = alloca %__L_Exception
@@ -1626,11 +1631,6 @@ ret void
 }
 @g_globalGreeting = internal global %std__String zeroinitializer, align 8
 @g_globalGreetingArray = internal global [20 x %std__String] zeroinitializer, align 8
-@string42 = private unnamed_addr constant [16 x i8] c"INIT ALLOCS %d\0A\00"
-@string43 = private unnamed_addr constant [20 x i8] c"----- NO EXCEPTION\0A\00"
-@string44 = private unnamed_addr constant [11 x i8] c"ALLOCS %d\0A\00"
-@string45 = private unnamed_addr constant [15 x i8] c"----- TEST %d\0A\00"
-@string46 = private unnamed_addr constant [20 x i8] c"GLOBAL GREETING %s\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {

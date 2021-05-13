@@ -96,7 +96,7 @@ return {
 		promote = {"float", "int"},
 		conv = {
 			["float"] = {fmt="{out} = fcmp une float {this}, 0.00000\n", weight=0.375},
-			["int"] = {fmt="{out} = cmp ne i32 {this}, 0\n", weight=0.375}},
+			["int"] = {fmt="{out} = icmp ne i32 {this}, 0\n", weight=0.375}},
 		unop = {
 			["!"] = "{out} = xor i1 {this}, true\n"},
 		binop = {},

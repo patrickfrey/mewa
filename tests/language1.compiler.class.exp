@@ -8,6 +8,16 @@ declare external i32 @__gxx_personality_v0( ... ) nounwind
 %ObjectUpdater = type {i8*, %ObjectUpdater__VMT* }
 %Point = type { i32, i32 }
 %Line = type { %Point }
+@string1 = private unnamed_addr constant [18 x i8] c"RESULT[1] x = %d\0A\00"
+@string2 = private unnamed_addr constant [18 x i8] c"RESULT[1] y = %d\0A\00"
+@string3 = private unnamed_addr constant [18 x i8] c"RESULT[2] x = %d\0A\00"
+@string4 = private unnamed_addr constant [18 x i8] c"RESULT[2] y = %d\0A\00"
+@string5 = private unnamed_addr constant [18 x i8] c"RESULT[3] x = %d\0A\00"
+@string6 = private unnamed_addr constant [18 x i8] c"RESULT[3] y = %d\0A\00"
+@string7 = private unnamed_addr constant [18 x i8] c"RESULT[4] x = %d\0A\00"
+@string8 = private unnamed_addr constant [18 x i8] c"RESULT[4] y = %d\0A\00"
+@string9 = private unnamed_addr constant [25 x i8] c"RESULT[5] ptr->x() = %d\0A\00"
+@string10 = private unnamed_addr constant [25 x i8] c"RESULT[5] ptr->y() = %d\0A\00"
 define private dso_local void @__partial_dtor_Point( %Point* %ths, i32 %istate) {
 enter:
 br label %end
@@ -153,16 +163,6 @@ br label %L1
 L1:
 ret void
 }
-@string1 = private unnamed_addr constant [18 x i8] c"RESULT[1] x = %d\0A\00"
-@string2 = private unnamed_addr constant [18 x i8] c"RESULT[1] y = %d\0A\00"
-@string3 = private unnamed_addr constant [18 x i8] c"RESULT[2] x = %d\0A\00"
-@string4 = private unnamed_addr constant [18 x i8] c"RESULT[2] y = %d\0A\00"
-@string5 = private unnamed_addr constant [18 x i8] c"RESULT[3] x = %d\0A\00"
-@string6 = private unnamed_addr constant [18 x i8] c"RESULT[3] y = %d\0A\00"
-@string7 = private unnamed_addr constant [18 x i8] c"RESULT[4] x = %d\0A\00"
-@string8 = private unnamed_addr constant [18 x i8] c"RESULT[4] y = %d\0A\00"
-@string9 = private unnamed_addr constant [25 x i8] c"RESULT[5] ptr->x() = %d\0A\00"
-@string10 = private unnamed_addr constant [25 x i8] c"RESULT[5] ptr->y() = %d\0A\00"
 
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 {

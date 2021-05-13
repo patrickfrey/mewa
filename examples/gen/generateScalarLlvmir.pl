@@ -170,7 +170,7 @@ sub conv_constructor {
 	}
 	elsif ($sgn_out eq "bool")
 	{
-		return "{out} = cmp ne $llvmtype_in {this}, $defaultmap{$llvmtype_in}\\n";
+		return "{out} = icmp ne $llvmtype_in {this}, $defaultmap{$llvmtype_in}\\n";
 	}
 	else
 	{

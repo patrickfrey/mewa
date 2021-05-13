@@ -1906,7 +1906,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		defineGlobalVariable( node, descr, context, typeId, refTypeId, name, initVal)
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
-		defineVariableMember( node, descr, context, typeId, name, context.private)
+		defineMemberVariable( node, descr, context, typeId, name, context.private)
 	else
 		utils.errorMessage( node.line, "Internal: Context domain undefined, context=%s", mewa.tostring(context))
 	end
@@ -1935,7 +1935,7 @@ function defineCtorInitAssignments( refType, initType, name, index, load_ref)
 	typedb:def_reduction( refType, loadType, completeCtorInitializationAndReturnThis, tag_typeDeduction, rdw_barrier) -- define phase change to completed initialization if used otherwise
 end
 -- Define a member variable of a class or a structure
-function defineVariableMember( node, descr, context, typeId, name, private)
+function defineMemberVariable( node, descr, context, typeId, name, private)
 	local qs = typeQualiSepMap[ typeId]
 	local memberpos = context.structsize
 	local index = #context.members
@@ -2906,7 +2906,7 @@ function getStringConstant( value)
 		local encval,enclen = utils.encodeLexemLlvm(value)
 		local name = utils.uniqueName( "string")
 		stringConstantMap[ value] = {size=enclen+1,name=name}
-		print( utils.constructor_format( llvmir.control.stringConstDeclaration, {name=name, size=enclen+1, value=encval}) .. "\n")
+		print_section( "Constants", utils.constructor_format( llvmir.control.stringConstDeclaration, {name=name, size=enclen+1, value=encval}) .. "\n")
 	end
 	return {type=stringAddressType,constructor=stringConstantMap[value]}
 end
@@ -3838,7 +3838,7 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 		local typnam = typedb:type_name(typeId)
 		local private = false
 		if descr.class == "class" then
-			defineVariableMember( node, descr, context, typeId, typnam, private)
+			defineMemberVariable( node, descr, context, typeId, typnam, private)
 			defineClassInheritanceReductions( context, typnam, private, typeId)
 		elseif descr.class == "interface" then
 			defineInterfaceMember( node, context, typeId, typnam, private)

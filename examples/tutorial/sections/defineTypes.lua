@@ -50,7 +50,7 @@ function defineClassStructureAssignmentOperator( node, typeId)
 		if args and #args ~= 0 and #args ~= #descr.members then
 			utils.errorMessage( node.line, "Number of elements %d in init does not match number of members %d in class '%s'", #args, #descr.members, typedb:type_string( typeId))
 		end
-		local this_inp,code = constructorParts( this.constructor)
+		local this_inp,code = constructorParts( this)
 		for mi,member in ipairs(descr.members) do
 			local out = env.register()
 			local loadref = descr.loadelemref
@@ -82,8 +82,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		local descr_element = typeDescriptionMap[ elementTypeId]
 		local elementRefTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
 		local env = getCallableEnvironment()
-		local this_inp,res_code = constructorParts( this)
-		local code = ""
+		local this_inp,code = constructorParts( this)
 		for ai=1,nofElements do
 			local arg = (ai <= nofElements) and args[ai] or nil
 			local elemreg = env.register()
@@ -114,7 +113,7 @@ function getOrCreateArrayType( node, elementType, arraySize)
 		local arrayRefType = referenceTypeMap[ arrayType]
 		arrayTypeMap[ arrayKey] = arrayType
 		defineArrayIndexOperator( elementType, arrayType, arrayDescr)
-		defineCall( voidType, arrayType, "=", {constexprStructureType}, arrayStructureAssignmentConstructor( node, arrayType, elementType, arraySize))
+		defineCall( voidType, arrayRefType, "=", {constexprStructureType}, arrayStructureAssignmentConstructor( node, arrayType, elementType, arraySize))
 		typedb:scope( scope_bk,step_bk)
 	end
 	return arrayTypeMap[ arrayKey]

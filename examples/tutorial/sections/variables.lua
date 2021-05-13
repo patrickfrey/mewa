@@ -1,7 +1,7 @@
 local utils = require "typesystem_utils"
 
 -- Define a member variable of a class or a structure
-function defineVariableMember( node, descr, context, typeId, refTypeId, name)
+function defineMemberVariable( node, descr, context, typeId, refTypeId, name)
 	local memberpos = context.structsize or 0
 	local index = #context.members
 	local load_ref = utils.template_format( context.descr.loadelemref, {index=index, type=descr.llvmtype})
@@ -11,7 +11,6 @@ function defineVariableMember( node, descr, context, typeId, refTypeId, name)
 	context.structsize = memberpos + descr.size
 	table.insert( context.members, { type = typeId, name = name, descr = descr, bytepos = memberpos })
 	if not context.llvmtype then context.llvmtype = descr.llvmtype else context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype end
-	io.stderr:write("++++ MEMBER " .. context.llvmtype .. "\n")
 	defineCall( refTypeId, referenceTypeMap[ context.decltype], name, {}, callConstructor( load_ref))
 	defineCall( typeId, context.decltype, name, {}, callConstructor( load_val))
 end
@@ -38,8 +37,7 @@ function defineLocalVariable( node, descr, context, typeId, refTypeId, name, ini
 	typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
 	local decl = {type=var, constructor={code=code,out=out}}
 	if type(initVal) == "function" then initVal = initVal() end
-	local init = applyCallable( node, decl, "=", {initVal})
-	return init
+	return applyCallable( node, decl, "=", {initVal})
 end
 -- Define a variable (what kind is depending on the context)
 function defineVariable( node, context, typeId, name, initVal)
@@ -52,7 +50,7 @@ function defineVariable( node, context, typeId, name, initVal)
 		return defineGlobalVariable( node, descr, context, typeId, refTypeId, name, initVal)
 	elseif context.domain == "member" then
 		if initVal then utils.errorMessage( node.line, "No initialization value in definition of member variable allowed") end
-		defineVariableMember( node, descr, context, typeId, refTypeId, name)
+		defineMemberVariable( node, descr, context, typeId, refTypeId, name)
 	else
 		utils.errorMessage( node.line, "Internal: Context domain undefined, context=%s", mewa.tostring(context))
 	end
