@@ -24,10 +24,10 @@ dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound
 dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
 dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expression types and arithmetics are defined here
 dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
+dofile( "examples/tutorial/sections/callableTypes.lua")			-- All type declarations for callables (functions,methods,etc.)
 dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
 dofile( "examples/tutorial/sections/controlBooleanTypes.lua")		-- Implementation of control boolean types
 dofile( "examples/tutorial/sections/variables.lua")			-- Define variables (globals, locals, members)
-dofile( "examples/tutorial/sections/output.lua")			-- Some helper functions for output
 
 -- AST Callbacks:
 local typesystem = {}
@@ -39,10 +39,11 @@ function typesystem.program( node)
 	utils.traverse( typedb, node, context)
 end
 function typesystem.extern_funcdef( node)
-	local name,ret,param = table.unpack( utils.traverse( typedb, node, {domain="global"}))
+	local context = {domain="global"}
+	local name,ret,param = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {externtype="C", name=name, symbolname=name, ret=ret, param=param, signature=""}
-	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, {domain="global"})
 	descr.rtllvmtype = (ret ~= voidType) and typeDescriptionMap[ ret].llvmtype or "void"
+	defineFunctionCall( node, descr, context)
 	print_section( "Typedefs", utils.constructor_format( llvmir.control.extern_functionDeclaration, descr))
 end
 function typesystem.extern_paramdef( node, param)
@@ -113,6 +114,7 @@ function typesystem.funcdef( node, context, pass)
 		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.symbolname
 				.. " (" .. utils.typeListString(typedb,descr.param) .. ")"
 				.. " -> " .. (rtype and utils.typeString(typedb,rtype) or "void") .. "\n")
+		defineFunctionCall( node, descr, context)
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)

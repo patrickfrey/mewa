@@ -100,7 +100,7 @@ llvmir.control = {
 	returnStatement = "ret {type} {this}\n",
 	returnVoidStatement = "ret void\n",
 	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
-	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
+	functionCall = "{out} = call {rtllvmtype} {symbolname}( {callargstr})\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
 	stringConstDeclaration = "@{name} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",

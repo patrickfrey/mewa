@@ -15,22 +15,23 @@ end
 -- Builds the argument string and the argument build-up code for a function call or interface method call constructors
 function buildCallArguments( subst, thisTypeId, thisConstructor, args, types)
 	local this_inp,code = constructorParts(thisConstructor or "%UNDEFINED")
-	local argstr = ""
-	if types and thisTypeId and thisTypeId ~= 0 then argstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp .. ", " end
+	local callargstr = ""
+	if types and thisTypeId and thisTypeId ~= 0 then callargstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp .. ", " end
 	if args then
 		for ii=1,#args do
 			local arg = args[ ii]
 			local arg_inp,arg_code = constructorParts( arg)
 			subst[ "arg" .. ii] = arg_inp
 			if types then
-				local llvmtype = typeDescriptionMap[ types[ ii]].llvmtype
-				if llvmtype then argstr = argstr .. llvmtype .. " " .. tostring(arg_inp) .. ", " else argstr = argstr .. "i32 0, " end
+				local llvmtype = types[ ii].llvmtype
+				if not llvmtype then utils.errorMessage( 0, "Parameter has no LLVM type specified") end
+				callargstr = callargstr .. llvmtype .. " " .. tostring(arg_inp) .. ", "
 			end
 			code = code .. arg_code
 		end
 	end
-	if types and thisTypeId ~= 0 then argstr = argstr:sub(1, -3) end
-	subst.argstr = argstr
+	if types or thisTypeId ~= 0 then callargstr = callargstr:sub(1, -3) end
+	subst.callargstr = callargstr
 	subst.this = this_inp
 	return code
 end

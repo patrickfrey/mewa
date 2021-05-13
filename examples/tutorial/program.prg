@@ -19,6 +19,7 @@ function salarySum float( Employee[10] list)
 	var float sum = 0.0;
 	while (list[idx].age)
 	{
+		list[idx].setSalary( list[idx].salary * 1.10); // Give them all a 10% raise
 		sum = sum + list[idx].salary;
 		idx = idx + 1;
 	}
