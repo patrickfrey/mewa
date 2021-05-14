@@ -81,7 +81,7 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 
 ### What are the hacks in the implementation of the example language1?
 Some may say that the whole example _language1_ is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimised for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
- 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a Lua table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately I don't have any idea to get around the problem in a different fashion.
+ 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a _Lua_ table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately I don't have any idea to get around the problem in a different fashion.
  2. *scope-steps for allocation/deallocation synchronization*: I got a problem with multiple constructors queing up at one place with a single scope-step assigned. This is a problem because the scope-step is used as the state that determines where the cleanup starts in case of an exception. The cleanup of an object gets linked to the scope-step at the moment when the object gets constructed. In case of an unbound reference this gets delayed until the constructor gets instantiated. In case of an expression with unbound reference arguments having a cleanup to register, this leads to multiple cleanup registration requests at one scope-step. Problem! A similar problem arises with structures. I "solved" this by assigning the scope-step of an unbound reference or of a structure as element to the constructor and using this scope-step as key for allocation/deallocation synchronization. This will hunt me sooner or later. And the effects will be spooky. Have to fix this otherwise somehow. Or some contracts have to be defined. Looking for ideas.
  3. *Cleaning up of partially constructed objects*: This problem caught on the wrong foot, especially the building of arrays from initializer lists. The solution is akward and needs to be revisited.
 
@@ -112,26 +112,26 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 <a name="astStructure"/>
 
 ### How to process the AST structure?
-The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexems explicitly declared as leaves and Lua calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the _AST_. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the Lua functions called. The example language uses a function utils.traverse defined in [typesystem_utils.Lua](../examples/typesystem_utils.Lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope-step if defined in the _AST_ and calls the function defined for the _AST_ node.
+The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexems explicitly declared as leaves and _Lua_ calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the _AST_. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the _Lua_ functions called. The example language uses a function utils.traverse defined in [typesystem_utils.lua](../examples/typesystem_utils.lua) for the tree traversal of sub nodes. The traversal function sets the current scope or scope-step if defined in the _AST_ and calls the function defined for the _AST_ node.
 
 <a name="astTraversalAndScope"/>
 
 ### How to handle lexical scopes?
 
-The _Scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type,reduction,instance) has a _scope_ definition attached. Depending on the current _scope-step_ (an integer number) only the subset of definitions having a _scope_ covering it are visible when resolving or deriving a type. The current _scope_ and the current _scope-step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. _Scope_ is usually used to envelop code blocks. Substructures on the other hand are preferrably implemented with a context type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context type to it. Every resolve type query can contain a set of context type candidates.
+The _scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type,reduction,instance) has a _scope_ definition attached. Depending on the current _scope-step_ (an integer number) only the subset of definitions having a _scope_ covering it are visible when resolving or deriving a type. The current _scope_ and the current _scope-step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. _Scope_ is usually used to envelop code blocks. Substructures on the other hand are preferrably implemented with a context type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context type to it. Every resolve type query can contain a set of context type candidates.
 
 <a name="scopeInstanceAndAllocators"/>
 
 ### How to store and access scope bound data?
 
-_Scope_ bound data in form of a Lua object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and implying inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
+_Scope_ bound data in form of a _Lua_ object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and implying inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
 
 <a name="tracing"/>
 
 ### How to debug/trace the _Mewa_ functions?
 
-A developer of a compiler front-end with Lua using _Mewa_ should not have to debug a program with a C/C++ debugger if something goes wrong.
-Fortunately, the _Mewa_ code for the important functions like typedb:resolve_type and typedb:derive_type is simple. I wrote parallel implementations in Lua that do the same. The _typedb_ API has been extended with convenient functions that make such parallel implementations possible. The following functions are in examples/typesystem_utils.lua:
+A developer of a compiler front-end with _Lua_ using _Mewa_ should not have to debug a program with a C/C++ debugger if something goes wrong.
+Fortunately, the _Mewa_ code for the important functions like typedb:resolve_type and typedb:derive_type is simple. I wrote parallel implementations in _Lua_ that do the same. The _typedb_ API has been extended with convenient functions that make such parallel implementations possible. The following functions are in examples/typesystem_utils.lua:
 
  * utils.getResolveTypeTrace( typedb, contextType, typeName, tagmask) is the equivalent of typedb:resolve_type 
  * utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_pathlen, max_pathlen) is the equivalent of typedb:derive_type 
@@ -305,7 +305,7 @@ For a languages allowing a schema like C++ we need multipass AST traversal. See 
 
 Sometimes some definitions have to be prioritized, e.g. member variable definitions have to be known before translating member functions.
 _Mewa_ does not support multipass traversal by nature, but you can implement it by passing additional parameters to the traversal routine.
-In the example grammar I attached a pass argument for the ```definition``` Lua callback:
+In the example grammar I attached a pass argument for the ```definition``` _Lua_ callback:
 ```
 inclass_definition	= typedefinition ";"		    (definition 1)
 	        		| variabledefinition ";"        (definition 2)
@@ -413,7 +413,7 @@ In the example _language1_ I implemented a very primitive exception handling. Th
 
 Every call that can potentially raise an exception needs a label to be jumped at in the case. The first instructions at this label are launching the exception handling and extracting the exception data, storing them into local variables reserved for that. In the following the code goes through a sequence of cleanup calls. After cleanup the exception structure is rebuilt and rethrown with the LLVM 'resume' instruction or the exception is processed. The instructions for launching the exception handling and ending it are different for the two cases. LLVM calls the case of rethrowing the exception with resume 'cleanup' and the case where the exception is processed 'catch'.
 
-The templates I used for implementing it are defined in ```llvmir.exception``` in the Lua module llvmir.lua. I will provide more documentation later.
+The templates I used for implementing it are defined in ```llvmir.exception``` in the _Lua_ module llvmir.lua. I will provide more documentation later.
 
 The most difficult about exception handling is the cleanup. In the example _language1_ I pair every constructor call where a destructor exists with a call registering a cleanup call with the current _scope-step_ in the current _allocation frame_. The _scope-step_ is the identifer that helps to figure out a label where to jump into the chain of cleanup commands from any possible location identified by a _scope-step_. Every cleanup chain of an _allocation frame_ ends with the jump to a label of the enclosing _allocation frame_ (called parent). For every exit case (return with a specific value, throwing an exception, handling an exception) there exists an own chain of cleanup calls with entry labels for any possible location to come from.
 

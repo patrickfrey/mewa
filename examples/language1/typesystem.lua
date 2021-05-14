@@ -2485,7 +2485,7 @@ function getRequiredTypeConstructor( node, redutype, operand, tagmask_decl, tagm
 		return operand.constructor
 	end
 end
--- For a callable item, create for each argument the lists of reductions needed to pass the arguments to it, with summation of the reduction weights
+-- For a callable item, create for each argument the lists of reductions needed to pass the arguments to it, with accumulation of the reduction weights
 function collectItemParameter( node, item, args, parameters)
 	local rt = {redulist={},llvmtypes={},weight=0.0}
 	for pi=1,#args do
@@ -2505,30 +2505,31 @@ function collectItemParameter( node, item, args, parameters)
 	end
 	return rt
 end
--- Get the best matching item from a list of items by weighting the matching of the arguments to the item parameter types
-function selectItemsMatchParameters( node, items, args, this_constructor)
-	function selectCandidateItemsBestWeight( items, item_parameter_map, maxweight)
-		local candidates,bestweight = {},nil
-		for ii,item in ipairs(items) do
-			if item_parameter_map[ ii] then -- we have a match
-				local weight = item_parameter_map[ ii].weight
-				if not maxweight or maxweight > weight + weightEpsilon then -- we have a candidate not looked at yet
-					if not bestweight then
+-- Select the candidate items with the highest weight not exceeding maxweight
+function selectCandidateItemsBestWeight( items, item_parameter_map, maxweight)
+	local candidates,bestweight = {},nil
+	for ii,item in ipairs(items) do
+		if item_parameter_map[ ii] then -- we have a match
+			local weight = item_parameter_map[ ii].weight
+			if not maxweight or maxweight > weight + weightEpsilon then -- we have a candidate not looked at yet
+				if not bestweight then
+					candidates = {ii}
+					bestweight = weight
+				elseif weight < bestweight + weightEpsilon then
+					if weight >= bestweight - weightEpsilon then -- they are equal
+						table.insert( candidates, ii)
+					else -- the new candidate is the single best match
 						candidates = {ii}
 						bestweight = weight
-					elseif weight < bestweight + weightEpsilon then
-						if weight >= bestweight - weightEpsilon then -- they are equal
-							table.insert( candidates, ii)
-						else -- the new candidate is the single best match
-							candidates = {ii}
-							bestweight = weight
-						end
 					end
 				end
 			end
 		end
-		return candidates,bestweight
 	end
+	return candidates,bestweight
+end
+-- Get the best matching item from a list of items by weighting the matching of the arguments to the item parameter types
+function selectItemsMatchParameters( node, items, args, this_constructor)
 	local item_parameter_map = {}
 	local bestmatch = {}
 	local candidates = {}
