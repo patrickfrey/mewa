@@ -31,7 +31,7 @@ dofile( "examples/tutorial/sections/variables.lua")			-- Define variables (globa
 
 -- AST Callbacks:
 local typesystem = {}
-function typesystem.program( node)
+function typesystem.program( node, options)
 	defineConstExprArithmetics()
 	initBuiltInTypes()
 	initControlBooleanTypes()

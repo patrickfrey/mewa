@@ -16,7 +16,7 @@ Compiler for language %s
 	<input> (string) File with source to compile
 ]], langname))
 		local targetTemplatePath = "examples/target/" .. args.target .. ".tpl"
-                return {input=args.input, output=nilIfEmpty( args.output), debug=nilIfEmpty( args.debug), target=targetTemplatePath}
+                return {input=args.input, output=nilIfEmpty( args.output), debug=nilIfEmpty( args.debug), target=targetTemplatePath, options={}}
         end
 }
 

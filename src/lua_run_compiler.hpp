@@ -22,10 +22,12 @@ extern "C" {
 namespace mewa {
 
 // \param[in] ls Lua state
+// \param[in] automaton LALR(1) parser automaton
+// \param[in] options_index Lua stack index of options passed to top level Lua AST callback functions
 // \param[in] source source to compile
 // \param[in] calltable Name of Lua global variable addressing the call table of the compiler
 // \param[in] dbgout optional debug output, null if not defined
-void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, FILE* dbgout);
+void luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, int options_index, const std::string_view& source, const char* calltable, FILE* dbgout);
 
 } //namespace
 #else

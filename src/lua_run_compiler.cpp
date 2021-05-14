@@ -284,7 +284,7 @@ static mewa::Error::Code luaErrorCode2ErrorCode( int rc)
 	return rc ? mewa::Error::LuaCallErrorUNKNOWN : mewa::Error::Ok;
 }
 
-static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbgout)
+static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbgout, int options_index)
 {
 	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 	lua_pushvalue( ls, li);						// STK: [NODE]
@@ -334,6 +334,11 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 		}
 		else
 		{
+			nargs += 1;
+		}
+		if (!lua_isnil( ls, options_index))
+		{
+			lua_pushvalue( ls, options_index);
 			nargs += 1;
 		}
 		int rc = lua_pcall( ls, nargs, 1/*nresults*/, 0/*errfunc*/);	// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
@@ -526,7 +531,7 @@ static void printDebugAction( FILE* dbgout, CompilerContext& ctx, const mewa::Au
 	}
 }
 
-void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, const std::string_view& source, const char* calltable, FILE* dbgout)
+void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, int options_index, const std::string_view& source, const char* calltable, FILE* dbgout)
 {
 	int buffer[ 2048];
 	mewa::monotonic_buffer_resource memrsc( buffer, sizeof buffer);
@@ -581,13 +586,13 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, cons
 	{
 		if (dbgout) printDebugAction( dbgout, ctx, automaton, lexem);
 	}
-	// Call Lua with built tree structures:
+	// Call Lua top level AST node callback functions with their associated nodes as parameter:
 	if (ctx.calltablesize)
 	{
 		int lastElementOnStack = lua_gettop( ls);
 		for (int li=calltableref+1; li<=lastElementOnStack; ++li)
 		{
-			luaCallNodeFunction( ls, li, ctx.calltable, ctx.dbgout);
+			luaCallNodeFunction( ls, li, ctx.calltable, ctx.dbgout, options_index);
 		}
 	}
 	lua_pop( ls, 1 + lua_gettop( ls) - nofLuaStackElements);

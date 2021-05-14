@@ -3888,7 +3888,7 @@ function typesystem.main_procdef( node)
 	typedb:scope( scope_bk)
 	print( "\n" .. utils.constructor_format( llvmir.control.mainDeclaration, {body=body}))
 end
-function typesystem.program( node)
+function typesystem.program( node, options)
 	llvmir.init()
 	initBuiltInTypes()
 	globalCallableEnvironment = createCallableEnvironment( node, "globals ", nil, false, "%ir", "IL")

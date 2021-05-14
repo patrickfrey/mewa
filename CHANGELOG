@@ -1,0 +1,10 @@
+mewa (0.2.0-1) stable; urgency=low
+  * Added command line parser return value options, passed as additional argument to top level Lua AST callback functions of the compiler
+  * Added mewa.version command
+  * Make tagmask default uniform across all resolving functions, default is allways ALL and not NOTHING
+ -- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 15 Mai 2021 10:12:01 +0200
+
+mewa (0.1.0-1) stable; urgency=low
+  * Initial revision
+ -- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 1 Mai 2021 15:16:29 +0200
+

@@ -406,17 +406,18 @@ static void copyFileNameToBuffer( char* buf, std::size_t bufsize, std::string_vi
 }
 static int mewa_compiler_run( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "compiler:run( target, inputfile [,outputfile [,dbgoutput]])";
+	[[maybe_unused]] static const char* functionName = "compiler:run( target, options, inputfile, [,outputfile [,dbgoutput]])";
 	mewa_compiler_userdata_t* cp = (mewa_compiler_userdata_t*)luaL_checkudata( ls, 1, mewa_compiler_userdata_t::metatableName());
 	try
 	{
-		int nargs = mewa::lua::checkNofArguments( functionName, ls, 3/*minNofArgs*/, 5/*maxNofArgs*/);
+		int nargs = mewa::lua::checkNofArguments( functionName, ls, 4/*minNofArgs*/, 6/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 10);
 
-		char targetfn[ 256]; //... target filename
+		char targetfn[ 256]; 	//... target filename
 		copyFileNameToBuffer( targetfn, sizeof(targetfn), mewa::lua::getArgumentAsString( functionName, ls, 2));
-		char filename[ 256]; //... source filename
-		copyFileNameToBuffer( filename, sizeof(filename), mewa::lua::getArgumentAsString( functionName, ls, 3));
+		int options_index = 3;	//... options
+		char filename[ 256]; 	//... source filename
+		copyFileNameToBuffer( filename, sizeof(filename), mewa::lua::getArgumentAsString( functionName, ls, 4));
 		std::string_view outputfn = "stdout";
 
 		std::string sourcestr_ = mewa::readFile( std::string(filename));
@@ -424,15 +425,15 @@ static int mewa_compiler_run( lua_State* ls)
 		std::string targetstr_ = mewa::readFile( std::string(targetfn));
 		std::string_view targetptr = move_string_on_lua_stack( ls, std::move( targetstr_));	// STK: [COMPILER] [INPUTFILE] [SOURCE] [TARGET]
 
-		if (nargs >= 4)
+		if (nargs >= 5)
 		{
-			if (!lua_isnil( ls, 4))
+			if (!lua_isnil( ls, 5))
 			{
-				outputfn = mewa::lua::getArgumentAsString( functionName, ls, 4);
+				outputfn = mewa::lua::getArgumentAsString( functionName, ls, 5);
 			}
-			if (nargs >= 5 && !lua_isnil( ls, 5))
+			if (nargs >= 6 && !lua_isnil( ls, 6))
 			{
-				std::string_view debugFileName = mewa::lua::getArgumentAsString( functionName, ls, 5);
+				std::string_view debugFileName = mewa::lua::getArgumentAsString( functionName, ls, 6);
 				cp->debugFileHandle = mewa_compiler_userdata_t::openFile( debugFileName.data());
 				if (!cp->debugFileHandle) throw mewa::Error( (mewa::Error::Code) errno, debugFileName);
 			}
@@ -450,7 +451,7 @@ static int mewa_compiler_run( lua_State* ls)
 		luaL_setfuncs( ls, g_printlib, 1/*number of closure elements*/);
 		lua_pop( ls, 1);
 
-		mewa::luaRunCompiler( ls, cp->automaton, sourceptr, cp->callTableName.buf, cp->debugFileHandle);
+		mewa::luaRunCompiler( ls, cp->automaton, options_index, sourceptr, cp->callTableName.buf, cp->debugFileHandle);
 		{
 			std::string triple = mewa::fileBaseName( targetfn);
 

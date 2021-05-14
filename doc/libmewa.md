@@ -6,6 +6,7 @@ The _Mewa_ module imported with ```require "mewa"``` has the following functions
 1. [mewa.compiler](#compiler)  ~ Create a Compiler Object
 1. [mewa.typedb](#typedb)  ~ Create a Type Database Object
 1. [mewa.tostring](#tostring)  ~ Serialization for Debugging Purposes
+1. [mewa.version](#version)  ~ Get the current _Mewa_ version
 1. [mewa.stacktrace](#stacktrace) ~ An Alternative to debug.traceback
 1. [mewa.llvm_float_tohex](#llvm_float_tohex)  ~ Display of 32bit floating point numbers for output to LLVM IR
 1. [mewa.llvm_double_tohex](#llvm_double_tohex)  ~ Display of 64bit floating point numbers (double) for output to LLVM IR
@@ -23,13 +24,14 @@ compiler = mewa.compiler( compilerdef)
 ```compilerdef``` is the structure created from the grammar definition by the _mewa_ program.
 
 ### Run the Compiler
-The compiler has one method ```run``` that takes 3 arguments from which two are optional:
+The compiler has one method ```run``` that takes up to 5 arguments from which two are optional:
 
 ```Lua
-compiler:run( targetfile, inputfile, outputfile, dbgout)
+compiler:run( targetfile, options, inputfile, outputfile, dbgout)
 
 ```
 ```targetfile``` specifies the path to the file that is the template used for a specific target where {Code} and {Source} are substituted by the output printed and the name of the source file.
+```options``` specifies some options defined by the command line parser
 ```inputfile``` specifies the path to the file to compile.
 ```outputfile``` specifies the path to the file to write the compiler output to. If not specified the output is written to stdandard output.
 ```dbgout``` specifies the path to the file to write the compiler debug output to. The debug output logs the actions of the compiler and may be helpful during the early stages of development.
@@ -68,6 +70,23 @@ A documentation can be found [here](typedb.md).
 
 #### Remark
 The serialization is not complete. Serialization is done only for raw tables, numbers and strings. It just does the job suitable for _Mewa_. 
+
+
+
+<a name="version"/>
+
+## Version of _Mewa_
+
+### mewa.version
+Get the 3 parts of the version of _Mewa_.
+
+#### Parameter
+| #          | Name     | Type              | Description                                                      |
+| :--------- | :------- | :---------------- | :--------------------------------------------------------------- |
+| Return 1st |          | integer           | Major version of _Mewa_.                                         |
+| Return 2nd |          | integer           | Minor version of _Mewa_.                                         |
+| Return 3rd |          | integer           | Patch version of _Mewa_.                                         |
+
 
 
 <a name="stacktrace"/>

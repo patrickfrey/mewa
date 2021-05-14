@@ -36,7 +36,6 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
     * [typedb:instance_tree](#instance_tree)
     * [typedb:type_tree](#type_tree)
     * [typedb:reduction_tree](#reduction_tree)
-1. [Version of _Mewa_](#version)
 
 
 <a name="createTypeDb"/>
@@ -568,20 +567,4 @@ Get the tree of scopes with the list of reductions defined there.
 #### Remark
 This is a costly operation and not intended to be used as data structure for the compiler itself. 
 It is thought as help during development.
-
-
-<a name="version"/>
-
-## Version of _Mewa_
-
-### typedb:version
-Get the 3 parts of the version of _Mewa_.
-
-#### Parameter
-| #          | Name     | Type              | Description                                                      |
-| :--------- | :------- | :---------------- | :--------------------------------------------------------------- |
-| Return 1st |          | integer           | Major version of _Mewa_.                                         |
-| Return 2nd |          | integer           | Minor version of _Mewa_.                                         |
-| Return 3rd |          | integer           | Patch version of _Mewa_.                                         |
-
 
