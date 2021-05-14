@@ -68,6 +68,8 @@ It aims to support the mapping of a programming language to an intermediate repr
 It is not recommended to use _Mewa_ for other than compilable, stronly typed programming languages, because it was not designed for other language classes.
 To define a type system as graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
 
+_Mewa_ is currently based on an own implementation of a LALR(1) parser generator. I am open for alternatives or extensions to cover more programming languages.
+
 
 <a name="nameMewa"/>
 
