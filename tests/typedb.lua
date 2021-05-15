@@ -41,7 +41,7 @@ end
 function testRegisterAllocator()
 	typedb = mewa.typedb()
 
-	-- A register allocator as a function counting from 1, returning the LLVM register identifiers:
+	-- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
 	function register_allocator()
 		local i = 0
 		return function ()

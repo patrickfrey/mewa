@@ -557,7 +557,10 @@ static int mewa_typedb_step( lua_State* ls)
 		int nargs = mewa::lua::checkNofArguments( functionName, ls, 1/*minNofArgs*/, 2/*maxNofArgs*/);
 		mewa::lua::checkStack( functionName, ls, 2);
 		mewa::Scope::Step rt = td->curStep;
-		if (nargs >= 2) td->curStep = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+		if (nargs >= 2)
+		{
+			td->curStep = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
+		}
 		lua_pushinteger( ls, rt);
 	}
 	catch (...) { lippincottFunction( ls); }

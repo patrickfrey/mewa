@@ -7,7 +7,7 @@ function constructor_format( fmt, argtable)
 	return (fmt:gsub("[{]([_%d%w]*)[}]", function( match) return argtable[ match] or "" end))
 end
 
--- A register allocator as a function counting from 1, returning the LLVM register identifiers:
+-- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
 function register_allocator()
 	local i = 0
 	return function ()

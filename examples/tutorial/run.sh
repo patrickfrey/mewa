@@ -51,5 +51,25 @@ echo ""
 echo "[10] Run example scope:"
 $LUABIN examples/tutorial/examples/scope.lua
 
+echo ""
+echo "[11] Run example weight1:"
+$LUABIN examples/tutorial/examples/weight1.lua
+
+echo ""
+echo "[12] Run example weight2:"
+$LUABIN examples/tutorial/examples/weight2.lua
+
+echo ""
+echo "[13] Run example tags1:"
+$LUABIN examples/tutorial/examples/tags1.lua
+
+echo ""
+echo "[14] Run example tags2:"
+$LUABIN examples/tutorial/examples/tags2.lua
+
+echo ""
+echo "[15] Run example env:"
+$LUABIN examples/tutorial/examples/env.lua
+
 
 
