@@ -41,6 +41,7 @@ local controlTrueType = typedb:def_type( 0, " controlTrueType")
 local controlFalseType = typedb:def_type( 0, " controlFalseType")
 local scalarBooleanType = typedb:def_type( 0, "bool")
 
+-- Build a boolean true type from a boolean value
 local function booleanToFalseExit( constructor)
 	local true_label = label()
 	local false_label = label()
@@ -48,6 +49,7 @@ local function booleanToFalseExit( constructor)
 			.. constructor_format( "br i1 {inp}, label %{on}, label %{out}\n{on}:\n",
 				{inp=constructor.out, out=false_label, on=true_label}), out=false_label}
 end
+-- Build a boolean false type from a boolean value
 local function booleanToTrueExit( constructor)
 	local true_label = label()
 	local false_label = label()
@@ -59,14 +61,18 @@ end
 typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, 1)
 typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, 1)
 
--- Implementation of an 'if' statement, parameter condition is a type/constructor pair, block a constructor, return value is a constructor
+-- Implementation of an 'if' statement
+--   condition is a type/constructor pair, block a constructor, return value is a constructor
 function if_statement( condition, block)
 	local reductions,weight,altpath = typedb:derive_type( controlTrueType, condition.type)
 	if not weight then error( "Type not usable as conditional") end
 	if altpath then error("Ambiguous") end
 	local constructor = condition.constructor
-	for _,redu in ipairs(reductions or {}) do constructor = applyConstructor( redu.constructor, constructor) end
-	local code = constructor.code .. block.code .. constructor_format( "br label {out}\n{out}:\n", {out=constructor.out})
+	for _,redu in ipairs(reductions or {}) do
+		constructor = applyConstructor( redu.constructor, constructor)
+	end
+	local code = constructor.code .. block.code
+			.. constructor_format( "br label {out}\n{out}:\n", {out=constructor.out})
 	return {code=code}
 end
 
@@ -74,7 +80,8 @@ local condition_in = register()
 local condition_out = register()
 local condition = {
 	type=scalarBooleanType,
-	constructor={code = constructor_format( "{out} = icmp ne i32 {this}, 0\n", {out=condition_out,this=condition_in}), out=condition_out}
+	constructor={code = constructor_format( "{out} = icmp ne i32 {this}, 0\n",
+				{out=condition_out,this=condition_in}), out=condition_out}
 }
 local block = {code = "... this code is executed if the value in " .. condition_in .. " is not 0 ...\n"}
 

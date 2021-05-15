@@ -21,4 +21,4 @@ typedb:step( 45);  print( typedb:get_instance( "register")());
 typedb:step( 500);  print( typedb:get_instance( "register")());
 -- Allocate a register in the scope-step 49, that is the second register in [2..300]:
 typedb:step( 49);  print( typedb:get_instance( "register")());
-s
+

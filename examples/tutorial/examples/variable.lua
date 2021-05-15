@@ -61,13 +61,13 @@ typedb:def_reduction( intRefType, variable_b, nil, 1)
 io.stdout:write( constructor_format( "{out} = alloca i32, align 4 ; allocation of 'b'\n", {out=register_b}))
 
 -- [5] Assign the value to "a" to "b":
--- [5.1] Resolve the operator "a = .."
+-- [5.1] Resolve the operator "b = .."
 local resolveTypeId, reductions, items = typedb:resolve_type( variable_b, "=")
 if not resolveTypeId then error( "Not found") elseif type( resolveTypeId) == "table" then error( "Ambiguous") end
 
 -- [5.2] For all candidates of "b = ..", get the first one with one parameter and match the argument to this parameter
 local constructor = typedb:type_constructor( variable_b)
-for _,redu in ipairs(reductions or {}) do constructor = applyConstructor( constructor) end
+for _,redu in ipairs(reductions or {}) do constructor = applyConstructor( redu.constructor, constructor) end
 for _,item in ipairs(items) do
 	local parameters = typedb:type_parameters( item)
 	if #parameters == 1 then

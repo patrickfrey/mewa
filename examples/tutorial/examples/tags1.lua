@@ -32,7 +32,8 @@ function defineType( name)
 	typedb:def_reduction( valTypeId, refTypeId,
 		function(this)
 			local out = register()
-			local code = constructor_format( "{out} = load %{symbol}, %{symbol}* {this}\n", {symbol=name,out=out,this=this.out})
+			local fmt = "{out} = load %{symbol}, %{symbol}* {this}\n"
+			local code = constructor_format( fmt, {symbol=name,out=out,this=this.out})
 			return {out=out, code=code}
 		end, 1)
 	return {val=valTypeId, ref=refTypeId}
@@ -44,17 +45,18 @@ local register = register_allocator()
 function loadMemberConstructor( classname, index)
 	return function( this)
 		local out = register()
+		local fmt = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n"
 		local code = (this.code or "")
-			.. constructor_format( "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
-				{out=out,this=this.out,symbol=classname,index=index})
+			.. constructor_format( fmt, {out=out,this=this.out,symbol=classname,index=index})
 		return {code=code, out=out}
 	end
 end
 -- Constructor for calling the default ctor, assuming that it exists
 function callDefaultCtorConstructor( classname)
 	return function(this)
+		local fmt = "call void @__ctor_init_{symbol}( %{symbol}* {this})\n"
 		local code = (this.code or "") .. (arg[1].code or "")
-			.. constructor_format( "call void @__ctor_init_{symbol}( %{symbol}* {this})\n", {this=this.out,symbol=classname})
+			.. constructor_format( fmt, {this=this.out,symbol=classname})
 		return {code=code, out=out}
 	end
 end
