@@ -43,3 +43,13 @@ else
 	exit 1
 fi
 
+echo ""
+echo "[9] Run example variable assignment:"
+$LUABIN examples/tutorial/examples/variable.lua
+
+echo ""
+echo "[10] Run example scope:"
+$LUABIN examples/tutorial/examples/scope.lua
+
+
+

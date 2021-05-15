@@ -23,7 +23,7 @@ local tagmask_typeCast = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduct
 local tagmask_typeAlias = typedb.reduction_tagmask( tag_typeAlias)
 local tagmask_pushVararg = typedb.reduction_tagmask( tag_typeAlias, tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_pushVararg)
 
--- Centralized list of the ordering of the reduction rules determined by their weights, we force an order of reductions by defining the weight sums as polynomials:
+-- Centralized list of the ordering of the reduction rules determined by their weights:
 local rdw_conv = 1.0			-- Reduction weight of conversion
 local rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
 local rdw_sign = 0.125			-- Conversion of integers changing sign
