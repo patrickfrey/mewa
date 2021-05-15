@@ -71,5 +71,9 @@ echo ""
 echo "[15] Run example env:"
 $LUABIN examples/tutorial/examples/env.lua
 
+echo ""
+echo "[16] Run example control:"
+$LUABIN examples/tutorial/examples/control.lua
+
 
 
