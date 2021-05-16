@@ -15,7 +15,10 @@ The program ```mewa``` will generate a Lua script that will transform any source
 
 ## Goals
 
-This tutorial starts with some self-contained examples of using the Lua library of Mewa to build the type system of your programming language. Self-contained means that nothing is used but the library. After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language.
+This tutorial starts with some self-contained examples of using the Lua library of Mewa to build the type system of your programming language. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading and return to the snippets you did not
+understand completely later.
+
+After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language.
 The example program we will compile is the following:
 ```
 extern function printf void( string, double);
@@ -71,7 +74,6 @@ main
 ```
 We will compile this program with the tutorial compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
-
 
 ## Target Audience
 
@@ -750,7 +752,9 @@ L2:
 ```
 
 #### Conclusion
-Control structures are implemented by constructing the control boolean type required. Boolean operators as the logical and or the logical or are constructed by wiring control boolean types together. This has not been done in this example, but it is imaginable after constructing an IF. The construction of types with reduction rules does not stop here. Control structures are not a entirely different animal. I think we are now ready to look at our example compiler as a whole as we have introduced the whole variety of functions of the typedb library.
+Control structures are implemented by constructing the control boolean type required. Boolean operators as the logical and or the logical or are constructed by wiring control boolean types together. This has not been done in this example, but it is imaginable after constructing an IF. The construction of types with reduction rules does not stop here. Control structures are not a entirely different animal.
+
+I think we are now ready to look at our example compiler as a whole as we have introduced the whole variety of functions of the typedb library.
 
 
 
