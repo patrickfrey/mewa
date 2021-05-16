@@ -119,6 +119,7 @@ by applying the list of constructors on this path.
 Let's have a look at the example:
 
 #### Source
+File examples/variable.lua
 ```lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -254,6 +255,7 @@ All declarations in the typedb are bound to a scope, all queryies of the typedb 
 The example is fairly artificial, but it shows how it works:
 
 #### Source
+File examples/scope.lua
 ```lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -297,10 +299,20 @@ Retrieve X instance of scope {1,100}
 Retrieve X !NOTFOUND
 
 ```
+#### Conclusion
+This was easy, wasn't it? What is missing now is how the current scope step and scope are set. I chose the variant of treating it as an own aspect. 
+The function used for the AST tree traversal sets the current scope step and scope. This works for most of the cases. Sometimes you have to set the scope manually in nodes that implement declarations of different scopes, like for example function declarations with a function body in an own scope.
+
 
 ### Weight of Reductions
 
+Now we have to look again at something that is a little bit puzzling. We have to assign weights to reductions. The problem is that even trivial examples of type queryies lead to ambiguity if we do not introduce a weighting scheme that memorizes a preference. Real ambiguity is something we want to detect as an error.
+I came to the conclusion that it is the best to declare all reduction weights at one central place in the source and to document it well.
+
+Let's have a look at an example without weighting of reductions that will lead to an ambiguity. 
+
 #### Failing example
+File examples/weight1.lua
 ```lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -364,6 +376,9 @@ Ambiguous: long -> const long -> const int | long -> int -> const int
 
 ```
 #### Adding weights
+File examples/weight2.lua
+
+Here is a diff with the edits we have to make for fixing the problem:
 ```
 3a4,12
 > -- Centralized list of the ordering of the reduction rules determined by their weights:
