@@ -57,6 +57,68 @@ $EXAMPLE:tutorial_scope
 $EXAMOUT:tutorial_scope
 ```
 
+### Weight of Reductions
+
+#### Failing example
+```lua
+$EXAMPLE:tutorial_weight1
+```
+#### Output
+```
+$EXAMOUT:tutorial_weight1
+```
+#### Adding weights
+```
+$EXAMPLE:tutorial_weight_diff
+```
+#### Output with weights
+```
+$EXAMOUT:tutorial_weight2
+```
+
+### Tags of Reductions
+
+#### Failing example
+```lua
+$EXAMPLE:tutorial_tags1
+```
+#### Output
+```
+$EXAMOUT:tutorial_tags1
+```
+#### Adding tags
+```
+$EXAMPLE:tutorial_tags_diff
+```
+#### Output with tags
+```
+$EXAMOUT:tutorial_tags2
+```
+
+
+### Objects with Scope
+
+#### Source
+```lua
+$EXAMPLE:tutorial_env
+```
+#### Output
+```
+$EXAMOUT:tutorial_env
+```
+
+
+### Control Structures, Implementing an IF
+
+#### Source
+```lua
+$EXAMPLE:tutorial_control
+```
+#### Output
+```
+$EXAMOUT:tutorial_control
+```
+
 
 
 

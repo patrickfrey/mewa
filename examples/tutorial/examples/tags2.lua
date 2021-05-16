@@ -3,8 +3,8 @@ typedb = mewa.typedb()
 
 -- [1] Define all tags and tag masks
 -- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
-tag_typeDeclaration = 1			-- Type declaration relation (e.g. variable to data type)
-tag_typeDeduction = 2			-- Type deduction (e.g. inheritance)
+tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
+tag_typeDeduction   = 2		-- Type deduction (e.g. inheritance)
 
 -- Sets of tags used for resolving a type or deriving a type, depending on the case
 tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
@@ -42,7 +42,8 @@ function defineType( name)
 	typedb:def_reduction( valTypeId, refTypeId,
 		function(this)
 			local out = register()
-			local code = constructor_format( "{out} = load %{symbol}, %{symbol}* {this}\n", {symbol=name,out=out,this=this.out})
+			local fmt = "{out} = load %{symbol}, %{symbol}* {this}\n"
+			local code = constructor_format( fmt, {symbol=name,out=out,this=this.out})
 			return {out=out, code=code}
 		end, tag_typeDeduction)
 	return {val=valTypeId, ref=refTypeId}
@@ -54,17 +55,18 @@ local register = register_allocator()
 function loadMemberConstructor( classname, index)
 	return function( this)
 		local out = register()
+		local fmt = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n"
 		local code = (this.code or "")
-			.. constructor_format( "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
-				{out=out,this=this.out,symbol=classname,index=index})
+			.. constructor_format( fmt, {out=out,this=this.out,symbol=classname,index=index})
 		return {code=code, out=out}
 	end
 end
 -- Constructor for calling the default ctor, assuming that it exists
 function callDefaultCtorConstructor( classname)
 	return function(this)
+		local fmt = "call void @__ctor_init_{symbol}( %{symbol}* {this})\n"
 		local code = (this.code or "") .. (arg[1].code or "")
-			.. constructor_format( "call void @__ctor_init_{symbol}( %{symbol}* {this})\n", {this=this.out,symbol=classname})
+			.. constructor_format( fmt, {this=this.out,symbol=classname})
 		return {code=code, out=out}
 	end
 end
@@ -83,8 +85,3 @@ local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.re
 if not resolveTypeId then print( "Not found") elseif type( resolveTypeId) == "table" then print( "Ambiguous") end
 
 for _,item in ipairs(items or {}) do print( "Found " .. typedb:type_string( item) .. "\n") end
-
-
-
-
-

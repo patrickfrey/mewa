@@ -59,6 +59,8 @@ echo ""
 echo "[12] Run example weight2:"
 $LUABIN examples/tutorial/examples/weight2.lua
 
+diff examples/tutorial/examples/weight1.lua examples/tutorial/examples/weight2.lua > examples/tutorial/examples/weight_diff.txt
+
 echo ""
 echo "[13] Run example tags1:"
 $LUABIN examples/tutorial/examples/tags1.lua
@@ -66,6 +68,8 @@ $LUABIN examples/tutorial/examples/tags1.lua
 echo ""
 echo "[14] Run example tags2:"
 $LUABIN examples/tutorial/examples/tags2.lua
+
+diff examples/tutorial/examples/tags1.lua examples/tutorial/examples/tags2.lua > examples/tutorial/examples/tags_diff.txt
 
 echo ""
 echo "[15] Run example env:"

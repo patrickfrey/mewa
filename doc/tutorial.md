@@ -238,6 +238,395 @@ Retrieve X !NOTFOUND
 
 ```
 
+### Weight of Reductions
+
+#### Failing example
+```lua
+mewa = require "mewa"
+typedb = mewa.typedb()
+
+-- Build a constructor
+function applyConstructor( constructor, this, arg)
+	if constructor then
+		if (type(constructor) == "function") then return constructor( this, arg) else return constructor end
+	else
+		return this
+	end
+end
+
+-- Type list as string
+function typeListString( typeList, separator)
+	if not typeList or #typeList == 0 then return "" end
+	local rt = typedb:type_string( type(typeList[ 1]) == "table" and typeList[ 1].type or typeList[ 1])
+	for ii=2,#typeList do
+		rt = rt .. separator .. typedb:type_string( type(typeList[ ii]) == "table" and typeList[ ii].type or typeList[ ii])
+	end
+	return rt
+end
+
+-- Define a type with all its variations having different qualifiers
+function defineType( name)
+	local valTypeId = typedb:def_type( 0, name)
+	local refTypeId = typedb:def_type( 0, name .. "&")
+	local c_valTypeId = typedb:def_type( 0, "const " .. name)
+	local c_refTypeId = typedb:def_type( 0, "const " .. name .. "&")
+	typedb:def_reduction( valTypeId, refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1)
+	typedb:def_reduction( c_valTypeId, c_refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1)
+	typedb:def_reduction( c_valTypeId, valTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1)
+	typedb:def_reduction( c_refTypeId, refTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1)
+	return {val=valTypeId, ref=refTypeId, c_val=c_valTypeId, c_ref=c_refTypeId}
+end
+
+local qualitype_int = defineType( "int")
+local qualitype_long = defineType( "long")
+
+typedb:def_reduction( qualitype_int.val, qualitype_long.val, function( arg) return "convert int ( " .. arg .. ")"  end, 1)
+typedb:def_reduction( qualitype_int.c_val, qualitype_long.c_val, function( arg) return "convert const int ( " .. arg .. ")"  end, 1)
+typedb:def_reduction( qualitype_long.val, qualitype_int.val, function( arg) return "convert long ( " .. arg .. ")"  end, 1)
+typedb:def_reduction( qualitype_long.c_val, qualitype_int.c_val, function( arg) return "convert const long ( " .. arg .. ")" end, 1)
+
+local reductions,weight,altpath = typedb:derive_type( qualitype_int.c_val, qualitype_long.ref)
+if not weight then
+	print( "Not found!")
+elseif altpath then
+	print( "Ambiguous: " .. typeListString( reductions, " -> ") .. " | " .. typeListString( altpath, " -> "))
+else
+	local constructor = typedb:type_name( qualitype_long.ref)
+	for _,redu in ipairs(reductions or {}) do constructor = applyConstructor( redu.constructor, constructor) end
+
+	print( constructor)
+end
+
+```
+#### Output
+```
+Ambiguous: long -> const long -> const int | long -> int -> const int
+
+```
+#### Adding weights
+```
+3a4,12
+> -- Centralized list of the ordering of the reduction rules determined by their weights:
+> local weight_conv=	1.0		-- weight of a conversion
+> local weight_const_1=	0.5 / (1*1)	-- make const of a type having one qualifier
+> local weight_const_2=	0.5 / (2*2)	-- make const of a type having two qualifiers
+> local weight_const_3=	0.5 / (3*3)	-- make const of a type having three qualifiers
+> local weight_ref_1=	0.25 / (1*1)	-- strip reference of a type having one qualifier
+> local weight_ref_2=	0.25 / (2*2)	-- strip reference of a type having two qualifiers
+> local weight_ref_3=	0.25 / (3*3)	-- strip reference of a type having three qualifiers
+> 
+29,32c38,41
+< 	typedb:def_reduction( valTypeId, refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1)
+< 	typedb:def_reduction( c_valTypeId, c_refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1)
+< 	typedb:def_reduction( c_valTypeId, valTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1)
+< 	typedb:def_reduction( c_refTypeId, refTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1)
+---
+> 	typedb:def_reduction( valTypeId, refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1, weight_ref_1)
+> 	typedb:def_reduction( c_valTypeId, c_refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1, weight_ref_2)
+> 	typedb:def_reduction( c_valTypeId, valTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1, weight_const_1)
+> 	typedb:def_reduction( c_refTypeId, refTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1, weight_const_2)
+39,42c48,51
+< typedb:def_reduction( qualitype_int.val, qualitype_long.val, function( arg) return "convert int ( " .. arg .. ")"  end, 1)
+< typedb:def_reduction( qualitype_int.c_val, qualitype_long.c_val, function( arg) return "convert const int ( " .. arg .. ")"  end, 1)
+< typedb:def_reduction( qualitype_long.val, qualitype_int.val, function( arg) return "convert long ( " .. arg .. ")"  end, 1)
+< typedb:def_reduction( qualitype_long.c_val, qualitype_int.c_val, function( arg) return "convert const long ( " .. arg .. ")" end, 1)
+---
+> typedb:def_reduction( qualitype_int.val, qualitype_long.val, function( arg) return "convert int ( " .. arg .. ")"  end, 1, weight_conv)
+> typedb:def_reduction( qualitype_int.c_val, qualitype_long.c_val, function( arg) return "convert const int ( " .. arg .. ")"  end, 1, weight_conv)
+> typedb:def_reduction( qualitype_long.val, qualitype_int.val, function( arg) return "convert to long ( " .. arg .. ")"  end, 1, weight_conv)
+> typedb:def_reduction( qualitype_long.c_val, qualitype_int.c_val, function( arg) return "convert to const long ( " .. arg .. ")"  end, 1, weight_conv)
+
+```
+#### Output with weights
+```
+convert const int ( load ( make const ( long&)))
+
+```
+
+### Tags of Reductions
+
+#### Failing example
+```lua
+mewa = require "mewa"
+typedb = mewa.typedb()
+
+-- [1] Define some helper functions
+-- Map template for LLVM Code synthesis
+function constructor_format( fmt, argtable)
+	return (fmt:gsub("[{]([_%d%w]*)[}]", function( match) return argtable[ match] or "" end))
+end
+
+-- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
+function register_allocator()
+	local i = 0
+	return function ()
+		i = i + 1
+		return "%R" .. i
+	end
+end
+
+-- Build a constructor
+function applyConstructor( constructor, this, arg)
+	if constructor then
+		if (type(constructor) == "function") then return constructor( this, arg) else return constructor end
+	else
+		return this
+	end
+end
+
+-- Define a type with variations having different qualifiers
+function defineType( name)
+	local valTypeId = typedb:def_type( 0, name)
+	local refTypeId = typedb:def_type( 0, name .. "&")
+	typedb:def_reduction( valTypeId, refTypeId,
+		function(this)
+			local out = register()
+			local fmt = "{out} = load %{symbol}, %{symbol}* {this}\n"
+			local code = constructor_format( fmt, {symbol=name,out=out,this=this.out})
+			return {out=out, code=code}
+		end, 1)
+	return {val=valTypeId, ref=refTypeId}
+end
+
+local register = register_allocator()
+
+-- Constructor for loading a member reference
+function loadMemberConstructor( classname, index)
+	return function( this)
+		local out = register()
+		local fmt = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n"
+		local code = (this.code or "")
+			.. constructor_format( fmt, {out=out,this=this.out,symbol=classname,index=index})
+		return {code=code, out=out}
+	end
+end
+-- Constructor for calling the default ctor, assuming that it exists
+function callDefaultCtorConstructor( classname)
+	return function(this)
+		local fmt = "call void @__ctor_init_{symbol}( %{symbol}* {this})\n"
+		local code = (this.code or "") .. (arg[1].code or "")
+			.. constructor_format( fmt, {this=this.out,symbol=classname})
+		return {code=code, out=out}
+	end
+end
+
+local qualitype_baseclass = defineType("baseclass")
+local qualitype_class = defineType("class")
+
+-- Define the default ctor of baseclass
+local constructor_baseclass = typedb:def_type( qualitype_baseclass.ref, "constructor", callDefaultCtorConstructor("baseclass"))
+
+-- Define the inheritance of class from baseclass
+typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberConstructor( "class", 1), 1)
+
+-- Search for the constructor of class (that does not exist)
+local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor")
+if not resolveTypeId then print( "Not found") elseif type( resolveTypeId) == "table" then print( "Ambiguous") end
+
+for _,item in ipairs(items or {}) do print( "Found " .. typedb:type_string( item) .. "\n") end
+
+```
+#### Output
+```
+Found baseclass& constructor
+
+
+```
+#### Adding tags
+```
+3a4,13
+> -- [1] Define all tags and tag masks
+> -- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
+> tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
+> tag_typeDeduction   = 2		-- Type deduction (e.g. inheritance)
+> 
+> -- Sets of tags used for resolving a type or deriving a type, depending on the case
+> tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
+> tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
+> 
+> 
+38c48
+< 		end, 1)
+---
+> 		end, tag_typeDeduction)
+71c81
+< typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberConstructor( "class", 1), 1)
+---
+> typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberConstructor( "class", 1), tag_typeDeduction)
+74c84
+< local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor")
+---
+> local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor", tagmask_declaration)
+
+```
+#### Output with tags
+```
+Not found
+
+```
+
+
+### Objects with Scope
+
+#### Source
+```lua
+mewa = require "mewa"
+typedb = mewa.typedb()
+
+-- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
+function register_allocator()
+	local i = 0
+	return function ()
+		i = i + 1
+		return "%R" .. i
+	end
+end
+
+-- Attach a data structure for a callable to its scope
+function defineCallableEnvironment( name)
+	local env = {name=name, scope=(typedb:scope()), register=register_allocator()}
+	if typedb:this_instance( "callenv") then error( "Callable environment defined twice") end
+	typedb:set_instance( "callenv", env)
+	return env
+end
+-- Get the active callable instance
+function getCallableEnvironment()
+	return typedb:get_instance( "callenv")
+end
+
+typedb:scope( {1,100} )
+defineCallableEnvironment( "function X")
+typedb:scope( {20,30} )
+defineCallableEnvironment( "function Y")
+typedb:scope( {70,90} )
+defineCallableEnvironment( "function Z")
+
+typedb:step( 10)
+print( "We are in " .. typedb:get_instance( "callenv").name)
+typedb:step( 25)
+print( "We are in " .. typedb:get_instance( "callenv").name)
+typedb:step( 85)
+print( "We are in " .. typedb:get_instance( "callenv").name)
+
+
+```
+#### Output
+```
+We are in function X
+We are in function Y
+We are in function Z
+
+```
+
+
+### Control Structures, Implementing an IF
+
+#### Source
+```lua
+mewa = require "mewa"
+typedb = mewa.typedb()
+
+-- [1] Define some helper functions
+-- Map template for LLVM Code synthesis
+function constructor_format( fmt, argtable)
+	return (fmt:gsub("[{]([_%d%w]*)[}]", function( match) return argtable[ match] or "" end))
+end
+
+-- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
+function register_allocator()
+	local i = 0
+	return function ()
+		i = i + 1
+		return "%R" .. i
+	end
+end
+
+-- A label allocator as a generator function counting from 1, returning the LLVM label identifiers:
+function label_allocator()
+	local i = 0
+	return function ()
+		i = i + 1
+		return "L" .. i
+	end
+end
+
+-- Build a constructor
+function applyConstructor( constructor, this, arg)
+	if constructor then
+		if (type(constructor) == "function") then return constructor( this, arg) else return constructor end
+	else
+		return this
+	end
+end
+
+local register = register_allocator()
+local label = label_allocator()
+
+local controlTrueType = typedb:def_type( 0, " controlTrueType")
+local controlFalseType = typedb:def_type( 0, " controlFalseType")
+local scalarBooleanType = typedb:def_type( 0, "bool")
+
+-- Build a boolean true type from a boolean value
+local function booleanToFalseExit( constructor)
+	local true_label = label()
+	local false_label = label()
+	return {code = constructor.code
+			.. constructor_format( "br i1 {inp}, label %{on}, label %{out}\n{on}:\n",
+				{inp=constructor.out, out=false_label, on=true_label}), out=false_label}
+end
+-- Build a boolean false type from a boolean value
+local function booleanToTrueExit( constructor)
+	local true_label = label()
+	local false_label = label()
+	return {code = constructor.code
+			.. constructor_format( "br i1 {inp}, label %{on}, label %{out}\n{on}:\n",
+				{inp=constructor.out, out=true_label, on=false_label}), out=true_label}
+end
+
+typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, 1)
+typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, 1)
+
+-- Implementation of an 'if' statement
+--   condition is a type/constructor pair, block a constructor, return value is a constructor
+function if_statement( condition, block)
+	local reductions,weight,altpath = typedb:derive_type( controlTrueType, condition.type)
+	if not weight then error( "Type not usable as conditional") end
+	if altpath then error("Ambiguous") end
+	local constructor = condition.constructor
+	for _,redu in ipairs(reductions or {}) do
+		constructor = applyConstructor( redu.constructor, constructor)
+	end
+	local code = constructor.code .. block.code
+			.. constructor_format( "br label {out}\n{out}:\n", {out=constructor.out})
+	return {code=code}
+end
+
+local condition_in = register()
+local condition_out = register()
+local condition = {
+	type=scalarBooleanType,
+	constructor={code = constructor_format( "{out} = icmp ne i32 {this}, 0\n",
+				{out=condition_out,this=condition_in}), out=condition_out}
+}
+local block = {code = "... this code is executed if the value in " .. condition_in .. " is not 0 ...\n"}
+
+print( if_statement( condition, block).code)
+
+
+
+```
+#### Output
+```
+%R2 = icmp ne i32 %R1, 0
+br i1 %R2, label %L1, label %L2
+L1:
+... this code is executed if the value in %R1 is not 0 ...
+br label L2
+L2:
+
+
+```
+
 
 
 

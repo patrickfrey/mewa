@@ -74,4 +74,4 @@ typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberCo
 local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor")
 if not resolveTypeId then print( "Not found") elseif type( resolveTypeId) == "table" then print( "Ambiguous") end
 
-for _,item in ipairs(items or {}) do print( "Found " .. typedb:type_string( item)) end
+for _,item in ipairs(items or {}) do print( "Found " .. typedb:type_string( item) .. "\n") end

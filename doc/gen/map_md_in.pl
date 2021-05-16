@@ -103,8 +103,8 @@ sub readIncludes
 	while (readdir $dirhnd) {
 		if (/^(.*)[.](.*)$/)
 		{
-			my $ext = "$2";
 			my $exampleName = "$1";
+			my $ext = "$2";
 			if ($ext eq $extension)
 			{
 				my $exampleId = "$prefix$exampleName";
@@ -125,6 +125,7 @@ sub readIncludes
 readExamples( "", "doc/examples");
 readExamples( "tutorial_", "examples/tutorial/examples");
 readIncludes( "tutorial_", "examples/tutorial", "prg");
+readIncludes( "tutorial_", "examples/tutorial/examples", "txt");
 
 sub substVariables
 {

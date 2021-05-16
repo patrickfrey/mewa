@@ -1,0 +1,23 @@
+3a4,13
+> -- [1] Define all tags and tag masks
+> -- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
+> tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
+> tag_typeDeduction   = 2		-- Type deduction (e.g. inheritance)
+> 
+> -- Sets of tags used for resolving a type or deriving a type, depending on the case
+> tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
+> tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
+> 
+> 
+38c48
+< 		end, 1)
+---
+> 		end, tag_typeDeduction)
+71c81
+< typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberConstructor( "class", 1), 1)
+---
+> typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberConstructor( "class", 1), tag_typeDeduction)
+74c84
+< local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor")
+---
+> local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor", tagmask_declaration)
