@@ -64,29 +64,36 @@ while (<FILE>)  {
 }
 close( FILE);
 
-my $exampledir = "doc/examples";
-opendir( my $dirhnd, $exampledir) || die "Can't open $exampledir: $!";
-while (readdir $dirhnd) {
-	if (/^(.*)[.]lua$/)
-	{
-		my $exampleId = $1;
-		my $exampleFile = "$exampledir/$exampleId.lua";
-		my $exampleOut = "build/$exampleId.out";
-		my $exampleSrc = readFile( "$exampleFile");
-		my $output = `$luabin $exampleFile`;
-		writeFile( $exampleOut, $output);
-
-		$EXAMPLE{ $exampleId} = $exampleSrc;
-		$EXAMOUT{ $exampleId} = $output;
-
-		if ($verbose)
+sub readExamples
+{
+	my $prefix = $_[0];
+	my $exampledir = $_[1];
+	opendir( my $dirhnd, $exampledir) || die "Can't open $exampledir: $!";
+	while (readdir $dirhnd) {
+		if (/^(.*)[.]lua$/)
 		{
-			print( STDERR "EXAMPLE:$exampleId => $exampleSrc\n");
-			print( STDERR "EXAMOUT:$exampleId => $output\n");
+			my $exampleName = "$1";
+			my $exampleId = "$prefix$exampleName";
+			my $exampleFile = "$exampledir/$exampleName.lua";
+			my $exampleOut = "build/$exampleId.out";
+			my $exampleSrc = readFile( "$exampleFile");
+			my $output = `$luabin $exampleFile`;
+			writeFile( $exampleOut, $output);
+
+			$EXAMPLE{ $exampleId} = $exampleSrc;
+			$EXAMOUT{ $exampleId} = $output;
+
+			if ($verbose)
+			{
+				print( STDERR "EXAMPLE:$exampleId => $exampleSrc\n");
+				print( STDERR "EXAMOUT:$exampleId => $output\n");
+			}
 		}
 	}
+	closedir $dirhnd;
 }
-closedir $dirhnd;
+readExamples( "", "doc/examples");
+readExamples( "tutorial_", "examples/tutorial/examples");
 
 sub substVariables
 {

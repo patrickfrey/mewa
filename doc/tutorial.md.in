@@ -1,0 +1,58 @@
+# Writing Compiler Front-Ends for LLVM with Lua using Mewa
+
+## Lead Text
+LLVM IR text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of LLVM IR and use the tools of the clang compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. Mewa tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
+
+## Introduction
+
+The Mewa compiler-compiler is a tool to script compiler front-ends in Lua. A compiler written with Mewa takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this tutorial uses the text format of LLVM IR as output. An executable is built using the ```llc``` command of _Clang_.
+
+Mewa provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
+
+For implementing a compiler with Mewa, you define a grammar attributed with Lua function calls.
+The program ```mewa`` will generate a Lua script that will transform any source passing the grammar specified into an AST with the Lua function calls attached to the nodes. The compiler will call the functions of the top level nodes of the AST that take the control of the further processing of the compiler front-end. The functions called with their AST node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
+
+
+### Goals
+
+This tutorial starts with some self-contained examples of using the Lua library of Mewa to build the type system of your programming language. Self-contained means that nothing is used but the library. After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language. We will compile and run the program in a shell and look at different parts including the grammar of the language. Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
+
+### Target Audience
+
+To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to Lua. If you have read a tutorial about LLVM IR, you will get grip on the code generation in the examples.
+
+### Deeper Digging
+
+For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions. There exists also an [FAQ](faq.md) that tries to answer problem-solving questions.
+
+
+## Tutorial, Part 1 
+
+### Declaring a variable
+
+#### Source
+```lua
+$EXAMPLE:tutorial_variable
+```
+#### Output
+```
+$EXAMOUT:tutorial_variable
+```
+
+### The Concept of Scope
+
+#### Source
+```lua
+$EXAMPLE:tutorial_scope
+```
+#### Output
+```
+$EXAMOUT:tutorial_scope
+```
+
+
+
+
+
+
+
