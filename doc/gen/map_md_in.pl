@@ -92,8 +92,39 @@ sub readExamples
 	}
 	closedir $dirhnd;
 }
+
+sub readIncludes
+{
+	my $prefix = $_[0];
+	my $exampledir = $_[1];
+	my $extension = $_[2];
+
+	opendir( my $dirhnd, $exampledir) || die "Can't open $exampledir: $!";
+	while (readdir $dirhnd) {
+		if (/^(.*)[.](.*)$/)
+		{
+			my $ext = "$2";
+			my $exampleName = "$1";
+			if ($ext eq $extension)
+			{
+				my $exampleId = "$prefix$exampleName";
+				my $exampleFile = "$exampledir/$exampleName.$extension";
+				my $exampleSrc = readFile( "$exampleFile");
+
+				$EXAMPLE{ $exampleId} = $exampleSrc;
+				if ($verbose)
+				{
+					print( STDERR "EXAMPLE:$exampleId => $exampleSrc\n");
+				}
+			}
+		}
+	}
+	closedir $dirhnd;
+}
+
 readExamples( "", "doc/examples");
 readExamples( "tutorial_", "examples/tutorial/examples");
+readIncludes( "tutorial_", "examples/tutorial", "prg");
 
 sub substVariables
 {

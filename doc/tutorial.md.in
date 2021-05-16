@@ -10,20 +10,27 @@ The Mewa compiler-compiler is a tool to script compiler front-ends in Lua. A com
 Mewa provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
 
 For implementing a compiler with Mewa, you define a grammar attributed with Lua function calls.
-The program ```mewa`` will generate a Lua script that will transform any source passing the grammar specified into an AST with the Lua function calls attached to the nodes. The compiler will call the functions of the top level nodes of the AST that take the control of the further processing of the compiler front-end. The functions called with their AST node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
+The program ```mewa``` will generate a Lua script that will transform any source passing the grammar specified into an AST with the Lua function calls attached to the nodes. The compiler will call the functions of the top level nodes of the AST that take the control of the further processing of the compiler front-end. The functions called with their AST node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
 
 
-### Goals
+## Goals
 
-This tutorial starts with some self-contained examples of using the Lua library of Mewa to build the type system of your programming language. Self-contained means that nothing is used but the library. After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language. We will compile and run the program in a shell and look at different parts including the grammar of the language. Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
+This tutorial starts with some self-contained examples of using the Lua library of Mewa to build the type system of your programming language. Self-contained means that nothing is used but the library. After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language.
+The example program we will compile is the following:
+```
+$EXAMPLE:tutorial_program
+```
+We will compile this program with the tutorial compiler and run it in a shell. We will also look at different parts including the grammar of the language.
+Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
 
-### Target Audience
+
+## Target Audience
 
 To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to Lua. If you have read a tutorial about LLVM IR, you will get grip on the code generation in the examples.
 
-### Deeper Digging
+## Deeper Digging
 
-For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions. There exists also an [FAQ](faq.md) that tries to answer problem-solving questions.
+For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
 
 ## Tutorial, Part 1 
