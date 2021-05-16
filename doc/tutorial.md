@@ -86,13 +86,45 @@ For a deeper digging you have to look at the Mewa project itself and the impleme
 
 ### Declaring a variable
 
+Let's start with an example that is complicated but a substantial step forward. 
+We print the LLVM code needed to assign a variable value to another variable. 
+For this, we need to introduce **types** and **reductions**.
+
+##### Types
+Types are items represented as integers. They are declared and retrieved by a string, the name of the type, and a context type.
+The context type is a type declared before or 0.
+Global free variables have for example no associated context type and are declared with 0 as context type. 
+Types are associated with a constructor. A constructor is a value, structure or a function that describes the construction of the type.
+Optionally, types are associated with arguments. Arguments are list of type/constructor pairs. Types are declared with 
+```Lua
+	typeid = typedb:def_type( contextType, name, constructor, parameter)
+```
+The ```typeid``` returned is the integer that represents the type for the typedb.
+##### Reductions
+Reductions are paths to derive a type from another. You can imagine the typesystem as a directed graph of vertices (types) and edges (reductions).
+We will introduce some concepts that allow a partial view on this graph later. For now, imagine it as a graph.
+Reductions have also an associated constructor. The constructor describes the construction of the type in the direction of the reduction from its source.
+Here is an example:
+```Lua
+	typedb:def_reduction( destType, srcType, constructor, 1)
+```
+The 1 as parameter is a value we will explain later. 
+##### Resolve Type
+Types can be resolved by their name and a context type having a path of reductions to the context type declaration.
+##### Derive type
+Types can be constructed by querying a reduction path from one type to another and constructing the type from the source type constructor
+by applying the list of constructors on this path.
+
+We will now inspect the example:
+
 #### Source
 ```lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
 -- [1] Define some helper functions
--- Map template for LLVM Code synthesis
+-- Map template for LLVM IR Code synthesis
+--   substitute identifiers in curly brackets '{' '}' with the values in a table
 function constructor_format( fmt, argtable)
 	return (fmt:gsub("[{]([_%d%w]*)[}]", function( match) return argtable[ match] or "" end))
 end
@@ -106,7 +138,8 @@ function register_allocator()
 	end
 end
 
--- Build a constructor
+-- Build a constructor by applying a constructor function on some arguments
+--   or returning the first argument in case of a constructor function as nil
 function applyConstructor( constructor, this, arg)
 	if constructor then
 		if (type(constructor) == "function") then return constructor( this, arg) else return constructor end
@@ -115,18 +148,18 @@ function applyConstructor( constructor, this, arg)
 	end
 end
 
--- [2] Define an integer type with assignment
+-- [2] Define an integer type with assignment operator
 do
 local register = register_allocator()
-local intValType = typedb:def_type( 0, "int")
-local intRefType = typedb:def_type( 0, "int&")
-typedb:def_reduction( intValType, intRefType,
+local intValType = typedb:def_type( 0, "int")	-- integer value type
+local intRefType = typedb:def_type( 0, "int&")	-- integer reference type
+typedb:def_reduction( intValType, intRefType,	-- get the value type from its reference type
 	function(this)
 		local out = register()
 		local code = constructor_format( "{out} = load i32, i32* {this} ; reduction int <- int&\n", {out=out,this=this.out})
 		return {out=out, code=code}
 	end, 1)
-typedb:def_type( intRefType, "=",
+typedb:def_type( intRefType, "=",		-- assignment operator
 	function( this, arg)
 		local code = (this.code or "") .. (arg[1].code or "")
 			.. constructor_format( "store i32 {arg1}, i32* {this} ; assignment int& = int\n", {this=this.out,arg1=arg[1].out})
@@ -141,21 +174,22 @@ io.stdout:write( "; SOURCE int a = 1;\n")
 io.stdout:write( constructor_format( "{out} = alloca i32, align 4 ; allocation of 'a'\n", {out=register_a}))
 io.stdout:write( constructor_format( "store i32 {arg1}, i32* {this} ; assignment int& = 1 \n", {this=register_a,arg1=1}))
 
--- [4] Define a variable "b" without initialization:
-
+-- [4] Define a variable b and assign the value of a to it:
 io.stdout:write( "; SOURCE int b = a;\n")
+
+-- [4.1] Define a variable "b":
 local register_b = register()
 local variable_b = typedb:def_type( 0, "b", {out=register_b})
 typedb:def_reduction( intRefType, variable_b, nil, 1)
 
 io.stdout:write( constructor_format( "{out} = alloca i32, align 4 ; allocation of 'b'\n", {out=register_b}))
 
--- [5] Assign the value to "a" to "b":
--- [5.1] Resolve the operator "b = .."
+-- [4.2] Assign the value to "a" to "b":
+-- [4.2.1] Resolve the operator "b = .."
 local resolveTypeId, reductions, items = typedb:resolve_type( variable_b, "=")
 if not resolveTypeId then error( "Not found") elseif type( resolveTypeId) == "table" then error( "Ambiguous") end
 
--- [5.2] For all candidates of "b = ..", get the first one with one parameter and match the argument to this parameter
+-- [4.2.2] For all candidates of "b = ..", get the first one with one parameter and match the argument to this parameter
 local constructor = typedb:type_constructor( variable_b)
 for _,redu in ipairs(reductions or {}) do constructor = applyConstructor( redu.constructor, constructor) end
 for _,item in ipairs(items) do
@@ -172,7 +206,7 @@ for _,item in ipairs(items) do
 		constructor = typedb:type_constructor(item)( constructor, {parameter_constructor})
 	end
 end
--- [5.4] Print the code of "b = a;"
+-- [4.3] Print the code of "b = a;"
 io.stdout:write( constructor.code)
 
 end

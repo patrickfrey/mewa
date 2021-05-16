@@ -37,6 +37,37 @@ For a deeper digging you have to look at the Mewa project itself and the impleme
 
 ### Declaring a variable
 
+Let's start with an example that is complicated but a substantial step forward. 
+We print the LLVM code needed to assign a variable value to another variable. 
+For this, we need to introduce **types** and **reductions**.
+
+##### Types
+Types are items represented as integers. They are declared and retrieved by a string, the name of the type, and a context type.
+The context type is a type declared before or 0.
+Global free variables have for example no associated context type and are declared with 0 as context type. 
+Types are associated with a constructor. A constructor is a value, structure or a function that describes the construction of the type.
+Optionally, types are associated with arguments. Arguments are list of type/constructor pairs. Types are declared with 
+```Lua
+	typeid = typedb:def_type( contextType, name, constructor, parameter)
+```
+The ```typeid``` returned is the integer that represents the type for the typedb.
+##### Reductions
+Reductions are paths to derive a type from another. You can imagine the typesystem as a directed graph of vertices (types) and edges (reductions).
+We will introduce some concepts that allow a partial view on this graph later. For now, imagine it as a graph.
+Reductions have also an associated constructor. The constructor describes the construction of the type in the direction of the reduction from its source.
+Here is an example:
+```Lua
+	typedb:def_reduction( destType, srcType, constructor, 1)
+```
+The 1 as parameter is a value we will explain later. 
+##### Resolve Type
+Types can be resolved by their name and a context type having a path of reductions to the context type declaration.
+##### Derive type
+Types can be constructed by querying a reduction path from one type to another and constructing the type from the source type constructor
+by applying the list of constructors on this path.
+
+We will now inspect the example:
+
 #### Source
 ```lua
 $EXAMPLE:tutorial_variable
