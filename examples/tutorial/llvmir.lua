@@ -86,10 +86,10 @@ llvmir.constexprStructDescr = {
 
 -- Format strings for code control structures
 llvmir.control = {
-	falseExitToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
-	trueExitToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
-	booleanToFalseExit = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
-	booleanToTrueExit = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
+	controlTrueTypeToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
+	controlFalseTypeToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
+	booleanToControlTrueType = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
+	booleanToControlFalseType = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
 	invertedControlType = "br label %{out}\n{inp}:\n",
 	terminateFalseExit = "br label %{out}\n{1}:\n",
 	terminateTrueExit = "br label %{out}\n{1}:\n",

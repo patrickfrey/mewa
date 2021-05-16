@@ -5,44 +5,44 @@ function initControlBooleanTypes()
 	controlTrueType = typedb:def_type( 0, " controlTrueType")
 	controlFalseType = typedb:def_type( 0, " controlFalseType")
 
-	local function falseExitToBoolean( constructor)
+	local function controlTrueTypeToBoolean( constructor)
 		local env = getCallableEnvironment()
 		local out = env.register()
-		return {code = constructor.code .. utils.constructor_format(llvmir.control.falseExitToBoolean,{falseExit=constructor.out,out=out},env.label),out=out}
+		return {code = constructor.code .. utils.constructor_format(llvmir.control.controlTrueTypeToBoolean,{falseExit=constructor.out,out=out},env.label),out=out}
 	end
-	local function trueExitToBoolean( constructor)
+	local function controlFalseTypeToBoolean( constructor)
 		local env = getCallableEnvironment()
 		local out = env.register()
-		return {code = constructor.code .. utils.constructor_format( llvmir.control.trueExitToBoolean,{trueExit=constructor.out,out=out},env.label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.controlFalseTypeToBoolean,{trueExit=constructor.out,out=out},env.label),out=out}
 	end
-	typedb:def_reduction( scalarBooleanType, controlTrueType, falseExitToBoolean, tag_typeDeduction, rwd_control)
-	typedb:def_reduction( scalarBooleanType, controlFalseType, trueExitToBoolean, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( scalarBooleanType, controlTrueType, controlTrueTypeToBoolean, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( scalarBooleanType, controlFalseType, controlFalseTypeToBoolean, tag_typeDeduction, rwd_control)
 
-	local function booleanToFalseExit( constructor)
+	local function booleanToControlTrueType( constructor)
 		local env = getCallableEnvironment()
 		local out = env.label()
-		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=constructor.out, out=out}, env.label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToControlTrueType, {inp=constructor.out, out=out}, env.label),out=out}
 	end
-	local function booleanToTrueExit( constructor)
+	local function booleanToControlFalseType( constructor)
 		local env = getCallableEnvironment()
 		local out = env.label()
-		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=constructor.out, out=out}, env.label),out=out}
+		return {code = constructor.code .. utils.constructor_format( llvmir.control.booleanToControlFalseType, {inp=constructor.out, out=out}, env.label),out=out}
 	end
 
-	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, tag_typeDeduction, rwd_control)
-	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToControlTrueType, tag_typeDeduction, rwd_control)
+	typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToControlFalseType, tag_typeDeduction, rwd_control)
 
 	local function negateControlTrueType( this) return {type=controlFalseType, constructor=this.constructor} end
 	local function negateControlFalseType( this) return {type=controlTrueType, constructor=this.constructor} end
 
 	local function joinControlTrueTypeWithBool( this, arg)
 		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToFalseExit, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
+		local code2 = utils.constructor_format( llvmir.control.booleanToControlTrueType, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
 		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	local function joinControlFalseTypeWithBool( this, arg)
 		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToTrueExit, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
+		local code2 = utils.constructor_format( llvmir.control.booleanToControlFalseType, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
 		return {code=this.code .. arg[1].code .. code2, out=out}
 	end
 	defineCall( controlTrueType, controlFalseType, "!", {}, nil)

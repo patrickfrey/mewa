@@ -41,16 +41,16 @@ local controlTrueType = typedb:def_type( 0, " controlTrueType")
 local controlFalseType = typedb:def_type( 0, " controlFalseType")
 local scalarBooleanType = typedb:def_type( 0, "bool")
 
--- Build a boolean true type from a boolean value
-local function booleanToFalseExit( constructor)
+-- Build a control true type from a boolean value
+local function booleanToControlTrueType( constructor)
 	local true_label = label()
 	local false_label = label()
 	return {code = constructor.code
 			.. constructor_format( "br i1 {inp}, label %{on}, label %{out}\n{on}:\n",
 				{inp=constructor.out, out=false_label, on=true_label}), out=false_label}
 end
--- Build a boolean false type from a boolean value
-local function booleanToTrueExit( constructor)
+-- Build a control false type from a boolean value
+local function booleanToControlFalseType( constructor)
 	local true_label = label()
 	local false_label = label()
 	return {code = constructor.code
@@ -58,8 +58,8 @@ local function booleanToTrueExit( constructor)
 				{inp=constructor.out, out=true_label, on=false_label}), out=true_label}
 end
 
-typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToFalseExit, 1)
-typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToTrueExit, 1)
+typedb:def_reduction( controlTrueType, scalarBooleanType, booleanToControlTrueType, 1)
+typedb:def_reduction( controlFalseType, scalarBooleanType, booleanToControlFalseType, 1)
 
 -- Implementation of an 'if' statement
 --   condition is a type/constructor pair, block a constructor, return value is a constructor
