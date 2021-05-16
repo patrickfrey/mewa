@@ -108,14 +108,14 @@ Here is an example:
 ```Lua
 	typedb:def_reduction( destType, srcType, constructor, 1)
 ```
-The 1 as parameter is a value we will explain later. 
+The 1 as parameter is an integer value we will explain later.
 ##### Resolve Type
 Types can be resolved by their name and a context type having a path of reductions to the context type declaration.
 ##### Derive type
 Types can be constructed by querying a reduction path from one type to another and constructing the type from the source type constructor
 by applying the list of constructors on this path.
 
-We will now inspect the example:
+Let's have a look at the example:
 
 #### Source
 ```lua
@@ -196,14 +196,16 @@ for _,item in ipairs(items) do
 	local parameters = typedb:type_parameters( item)
 	if #parameters == 1 then
 		local reductions,weight,altpath = typedb:derive_type( parameters[1].type, variable_a)
-		if not weight then error( "Failed to match parameter") elseif altpath then error( "Ambiguous parameter") end
-
-		-- [5.3] Synthesize the code for "b = a;"
-		local parameter_constructor = typedb:type_constructor( variable_a)
-		for _,redu in ipairs(reductions or {}) do
-			parameter_constructor = applyConstructor( redu.constructor, parameter_constructor)
+		if altpath then error( "Ambiguous parameter") end
+		if weight then
+			-- [5.3] Synthesize the code for "b = a;"
+			local parameter_constructor = typedb:type_constructor( variable_a)
+			for _,redu in ipairs(reductions or {}) do
+				parameter_constructor = applyConstructor( redu.constructor, parameter_constructor)
+			end
+			constructor = typedb:type_constructor(item)( constructor, {parameter_constructor})
+			break
 		end
-		constructor = typedb:type_constructor(item)( constructor, {parameter_constructor})
 	end
 end
 -- [4.3] Print the code of "b = a;"

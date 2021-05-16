@@ -59,14 +59,14 @@ Here is an example:
 ```Lua
 	typedb:def_reduction( destType, srcType, constructor, 1)
 ```
-The 1 as parameter is a value we will explain later. 
+The 1 as parameter is an integer value we will explain later.
 ##### Resolve Type
 Types can be resolved by their name and a context type having a path of reductions to the context type declaration.
 ##### Derive type
 Types can be constructed by querying a reduction path from one type to another and constructing the type from the source type constructor
 by applying the list of constructors on this path.
 
-We will now inspect the example:
+Let's have a look at the example:
 
 #### Source
 ```lua
