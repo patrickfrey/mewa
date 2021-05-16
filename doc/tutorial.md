@@ -417,10 +417,20 @@ Here is a diff with the edits we have to make for fixing the problem:
 convert const int ( load ( make const ( long&)))
 
 ```
+#### Conclusion
+We introduced a 5th parameter of the ```typedb:def_reduction``` command that is 0 if not specified. 
+This new parameter is meant to be declared in a way that it memorizes a preference of solution paths. 
+The weights should be referenced by constants we declare at a central place where the trains of thought that led to the weighting schema are documented.
+
 
 ### Tags of Reductions
 
+Unfortunately, the display of the typesystem as one graph is not enough for all cases. There are type derivation paths that are fitting in one case and undesirable in other cases. The following example declares an object of a class derived from a base class that calls a constructor function with no arguments. Unfortunately the constructor function is only declared for the base class. But when calling an object constructor an error should be reported if it does not exist for the class. The same behaviour as for a method call is bad in this case.
+
+Let's first look at an example failing:
+
 #### Failing example
+File examples/tags1.lua
 ```lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -508,6 +518,9 @@ Found baseclass& constructor
 
 ```
 #### Adding tags
+File examples/tags1.lua
+
+Here is a diff with the edits we have to make for fixing the problem:
 ```
 3a4,13
 > -- [1] Define all tags and tag masks
@@ -539,6 +552,9 @@ Found baseclass& constructor
 Not found
 
 ```
+#### Conclusion
+We explained now the 4th parameter of the typedb:def_reduction defined as ```1``` in the first examples. It is the mandatory tag assigned to the reduction.
+The command ```typedb.reduction_tagmask``` is used to declare sets of tags selected for resolving and deriving types.
 
 
 ### Objects with Scope
