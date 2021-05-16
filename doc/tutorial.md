@@ -304,7 +304,7 @@ This was easy, wasn't it? What is missing now is how the current scope step and 
 The function used for the AST tree traversal sets the current scope step and scope. This works for most of the cases. Sometimes you have to set the scope manually in nodes that implement declarations of different scopes, like for example function declarations with a function body in an own scope.
 
 
-### Weight of Reductions
+### The Weight of Reductions
 
 Now we have to look again at something that is a little bit puzzling. We have to assign weights to reductions. The problem is that even trivial examples of type queryies lead to ambiguity if we do not introduce a weighting scheme that memorizes a preference. Real ambiguity is something we want to detect as an error.
 I came to the conclusion that it is the best to declare all reduction weights at one central place in the source and to document it well.
@@ -518,7 +518,7 @@ Found baseclass& constructor
 
 ```
 #### Adding tags
-File examples/tags1.lua
+File examples/tags2.lua
 
 Here is a diff with the edits we have to make for fixing the problem:
 ```
@@ -558,6 +558,22 @@ The command ```typedb.reduction_tagmask``` is used to declare sets of tags selec
 
 
 ### Objects with Scope
+
+In a compiler we have building blocks that are bound to a scope. For example functions. These building blocks are best represented as objects. If we are in the depht of an AST tree traversal we would like to have a way to address these objects without complicated structures passed down as parameters. This would be very error prone. Especially in a non stricly typed language as Lua. 
+
+#### Introduction
+##### Define object instance in the current scope
+```Lua
+	typedb:set_instance( name, obj)
+```
+##### Get the object instance of this or the nearest enclosing scope
+```Lua
+	obj = typedb:get_instance( name)
+```
+##### Get the object instance declared of the current scope
+```Lua
+	obj = typedb:this_instance( name)
+```
 
 #### Source
 ```lua
@@ -608,9 +624,24 @@ We are in function Y
 We are in function Z
 
 ```
+#### Conclusion
+The possibility of attaching named objects to a scope is a big deal for the readability, an important property for prototyping.
+It brings structure into a system in an interpreter context where we have few possibilities to ensure safety by contracts.
 
 
 ### Control Structures, Implementing an IF
+The next step is implementing an IF and to introduce a new class of type. 
+Most programming languages require that the evaluation of a boolean expression stops when its outcome is determined.
+An expression like ```if ptr && ptr->value()``` should not crash in the case ptr is a NULL pointer.
+
+#### Introduction
+For evaluating boolean expressions and as condition type of conditionals we define two new types.
+##### Control True Type
+This type has a field ```code``` that holds the code executed as long as it evaluates to true and a field ```out``` that holds an unbound label where the control branches to in case of evaluating to false.
+##### Control False Type
+This type is the mirror type of the control true type. It has a field ```code``` that holds the code that is executed as long as it evaluates to false and a field ```out``` that holds an unbound label where the control branches to in case of evaluating to true.
+##### The IF statement
+The IF takes the condition argument and transforms it into a control true type. The code of the resulting constructor is joined with the constructor of the code block to evaluate in the case the condition is true. At the end the unbound label is declared at the end of the code.
 
 #### Source
 ```lua
@@ -718,7 +749,8 @@ L2:
 
 ```
 
-
+#### Conclusion
+Control structures are implemented by constructing the control boolean type required. Boolean operators as the logical and or the logical or are constructed by wiring control boolean types together. This has not been done in this example, but it is imaginable after constructing an IF. The construction of types with reduction rules does not stop here. Control structures are not a entirely different animal. I think we are now ready to look at our example compiler as a whole as we have introduced the whole variety of functions of the typedb library.
 
 
 
