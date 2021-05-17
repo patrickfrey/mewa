@@ -98,7 +98,7 @@ make PREFIX=/usr/local install
 Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from command line. 
 You find a luaenv.sh in the archive of this tutorial. Load it with.
 ```Bash
-. tests/luaenv.sh
+. examples/tutorial/luaenv.sh
 ```
 
 
