@@ -238,7 +238,7 @@ The first match of the operator was our candidate match chosen as a result. But 
 We declared a variable with a name, a concept of scope is missing here. We will look at scopes in the next example.
 
 
-### The Concept of Scope
+### Scope
 
 Now let's see how scope is represented in the typedb.
 
@@ -307,7 +307,7 @@ This was easy, wasn't it? What is missing now is how the current scope step and 
 The function used for the _AST_ tree traversal sets the current scope step and scope. This works for most cases. Sometimes you have to set the scope manually in nodes that implement declarations of different scopes, like for example function declarations with a function body in an own scope.
 
 
-### The Weight of Reductions
+### Reduction Weight
 
 Now we have to look again at something a little bit puzzling. We have to assign a weight to reductions. The problem is that even trivial examples of type queries lead to ambiguity if we do not introduce a weighting scheme that memorizes a preference. Real ambiguity is something we want to detect as an error.
 I concluded that it is best to declare all reduction weights at one central place in the source and to document it well.
@@ -426,7 +426,7 @@ This new parameter is meant to be declared in a way that it memorizes a preferen
 The weights should be referenced by constants we declare at a central place where the trains of thought that led to the weighting schema are documented.
 
 
-### Tags of Reductions
+### Reduction Tag
 
 The display of the typesystem as one graph is not enough for all cases. There are type derivation paths that are fitting in one case and undesirable in other cases. The following example declares an object of a class derived from a base class that calls a constructor function with no arguments. The constructor function is only declared for the base class. But when calling an object constructor an error should be reported if it does not exist for the class. The same behavior as for a method call is bad in this case.
 
@@ -564,7 +564,7 @@ The command ```typedb.reduction_tagmask``` is used to declare named sets of tags
 The aim behind that is to allow restrictions on some classes of reductions. Most statically typed programming languages impose restrictions on the number of conversions of a parameter. The second tag mask helps you to implement such restrictions.  
 
 
-### Objects with Scope
+### Objects with a Scope
 
 In a compiler, we have building blocks that are bound to a scope. For example functions. These building blocks are best represented as objects. If we are in the depth of an _AST_ tree traversal we would like to have a way to address these objects without complicated structures passed down as parameters. This would be very error-prone. Especially in a non strictly typed language as _Lua_. 
 
@@ -772,19 +772,19 @@ First we take a look at the grammar of the language.
 ### Introduction
 
 #### Parser Generator
-_Mewa_ implements an LALR(1) parser generator. The source file of the grammar has 3 parts. 
+_Mewa_ implements an LALR(1) parser generator. The source file of the attributed grammar has 3 parts. 
 
-  * Some Language Attributes marked with a prefix '%'
-  * The Lexems declared with name and a regular expression that matches the lexem as argument (Ambiguity is solved by taking the longest match or the first match).
-  * An attributed grammar with keywords as strings and lexems or production names as identifiers
+  * Some configuration marked with a prefix '%'
+  * The named lexems as a regular expression that matches the lexem value as argument (Ambiguity is solved by taking the longest match or the first match).
+  * An attributed grammar with keywords as strings and lexem or production names as identifiers
 
-On the right side of productions are optionally attributes in oval brackets '(' ')' attached to the production. Attributes consist of
+On the right side of productions are the attributes in oval brackets '(' ')' optionally attached to the production. 
+Attributes consist of
 
   * A scope declaration **{}** or a scope step increment **>>**
-  * A _Lua_ function call name
-  * An optional argument (a number, string, or a table)
+  * A _Lua_ function call name and an optional argument (a number, string, or a table)
 
-in this order. 
+in this order. Both the scope/step declaration and the function call declaration are optional.
 
 #### Compilation Process
 Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
