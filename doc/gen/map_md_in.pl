@@ -125,6 +125,7 @@ sub readIncludes
 readExamples( "", "doc/examples");
 readExamples( "tutorial_", "examples/tutorial/examples");
 readExamples( "tutorial_", "examples/tutorial");
+readIncludes( "tutorial_typesystem_", "examples/tutorial/typesystem", "lua");
 readIncludes( "tutorial_", "examples/tutorial", "prg");
 readIncludes( "tutorial_", "examples/tutorial", "g");
 readIncludes( "tutorial_", "examples/tutorial/examples", "txt");
