@@ -852,9 +852,12 @@ Attributes consist of
 
 in this order. Both the scope/step declaration and the function call declaration are optional.
 
+##### Conflict solving
+You can attribute a production with a positive integer number as priority having an 'L' or 'R' prefix. The 'L' prefix stands for left and tells to prioritize reduce in a shift/reduce conflict, while the 'R' prefix stands for right and tells to prioritize shift in a shift/reduce conflict with itself. The positive integer number on the other hand tells what to prioritize in a conflict of different productions having both a priority assigned. This mechnism of conflict solving is comparable with declaring operator priorities in _Bison_/_Yacc_.
+
 #### Compilation Process
 Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
-The remaining nodes on the stack after syntax analysis are the root nodes of the AST built. Their Lua function attached is called by the compiler after the syntax analysis to produce the outout.
+The remaining nodes on the stack after syntax analysis are the root nodes of the AST built. Their Lua function attached is called by the compiler after the syntax analysis to produce the output.
 
 #### Source
 ```
