@@ -38,7 +38,7 @@ For a deeper digging you have to look at the _Mewa_ project itself and the imple
 ## Preparation
 
 The _Mewa_ program and the _Lua_ module are written in C++. Follow the instructions to install it.
-The installation description is written for Ubuntu. For other platforms you might need to lookup the corresponding package names.
+The installation description is written for _Ubuntu_. For other platforms you might need to lookup the corresponding package names.
 
 ### Installation
 
@@ -60,7 +60,7 @@ luarocks install penlight
 luarocks install LuaBcd
 ```
 #### Build LuaBcd from sources (if luarocks install LuaBcd fails)
-If the build of LuaBcd with luarocks fails, you can fetch the sources from github and build it:
+If the build of _LuaBcd_ with _luarocks_ fails, you can fetch the sources from _github_ and build it:
 ```Bash
 git clone https://github.com/patrickfrey/luabcd.git
 cd LuaBcd
@@ -95,7 +95,7 @@ make test
 make PREFIX=/usr/local install
 ```
 #### Lua Environment
-Don't forget to set the Lua environment (LUA_CPATH,LUA_PATH) correctly when running the Lua scripts from command line. 
+Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from command line. 
 You find a luaenv.sh in the archive of this tutorial. Load it with.
 ```Bash
 . tests/luaenv.sh
@@ -352,7 +352,7 @@ in this order. Both the scope/step declaration and the function call declaration
 Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
 The remaining nodes on the stack after syntax analysis are the root nodes of the AST built. Their Lua function attached is called by the compiler after the syntax analysis to produce the outout.
 
-### Source
+#### Source
 ```
 $EXAMPLE:tutorial_grammar
 ```
@@ -361,6 +361,10 @@ Now let's overview the implementation of the typesystem module that generates th
 
 ### Typesystem
 
+#### Source
+```
+$EXAMPLE:tutorial_typesystem
+```
 
 
 

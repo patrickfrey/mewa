@@ -4,30 +4,48 @@ llvmir = require "llvmir"
 typedb = mewa.typedb()
 
 -- Global variables
-localDefinitionContext = 0		-- Context type of local definitions
-seekContextKey = "seekctx"		-- Key for context types defined for a scope
-callableEnvKey = "env"			-- Key for current callable environment
-typeDescriptionMap = {}			-- Map of type ids to their description
-referenceTypeMap = {}			-- Map of value type ids to their reference type if it exists
-dereferenceTypeMap = {}			-- Map of reference type ids to their value type if it exists
-arrayTypeMap = {}			-- Map array keys to their array type
-stringConstantMap = {}			-- Map of string constant values to a structure with the attributes {name,size}
-scalarTypeMap = {}			-- Map of scalar type names to the correspoding value type
+localDefinitionContext = 0	-- Context type of local definitions
+seekContextKey = "seekctx"	-- Key for context types defined for a scope
+callableEnvKey = "env"		-- Key for current callable environment
+typeDescriptionMap = {}		-- Map of type ids to their description
+referenceTypeMap = {}		-- Map of value type ids to their reference type if it exists
+dereferenceTypeMap = {}		-- Map of reference type ids to their value type if it exists
+arrayTypeMap = {}		-- Map array keys to their array type
+stringConstantMap = {}		-- Map of string constant values to a structure with the attributes {name,size}
+scalarTypeMap = {}		-- Map of scalar type names to the correspoding value type
 
-dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")	-- Reductions are defined with a tag and selected with a tagmask when addressed for type retrieval
-dofile( "examples/tutorial/sections/reductionWeights.lua")		-- Weights of reductions
-dofile( "examples/tutorial/sections/constructorFunctions.lua")		-- Functions of constructors
-dofile( "examples/tutorial/sections/applyConstructors.lua")		-- Build constructors by applying constructor functions on argument constructors
-dofile( "examples/tutorial/sections/applyCallable.lua")			-- Build constructors of calls of callables (types with a "()" operator with parameters to match)
-dofile( "examples/tutorial/sections/defineTypes.lua")			-- Functions to define types with or without arguments
-dofile( "examples/tutorial/sections/callableEnvironment.lua")		-- All data bound to a function are stored in a structure called callable environment associated to a scope
-dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")		-- Functions to define types with or without arguments
-dofile( "examples/tutorial/sections/constexprTypes.lua")		-- All constant expression types and arithmetics are defined here
-dofile( "examples/tutorial/sections/contextTypes.lua")			-- All type declarations are bound to a context type and for retrieval there is a set of context types defined, associated to a scope
-dofile( "examples/tutorial/sections/callableTypes.lua")			-- All type declarations for callables (functions,methods,etc.)
-dofile( "examples/tutorial/sections/resolveTypes.lua")			-- Methods to resolve types
-dofile( "examples/tutorial/sections/controlBooleanTypes.lua")		-- Implementation of control boolean types
-dofile( "examples/tutorial/sections/variables.lua")			-- Define variables (globals, locals, members)
+-- Define the tags of reductions and the tag masks for resolve/derive type:
+dofile( "examples/tutorial/sections/reductionTagsAndTagmasks.lua")
+-- Define the weights of reductions:
+dofile( "examples/tutorial/sections/reductionWeights.lua")
+-- Type representation as string:
+dofile( "examples/tutorial/sections/declarationString.lua")
+-- Define the functions used to implement most of the constructors:
+dofile( "examples/tutorial/sections/constructorFunctions.lua")
+-- Define the functions to apply a constructor or a chain of constructors:
+dofile( "examples/tutorial/sections/applyConstructors.lua")
+-- Functions to find the best match of a callable with arguments and to build its constructor:
+dofile( "examples/tutorial/sections/applyCallable.lua")
+-- Define types named calls having arguments, for example operators:
+dofile( "examples/tutorial/sections/defineCalls.lua")
+-- Define data types, basic up to complex structures like arrays or classes:
+dofile( "examples/tutorial/sections/defineDataTypes.lua")
+-- Declare all data of a function in a structure named callable environment that is bound to a scope:
+dofile( "examples/tutorial/sections/callableEnvironment.lua")
+-- Declare the first class scalar types:
+dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")
+-- Declare constant expression types and arithmetics:
+dofile( "examples/tutorial/sections/constexprTypes.lua")
+-- Define how the list of context types used for retrieve types is bound to the current scope:
+dofile( "examples/tutorial/sections/contextTypes.lua")
+-- Define all functions need to declare functions and methods,etc.:
+dofile( "examples/tutorial/sections/callableTypes.lua")
+-- Define the functions needed to resolve types and matching types:
+dofile( "examples/tutorial/sections/resolveTypes.lua")
+-- Implementation of control boolean types for control structures and boolean operators:
+dofile( "examples/tutorial/sections/controlBooleanTypes.lua")
+-- Define variables (globals, locals, members):
+dofile( "examples/tutorial/sections/variables.lua")
 
 -- AST Callbacks:
 local typesystem = {}

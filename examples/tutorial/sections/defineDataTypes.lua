@@ -1,29 +1,5 @@
 local utils = require "typesystem_utils"
 
--- Type string of a type declaration built from its parts for error messages
-function typeDeclarationString( this, typnam, args)
-	local rt = (this == 0 or not this) and typnam or (typedb:type_string(type(this) == "table" and this.type or this) .. " " .. typnam)
-	if (args) then rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")" end
-	return rt
-end
--- Constructor for a promote call (implementing int + double by promoting the first argument int to double and do a double + double to get the result)
-function promoteCallConstructor( call_constructor, promote_constructor)
-	return function( this, arg) return call_constructor( promote_constructor( this), arg) end
-end
--- Define an operation with involving the promotion of the left hand argument to another type and executing the operation as defined for the type promoted to.
-function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, promote_constructor)
-	local call_constructor = typedb:type_constructor( typedb:get_type( promoteType, opr, argTypes))
-	local callType = typedb:def_type( thisType, opr, promoteCallConstructor( call_constructor, promote_constructor), argTypes)
-	if callType == -1 then utils.errorMessage( node.line, "Duplicate definition '%s'", typeDeclarationString( thisType, opr, argTypes)) end
-	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
-end
--- Define an operation generalized
-function defineCall( returnType, thisType, opr, argTypes, constructor)
-	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
-	if callType == -1 then utils.errorMessage( 0, "Duplicate definition of call '%s'", typeDeclarationString( thisType, opr, argTypes)) end
-	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
-	return callType
-end
 -- Define an operation generalized
 function defineDataType( node, contextTypeId, typnam, descr)
 	local typeId = typedb:def_type( contextTypeId, typnam)
