@@ -757,7 +757,15 @@ I think we are now ready to look at our example compiler as a whole.
 
 ## Tutorial, Part 2
 
-First we take a look at the grammar of the language. 
+In the second part of the tutorial we will take a look at the implementation of the example language.
+The code shown now will be more organised into subparts, more complete, but not self-contained anymore.
+
+Because the amount of code in this second part, we will not inspect it so closely anymore. 
+We change now from a walk through to an inspection with a helicopter.
+
+But I hope that after the first part of the tutorial you will still get a grip on the code shown.
+
+First we take a look at the grammar of the language.
 
 ### Grammar
 
