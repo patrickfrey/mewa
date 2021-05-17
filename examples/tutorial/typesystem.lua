@@ -48,7 +48,7 @@ dofile( "examples/tutorial/sections/controlBooleanTypes.lua")
 dofile( "examples/tutorial/sections/variables.lua")
 
 -- AST Callbacks:
-local typesystem = {}
+typesystem = {}
 function typesystem.program( node, options)
 	defineConstExprArithmetics()
 	initBuiltInTypes()
@@ -188,14 +188,6 @@ function typesystem.codeblock( node)
 	for _,stm in ipairs(stmlist) do code = code .. stm.code end
 	return {code=code}
 end
-function typesystem.conditional_else( node, exitLabel)
-	return table.unpack( utils.traverse( typedb, node))
-end
-function typesystem.conditional_elseif( node, exitLabel)
-	local env = getCallableEnvironment()
-	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, exitLabel))
-	return conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
-end
 function typesystem.free_expression( node)
 	local expression = table.unpack( utils.traverse( typedb, node))
 	if expression.type == controlTrueType or expression.type == controlFalseType then
@@ -226,6 +218,14 @@ function typesystem.conditional_if( node)
 	local rt = conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
 	rt.code = rt.code .. utils.constructor_format( llvmir.control.label, {inp=exitLabel})
 	return rt
+end
+function typesystem.conditional_else( node, exitLabel)
+	return table.unpack( utils.traverse( typedb, node))
+end
+function typesystem.conditional_elseif( node, exitLabel)
+	local env = getCallableEnvironment()
+	local condition,yesblock,noblock = table.unpack( utils.traverse( typedb, node, exitLabel))
+	return conditionalIfElseBlock( node, condition, yesblock, noblock, exitLabel)
 end
 function typesystem.conditional_while( node)
 	local env = getCallableEnvironment()
