@@ -35,6 +35,72 @@ To understand this article some knowledge about formal languages and parser gene
 
 For a deeper digging you have to look at the _Mewa_ project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
+## Preparation
+
+The _Mewa_ program and the _Lua_ module are written in C++. Follow the instructions to install it.
+The installation description is written for Ubuntu. For other platforms you might need to lookup the corresponding package names.
+
+### Installation
+
+To install _Mewa_ you need a C++ compiler with C++17 support. _Mewa_ is tested with _clang_ and _gcc_. 
+
+#### Required system packages
+##### For Lua 5.2
+```Bash
+lua5.2 liblua5.2-dev luarocks llvm llvm-runtime
+```
+##### For Lua 5.1
+```Bash
+lua5.1 liblua5.1-0-dev luarocks llvm llvm-runtime
+```
+#### Required luarocks packages
+```Bash
+luarocks install bit32
+luarocks install penlight 
+luarocks install LuaBcd
+```
+#### Build LuaBcd from sources (if luarocks install LuaBcd fails)
+If the build of LuaBcd with luarocks fails, you can fetch the sources from github and build it:
+```Bash
+git clone https://github.com/patrickfrey/luabcd.git
+cd LuaBcd
+./configure
+make
+make PREFIX=/usr/local install
+```
+#### Fetch sources of latest release version
+```Bash
+git clone https://github.com/patrickfrey/mewa
+cd mewa
+git checkout -b `cat VERSION`
+```
+#### Configure to find Lua includes and to write the file Lua.inc included by make
+```Bash
+./configure
+```
+#### Build with GNU C/C++
+```Bash
+make COMPILER=gcc RELEASE=YES
+```
+#### Build with Clang C/C++
+```Bash
+make COMPILER=clang RELEASE=YES
+```
+#### Run tests
+```Bash
+make test
+```
+#### Install
+```Bash
+make PREFIX=/usr/local install
+```
+#### Lua Environment
+Don't forget to set the Lua environment (LUA_CPATH,LUA_PATH) correctly when running the Lua scripts from command line. 
+You find a luaenv.sh in the archive of this tutorial. Load it with.
+```Bash
+. tests/luaenv.sh
+```
+
 
 ## Tutorial, Part 1 
 
