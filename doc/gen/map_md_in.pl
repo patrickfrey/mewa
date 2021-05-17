@@ -125,6 +125,7 @@ sub readIncludes
 readExamples( "", "doc/examples");
 readExamples( "tutorial_", "examples/tutorial/examples");
 readIncludes( "tutorial_", "examples/tutorial", "prg");
+readIncludes( "tutorial_", "examples/tutorial", "g");
 readIncludes( "tutorial_", "examples/tutorial/examples", "txt");
 
 sub substVariables

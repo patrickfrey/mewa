@@ -1,21 +1,21 @@
-# Writing Compiler Front-Ends for LLVM with Lua using Mewa
+# Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_
 
 ## Lead Text
-LLVM IR text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of LLVM IR and use the tools of the clang compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. Mewa tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
+_LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of LLVM IR and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
 
 ## Introduction
 
-The Mewa compiler-compiler is a tool to script compiler front-ends in Lua. A compiler written with Mewa takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this tutorial uses the text format of LLVM IR as output. An executable is built using the ```llc``` command of _Clang_.
+The _Mewa_ compiler-compiler is a tool to script compiler front-ends in _Lua_. A compiler written with _Mewa_ takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this tutorial uses the text format of _LLVM IR_ as output. An executable is built using the ```llc``` command of _Clang_.
 
-Mewa provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
+_Mewa_ provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
 
-For implementing a compiler with Mewa, you define a grammar attributed with Lua function calls.
-The program ```mewa``` will generate a Lua script that will transform any source passing the grammar specified into an AST with the Lua function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the AST that take the control of the further processing of the compiler front-end. The functions called with their AST node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
+For implementing a compiler with _Mewa_, you define a grammar attributed with _Lua_ function calls.
+The program ```mewa``` will generate a _Lua_ script that will transform any source passing the grammar specified into an _AST_ with the _Lua_ function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the _AST_ that take the control of the further processing of the compiler front-end. The functions called with their _AST_ node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
 
 
 ## Goals
 
-This tutorial starts with some self-contained examples of using the Lua library of Mewa to build the type system of your programming language. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading and return to the snippets you did not
+This tutorial starts with some self-contained examples of using the _Lua_ library of _Mewa_ to build the type system of your programming language. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading and return to the snippets you did not
 understand completely later.
 
 After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language.
@@ -78,11 +78,11 @@ Finally, I will talk about the features missing in the language to give you some
 
 ## Target Audience
 
-To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to Lua. If you have read a tutorial about LLVM IR, you will get grip on the code generation in the examples.
+To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to _Lua_. If you have read a tutorial about _LLVM IR_, you will get grip on the code generation in the examples.
 
 ## Deeper Digging
 
-For a deeper digging you have to look at the Mewa project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
+For a deeper digging you have to look at the _Mewa_ project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
 
 ## Tutorial, Part 1 
@@ -95,13 +95,13 @@ For this, we need to introduce **types** and **reductions**.
 
 #### Introduction
 ##### Types
-Types are items represented as integers. They are declared and retrieved by a string, the name of the type, and a context type.
-The context type is a type declared before or 0.
+Types are items represented as integers. They are declared and retrieved by the name of the type and a context type.
+The context type is itself a type or 0.
 Global free variables have for example no associated context type and are declared with 0 as context type. 
 Types are associated with a constructor. A constructor is a value, structure, or a function that describes the construction of the type.
-Optionally, types are associated with arguments. Arguments are a list of type/constructor pairs. Types are declared with 
+Optionally, types can have parameters attached. Parameters are a list of type/constructor pairs. Types are declared with 
 ```Lua
-	typeid = typedb:def_type( contextType, name, constructor, parameter)
+typeid = typedb:def_type( contextType, name, constructor, parameters)
 ```
 The ```typeid``` returned is the integer that represents the type for the typedb.
 ##### Reductions
@@ -110,20 +110,20 @@ We will introduce some concepts that allow a partial view of this graph later. F
 Reductions have also an associated constructor. The constructor describes the construction of the type in the direction of the reduction from its source.
 Here is an example:
 ```Lua
-	typedb:def_reduction( destType, srcType, constructor, 1)
+typedb:def_reduction( destType, srcType, constructor, 1)
 ```
 The 1 as parameter is an integer value we will explain later.
 ##### Resolve Type
-Types can be resolved by their name and a context type having a path of reductions to the context type declaration.
+Types can be resolved by their name and a single or a list of context types, one having a path of reductions to the context type of the resolved type.
 ##### Derive type
 Types can be constructed by querying a reduction path from one type to another and constructing the type from the source type constructor
-by applying the list of constructors on this path.
+by applying the list of constructors on this path. 
 
 Let's have a look at the example:
 
 #### Source
 File examples/variable.lua
-```lua
+```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
@@ -243,23 +243,23 @@ We declared a variable with a name, a concept of scope is missing here. We will 
 Now let's see how scope is represented in the typedb.
 
 #### Introduction
-Scope in Mewa is represented as a pair of non-negative integer numbers. The first number is the start, the first scope step that belongs to the scope, the second number the end, the first scope step that is not part of the scope. Scope steps are generated by a counter with increments declared in the grammar of your language parser.
+Scope in _Mewa_ is represented as a pair of non-negative integer numbers. The first number is the start, the first scope step that belongs to the scope, the second number the end, the first scope step that is not part of the scope. Scope steps are generated by a counter with increments declared in the grammar of your language parser.
 All declarations in the typedb are bound to a scope, all queries of the typedb are bound to the current scope step. A declaration is considered to contribute to the result if its scope is covering the scope step of the query.
 
 ##### Set the current scope
 ```Lua
-	scope_old = typedb:scope( scope_new )
+scope_old = typedb:scope( scope_new )
 ```
 ##### Get the current scope
 ```Lua
-	current_scope = typedb:scope()
+current_scope = typedb:scope()
 ```
 
 The example is fairly artificial, but it shows how it works:
 
 #### Source
 File examples/scope.lua
-```lua
+```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
@@ -304,7 +304,7 @@ Retrieve X !NOTFOUND
 ```
 #### Conclusion
 This was easy, wasn't it? What is missing now is how the current scope step and scope are set. I chose the variant of treating it as an own aspect. 
-The function used for the AST tree traversal sets the current scope step and scope. This works for most cases. Sometimes you have to set the scope manually in nodes that implement declarations of different scopes, like for example function declarations with a function body in an own scope.
+The function used for the _AST_ tree traversal sets the current scope step and scope. This works for most cases. Sometimes you have to set the scope manually in nodes that implement declarations of different scopes, like for example function declarations with a function body in an own scope.
 
 
 ### The Weight of Reductions
@@ -316,7 +316,7 @@ Let's have a look at an example without weighting of reductions that will lead t
 
 #### Failing example
 File examples/weight1.lua
-```lua
+```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
@@ -434,7 +434,7 @@ Let's first look at an example failing:
 
 #### Failing example
 File examples/tags1.lua
-```lua
+```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
@@ -559,27 +559,31 @@ Not found
 We explained now the 4th parameter of the typedb:def_reduction defined as ```1``` in the first examples. It is the mandatory tag assigned to the reduction.
 The command ```typedb.reduction_tagmask``` is used to declare named sets of tags selected for resolving and deriving types.
 
+#### Remark
+```typedb:derive_type``` has a second optional tag mask parameter that selects reductions to count and limit to a specified number, 1 by default.
+The aim behind that is to allow restrictions on some classes of reductions. Most statically typed programming languages impose restrictions on the number of conversions of a parameter. The second tag mask helps you to implement such restrictions.  
+
 
 ### Objects with Scope
 
-In a compiler, we have building blocks that are bound to a scope. For example functions. These building blocks are best represented as objects. If we are in the depth of an AST tree traversal we would like to have a way to address these objects without complicated structures passed down as parameters. This would be very error-prone. Especially in a non strictly typed language as Lua. 
+In a compiler, we have building blocks that are bound to a scope. For example functions. These building blocks are best represented as objects. If we are in the depth of an _AST_ tree traversal we would like to have a way to address these objects without complicated structures passed down as parameters. This would be very error-prone. Especially in a non strictly typed language as _Lua_. 
 
 #### Introduction
 ##### Define object instance in the current scope
 ```Lua
-	typedb:set_instance( name, obj)
+typedb:set_instance( name, obj)
 ```
 ##### Get the object instance of this or the nearest enclosing scope
 ```Lua
-	obj = typedb:get_instance( name)
+obj = typedb:get_instance( name)
 ```
 ##### Get the object instance declared of the current scope
 ```Lua
-	obj = typedb:this_instance( name)
+obj = typedb:this_instance( name)
 ```
 
 #### Source
-```lua
+```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
@@ -638,7 +642,7 @@ This type is the mirror type of the control true type. It has a field ```code```
 The IF takes the condition argument and transforms it into a control true type. The code of the resulting constructor is joined with the constructor code of the statements to evaluate in the case the condition is true. At the end, the unbound label is bound and declared at the end of the code.
 
 #### Source
-```lua
+```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
 
@@ -744,7 +748,7 @@ L2:
 ```
 
 #### Conclusion
-Control structures are implemented by constructing the control boolean type required. Boolean operators as the logical **AND** or the logical **OR** are constructed by wiring control boolean types together. This has not been done in this example, but it is imaginable after constructing an **IF**. The construction of types with reduction rules does not stop here. Control structures are not entirely different animals.
+Control structures are implemented by constructing the control boolean types required. Boolean operators as the logical **AND** or the logical **OR** are constructed by wiring control boolean types together. This has not been done in this example, but it is imaginable after constructing an **IF**. The construction of types with reduction rules does not stop here. Control structures are not entirely different animals.
 
 We have seen the whole variety of functions of the typedb library now. The remaining functions not explained yet are convenient functions to set and get attributes of types. There is nothing substantial left to explain about the API though there is a lot more to talk about best practices and how to use this API.
 
@@ -753,6 +757,172 @@ I think we are now ready to look at our example compiler as a whole.
 
 ## Tutorial, Part 2
 
+First we take a look at the grammar of the language. 
+
+### Grammar
+
+### Introduction
+
+#### Parser Generator
+_Mewa_ implements an LALR(1) parser generator. The source file of the grammar has 3 parts. 
+
+  * Some Language Attributes marked with a prefix '%'
+  * The Lexems declared with name and a regular expression that matches the lexem as argument (Ambiguity is solved by taking the longest match or the first match).
+  * An attributed grammar with keywords as strings and lexems or production names as identifiers
+
+On the right side of productions are optionally attributes in oval brackets '(' ')' attached to the production. Attributes consist of
+
+  * A scope declaration **{}** or a scope step increment **>>**
+  * A _Lua_ function call name
+  * An optional argument (a number, string, or a table)
+
+in this order. 
+
+#### Compilation Process
+Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
+The remaining nodes on the stack after syntax analysis are the root nodes of the AST built. Their Lua function attached is called by the compiler after the syntax analysis to produce the outout.
+
+### Source
+```
+% LANGUAGE tutolang;
+% TYPESYSTEM "tutorial/typesystem";
+% CMDLINE "cmdlinearg";
+% COMMENT "/*" "*/";
+% COMMENT "//";
+
+BOOLEAN : '((true)|(false))';
+IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
+DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
+UINTEGER: '[0123456789]+';
+FLOAT	: '[0123456789]*[.][0123456789]+';
+FLOAT	: '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+
+program		   	= extern_definitionlist free_definitionlist main_procedure			(program)
+			;
+extern_definitionlist	= extern_definition extern_definitionlist
+			|
+			;
+free_definitionlist	= free_definition free_definitionlist
+			|
+			;
+inclass_definitionlist	= inclass_definition inclass_definitionlist
+			|
+			;
+extern_definition	= "extern" "function" IDENT typespec "(" extern_paramlist ")" ";"		(extern_funcdef)
+			;
+extern_paramdecl	= typespec IDENT								(extern_paramdef)
+			| typespec									(extern_paramdef)
+			;
+extern_parameters 	= extern_paramdecl "," extern_parameters
+			| extern_paramdecl
+			;
+extern_paramlist	= extern_parameters								(extern_paramdeflist)
+			|										(extern_paramdeflist)
+			;
+inclass_definition	= variabledefinition ";"							(definition 2)
+			| classdefinition 								(definition 1)
+			| functiondefinition								(definition_2pass 4)
+			;
+free_definition		= variabledefinition ";"							(definition 1)
+			| classdefinition 								(definition 1)
+			| functiondefinition								(definition 1)
+			;
+typename/L1		= IDENT
+			| IDENT "::" typename
+			;
+typehdr/L1		= typename									(typehdr)
+			;
+typegen/L1		= typehdr
+			| typegen "[" UINTEGER "]"							(arraytype)
+			;
+typespec/L1		= typegen									(typespec)
+			;
+classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(>>classdef)
+			;
+functiondefinition	= "function" IDENT typespec callablebody					(funcdef)
+			;
+callablebody		= "(" impl_paramlist ")" "{" statementlist "}"					({}callablebody)
+			;
+main_procedure		= "main" codeblock								(main_procdef)
+			|
+			;
+impl_paramlist		= impl_parameters								(paramdeflist)
+			|										(paramdeflist)
+			;
+impl_parameters		= impl_paramdecl "," impl_parameters
+			| impl_paramdecl
+			;
+impl_paramdecl		= typespec IDENT								(paramdef)
+			;
+codeblock/L1		= "{" statementlist "}"								({}codeblock)
+			;
+statementlist/L1	= statement statementlist							(>>)
+			|
+			;
+elseblock/L1		= "elseif" "(" expression ")" codeblock	elseblock				(conditional_elseif)
+			| "elseif" "(" expression ")" codeblock 					(conditional_elseif)
+			| "else" codeblock 								(conditional_else)
+			;
+statement/L1		= classdefinition 								(definition 1)
+			| functiondefinition								(definition 1)
+			| "var" variabledefinition ";"							(>>definition 1)
+			| expression ";"								(free_expression)
+			| "return" expression ";"							(>>return_value)
+			| "return" ";"									(>>return_void)
+			| "if" "(" expression ")" codeblock elseblock					(conditional_if)
+			| "if" "(" expression ")" codeblock 						(conditional_if)
+			| "while" "(" expression ")" codeblock						(conditional_while)
+			| codeblock
+			;
+variabledefinition	= typespec IDENT								(>>vardef)
+			| typespec IDENT "=" expression							(>>vardef)
+			;
+expression/L1		= "{" expressionlist "}"							(>>structure)
+			| "{" "}"									(>>structure)
+			;
+expression/L2		= IDENT										(variable)
+			| BOOLEAN									(constant "constexpr bool")
+			| UINTEGER									(constant "constexpr int")
+			| FLOAT										(constant "constexpr double")
+			| DQSTRING									(constant "constexpr string")
+			;
+expression/L3		= expression  "="  expression							(>>binop "=")
+			;
+expression/L4		= expression  "||"  expression							(>>binop "||")
+			;
+expression/L5		= expression  "&&"  expression							(>>binop "&&")
+			;
+expression/L8		= expression  "=="  expression							(>>binop "==")
+			| expression  "!="  expression							(>>binop "!=")
+			| expression  "<="  expression							(>>binop "<=")
+			| expression  "<"  expression							(>>binop "<")
+			| expression  ">="  expression							(>>binop ">=")
+			| expression  ">"  expression							(>>binop ">")
+			;
+expression/L9		= expression  "+"  expression							(>>binop "+")
+			| expression  "-"  expression							(>>binop "-")
+			| "-"  expression								(>>unop "-")
+			| "+"  expression								(>>unop "+") 
+			;
+expression/L10		= expression  "*"  expression							(>>binop "*")
+			| expression  "/"  expression							(>>binop "/")
+			;
+expression/L12		= expression "." IDENT								(member)
+			;
+expression/L13		= expression  "(" expressionlist ")"						(>>operator "()")
+			| expression  "(" ")"								(>>operator "()")
+			| expression  "[" expressionlist "]"						(>>operator_array "[]")
+			;
+expressionlist/L0	= expression "," expressionlist
+			| expression
+			;
+
+
+```
+
+Now let's overview the implementation of the typesystem module that generates the code.
+
+### Typesystem
 
 
 
