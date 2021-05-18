@@ -1,11 +1,15 @@
 # The Grammar Definition Language
-_Mewa_ uses a language to describe a grammar similar to the language defined by [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). If you are familiar with _Yacc/Bison_ you won't have problems to adapt to _Mewa_.
+_Mewa_ uses a language to describe an **attributed grammar** similar to the language defined by [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). If you are familiar with _Yacc/Bison_ you won't have problems to adapt to _Mewa_.
 
-## Differences to Yacc/Bison
-Unlike in _Yacc/Bison_ where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where space has no meaning and the lexems can only be described as regular expression matches. The annotation of the rules with code in _Yacc/Bison_ is also different and more restricted in _Mewa_. Instead of arbitrary code to be generated and invoked when the annotated rule matches, _Mewa_ has one Lua callback function per rule that is called on a match. The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right handed assoziativity are attached to productions and not to terminals (operators). Attaching the precedence info to rules (_Mewa_) and not to the terminals (_Yacc/Bison_) can theoretically lead to more reported conflicts in the grammar definition. In practice both ways are equivalent. While the _Yacc/Bison_ is a little bit more intuitive (it's natural to talk about operator precedence), with _Mewa_ you have one class of rules less to write.
+## Parser Generator
+_Mewa_ implements an LALR(1) parser generator for an attributed grammar. The grammar description is read from a source file and has 3 parts:
 
-## Language Attribute Declarations
-Language attribute declarations start with a '**%**' followed by the command and its arguments separated by spaces.
+  * The **configuration declarations** marked with a prefix '%'
+  * The **lexem declarations** 
+  * The **production declarations**
+
+### Configuration Declarations
+Configuration declarations start with a '**%**' followed by the command and its arguments separated by spaces.
 The following commands are known:
 
 * **%** **LANGUAGE** _name_ **;** Defines the name of the language of this grammar as _name_
@@ -16,7 +20,7 @@ The following commands are known:
 * **%** **IGNORE** _pattern_ **;** Defines a token matching this pattern defined as regular expression quoted in single or double quotes as invisible. It is ignored by the lexer and thus by the compiler. Hence it does not need a name.
 * **%** **BAD** _name_ **;** Defines the name of the error token of the lexer. Has no implications but for the debugging output.
 
-## Lexem Declarations
+### Lexem Declarations
 Lexem declarations start with an identifier followed by a colon '**:**', a pattern and an optional selection index:
 
 * _lexemname_ **:** _pattern_ **;**
@@ -25,29 +29,40 @@ Lexem declarations start with an identifier followed by a colon '**:**', a patte
 The name _lexemname_ defines the identifier this lexem can be referred to in the grammar.
 The regular expression string _pattern_ quoted in single or double quotes defines the pattern that matches the lexem.
 You can have multiple declarations with the same name _lexemname_.
-The optional integer number _select_ defines the index of the subexpression of the regular expression match to select as the value of the lexem recognized. If _0_ or nothing is specified the whole expression match is taken as lexem value.
+The optional integer number _select_ defines the index of the subexpression of the regular expression match to select as the value of the lexem recognized. 
+If _0_ or nothing is specified the whole expression match is taken as lexem value.
 If multiple patterns match at the same source position then the longest match is taken. If two matches have the same length, the first declaration is chosen.
 Keywords and operators of the the grammar do not have to be declared in the lexer section but can be directly referred to as strings in the rule section of the grammar.
+
+### Production Delarations
+Production declarations start with an identifier optionally attributed with a priority specifier, followed by an assignment '**=**' and the right side of the production.
+At the end of each production we can declare one optional call to the typesystem module written in Lua.
+Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **scope** info to the nodes of the AST built during parsing.
+
+1. _name_ **=** _itemlist_ **;**
+    * Simple grammar production definition with _name_ as left hand _nonterminal_ and _itemlist_ as space separated list of identifiers (nonterminals or lexem names) and strings (keywords and operators as implicitly defined lexems).
+2. _name_/_priority_ **=** _itemlist_ **;**
+    * Production definition with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a non-negative integer number. The **L** defines the rule to be left handed, meaning that _REDUCE_ is prefered in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right handed, meaning that _SHIFT_ is prefered in self including rules. The integer number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of _SHIFT_ actions must be consistent for a state.
+3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
+    * Production definition with a _luafunction_ as a single identifier plus an optional argument (a lua value or table). The function identifier refers to a member of the typesystem module written by the author and loaded by the compiler. The function and its opional argument are attached to the node of the **AST** defined by its production.
+4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
+    * Production definition with an increment defined for the **scope-step**.
+5. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
+    * Production definition with a **scope** structure (start and end of the scope) defined for the result node
+
+### Conflict solving
+You can attribute a production with a positive integer number as priority having an 'L' or 'R' prefix. The 'L' prefix stands for left and tells to prioritize reduce in a shift/reduce conflict, while the 'R' prefix stands for right and tells to prioritize shift in a shift/reduce conflict with itself. The positive integer number on the other hand tells what to prioritize in a conflict of different productions having both a priority assigned. This mechnism of conflict solving is comparable with declaring operator priorities in _Bison_/_Yacc_.
+
+## Compilation Process
+Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
+The remaining nodes on the stack after syntax analysis are the root nodes of the AST built. Their Lua function attached is called by the compiler after the syntax analysis to produce the output.
+
+## Differences to Yacc/Bison
+Unlike in _Yacc/Bison_ where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where space has no meaning and the lexems can only be described as regular expression matches. The annotation of the rules with code in _Yacc/Bison_ is also different and more restricted in _Mewa_. Instead of arbitrary code to be generated and invoked when the annotated rule matches, _Mewa_ has one Lua callback function per rule that is called on a match. The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right handed assoziativity are attached to productions.
 
 ### Meaning of Whitespaces
 Whitespaces have no meaning in languages describable by _Mewa_.
 The lexems of the languages cannot start with whitespaces as the parser skips whitespaces after every lexem matched and starts matching the next lexem with the first non whitespace character after the last match.
-
-## Rule Delarations
-Rule declarations start with an identifier followed by an assignment '**=**' and the right side of the production.
-At the end of each production we can declare one optional call to the typesystem module written in Lua.
-Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **scope** info to the nodes of the AST initially built.
-
-1. _name_ **=** _itemlist_ **;**
-    * Simple grammar rule definition with _name_ as left hand _nonterminal_ and _itemlist_ as space separated list of identifiers (nonterminals or lexem names) and strings (keywords and operators as implicitly defined lexems).
-2. _name_/_priority_ **=** _itemlist_ **;**
-    * Rule definition as 1. but with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a integer number. The **L** defines the rule to be left handed, meaning that _REDUCE_ is prefered in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right handed, meaning that _SHIFT_ is prefered in self including rules. The integer number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of SHIFT actions must be consistent for a state.
-3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
-    * Rule definition as in (1. or 2.) but with _luafunction_ as a single identifier or an pair of identifiers referring to a function and an optional context argument defined in the typesystem Lua module. A rule defined with a function form a node in the resulting AST (abstract syntax tree). The result node has all non keyword/operator lexems or other nodes defined inside its right hand part of the rule that are not bound by other nodes as subnodes.
-4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
-    * Rule definition as in (1. or 2.) but an with increment defined for the **scope-step**.
-5. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
-    * Rule definition as in (1. or 2.) but with a **scope** structure (start and end of the scope) defined for the result node
 
 ## Scope of AST Nodes and Definitions
 The **scope** of a node in the resulting AST is defined as a pair of integer numbers **[** _start_ , _end_ **]**.

@@ -337,23 +337,16 @@ First we take a look at the grammar of the language.
 _Mewa_ implements an LALR(1) parser generator. The source file of the attributed grammar has 3 parts. 
 
   * Some configuration marked with a prefix '%'
-  * The named lexems as a regular expression that matches the lexem value as argument (Ambiguity is solved by taking the longest match or the first match).
+  * The named lexems as a regular expression that matches the lexem value as argument.
   * An attributed grammar with keywords as strings and lexem or production names as identifiers
 
-On the right side of productions are the attributes in oval brackets '(' ')' optionally attached to the production. 
-Attributes consist of
+#### Production Attribute Operators
+The operator **>>** in the production attributes in oval brackets on the right side is incrementing the scope-step.
+The operator **{}** in the production attributes is defining a scope range.
 
-  * A scope declaration **{}** or a scope step increment **>>**
-  * A _Lua_ function call name and an optional argument (a number, string, or a table)
-
-in this order. Both the scope/step declaration and the function call declaration are optional.
-
-##### Conflict solving
-You can attribute a production with a positive integer number as priority having an 'L' or 'R' prefix. The 'L' prefix stands for left and tells to prioritize reduce in a shift/reduce conflict, while the 'R' prefix stands for right and tells to prioritize shift in a shift/reduce conflict with itself. The positive integer number on the other hand tells what to prioritize in a conflict of different productions having both a priority assigned. This mechnism of conflict solving is comparable with declaring operator priorities in _Bison_/_Yacc_.
-
-#### Compilation Process
-Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
-The remaining nodes on the stack after syntax analysis are the root nodes of the AST built. Their Lua function attached is called by the compiler after the syntax analysis to produce the output.
+#### Production Head Attributes
+The attributes L1,L2,... are defining the production to be left associative with a priority specified as a number. 
+The attributes R1,R2,... are defining the production to be right associative with a priority specified as a number. 
 
 #### Source
 ```

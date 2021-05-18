@@ -36,7 +36,7 @@ dofile( "examples/tutorial/sections/callableEnvironment.lua")
 dofile( "examples/tutorial/sections/firstClassScalarTypes.lua")
 -- Declare constant expression types and arithmetics:
 dofile( "examples/tutorial/sections/constexprTypes.lua")
--- Define how the list of context types used for retrieve types is bound to the current scope:
+-- Define how the list of context types used to retrieve types is bound to the current scope:
 dofile( "examples/tutorial/sections/contextTypes.lua")
 -- Define all functions need to declare functions and methods,etc.:
 dofile( "examples/tutorial/sections/callableTypes.lua")
