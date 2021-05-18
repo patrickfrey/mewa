@@ -26,6 +26,7 @@
 #include <set>
 #include <limits>
 #include <cstring>
+#include <memory>
 
 using namespace mewa;
 

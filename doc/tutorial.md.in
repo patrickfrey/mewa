@@ -318,7 +318,7 @@ I think we are now ready to look at our example compiler as a whole.
 ## Tutorial, Part 2
 
 In the second part of the tutorial we will take a look at the implementation of the example language.
-This chapter will be more about best practices as far as I know and not about explaining the typedb API.
+This chapter will be more about best practices and not about explaining the typedb API.
 The code shown now will be more organised into subparts, more complete, but not self-contained anymore.
 
 Because the amount of code in this second part, we will not inspect it so closely anymore. 
