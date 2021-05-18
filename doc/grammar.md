@@ -46,12 +46,12 @@ Additionally _Mewa_ provides the operators '**>>**' and '**{}**' to assign **sco
 3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
     * Production definition with a _luafunction_ as a single identifier plus an optional argument (a lua value or table). The function identifier refers to a member of the typesystem module written by the author and loaded by the compiler. The function and its opional argument are attached to the node of the **AST** defined by its production.
 4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
-    * Production definition with an increment defined for the **scope-step**.
+    * Production definition with an increment defined for the **scope-step**. The _luafunction_ is optional here.
 5. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
-    * Production definition with a **scope** structure (start and end of the scope) defined for the result node
+    * Production definition with a **scope** structure (start and end of the scope) defined for the result node. The _luafunction_ is optional here.
 
 ### Conflict solving
-You can attribute a production with a positive integer number as priority having an 'L' or 'R' prefix. The 'L' prefix stands for left and tells to prioritize reduce in a shift/reduce conflict, while the 'R' prefix stands for right and tells to prioritize shift in a shift/reduce conflict with itself. The positive integer number on the other hand tells what to prioritize in a conflict of different productions having both a priority assigned. This mechnism of conflict solving is comparable with declaring operator priorities in _Bison_/_Yacc_.
+The mechnism of conflict solving ba attaching priorities to productions is comparable with declaring operator priorities in _Bison_/_Yacc_ though it is more error prone and can lead to undetected conflicts. See bug report #1.
 
 ## Compilation Process
 Matching lexems declared as regular expression in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call attached create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the AST. 
