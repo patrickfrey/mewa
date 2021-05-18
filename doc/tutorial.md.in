@@ -12,7 +12,6 @@ _Mewa_ provides no support for the evaluation of different paths of code generat
 For implementing a compiler with _Mewa_, you define a grammar attributed with _Lua_ function calls.
 The program ```mewa``` will generate a _Lua_ script that will transform any source passing the grammar specified into an _AST_ with the _Lua_ function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the _AST_ that take the control of the further processing of the compiler front-end. The functions called with their _AST_ node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
 
-
 ## Goals
 
 This tutorial starts with some self-contained examples of using the _Lua_ library of _Mewa_ to build the type system of your programming language. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading and return to the snippets you did not
@@ -25,7 +24,6 @@ $EXAMPLE:tutorial_program
 ```
 We will compile this program with the tutorial compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
-
 
 ## Target Audience
 
@@ -356,11 +354,12 @@ $EXAMPLE:tutorial_grammar
 
 ### Typesystem
 Now let's overview the implementation of the typesystem module that generates the code.
+I tried to keep the naming of global variables and also of functions in sync with the example **language1**, the language implemented as proof of concept for _Mewa_.
 
-In contrary to the example **language1**, the proof of concept language for _Mewa_, the typesystem module  of the tutorial language has been splitted in several parts of maximum 100 lines of code to make them digestible in a tutorial. The snippets are included with the _Lua_ command _dofile_. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
+In contrary to the example **language1** the typesystem module of the tutorial language has been splitted in several parts of maximum 100 lines of code to make them digestible in a tutorial. The snippets are included with the _Lua_ command _dofile_. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
 
 #### Header
-Let's first take a look at the header of the typesystem.lua. 
+Let's first take a look at the header of typesystem.lua. 
 
 ##### Submodule llvmir
 The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the first part of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
@@ -376,28 +375,161 @@ The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it help
 $EXAMPLE:tutorial_typesystem
 ```
 
-#### Constants
-##### AST nodes
+#### AST Node functions
+
+##### Constants
+Define atomic and structure constant in the source.
 ```Lua
 $EXAMPLE:tutorial_ast_constants
 ```
-##### Functions
+
+##### Variables
+Define and query variables.
+```Lua
+$EXAMPLE:tutorial_ast_variables
+```
+
+##### AST Extern Function Declarations
+Define extern functions with their parameters.
+```Lua
+$EXAMPLE:tutorial_ast_extern
+```
+
+##### AST Types
+Define and reference classes, arrays and other data types.
+```Lua
+$EXAMPLE:tutorial_ast_types
+```
+
+##### AST Functions
+Define functions with the parameters and the callable body.
+```Lua
+$EXAMPLE:tutorial_ast_functions
+```
+
+##### AST Operators
+Define all sorts of AST operators.
+```Lua
+$EXAMPLE:tutorial_ast_operators
+```
+
+##### AST Control Structures
+Define the AST control structures like conditionals and the return statements.
+```Lua
+$EXAMPLE:tutorial_ast_controls
+```
+
+##### AST Blocks and the Rest
+Define the AST block elements defined and the rest that does not fall in any other category.
+```Lua
+$EXAMPLE:tutorial_ast_blocks
+```
+
+#### Functions
+
+##### Reduction Weights
+Define all reduction weights of our tutorial language. We have explained the necessity of attaching weights ro reductions in the part one of the tutorial.
+```Lua
+$EXAMPLE:tutorial_section_reductionWeights
+```
+
+##### Reduction Tags and Tagmasks
+Define all reduction tags and tagmasks of our tutorial language. We have explained the necessity of tagging in the part one of the tutorial.
+```Lua
+$EXAMPLE:tutorial_section_reductionTagsAndTagmasks
+```
+
+##### Declaration String
+This function provides a signature string of the type including context type and parameter types.
+```Lua
+$EXAMPLE:tutorial_section_declarationString
+```
+
+##### Calls and Promote Calls
+Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the argument to determine the constructor to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls in the example **language1** and the tutorial. The first argument an integer is promoted to a float and then the constructor of the float multiplication is taken.
+```Lua
+$EXAMPLE:tutorial_section_defineCalls
+```
+
+##### Apply Constructors
+The call of a constructor to build an object has been shown in the part 1 of the turial (variable assignment).
+```Lua
+$EXAMPLE:tutorial_section_applyConstructors
+```
+
+##### Resolve Types
+Functions for resolving types, mapping types, and asserting type properties
+```Lua
+$EXAMPLE:tutorial_section_resolveTypes
+```
+
+##### Apply Callable
+Find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight. Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
+```Lua
+$EXAMPLE:tutorial_section_applyCallable
+```
+
+##### Constructor Functions
+Functions for building constructors with parameters like for function calls.
+```Lua
+$EXAMPLE:tutorial_section_constructorFunctions
+```
+
+##### Define Function Call
+Define a function as "()" operator with arguments of a callable.
+```Lua
+$EXAMPLE:tutorial_section_defineFunctionCall
+```
+
+##### Const Expression Types
+Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. But the operators do not produce code, but calculate the resulting value. A const expression type has the value as data type depending on the const expression type as constructor.
 ```Lua
 $EXAMPLE:tutorial_section_constexprTypes
 ```
 
-#### Variables
-Now we will look at variables, including free variables, member variables, and function parameter.
-In the grammar all elements are context free. A variable definition 
-
-##### AST nodes
+##### First Class Scalar Types
+Define the first class scalar types of the language from the descriptions in the module llvmir_scalar.lua.
 ```Lua
-$EXAMPLE:tutorial_ast_variables
+$EXAMPLE:tutorial_section_firstClassScalarTypes
 ```
-##### Functions
+
+##### Variables
+Define the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
 ```Lua
 $EXAMPLE:tutorial_section_variables
 ```
 
+##### Define Data Types
+Define all sorts of data types, including structures and arrays.
+```Lua
+$EXAMPLE:tutorial_section_defineDataTypes
+```
 
+##### Context Types
+Define the list of context types used for resolving types dependent on the scope. Define the context type for declarations of new types.
+```Lua
+$EXAMPLE:tutorial_section_contextTypes
+```
+
+##### Callable Environment
+Define the object with all data related to a callable bound to the scope of the function body, e.g. register allocator, label allocator, return type, etc.
+```Lua
+$EXAMPLE:tutorial_section_callableEnvironment
+```
+
+##### Control Boolean Types
+Complete definition of the control boolean types as introduced in the first part of the tutorial.
+```Lua
+$EXAMPLE:tutorial_section_controlBooleanTypes
+```
+
+##### Control Structures
+Some helper functions for implementing control structures.
+```Lua
+$EXAMPLE:tutorial_section_controlStructures
+```
+
+
+
+   
 

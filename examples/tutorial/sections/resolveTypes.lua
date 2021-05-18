@@ -16,7 +16,7 @@ function selectNoArgumentType( node, seekctx, typeName, tagmask, resolveContextT
 	end
 	utils.errorMessage( node.line, "Failed to resolve %s with no arguments", utils.resolveTypeString( typedb, seekctx, typeName))
 end
--- Get the type handle of a type defined as a path
+-- Get the type handle of a type defined as a path (elements of the path are namespaces and parent structures followed by the type name resolved)
 function resolveTypeFromNamePath( node, arg, argidx)
 	if not argidx then argidx = #arg end
 	local typeName = arg[ argidx]

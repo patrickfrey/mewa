@@ -23,7 +23,7 @@ dofile( "examples/tutorial/sections/constexprTypes.lua")
 -- Define how the list of context types used to retrieve types is bound to the current scope:
 dofile( "examples/tutorial/sections/contextTypes.lua")
 -- Define all functions need to declare functions and methods,etc.:
-dofile( "examples/tutorial/sections/callableTypes.lua")
+dofile( "examples/tutorial/sections/defineFunctionCall.lua")
 -- Define the functions needed to resolve types and matching types:
 dofile( "examples/tutorial/sections/resolveTypes.lua")
 -- Implementation of control boolean types for control structures and boolean operators:
