@@ -996,21 +996,28 @@ Now let's overview the implementation of the typesystem module that generates th
 
 #### Source
 ```
--- Extern function declarations (typesystem.extern_funcdef typesystem.extern_paramdef typesystem.extern_paramdeflist)
-dofile( "examples/tutorial/typesystem/extern.lua")
--- Function declarations (typesystem.funcdef typesystem.callablebody typesystem.paramdef typesystem.paramdeflist)
-dofile( "examples/tutorial/typesystem/functions.lua")
--- Operator declarations (typesystem.binop typesystem.unop typesystem.member typesystem.operator typesystem.operator_array)
-dofile( "examples/tutorial/typesystem/operators.lua")
--- Control structures (typesystem.conditional_if typesystem.conditional_else typesystem.conditional_elseif
---   typesystem.conditional_while typesystem.return_value typesystem.return_void)
-dofile( "examples/tutorial/typesystem/controls.lua")
--- Type definitions (typesystem.typehdr typesystem.arraytype typesystem.typespec typesystem.classdef)
-dofile( "examples/tutorial/typesystem/types.lua")
--- Values, constants and constant structures (typesystem.vardef typesystem.variable typesystem.constant typesystem.structure)
-dofile( "examples/tutorial/typesystem/values.lua")
--- Program building blocks besides functions, classes and types ()
-dofile( "examples/tutorial/typesystem/blocks.lua")
+mewa = require "mewa"
+local utils = require "typesystem_utils"
+llvmir = require "llvmir"
+typedb = mewa.typedb()
+
+-- Global variables
+localDefinitionContext = 0	-- Context type of local definitions
+seekContextKey = "seekctx"	-- Key for context types defined for a scope
+callableEnvKey = "env"		-- Key for current callable environment
+typeDescriptionMap = {}		-- Map of type ids to their description
+referenceTypeMap = {}		-- Map of value type ids to their reference type if it exists
+dereferenceTypeMap = {}		-- Map of reference type ids to their value type if it exists
+arrayTypeMap = {}		-- Map array keys to their array type
+stringConstantMap = {}		-- Map of string constant values to a structure with the attributes {name,size}
+scalarTypeMap = {}		-- Map of scalar type names to the correspoding value type
+
+dofile( "examples/tutorial/sections.inc")
+
+-- AST Callbacks:
+typesystem = {}
+dofile( "examples/tutorial/typesystem.inc")
+return typesystem
 
 ```
 
