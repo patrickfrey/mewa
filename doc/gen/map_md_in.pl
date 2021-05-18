@@ -98,6 +98,7 @@ sub readIncludes
 	my $prefix = $_[0];
 	my $exampledir = $_[1];
 	my $extension = $_[2];
+	my $grepout = $_[3];
 
 	opendir( my $dirhnd, $exampledir) || die "Can't open $exampledir: $!";
 	while (readdir $dirhnd) {
@@ -109,8 +110,24 @@ sub readIncludes
 			{
 				my $exampleId = "$prefix$exampleName";
 				my $exampleFile = "$exampledir/$exampleName.$extension";
-				my $exampleSrc = readFile( "$exampleFile");
-
+				my $exampleSrc = "";
+				if (defined $grepout)
+				{
+					open( XMPLFILE, "$exampleFile") or die("Could not open file $exampleFile for reading: $!");
+					while (<XMPLFILE>)  {
+						if (/$grepout/)
+						{}
+						else
+						{
+							if ($exampleSrc eq "" && $_ eq "\n") {} else {$exampleSrc .= $_;}
+						}
+					}
+					close( FILE);
+				}
+				else
+				{
+					$exampleSrc = readFile( "$exampleFile");
+				}
 				$EXAMPLE{ $exampleId} = $exampleSrc;
 				if ($verbose)
 				{
@@ -125,8 +142,8 @@ sub readIncludes
 readExamples( "", "doc/examples");
 readExamples( "tutorial_", "examples/tutorial/examples");
 readExamples( "tutorial_", "examples/tutorial");
-readIncludes( "tutorial_section_", "examples/tutorial/sections", "lua");
-readIncludes( "tutorial_ast_", "examples/tutorial/ast", "lua");
+readIncludes( "tutorial_section_", "examples/tutorial/sections", "lua", " require ");
+readIncludes( "tutorial_ast_", "examples/tutorial/ast", "lua", " require ");
 readIncludes( "tutorial_", "examples/tutorial", "prg");
 readIncludes( "tutorial_", "examples/tutorial", "g");
 readIncludes( "tutorial_", "examples/tutorial/examples", "txt");

@@ -1002,10 +1002,10 @@ Let's first take a look at the header of typesystem.lua.
 The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the first part of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
 
 ##### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the first part of the tutorial is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the first part of the tutorial. It is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
 
 ##### Global variables
-The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are a lot more.
+The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
 
 ##### Source
 ```
@@ -1037,10 +1037,8 @@ return typesystem
 #### AST Node functions
 
 ##### Constants
-Define atomic and structure constant in the source.
+Define atomic and structure constants in the source.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
 	return {type=typeId,constructor=createConstexprValue( typeId, node.arg[1].value)}
@@ -1055,8 +1053,6 @@ end
 ##### Variables
 Define and query variables.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
 	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. " " .. typedb:type_string(datatype) .. "\n")
@@ -1072,8 +1068,6 @@ end
 ##### AST Extern Function Declarations
 Define extern functions with their parameters.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
 	local name,ret,param = table.unpack( utils.traverse( typedb, node, context))
@@ -1100,8 +1094,6 @@ end
 ##### AST Types
 Define and reference classes, arrays and other data types.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.typehdr( node, decl)
 	return resolveTypeFromNamePath( node, utils.traverse( typedb, node))
 end
@@ -1139,8 +1131,6 @@ end
 ##### AST Functions
 Define functions with the parameters and the callable body.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.funcdef( node, context, pass)
 	local typnam = node.arg[1].value
 	if not pass or pass == 1 then
@@ -1202,8 +1192,6 @@ end
 ##### AST Operators
 Define all sorts of AST operators.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
 	expectValueType( node, this)
@@ -1235,8 +1223,6 @@ end
 ##### AST Control Structures
 Define the AST control structures like conditionals and the return statements.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.conditional_if( node)
 	local env = getCallableEnvironment()
 	local exitLabel = env.label()
@@ -1284,8 +1270,6 @@ end
 ##### AST Blocks and the Rest
 Define the AST block elements defined and the rest that does not fall in any other category.
 ```Lua
-local utils = require "typesystem_utils"
-
 function typesystem.program( node, options)
 	defineConstExprArithmetics()
 	initBuiltInTypes()
@@ -1380,8 +1364,6 @@ tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
 ##### Declaration String
 This function provides a signature string of the type including context type and parameter types.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( this, typnam, args)
 	local rt = (this == 0 or not this) and typnam or (typedb:type_string(type(this) == "table" and this.type or this) .. " " .. typnam)
@@ -1396,8 +1378,6 @@ end
 ##### Calls and Promote Calls
 Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the argument to determine the constructor to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls in the example **language1** and the tutorial. The first argument an integer is promoted to a float and then the constructor of the float multiplication is taken.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Constructor for a promote call (implementing int + double by promoting the first argument int to double and do a double + double to get the result)
 function promoteCallConstructor( call_constructor, promote_constructor)
 	return function( this, arg) return call_constructor( promote_constructor( this), arg) end
@@ -1423,8 +1403,6 @@ end
 ##### Apply Constructors
 The call of a constructor to build an object has been shown in the part 1 of the turial (variable assignment).
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Application of a constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
 function tryApplyConstructor( node, typeId, constructor, arg)
 	if constructor then
@@ -1471,8 +1449,6 @@ end
 ##### Resolve Types
 Functions for resolving types, mapping types, and asserting type properties
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
 function selectNoArgumentType( node, seekctx, typeName, tagmask, resolveContextTypeId, reductions, items)
 	if not resolveContextTypeId or type(resolveContextTypeId) == "table" then -- not found or ambiguous
@@ -1552,8 +1528,6 @@ end
 ##### Apply Callable
 Find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight. Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- For a callable item, create for each argument the lists of reductions needed to pass the arguments to it, with accumulation of the reduction weights
 function collectItemParameter( node, item, args, parameters)
 	local rt = {redulist={},llvmtypes={},weight=0.0}
@@ -1684,8 +1658,6 @@ end
 ##### Constructor Functions
 Functions for building constructors with parameters like for function calls.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
 	if type(constructor) == "table" then return constructor.out,(constructor.code or "") else return tostring(constructor),"" end
@@ -1740,8 +1712,6 @@ end
 ##### Define Function Call
 Define a function as "()" operator with arguments of a callable.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Get the parameter string of a function declaration
 function getDeclarationLlvmTypeRegParameterString( descr, context)
 	local rt = ""
@@ -1787,8 +1757,6 @@ end
 ##### Const Expression Types
 Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. But the operators do not produce code, but calculate the resulting value. A const expression type has the value as data type depending on the const expression type as constructor.
 ```Lua
-local utils = require "typesystem_utils"
-
 constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- signed integer type constant value, represented as Lua number
 constexprDoubleType = typedb:def_type( 0, "constexpr double")		-- double precision floating point number constant, represented as Lua number
 constexprBooleanType = typedb:def_type( 0, "constexpr bool")		-- boolean constants
@@ -1876,8 +1844,6 @@ end
 ##### First Class Scalar Types
 Define the first class scalar types of the language from the descriptions in the module llvmir_scalar.lua.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Define built-in promote calls for first class citizen scalar types
 function defineBuiltInTypePromoteCalls( typnam, descr)
 	local typeId = scalarTypeMap[ typnam]
@@ -1972,8 +1938,6 @@ end
 ##### Variables
 Define the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Define a member variable of a class or a structure
 function defineMemberVariable( node, descr, context, typeId, refTypeId, name)
 	local memberpos = context.structsize or 0
@@ -2068,8 +2032,6 @@ end
 ##### Define Data Types
 Define all sorts of data types, including structures and arrays.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Define an operation generalized
 function defineDataType( node, contextTypeId, typnam, descr)
 	local typeId = typedb:def_type( contextTypeId, typnam)
@@ -2170,8 +2132,6 @@ end
 ##### Context Types
 Define the list of context types used for resolving types dependent on the scope. Define the context type for declarations of new types.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Get the context type for type declarations
 function getDeclarationContextTypeId( context)
 	if context.domain == "local" then return localDefinitionContext
@@ -2202,8 +2162,6 @@ end
 ##### Callable Environment
 Define the object with all data related to a callable bound to the scope of the function body, e.g. register allocator, label allocator, return type, etc.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Create a callable environent object
 function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
 	if rtype then
@@ -2238,8 +2196,6 @@ end
 ##### Control Boolean Types
 Complete definition of the control boolean types as introduced in the first part of the tutorial.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Initialize control boolean types used for implementing control structures like 'if','while' and operators on booleans like '&&','||'
 function initControlBooleanTypes()
 	controlTrueType = typedb:def_type( 0, " controlTrueType")
@@ -2341,8 +2297,6 @@ end
 ##### Control Structures
 Some helper functions for implementing control structures.
 ```Lua
-local utils = require "typesystem_utils"
-
 -- Build a conditional if/elseif block
 function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
 	local cond_constructor = getRequiredTypeConstructor( node, controlTrueType, condition, tagmask_matchParameter, tagmask_typeConversion)

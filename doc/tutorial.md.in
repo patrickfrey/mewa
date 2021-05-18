@@ -365,10 +365,10 @@ Let's first take a look at the header of typesystem.lua.
 The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the first part of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
 
 ##### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the first part of the tutorial is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the first part of the tutorial. It is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
 
 ##### Global variables
-The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are a lot more.
+The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
 
 ##### Source
 ```
@@ -378,7 +378,7 @@ $EXAMPLE:tutorial_typesystem
 #### AST Node functions
 
 ##### Constants
-Define atomic and structure constant in the source.
+Define atomic and structure constants in the source.
 ```Lua
 $EXAMPLE:tutorial_ast_constants
 ```
