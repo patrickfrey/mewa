@@ -838,9 +838,9 @@ First we take a look at the grammar of the language.
 ### Introduction
 
 #### Parser Generator
-_Mewa_ implements an LALR(1) parser generator. The source file of the attributed grammar has 3 parts. 
+_Mewa_ implements an _LALR(1)_ parser generator. The source file of the attributed grammar has 3 parts. 
 
-  * Some configuration marked with a prefix '%'
+  * Some configuration marked with a prefix '**%**'
   * The named lexems as a regular expression that matches the lexem value as argument.
   * An attributed grammar with keywords as strings and lexem or production names as identifiers
 
@@ -849,8 +849,8 @@ The operator **>>** in the production attributes in oval brackets on the right s
 The operator **{}** in the production attributes is defining a scope range.
 
 #### Production Head Attributes
-The attributes L1,L2,... are defining the production to be left associative with a priority specified as a number. 
-The attributes R1,R2,... are defining the production to be right associative with a priority specified as a number. 
+The attributes **L1**,**L2**,... are defining the production to be left associative with a priority specified as a number. 
+The attributes **R1**,**R2**,... are defining the production to be right associative with a priority specified as a number. 
 
 #### Source
 ```
@@ -990,9 +990,22 @@ expressionlist/L0	= expression "," expressionlist
 
 ```
 
+### Typesystem
 Now let's overview the implementation of the typesystem module that generates the code.
 
-### Typesystem
+In contrary to the example **language1**, the proof of concept language for _Mewa_, the typesystem module  of the tutorial language has been splitted in several parts of maximum 100 lines of code to make them digestible in a tutorial. The snippets are included with the _Lua_ command _dofile_. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
+
+#### Header
+We take now a look at the header of the typesystem.lua. 
+
+##### Submodule llvmir
+The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the first part of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
+
+##### Submodule utils
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the first part of the tutorial is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
+
+##### Global variables
+The approach of _Mewa_ is not pure. Things are stored in the typedb if it helps. For everything else we use global variables. I tried to keep the API of the typedb as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example language1 there are a lot more.
 
 #### Source
 ```
@@ -1016,7 +1029,7 @@ dofile( "examples/tutorial/sections.inc")
 
 -- AST Callbacks:
 typesystem = {}
-dofile( "examples/tutorial/typesystem.inc")
+dofile( "examples/tutorial/ast.inc")
 return typesystem
 
 ```

@@ -18,5 +18,5 @@ dofile( "examples/tutorial/sections.inc")
 
 -- AST Callbacks:
 typesystem = {}
-dofile( "examples/tutorial/typesystem.inc")
+dofile( "examples/tutorial/ast.inc")
 return typesystem

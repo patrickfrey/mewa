@@ -315,7 +315,7 @@ Finds the path of reductions selected by the _tagmask_ parameter with the minimu
 The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
-| #          | Name            | Type              | Description                                                                                                      |
+| #          | Name            | Type     | Description                                                                                                               |
 | :--------- | :-------------- | :------- | :------------------------------------------------------------------------------------------------------------------------ |
 | 1st        | dest-type       | integer  | Resulting type to derive.                                                                                                 |
 | 2nd        | src-type        | integer  | Start type of the reduction path leading to the result type.                                                              |
