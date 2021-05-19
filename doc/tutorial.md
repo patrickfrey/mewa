@@ -982,7 +982,7 @@ expressionlist/L0	= expression "," expressionlist
 Now let's overview the implementation of the typesystem module that generates the code.
 The code shown now will be more organised, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrary to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
+In contrast to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
 
 Because the amount of code in this second part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
@@ -994,7 +994,7 @@ Let's first take a look at the header of typesystem.lua.
 The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
 
 #### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and AST tree traversal functions are other examples there.
 
 #### Global variables
 The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
@@ -1032,8 +1032,8 @@ All AST node functions do some sort of traversal, as it is in their responsibili
   * ```function traverse( typedb, node, ...)```
   * ```function traverseRange( typedb, node, range, ...)```
 
-The range is a pair of Lua array indices referring to subnodes to process for partial traversal. Partial traversal is used for processing the subnodes selectively at different times or conditions. You may for example traverse the function parameters and the body at different time, because you have top declare the function first before caring about the implementation. 
-The variable arguments **...** are forwarded to the AST functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the AST to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process and an AST node function. But be aware that this way of passing information and state is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+The range is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
+The variable arguments **...** are forwarded to the AST functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the AST to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an AST node function. But be aware that this way of passing information and state is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
 ```Lua
 -- Tree traversal helper function setting the current scope/step and calling the function of one node, and returning its result:
 local function processSubnode( typedb, subnode, ...)
@@ -1085,7 +1085,7 @@ Now we will visit the functions attchached to the AST nodes. I split them into s
 Most of the code is just delegating to functions we will inspect in the following section. 
 
 #### Constants
-Define atomic and structure constants in the source. 
+Define atomic and structure constants in the source.
 
 ##### Structures, e.g. Initializer Lists
 A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object beeing initializable by a contant structure. The constructor is using the typedb to find a matching constructor with this list matching as parameter list. If it fails the constructor returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
@@ -1117,7 +1117,7 @@ end
 ```
 
 #### Extern Function Declarations
-Define extern functions with their parameters. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameter. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, filled by param declaration node ```typesystem.extern_paramdef```.
+Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameter. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, filled by param declaration node ```typesystem.extern_paramdef```.
 ```Lua
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
