@@ -132,6 +132,10 @@ end
 function getCallableEnvironment()
 	return instantCallableEnvironment or typedb:get_instance( callableEnvKey)
 end
+-- Get the node of this scope in case we do not have any line info anymore
+function getCurrentScopeNode()
+	return typedb:get_instance( "node") or {line=0}
+end
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( this, typnam, args)
 	local rt = (this == 0 or not this) and typnam or (typedb:type_string(type(this) == "table" and this.type or this) .. " " .. typnam)
@@ -314,7 +318,7 @@ function constReferenceFromUnboundRefTypeConstructor( descr, refTypeId)
 		local inp,code = constructorParts( constructor)
 		bindPartialDtor( constructor.step, inp, out)
 		code = utils.constructor_format( descr.def_local, {out = out}, env.register) .. utils.template_format( code, {[inp]=out} )
-		local cleanup = typeConstructorPairCode( tryApplyCallable( {line=env.line}, {type=refTypeId,constructor={out=out}}, ":~", {}))
+		local cleanup = typeConstructorPairCode( tryApplyCallable( getCurrentScopeNode(), {type=refTypeId,constructor={out=out}}, ":~", {}))
 		if cleanup then registerCleanupCode( "local " .. typedb:type_name(dereferenceTypeMap[ refTypeId]), cleanup, constructor.step) end
 		return {code=code, out=out}
 	end
@@ -353,7 +357,7 @@ function functionCallConstructor( env, code, func, argstr, descr)
 		if hasCatchFrame() then
 			env.throws = true
 		else
-			utils.errorMessage( env.line or 0, "Calling throwing function inside a callable declared as nothrow without a catch handling an exception: %s", func)
+			utils.errorMessage( getCurrentScopeNode().line, "Calling throwing function inside a callable declared as nothrow without a catch handling an exception: %s", func)
 		end
 	end
 	if descr.ret then
@@ -1454,7 +1458,7 @@ function registerCleanupCode( name, code, step)
 	if not step then step = typedb:step() end
 	local frame = getOrCreateThisAllocationFrame()
 	local dtor = getOrCreateAllocationFrameCleanupSlot( frame, step)
-	if dtor.cleanup then utils.errorMessage( frame.env.line, "Internal: More than one cleanup registered per scope step (%d): %s and %s", step, name, dtor.cleanup.name) end
+	if dtor.cleanup then utils.errorMessage( getCurrentScopeNode().line, "Internal: More than one cleanup registered per scope step (%d): %s and %s", step, name, dtor.cleanup.name) end
 	dtor.cleanup = {name=name,code=code}
 end
 -- Register the partial dtor for the current scope step, must be called in ascending order
@@ -1462,7 +1466,7 @@ function registerPartialDtor( name, code, parent_step)
 	local step = typedb:step()
 	local frame = getOrCreateThisAllocationFrame()
 	local dtor = getOrCreateAllocationFrameCleanupSlot( frame, step)
-	if dtor.partial then utils.errorMessage( frame.env.line, "Internal: More than one partial dtor registered per scope step (%d): %s and %s", step, name, dtor.partial.name) end
+	if dtor.partial then utils.errorMessage( getCurrentScopeNode().line, "Internal: More than one partial dtor registered per scope step (%d): %s and %s", step, name, dtor.partial.name) end
 	dtor.partial = {name=name,code=code,parent_step=parent_step}
 end
 -- Substitute the target in the cleanup code of an unbound reference type if there is a partial cleanup registered
@@ -1471,7 +1475,7 @@ function bindPartialDtor( step, var, value)
 	if frame then
 		local dtor = getAllocationFrameCleanupSlot( frame, step)
 		if dtor then
-			if not dtor.partial then utils.errorMessage( frame.env.line, "Internal: No partial dtor at step (%d)", step) end
+			if not dtor.partial then utils.errorMessage( getCurrentScopeNode().line, "Internal: No partial dtor at step (%d)", step) end
 			dtor.partial.code = utils.template_format( dtor.partial.code, {[var]=value})
 		end
 	end
@@ -1487,7 +1491,7 @@ function getAllocationFrameCleanupLabel( frame, exitkey, exitcode, exitlabel)
 			exit = {labels={}, labelsteps={}, exitcode=utils.constructor_format( llvmir.control.gotoStatement, {inp=parent_cleanup})}
 		else
 			if exitlabel then exitcode = (exitcode or "") .. utils.constructor_format( llvmir.control.gotoStatement, {inp=exitlabel}) end
-			if not exitcode then utils.errorMessage( env.line, "Internal: Frame cleanup without label or code defined") end
+			if not exitcode then utils.errorMessage( getCurrentScopeNode().line, "Internal: Frame cleanup without label or code defined") end
 			exit = {labels={}, labelsteps={}, exitcode=exitcode}
 		end
 		frame.exitmap[ exitkey] = exit
@@ -1778,7 +1782,7 @@ function logInitCall( name, index)
 	if msg then utils.errorMessage( line, msg) end
 	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
-	if frame.initstate >= index+1 then utils.errorMessage( env.line, "Multiple initializations for member '%s' or initializations not in order of definition", name)
+	if frame.initstate >= index+1 then utils.errorMessage( getCurrentScopeNode().line, "Multiple initializations for member '%s' or initializations not in order of definition", name)
 	else while frame.initstate ~= index do
 		code = code .. getImplicitInitCode( node, env, frame.initstate, index)
 		frame.initstate = index+1
@@ -1796,7 +1800,7 @@ function defaultInitConstructorCode( node, env, member)
 	local resolveContextTypeId, reductions, items = typedb:resolve_type( seekctx, member.name, tagmask_resolveType)
 	local membervar,memberconstructor = selectNoArgumentType( node, seekctx, member.name, resolveContextTypeId, reductions, items)
 	local res = tryApplyCallable( node, {type=membervar,constructor=memberconstructor}, ":=", {})
-	if not res then utils.errorMessage( env.line, "No default constructor available for member '%s', need explicit initialization for every case", member.name) end
+	if not res then utils.errorMessage( getCurrentScopeNode().line, "No default constructor available for member '%s', need explicit initialization for every case", member.name) end
 	return res.constructor.code
 end
 -- Get the code of the default initialization constructors from state initstate to state initstateTo, needed top level up initialization states of different branches
@@ -1813,7 +1817,7 @@ function completeCtorInitializationCode( nofollow)
 	local frame = getOrCreateThisAllocationFrame()
 	local env = frame.env
 	if nofollow and frame.initstate ~= #env.initcontext.members then utils.errorMessage( node, "Internal: Can't complete initialization") end
-	local rt = getImplicitInitCode( {line=env.line}, env, frame.initstate, #env.initcontext.members)
+	local rt = getImplicitInitCode( getCurrentScopeNode(), env, frame.initstate, #env.initcontext.members)
 	frame.initstate = #env.initcontext.members
 	return rt
 end

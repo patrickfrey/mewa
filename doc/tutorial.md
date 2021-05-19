@@ -1027,10 +1027,66 @@ return typesystem
 ```
 
 ### AST Node functions
-Now we will visit the functions attchached to the AST nodes. I split them into snippets covering different aspects.
+Now we will visit the functions attchached to the AST nodes. I split them into snippets covering different aspects. Most of the code is just delegating to functions we will inspect in the following section. All AST node functions do some sort of traversal, as it is in their responsibility to call the subnodes of the AST. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the AST traversal function. Because it is so important I would like you to have a look at the traversal functions implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
+
+  * ```function traverse( typedb, node, ...)```
+  * ```function traverseRange( typedb, node, range, ...)```
+
+The range is a pair of Lua array indices referring to subnodes to process for partial traversal. Partial traversal is used for processing the subnodes selectively at different times or conditions. You may for example traverse the function parameters and the body at different time, because you have top declare the function first before caring about the implementation. 
+The variable arguments **...** are forwarded to the AST functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the AST to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process and an AST node function. But be aware that this way of passing information and state is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+```Lua
+-- Tree traversal helper function setting the current scope/step and calling the function of one node, and returning its result:
+local function processSubnode( typedb, subnode, ...)
+	local rt
+	if subnode.call then
+		if (subnode.scope) then
+			local scope_bk,step_bk = typedb:scope( subnode.scope)
+			typedb:set_instance( "node", subnode)
+			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+			typedb:scope( scope_bk,step_bk)
+		elseif (subnode.step) then
+			local step_bk = typedb:step( subnode.step)
+			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+			typedb:step( step_bk)
+		else
+			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+		end
+	else
+		rt = subnode.value
+	end
+	return rt
+end
+-- Tree traversal or a subrange of argument nodes, define scope/step and do the traversal call
+function utils.traverseRange( typedb, node, range, ...)
+	if node.arg then
+		local rt = {}
+		local start,last = table.unpack(range)
+		local lasti,ofs = last-start+1,start-1
+		for ii=1,lasti do rt[ ii] = processSubnode( typedb, node.arg[ ofs+ii], ...) end
+		return rt
+	else
+		return node.value
+	end
+end
+-- Tree traversal, define scope/step and do the traversal call
+function utils.traverse( typedb, node, ...)
+	if node.arg then
+		local rt = {}
+		for ii,subnode in ipairs(node.arg) do rt[ii] = processSubnode( typedb, subnode, ...) end
+		return rt
+	else
+		return node.value
+	end
+end
+```
+#### AST Traversal
+
 
 #### Constants
-Define atomic and structure constants in the source.
+Define atomic and structure constants in the source. 
+
+##### Note
+A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to the object type with this list as constructor argument. The constructor is using the typedb to find a matching constructor with this list matching as parameter list. If it fails the constructor returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
@@ -1044,7 +1100,7 @@ end
 ```
 
 #### Variables
-Define and query variables.
+Define and query variables. 
 ```Lua
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
@@ -1371,7 +1427,7 @@ end
 ```
 
 #### Calls and Promote Calls
-Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the argument to determine the constructor to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls in the example **language1** and the tutorial. The first argument an integer is promoted to a float and then the constructor of the float multiplication is taken.
+Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the argument to determine the constructor to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls in the example **language1** and in this language. The first argument an integer is promoted to a float and then the constructor of the float multiplication is taken.
 ```Lua
 -- Constructor for a promote call (implementing int + double by promoting the first argument int to double and do a double + double to get the result)
 function promoteCallConstructor( call_constructor, promote_constructor)
@@ -2326,21 +2382,49 @@ echo "Build the compiler ..."
 mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua tutorial/grammar.g
 chmod +x build/tutorial.compiler.lua
 
-echo "[5] Run the compiler on a test program ..."
+echo "[1] Run the compiler on a test program ..."
 build/tutorial.compiler.lua -o build/tutorial.program.llr tutorial/program.prg
 
-echo "[6] Create an object file ..."
+echo "[2] Create an object file ..."
 llc -relocation-model=pic -O=3 -filetype=obj build/tutorial.program.llr -o build/tutorial.program.o
 
-echo "[7] Create an executable ..."
+echo "[3] Create an executable ..."
 clang -lm -lstdc++ -o build/tutorial.program build/tutorial.program.o
 
-echo "[8] Run the executable file build/tutorial.program"
+echo "[4] Run the executable file build/tutorial.program"
 build/tutorial.program
 
 ```
 #### Output
 ```
+[1] Run the compiler on a test program ...
+DECLARE global class Employee
+-- MEMBER VARIABLES class Employee
+DECLARE member variable name string
+DECLARE member variable age int
+DECLARE member variable salary double
+-- FUNCTION DECLARATIONS class Employee
+PARAMDECL function setSalary
+DECLARE member function Employee__setSalary (double) -> void
+-- FUNCTION IMPLEMENTATIONS class Employee
+STATEMENTS function setSalary
+IMPLEMENTATION function setSalary
+-- DONE class Employee
+PARAMDECL function salarySum
+DECLARE global function salarySum (Employee [10]&) -> double
+STATEMENTS function salarySum
+DECLARE local variable idx int
+DECLARE local variable sum double
+IMPLEMENTATION function salarySum
+PARAMDECL function salaryRaise
+DECLARE global function salaryRaise (Employee [10]&, double) -> void
+STATEMENTS function salaryRaise
+DECLARE local variable idx int
+IMPLEMENTATION function salaryRaise
+DECLARE local variable list Employee [10]
+[2] Create an object file ...
+[3] Create an executable ...
+[4] Run the executable file build/tutorial.program
 Salary sum: 280720.00
 ```
 

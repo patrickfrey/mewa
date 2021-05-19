@@ -140,9 +140,8 @@ end
 function utils.register_allocator( prefix)
 	return utils.name_allocator( prefix or "%r")
 end
-utils.doLogging = false
--- Tree traversal:
-function processSubnode( typedb, subnode, ...)
+-- Tree traversal helper function setting the current scope/step and calling the function of one node, and returning its result:
+local function processSubnode( typedb, subnode, ...)
 	local rt
 	if subnode.call then
 		if (subnode.scope) then
@@ -151,7 +150,6 @@ function processSubnode( typedb, subnode, ...)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
 			typedb:scope( scope_bk,step_bk)
 		elseif (subnode.step) then
-			-- if subnode.step >= XX and subnode.step <= YY then utils.doLogging = true else utils.doLogging = false end -- DO COMMENT OUT IF NOT DEBUGGING
 			local step_bk = typedb:step( subnode.step)
 			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
 			typedb:step( step_bk)
