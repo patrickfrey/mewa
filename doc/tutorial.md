@@ -1026,8 +1026,8 @@ return typesystem
 
 ```
 
-### AST Node functions
-Now we will visit the functions attchached to the AST nodes. I split them into snippets covering different aspects. Most of the code is just delegating to functions we will inspect in the following section. All AST node functions do some sort of traversal, as it is in their responsibility to call the subnodes of the AST. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the AST traversal function. Because it is so important I would like you to have a look at the traversal functions implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
+### AST Traversal
+All AST node functions do some sort of traversal, as it is in their responsibility to call the subnodes of the AST. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the AST traversal function. Because it is so important I would like you to have a look at the traversal functions implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
 
   * ```function traverse( typedb, node, ...)```
   * ```function traverseRange( typedb, node, range, ...)```
@@ -1079,14 +1079,16 @@ function utils.traverse( typedb, node, ...)
 	end
 end
 ```
-#### AST Traversal
 
+### AST Node functions
+Now we will visit the functions attchached to the AST nodes. I split them into snippets covering different aspects. 
+Most of the code is just delegating to functions we will inspect in the following section. 
 
 #### Constants
 Define atomic and structure constants in the source. 
 
-##### Note
-A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to the object type with this list as constructor argument. The constructor is using the typedb to find a matching constructor with this list matching as parameter list. If it fails the constructor returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
+##### Structures, e.g. Initializer Lists
+A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object beeing initializable by a contant structure. The constructor is using the typedb to find a matching constructor with this list matching as parameter list. If it fails the constructor returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
@@ -1100,7 +1102,7 @@ end
 ```
 
 #### Variables
-Define and query variables. 
+Define and query variables. These AST node functions are just delegating to functions we will see later.
 ```Lua
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
@@ -1115,7 +1117,7 @@ end
 ```
 
 #### Extern Function Declarations
-Define extern functions with their parameters.
+Define extern functions with their parameters. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameter. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, filled by param declaration node ```typesystem.extern_paramdef```.
 ```Lua
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
@@ -1141,7 +1143,16 @@ end
 ```
 
 #### Data Types
-Define and reference classes, arrays and other data types.
+Define and reference classes, arrays and other data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
+ 1. We see a switch of the context here. Whatever is passed to this AST node function as context, we define a new context (```classContext```) to be passed down to the traversal. 
+ 2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as parameter for the subnodes to decide what to do:
+    * 1st Pass: Type Definitions
+    * 2nd Pass: Member Variable Declarations
+    * 3rd Pass: Method Declarations (=1st pass of function declarations)
+    * 4th Pass: Method Implementation (=2nd pass of function declarations)
+    The head scrathing thing here the mapping of the 3rd pass to the 1st pass of the subnode and the 4th pass to the 2nd pass of the subnode in the node ```typesystem.definition_2pass``` that is a node that does something in 2 different passes.
+ The implementation might be a little bit complicated, but hopefully you see the intention. The class node defines a multiple pass evaluation and the nodes ```typesystem.definition_2pass``` and ```typesystem.definition``` implement the gates that encapsulate the decision what lines are processed. 
+ 
 ```Lua
 function typesystem.typehdr( node, decl)
 	return resolveTypeFromNamePath( node, utils.traverse( typedb, node))
@@ -1172,6 +1183,21 @@ function typesystem.classdef( node, context)
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method implementations
 	print_section( "Typedefs", utils.constructor_format( descr.typedef, {llvmtype=classContext.llvmtype}))
 	io.stderr:write("-- DONE class " .. descr.symbol .. "\n")
+end
+function typesystem.definition( node, pass, context, pass_selected)
+	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
+		local statement = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
+		return statement and statement.constructor or nil
+	end
+end
+function typesystem.definition_2pass( node, pass, context, pass_selected)
+	if not pass_selected then
+		return typesystem.definition( node, pass, context, pass_selected)
+	elseif pass == pass_selected+1 then
+		utils.traverse( typedb, node, context, 1) 	-- 3rd pass: declarations
+	elseif pass == pass_selected then
+		utils.traverse( typedb, node, context, 2)	-- 4th pass: implementations
+	end
 end
 
 
@@ -1325,21 +1351,6 @@ function typesystem.program( node, options)
 	initControlBooleanTypes()
 	local context = {domain="global"}
 	utils.traverse( typedb, node, context)
-end
-function typesystem.definition( node, pass, context, pass_selected)
-	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
-		local statement = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
-		return statement and statement.constructor or nil
-	end
-end
-function typesystem.definition_2pass( node, pass, context, pass_selected)
-	if not pass_selected then
-		return typesystem.definition( node, pass, context, pass_selected)
-	elseif pass == pass_selected+1 then
-		utils.traverse( typedb, node, context, 1) 	-- 3rd pass: declarations
-	elseif pass == pass_selected then
-		utils.traverse( typedb, node, context, 2)	-- 4th pass: implementations
-	end
 end
 function typesystem.main_procdef( node)
 	local env = defineCallableEnvironment( node, "main ", scalarIntegerType)

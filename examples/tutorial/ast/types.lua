@@ -30,4 +30,19 @@ function typesystem.classdef( node, context)
 	print_section( "Typedefs", utils.constructor_format( descr.typedef, {llvmtype=classContext.llvmtype}))
 	io.stderr:write("-- DONE class " .. descr.symbol .. "\n")
 end
+function typesystem.definition( node, pass, context, pass_selected)
+	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
+		local statement = table.unpack( utils.traverse( typedb, node, context or {domain="local"}))
+		return statement and statement.constructor or nil
+	end
+end
+function typesystem.definition_2pass( node, pass, context, pass_selected)
+	if not pass_selected then
+		return typesystem.definition( node, pass, context, pass_selected)
+	elseif pass == pass_selected+1 then
+		utils.traverse( typedb, node, context, 1) 	-- 3rd pass: declarations
+	elseif pass == pass_selected then
+		utils.traverse( typedb, node, context, 2)	-- 4th pass: implementations
+	end
+end
 
