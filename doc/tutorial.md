@@ -982,7 +982,7 @@ expressionlist/L0	= expression "," expressionlist
 Now let's overview the implementation of the typesystem module that generates the code.
 The code shown now will be more organised, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrast to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
+In contrast to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```tutorial/ast```.
 
 Because the amount of code in this second part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
@@ -994,7 +994,7 @@ Let's first take a look at the header of typesystem.lua.
 The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
 
 #### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and AST tree traversal functions are other examples there.
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and _AST_ tree traversal functions are other examples there.
 
 #### Global variables
 The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
@@ -1027,13 +1027,13 @@ return typesystem
 ```
 
 ### AST Traversal
-All AST node functions do some sort of traversal, as it is in their responsibility to call the subnodes of the AST. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the AST traversal function. Because it is so important I would like you to have a look at the traversal functions implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
+All _AST_ node functions do some sort of traversal, as it is in their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the _AST_ traversal function. Because it is so important I would like you to have a look at the traversal functions implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
 
   * ```function traverse( typedb, node, ...)```
   * ```function traverseRange( typedb, node, range, ...)```
 
 The range is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
-The variable arguments **...** are forwarded to the AST functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the AST to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an AST node function. But be aware that this way of passing information and state is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+The variable arguments **...** are forwarded to the _AST_ functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of passing information and state is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
 ```Lua
 -- Tree traversal helper function setting the current scope/step and calling the function of one node, and returning its result:
 local function processSubnode( typedb, subnode, ...)
@@ -1081,7 +1081,7 @@ end
 ```
 
 ### AST Node functions
-Now we will visit the functions attchached to the AST nodes. I split them into snippets covering different aspects. 
+Now we will visit the functions attchached to the _AST_ nodes. I split them into snippets covering different aspects. 
 Most of the code is just delegating to functions we will inspect in the following section. 
 
 #### Constants
@@ -1102,7 +1102,7 @@ end
 ```
 
 #### Variables
-Define and query variables. These AST node functions are just delegating to functions we will see later.
+Define and query variables. These _AST_ node functions are just delegating to functions we will see later.
 ```Lua
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
@@ -1143,15 +1143,15 @@ end
 ```
 
 #### Data Types
-Define and reference classes, arrays and other data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
- 1. We see a switch of the context here. Whatever is passed to this AST node function as context, we define a new context (```classContext```) to be passed down to the traversal. 
+This section defines classes, arrays and atomic data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
+ 1. We see a switch of the context here. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. 
  2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as parameter for the subnodes to decide what to do:
     * 1st Pass: Type Definitions
     * 2nd Pass: Member Variable Declarations
-    * 3rd Pass: Method Declarations (=1st pass of function declarations)
-    * 4th Pass: Method Implementation (=2nd pass of function declarations)
-    The head scrathing thing here the mapping of the 3rd pass to the 1st pass of the subnode and the 4th pass to the 2nd pass of the subnode in the node ```typesystem.definition_2pass``` that is a node that does something in 2 different passes.
- The implementation might be a little bit complicated, but hopefully you see the intention. The class node defines a multiple pass evaluation and the nodes ```typesystem.definition_2pass``` and ```typesystem.definition``` implement the gates that encapsulate the decision what lines are processed. 
+    * 3rd Pass: Method Declarations (the traversal calls 1st pass of function declarations)
+    * 4th Pass: Method Implementation (the traversal calls the 2nd pass of function declarations)
+
+The class node defines a multiple pass evaluation and the nodes ```typesystem.definition_2pass``` and ```typesystem.definition``` implement the gates that encapsulate the decision what is processed when.
  
 ```Lua
 function typesystem.typehdr( node, decl)
@@ -1204,7 +1204,11 @@ end
 ```
 
 #### Function Declarations
-Define functions with the parameters and the callable body.
+Now we have a look at functions with the parameters and the body. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. The first time we use a helper function ```utils.allocNodeData``` that attaches the function description created to the node in the first pass and references it with the function ```utils.getNodeData```. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters has already been declared in the 1st pass.
+
+To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. This structure contains all function related data like the return type, the register allocator, etc.
+It is referenced with the function ```getCallableEnvironment```.
+
 ```Lua
 function typesystem.funcdef( node, context, pass)
 	local typnam = node.arg[1].value
@@ -1265,7 +1269,7 @@ end
 ```
 
 #### Operators
-Define the functions of AST nodes implementing operators.
+This section defines the the functions of _AST_ nodes implementing operators. The contruction of operators, member references, function calls are all redirected to the function ```applyCallable``` we will visit later. Function calls are implemented as operator "()" of a callable type.
 ```Lua
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
@@ -1296,7 +1300,10 @@ end
 ```
 
 #### Control Structures
-Define the AST control structures like conditionals and the return statements.
+As we learned in the turorial, conditionals are implemented by wiring a control boolean type together with some code blocks. The control boolean type derived from the condition type with ```getRequiredTypeConstructor```.
+
+The return node functions also use ```getRequiredTypeConstructor``` to derive the value returned from their argument. The return type is visible in the callable environment.
+
 ```Lua
 function typesystem.conditional_if( node)
 	local env = getCallableEnvironment()
@@ -1343,7 +1350,8 @@ end
 ```
 
 #### Blocks and the Rest
-Define the AST block elements defined and the rest that does not fall in any other category.
+Finally we come to the section containing the blocks that do not fit somewhere else. Namely the top level node, the program, that does some initializations of the language before further processing by delegation with the traversal of the subnodes. The main program node does not do much here, ```typesystem.codeblock``` and ```typesystem.free_expression``` are self explaining.
+
 ```Lua
 function typesystem.program( node, options)
 	defineConstExprArithmetics()
@@ -1376,7 +1384,6 @@ end
 ```
 
 ### Typesystem Functions
-
 This chapter will survey the functions implementing the typesystem. They are also split into snippets covering different aspects.
 
 #### Reduction Weights
