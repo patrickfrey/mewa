@@ -360,7 +360,7 @@ The submodule ```llvmir``` implements all templates for the LLVM IR code generat
 The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and _AST_ tree traversal functions are other examples there.
 
 #### Global variables
-The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
+The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. The API of the _typedb_ is pragmatic and kept as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
 
 #### Source
 ```
@@ -368,7 +368,7 @@ $EXAMPLE:tutorial_typesystem
 ```
 
 ### AST Traversal
-All _AST_ node functions do some sort of traversal, as it is in their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the _AST_ traversal function. Because it is so important I would like you to have a look at the traversal functions implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
+All _AST_ node functions participate in the traversal as it is in their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the _AST_ traversal function. The traversal functions are implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
 
   * ```function traverse( typedb, node, ...)```
   * ```function traverseRange( typedb, node, range, ...)```
@@ -435,13 +435,13 @@ $EXAMPLE:tutorial_ast_constants
 ```
 
 #### Variables
-Define and query variables. These _AST_ node functions are just delegating to functions we will see later.
+In this section are the node functions to define and query variables. These _AST_ node functions are just delegating to functions we will see later.
 ```Lua
 $EXAMPLE:tutorial_ast_variables
 ```
 
 #### Extern Function Declarations
-Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameter. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, filled by param declaration node ```typesystem.extern_paramdef```.
+Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```.
 ```Lua
 $EXAMPLE:tutorial_ast_extern
 ```
@@ -462,7 +462,7 @@ $EXAMPLE:tutorial_ast_types
 ```
 
 #### Function Declarations
-Now we have a look at functions with the parameters and the body. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. The first time we use a helper function ```utils.allocNodeData``` that attaches the function description created to the node in the first pass and references it with the function ```utils.getNodeData```. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters has already been declared in the 1st pass.
+Now we have a look at functions with the parameters and the body. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. A helper function ```utils.allocNodeData``` attaches the function description created in the first pass to the node. The function ```utils.getNodeData``` references it in the second pass. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters have already been declared in the 1st pass.
 
 To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. This structure contains all function related data like the return type, the register allocator, etc.
 It is referenced with the function ```getCallableEnvironment```.
