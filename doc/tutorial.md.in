@@ -1,11 +1,11 @@
 # Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_
 
 ## Lead Text
-_LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of LLVM IR and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
+_LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of _LLVM IR_ and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
 
 ## Introduction
 
-The _Mewa_ compiler-compiler is a tool to script compiler front-ends in _Lua_. A compiler written with _Mewa_ takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this tutorial uses the text format of _LLVM IR_ as output. An executable is built using the ```llc``` command of _Clang_.
+The _Mewa_ compiler-compiler is a tool to script compiler front-ends in _Lua_. A compiler written with _Mewa_ takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this article uses the text format of _LLVM IR_ as output. An executable is built using the ```llc``` command of _Clang_.
 
 _Mewa_ provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
 
@@ -14,24 +14,23 @@ The program ```mewa``` will generate a _Lua_ script that will transform any sour
 
 ## Goals
 
-This tutorial starts with some self-contained examples of using the _Lua_ library of _Mewa_ to build the type system of your programming language. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading and return to the snippets you did not
-understand completely later.
+We start with a tutorial of the **typedb** library of _Mewa_ for _Lua_ with some self-contained examples. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading even if you did not understand it completely and to return later.
 
-After this, the tutorial will guide you through the implementation of a compiler for a reduced and incomplete programming language.
+After this, this article will guide you through the implementation of a compiler for a simple programming language missing many features.
 The example program we will compile is the following:
 ```
 $EXAMPLE:tutorial_program
 ```
-We will compile this program with the tutorial compiler and run it in a shell. We will also look at different parts including the grammar of the language.
+We will compile this program with the our example compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
 
 ## Target Audience
 
-To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to _Lua_. If you have read a tutorial about _LLVM IR_, you will get grip on the code generation in the examples.
+To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to _Lua_. If you have read an introduction to [LLVM IR](links.md), you will get grip on the code generation in the examples.
 
 ## Deeper Digging
 
-For a deeper digging you have to look at the _Mewa_ project itself and the implementation of the main example language, a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
+For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
 ## Preparation
 
@@ -64,7 +63,7 @@ git clone https://github.com/patrickfrey/luabcd.git
 cd LuaBcd
 ./configure
 make
-make PREFIX=/usr/local install
+make install
 ```
 #### Fetch sources of latest release version
 ```Bash
@@ -90,17 +89,19 @@ make test
 ```
 #### Install
 ```Bash
-make PREFIX=/usr/local install
+make install
 ```
 #### Lua Environment
 Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from command line. 
-You find a luaenv.sh in the archive of this tutorial. Load it with.
+You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
-. examples/tutorial/luaenv.sh
+. tutorial/luaenv.sh
 ```
 
 
-## Tutorial, Part 1 
+## Tutorial
+
+In this tutorial we will learn how to use the typedb library with some self-contained examples.
 
 ### Declaring a variable
 
@@ -315,221 +316,252 @@ We have seen the whole variety of functions of the _typedb_ library now. The rem
 I think we are now ready to look at our example compiler as a whole.
 
 
-## Tutorial, Part 2
+## Example Language Grammar
 
-In the second part of the tutorial we will take a look at the implementation of the example language.
-This chapter will be more about best practices and not about explaining the typedb API.
-The code shown now will be more organised into subparts, more complete, but not self-contained anymore.
+Now we will take a look at the grammar of the example language. 
 
-Because the amount of code in this second part, we will not inspect it so closely anymore. 
-We change now from a walk through to an inspection with a helicopter.
-
-But I hope that after the first part of the tutorial you will still get a grip on the code shown.
-
-First we take a look at the grammar of the language.
-
-### Grammar
-
-### Introduction
-
-#### Parser Generator
+### Parser Generator
 _Mewa_ implements an _LALR(1)_ parser generator. The source file of the attributed grammar has 3 parts. 
 
   * Some configuration marked with a prefix '**%**'
   * The named lexems as a regular expression that matches the lexem value as argument.
   * An attributed grammar with keywords as strings and lexem or production names as identifiers
 
-#### Production Attribute Operators
+### Production Attribute Operators
 The operator **>>** in the production attributes in oval brackets on the right side is incrementing the scope-step.
 The operator **{}** in the production attributes is defining a scope range.
 
-#### Production Head Attributes
+### Production Head Attributes
 The attributes **L1**,**L2**,... are defining the production to be left associative with a priority specified as a number. 
 The attributes **R1**,**R2**,... are defining the production to be right associative with a priority specified as a number. 
 
-#### Source
+### Source
 ```
 $EXAMPLE:tutorial_grammar
 ```
 
-### Typesystem
+
+## Typesystem
 Now let's overview the implementation of the typesystem module that generates the code.
-I tried to keep the naming of global variables and also of functions in sync with the example **language1**, the language implemented as proof of concept for _Mewa_.
+The code shown now will be more organised, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrary to the example **language1** the typesystem module of the tutorial language has been splitted in several parts of maximum 100 lines of code to make them digestible in a tutorial. The snippets are included with the _Lua_ command _dofile_. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
+In contrary to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the **AST** nodes are in the directory ```tutorial/ast```.
 
-#### Header
+Because the amount of code in this second part, we will not inspect it so closely as in the tutorial anymore. 
+But I hope that after the tutorial you will still get a grip on the code shown.
+
+### Header
 Let's first take a look at the header of typesystem.lua. 
 
-##### Submodule llvmir
-The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the first part of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
+#### Submodule llvmir
+The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
 
-##### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the first part of the tutorial. It is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
+#### Submodule utils
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more sophisticated form. String encoding, mangling, and AST tree traversal functions are other examples.
 
-##### Global variables
+#### Global variables
 The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. I tried to keep the API of the _typedb_ as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
 
-##### Source
+#### Source
 ```
 $EXAMPLE:tutorial_typesystem
 ```
 
-#### AST Node functions
+### AST Node functions
+Now we will visit the functions attchached to the AST nodes. I split them into snippets covering different aspects.
 
-##### Constants
+#### Constants
 Define atomic and structure constants in the source.
 ```Lua
 $EXAMPLE:tutorial_ast_constants
 ```
 
-##### Variables
+#### Variables
 Define and query variables.
 ```Lua
 $EXAMPLE:tutorial_ast_variables
 ```
 
-##### AST Extern Function Declarations
+#### Extern Function Declarations
 Define extern functions with their parameters.
 ```Lua
 $EXAMPLE:tutorial_ast_extern
 ```
 
-##### AST Types
+#### Data Types
 Define and reference classes, arrays and other data types.
 ```Lua
 $EXAMPLE:tutorial_ast_types
 ```
 
-##### AST Functions
+#### Function Declarations
 Define functions with the parameters and the callable body.
 ```Lua
 $EXAMPLE:tutorial_ast_functions
 ```
 
-##### AST Operators
-Define all sorts of AST operators.
+#### Operators
+Define the functions of AST nodes implementing operators.
 ```Lua
 $EXAMPLE:tutorial_ast_operators
 ```
 
-##### AST Control Structures
+#### Control Structures
 Define the AST control structures like conditionals and the return statements.
 ```Lua
 $EXAMPLE:tutorial_ast_controls
 ```
 
-##### AST Blocks and the Rest
+#### Blocks and the Rest
 Define the AST block elements defined and the rest that does not fall in any other category.
 ```Lua
 $EXAMPLE:tutorial_ast_blocks
 ```
 
-#### Functions
+### Typesystem Functions
 
-##### Reduction Weights
-Define all reduction weights of our tutorial language. We have explained the necessity of attaching weights ro reductions in the part one of the tutorial.
+This chapter will survey the functions implementing the typesystem. They are also split into snippets covering different aspects.
+
+#### Reduction Weights
+Define all reduction weights of our language. We have explained the need for weighting reductions in the tutorial.
 ```Lua
 $EXAMPLE:tutorial_section_reductionWeights
 ```
 
-##### Reduction Tags and Tagmasks
-Define all reduction tags and tagmasks of our tutorial language. We have explained the necessity of tagging in the part one of the tutorial.
+#### Reduction Tags and Tagmasks
+Define all reduction tags and tagmasks of our example language. We have explained the need for tagging in the tutorial.
 ```Lua
 $EXAMPLE:tutorial_section_reductionTagsAndTagmasks
 ```
 
-##### Declaration String
+#### Declaration String
 This function provides a signature string of the type including context type and parameter types.
 ```Lua
 $EXAMPLE:tutorial_section_declarationString
 ```
 
-##### Calls and Promote Calls
+#### Calls and Promote Calls
 Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the argument to determine the constructor to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls in the example **language1** and the tutorial. The first argument an integer is promoted to a float and then the constructor of the float multiplication is taken.
 ```Lua
 $EXAMPLE:tutorial_section_defineCalls
 ```
 
-##### Apply Constructors
+#### Apply Constructors
 The call of a constructor to build an object has been shown in the part 1 of the turial (variable assignment).
 ```Lua
 $EXAMPLE:tutorial_section_applyConstructors
 ```
 
-##### Resolve Types
+#### Resolve Types
 Functions for resolving types, mapping types, and asserting type properties
 ```Lua
 $EXAMPLE:tutorial_section_resolveTypes
 ```
 
-##### Apply Callable
+#### Apply Callable
 Find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight. Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
 ```Lua
 $EXAMPLE:tutorial_section_applyCallable
 ```
 
-##### Constructor Functions
+#### Constructor Functions
 Functions for building constructors with parameters like for function calls.
 ```Lua
 $EXAMPLE:tutorial_section_constructorFunctions
 ```
 
-##### Define Function Call
+#### Define Function Call
 Define a function as "()" operator with arguments of a callable.
 ```Lua
 $EXAMPLE:tutorial_section_defineFunctionCall
 ```
 
-##### Const Expression Types
+#### Const Expression Types
 Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. But the operators do not produce code, but calculate the resulting value. A const expression type has the value as data type depending on the const expression type as constructor.
 ```Lua
 $EXAMPLE:tutorial_section_constexprTypes
 ```
 
-##### First Class Scalar Types
+#### First Class Scalar Types
 Define the first class scalar types of the language from the descriptions in the module llvmir_scalar.lua.
 ```Lua
 $EXAMPLE:tutorial_section_firstClassScalarTypes
 ```
 
-##### Variables
+#### Variables
 Define the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
 ```Lua
 $EXAMPLE:tutorial_section_variables
 ```
 
-##### Define Data Types
+#### Define Data Types
 Define all sorts of data types, including structures and arrays.
 ```Lua
 $EXAMPLE:tutorial_section_defineDataTypes
 ```
 
-##### Context Types
+#### Context Types
 Define the list of context types used for resolving types dependent on the scope. Define the context type for declarations of new types.
 ```Lua
 $EXAMPLE:tutorial_section_contextTypes
 ```
 
-##### Callable Environment
+#### Callable Environment
 Define the object with all data related to a callable bound to the scope of the function body, e.g. register allocator, label allocator, return type, etc.
 ```Lua
 $EXAMPLE:tutorial_section_callableEnvironment
 ```
 
-##### Control Boolean Types
-Complete definition of the control boolean types as introduced in the first part of the tutorial.
+#### Control Boolean Types
+Complete definition of the control boolean types as introduced in the tutorial.
 ```Lua
 $EXAMPLE:tutorial_section_controlBooleanTypes
 ```
 
-##### Control Structures
+#### Control Structures
 Some helper functions for implementing control structures.
 ```Lua
 $EXAMPLE:tutorial_section_controlStructures
 ```
 
+### Running the compiler
+```bash
+cd examples
+mkdir build
 
+LUABIN=`which $ARG`
+. tutorial/luaenv.sh
 
-   
+echo "Build the compiler ..."
+mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua tutorial/grammar.g
+chmod +x build/tutorial.compiler.lua
+
+echo "[5] Run the compiler on a test program ..."
+build/tutorial.compiler.lua -o build/tutorial.program.llr tutorial/program.prg
+
+echo "[6] Create an object file ..."
+llc -relocation-model=pic -O=3 -filetype=obj build/tutorial.program.llr -o build/tutorial.program.o
+
+echo "[7] Create an executable ..."
+clang -lm -lstdc++ -o build/tutorial.program build/tutorial.program.o
+
+echo "[8] Run the executable file build/tutorial.program"
+build/tutorial.program
+
+```
+#### Output
+```
+Salary sum: 280720.00
+```
+
+### What is Missing
+This article showed the implementation of a primitive language missing lots of features. For example:
+  * Dynamic Memory Allocation
+  * Exceptions
+  * More Language Features
+  * Generics
+
+And many more. You can visit the [FAQ](faq.md) and dig into the main [example language1](example_language1.md).
+Writing a compiler is a matter of organization. I hope this article could give you some anchors for your personal compiler project.
+
 

@@ -9,11 +9,6 @@ cat example.llr
 ```
 C++ example translations with _Clang_ unravel how to map specific constructs into LLVM IR.
 
-### Presentation & Slides
-* [Modern Intermediate Representations (IR) - LLVM](https://llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf)
-* [Tutorial for LLVM Intermediate Representation](http://swtv.kaist.ac.kr/courses/cs453-fall14/lec10-llvm-ir.pptx)
-* [Datatypes in the LLVM IR - Compiler Design ETH Zürich](https://people.inf.ethz.ch/suz/teaching/252-0210-f19/lec08.pdf)
-
 ### Manuals
 * [LLVM Language Reference Manual](https://llvm.org/docs/LangRef.html)
 * [LLVM GetElementPtr](https://llvm.org/docs/GetElementPtr.html)
