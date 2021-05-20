@@ -2645,7 +2645,7 @@ function getDeclarationLlvmTypeRegParameterString( descr, context)
 	if rt ~= "" then rt = rt:sub(1, -3) end
 	return rt
 end
--- Get the parameter string of a function typedef
+-- Get the parameter string of a function declaration
 function getDeclarationLlvmTypedefParameterString( descr, context)
 	local rt = ""
 	if doReturnValueAsReferenceParameter( descr.ret) then rt = descr.rtllvmtype .. "* sret, " end

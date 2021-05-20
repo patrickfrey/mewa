@@ -548,6 +548,9 @@ Here are the functions for resolving types, mapping types, and asserting type pr
   * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as accumulation function for the weight of the function match.
   * The function ```getRequiredTypeConstructor``` transforms a type into another type.
 
+##### Note
+The function ```getSeekContextTypes()``` is important to resolve types and called here. It provides the list of the candidate context types used to resolve a type. This list is extended whenever a new realm of a type is entered. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access elements in the outer realm, for example global types. Therefore we need to maintain a list of current context types that is extended on entry into a lexical scope of a structure and shrinked on exit. We cannot solve the problem with help of _Mewa_ scopes, because ... it get's a mess. I was there before.
+
 ```Lua
 $EXAMPLE:tutorial_section_resolveTypes
 ```
@@ -563,31 +566,41 @@ $EXAMPLE:tutorial_section_applyCallable
 ```
 
 #### Constructor Functions
-Functions for building constructors with parameters like for function calls.
+Here are the building blocks for defining constructors.
+  * The functions ```constructorParts```, ```constructorStruct``` and ```typeConstructorPairStruct''' are helpers for constructor or type/constructor pair structures.
+  * The function ```callConstructor``` builds a constructor function from a format string and additional attributes. Most of the constructor function of this example compiler are defined with ```callConstructor```. It uses the helper function ```buildCallArguments``` to build some format string variables for mapping the arguments of a constructor call.
 ```Lua
 $EXAMPLE:tutorial_section_constructorFunctions
 ```
 
 #### Define Function Call
-Define a function as "()" operator with arguments of a callable.
+The function ```defineFunctionCall``` introduced in this section is used to define a free function call of a method call as "()" operator with arguments of a callable.
+A callable is an intermediate type created to unify all cases of a function call into one case. For example function variables may also be called with the arguments in oval brackets "(" ")". If we want to unify these cases, we cannot define a function as symbol with arguments, because the symbol binding is not available for a function variable. Therefore we define the function symbol to be of type callable with a "()" operator with the function parameter as arguments. The function variable can reference the callable as its type and also have a "()" operator with the function parameter as arguments.
 ```Lua
 $EXAMPLE:tutorial_section_defineFunctionCall
 ```
 
 #### Const Expression Types
-Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. But the operators do not produce code, but calculate the resulting value. A const expression type has the value as data type depending on the const expression type as constructor.
+Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. 
+The const expression operator constructors do not produce code, but return a value as result. 
+The constructor of a const expression is the value of the data item with this type.
+
+##### Remark
+The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating point number constants into a binary representation needed by LLVM IR for floating point numbers that have no exact binary representation of a value writen with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
+
 ```Lua
 $EXAMPLE:tutorial_section_constexprTypes
 ```
 
 #### First Class Scalar Types
-Define the first class scalar types of the language from the descriptions in the module llvmir_scalar.lua.
+This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type, that is just a string pointer in this example language, is also defined here. As for the const expression types, we also define promote calls here, like integer + float implemented as float + float after _promotion_ of the left argument.
+
 ```Lua
 $EXAMPLE:tutorial_section_firstClassScalarTypes
 ```
 
 #### Variables
-Define the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
+Here are the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
 ```Lua
 $EXAMPLE:tutorial_section_variables
 ```

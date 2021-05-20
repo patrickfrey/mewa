@@ -74,7 +74,7 @@ function defineParameter( node, typeId, name)
 	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
 	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
 end
--- Resolve a variable by name and return ist type/constructor structure
+-- Resolve a variable by name and return its type/constructor structure
 function getVariable( node, varname)
 	local env = getCallableEnvironment()
 	local seekctx = getSeekContextTypes()

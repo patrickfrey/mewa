@@ -9,7 +9,7 @@ function getDeclarationLlvmTypeRegParameterString( descr, context)
 	return rt
 end
 
--- Get the parameter string of a function typedef
+-- Get the parameter string of a function declaration
 function getDeclarationLlvmTypedefParameterString( descr, context)
 	local rt = ""
 	if context.domain == "member" then rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, " end
