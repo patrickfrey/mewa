@@ -677,7 +677,7 @@ build/tutorial.compiler.lua -o build/tutorial.program.llr tutorial/program.prg
 
 ##### Inspect the LLVM IR code
 ```bash
-build/tutorial.program.llr 
+less build/tutorial.program.llr 
 ```
 
 ##### Create an object file
