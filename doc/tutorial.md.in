@@ -527,14 +527,14 @@ $EXAMPLE:tutorial_section_declarationString
 ```
 
 #### Calls and Promote Calls
-Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the argument to determine the constructor to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls in the example **language1** and in this language. The first argument an integer is promoted to a float and then the constructor of the float multiplication is taken.
+Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the 2nd argument to determine the constructor function to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls (promoting the first argument to the type of the second argument) in the examples. The integer argument is promoted to a float and then the constructor function of the float multiplication is called.
 ```Lua
 $EXAMPLE:tutorial_section_defineCalls
 ```
 
 #### Apply Constructors
-This section defines the call of a constructor. We got an impression of how this works in the tutorial (variable assignment). 
-The functions ```tryApplyConstructor``` and ```applyConstructor``` are building a constructor from a constructor function and a list of arguments.
+This section defines the call of a constructor function. We got an impression of how this works in the tutorial (variable assignment). 
+The functions ```tryApplyConstructor``` and ```applyConstructor``` are building a constructor by applying a constructor function on a list of arguments.
 The functions ```tryApplyReductionList``` and ```applyReductionList``` are building a constructor from a chain of reductions applied on a base constructor.
 The functions with a prefix ```try``` report a miss or an ambiguity with their return value instead of exiting with ```utils.errorMessage``` in case of an error.
 ```Lua
@@ -543,7 +543,7 @@ $EXAMPLE:tutorial_section_applyConstructors
 
 #### Resolve Types
 Here are the functions for resolving types, mapping types, and asserting type properties.
-  * The function ```selectNoArgumentType``` filters a resolve type match without parameters, a variable or datatype.
+  * The function ```selectNoArgumentType``` filters a resolve type match without parameters, a variable or a data type.
   * The function ```resolveTypeFromNamePath``` resolves a type from a namespace or structure name path.
   * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as accumulation function for the weight of the function match.
   * The function ```getRequiredTypeConstructor``` transforms a type into another type.
