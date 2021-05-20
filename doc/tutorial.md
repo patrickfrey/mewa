@@ -1526,7 +1526,8 @@ Here are the functions for resolving types, mapping types, and asserting type pr
   * The function ```getRequiredTypeConstructor``` transforms a type into another type.
 
 ##### Note
-The function ```getSeekContextTypes()``` is important to resolve types and called here. It provides the list of the candidate context types used to resolve a type. This list is extended whenever a new realm of a type is entered. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access elements in the outer realm, for example global types. Therefore we need to maintain a list of current context types that is extended on entry into a lexical scope of a structure and shrinked on exit. We cannot solve the problem with help of _Mewa_ scopes, because ... it get's a mess. I was there before.
+The function ```getSeekContextTypes()``` called here is important to resolve types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrinked on exit.
+
 
 ```Lua
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
