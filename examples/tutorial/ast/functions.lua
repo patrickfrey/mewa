@@ -10,15 +10,11 @@ function typesystem.funcdef( node, context, pass)
 		local descr = {lnk="internal", name=typnam, symbolname=symbolname, func='@'..symbolname, ret=rtype, rtllvmtype=rtllvmtype, attr="#0"}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
-		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.symbolname
-				.. " (" .. utils.typeListString(typedb,descr.param) .. ")"
-				.. " -> " .. (rtype and utils.typeString(typedb,rtype) or "void") .. "\n")
 		defineFunctionCall( node, descr, context)
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
-		io.stderr:write("IMPLEMENTATION function " .. descr.name .. "\n")
 		if descr.ret then
 			local rtdescr = typeDescriptionMap[descr.ret]
 			descr.body = descr.body .. utils.constructor_format( llvmir.control.returnStatement, {type=rtdescr.llvmtype,this=rtdescr.default})
@@ -33,12 +29,10 @@ function typesystem.callablebody( node, context, descr, selectid)
 	local subcontext = {domain="local"}
 	if selectid == 1 then -- parameter declarations
 		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
-		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
 		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
 		descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
 	elseif selectid == 2 then -- statements in body
 		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
-		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
 		local statementlist = utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
 		local code = ""
 		for _,statement in ipairs(statementlist) do code = code .. statement.code end

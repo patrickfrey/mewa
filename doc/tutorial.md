@@ -1026,14 +1026,19 @@ return typesystem
 
 ```
 
+### Output
+The output of out compiler front-end is printed with the functions ```print``` and ```print_section``` defined by the compiler. The function ```print``` is redirected to a function appending to the ```Code``` section of the output. The sections are variables in the [target files](../examples/target). The function ```print_section``` is appending to an output section specified as first parameter.
+
 ### AST Traversal
 All _AST_ node functions participate in the traversal as it is in their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the _AST_ traversal function. The traversal functions are implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
 
   * ```function traverse( typedb, node, ...)```
   * ```function traverseRange( typedb, node, range, ...)```
 
-The range is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
-The variable arguments **...** are forwarded to the _AST_ functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of passing information and state is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+The ```range``` is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
+The variable arguments **...** are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+
+##### Source from typesystem_utils
 ```Lua
 -- Tree traversal helper function setting the current scope/step and calling the function of one node, and returning its result:
 local function processSubnode( typedb, subnode, ...)
@@ -1102,11 +1107,10 @@ end
 ```
 
 #### Variables
-In this section are the node functions to define and query variables. These _AST_ node functions are just delegating to functions we will see later.
+In this section are the node functions to define and query variables. These _AST_ node functions are just delegating to functions we will revisit later.
 ```Lua
 function typesystem.vardef( node, context)
 	local datatype,varnam,initval = table.unpack( utils.traverse( typedb, node, context))
-	io.stderr:write("DECLARE " .. context.domain .. " variable " .. varnam .. " " .. typedb:type_string(datatype) .. "\n")
 	return defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.variable( node)
@@ -1117,7 +1121,7 @@ end
 ```
 
 #### Extern Function Declarations
-Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```.
+Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```. The function call definition with ```defineFunctionCall``` is the same as for free functions and class methods.
 ```Lua
 function typesystem.extern_funcdef( node)
 	local context = {domain="global"}
@@ -1144,7 +1148,7 @@ end
 
 #### Data Types
 This section defines classes, arrays and atomic data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
- 1. We see a switch of the context here. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. 
+ 1. The context is changed. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. 
  2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as parameter for the subnodes to decide what to do:
     * 1st Pass: Type Definitions
     * 2nd Pass: Member Variable Declarations
@@ -1170,19 +1174,14 @@ function typesystem.classdef( node, context)
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local typeId,descr = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
 	local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
-	io.stderr:write("DECLARE " .. context.domain .. " class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
-	io.stderr:write("-- MEMBER VARIABLES class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
-	io.stderr:write("-- FUNCTION DECLARATIONS class " .. descr.symbol .. "\n")
 	descr.size = classContext.structsize
 	descr.members = classContext.members
 	defineClassStructureAssignmentOperator( node, typeId)
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: method declarations
-	io.stderr:write("-- FUNCTION IMPLEMENTATIONS class " .. descr.symbol .. "\n")
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method implementations
 	print_section( "Typedefs", utils.constructor_format( descr.typedef, {llvmtype=classContext.llvmtype}))
-	io.stderr:write("-- DONE class " .. descr.symbol .. "\n")
 end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
@@ -1206,8 +1205,10 @@ end
 #### Function Declarations
 Now we have a look at functions with the parameters and the body. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. A helper function ```utils.allocNodeData``` attaches the function description created in the first pass to the node. The function ```utils.getNodeData``` references it in the second pass. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters have already been declared in the 1st pass.
 
-To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. This structure contains all function related data like the return type, the register allocator, etc.
-It is referenced with the function ```getCallableEnvironment```.
+To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. We have seen in the tutorial how this works (Objects with a Scope). The callable environment structure contains all function related data like the return type, the register allocator, etc.
+It is accessed with the function ```getCallableEnvironment```.
+
+The _AST_ node function ```typesystem.callablebody``` collects the elements of the free function or class method description in the scope of the callable body. It collects the list of parameters in a similar way as the extern function declaration we have already seen.
 
 ```Lua
 function typesystem.funcdef( node, context, pass)
@@ -1220,15 +1221,11 @@ function typesystem.funcdef( node, context, pass)
 		local descr = {lnk="internal", name=typnam, symbolname=symbolname, func='@'..symbolname, ret=rtype, rtllvmtype=rtllvmtype, attr="#0"}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)	-- 1st pass: function declaration
 		utils.allocNodeData( node, localDefinitionContext, descr)
-		io.stderr:write("DECLARE " .. context.domain .. " function " .. descr.symbolname
-				.. " (" .. utils.typeListString(typedb,descr.param) .. ")"
-				.. " -> " .. (rtype and utils.typeString(typedb,rtype) or "void") .. "\n")
 		defineFunctionCall( node, descr, context)
 	end
 	if not pass or pass == 2 then
 		local descr = utils.getNodeData( node, localDefinitionContext)
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)	-- 2nd pass: function implementation
-		io.stderr:write("IMPLEMENTATION function " .. descr.name .. "\n")
 		if descr.ret then
 			local rtdescr = typeDescriptionMap[descr.ret]
 			descr.body = descr.body .. utils.constructor_format( llvmir.control.returnStatement, {type=rtdescr.llvmtype,this=rtdescr.default})
@@ -1243,12 +1240,10 @@ function typesystem.callablebody( node, context, descr, selectid)
 	local subcontext = {domain="local"}
 	if selectid == 1 then -- parameter declarations
 		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
-		io.stderr:write("PARAMDECL function " .. descr.name .. "\n")
 		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, subcontext))
 		descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
 	elseif selectid == 2 then -- statements in body
 		if context.domain == "member" then expandMethodEnvironment( node, context, descr, descr.env) end
-		io.stderr:write("STATEMENTS function " .. descr.name .. "\n")
 		local statementlist = utils.traverseRange( typedb, node, {2,#node.arg}, subcontext)
 		local code = ""
 		for _,statement in ipairs(statementlist) do code = code .. statement.code end
@@ -1270,6 +1265,7 @@ end
 
 #### Operators
 This section defines the the functions of _AST_ nodes implementing operators. The contruction of operators, member references, function calls are all redirected to the function ```applyCallable``` we will visit later. Function calls are implemented as operator "()" of a callable type.
+The functions ```expectValueType``` and ```expectDataType``` used here are assertions.
 ```Lua
 function typesystem.binop( node, operator)
 	local this,operand = table.unpack( utils.traverse( typedb, node))
@@ -1302,7 +1298,7 @@ end
 #### Control Structures
 As we learned in the turorial, conditionals are implemented by wiring a control boolean type together with some code blocks. The control boolean type derived from the condition type with ```getRequiredTypeConstructor```.
 
-The return node functions also use ```getRequiredTypeConstructor``` to derive the value returned from their argument. The return type is visible in the callable environment.
+The return node functions also use ```getRequiredTypeConstructor``` to derive the value returned from their argument. The return type is accessible in the callable environment structure.
 
 ```Lua
 function typesystem.conditional_if( node)
@@ -1350,7 +1346,11 @@ end
 ```
 
 #### Blocks and the Rest
-Finally we come to the section containing the blocks that do not fit somewhere else. Namely the top level node, the program, that does some initializations of the language before further processing by delegation with the traversal of the subnodes. The main program node does not do much here, ```typesystem.codeblock``` and ```typesystem.free_expression``` are self explaining.
+Finally we come to the section containing the blocks that do not fit somewhere else. 
+  * The top level node, the program, that does some initializations of the language before further processing by delegation with the traversal of the subnodes.
+  * The main program node, that does not do a lot here as there are no program arguments and no program return value implemented here. 
+  * The node function ```typesystem.codeblock``` joins a list of statements to one constructor. 
+  * The node function ```typesystem.free_expression``` makes a statement node from an expression node.
 
 ```Lua
 function typesystem.program( node, options)
@@ -1384,7 +1384,7 @@ end
 ```
 
 ### Typesystem Functions
-This chapter will survey the functions implementing the typesystem. They are also split into snippets covering different aspects.
+This chapter will survey the functions used in the AST node functions we have now seen. They are also split into snippets covering different aspects.
 
 #### Reduction Weights
 Define all reduction weights of our language. We have explained the need for weighting reductions in the tutorial.
@@ -2416,30 +2416,6 @@ build/tutorial.program
 #### Output
 ```
 [1] Run the compiler on a test program ...
-DECLARE global class Employee
--- MEMBER VARIABLES class Employee
-DECLARE member variable name string
-DECLARE member variable age int
-DECLARE member variable salary double
--- FUNCTION DECLARATIONS class Employee
-PARAMDECL function setSalary
-DECLARE member function Employee__setSalary (double) -> void
--- FUNCTION IMPLEMENTATIONS class Employee
-STATEMENTS function setSalary
-IMPLEMENTATION function setSalary
--- DONE class Employee
-PARAMDECL function salarySum
-DECLARE global function salarySum (Employee [10]&) -> double
-STATEMENTS function salarySum
-DECLARE local variable idx int
-DECLARE local variable sum double
-IMPLEMENTATION function salarySum
-PARAMDECL function salaryRaise
-DECLARE global function salaryRaise (Employee [10]&, double) -> void
-STATEMENTS function salaryRaise
-DECLARE local variable idx int
-IMPLEMENTATION function salaryRaise
-DECLARE local variable list Employee [10]
 [2] Create an object file ...
 [3] Create an executable ...
 [4] Run the executable file build/tutorial.program
