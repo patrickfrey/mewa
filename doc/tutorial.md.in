@@ -453,7 +453,7 @@ $EXAMPLE:tutorial_ast_extern
 
 #### Data Types
 This section defines classes, arrays and atomic data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
- 1. The context is changed. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. 
+ 1. The context is changed. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. The context is a structure a field ```domain``` that tells if we are inside the definition of a class ("member"), if we are in the body of a function ("local"), or if we are not inside any structure ("global"). It has other fields too depending on the context. In classes it is also used to collect data (```structsize```,```members```) from its subnodes.
  2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as parameter for the subnodes to decide what to do:
     * 1st Pass: Type Definitions
     * 2nd Pass: Member Variable Declarations
