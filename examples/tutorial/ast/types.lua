@@ -14,6 +14,7 @@ end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
+	pushSeekContextType( declContextTypeId)
 	local typeId,descr = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
 	local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
@@ -24,6 +25,7 @@ function typesystem.classdef( node, context)
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: method declarations
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method implementations
 	print_section( "Typedefs", utils.constructor_format( descr.typedef, {llvmtype=classContext.llvmtype}))
+	popSeekContextType( declContextTypeId)
 end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar

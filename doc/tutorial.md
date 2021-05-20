@@ -1008,7 +1008,7 @@ typedb = mewa.typedb()
 
 -- Global variables
 localDefinitionContext = 0	-- Context type of local definitions
-seekContextKey = "seekctx"	-- Key for context types defined for a scope
+seekContextKey = "seekctx"	-- Key for seek context types defined for a scope
 callableEnvKey = "env"		-- Key for current callable environment
 typeDescriptionMap = {}		-- Map of type ids to their description
 referenceTypeMap = {}		-- Map of value type ids to their reference type if it exists
@@ -1172,6 +1172,7 @@ end
 function typesystem.classdef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
+	pushSeekContextType( declContextTypeId)
 	local typeId,descr = defineStructureType( node, declContextTypeId, typnam, llvmir.structTemplate)
 	local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
 	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
@@ -1182,6 +1183,7 @@ function typesystem.classdef( node, context)
 	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: method declarations
 	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method implementations
 	print_section( "Typedefs", utils.constructor_format( descr.typedef, {llvmtype=classContext.llvmtype}))
+	popSeekContextType( declContextTypeId)
 end
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then	-- if the pass matches the declaration in the grammar
@@ -2237,9 +2239,10 @@ end
 The list of context types used for resolving types has already been explained. 
 The function ```getDeclarationContextTypeId``` provides the access to the context type used for declarations depending on context.
 The function ```getSeekContextTypes``` provides the access to the list context type used for ```typedb:resolve_type```.
-The list of seek context types is also dependent on scope. 
-It is possible to extend the list of seek context types explicitely when implementing a construct like ```using namespace``` in _C++_
-or like the Pascal ```WITH```. This has not been done in this 
+
+The list of seek context types is also dependent on scope. When adding an element to a list not yet bound to the current scope then the list of the enclosing 
+scope cloned calling ```thisInstanceTableClone( name, emptyInst)``` and the element is added to the clone. This comes into play when the ```self``` type is added to the list of context types. It is only visible in the methods body.
+
 ```Lua
 -- Get the context type for type declarations
 function getDeclarationContextTypeId( context)
@@ -2265,11 +2268,19 @@ end
 function pushSeekContextType( val)
 	table.insert( thisInstanceTableClone( seekContextKey, {0}), val)
 end
+-- Remove the last element of the the list of context types associated with the current scope used for resolving types
+function popSeekContextType( val)
+	local seekctx = typedb:this_instance( seekContextKey)
+	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end
+	table.remove( seekctx, #seekctx)
+end
 
 ```
 
 #### Callable Environment
-Define the object with all data related to a callable bound to the scope of the function body, e.g. register allocator, label allocator, return type, etc.
+The callable environment bound to the scope of the function body has also been discussed.
+
+To mention is the function ```expandMethodEnvironment``` that declares the ```self``` variable in a method body (explicit and implicit).
 ```Lua
 -- Create a callable environent object
 function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
@@ -2303,7 +2314,8 @@ end
 ```
 
 #### Control Boolean Types
-Complete definition of the control boolean types as introduced in the tutorial.
+Here we have a complete definition of the control boolean types as introduced in the tutorial. The function definition has been taken one to one from the example **language1**. I think after our journey through the example, the code explains itself.
+
 ```Lua
 -- Initialize control boolean types used for implementing control structures like 'if','while' and operators on booleans like '&&','||'
 function initControlBooleanTypes()
@@ -2404,7 +2416,8 @@ end
 ```
 
 #### Control Structures
-Some helper functions for implementing control structures.
+Finally we visit the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and to bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
+
 ```Lua
 -- Build a conditional if/elseif block
 function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
@@ -2429,6 +2442,8 @@ end
 ```
 
 ### Running the compiler
+Finally or maybe with a quick jump to the end we got here. Now we build and run our compiler on the example source presented at the beginning.
+
 ```bash
 cd examples
 mkdir build
@@ -2464,7 +2479,7 @@ Salary sum: 280720.00
 
 ### What is Missing
 This article showed the implementation of a primitive language missing lots of features. For example:
-  * Constructors implementing late binding, e.g. for implementing copy elision
+  * Constructors implementing late binding, e.g. for implementing copy elision. In the example **language1** and in the [glossary](glossary.md) they are called unbound reference types.
   * More type qualifiers like const, private, etc.
   * Pointers
   * Dynamic memory allocation
@@ -2480,11 +2495,11 @@ You can dig into the main [example language1](example_language1.md) that impleme
 We have seen how a very primitive compiler is written in _Lua_ using _Mewa_. 
 We could compile and run a simple demo program in the shell.
 
-I hope I could give you some overview about one way writing a compiler front-end.
-To see another approach can be interesting, even if you go along another path.
+I hope I could give you some overview about one way to write a compiler front-end.
+Learning about another approach can be interesting, even if you go along another path.
 
 _Mewa_ is based on very old ideas and offers nothing new. 
-But it is a pragmatic approach that brings the implementation of non trivial compiler front-ends for a single person within reach.
+But it is a pragmatic approach that brings the implementation of a prototype of a non trivial compiler front-end for a single person within reach.
 
 
 

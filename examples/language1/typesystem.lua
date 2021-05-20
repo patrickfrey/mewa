@@ -1354,7 +1354,7 @@ end
 function pushSeekContextType( val)
 	table.insert( thisInstanceTableClone( seekContextKey, {0}), val)
 end
--- Remove the last element of the the list of context types associated with the current scope used for resolving types by one type/constructor pair structure
+-- Remove the last element of the the list of context types associated with the current scope used for resolving types
 function popSeekContextType( val)
 	local seekctx = typedb:this_instance( seekContextKey)
 	if not seekctx or seekctx[ #seekctx] ~= val then utils.errorMessage( 0, "Internal: corrupt definition context stack") end

@@ -5,7 +5,7 @@ typedb = mewa.typedb()
 
 -- Global variables
 localDefinitionContext = 0	-- Context type of local definitions
-seekContextKey = "seekctx"	-- Key for context types defined for a scope
+seekContextKey = "seekctx"	-- Key for seek context types defined for a scope
 callableEnvKey = "env"		-- Key for current callable environment
 typeDescriptionMap = {}		-- Map of type ids to their description
 referenceTypeMap = {}		-- Map of value type ids to their reference type if it exists
