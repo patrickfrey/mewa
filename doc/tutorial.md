@@ -374,7 +374,7 @@ The function used for the _AST_ tree traversal sets the current scope step and s
 
 ### Reduction Weight
 
-Now we have to look again at something a little bit puzzling. We have to assign a weight to reductions. The problem is that even trivial examples of type queries lead to ambiguity if we do not introduce a weighting scheme that memorizes a preference. Real ambiguity is something we want to detect as an error.
+Now we have to look again at something a little bit puzzling. We have to assign a weight to reductions. The problem is that even trivial examples of type queries lead to ambiguity if we do not introduce a weighting scheme that memorizes a preference. The ```typedb:resolve_type``` and ```typedb:derive_type``` functions are implemented as shortest path search that selects the result and implements this preference. Real ambiguity is something we want to detect as an error. An ambiguity is indicated when two or more results are appearing having the same weight sum.
 I concluded that it is best to declare all reduction weights at one central place in the source and to document it well.
 
 Let's have a look at an example without weighting of reductions that will lead to ambiguity. 
@@ -984,7 +984,7 @@ The code shown now will be more organised, more complete, but in contrary to the
 
 In contrast to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```tutorial/ast```.
 
-Because the amount of code in this second part, we will not inspect it so closely as in the tutorial anymore. 
+Because the amount of code in this part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
 
 ### Header
@@ -1387,7 +1387,7 @@ end
 This chapter will survey the functions used in the AST node functions we have now seen. They are also split into snippets covering different aspects.
 
 #### Reduction Weights
-Define all reduction weights of our language. We have explained the need for weighting reductions in the tutorial.
+Here are all reduction weights of the reductions defined. We have explained the need for weighting reductions in the tutorial.
 ```Lua
 -- Centralized list of the ordering of the reduction rules determined by their weights, we force an order of reductions by defining the weight sums as polynomials:
 rdw_conv = 1.0			-- Reduction weight of conversion
@@ -1412,7 +1412,7 @@ weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
 ```
 
 #### Reduction Tags and Tagmasks
-Define all reduction tags and tagmasks of our example language. We have explained the need for tagging in the tutorial.
+This section defines all reduction tags and tagmasks. We have explained the need for tagging in the tutorial.
 ```Lua
 -- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
 tag_typeDeclaration = 1			-- Type declaration relation (e.g. variable to data type)
@@ -1430,7 +1430,7 @@ tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
 
 ```
 
-#### Declaration String
+#### Type Declaration String
 This function provides a signature string of the type including context type and parameter types.
 ```Lua
 -- Type string of a type declaration built from its parts for error messages
@@ -1470,7 +1470,10 @@ end
 ```
 
 #### Apply Constructors
-The call of a constructor to build an object has been shown in the part 1 of the turial (variable assignment).
+This section defines the call of a constructor. We got an impression of how this works in the tutorial (variable assignment). 
+The functions ```tryApplyConstructor``` and ```applyConstructor``` are building a constructor from a constructor function and a list of arguments.
+The functions ```tryApplyReductionList``` and ```applyReductionList``` are building a constructor from a chain of reductions applied on a base constructor.
+The functions with a prefix ```try``` report a miss or an ambiguity with their return value instead of exiting with ```utils.errorMessage``` in case of an error.
 ```Lua
 -- Application of a constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
 function tryApplyConstructor( node, typeId, constructor, arg)
@@ -1516,7 +1519,12 @@ end
 ```
 
 #### Resolve Types
-Functions for resolving types, mapping types, and asserting type properties
+Here are the functions for resolving types, mapping types, and asserting type properties.
+  * The function ```selectNoArgumentType``` filters a resolve type match without parameters, a variable or datatype.
+  * The function ```resolveTypeFromNamePath``` resolves a type from a namespace or structure name path.
+  * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as accumulation function for the weight of the function match.
+  * The function ```getRequiredTypeConstructor``` transforms a type into another type.
+
 ```Lua
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
 function selectNoArgumentType( node, seekctx, typeName, tagmask, resolveContextTypeId, reductions, items)
@@ -1595,7 +1603,11 @@ end
 ```
 
 #### Apply Callable
-Find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight. Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
+This section is the most complicated of the whole example compiler. 
+It shows the code for how to find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight.
+Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
+Candidates with a failing constructor are dropped to enable recursive initializer structures.
+Calls of the function ```tryApplyCallable``` and ```applyCallable``` are used for resolving all types with arguments (operators, member access, function call, etc.).
 ```Lua
 -- For a callable item, create for each argument the lists of reductions needed to pass the arguments to it, with accumulation of the reduction weights
 function collectItemParameter( node, item, args, parameters)
@@ -2424,12 +2436,29 @@ Salary sum: 280720.00
 
 ### What is Missing
 This article showed the implementation of a primitive language missing lots of features. For example:
-  * Dynamic Memory Allocation
+  * Constructors implementing late binding, e.g. for implementing copy elision
+  * More type qualifiers like const, private, etc.
+  * Pointers
+  * Dynamic memory allocation
   * Exceptions
-  * More Language Features
   * Generics
+  * Lambdas
+  * Coroutines
 
-And many more. You can visit the [FAQ](faq.md) and dig into the main [example language1](example_language1.md).
-Writing a compiler is a matter of organization. I hope this article could give you some anchors for your personal compiler project.
+And many more. You can visit the [FAQ](faq.md) to get an idea, how to implement a richer language.
+You can dig into the main [example language1](example_language1.md) that implements many features missing here as example.
+
+## Conclusion
+We have seen how a very primitive compiler is written in _Lua_ using _Mewa_. 
+We could compile and run a simple demo program in the shell.
+
+I hope I could give you some overview about one way writing a compiler front-end.
+To see another approach can be interesting, even if you go along another path.
+
+_Mewa_ is based on very old ideas and offers nothing new. 
+But it is a pragmatic approach that brings the implementation of non trivial compiler front-ends for a single person within reach.
+
+
+
 
 
