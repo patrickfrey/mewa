@@ -1,6 +1,6 @@
 local utils = require "typesystem_utils"
 
--- Define an operation generalized
+-- Define a data type with all its qualifiers
 function defineDataType( node, contextTypeId, typnam, descr)
 	local typeId = typedb:def_type( contextTypeId, typnam)
 	local refTypeId = typedb:def_type( contextTypeId, typnam .. "&")
@@ -12,13 +12,13 @@ function defineDataType( node, contextTypeId, typnam, descr)
 	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load), tag_typeDeduction, rdw_load)
 	return typeId
 end
--- Structure type definition for class
+-- Structure type definition for a class
 function defineStructureType( node, declContextTypeId, typnam, fmt)
 	local descr = utils.template_format( fmt, {symbol=typnam})
 	local typeId = defineDataType( node, declContextTypeId, typnam, descr)
 	return typeId,descr
 end
--- Define the assignment operator of a class
+-- Define the assignment operator of a class as memberwise assignment of the member variables
 function defineClassStructureAssignmentOperator( node, typeId)
 	local descr = typeDescriptionMap[ typeId]
 	local function assignElementsConstructor( this, args)
@@ -44,11 +44,11 @@ function defineClassStructureAssignmentOperator( node, typeId)
 	defineCall( nil, referenceTypeMap[ typeId], "=", {constexprStructureType}, assignStructTypeConstructor)
 	defineCall( nil, referenceTypeMap[ typeId], "=", {}, assignElementsConstructor)
 end
--- Define index operator for arrays
+-- Define the index access operator for arrays
 function defineArrayIndexOperator( elemTypeId, arTypeId, arDescr)
 	defineCall( referenceTypeMap[elemTypeId], referenceTypeMap[arTypeId], "[]", {scalarIntegerType}, callConstructor( arDescr.index[ "int"]))
 end
--- Constructor for a memberwise assignment of a tree structure (initializing an "array")
+-- Constructor for a memberwise assignment of a structure from an initializer-list (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( this, args)
 		if #args > nofElements then

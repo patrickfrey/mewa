@@ -428,7 +428,7 @@ function interfaceMethodCallConstructor( descr)
 		return functionCallConstructor( env, code, intr_func, argstr, descr)
 	end
 end
--- Constructor for a memberwise assignment of a tree structure (initializing an "array")
+-- Constructor for a memberwise initialization of an "array" from a constexpr structure type constructor (list of type/constructor pairs)
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( this, args, parentStep)
 		if #args > nofElements then
@@ -477,7 +477,7 @@ function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofEle
 		return constructorStructCall( this_inp, code, nil, element_throws)
 	end
 end
--- Constructor of an array unbound reference type from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference array type)
+-- Constructor of an unbound reference type of an array from a constexpr structure type as argument (used for a reduction of a constexpr structure to an unbound reference array type)
 function tryConstexprStructureReductionConstructorArray( node, thisTypeId, elementTypeId, nofElements)
 	local initconstructor = memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( constructor) -- constructor of a constexpr structure type passed is a list of type constructor pairs

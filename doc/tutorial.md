@@ -1525,10 +1525,6 @@ Here are the functions for resolving types, mapping types, and asserting type pr
   * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as accumulation function for the weight of the function match.
   * The function ```getRequiredTypeConstructor``` transforms a type into another type.
 
-##### Note
-The function ```getSeekContextTypes()``` called here is important to resolve types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrinked on exit.
-
-
 ```Lua
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
 function selectNoArgumentType( node, seekctx, typeName, tagmask, resolveContextTypeId, reductions, items)
@@ -1605,13 +1601,17 @@ function expectDataType( node, item)
 end
 
 ```
+##### Note
+The function ```getSeekContextTypes()``` called here is important to resolve types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrinked on exit.
+
 
 #### Apply Callable
 This section is the most complicated of the whole example compiler. 
 It shows the code for how to find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight.
 Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
 Candidates with a failing constructor are dropped to enable recursive initializer structures.
-Calls of the function ```tryApplyCallable``` and ```applyCallable``` are used for resolving all types with arguments (operators, member access, function call, etc.).
+
+The functions ```tryApplyCallable``` and ```applyCallable``` are provided for resolving all types with arguments (operators, member access, function call, etc.).
 ```Lua
 -- For a callable item, create for each argument the lists of reductions needed to pass the arguments to it, with accumulation of the reduction weights
 function collectItemParameter( node, item, args, parameters)
@@ -1743,7 +1743,7 @@ end
 #### Constructor Functions
 Here are the building blocks for defining constructors.
   * The functions ```constructorParts```, ```constructorStruct``` and ```typeConstructorPairStruct''' are helpers for constructor or type/constructor pair structures.
-  * The function ```callConstructor``` builds a constructor function from a format string and additional attributes. Most of the constructor function of this example compiler are defined with ```callConstructor```. It uses the helper function ```buildCallArguments``` to build some format string variables for mapping the arguments of a constructor call.
+  * The function ```callConstructor``` builds a constructor function from a format string and additional attributes. Most of the constructor functions of this example compiler are defined with ```callConstructor```. It uses the helper function ```buildCallArguments``` to build some format string variables for mapping the arguments of a constructor call.
 ```Lua
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
@@ -1797,7 +1797,7 @@ end
 ```
 
 #### Define Function Call
-The function ```defineFunctionCall``` introduced in this section is used to define a free function call of a method call as "()" operator with arguments of a callable.
+The function ```defineFunctionCall``` introduced in this section is used to define a free function call or a method call as "()" operator with arguments on a callable.
 A callable is an intermediate type created to unify all cases of a function call into one case. For example function variables may also be called with the arguments in oval brackets "(" ")". If we want to unify these cases, we cannot define a function as symbol with arguments, because the symbol binding is not available for a function variable. Therefore we define the function symbol to be of type callable with a "()" operator with the function parameter as arguments. The function variable can reference the callable as its type and also have a "()" operator with the function parameter as arguments.
 ```Lua
 -- Get the parameter string of a function declaration
@@ -1846,9 +1846,6 @@ end
 Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. 
 The const expression operator constructors do not produce code, but return a value as result. 
 The constructor of a const expression is the value of the data item with this type.
-
-##### Remark
-The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating point number constants into a binary representation needed by LLVM IR for floating point numbers that have no exact binary representation of a value writen with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
 
 ```Lua
 constexprIntegerType = typedb:def_type( 0, "constexpr int")		-- signed integer type constant value, represented as Lua number
@@ -1934,9 +1931,11 @@ end
 
 
 ```
+##### Remark
+The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating point number constants into a binary representation needed by LLVM IR for floating point numbers that have no exact binary representation of a value writen with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
 
 #### First Class Scalar Types
-This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type, that is just a string pointer in this example language, is also defined here. As for the const expression types, we also define promote calls here, like integer + float implemented as float + float after _promotion_ of the left argument.
+This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type, or better called string pointer type in this example language, is also defined here. As for the const expression types, we also define promote calls here, like integer + float implemented as float + float after _promotion_ of the left argument.
 
 ```Lua
 -- Define built-in promote calls for first class citizen scalar types
@@ -2032,6 +2031,9 @@ end
 
 #### Variables
 Here are the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
+Most of the code is self explaining now.
+
+One thing that is new is the use of the global variable ```localDefinitionContext``` as context type when defining local variables. Instead of the variable we could as well use 0. In a language implementing generics the value of localDefinitionContext can be set to an artificial type created for a generic instance because generic instances share scopes and the definition of different instances would otherwise interfere. 
 ```Lua
 -- Define a member variable of a class or a structure
 function defineMemberVariable( node, descr, context, typeId, refTypeId, name)
@@ -2125,9 +2127,16 @@ end
 ```
 
 #### Define Data Types
-Define all sorts of data types, including structures and arrays.
+This section provides the functions to declare the data types of the example language, including structures and arrays.
+The data types of the example language are fairly simple because the missing need of cleanup in case of failure.
+
+The elementwise initializer of the class type and the array type are using the function ```applyCallable``` for the member initialization. 
+This provides the recursive assignments of substructures.
+
+The ```getOrCreateArrayType``` function is a seldom case where the current scope is set manually. The scope of the array type definition is set to the scope of the element type. The current scope is set back to the original after the  function completed its job.
+
 ```Lua
--- Define an operation generalized
+-- Define a data type with all its qualifiers
 function defineDataType( node, contextTypeId, typnam, descr)
 	local typeId = typedb:def_type( contextTypeId, typnam)
 	local refTypeId = typedb:def_type( contextTypeId, typnam .. "&")
@@ -2139,13 +2148,13 @@ function defineDataType( node, contextTypeId, typnam, descr)
 	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load), tag_typeDeduction, rdw_load)
 	return typeId
 end
--- Structure type definition for class
+-- Structure type definition for a class
 function defineStructureType( node, declContextTypeId, typnam, fmt)
 	local descr = utils.template_format( fmt, {symbol=typnam})
 	local typeId = defineDataType( node, declContextTypeId, typnam, descr)
 	return typeId,descr
 end
--- Define the assignment operator of a class
+-- Define the assignment operator of a class as memberwise assignment of the member variables
 function defineClassStructureAssignmentOperator( node, typeId)
 	local descr = typeDescriptionMap[ typeId]
 	local function assignElementsConstructor( this, args)
@@ -2171,11 +2180,11 @@ function defineClassStructureAssignmentOperator( node, typeId)
 	defineCall( nil, referenceTypeMap[ typeId], "=", {constexprStructureType}, assignStructTypeConstructor)
 	defineCall( nil, referenceTypeMap[ typeId], "=", {}, assignElementsConstructor)
 end
--- Define index operator for arrays
+-- Define the index access operator for arrays
 function defineArrayIndexOperator( elemTypeId, arTypeId, arDescr)
 	defineCall( referenceTypeMap[elemTypeId], referenceTypeMap[arTypeId], "[]", {scalarIntegerType}, callConstructor( arDescr.index[ "int"]))
 end
--- Constructor for a memberwise assignment of a tree structure (initializing an "array")
+-- Constructor for a memberwise assignment of a structure from an initializer-list (initializing an "array")
 function memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
 	return function( this, args)
 		if #args > nofElements then
@@ -2225,7 +2234,12 @@ end
 ```
 
 #### Context Types
-Define the list of context types used for resolving types dependent on the scope. Define the context type for declarations of new types.
+The list of context types used for resolving types has already been explained. 
+The function ```getDeclarationContextTypeId``` provides the access to the context type used for declarations depending on context.
+The function ```getSeekContextTypes``` provides the access to the list context type used for ```typedb:resolve_type```.
+The list of seek context types is also dependent on scope. 
+It is possible to extend the list of seek context types explicitely when implementing a construct like ```using namespace``` in _C++_
+or like the Pascal ```WITH```. This has not been done in this 
 ```Lua
 -- Get the context type for type declarations
 function getDeclarationContextTypeId( context)
