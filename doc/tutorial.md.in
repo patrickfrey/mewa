@@ -655,9 +655,10 @@ Finally we visit the function ```conditionalIfElseBlock( node, condition, matchb
 $EXAMPLE:tutorial_section_controlStructures
 ```
 
-### Running the compiler
+### Build and Run the Compiler
 Finally or maybe with a quick jump to the end we got here. Now we build and run our compiler on the example source presented at the beginning.
 
+##### Translate the grammar and build the Lua script of the compiler
 ```bash
 cd examples
 mkdir build
@@ -665,29 +666,37 @@ mkdir build
 LUABIN=`which $ARG`
 . tutorial/luaenv.sh
 
-echo "Build the compiler ..."
 mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua tutorial/grammar.g
 chmod +x build/tutorial.compiler.lua
-
-echo "[1] Run the compiler on a test program ..."
-build/tutorial.compiler.lua -o build/tutorial.program.llr tutorial/program.prg
-
-echo "[2] Create an object file ..."
-llc -relocation-model=pic -O=3 -filetype=obj build/tutorial.program.llr -o build/tutorial.program.o
-
-echo "[3] Create an executable ..."
-clang -lm -lstdc++ -o build/tutorial.program build/tutorial.program.o
-
-echo "[4] Run the executable file build/tutorial.program"
-build/tutorial.program
-
 ```
+
+##### Run the compiler front-end on a test program
+```bash
+build/tutorial.compiler.lua -o build/tutorial.program.llr tutorial/program.prg
+```
+
+##### Inspect the LLVM IR code
+```bash
+build/tutorial.program.llr 
+```
+
+##### Create an object file
+```bash
+llc -relocation-model=pic -O=3 -filetype=obj build/tutorial.program.llr -o build/tutorial.program.o
+```
+
+##### Create an executable
+```bash
+clang -lm -lstdc++ -o build/tutorial.program build/tutorial.program.o
+```
+
+##### Run the executable file
+```bash
+build/tutorial.program
+```
+
 #### Output
 ```
-[1] Run the compiler on a test program ...
-[2] Create an object file ...
-[3] Create an executable ...
-[4] Run the executable file build/tutorial.program
 Salary sum: 280720.00
 ```
 
