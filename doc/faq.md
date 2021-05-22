@@ -23,7 +23,7 @@
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
     * [How to implement return in a function?](#functionReturn)
     * [How to implement return of a non-scalar type from a function?](#functionReturnComplexData)
-    * [How to implement the Pascal "WITH", the C++ "using", etc.?](#withAndUsing)
+    * [How to implement the Pascal "WITH", the C++ "using", etc...?](#withAndUsing)
     * [How to implement class inheritance?](#inheritance)
     * [How to implement object-oriented polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private, public, protected?](#visibilityRules)
@@ -248,7 +248,7 @@ In the example _language1_, I defined the types
 
 <a name="withAndUsing"/>
 
-### How to implement type contexts, e.g. the Pascal "WITH", the C++ "using", and friends?
+### How to implement type contexts, e.g. the Pascal "WITH", the C++ "using", etc...?
 
 In the example _language1_, a context list is an object bound to a scope. The enclosed scopes inherit the context list from the parent scope.
 A "WITH" or "using" defines the context list for the current scope as a copy of the inherited context list if not defined yet. It then attaches the
@@ -439,7 +439,7 @@ For automatic template argument deduction, the generic parameter assignments hav
 
 ### How to traverse AST nodes multiple times without the definitions of different traversals interfering?
 
-Generics use definition scopes multiple times with differing declarations inside the scope. These definitions interfere. To separate the definitions I suggest defining a type named 'local &lt;generic name&gt;' and define this type as a global variable to use as context-type for local variables inside this scope. In the example **language1** I use a stack for the context-types used for locals inside a generic scope, resp. during the expansion of a generic as these generic expansions can pile up (The expansion can lead to another generic expansion, etc.).
+Generics use definition scopes multiple times with differing declarations inside the scope. These definitions interfere. To separate the definitions I suggest defining a type named 'local &lt;generic name&gt;' and define this type as a global variable to use as context-type for local variables inside this scope. In the example **language1** I use a stack for the context-types used for locals inside a generic scope, resp. during the expansion of a generic as these generic expansions can pile up (The expansion can lead to another generic expansion, etc...).
 
 
 <a name="concepts"/>
