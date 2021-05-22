@@ -323,8 +323,8 @@ Now we will take a look at the grammar of the example language.
 _Mewa_ implements an _LALR(1)_ parser generator. The source file of the attributed grammar has 3 parts. 
 
   * Some configuration marked with a prefix '**%**'
-  * The named lexems as a regular expression that matches the lexem value as argument.
-  * An attributed grammar with keywords as strings and lexem or production names as identifiers
+  * The named lexemes as regular expressions matching the lexeme value as argument.
+  * An attributed grammar with keywords as strings and lexeme or production names as identifiers
 
 ### Production Attribute Operators
 The operator **>>** in the production attributes in oval brackets on the right side increments the scope-step.
