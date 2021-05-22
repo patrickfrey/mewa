@@ -21,7 +21,7 @@ The example program we will compile is the following:
 ```
 $EXAMPLE:tutorial_program
 ```
-We will compile this program with the our example compiler and run it in a shell. We will also look at different parts including the grammar of the language.
+We will compile this program with our example compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
 
 ### Target Audience
@@ -30,12 +30,12 @@ To understand this article some knowledge about formal languages and parser gene
 
 ### Deeper Digging
 
-For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
+For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a statically typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
 ## Preparation
 
 The _Mewa_ program and the _Lua_ module are written in C++. Follow the instructions to install it.
-The installation description is written for _Ubuntu_. For other platforms you might need to lookup the corresponding package names.
+The installation description is written for _Ubuntu_. You have to look the package names up for other platforms.
 
 ### Installation
 
@@ -65,7 +65,7 @@ cd LuaBcd
 make
 make install
 ```
-#### Fetch sources of latest release version
+#### Fetch sources of the latest release version
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
@@ -92,7 +92,7 @@ make test
 make install
 ```
 #### Lua Environment
-Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from command line. 
+Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from the command line. 
 You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
 . tutorial/luaenv.sh
@@ -100,7 +100,7 @@ You find a luaenv.sh in the archive of this article. Load it with.
 
 ## Tutorial
 
-In this tutorial we will learn how to use the typedb library with some self-contained examples.
+In this tutorial, we will learn how to use the typedb library with some self-contained examples.
 
 ### Declaring a variable
 
@@ -292,11 +292,11 @@ An expression like ```if ptr && ptr->value()``` should not crash in the case ptr
 #### Introduction
 For evaluating boolean expressions and as condition type of conditionals we define two new types.
 ##### Control True Type
-This type has a field ```code``` that holds the code executed as long as it evaluates to true and a field ```out``` that holds an unbound label where the control branches to in case of evaluating to false.
+This type has a field ```code``` holding the code executed as long as it evaluates to true and a field ```out``` with the unbound label where the control branches to in case of evaluating to false.
 ##### Control False Type
-This type is the mirror type of the control true type. It has a field ```code``` that holds the code that is executed as long as it evaluates to false and a field ```out``` that holds an unbound label where the control branches to in case of evaluating to true.
+This type is the mirror type of the control true type. It has a field ```code``` holding the code that is executed as long as it evaluates to false and a field ```out``` with the unbound label where the control branches to in case of evaluating to true.
 ##### The IF statement
-The IF takes the condition argument and transforms it into a control true type. The code of the resulting constructor is joined with the constructor code of the statements to evaluate in the case the condition is true. At the end, the unbound label is bound and declared at the end of the code.
+The IF takes the condition argument and transforms it into a control true type. The code of the resulting constructor is joined with the constructor code of the statements to evaluate in the case the condition is true. The unbound label is bound and declared at the end of the code.
 
 #### Source
 ```Lua
@@ -327,12 +327,12 @@ _Mewa_ implements an _LALR(1)_ parser generator. The source file of the attribut
   * An attributed grammar with keywords as strings and lexem or production names as identifiers
 
 ### Production Attribute Operators
-The operator **>>** in the production attributes in oval brackets on the right side is incrementing the scope-step.
-The operator **{}** in the production attributes is defining a scope range.
+The operator **>>** in the production attributes in oval brackets on the right side increments the scope-step.
+The operator **{}** in the production attributes defines a scope range.
 
 ### Production Head Attributes
-The attributes **L1**,**L2**,... are defining the production to be left associative with a priority specified as a number. 
-The attributes **R1**,**R2**,... are defining the production to be right associative with a priority specified as a number. 
+The attributes **L1**,**L2**,... are defining the production to be left-associative with a priority specified as a number. 
+The attributes **R1**,**R2**,... are defining the production to be right-associative with a priority specified as a number. 
 A greater priority number means a higher priority. Production priorities are used to define operator precedence.
 
 ### Source
@@ -342,18 +342,18 @@ $EXAMPLE:tutorial_grammar
 
 ## Typesystem
 Now let's overview the implementation of the typesystem module that generates the code.
-The code shown now will be more organised, more complete, but in contrary to the tutorial not self-contained anymore.
+The code shown now will be more organized, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrast to the example [language1](example_language1.md) the typesystem module has been splitted in several parts of maximum 100 lines of code to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```tutorial/ast```.
+In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```tutorial/ast```.
 
-Because the amount of code in this part, we will not inspect it so closely as in the tutorial anymore. 
+Because of the amount of code in this part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
 
 ### Header
 Let's first take a look at the header of typesystem.lua. 
 
 #### Submodule llvmir
-The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We sah such templates like ```{out} = load i32, i32* {this}``` with substututes in curly brackets in the examples of the tutorial. In the example compiler these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
+The submodule ```llvmir``` implements all templates for the LLVM IR code generation. We saw such templates like ```{out} = load i32, i32* {this}``` with substitutes in curly brackets in the examples of the tutorial. In the example compiler, these templates are all declared in the module ```llvmir``` and referred to by name. The module ```llvmir``` has a submodule ```llvmir_scalar``` that is generated from a description of the scalar types of our language.
 
 ##### llvmir.lua
 You see here one example definition of the file llvmir.lua. 
@@ -377,7 +377,7 @@ llvmir.structTemplate = {
 ```
 
 #### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and _AST_ tree traversal functions are other examples of functions provided there.
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` instantiatiating the llvmir code templates in the tutorial. It is implemented in the module ```typesystem_utils``` in a more powerful form. String encoding, mangling, and _AST_ tree traversal functions are other examples of functions provided there.
 
 #### Global variables
 The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For most other things we use global variables. The header of ```typesystem.lua``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table containing the code generation templates for this type.
@@ -388,16 +388,16 @@ $EXAMPLE:tutorial_typesystem
 ```
 
 ### Output
-The output of out compiler front-end is printed with the functions ```print``` and ```print_section``` defined by the compiler. The function ```print``` is redirected to a function appending to the ```Code``` section of the output. The sections are variables to substitute in the [target files](../examples/target). The function ```print_section``` is appending to an output section specified as first parameter.
+The output of our compiler front-end is printed with the functions ```print``` and ```print_section``` defined by the compiler. The function ```print``` is redirected to a function appending to the ```Code``` section of the output. The sections are variables to substitute in the [target files](../examples/target). The function ```print_section``` is appending to an output section specified as the first parameter.
 
 ### AST Traversal
-All _AST_ node functions participate in the traversal as it is in their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the _AST_ traversal function. The traversal functions are implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
+All _AST_ node functions participate in the traversal as it is their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as an aspect on its own and set by the _AST_ traversal function. The traversal functions are implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
 
   * ```function traverse( typedb, node, ...)```
   * ```function traverseRange( typedb, node, range, ...)```
 
 The ```range``` is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
-The variable arguments **...** are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, wheter a variable declaration is member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error prone. You should restrict it to a bare minimum and use scope bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+The variable arguments **...** are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, whether a variable declaration is a member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error-prone. You should restrict it to a bare minimum and use scope-bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
 
 ##### Source from typesystem_utils
 ```Lua
@@ -454,7 +454,7 @@ Most of the code is just delegating to functions we will inspect in the followin
 Define atomic and structure constants in the source.
 
 ##### Structures, e.g. Initializer Lists
-A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object beeing initializable by a contant structure. The constructor is using the typedb to find a _ctor_ type with this list matching as parameter list. If it fails the constructor function returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
+A structure has a list of type/constructor pairs as the constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object being initializable by a constant structure. The constructor is using the typedb to find a _ctor_ type with this list matching the parameter list. If it fails the constructor function returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
 $EXAMPLE:tutorial_ast_constants
 ```
@@ -466,15 +466,15 @@ $EXAMPLE:tutorial_ast_variables
 ```
 
 #### Extern Function Declarations
-Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```. The function call definition with ```defineFunctionCall``` is the same as for free functions and class methods.
+Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as a parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```. The function call definition with ```defineFunctionCall``` is the same as for free functions and class methods.
 ```Lua
 $EXAMPLE:tutorial_ast_extern
 ```
 
 #### Data Types
 This section defines classes, arrays and atomic data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
- 1. The context is changed. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. The context is a structure a field ```domain``` that tells if we are inside the definition of a class ("member"), if we are in the body of a function ("local"), or if we are not inside any structure ("global"). It has other fields too depending on the context. In classes it is also used to collect data (```structsize```,```members```) from its subnodes.
- 2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as parameter for the subnodes to decide what to do:
+ 1. The context is changed. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. The context is a structure a field ```domain``` that tells if we are inside the definition of a class ("member"), if we are in the body of a function ("local"), or if we are not inside any structure ("global"). It has other fields too depending on the context. It is also used to collect data in classes. (```structsize```,```members```) from its subnodes.
+ 2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as a parameter for the subnodes to decide what to do:
     * 1st Pass: Type Definitions
     * 2nd Pass: Member Variable Declarations
     * 3rd Pass: Method Declarations (the traversal calls 1st pass of function declarations)
@@ -487,9 +487,9 @@ $EXAMPLE:tutorial_ast_types
 ```
 
 #### Function Declarations
-Now we have a look at functions that are implemented in the source file processed. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. A helper function ```utils.allocNodeData``` attaches the function description created in the first pass to the node. The function ```utils.getNodeData``` references it in the second pass. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters have already been declared in the 1st pass.
+Now we have a look at functions that are implemented in the source file processed. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. A helper function ```utils.allocNodeData``` attaches the function description created in the first pass to the node. The function ```utils.getNodeData``` references it in the second pass. At the end of the 2nd pass, the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters have already been declared in the 1st pass.
 
-To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. We have seen in the tutorial how this works (Objects with a Scope). The callable environment structure contains all function related data like the return type, the register allocator, etc.
+To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. We have seen in the tutorial how this works (Objects with a Scope). The callable environment structure contains all function-related data like the return type, the register allocator, etc.
 It is accessed with the function ```getCallableEnvironment```.
 
 The _AST_ node function ```typesystem.callablebody``` collects the elements of the free function or class method description in the scope of the callable body. It collects the list of parameters in a similar way as the extern function declaration we have already seen.
@@ -499,14 +499,14 @@ $EXAMPLE:tutorial_ast_functions
 ```
 
 #### Operators
-This section defines the the functions of _AST_ nodes implementing operators. The contruction of operators, member references, function calls are all redirected to the function ```applyCallable``` we will visit later. Function calls are implemented as operator "()" of a callable type.
+This section defines the functions of _AST_ nodes implementing operators. The construction of operators, member references, function calls are is redirected to the function ```applyCallable``` we will visit later. Function calls are implemented as operator "()" of a callable type.
 The functions ```expectValueType``` and ```expectDataType``` used here are assertions.
 ```Lua
 $EXAMPLE:tutorial_ast_operators
 ```
 
 #### Control Structures
-As we learned in the turorial, conditionals are implemented by wiring a control boolean type together with some code blocks. The control boolean type is derived from the condition type with ```getRequiredTypeConstructor```.
+As we learned in the tutorial, conditionals are implemented by wiring a control boolean type together with some code blocks. The control boolean type is derived from the condition type with ```getRequiredTypeConstructor```.
 
 The return node functions also use ```getRequiredTypeConstructor``` to derive the value returned from their argument. The return type is accessible in the callable environment structure.
 
@@ -515,9 +515,9 @@ $EXAMPLE:tutorial_ast_controls
 ```
 
 #### Blocks and the Rest
-Finally we come to the section containing the blocks that do not fit somewhere else. 
-  * The top level node, the program, that does some initializations of the language before further processing by delegation with the traversal of the subnodes.
-  * The main program node, that does not do a lot here as there are no program arguments and no program return value implemented here. 
+Finally, we come to the section containing the blocks that do not fit somewhere else. 
+  * The top-level node, the program, that does some initializations of the language before further processing by delegation with the traversal of the subnodes.
+  * The main program node does not do a lot here as there are no program arguments and no program return value implemented here. 
   * The node function ```typesystem.codeblock``` joins a list of statements to one constructor. 
   * The node function ```typesystem.free_expression``` makes a statement node from an expression node.
 
@@ -529,13 +529,13 @@ $EXAMPLE:tutorial_ast_blocks
 This chapter will survey the functions used in the AST node functions we have now seen. They are also split into snippets covering different aspects.
 
 #### Reduction Weights
-Here are all reduction weights of the reductions defined. We have explained the need for weighting reductions in the tutorial.
+Here are all the reduction weights of the reductions defined. We have explained the need for weighting reductions in the tutorial.
 ```Lua
 $EXAMPLE:tutorial_section_reductionWeights
 ```
 
-#### Reduction Tags and Tagmasks
-This section defines all reduction tags and tagmasks. We have explained the need for tagging in the tutorial.
+#### Reduction Tags and Tag Masks
+This section defines all reduction tags and tag masks. We have explained the need for tagging in the tutorial.
 ```Lua
 $EXAMPLE:tutorial_section_reductionTagsAndTagmasks
 ```
@@ -547,7 +547,7 @@ $EXAMPLE:tutorial_section_declarationString
 ```
 
 #### Calls and Promote Calls
-Here are the functions to define calls with parameters and a return value. For first class scalar types we often also need to look at the 2nd argument to determine the constructor function to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call ```int * double``` as conversion of the first operand to a ```double``` followed by a ```double * double``` multiplication. I call these calls promote calls (promoting the first argument to the type of the second argument) in the examples. The integer argument is promoted to a ```double``` and then the constructor function of ```double * double``` is called.
+Here are the functions to define calls with parameters and a return value. For first-class scalar types we often also need to look at the 2nd argument to determine the constructor function to call. Most statically typed programming languages specify a multiplication of an interger with a floating-point number as a multiplication of floating-point numbers. If we define the operator dependent on the first argument, we have to define the call ```int * double``` as the conversion of the first operand to a ```double``` followed by a ```double * double``` multiplication. I call these calls "promote-calls" (promoting the first argument to the type of the second argument) in the examples. The integer argument is promoted to a ```double``` and then the constructor function of ```double * double``` is called.
 ```Lua
 $EXAMPLE:tutorial_section_defineCalls
 ```
@@ -556,24 +556,23 @@ $EXAMPLE:tutorial_section_defineCalls
 This section defines the call of a constructor function. We got an impression of how this works in the tutorial (variable assignment). 
 The functions ```tryApplyConstructor``` and ```applyConstructor``` are building a constructor by applying a constructor function on a list of arguments.
 The functions ```tryApplyReductionList``` and ```applyReductionList``` are building a constructor from a chain of reductions applied on a base constructor.
-The functions with a prefix ```try``` report a miss or an ambiguity with their return value instead of exiting with ```utils.errorMessage``` in case of an error.
+The functions with the prefix ```try``` report a miss or an ambiguity with their return value instead of exiting with ```utils.errorMessage``` in case of an error.
 ```Lua
 $EXAMPLE:tutorial_section_applyConstructors
 ```
 
 #### Resolve Types
 Here are the functions for resolving types, mapping types, and asserting type properties.
-  * The function ```selectNoArgumentType``` filters a resolve type match without parameters, a variable or a data type.
+  * The function ```selectNoArgumentType``` filters a resolve-type match without parameters, a variable, or a data type.
   * The function ```resolveTypeFromNamePath``` resolves a type from structure name path ( classname1 "::" classname2 ...).
-  * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as accumulation function for the weight of the function match.
+  * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as the accumulation function for the weight of the function match.
   * The function ```getRequiredTypeConstructor``` derives a type from another type. We saw applications of this function in the implementation of ```return``` or conditionals like ```if```, ```while```, etc.
 
 ```Lua
 $EXAMPLE:tutorial_section_resolveTypes
 ```
 ##### Note
-The function ```getSeekContextTypes()``` called here is important when resolving types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrinked on exit. The list of context types is bound to a scope. This makes the implementation of the _C++_ ```using``` or the _Pascal_ ```WITH``` a one liner. You add the argument to the list of seek context types of the current scope.
-
+The function ```getSeekContextTypes()``` called here is important when resolving types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure, for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrunk on exit. The list of context types is bound to a scope. This implementents the _C++_ ```using``` or the _Pascal_ ```WITH``` with a one-liner. You add the argument to the list of seek-context types of the current scope.
 
 #### Apply Callable
 This section is the most complicated of the whole example compiler. 
@@ -596,24 +595,24 @@ $EXAMPLE:tutorial_section_constructorFunctions
 
 #### Define Function Call
 The function ```defineFunctionCall``` introduced in this section is used to define a free function call or a method call as "()" operator with arguments on a callable.
-A callable is an intermediate type created to unify all cases of a function call into one case. For example function variables may also be called with the arguments in oval brackets "(" ")". If we want to unify these cases, we cannot define a function as symbol with arguments, because the symbol binding is not available for a function variable. Therefore we define the function symbol to be of type callable with a "()" operator with the function parameter as arguments. The function variable can reference the callable as its type and also have a "()" operator with the function parameter as arguments.
+A callable is an intermediate type created to unify all cases of a function call into one case. For example, function variables may also be called with the arguments in oval brackets "(" ")". If we want to unify these cases, we cannot define a function as a symbol with arguments, because the symbol binding is not available for a function variable. Therefore we define the function symbol to be of type callable with a "()" operator with the function parameter as arguments. The function variable can reference the callable as its type and also have a "()" operator with the function parameter as arguments.
 ```Lua
 $EXAMPLE:tutorial_section_defineFunctionCall
 ```
 
 #### Const Expression Types
-Constants in the source trigger the creation of const expression types. Const expression types have their own implementation of operators. 
-The const expression operator constructors do not produce code, but return a value as result. 
+Constants in the source trigger the creation of const expression types. Const expression types have their proprietary implementation of operators. 
+The const expression operator constructors do not produce code but return a value as result. 
 The constructor of a const expression is the value of the data item with this type.
 
 ```Lua
 $EXAMPLE:tutorial_section_constexprTypes
 ```
 ##### Remark
-The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating point number constants into a binary representation needed by LLVM IR for floating point numbers that have no exact binary representation of a value writen with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
+The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating-point number constants into a binary representation needed by LLVM IR for floating-point numbers that have no exact binary representation of a value written with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
 
 #### First Class Scalar Types
-This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type, or better called string pointer type in this example language, is also defined here. As for the const expression types, we also define promote calls here, like ```integer + double``` implemented as ```double + double``` after promoting the left argument.
+This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type is also defined here. As for the const expression types, we also define promote calls here, like ```integer + double``` implemented as ```double + double``` after promoting the left argument.
 
 ```Lua
 $EXAMPLE:tutorial_section_firstClassScalarTypes
@@ -621,21 +620,21 @@ $EXAMPLE:tutorial_section_firstClassScalarTypes
 
 #### Variables
 Here are the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
-Most of the code is self explaining now.
+Most of the code is self-explaining now.
 
-One thing that is new is the use of the global variable ```localDefinitionContext``` as context type when defining local variables. Instead of the variable we could as well use 0. In a language implementing generics the value of localDefinitionContext can vary because generic instances share scopes. Instances of generics have to define an artificial type for the local definition context to separate their local definitions from others.
+One new thing is the use of the global variable ```localDefinitionContext``` as context type when defining local variables. We could as well use 0 instead of the variable. In a language implementing generics the value of localDefinitionContext can vary because generic instances share scopes. Instances of generics have to define an artificial type for the local definition context to separate their local definitions from others.
 ```Lua
 $EXAMPLE:tutorial_section_variables
 ```
 
 #### Define Data Types
 This section provides the functions to declare the data types of the example language, including structures and arrays.
-The data types of the example language are fairly simple because the missing need of cleanup in case of failure.
+The data types of the example language are fairly simple because of the missing need for cleanup in case of failure.
 
-The elementwise initializer of the class type and the array type are using the function ```applyCallable``` for the member initialization. 
-This provides the recursive assignments of substructures.
+The elementwise initializer of the class type and the array type is using the function ```applyCallable``` for the member initialization. 
+This provides recursion for the assignments of substructures.
 
-The ```getOrCreateArrayType``` function is a seldom case where the current scope is set manually. The scope of the array type definition is set to the scope of the element type. The current scope is set back to the original after the  function completed its job.
+The ```getOrCreateArrayType``` function is a seldom case where the current scope is set manually. The scope of the array type definition is set to the scope of the element type. The current scope is set back to the original after the function completed its job.
 
 ```Lua
 $EXAMPLE:tutorial_section_defineDataTypes
@@ -646,8 +645,7 @@ The list of context types used for resolving types has already been explained.
 The function ```getDeclarationContextTypeId``` provides the access to the context type used for declarations depending on context.
 The function ```getSeekContextTypes``` provides the access to the list context type used for ```typedb:resolve_type```.
 
-The list of seek context types is also dependent on scope. When adding an element to a list not yet bound to the current scope then the list of the enclosing 
-scope cloned calling ```thisInstanceTableClone( name, emptyInst)``` and the element is added to the clone. This comes into play when the ```self``` type is added to the list of context types. It is only visible in the methods body.
+The list of seek-context types is also dependent on a scope. When adding an element to a list not yet bound to the current scope then the list of the enclosing scope cloned calling ```thisInstanceTableClone( name, emptyInst)``` and the element is added to the clone. This comes into play when the ```self``` type is added to the list of context types. It is only visible in the body of the method.
 
 ```Lua
 $EXAMPLE:tutorial_section_contextTypes
@@ -669,14 +667,14 @@ $EXAMPLE:tutorial_section_controlBooleanTypes
 ```
 
 #### Control Structures
-The last snippet implements the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and to bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
+The last snippet implements the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
 
 ```Lua
 $EXAMPLE:tutorial_section_controlStructures
 ```
 
 ### Build and Run the Compiler
-Finally we build and run our compiler on the example source presented at the beginning.
+Finally, we build and run our compiler on the example source presented at the beginning.
 
 ##### Translate the grammar and build the Lua script of the compiler
 ```bash
@@ -721,7 +719,8 @@ Salary sum: 280720.00
 ```
 
 ### What is Missing
-This article showed the implementation of a primitive language missing lots of features. For example:
+This article showed the implementation of a primitive language missing lots of features. Here is a list:
+
   * Constructors implementing late binding, e.g. for implementing copy elision.
   * More type qualifiers like const, private, etc.
   * Pointers
@@ -732,7 +731,7 @@ This article showed the implementation of a primitive language missing lots of f
   * Coroutines
 
 And many more. You can visit the [FAQ](faq.md) to get an idea, how to implement a richer language.
-You can dig into the main [example language1](example_language1.md) that implements many features missing here as example.
+You can dig into the main [example language1](example_language1.md) that implements many features missing here as examples.
 
 ## Conclusion
 We have seen how a very primitive compiler is written in _Lua_ using _Mewa_. 
@@ -742,7 +741,7 @@ I hope I could give you some overview about one way to write a compiler front-en
 Learning about another approach can be interesting, even if you go along another path.
 
 _Mewa_ is based on very old ideas and offers nothing fundamentally new. 
-But it is a pragmatic approach that brings the implementation of a prototype of a non trivial compiler front-end for a single person within reach.
+But it is a pragmatic approach that brings the implementation of a prototype of a non-trivial compiler front-end for a single person within reach.
 
 
 
