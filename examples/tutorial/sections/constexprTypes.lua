@@ -69,10 +69,10 @@ function defineConstExprArithmetics()
 end
 -- Define the type conversions of const expressions to other const expression types
 function defineConstExprTypeConversions()
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return math.floor(value) end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, function( value) return value and 1 or 0 end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_constexpr_bool)
+	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_constexpr_bool)
+	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_constexpr_float)
+	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return math.floor(value) end, tag_typeConversion, rdw_constexpr_float)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, function( value) return value and 1 or 0 end, tag_typeConversion, rdw_constexpr_bool)
 end
 

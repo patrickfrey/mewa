@@ -838,6 +838,7 @@ The operator **{}** in the production attributes is defining a scope range.
 ### Production Head Attributes
 The attributes **L1**,**L2**,... are defining the production to be left associative with a priority specified as a number. 
 The attributes **R1**,**R2**,... are defining the production to be right associative with a priority specified as a number. 
+A greater priority number means a higher priority. Production priorities are used to define operator precedence.
 
 ### Source
 ```
@@ -978,7 +979,6 @@ expressionlist/L0	= expression "," expressionlist
 
 ```
 
-
 ## Typesystem
 Now let's overview the implementation of the typesystem module that generates the code.
 The code shown now will be more organised, more complete, but in contrary to the tutorial not self-contained anymore.
@@ -1016,10 +1016,10 @@ llvmir.structTemplate = {
 ```
 
 #### Submodule utils
-The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and _AST_ tree traversal functions are other examples there.
+The submodule ```typesystem_utils``` implements functions that are language independent. For example the function ```constructor_format``` that instantiated the llvmir code templates in the tutorial. It is implemented there in a more powerful form. String encoding, mangling, and _AST_ tree traversal functions are other examples of functions provided there.
 
 #### Global variables
-The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For everything else we use global variables. The API of the _typedb_ is pragmatic and kept as minimal as reasonable. The header of ```typesystem.lua ``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table with the code generation templates for this type as members.
+The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it helps. For most other things we use global variables. The header of ```typesystem.lua``` has about a dozen global variables declared. In the example **language1** there are around 50 variables defined. For example ```typeDescriptionMap```, a map that associates every type with a table containing the code generation templates for this type.
 
 #### Source
 ```
@@ -1049,7 +1049,7 @@ return typesystem
 ```
 
 ### Output
-The output of out compiler front-end is printed with the functions ```print``` and ```print_section``` defined by the compiler. The function ```print``` is redirected to a function appending to the ```Code``` section of the output. The sections are variables in the [target files](../examples/target). The function ```print_section``` is appending to an output section specified as first parameter.
+The output of out compiler front-end is printed with the functions ```print``` and ```print_section``` defined by the compiler. The function ```print``` is redirected to a function appending to the ```Code``` section of the output. The sections are variables to substitute in the [target files](../examples/target). The function ```print_section``` is appending to an output section specified as first parameter.
 
 ### AST Traversal
 All _AST_ node functions participate in the traversal as it is in their responsibility to call the subnodes of the _AST_. I already mentioned in the tutorial that the current scope is implemented as own aspect and set by the _AST_ traversal function. The traversal functions are implemented in the ```typesystem_utils``` module. There are two variants of the traversal function:
@@ -1115,7 +1115,7 @@ Most of the code is just delegating to functions we will inspect in the followin
 Define atomic and structure constants in the source.
 
 ##### Structures, e.g. Initializer Lists
-A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object beeing initializable by a contant structure. The constructor is using the typedb to find a matching constructor with this list matching as parameter list. If it fails the constructor returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
+A structure has a list of type/constructor pairs as constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object beeing initializable by a contant structure. The constructor is using the typedb to find a _ctor_ type with this list matching as parameter list. If it fails the constructor function returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
 function typesystem.constant( node, decl)
 	local typeId = scalarTypeMap[ decl]
@@ -1227,7 +1227,7 @@ end
 ```
 
 #### Function Declarations
-Now we have a look at functions with the parameters and the body. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. A helper function ```utils.allocNodeData``` attaches the function description created in the first pass to the node. The function ```utils.getNodeData``` references it in the second pass. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters have already been declared in the 1st pass.
+Now we have a look at functions that are implemented in the source file processed. The traversal is split into two passes, the declaration and implementation as already mentioned in the data type section. A helper function ```utils.allocNodeData``` attaches the function description created in the first pass to the node. The function ```utils.getNodeData``` references it in the second pass. At the end of the 2nd pass the LLVM function declaration is printed to the output. The constructor of the function call and the function type with its parameters have already been declared in the 1st pass.
 
 To mention is also the call of ```defineCallableEnvironment``` that creates a structure referred to as callable environment and binds it to the scope of the function body. We have seen in the tutorial how this works (Objects with a Scope). The callable environment structure contains all function related data like the return type, the register allocator, etc.
 It is accessed with the function ```getCallableEnvironment```.
@@ -1320,7 +1320,7 @@ end
 ```
 
 #### Control Structures
-As we learned in the turorial, conditionals are implemented by wiring a control boolean type together with some code blocks. The control boolean type derived from the condition type with ```getRequiredTypeConstructor```.
+As we learned in the turorial, conditionals are implemented by wiring a control boolean type together with some code blocks. The control boolean type is derived from the condition type with ```getRequiredTypeConstructor```.
 
 The return node functions also use ```getRequiredTypeConstructor``` to derive the value returned from their argument. The return type is accessible in the callable environment structure.
 
@@ -1416,15 +1416,12 @@ Here are all reduction weights of the reductions defined. We have explained the 
 ```Lua
 -- Centralized list of the ordering of the reduction rules determined by their weights, we force an order of reductions by defining the weight sums as polynomials:
 rdw_conv = 1.0			-- Reduction weight of conversion
-rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
+rdw_constexpr_float = 0.375	-- Conversion of constexpr floating point to integers or integer to floating point
+rdw_constexpr_bool = 0.50	-- Conversion of constexpr numeric value to boolean or boolean to numeric value
 rdw_load = 0.25			-- Reduction weight of loading a value
-rdw_sign = 0.125		-- Conversion of integers changing sign
-rdw_float = 0.375		-- Conversion of floating point to integers or integer to floating point
-rdw_bool = 0.50			-- Conversion of numeric value to boolean or boolean to numeric value
 rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch value) from type having 1 qualifier
 rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type having 2 qualifiers
 rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type having 3 qualifiers
-rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
 rwd_control = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 
 weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
@@ -1440,19 +1437,17 @@ tag_typeDeclaration = 1			-- Type declaration relation (e.g. variable to data ty
 tag_typeDeduction = 2			-- Type deduction (e.g. inheritance)
 tag_typeConversion = 3			-- Type conversion of parameters
 tag_typeInstantiation = 4		-- Type value construction from const expression
-tag_transfer = 5			-- Transfer of information to build an object by a constructor, used in free function callable to pointer assignment
 
 -- Sets of tags used for resolving a type or deriving a type, depending on the case
 tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
 tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
-tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation, tag_transfer)
+tagmask_matchParameter = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration, tag_typeConversion, tag_typeInstantiation)
 tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
-
 
 ```
 
 #### Type Declaration String
-This function provides a signature string of the type including context type and parameter types.
+This function provides a signature string of the type including context type and parameter types. The signature string is used to refer to a type in error messages.
 ```Lua
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( this, typnam, args)
@@ -1466,7 +1461,7 @@ end
 ```
 
 #### Calls and Promote Calls
-Here are the functions to define calls with parameters and a return value. For first class scalar types we often need to look also at the 2nd argument to determine the constructor function to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call int * float as conversion of the first operand to a float followed by a float multiplication. I call these calls promote calls (promoting the first argument to the type of the second argument) in the examples. The integer argument is promoted to a float and then the constructor function of the float multiplication is called.
+Here are the functions to define calls with parameters and a return value. For first class scalar types we often also need to look at the 2nd argument to determine the constructor function to call. Most statically typed programming languages specify a multiplication of an interger with a floating point number as a multiplication of floating point numbers. If we define the operator dependent on the first argument, we have to define the call ```int * double``` as conversion of the first operand to a ```double``` followed by a ```double * double``` multiplication. I call these calls promote calls (promoting the first argument to the type of the second argument) in the examples. The integer argument is promoted to a ```double``` and then the constructor function of ```double * double``` is called.
 ```Lua
 -- Constructor for a promote call (implementing int + double by promoting the first argument int to double and do a double + double to get the result)
 function promoteCallConstructor( call_constructor, promote_constructor)
@@ -1542,9 +1537,9 @@ end
 #### Resolve Types
 Here are the functions for resolving types, mapping types, and asserting type properties.
   * The function ```selectNoArgumentType``` filters a resolve type match without parameters, a variable or a data type.
-  * The function ```resolveTypeFromNamePath``` resolves a type from a namespace or structure name path.
+  * The function ```resolveTypeFromNamePath``` resolves a type from structure name path ( classname1 "::" classname2 ...).
   * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as accumulation function for the weight of the function match.
-  * The function ```getRequiredTypeConstructor``` transforms a type into another type.
+  * The function ```getRequiredTypeConstructor``` derives a type from another type. We saw applications of this function in the implementation of ```return``` or conditionals like ```if```, ```while```, etc.
 
 ```Lua
 -- Get the handle of a type expected to have no arguments (plain typedef type or a variable name)
@@ -1623,14 +1618,14 @@ end
 
 ```
 ##### Note
-The function ```getSeekContextTypes()``` called here is important to resolve types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrinked on exit.
+The function ```getSeekContextTypes()``` called here is important when resolving types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrinked on exit. The list of context types is bound to a scope. This makes the implementation of the _C++_ ```using``` or the _Pascal_ ```WITH``` a one liner. You add the argument to the list of seek context types of the current scope.
 
 
 #### Apply Callable
 This section is the most complicated of the whole example compiler. 
 It shows the code for how to find the best match of a callable with parameters. The candidates are fetched from a priority queue ordered by weight.
 Constructor functions of the top candidates are called and if they succeed to build the objects then the match is returned.
-Candidates with a failing constructor are dropped to enable recursive initializer structures.
+Candidates with a failing constructor are dropped.
 
 The functions ```tryApplyCallable``` and ```applyCallable``` are provided for resolving all types with arguments (operators, member access, function call, etc.).
 ```Lua
@@ -1938,11 +1933,11 @@ function defineConstExprArithmetics()
 end
 -- Define the type conversions of const expressions to other const expression types
 function defineConstExprTypeConversions()
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return math.floor(value) end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, function( value) return value and 1 or 0 end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_constexpr_bool)
+	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_constexpr_bool)
+	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_constexpr_float)
+	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return math.floor(value) end, tag_typeConversion, rdw_constexpr_float)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, function( value) return value and 1 or 0 end, tag_typeConversion, rdw_constexpr_bool)
 end
 
 
@@ -1951,7 +1946,7 @@ end
 The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating point number constants into a binary representation needed by LLVM IR for floating point numbers that have no exact binary representation of a value writen with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
 
 #### First Class Scalar Types
-This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type, or better called string pointer type in this example language, is also defined here. As for the const expression types, we also define promote calls here, like integer + float implemented as float + float after _promotion_ of the left argument.
+This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type, or better called string pointer type in this example language, is also defined here. As for the const expression types, we also define promote calls here, like ```integer + double``` implemented as ```double + double``` after promoting the left argument.
 
 ```Lua
 -- Define built-in promote calls for first class citizen scalar types
@@ -2065,7 +2060,7 @@ end
 Here are the functions to declare variables of any kind depending on the context: local variables, global variables, member variables, function parameter, etc.
 Most of the code is self explaining now.
 
-One thing that is new is the use of the global variable ```localDefinitionContext``` as context type when defining local variables. Instead of the variable we could as well use 0. In a language implementing generics the value of localDefinitionContext can be set to an artificial type created for a generic instance because generic instances share scopes and the definition of different instances would otherwise interfere. 
+One thing that is new is the use of the global variable ```localDefinitionContext``` as context type when defining local variables. Instead of the variable we could as well use 0. In a language implementing generics the value of localDefinitionContext can vary because generic instances share scopes. Instances of generics have to define an artificial type for the local definition context to separate their local definitions from others.
 ```Lua
 -- Define a member variable of a class or a structure
 function defineMemberVariable( node, descr, context, typeId, refTypeId, name)
