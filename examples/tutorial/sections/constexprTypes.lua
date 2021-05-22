@@ -42,8 +42,8 @@ end
 -- List of value constructors from constexpr constructors
 function constexprDoubleToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
 function constexprDoubleToIntegerConstructor( val) return constructorStruct( tostring(tointeger(val))) end
-function constexprDoubleToBooleanConstructor( val) if math.abs(val) < epsilonthen then return constructorStruct( "0") else constructorStruct( "1") end end
-function constexprIntegerToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val:tonumber())) end
+function constexprDoubleToBooleanConstructor( val) if math.abs(val) < epsilon then return constructorStruct( "0") else constructorStruct( "1") end end
+function constexprIntegerToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
 function constexprIntegerToIntegerConstructor( val) return constructorStruct( tostring(val)) end
 function constexprIntegerToBooleanConstructor( val) if val == "0" then return constructorStruct( "0") else return constructorStruct( "1") end end
 function constexprBooleanToScalarConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
@@ -51,15 +51,15 @@ function constexprBooleanToScalarConstructor( val) if val == true then return co
 -- Define arithmetics of constant expressions
 function defineConstExprArithmetics()
 	defineCall( constexprIntegerType, constexprIntegerType, "-", {}, function(this) return -this end)
-	defineCall( constexprIntegerType, constexprIntegerType, "+", {constexprIntegerType}, function(this,args) return this+args[0] end)
-	defineCall( constexprIntegerType, constexprIntegerType, "-", {constexprIntegerType}, function(this,args) return this-args[0] end)
-	defineCall( constexprIntegerType, constexprIntegerType, "/", {constexprIntegerType}, function(this,args) return tointeger(this/args[0]) end)
-	defineCall( constexprIntegerType, constexprIntegerType, "*", {constexprIntegerType}, function(this,args) return tointeger(this*args[0]) end)
+	defineCall( constexprIntegerType, constexprIntegerType, "+", {constexprIntegerType}, function(this,args) return this+args[1] end)
+	defineCall( constexprIntegerType, constexprIntegerType, "-", {constexprIntegerType}, function(this,args) return this-args[1] end)
+	defineCall( constexprIntegerType, constexprIntegerType, "/", {constexprIntegerType}, function(this,args) return tointeger(this/args[1]) end)
+	defineCall( constexprIntegerType, constexprIntegerType, "*", {constexprIntegerType}, function(this,args) return tointeger(this*args[1]) end)
 	defineCall( constexprDoubleType, constexprDoubleType, "-", {}, function(this) return -this end)
-	defineCall( constexprDoubleType, constexprDoubleType, "+", {constexprDoubleType}, function(this,args) return this+args[0] end)
-	defineCall( constexprDoubleType, constexprDoubleType, "-", {constexprDoubleType}, function(this,args) return this-args[0] end)
-	defineCall( constexprDoubleType, constexprDoubleType, "/", {constexprDoubleType}, function(this,args) return this/args[0] end)
-	defineCall( constexprDoubleType, constexprDoubleType, "*", {constexprDoubleType}, function(this,args) return this*args[0] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "+", {constexprDoubleType}, function(this,args) return this+args[1] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "-", {constexprDoubleType}, function(this,args) return this-args[1] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "/", {constexprDoubleType}, function(this,args) return this/args[1] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "*", {constexprDoubleType}, function(this,args) return this*args[1] end)
 
 	-- Define arithmetic operators of integers with a double as promotion of the left hand integer to a double and an operator of a double with a double
 	definePromoteCall( constexprDoubleType, constexprIntegerType, constexprDoubleType, "+", {constexprDoubleType},function(this) return this end)
@@ -69,15 +69,10 @@ function defineConstExprArithmetics()
 end
 -- Define the type conversions of const expressions to other const expression types
 function defineConstExprTypeConversions()
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprDoubleType, constexprUIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
-	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
-
-	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return math.floor(value) end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, function( value) return value and 1 or 0 end, tag_typeConversion, rdw_bool)
 end
 

@@ -17,7 +17,7 @@ function salarySum double( Employee[10] list)
 {
 	var int idx = 0;
 	var double sum = 0.0;
-	while (list[idx].age)
+	while (idx < 10 && list[idx].age)
 	{
 		sum = sum + list[idx].salary;
 		idx = idx + 1;
@@ -25,10 +25,11 @@ function salarySum double( Employee[10] list)
 	return sum;
 }
 
-function salaryRaise void( Employee[10] list, double factor)
+function salaryRaise void( Employee[10] list, double percentRaise)
 {
 	var int idx = 0;
-	while (list[idx].age)
+	var double factor = 1 + (percentRaise / 100);
+	while (idx < 10 && list[idx].age)
 	{
 		list[idx].setSalary( list[idx].salary * factor);
 		idx = idx + 1;
@@ -43,7 +44,7 @@ main
 		{"Doe Joe", 36, 64400},
 		{"Sandra Last", 36, 67400}
 	};
-	salaryRaise( list, 1.10); // Give them all a 10% raise
-	printf( "Salary sum: %.2f\n", salarySum( list)); // Expected result = 280720
+	salaryRaise( list, 10);					// Give them all a 10% raise
+	printf( "Salary sum: %.2f\n", salarySum( list));	// Expected result = 280720
 }
 

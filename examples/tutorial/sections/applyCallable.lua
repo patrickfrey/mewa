@@ -80,7 +80,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 	end
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of a type (this)
-function findApplyCallable( node, this, callable, args)
+function findCallable( node, this, callable, args)
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType then return nil end
 	if type(resolveContextType) == "table" then
@@ -110,7 +110,7 @@ function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args
 end
 -- Retrieve and apply a callable in a specified context
 function applyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findCallable( node, this, callable, args)
 	if not bestweight then
 		io.stderr:write( "TRACE typedb:resolve_type\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
 		utils.errorMessage( node.line, "Failed to find callable with signature '%s'", typeDeclarationString( this, callable, args))
@@ -121,6 +121,6 @@ function applyCallable( node, this, callable, args)
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not
 function tryApplyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end

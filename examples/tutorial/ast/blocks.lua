@@ -2,6 +2,7 @@ local utils = require "typesystem_utils"
 
 function typesystem.program( node, options)
 	defineConstExprArithmetics()
+	defineConstExprTypeConversions()
 	initBuiltInTypes()
 	initControlBooleanTypes()
 	local context = {domain="global"}

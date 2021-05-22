@@ -2569,7 +2569,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 	end
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of a type (this)
-function findApplyCallable( node, this, callable, args)
+function findCallable( node, this, callable, args)
 	local mask = (callable == ":=" or callable == "=") and tagmask_declaration or tagmask_resolveType
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, mask)
 	if not resolveContextType then return nil end
@@ -2597,7 +2597,7 @@ function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args
 end
 -- Retrieve and apply a callable in a specified context
 function applyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findCallable( node, this, callable, args)
 	if not bestweight then utils.errorMessage( node.line, "Failed to find callable with signature '%s'", typeDeclarationString( this, callable, args)) end
 	local rt = getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
 	if not rt then  utils.errorMessage( node.line, "Failed to match parameters to callable with signature '%s'", typeDeclarationString( this, callable, args)) end
@@ -2605,7 +2605,7 @@ function applyCallable( node, this, callable, args)
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not
 function tryApplyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end
 -- Get the symbol name for a function in the LLVM output

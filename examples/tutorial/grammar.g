@@ -99,6 +99,7 @@ expression/L2		= IDENT								(variable)
 			| UINTEGER							(constant "constexpr int")
 			| FLOAT								(constant "constexpr double")
 			| DQSTRING							(constant "constexpr string")
+			| "(" expression ")"
 			;
 expression/L3		= expression  "="  expression					(>>binop "=")
 			;

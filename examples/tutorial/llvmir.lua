@@ -68,7 +68,7 @@ llvmir.constexprIntegerDescr = {
 	scalar = true,
 	class = "constexpr"
 }
-llvmir.constexprFloatDescr = {
+llvmir.constexprDoubleDescr = {
 	llvmtype = "double",
 	scalar = true,
 	class = "constexpr"

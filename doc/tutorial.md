@@ -12,7 +12,7 @@ _Mewa_ provides no support for the evaluation of different paths of code generat
 For implementing a compiler with _Mewa_, you define a grammar attributed with _Lua_ function calls.
 The program ```mewa``` will generate a _Lua_ script that will transform any source passing the grammar specified into an _AST_ with the _Lua_ function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the _AST_ that take the control of the further processing of the compiler front-end. The functions called with their _AST_ node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
 
-## Goals
+### Goals
 
 We start with a tutorial of the **typedb** library of _Mewa_ for _Lua_ with some self-contained examples. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading even if you did not understand it completely and to return later.
 
@@ -38,7 +38,7 @@ function salarySum double( Employee[10] list)
 {
 	var int idx = 0;
 	var double sum = 0.0;
-	while (list[idx].age)
+	while (idx < 10 && list[idx].age)
 	{
 		sum = sum + list[idx].salary;
 		idx = idx + 1;
@@ -46,10 +46,11 @@ function salarySum double( Employee[10] list)
 	return sum;
 }
 
-function salaryRaise void( Employee[10] list, double factor)
+function salaryRaise void( Employee[10] list, double percentRaise)
 {
 	var int idx = 0;
-	while (list[idx].age)
+	var double factor = 1 + (percentRaise / 100);
+	while (idx < 10 && list[idx].age)
 	{
 		list[idx].setSalary( list[idx].salary * factor);
 		idx = idx + 1;
@@ -64,8 +65,8 @@ main
 		{"Doe Joe", 36, 64400},
 		{"Sandra Last", 36, 67400}
 	};
-	salaryRaise( list, 1.10); // Give them all a 10% raise
-	printf( "Salary sum: %.2f\n", salarySum( list)); // Expected result = 280720
+	salaryRaise( list, 10);					// Give them all a 10% raise
+	printf( "Salary sum: %.2f\n", salarySum( list));	// Expected result = 280720
 }
 
 
@@ -73,11 +74,11 @@ main
 We will compile this program with the our example compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
 
-## Target Audience
+### Target Audience
 
 To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to _Lua_. If you have read an introduction to [LLVM IR](links.md), you will get grip on the code generation in the examples.
 
-## Deeper Digging
+### Deeper Digging
 
 For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
@@ -146,7 +147,6 @@ You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
 . tutorial/luaenv.sh
 ```
-
 
 ## Tutorial
 
@@ -942,6 +942,7 @@ expression/L2		= IDENT								(variable)
 			| UINTEGER							(constant "constexpr int")
 			| FLOAT								(constant "constexpr double")
 			| DQSTRING							(constant "constexpr string")
+			| "(" expression ")"
 			;
 expression/L3		= expression  "="  expression					(>>binop "=")
 			;
@@ -1378,6 +1379,7 @@ Finally we come to the section containing the blocks that do not fit somewhere e
 ```Lua
 function typesystem.program( node, options)
 	defineConstExprArithmetics()
+	defineConstExprTypeConversions()
 	initBuiltInTypes()
 	initControlBooleanTypes()
 	local context = {domain="global"}
@@ -1417,18 +1419,14 @@ rdw_conv = 1.0			-- Reduction weight of conversion
 rdw_constexpr = 0.0675		-- Minimum weight of a reduction involving a constexpr value
 rdw_load = 0.25			-- Reduction weight of loading a value
 rdw_sign = 0.125		-- Conversion of integers changing sign
-rdw_float = 0.25		-- Conversion switching floating point with integers
-rdw_bool = 0.25			-- Conversion of numeric value to boolean
+rdw_float = 0.375		-- Conversion of floating point to integers or integer to floating point
+rdw_bool = 0.50			-- Conversion of numeric value to boolean or boolean to numeric value
 rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch value) from type having 1 qualifier
 rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type having 2 qualifiers
 rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type having 3 qualifiers
 rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
 rwd_control = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 
-function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other
-function factorWeight( fac, w1) return fac * w1	end
-function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
-function scalarDeductionWeight( sizeweight) return 0.125*(1.0-sizeweight) end -- Deduction weight of this element for scalar operators
 weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
 
 
@@ -1716,7 +1714,7 @@ function selectItemsMatchParameters( node, items, args, this_constructor)
 	end
 end
 -- Find a callable identified by name and its arguments (parameter matching) in the context of a type (this)
-function findApplyCallable( node, this, callable, args)
+function findCallable( node, this, callable, args)
 	local resolveContextType,reductions,items = typedb:resolve_type( this.type, callable, tagmask_resolveType)
 	if not resolveContextType then return nil end
 	if type(resolveContextType) == "table" then
@@ -1746,7 +1744,7 @@ function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args
 end
 -- Retrieve and apply a callable in a specified context
 function applyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findCallable( node, this, callable, args)
 	if not bestweight then
 		io.stderr:write( "TRACE typedb:resolve_type\n" .. utils.getResolveTypeTrace( typedb, this.type, callable, tagmask_resolveType) .. "\n")
 		utils.errorMessage( node.line, "Failed to find callable with signature '%s'", typeDeclarationString( this, callable, args))
@@ -1757,7 +1755,7 @@ function applyCallable( node, this, callable, args)
 end
 -- Try to retrieve a callable in a specified context, apply it and return its type/constructor pair if found, return nil if not
 function tryApplyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findApplyCallable( node, this, callable, args)
+	local bestmatch,bestweight = findCallable( node, this, callable, args)
 	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
 end
 
@@ -1913,8 +1911,8 @@ end
 -- List of value constructors from constexpr constructors
 function constexprDoubleToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
 function constexprDoubleToIntegerConstructor( val) return constructorStruct( tostring(tointeger(val))) end
-function constexprDoubleToBooleanConstructor( val) if math.abs(val) < epsilonthen then return constructorStruct( "0") else constructorStruct( "1") end end
-function constexprIntegerToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val:tonumber())) end
+function constexprDoubleToBooleanConstructor( val) if math.abs(val) < epsilon then return constructorStruct( "0") else constructorStruct( "1") end end
+function constexprIntegerToDoubleConstructor( val) return constructorStruct( "0x" .. mewa.llvm_double_tohex( val)) end
 function constexprIntegerToIntegerConstructor( val) return constructorStruct( tostring(val)) end
 function constexprIntegerToBooleanConstructor( val) if val == "0" then return constructorStruct( "0") else return constructorStruct( "1") end end
 function constexprBooleanToScalarConstructor( val) if val == true then return constructorStruct( "1") else return constructorStruct( "0") end end
@@ -1922,15 +1920,15 @@ function constexprBooleanToScalarConstructor( val) if val == true then return co
 -- Define arithmetics of constant expressions
 function defineConstExprArithmetics()
 	defineCall( constexprIntegerType, constexprIntegerType, "-", {}, function(this) return -this end)
-	defineCall( constexprIntegerType, constexprIntegerType, "+", {constexprIntegerType}, function(this,args) return this+args[0] end)
-	defineCall( constexprIntegerType, constexprIntegerType, "-", {constexprIntegerType}, function(this,args) return this-args[0] end)
-	defineCall( constexprIntegerType, constexprIntegerType, "/", {constexprIntegerType}, function(this,args) return tointeger(this/args[0]) end)
-	defineCall( constexprIntegerType, constexprIntegerType, "*", {constexprIntegerType}, function(this,args) return tointeger(this*args[0]) end)
+	defineCall( constexprIntegerType, constexprIntegerType, "+", {constexprIntegerType}, function(this,args) return this+args[1] end)
+	defineCall( constexprIntegerType, constexprIntegerType, "-", {constexprIntegerType}, function(this,args) return this-args[1] end)
+	defineCall( constexprIntegerType, constexprIntegerType, "/", {constexprIntegerType}, function(this,args) return tointeger(this/args[1]) end)
+	defineCall( constexprIntegerType, constexprIntegerType, "*", {constexprIntegerType}, function(this,args) return tointeger(this*args[1]) end)
 	defineCall( constexprDoubleType, constexprDoubleType, "-", {}, function(this) return -this end)
-	defineCall( constexprDoubleType, constexprDoubleType, "+", {constexprDoubleType}, function(this,args) return this+args[0] end)
-	defineCall( constexprDoubleType, constexprDoubleType, "-", {constexprDoubleType}, function(this,args) return this-args[0] end)
-	defineCall( constexprDoubleType, constexprDoubleType, "/", {constexprDoubleType}, function(this,args) return this/args[0] end)
-	defineCall( constexprDoubleType, constexprDoubleType, "*", {constexprDoubleType}, function(this,args) return this*args[0] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "+", {constexprDoubleType}, function(this,args) return this+args[1] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "-", {constexprDoubleType}, function(this,args) return this-args[1] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "/", {constexprDoubleType}, function(this,args) return this/args[1] end)
+	defineCall( constexprDoubleType, constexprDoubleType, "*", {constexprDoubleType}, function(this,args) return this*args[1] end)
 
 	-- Define arithmetic operators of integers with a double as promotion of the left hand integer to a double and an operator of a double with a double
 	definePromoteCall( constexprDoubleType, constexprIntegerType, constexprDoubleType, "+", {constexprDoubleType},function(this) return this end)
@@ -1940,16 +1938,11 @@ function defineConstExprArithmetics()
 end
 -- Define the type conversions of const expressions to other const expression types
 function defineConstExprTypeConversions()
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return value ~= "0" end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) < math.abs(epsilon) end, tag_typeConversion, rdw_bool)
-	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprDoubleType, constexprUIntegerType, function( value) return value:tonumber() end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return bcd.int( tostring(value)) end, tag_typeConversion, rdw_float)
-	typedb:def_reduction( constexprIntegerType, constexprUIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
-	typedb:def_reduction( constexprUIntegerType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_sign)
-
-	local function bool2bcd( value) if value then return bcd.int("1") else return bcd.int("0") end end
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType, bool2bcd, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprIntegerType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprBooleanType, constexprDoubleType, function( value) return math.abs(value) > epsilon end, tag_typeConversion, rdw_bool)
+	typedb:def_reduction( constexprDoubleType, constexprIntegerType, function( value) return value end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprDoubleType, function( value) return math.floor(value) end, tag_typeConversion, rdw_float)
+	typedb:def_reduction( constexprIntegerType, constexprBooleanType, function( value) return value and 1 or 0 end, tag_typeConversion, rdw_bool)
 end
 
 
@@ -1981,11 +1974,26 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		end
 	end
 end
+-- Define the promote calls of a const expression for a binary scalar operator
+function defineBinopConstexprPromoteCalls( resultType, operator, argtype, descr)
+	if descr.llvmtype == "double" then
+		definePromoteCall( resultType, constexprDoubleType, argtype, operator, {argtype}, constexprDoubleToDoubleConstructor)
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToDoubleConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "bool" then
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "signed" then
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToIntegerConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	end
+end
+
 -- Helper functions to define binary operators of first class scalar types
 function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in pairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
 		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt))
+		defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, typeDescriptionMap[typeId])
 	end
 end
 -- Helper functions to define binary operators of first class scalar types
@@ -1993,6 +2001,7 @@ function defineBuiltInUnaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in ipairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
 		defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt))
+		defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, typeDescriptionMap[typeId])
 	end
 end
 -- Constructor of a string pointer from a string definition
@@ -2437,7 +2446,7 @@ end
 ```
 
 #### Control Structures
-Finally we visit the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and to bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
+The last snippet implements the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and to bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
 
 ```Lua
 -- Build a conditional if/elseif block
@@ -2463,7 +2472,7 @@ end
 ```
 
 ### Build and Run the Compiler
-Finally or maybe with a quick jump to the end we got here. Now we build and run our compiler on the example source presented at the beginning.
+Finally we build and run our compiler on the example source presented at the beginning.
 
 ##### Translate the grammar and build the Lua script of the compiler
 ```bash
@@ -2509,7 +2518,7 @@ Salary sum: 280720.00
 
 ### What is Missing
 This article showed the implementation of a primitive language missing lots of features. For example:
-  * Constructors implementing late binding, e.g. for implementing copy elision. In the example **language1** and in the [glossary](glossary.md) they are called unbound reference types.
+  * Constructors implementing late binding, e.g. for implementing copy elision.
   * More type qualifiers like const, private, etc.
   * Pointers
   * Dynamic memory allocation
@@ -2528,7 +2537,7 @@ We could compile and run a simple demo program in the shell.
 I hope I could give you some overview about one way to write a compiler front-end.
 Learning about another approach can be interesting, even if you go along another path.
 
-_Mewa_ is based on very old ideas and offers nothing new. 
+_Mewa_ is based on very old ideas and offers nothing fundamentally new. 
 But it is a pragmatic approach that brings the implementation of a prototype of a non trivial compiler front-end for a single person within reach.
 
 

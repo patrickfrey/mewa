@@ -12,7 +12,7 @@ _Mewa_ provides no support for the evaluation of different paths of code generat
 For implementing a compiler with _Mewa_, you define a grammar attributed with _Lua_ function calls.
 The program ```mewa``` will generate a _Lua_ script that will transform any source passing the grammar specified into an _AST_ with the _Lua_ function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the _AST_ that take the control of the further processing of the compiler front-end. The functions called with their _AST_ node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
 
-## Goals
+### Goals
 
 We start with a tutorial of the **typedb** library of _Mewa_ for _Lua_ with some self-contained examples. Self-contained means that nothing is used but the library. The examples are also not dependent on each other. This allows you to continue reading even if you did not understand it completely and to return later.
 
@@ -24,11 +24,11 @@ $EXAMPLE:tutorial_program
 We will compile this program with the our example compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
 
-## Target Audience
+### Target Audience
 
 To understand this article some knowledge about formal languages and parser generators is helpful. To understand the examples you should be familiar with some scripting languages that have a concept of closures similar to _Lua_. If you have read an introduction to [LLVM IR](links.md), you will get grip on the code generation in the examples.
 
-## Deeper Digging
+### Deeper Digging
 
 For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a strongly typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
@@ -97,7 +97,6 @@ You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
 . tutorial/luaenv.sh
 ```
-
 
 ## Tutorial
 
@@ -670,14 +669,14 @@ $EXAMPLE:tutorial_section_controlBooleanTypes
 ```
 
 #### Control Structures
-Finally we visit the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and to bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
+The last snippet implements the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and to bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
 
 ```Lua
 $EXAMPLE:tutorial_section_controlStructures
 ```
 
 ### Build and Run the Compiler
-Finally or maybe with a quick jump to the end we got here. Now we build and run our compiler on the example source presented at the beginning.
+Finally we build and run our compiler on the example source presented at the beginning.
 
 ##### Translate the grammar and build the Lua script of the compiler
 ```bash
@@ -723,7 +722,7 @@ Salary sum: 280720.00
 
 ### What is Missing
 This article showed the implementation of a primitive language missing lots of features. For example:
-  * Constructors implementing late binding, e.g. for implementing copy elision. In the example **language1** and in the [glossary](glossary.md) they are called unbound reference types.
+  * Constructors implementing late binding, e.g. for implementing copy elision.
   * More type qualifiers like const, private, etc.
   * Pointers
   * Dynamic memory allocation
@@ -742,7 +741,7 @@ We could compile and run a simple demo program in the shell.
 I hope I could give you some overview about one way to write a compiler front-end.
 Learning about another approach can be interesting, even if you go along another path.
 
-_Mewa_ is based on very old ideas and offers nothing new. 
+_Mewa_ is based on very old ideas and offers nothing fundamentally new. 
 But it is a pragmatic approach that brings the implementation of a prototype of a non trivial compiler front-end for a single person within reach.
 
 

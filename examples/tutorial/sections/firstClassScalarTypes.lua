@@ -20,11 +20,26 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		end
 	end
 end
+-- Define the promote calls of a const expression for a binary scalar operator
+function defineBinopConstexprPromoteCalls( resultType, operator, argtype, descr)
+	if descr.llvmtype == "double" then
+		definePromoteCall( resultType, constexprDoubleType, argtype, operator, {argtype}, constexprDoubleToDoubleConstructor)
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToDoubleConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "bool" then
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	elseif descr.class == "signed" then
+		definePromoteCall( resultType, constexprIntegerType, argtype, operator, {argtype}, constexprIntegerToIntegerConstructor)
+		definePromoteCall( resultType, constexprBooleanType, argtype, operator, {argtype}, constexprBooleanToScalarConstructor)
+	end
+end
+
 -- Helper functions to define binary operators of first class scalar types
 function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in pairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
 		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt))
+		defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, typeDescriptionMap[typeId])
 	end
 end
 -- Helper functions to define binary operators of first class scalar types
@@ -32,6 +47,7 @@ function defineBuiltInUnaryOperators( typnam, descr, operators, resultTypeId)
 	for opr,fmt in ipairs(operators) do
 		local typeId = scalarTypeMap[ typnam]
 		defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt))
+		defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, typeDescriptionMap[typeId])
 	end
 end
 -- Constructor of a string pointer from a string definition
