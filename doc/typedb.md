@@ -360,7 +360,7 @@ Select none if undefined
 #### Remark (***)
 The tagmask_pathlen, max_pathlen parameters allow to define restrictions on the number of reductions that are implicit value conversions. 
 Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions and to reduce the costs of calculation.
-Usually the max_pathlen value is 1 if implicit type conversions are allowed at all. The default if not specified is also 1.
+Usually, the max_pathlen value is 1 if implicit type conversions are allowed at all. The default if not specified is also 1.
 
 
 <a name="resolve_type"/>
