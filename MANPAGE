@@ -37,10 +37,7 @@ Do generate a template for your
 module implementing the typesystem.
 Extract all
 .BR Lua
-function calls from the grammar and prints their empty implementation stubs to the output.
-No debug output is provided. 
-Be careful using this option. It is only useful after the initial definition of the grammar of your language.
-It overwrites previous definitions without merging with your edits in a previously generated version.
+function calls from the grammar and prints their empty implementation stubs to the output. No debug output is provided. Be careful using this option. It is only useful after the initial definition of the grammar of your language. It overwrites previous definitions without merging with your edits in a previously generated version.
 .TP
 \fB\-o\fR, \fB\--output=\fR \fIfile\fR
 Write the output (parsing tables) to \fIfile\fR instead of stdout.  
