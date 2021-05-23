@@ -12,11 +12,20 @@ _Mewa_ implements an LALR(1) parser generator for an attributed grammar. The gra
 Configuration declarations start with a '**%**' followed by the command and its arguments separated by spaces.
 The following commands are known:
 
-* **%** **LANGUAGE** _name_ **;** Defines the name of the language of this grammar as _name_
-* **%** **TYPESYSTEM** _name_ **;** Defines the name of the _Lua_ module without extension _.lua_ implementing the typesystem as _name_. that is implicitly added. The generated lua module of the compiler will include the type system module with this name. The typesystem module will contain all Lua callback definitions referred to in the grammar.
-* **%** **CMDLINE** _name_ **;** Defines the name of the Lua module without extension _.lua_ implementing command line parser of the compiler as _name_. If not specified _Mewa_ generates code that calls the compiler with the first command line argument. A module defined for the command line can implement some argument checking and initialize some compiler behaviour specified by command line options. The module defined by CMDLINE has to export a method _parse_ with 3 arguments: the name of the language, the typesystem structure and the array of command line arguments. It is expected to return 3 values: the input file name, the output file name, the debug output file name. Only the first return value is mandatory. And example of a command line parser can be found [here](../examples/cmdlinearg.lua). 
-* **%** **COMMENT** _start_ _end_ **;** Defines the content between the patterns _start_ and _end_ defined as regular expression quoted in single or double quotes as comment. Comments are ignored by the lexer and thus by the compiler.
-* **%** **COMMENT** _start_ **;** Defines the content starting with the pattern _start_ defined as regular expression quoted in single or double quotes until the next end of line as comment. Comments are ignored by the lexer and thus by the compiler.
+* **%** **LANGUAGE** _name_ **;** Defines the name of the language of this grammar.
+* **%** **TYPESYSTEM** _name_ **;** Defines the name of the _Lua_ module without extension _.lua_ implementing the typesystem. The generated _Lua_ module of the compiler will import the type system module with this name. The typesystem module will contain all _Lua_ AST node functions referred to in the grammar.
+* **%** **CMDLINE** _name_ **;** Defines the name of the Lua module without extension _.lua_ implementing command-line parser of the compiler. If not specified _Mewa_ generates code that calls the compiler with the first command-line argument. A module defined for the command-line can implement some argument checking and initialize some compiler behavior specified by command-line options. The module defined by CMDLINE has to export a method _parse_ with 3 arguments: the name of the language, the typesystem structure, and the array of command-line arguments. It is expected to return a structure with the following fields
+
+    * **input**: the input file name
+    * **output**: the output file name
+    * **debug**: the debug output file name
+    * **options**: an option structure passed to the compiler
+    * **target**: the template file used fot the LLVM IR output. 
+
+  An example of a command-line parser can be found [here](../examples/cmdlinearg.lua). 
+
+* **%** **COMMENT** _start_ _end_ **;** Defines the content between the patterns _start_ and _end_ defined as regular expression quoted in single or double quotes as a comment. Comments are ignored by the lexer and thus by the compiler.
+* **%** **COMMENT** _start_ **;** Defines the content starting with the pattern _start_ defined as regular expression quoted in single or double quotes until the next end of a line as a comment. Comments are ignored by the lexer and thus by the compiler.
 * **%** **IGNORE** _pattern_ **;** Defines a token matching this pattern defined as regular expression quoted in single or double quotes as invisible. It is ignored by the lexer and thus by the compiler. Hence it does not need a name.
 * **%** **BAD** _name_ **;** Defines the name of the error token of the lexer. Has no implications but for the debugging output.
 
@@ -44,21 +53,21 @@ Here are some declaration patterns described:
 
 1. _name_ **=** _itemlist_ **;**
 
-    * Simple grammar production definition with _name_ as left-hand _nonterminal_ and _itemlist_ as space-separated list of identifiers (nonterminals or lexeme names) and strings (keywords and operators as implicitly defined lexemes).
+    * Simple grammar production definition with _name_ as left-hand _nonterminal_ and _itemlist_ as a space-separated list of identifiers (nonterminals or lexeme names) and strings (keywords and operators as implicitly defined lexemes).
 2. _name_/_priority_ **=** _itemlist_ **;**
 
     * Production definition with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a non-negative integer number. The **L** defines the rule to be left-handed, meaning that _REDUCE_ is preferred in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right-handed, meaning that _SHIFT_ is preferred in self including rules. The integer number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of _SHIFT_ actions must be consistent for a state.
 3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
 
-    * Production definition with a _luafunction_ as a single identifier plus an optional argument (a lua value or table). The function identifier refers to a member of the typesystem module written by the author and loaded by the compiler. The function and its optional argument are attached to the node of the **AST** defined by its production.
+    * Production definition with Lua function as a single identifier plus an optional argument (a Lua value or table). The function identifier refers to a member of the typesystem module written by the author and loaded by the compiler. The function and its optional argument are attached to the node of the **AST** defined by its production.
 
 4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
 
-    * Production definition with an increment defined for the **scope-step**. The _luafunction_ is optional here.
+    * Production definition with an increment defined for the **scope-step**. The Lua function is optional here.
 
 5. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
 
-    * Production definition with a **scope** structure (start and end of the scope) defined for the result node. The _luafunction_ is optional here.
+    * Production definition with a **scope** structure (start and end of the scope) defined for the result node. The Lua function is optional here.
 
 ### Conflict solving
 The mechanism of conflict solving by attaching priorities to productions is comparable with declaring operator priorities in _Bison_/_Yacc_ though it is more error-prone and can lead to undetected conflicts. See bug report #1.
