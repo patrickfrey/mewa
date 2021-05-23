@@ -322,9 +322,9 @@ Now we will take a look at the grammar of the example language.
 ### Parser Generator
 _Mewa_ implements an _LALR(1)_ parser generator. The source file of the attributed grammar has 3 parts. 
 
-  * Some configuration marked with a prefix '**%**'
-  * The named lexemes as regular expressions matching the lexeme value as argument.
-  * An attributed grammar with keywords as strings and lexeme or production names as identifiers
+  * Some configuration marked with a prefix '**%**'.
+  * The _tokens_ defined as name/pattern pair. The pattern is defined as a regular expression matching the _lexeme_. Optionally, an index selecting a sub-match as the _token_ value can be specified.
+  * An attributed grammar with keywords as strings and token names or production names as identifiers.
 
 ### Production Attribute Operators
 The operator **>>** in the production attributes in oval brackets on the right side increments the scope-step.
@@ -731,7 +731,10 @@ This article showed the implementation of a primitive language missing lots of f
   * Coroutines
 
 And many more. You can visit the [FAQ](faq.md) to get an idea, how to implement a richer language.
-You can dig into the main [example language1](example_language1.md) that implements many features missing here as examples.
+You can dig into the main [example language1](example_language1.md) that implements most of the features missing here as examples.
+
+#### Remark
+You should not consider the examples presented here as a code-base for your own compiler project. The examples, together with the FAQ can help you planning your compiler project though. With a layout, you can do a much better job than me. I was cutting my way through the jungle with a machete. You have the overview.
 
 ## Conclusion
 We have seen how a very primitive compiler is written in _Lua_ using _Mewa_. 
@@ -742,8 +745,4 @@ Learning about another approach can be interesting, even if you go along another
 
 _Mewa_ is based on very old ideas and offers nothing fundamentally new. 
 But it is a pragmatic approach that brings the implementation of a prototype of a non-trivial compiler front-end for a single person within reach.
-
-
-
-
 

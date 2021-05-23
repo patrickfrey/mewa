@@ -55,7 +55,7 @@ Languages to describe a context free grammar. There exist many dialects for a fo
 The class of language covered by _Mewa_. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/LALR_parser).
 
 ### Lexer
-Component that scans the input and produces a stream of items called lexemes that are the atoms the grammar of the language is based on. It provides a sequence of items like identifiers, integer or floating-point numbers, strings, or operators instead of characters. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non-whitespace character in the input. Contradicting _lexeme_ definitions are resolved in _Mewa_ by selecting the longest match or the first definition for matches of the same length.
+Component that scans the input and produces a stream of items called _tokens_ that are the atoms the grammar of the language is based on. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non-whitespace character in the input. Contradicting _lexeme_ matches are resolved in _Mewa_ by selecting the longest match or the first definition comparing matches of the same length as the _token_ value emitted.
 
 ### AST (Abstract Syntax Tree)
 The intermediate representation of the program. The output of the program parser. The AST in _Mewa_ is described [here](ast.md).
@@ -68,7 +68,7 @@ The types are split into the following categories, each category having a differ
 #### Reference Type (reftype/c_reftype)
 These types (const and non-const instance) are referring to an address of a variable. Similar to an _lvalue_ in C++.
 
-#### Value Type (valtype/c_valuetype)
+#### Value Type (valtype/c_valtype)
 These types (const and non-const instance) are referring to a value of a variable but are also used for the pure type (without qualifiers). Similar to an _rvalue_ in C++.
 
 #### Unbound Reference Type (unbound_reftype/c_unbound_reftype)
@@ -97,7 +97,7 @@ Constants in the source and expressions built from constants are represented by 
   * **constexprStructureType**  const expression tree structure implemented as a list of type/constructor pairs (envelop for structure recursively resolved)
 
 ### Allocation Frame
-The frame object defines the context for implicit cleanup of resources after the exit of the scope the allocation frame is associated to. Every form of exit has a chain of commands executed before the final exit code is executed. The allocation frame provides a label to jump to depending on the current scope-step and the exit code. With the jump to this label, the cleanup followed by the exit from the allocation frame is initiated.
+The frame object defines the context for implicit cleanup of resources after the exit of the scope the allocation frame is associated with. Every form of exit has a chain of commands executed before the final exit code is executed. The allocation frame provides a label to jump to depending on the current scope-step and the exit code. With the jump to this label, the cleanup followed by the exit from the allocation frame is initiated.
 
 ### Callable Environment
 The callable environment holds the data associated with a callable during the processing of its body. Such data are for example the generators of registers and labels, the list of allocation frames holding the code executed in case of exceptions, the return type in case of a function, the initialization state in case of a constructor, some flags that indicate some events needed for printing the function declaration, etc...

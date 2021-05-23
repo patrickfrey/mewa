@@ -12,7 +12,6 @@ This is a multiparadigm general purpose statically typed programming language wi
  * Lambdas as instantiation arguments of generic classes or functions
  * Exception handling with a fixed exception structure (an error code and an optional string)
  * Backend is LLVM IR
- * Modules (not implemented yet)
 
 ## Project Specific Files
 
