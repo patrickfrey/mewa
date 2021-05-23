@@ -7,7 +7,7 @@ local function nilIfEmpty( arg)
 end
 
 return {
-        parse = function( langname, typesystem, arg)
+        parse = function( langname, arg)
                 local args = lapp( string.format( [[
 Compiler for language %s
 	-d,--debug  (default "") Optional file path (or stderr, resp. stdout) to write the debug output to

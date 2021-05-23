@@ -14,7 +14,7 @@ The following commands are known:
 
 * **%** **LANGUAGE** _name_ **;** Defines the name of the language of this grammar.
 * **%** **TYPESYSTEM** _name_ **;** Defines the name of the _Lua_ module without extension _.lua_ implementing the typesystem. The generated _Lua_ module of the compiler will import the type system module with this name. The typesystem module will contain all _Lua_ AST node functions referred to in the grammar.
-* **%** **CMDLINE** _name_ **;** Defines the name of the Lua module without extension _.lua_ implementing command-line parser of the compiler. If not specified _Mewa_ generates code that calls the compiler with the first command-line argument. A module defined for the command-line can implement some argument checking and initialize some compiler behavior specified by command-line options. The module defined by CMDLINE has to export a method _parse_ with 3 arguments: the name of the language, the typesystem structure, and the array of command-line arguments. It is expected to return a structure with the following fields
+* **%** **CMDLINE** _name_ **;** Defines the name of the Lua module without extension _.lua_ implementing command-line parser of the compiler. If not specified _Mewa_ generates code that calls the compiler with the first command-line argument. The module defined by CMDLINE has to export a method _parse_ with 2 arguments: the name of the language and the array of command-line arguments. It is expected to return a structure with the following fields:
 
     * **input**: the input file name
     * **output**: the output file name
