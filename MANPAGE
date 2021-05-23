@@ -12,9 +12,9 @@
 .B mewa
 is a compiler compiler that builds a
 .BR Lua
-module implementing a compiler described as a formal grammar in the file \fIINPUTFILE\fR with some 
+module implementing a compiler described as a LALR(1) grammar in the file \fIINPUTFILE\fR attributed with
 .BR Lua
-callbacks of functions implementing the type system and the code generation.
+calls implementing the type system and the code generation.
 .TP
 \fB\-h\fR, \fB\--help\fR
 Print this usage.
@@ -24,7 +24,7 @@ Print the current version of
 .B mewa
 .TP
 \fB\-V\fR, \fB\--verbose\fR
-Verbose debug output to stderr.
+Do verbose debug output to stderr.
 .TP
 \fB\-g\fR, \fB\--generate-compiler\fR
 Do generate a compiler as a
@@ -35,11 +35,11 @@ module described by the grammar in the input file.
 Do generate a template for your
 .BR Lua
 module implementing the typesystem.
-Extracts all
+Extract all
 .BR Lua
-function calls fromm the grammar and print their empty implementation stubs to the output.
-No debug output here. 
-Be careful using this option. It is useful only after the initial definition of the grammar of your language.
+function calls from the grammar and prints their empty implementation stubs to the output.
+No debug output is provided. 
+Be careful using this option. It is only useful after the initial definition of the grammar of your language.
 It overwrites previous definitions without merging with your edits in a previously generated version.
 .TP
 \fB\-o\fR, \fB\--output=\fR \fIfile\fR

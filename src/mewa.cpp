@@ -50,8 +50,8 @@ static void printUsage()
 	std::cerr << " -g           : Do generate a compiler as a Lua module.\n";
 	std::cerr << " --generate-template,\n";
 	std::cerr << " -s           : Do generate a template for your Lua module implementing the typesystem.\n";
-	std::cerr << "                Extracts all Lua function calls fromm the grammar and print their\n";
-	std::cerr << "                empty implementation stubs to the output. No debug output here.\n";
+	std::cerr << "                Extracts all Lua function calls from the grammar and prints their\n";
+	std::cerr << "                empty implementation stubs to the output. No debug output is provided.\n";
 	std::cerr << " --luabin <LUABIN>,\n";
 	std::cerr << " -b <LUABIN>  : Specify the path of the Lua program in the header of generated scripts.\n";
 	std::cerr << " --output <OUTF>,\n";

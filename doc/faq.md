@@ -3,7 +3,9 @@
 1. [General](#general)
     * [What is _Mewa_](#WTF)
     * [What audience is targeted by _Mewa_?](#targetAudience)
-    * [What classes of languages are covered by _Mewa_?](#coveredLanguageClasses)
+    * [What types of grammars are covered by _Mewa_?](#coveredGrammarClasses)
+    * [Why only a LALR(1) parser generator?](#onlyLALR1)
+    * [What types of languages are covered by _Mewa_?](#coveredLanguageClasses)
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
     * [What are the hacks in the implementation of the example language1?](#hacks)
 1. [Decision Questions](#decisions)
@@ -61,15 +63,23 @@ It aims to support the mapping of a programming language to an intermediate repr
 
 **(*)** There have not yet been many efforts done to assist users in case of conflicts in a grammar. The conflicts are detected and reported and the building of the parser fails in consequence, but there is no mechanism implemented for autocorrection and there is no deeper analysis made by the _Mewa_ parser generator program.
 
+<a name="coveredGrammarClasses"/>
+
+### What types of grammars are covered by _Mewa_?
+_Mewa_ is currently based on its own implementation of a **LALR(1)** parser generator. 
+
+<a name="onlyLALR1"/>
+
+### Why only a LALR(1) parser generator?
+_Mewa_ is not first and foremost about parser generators. The main focus is currently on other problems. For a tool for prototyping languages, it is not the most important thing to be able to cover many language classes. At least not yet. This is more of an issue when dealing with legacy languages. But here, the author of the grammar is most likely also the author of the compiler. 
+But I am open to alternatives or extensions to cover more classes of grammars. I don't say that it isn't important. It's just not a forefront issue yet.
+
 <a name="coveredLanguageClasses"/>
 
-### What classes of languages are covered by _Mewa_?
+### What types of languages are covered by _Mewa_?
 **_Mewa_ was been designed to be capable to implement statically typed, general-purpose programming languages having a LALR(1) grammar definition.**
 It is not recommended to use _Mewa_ for processing other than compilable, statically typed programming languages, because it was not designed for other language classes.
 To define a type system as a graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
-
-_Mewa_ is currently based on an own implementation of a LALR(1) parser generator. I am open to alternatives or extensions to cover more programming languages.
-
 
 <a name="nameMewa"/>
 
