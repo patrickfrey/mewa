@@ -101,29 +101,29 @@ typegen/L1		= typehdr
 typespec/L1		= typegen									(typespec)
 			| typegen "&"									(typespec_ref)
 			;
-typedefinition		= "typedef" typegen IDENT							(>>typedef)
-			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(>>typedef_functype {throws=true})
-			| "typedef" "procedure" IDENT "(" extern_paramlist ")"				(>>typedef_proctype {throws=true})
-			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" 	(>>typedef_functype {throws=false})
-			| "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"		(>>typedef_proctype {throws=false})
+typedefinition		= "typedef" typegen IDENT							(typedef)
+			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" 			(typedef_functype {throws=true})
+			| "typedef" "procedure" IDENT "(" extern_paramlist ")"				(typedef_proctype {throws=true})
+			| "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" 	(typedef_functype {throws=false})
+			| "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow"		(typedef_proctype {throws=false})
 			;
-structdefinition	= "struct" IDENT "{" instruct_definitionlist "}"				(>>structdef)
+structdefinition	= "struct" IDENT "{" instruct_definitionlist "}"				(structdef)
 			| "generic" "struct" IDENT "[" generic_header "]"
-				"{" instruct_definitionlist "}"						(>>generic_structdef)
+				"{" instruct_definitionlist "}"						(generic_structdef)
 			;
-interfacedefinition	= "interface" IDENT "{" ininterf_definitionlist "}"				(>>interfacedef)
+interfacedefinition	= "interface" IDENT "{" ininterf_definitionlist "}"				(interfacedef)
 			;
-inheritlist		= typegen "," inheritlist							(>>inheritdef 1)
-			| typegen									(>>inheritdef 1)
+inheritlist		= typegen "," inheritlist							(inheritdef 1)
+			| typegen									(inheritdef 1)
 			;
-namespacedefinition	= "namespace" IDENT  "{" namespace_definitionlist "}"				(>>namespacedef)
+namespacedefinition	= "namespace" IDENT  "{" namespace_definitionlist "}"				(namespacedef)
 			;
-classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(>>classdef)
-			| "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"			(>>classdef)
+classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(classdef)
+			| "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"			(classdef)
 			| "generic" "class" IDENT "[" generic_header "]"
-				"{" inclass_definitionlist "}"						(>>generic_classdef)
+				"{" inclass_definitionlist "}"						(generic_classdef)
 			| "generic" "class" IDENT "[" generic_header "]" 
-				":" inheritlist "{" inclass_definitionlist "}"				(>>generic_classdef)
+				":" inheritlist "{" inclass_definitionlist "}"				(generic_classdef)
 			;
 linkage			= "private"									(linkage {private=true, linkage="internal", explicit=true})
 			| "public"									(linkage {private=false, linkage="external", explicit=true})

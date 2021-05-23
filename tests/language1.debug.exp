@@ -217,21 +217,21 @@ typegen/L1 = typegen "^" (XX)
 typegen/L1 = typegen "const" "^" (XX)
 typespec/L1 = typegen (XX)
 typespec/L1 = typegen "&" (XX)
-typedefinition = "typedef" typegen IDENT (step:30)
-typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" (step:31)
-typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" (step:32)
-typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" (step:33)
-typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" (step:34)
-structdefinition = "struct" IDENT "{" instruct_definitionlist "}" (step:35)
-structdefinition = "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}" (step:36)
-interfacedefinition = "interface" IDENT "{" ininterf_definitionlist "}" (step:37)
-inheritlist = typegen "," inheritlist (step:38)
-inheritlist = typegen (step:38)
-namespacedefinition = "namespace" IDENT "{" namespace_definitionlist "}" (step:39)
-classdefinition = "class" IDENT "{" inclass_definitionlist "}" (step:40)
-classdefinition = "class" IDENT ":" inheritlist "{" inclass_definitionlist "}" (step:40)
-classdefinition = "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}" (step:41)
-classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" (step:41)
+typedefinition = "typedef" typegen IDENT (XX)
+typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" (XX)
+typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" (XX)
+typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" (XX)
+typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" (XX)
+structdefinition = "struct" IDENT "{" instruct_definitionlist "}" (XX)
+structdefinition = "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}" (XX)
+interfacedefinition = "interface" IDENT "{" ininterf_definitionlist "}" (XX)
+inheritlist = typegen "," inheritlist (XX)
+inheritlist = typegen (XX)
+namespacedefinition = "namespace" IDENT "{" namespace_definitionlist "}" (XX)
+classdefinition = "class" IDENT "{" inclass_definitionlist "}" (XX)
+classdefinition = "class" IDENT ":" inheritlist "{" inclass_definitionlist "}" (XX)
+classdefinition = "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}" (XX)
+classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" (XX)
 linkage = "private" (XX)
 linkage = "public" (XX)
 linkage =  (XX)
@@ -11747,7 +11747,7 @@ expressionlist/L0 = expression
 	structdefinition = . "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT "generic" GOTO XX
 	instruct_definitionlist = ., FOLLOW [XX] -> REDUCE instruct_definitionlist #0
 [XX]
-	typedefinition = "typedef" typegen IDENT . (step:30), FOLLOW [XX] -> REDUCE typedefinition #3 CALL typedef
+	typedefinition = "typedef" typegen IDENT . (XX), FOLLOW [XX] -> REDUCE typedefinition #3 CALL typedef
 [XX]
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
@@ -13022,7 +13022,7 @@ expressionlist/L0 = expression
 	typegen/L1 = typegen . "const" "^", FOLLOW [XX] -> SHIFT "const" GOTO XX
 	typegen/L1 = typegen . "^", FOLLOW [XX] -> SHIFT '^' GOTO XX
 	typegen/L1 = typegen . "[" generic_instance "]", FOLLOW [XX] -> SHIFT '[' GOTO XX
-	inheritlist = typegen . (step:38), FOLLOW [XX] -> REDUCE inheritlist #1 CALL inheritdef 1
+	inheritlist = typegen . (XX), FOLLOW [XX] -> REDUCE inheritlist #1 CALL inheritdef 1
 [XX]
 	classdefinition = "class" IDENT ":" inheritlist . "{" inclass_definitionlist "}", FOLLOW [XX] -> SHIFT '{' GOTO XX
 [XX]
@@ -15945,7 +15945,7 @@ expressionlist/L0 = expression
 	impl_parameters = impl_paramdecl . "," impl_parameters, FOLLOW [XX] -> SHIFT ',' GOTO XX
 	impl_parameters = impl_paramdecl ., FOLLOW [XX] -> REDUCE impl_parameters #1
 [XX]
-	classdefinition = "class" IDENT "{" inclass_definitionlist "}" . (step:40), FOLLOW [XX] -> REDUCE classdefinition #5 CALL classdef
+	classdefinition = "class" IDENT "{" inclass_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE classdefinition #5 CALL classdef
 [XX]
 	inclass_definitionlist = inclass_definition inclass_definitionlist ., FOLLOW [XX] -> REDUCE inclass_definitionlist #2
 [XX]
@@ -16051,7 +16051,7 @@ expressionlist/L0 = expression
 	inclass_definitionlist = ., FOLLOW [XX] -> REDUCE inclass_definitionlist #0
 	linkage = . (XX), FOLLOW [XX] -> REDUCE linkage #0 CALL linkage {private=false,linkage="external",explicit=false}
 [XX]
-	structdefinition = "struct" IDENT "{" instruct_definitionlist "}" . (step:35), FOLLOW [XX] -> REDUCE structdefinition #5 CALL structdef
+	structdefinition = "struct" IDENT "{" instruct_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE structdefinition #5 CALL structdef
 [XX]
 	instruct_definitionlist = instruct_definition instruct_definitionlist ., FOLLOW [XX] -> REDUCE instruct_definitionlist #2
 [XX]
@@ -16126,7 +16126,7 @@ expressionlist/L0 = expression
 [XX]
 	structdefinition = "generic" "struct" IDENT "[" generic_header . "]" "{" instruct_definitionlist "}", FOLLOW [XX] -> SHIFT ']' GOTO XX
 [XX]
-	interfacedefinition = "interface" IDENT "{" ininterf_definitionlist "}" . (step:37), FOLLOW [XX] -> REDUCE interfacedefinition #5 CALL interfacedef
+	interfacedefinition = "interface" IDENT "{" ininterf_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE interfacedefinition #5 CALL interfacedef
 [XX]
 	ininterf_definitionlist = ininterf_definition ininterf_definitionlist ., FOLLOW [XX] -> REDUCE ininterf_definitionlist #2
 [XX]
@@ -16211,7 +16211,7 @@ expressionlist/L0 = expression
 [XX]
 	operatordecl = "<" . (XX), FOLLOW [XX] -> REDUCE operatordecl #1 CALL operatordecl {name="<",symbol="lt"}
 [XX]
-	namespacedefinition = "namespace" IDENT "{" namespace_definitionlist "}" . (step:39), FOLLOW [XX] -> REDUCE namespacedefinition #5 CALL namespacedef
+	namespacedefinition = "namespace" IDENT "{" namespace_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE namespacedefinition #5 CALL namespacedef
 [XX]
 	namespace_definitionlist = namespace_definition namespace_definitionlist ., FOLLOW [XX] -> REDUCE namespace_definitionlist #2
 [XX]
@@ -17962,7 +17962,7 @@ expressionlist/L0 = expression
 [XX]
 	constructordefinition = linkage "constructor" callablebody . (XX), FOLLOW [XX] -> REDUCE constructordefinition #3 CALL constructordef
 [XX]
-	inheritlist = typegen "," inheritlist . (step:38), FOLLOW [XX] -> REDUCE inheritlist #3 CALL inheritdef 1
+	inheritlist = typegen "," inheritlist . (XX), FOLLOW [XX] -> REDUCE inheritlist #3 CALL inheritdef 1
 [XX]
 	classdefinition = "class" IDENT ":" inheritlist "{" inclass_definitionlist . "}", FOLLOW [XX] -> SHIFT '}' GOTO XX
 [XX]
@@ -17990,7 +17990,7 @@ expressionlist/L0 = expression
 	typehdr/L1 = . "any" "const" "struct" "^", FOLLOW [XX] -> SHIFT "any" GOTO XX
 [XX]
 	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . "nothrow", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . (step:32), FOLLOW [XX] -> REDUCE typedefinition #6 CALL typedef_proctype {throws=true}
+	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" . (XX), FOLLOW [XX] -> REDUCE typedefinition #6 CALL typedef_proctype {throws=true}
 [XX]
 	extern_paramdecl = typespec IDENT . (XX), FOLLOW [XX] -> REDUCE extern_paramdecl #2 CALL extern_paramdef
 [XX]
@@ -18252,14 +18252,14 @@ expressionlist/L0 = expression
 [XX]
 	operatordefinition = linkage "operator" operatordecl callablebody . (XX), FOLLOW [XX] -> REDUCE operatordefinition #4 CALL operator_procdef
 [XX]
-	classdefinition = "class" IDENT ":" inheritlist "{" inclass_definitionlist "}" . (step:40), FOLLOW [XX] -> REDUCE classdefinition #7 CALL classdef
+	classdefinition = "class" IDENT ":" inheritlist "{" inclass_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE classdefinition #7 CALL classdef
 [XX]
 	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . "nothrow", FOLLOW [XX] -> SHIFT "nothrow" GOTO XX
-	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . (step:31), FOLLOW [XX] -> REDUCE typedefinition #7 CALL typedef_functype {throws=true}
+	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" . (XX), FOLLOW [XX] -> REDUCE typedefinition #7 CALL typedef_functype {throws=true}
 [XX]
 	extern_parameters = extern_paramdecl "," extern_parameters . (XX), FOLLOW [XX] -> REDUCE extern_parameters #3 CALL extern_paramdef_collect
 [XX]
-	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" . (step:34), FOLLOW [XX] -> REDUCE typedefinition #7 CALL typedef_proctype {throws=false}
+	typedefinition = "typedef" "procedure" IDENT "(" extern_paramlist ")" "nothrow" . (XX), FOLLOW [XX] -> REDUCE typedefinition #7 CALL typedef_proctype {throws=false}
 [XX]
 	typehdr/L1 = . typename, FOLLOW [XX] -> GOTO XX
 	typegen/L1 = . typehdr, FOLLOW [XX] -> GOTO XX
@@ -18566,7 +18566,7 @@ expressionlist/L0 = expression
 [XX]
 	operatordefinition = linkage "operator" operatordecl typespec callablebody . (XX), FOLLOW [XX] -> REDUCE operatordefinition #5 CALL operator_funcdef
 [XX]
-	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" . (step:33), FOLLOW [XX] -> REDUCE typedefinition #8 CALL typedef_functype {throws=false}
+	typedefinition = "typedef" "function" IDENT typespec "(" extern_paramlist ")" "nothrow" . (XX), FOLLOW [XX] -> REDUCE typedefinition #8 CALL typedef_functype {throws=false}
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec . callablebody, FOLLOW [XX] -> GOTO XX
 	callablebody = . "(" impl_paramlist ")" funcattribute "{" statementlist "}", FOLLOW [XX] -> SHIFT '(' GOTO XX
@@ -18617,7 +18617,7 @@ expressionlist/L0 = expression
 [XX]
 	functiondefinition = "generic" linkage "function" IDENT "[" generic_header "]" typespec callablebody . (XX), FOLLOW [XX] -> REDUCE functiondefinition #9 CALL generic_funcdef
 [XX]
-	classdefinition = "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}" . (step:41), FOLLOW [XX] -> REDUCE classdefinition #9 CALL generic_classdef
+	classdefinition = "generic" "class" IDENT "[" generic_header "]" "{" inclass_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE classdefinition #9 CALL generic_classdef
 [XX]
 	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" . inclass_definitionlist "}", FOLLOW [XX] -> GOTO XX
 	inclass_definitionlist = . inclass_definition inclass_definitionlist, FOLLOW [XX] -> GOTO XX
@@ -18675,7 +18675,7 @@ expressionlist/L0 = expression
 	generic_defaultlist = IDENT . "=" typegen "," generic_defaultlist, FOLLOW [XX] -> SHIFT '=' GOTO XX
 	generic_defaultlist = IDENT . "=" typegen, FOLLOW [XX] -> SHIFT '=' GOTO XX
 [XX]
-	structdefinition = "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}" . (step:36), FOLLOW [XX] -> REDUCE structdefinition #9 CALL generic_structdef
+	structdefinition = "generic" "struct" IDENT "[" generic_header "]" "{" instruct_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE structdefinition #9 CALL generic_structdef
 [XX]
 	ininterf_definition = "function" IDENT typespec "(" extern_paramlist ")" . funcattribute ";", FOLLOW [XX] -> GOTO XX
 	funcattribute = . "const" funcattribute, FOLLOW [XX] -> SHIFT "const" GOTO XX
@@ -18810,7 +18810,7 @@ expressionlist/L0 = expression
 	expression/L3 = expression . ">>=" expression, FOLLOW [XX] -> SHIFT ">>=" GOTO XX
 	expression/L12 = expression . "." IDENT, FOLLOW [XX] -> SHIFT '.' GOTO XX
 [XX]
-	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" . (step:41), FOLLOW [XX] -> REDUCE classdefinition #11 CALL generic_classdef
+	classdefinition = "generic" "class" IDENT "[" generic_header "]" ":" inheritlist "{" inclass_definitionlist "}" . (XX), FOLLOW [XX] -> REDUCE classdefinition #11 CALL generic_classdef
 [XX]
 	ininterf_definition = "function" IDENT typespec "(" extern_paramlist ")" funcattribute ";" . (XX), FOLLOW [XX] -> REDUCE ininterf_definition #8 CALL interface_funcdef
 [XX]
