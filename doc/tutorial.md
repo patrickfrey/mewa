@@ -254,7 +254,7 @@ typedb:def_reduction( intRefType, variable_b, nil, 1)
 
 io.stdout:write( constructor_format( "{out} = alloca i32, align 4 ; allocation of 'b'\n", {out=register_b}))
 
--- [4.2] Assign the value to "a" to "b":
+-- [4.2] Assign the value of "a" to "b":
 -- [4.2.1] Resolve the operator "b = .."
 local resolveTypeId, reductions, items = typedb:resolve_type( variable_b, "=")
 if not resolveTypeId then error( "Not found") elseif type( resolveTypeId) == "table" then error( "Ambiguous") end
@@ -832,8 +832,8 @@ _Mewa_ implements an _LALR(1)_ parser generator. The source file of the attribut
   * An attributed grammar with keywords as strings and token names or production names as identifiers.
 
 ### Production Attribute Operators
-The operator **>>** in the production attributes in oval brackets on the right side increments the scope-step.
-The operator **{}** in the production attributes defines a scope range.
+ * The operator **>>** in the production attributes in oval brackets on the right side increments the scope-step.
+ * The operator **{}** in the production attributes defines a scope.
 
 ### Production Head Attributes
 The attributes **L1**,**L2**,... are defining the production to be left-associative with a priority specified as a number. 

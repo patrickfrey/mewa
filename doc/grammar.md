@@ -63,7 +63,7 @@ Here are some declaration patterns described:
 
 4. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** **)** **;**
 
-    * Production definition with an increment defined for the **scope-step**.
+    * Production definition with an increment of the **scope-step**.
 
 5. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
 
@@ -71,32 +71,26 @@ Here are some declaration patterns described:
 
 6. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
 
-    * Production definition creating an _AST_ node with a Lua function to call and an increment defined for the **scope-step**.
+    * Production definition creating an _AST_ node with a Lua function to call and an increment of the **scope-step**.
 
 7. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
 
     * Production definition creating an _AST_ node with a Lua function to call and a **scope** structure (start and end of the scope).
-
-### Conflict solving
-The mechanism of conflict solving by attaching priorities to productions is comparable with declaring operator priorities in _Bison_/_Yacc_ though it is more error-prone and can lead to undetected conflicts. See bug report #1.
 
 ## Compilation Process
 Matching lexemes declared as regular expressions in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the _AST_. 
 The remaining nodes on the stack after syntax analysis are the root nodes of the _AST_ built. Their Lua function attached is called by the compiler after the syntax analysis to produce the output.
 
 ## Differences to Yacc/Bison
-Unlike in _Yacc/Bison_ where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where spaces have no meaning and the _tokens_ can only be described as regular expression matches. The annotation of the rules with code in _Yacc/Bison_ is also different and more restricted in _Mewa_. Instead of arbitrary code to be generated and invoked when the annotated rule matches, _Mewa_ has one _Lua_ _AST_ node function per production that is called on its match. The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right-handed associativity are attached to productions. Unfortunately, the _Mewa_ approach is more error-prone.
+ * _Mewa_ supports only LALR(1), while _Bison_ support a variety of different language classes.
+ * Unlike in _Yacc/Bison_, where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where spaces have no meaning and the _tokens_ can only be described as regular expression matches.
+ * The annotation of the rules with code in _Yacc/Bison_ is also different. _Mewa_ has a strict schema of building of the _AST_. The annotations define the _AST_ node attributes.
+ * The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right-handed associativity are attached to productions. Unfortunately, the _Mewa_ approach is more error-prone.
 
 ### Meaning of Whitespaces
 Whitespaces have no meaning in languages describable by _Mewa_.
 The lexemes of the languages cannot start with whitespaces as the parser skips whitespaces after every lexeme matched and starts matching the next lexeme with the first non-whitespace character after the last match.
 
-## Scope of AST Nodes and Definitions
-The **scope** of a node in the resulting _AST_ is defined as a pair of integer numbers **[** _start_, _end_ **]**.
-The definitions of types in the typesystem will include the scope structure to select the valid definition amongst definitions with the same name.
-A definition is valid if its **scope-step** is inside the scope checked:
-* _step_ **>=** _start_
-* _step_ **<** _end_.
 
 
 

@@ -63,7 +63,7 @@ typedb:def_reduction( intRefType, variable_b, nil, 1)
 
 io.stdout:write( constructor_format( "{out} = alloca i32, align 4 ; allocation of 'b'\n", {out=register_b}))
 
--- [4.2] Assign the value to "a" to "b":
+-- [4.2] Assign the value of "a" to "b":
 -- [4.2.1] Resolve the operator "b = .."
 local resolveTypeId, reductions, items = typedb:resolve_type( variable_b, "=")
 if not resolveTypeId then error( "Not found") elseif type( resolveTypeId) == "table" then error( "Ambiguous") end
