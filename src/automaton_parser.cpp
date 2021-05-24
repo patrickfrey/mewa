@@ -633,6 +633,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 		}
 
 		// [3] Test if all rules are reachable and the first rule defines a valid start symbol:
+		std::string unreachableListString;
 		for (auto const& pr : prodmap)
 		{
 			auto nt = nonTerminalIdMap.at( pr.first);
@@ -640,7 +641,8 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 			{
 				if (nt != 1/*isn't the start symbol*/)
 				{
-					throw Error( Error::UnreachableNonTerminalInGrammarDef, pr.first);
+					if (!unreachableListString.empty()) unreachableListString.append( ", ");
+					unreachableListString.append( pr.first);
 				}
 			}
 			else
@@ -651,7 +653,10 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 				}
 			}
 		}
-
+		if (!unreachableListString.empty())
+		{
+			throw Error( Error::UnreachableNonTerminalInGrammarDef, unreachableListString);
+		}
 		// [4] Test if start symbol (head of first production) appears only once on the left side and never on the right side:
 		int startSymbolLeftCount = 0;
 		for (auto const& prod: rt.prodlist)
