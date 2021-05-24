@@ -3,7 +3,8 @@ mewa (0.2.0-1) stable; urgency=low
   * Do not pass typesystem structure anymore to the command-line parser. Reduce intrusiveness.
   * Added mewa.version command
   * Make tagmask default uniform across all resolving functions, default is allways ALL and not NOTHING
- -- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 15 Mai 2021 10:12:01 +0200
+  * Improved documentation, added article with tutorial
+ -- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 24 Mai 2021 22:00:00 +0200
 
 mewa (0.1.0-1) stable; urgency=low
   * Initial revision
