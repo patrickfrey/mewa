@@ -100,7 +100,7 @@ You find a luaenv.sh in the archive of this article. Load it with.
 . examples/tutorial/luaenv.sh
 ```
 ## Example Paths
-All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/tutorial``` relative to the _Mewa_ project path. The files are also uploaded in a tar as attachement of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
+All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/tutorial``` relative to the _Mewa_ project path. The files are also uploaded in a ```tar``` as attachment of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
 
 ## Tutorial
 
