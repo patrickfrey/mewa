@@ -49,7 +49,7 @@ A basic item of the language. Further reading in [Wikipedia: Context Free Gramma
 A named structure of the language. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
 
 ### BNF / EBNF / Yacc/Bison
-Languages to describe a context free grammar. There exist many dialects for a formal description of a context free language grammar based on BNF. The most similar to [the grammar of _Mewa_](grammar.md) is the language used in [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). Further reading in [Wikipedia: Backus-Naur form](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) and [Wikipedia: Extended Backus-Naur form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form). 
+Languages to describe a context free grammar. There exist many dialects for a formal description of a context free language grammar based on _BNF_ (Backus-Naur form). The most similar to [the grammar of _Mewa_](grammar.md) is the language used in [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). Further reading in [Wikipedia: Backus-Naur form](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) and [Wikipedia: Extended Backus-Naur form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form). 
 
 ### LALR(1)
 The class of language covered by _Mewa_. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/LALR_parser).
