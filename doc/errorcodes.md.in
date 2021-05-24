@@ -76,8 +76,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 
 + **#$ERRCODE:DefinedAsTerminalAndNonterminalInGrammarDef**   _$ERRTEXT:DefinedAsTerminalAndNonterminalInGrammarDef_
 + **#$ERRCODE:UnresolvedIdentifierInGrammarDef**   _$ERRTEXT:UnresolvedIdentifierInGrammarDef_
-+ **#$ERRCODE:UnreachableNonTerminalInGrammarDef**   _$ERRTEXT:UnreachableNonTerminalInGrammarDef_
-+ **#$ERRCODE:StartSymbolReferencedInGrammarDef**   _$ERRTEXT:StartSymbolReferencedInGrammarDef_
++ **#$ERRCODE:UnreachableNonTerminalInGrammarDef**   _$ERRTEXT:UnreachableNonTerminalInGrammarDef_. All non-terminals except the start symbol (the left side of the first production) must be referenced. Do comment them out if you do not use them yet.
++ **#$ERRCODE:StartSymbolReferencedInGrammarDef**   _$ERRTEXT:StartSymbolReferencedInGrammarDef_. The reason could be that the start-production is not the first production of the grammar.
 + **#$ERRCODE:StartSymbolDefinedTwiceInGrammarDef**   _$ERRTEXT:StartSymbolDefinedTwiceInGrammarDef_
 + **#$ERRCODE:EmptyGrammarDef**   _$ERRTEXT:EmptyGrammarDef_
 

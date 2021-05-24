@@ -76,8 +76,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 
 + **#551**   _Identifier defined as nonterminal and as lexem in the grammar definition not allowed_
 + **#552**   _Unresolved identifier in the grammar definition_
-+ **#553**   _Unreachable nonteminal in the grammar definition_
-+ **#554**   _Start symbol referenced on the right side of a rule in the grammar definition_
++ **#553**   _Unreachable nonteminal in the grammar definition_. All non-terminals except the start symbol (the left side of the first production) must be referenced. Do comment them out if you do not use them yet.
++ **#554**   _Start symbol referenced on the right side of a rule in the grammar definition_. The reason could be that the start-production is not the first production of the grammar.
 + **#555**   _Start symbol defined on the left side of more than one rule of the grammar definition_
 + **#556**   _The grammar definition is empty_
 
