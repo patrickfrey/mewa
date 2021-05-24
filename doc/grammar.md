@@ -1,5 +1,5 @@
 # The Grammar Definition Language
-_Mewa_ uses a language to describe an **attributed grammar** similar to the language defined by [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). If you are familiar with _Yacc/Bison_ you won't have problems adapting to _Mewa_.
+_Mewa_ uses a language to describe an **attributed grammar** similar to the language defined by [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html).
 
 ## Parser Generator
 _Mewa_ implements an LALR(1) parser generator for an attributed grammar. The grammar description is read from a source file and has 3 parts:
@@ -77,14 +77,23 @@ Here are some declaration patterns described:
 
     * Production definition creating an _AST_ node with a Lua function to call and a **scope** structure (start and end of the scope).
 
+## How the AST is built
+The _AST_ is built during syntax analysis with to a fixed schema according your grammar definition and the attribution of nodes. Here are the rules:
+
+ * New _AST_ nodes are pushed on a stack when created. _AST_ nodes are taken from this stack when declared as children of another _AST_ node created.
+ * Matching lexemes declared as regular expressions in the 2nd part of the grammar create a new node on the stack. 
+ * Attributes with a _Lua_ call create a new node on the stack. 
+ * Nodes created from Lua calls take all elements created on the stack during the matching of their production from the stack and define them as child nodes. 
+ * The nodes left on the stack after syntax analysis are the root nodes of the _AST_. Usually, it's one node. But there might exist many root nodes during development.
+
 ## Compilation Process
-Matching lexemes declared as regular expressions in the 2nd part of the grammar create a new node on the stack. Attributes with a Lua call create a new node on the stack. Nodes created from Lua calls take all elements created on the stack by their production from the stack and define them as child nodes in the _AST_. 
-The remaining nodes on the stack after syntax analysis are the root nodes of the _AST_ built. Their Lua function attached is called by the compiler after the syntax analysis to produce the output.
+
+The compiler does the syntax analysis and builds the _AST_ in the process. After the syntax analysis, the root nodes of the _AST_ lay on the stack used for building the _AST_ . The _Lua_ functions attached to the root nodes are called by the compiler after the syntax analysis to produce the output. It's in the responsibility of the _Lua_ functions attached to nodes of the _AST_ to invoke the traversal of their sub-nodes.
 
 ## Differences to Yacc/Bison
  * _Mewa_ supports only LALR(1), while _Bison_ support a variety of different language classes.
  * Unlike in _Yacc/Bison_, where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where spaces have no meaning and the _tokens_ can only be described as regular expression matches.
- * The annotation of the rules with code in _Yacc/Bison_ is also different. _Mewa_ has a strict schema of building of the _AST_. The annotations define the _AST_ node attributes.
+ * The annotation of the rules with code in _Yacc/Bison_ is also different. _Mewa_ has a fixed schema of the _AST_ construction. The actions described as attributes of the grammar are actions of the parser in _Bison/Yaac_, while is _Mewa_ they are actions performed during the tree traversal of the _AST_.
  * The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right-handed associativity are attached to productions. Unfortunately, the _Mewa_ approach is more error-prone.
 
 ### Meaning of Whitespaces
