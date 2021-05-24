@@ -1,6 +1,6 @@
 .\" Manpage for mewa.
 .\" Contact mail@mewa.cc.
-.TH man 1 "04 Oct 2020" "0.2" "mewa man page"
+.TH man 1 "25 May 2021" "0.2" "mewa man page"
 .SH NAME
 .B mewa
 \- compiler compiler

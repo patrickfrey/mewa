@@ -19,12 +19,12 @@ or die("Error in command line arguments\n");
 sub readFile {
 	my $infile = $_[0];
 	my $rt = "";
-	open( INFILE, "$infile") or die "failed to read from file $infile: $!";
-	while (<INFILE>)
+	open( RINFILE, "$infile") or die "failed to read from file $infile: $!";
+	while (<RINFILE>)
 	{
 		$rt .= $_;
 	}
-	close( INFILE);
+	close( RINFILE);
 	return $rt;
 }
 
@@ -151,7 +151,22 @@ readIncludes( "tutorial_", "examples/tutorial/examples", "txt");
 sub substVariables
 {
 	my $line = $_[0];
-	if ($line =~ m/^([^\$]*)[\$]([A-Z]+)[:]([A-Za-z0-9_]+)(.*)$/)
+	if ($line =~ m/^([^\$]*)[\$][:]([A-Z]+)([^:A-Za-z_].*)$/)
+	{
+		my $rt = $1;
+		my $var = $2;
+		my $rest = $3;
+		if ($var eq "VERSION")
+		{
+			$rt .= readFile( $var) . substVariables( $rest . "\n");
+		}
+		else
+		{
+			die "Unknown variable '$var'";
+		}
+		return $rt;
+	}
+	elsif ($line =~ m/^([^\$]*)[\$]([A-Z]+)[:]([A-Za-z0-9_]+)(.*)$/)
 	{
 		my $rt = $1;
 		my $dom = $2;
@@ -209,28 +224,32 @@ sub substVariablesFile
 {
 	my $infile = $_[0];
 	my $rt = "";
-	open( INFILE, $infile) or die("Could not open file $infile for reading: $!");
-	while (<INFILE>)  {
+	open( SINFILE, $infile) or die("Could not open file $infile for reading: $!");
+	while (<SINFILE>)  {
 		$rt .= substVariables( $_);
 	}
-	close( INFILE);
+	close( SINFILE);
 	return $rt;
 }
 
-my $docdir = "doc";
-opendir( my $dochnd, $docdir) || die "Can't open $docdir: $!";
-while (readdir $dochnd) {
-	if (/^(.*)[.]md[.]in$/)
-	{
-		my $mdId = $1;
-		my $mdInFile = "$docdir/$mdId.md.in";
-		my $mdOutFile = "$docdir/$mdId.md";
+sub processDocDir
+{
+	my $docdir = $_[0];
+	opendir( my $dochnd, $docdir) || die "Can't open $docdir: $!";
+	while (readdir $dochnd) {
+		if (/^(.*)[.]md[.]in$/)
+		{
+			my $mdId = $1;
+			my $mdInFile = "$docdir/$mdId.md.in";
+			my $mdOutFile = "$docdir/$mdId.md";
 
-		my $output = substVariablesFile( $mdInFile);
-		writeFile( $mdOutFile, $output);
+			my $output = substVariablesFile( $mdInFile);
+			writeFile( $mdOutFile, $output);
+		}
 	}
+	closedir $dochnd;
 }
-closedir $dochnd;
 
-
+processDocDir( "doc");
+processDocDir( ".");
 

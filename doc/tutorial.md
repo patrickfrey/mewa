@@ -1,5 +1,7 @@
 # Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_
 
+This article has also been published on [codeproject.com](codeproject.com).
+
 ## Lead Text
 _LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of _LLVM IR_ and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
 
@@ -119,7 +121,9 @@ make install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b `cat VERSION`
+git checkout -b 0.2
+
+
 ```
 #### Configure to find Lua includes and to write the file Lua.inc included by make
 ```Bash
