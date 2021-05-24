@@ -13,7 +13,8 @@
     * [Why are reductions defined with scope?](#reductionScope)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
-    * [How to handle scopes?](#astTraversalAndScope)
+    * [How to handle lexical scopes?](#astTraversalAndScope)
+    * [How to define a schema of reduction weights?](#reductionWeightSchema)
     * [How to store and access scope-bound data?](#scopeInstanceAndAllocators)
     * [How to debug/trace the _Mewa_ functions?](#tracing)
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
@@ -128,6 +129,36 @@ The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexemes exp
 ### How to handle lexical scopes?
 
 The _scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type, reduction, instance) has a _scope_ definition attached. Depending on the current _scope-step_ (an integer number) only the definitions having a _scope_ covering it are visible when resolving or deriving a type. The current _scope_ and the current _scope-step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. The _scope_ is usually used to envelop code blocks. Substructures on the other hand are preferably implemented with a context-type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context-type to it. Every resolve type query can contain a set of context-type candidates.
+
+<a name="reductionWeightSchema"/>
+
+### How to define a schema of reduction weights?
+
+If there is anything alien in _Mewa_, it's the assignment of weights to productions to memorize the preference of type deduction paths. 
+We talk about twenty lines of floating-point number assignments here. But weird ones. They empower _Mewa_ to use the shortest path search algorithm for resolving and deriving types, which is the key to the stunning performance of _Mewa_. 
+
+When thinking about the weight-sum of a path, I imagine it as the summation of its parts. Each part represents one type of action, like removing a qualifier, adding const, converting a value, etc... Now I describe my rules like the following:
+
+ * If I have to add _const_ I want to do it as soon as possible
+ * If I need to load a value from a reference type I do it as soon as possible, but after adding _const_
+ * If I need to do a value conversion, I do it as late as possible
+ * Value conversion somehow weight-in the amount of information they destroy
+
+When we have written down our rules, then we think about memorizing them in the weight-sum. Let's take the first one, adding _const_. The "as early as" possible measure requires a quantization of the "when". A quantization could be the number of qualifiers attached to the source type. Because _const_ is always taken away (except in an error reduction reporting illegal use of a type), we count the non-const as a qualifier. The example language1 enumerates the number of qualifiers up to 3. For the reductions adding const we could define 3 weights:
+ * rdw_const_1 = 0.5 * (1/(1*1))
+ * rdw_const_2 = 0.5 * (1/(2*2))
+ * rdw_const_3 = 0.5 * (1/(3*3))
+
+The weight of adding const is here the smallest, when applied of a type with the maximum cardinality of qualifiers.
+For the second case, load a value from a reference we do implement a similar schema. But the base weight is chosen smaller than 0.5. Let's take 0.3:
+ * rdw_load_1 = 0.3 * (1/(1*1))
+ * rdw_load_2 = 0.3 * (1/(2*2))
+ * rdw_load_3 = 0.3 * (1/(3*3))
+
+In a weight-sum of both, the adding const is applied before loading the value. But both are applied as soon as possible.
+You will continue this process of assigning the weights yourself. It will take some time and will cost some nerves. But the result will be stable without surprises after a while.
+
+In the utils helper module there are functions to trace the shortest path search of ```typedb:resolve_type (utils.getResolveTypeTrace)``` and ```typedb:derive_type (utils.getDeriveTypeTrace)``` to find bugs in your weighting schmema.
 
 <a name="scopeInstanceAndAllocators"/>
 

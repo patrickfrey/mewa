@@ -77,6 +77,9 @@ Here are some declaration patterns described:
 
     * Production definition creating an _AST_ node with a Lua function to call and a **scope** structure (start and end of the scope).
 
+### Start-Symbol / Start-Production
+The first production of the grammar has to be the start-production. The left-handed non-terminal of the start-production is called the start-symbol. The start-symbol must only appear once in the grammar, on the left side of the start production. Unlike most other parser generators, _Mewa_ does not generate a start production to impose these rules, avoiding restrictions on the grammar.
+
 ## How the AST is built
 The _AST_ is built during syntax analysis with to a fixed schema according your grammar definition and the attribution of nodes. Here are the rules:
 
