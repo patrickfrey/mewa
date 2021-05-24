@@ -158,7 +158,7 @@ For the second case, load a value from a reference we do implement a similar sch
 In a weight-sum of both, the adding const is applied before loading the value. But both are applied as soon as possible.
 You will continue this process of assigning the weights yourself. It will take some time and will cost some nerves. But the result will be stable without surprises after a while.
 
-In the utils helper module there are functions to trace the shortest path search of ```typedb:resolve_type (utils.getResolveTypeTrace)``` and ```typedb:derive_type (utils.getDeriveTypeTrace)``` to find bugs in your weighting schmema.
+In the utils helper module there are functions to trace the shortest path search of ```typedb:resolve_type (utils.getResolveTypeTrace)``` and ```typedb:derive_type (utils.getDeriveTypeTrace)``` to find bugs in your weighting schema.
 
 <a name="scopeInstanceAndAllocators"/>
 
