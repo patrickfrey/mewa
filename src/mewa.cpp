@@ -169,6 +169,7 @@ int main( int argc, const char* argv[] )
 			else if (0==std::strcmp( argv[argi], "-h") || 0==std::strcmp( argv[argi], "--help"))
 			{
 				printUsage();
+				return 0;
 			}
 			else if (0==std::strcmp( argv[argi], "-g") || 0==std::strcmp( argv[argi], "--generate-compiler"))
 			{
