@@ -1,6 +1,6 @@
 # Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_
 
-This article has also been published on [codeproject.com](codeproject.com).
+This article has also been published on [codeproject.com](https://codeproject.com).
 
 ## Lead Text
 _LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of _LLVM IR_ and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
@@ -97,8 +97,10 @@ make install
 Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from the command line. 
 You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
-. tutorial/luaenv.sh
+. examples/tutorial/luaenv.sh
 ```
+## Example Paths
+All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/tutorial``` relative to the _Mewa_ project path. The files are also uploaded in a tar as attachement of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
 
 ## Tutorial
 
@@ -346,7 +348,7 @@ $EXAMPLE:tutorial_grammar
 Now let's overview the implementation of the typesystem module that generates the code.
 The code shown now will be more organized, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```tutorial/ast```.
+In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```examples/tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```examples/tutorial/ast```.
 
 Because of the amount of code in this part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
@@ -680,19 +682,16 @@ Finally, we build and run our compiler on the example source presented at the be
 
 ##### Translate the grammar and build the Lua script of the compiler
 ```bash
-cd examples
-mkdir build
+LUABIN=`which lua`
+. examples/tutorial/luaenv.sh
 
-LUABIN=`which $ARG`
-. tutorial/luaenv.sh
-
-mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua tutorial/grammar.g
+mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua examples/tutorial/grammar.g
 chmod +x build/tutorial.compiler.lua
 ```
 
 ##### Run the compiler front-end on a test program
 ```bash
-build/tutorial.compiler.lua -o build/tutorial.program.llr tutorial/program.prg
+build/tutorial.compiler.lua -o build/tutorial.program.llr examples/tutorial/program.prg
 ```
 
 ##### Inspect the LLVM IR code
