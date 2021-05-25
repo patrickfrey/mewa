@@ -2,22 +2,26 @@ mewa = require "mewa"
 typedb = mewa.typedb()
 
 -- [1] Define all tags and tag masks
--- Tags attached to reduction definitions. When resolving a type or deriving a type, we select reductions by specifying a set of valid tags
-tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
-tag_typeDeduction   = 2		-- Type deduction (e.g. inheritance)
+-- Tags attached to reductions.
+-- When resolving a type or deriving a type,
+--	we select reductions by specifying a set of valid tags
+tag_typeDeclaration = 1	-- Type declaration relation (e.g. variable to data type)
+tag_typeDeduction   = 2	-- Type deduction (e.g. inheritance)
 
--- Sets of tags used for resolving a type or deriving a type, depending on the case
-tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
-tagmask_resolveType = typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
+-- Sets of tags used for resolving a type or deriving a type
+tagmask_declaration
+	= typedb.reduction_tagmask( tag_typeDeclaration)
+tagmask_resolveType
+	= typedb.reduction_tagmask( tag_typeDeduction, tag_typeDeclaration)
 
 
--- [1] Define some helper functions
--- Map template for LLVM Code synthesis
+-- Define some helper functions, that we discussed already before
+
 function constructor_format( fmt, argtable)
-	return (fmt:gsub("[{]([_%d%w]*)[}]", function( match) return argtable[ match] or "" end))
+	return (fmt:gsub("[{]([_%d%w]*)[}]",
+		function( match) return argtable[ match] or "" end))
 end
 
--- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
 function register_allocator()
 	local i = 0
 	return function ()
@@ -26,14 +30,23 @@ function register_allocator()
 	end
 end
 
--- Build a constructor
 function applyConstructor( constructor, this, arg)
 	if constructor then
-		if (type(constructor) == "function") then return constructor( this, arg) else return constructor end
+		if (type(constructor) == "function") then
+			return constructor( this, arg)
+		else
+			return constructor
+		end
 	else
 		return this
 	end
 end
+
+-- Define some format strings for the LLVM code
+local fmt_load = "{out} = load %{name}, %{name}* {this}\n"
+local fmt_member = "{out} = getelementptr inbounds %{name}, "
+			.. "%{name}* {this}, i32 0, i32 {index}\n"
+local fmt_init = "call void @__ctor_init_{name}( %{name}* {this})\n"
 
 -- Define a type with variations having different qualifiers
 function defineType( name)
@@ -42,8 +55,7 @@ function defineType( name)
 	typedb:def_reduction( valTypeId, refTypeId,
 		function(this)
 			local out = register()
-			local fmt = "{out} = load %{symbol}, %{symbol}* {this}\n"
-			local code = constructor_format( fmt, {symbol=name,out=out,this=this.out})
+			local code = constructor_format( fmt_load, {name=name,out=out,this=this.out})
 			return {out=out, code=code}
 		end, tag_typeDeduction)
 	return {val=valTypeId, ref=refTypeId}
@@ -55,33 +67,41 @@ local register = register_allocator()
 function loadMemberConstructor( classname, index)
 	return function( this)
 		local out = register()
-		local fmt = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n"
-		local code = (this.code or "")
-			.. constructor_format( fmt, {out=out,this=this.out,symbol=classname,index=index})
+		local subst = {out=out,this=this.out,name=classname,index=index}
+		local code = (this.code or "") .. constructor_format( fmt_member, subst)
 		return {code=code, out=out}
 	end
 end
 -- Constructor for calling the default ctor, assuming that it exists
 function callDefaultCtorConstructor( classname)
 	return function(this)
-		local fmt = "call void @__ctor_init_{symbol}( %{symbol}* {this})\n"
 		local code = (this.code or "") .. (arg[1].code or "")
-			.. constructor_format( fmt, {this=this.out,symbol=classname})
+			.. constructor_format( fmt_init, {this=this.out,name=classname})
 		return {code=code, out=out}
 	end
 end
 
-local qualitype_baseclass = defineType("baseclass")
-local qualitype_class = defineType("class")
+local t_baseclass = defineType("baseclass")
+local t_class = defineType("class")
 
 -- Define the default ctor of baseclass
-local constructor_baseclass = typedb:def_type( qualitype_baseclass.ref, "constructor", callDefaultCtorConstructor("baseclass"))
+local ctor = callDefaultCtorConstructor("baseclass")
+local constructor_baseclass = typedb:def_type( t_baseclass.ref, "constructor", ctor)
 
 -- Define the inheritance of class from baseclass
-typedb:def_reduction( qualitype_baseclass.ref, qualitype_class.ref, loadMemberConstructor( "class", 1), tag_typeDeduction)
+local load_base = loadMemberConstructor( "class", 1)
+typedb:def_reduction( t_baseclass.ref, t_class.ref, load_base, tag_typeDeduction)
 
 -- Search for the constructor of class (that does not exist)
-local resolveTypeId, reductions, items = typedb:resolve_type( qualitype_class.ref, "constructor", tagmask_declaration)
-if not resolveTypeId then print( "Not found") elseif type( resolveTypeId) == "table" then print( "Ambiguous") end
+local resolveTypeId, reductions, items
+	= typedb:resolve_type( t_class.ref, "constructor", tagmask_declaration)
+if not resolveTypeId then
+	print( "Not found")
+elseif type( resolveTypeId) == "table" then
+	print( "Ambiguous")
+end
 
-for _,item in ipairs(items or {}) do print( "Found " .. typedb:type_string( item) .. "\n") end
+for _,item in ipairs(items or {}) do
+	print( "Found " .. typedb:type_string( item) .. "\n")
+end
+

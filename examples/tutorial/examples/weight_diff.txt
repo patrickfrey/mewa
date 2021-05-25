@@ -1,30 +1,42 @@
 3a4,12
-> -- Centralized list of the ordering of the reduction rules determined by their weights:
+> -- Centralized list of the ordering of the reduction rule weights:
 > local weight_conv=	1.0		-- weight of a conversion
-> local weight_const_1=	0.5 / (1*1)	-- make const of a type having one qualifier
-> local weight_const_2=	0.5 / (2*2)	-- make const of a type having two qualifiers
-> local weight_const_3=	0.5 / (3*3)	-- make const of a type having three qualifiers
-> local weight_ref_1=	0.25 / (1*1)	-- strip reference of a type having one qualifier
-> local weight_ref_2=	0.25 / (2*2)	-- strip reference of a type having two qualifiers
-> local weight_ref_3=	0.25 / (3*3)	-- strip reference of a type having three qualifiers
+> local weight_const_1=	0.5 / (1*1)	-- make const of type with 1 qualifier
+> local weight_const_2=	0.5 / (2*2)	-- make const of type with 2 qualifiers
+> local weight_const_3=	0.5 / (3*3)	-- make const of type with 3 qualifiers
+> local weight_ref_1=	0.25 / (1*1)	-- strip reference of type with 1 qualifier
+> local weight_ref_2=	0.25 / (2*2)	-- strip reference of type with 2 qualifiers
+> local weight_ref_3=	0.25 / (3*3)	-- strip reference of type with 3 qualifiers
 > 
-29,32c38,41
-< 	typedb:def_reduction( valTypeId, refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1)
-< 	typedb:def_reduction( c_valTypeId, c_refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1)
-< 	typedb:def_reduction( c_valTypeId, valTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1)
-< 	typedb:def_reduction( c_refTypeId, refTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1)
+36c45
+< 		function( arg) return "load ( " .. arg .. ")"  end, 1)
 ---
-> 	typedb:def_reduction( valTypeId, refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1, weight_ref_1)
-> 	typedb:def_reduction( c_valTypeId, c_refTypeId, function( arg) return "load ( " .. arg .. ")"  end, 1, weight_ref_2)
-> 	typedb:def_reduction( c_valTypeId, valTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1, weight_const_1)
-> 	typedb:def_reduction( c_refTypeId, refTypeId, function( arg) return "make const ( " .. arg .. ")"  end, 1, weight_const_2)
-39,42c48,51
-< typedb:def_reduction( qualitype_int.val, qualitype_long.val, function( arg) return "convert int ( " .. arg .. ")"  end, 1)
-< typedb:def_reduction( qualitype_int.c_val, qualitype_long.c_val, function( arg) return "convert const int ( " .. arg .. ")"  end, 1)
-< typedb:def_reduction( qualitype_long.val, qualitype_int.val, function( arg) return "convert long ( " .. arg .. ")"  end, 1)
-< typedb:def_reduction( qualitype_long.c_val, qualitype_int.c_val, function( arg) return "convert const long ( " .. arg .. ")" end, 1)
+> 		function( arg) return "load ( " .. arg .. ")"  end, 1, weight_ref_2)
+38c47
+< 		function( arg) return "load ( " .. arg .. ")"  end, 1)
 ---
-> typedb:def_reduction( qualitype_int.val, qualitype_long.val, function( arg) return "convert int ( " .. arg .. ")"  end, 1, weight_conv)
-> typedb:def_reduction( qualitype_int.c_val, qualitype_long.c_val, function( arg) return "convert const int ( " .. arg .. ")"  end, 1, weight_conv)
-> typedb:def_reduction( qualitype_long.val, qualitype_int.val, function( arg) return "convert to long ( " .. arg .. ")"  end, 1, weight_conv)
-> typedb:def_reduction( qualitype_long.c_val, qualitype_int.c_val, function( arg) return "convert to const long ( " .. arg .. ")"  end, 1, weight_conv)
+> 		function( arg) return "load ( " .. arg .. ")"  end, 1, weight_ref_1)
+40c49
+< 		function( arg) return "make const ( " .. arg .. ")"  end, 1)
+---
+> 		function( arg) return "make const ( " .. arg .. ")"  end, 1, weight_const_1)
+42c51
+< 		function( arg) return "make const ( " .. arg .. ")"  end, 1)
+---
+> 		function( arg) return "make const ( " .. arg .. ")"  end, 1, weight_const_2)
+50c59
+< 	function( arg) return "convert int ( " .. arg .. ")"  end, 1)
+---
+> 	function( arg) return "convert int ( " .. arg .. ")"  end, 1, weight_conv)
+52c61
+< 	function( arg) return "convert const int ( " .. arg .. ")"  end, 1)
+---
+> 	function( arg) return "convert const int ( " .. arg .. ")"  end, 1, weight_conv)
+54c63
+< 	function( arg) return "convert long ( " .. arg .. ")"  end, 1)
+---
+> 	function( arg) return "convert long ( " .. arg .. ")"  end, 1, weight_conv)
+56c65
+< 	function( arg) return "convert const long ( " .. arg .. ")" end, 1)
+---
+> 	function( arg) return "convert const long ( " .. arg .. ")" end, 1, weight_conv)

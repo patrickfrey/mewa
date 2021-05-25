@@ -1,5 +1,5 @@
 extern function printf void( string, double);
-// ... printf is a variable argument list function, but this would go beyond the scope of this tutorial
+// ... Variable argument list functions are beyond the scope of this tutorial
 
 class Employee
 {

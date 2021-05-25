@@ -72,12 +72,14 @@ sub closeList {
 		my $tp = $listtype[ $#listlevel];
 		pop( @listlevel);
 		pop( @listtype);
-		if ($tp == "*" || $tp == "-")
+		if ($tp eq "*" || $tp eq "-")
 		{
+			print( "</li>");
 			print( "</ul>");
 		}
 		else
 		{
+			print( "</li>");
 			print( "</ol>");
 		}
 	}
@@ -90,13 +92,15 @@ sub openList {
 	{
 		push( @listlevel, $indentlen);
 		push( @listtype, $marker);
-		if ($marker == "*" || $marker == "-")
+		if ($marker eq "*" || $marker eq "-")
 		{
 			print( "<ul>\n");
+			print( "<li>");
 		}
 		else
 		{
 			print( "<ol>\n");
+			print( "<li>");
 		}
 	}
 }
@@ -105,30 +109,47 @@ sub processLine {
 	my $line = $_[0];
 	if ($state eq "TEXT")
 	{
-		if ($line =~ m/^([#]*)([^#].*)$)
+		my $len;
+		my $tag;
+		my $title;
+		my $indent;
+		my $indentlen;
+		my $marker;
+		my $item;
+
+		if ($line =~ m/^([\#]+)[ ]*([^\#].*)$/)
 		{
+			$len = length($1);
+			$tag = "h$len";
+			$title = $2;
 			closeList( -1);
 			printText();
-			$tag = "h" . length($1);
-			my $title = chop($2);
 			printSection( $tag, $title);
 		}
-		elsif ($line =~ m/^[\`]{3,3}([A-Za-z0-9_]*)$/)
+		elsif ($line =~ m/^[\`]{3,3}([A-Za-z0-9]*)$/)
 		{
 			closeList( -1);
 			printText();
 			$state = "CODE";
 			$language = $1;
 		}
-		elsif ($line =~ m/^(\s)([\*\-])[ ](.*)$/ || $line =~ m/^(\s)([1][\.])[ ](.*)$/ )
+		elsif ($line =~ m/^([\t ]+)([\*\-])[ ](.*)$/ || $line =~ m/^([\t ]+)([1][\.])[ ](.*)$/ )
 		{
-			my $indent = $1;
-			my $marker = $2;
-			my $item = $3;
+			$indent = $1;
+			$marker = $2;
+			$item = $3;
 			$indent =~ s/\t/    /;
-			closeList( length($indent));
-			openList( length($indent), $marker);
-			printSection( "li", substMarkup( encodeHtml( $item)));
+			$indentlen = length($indent);
+			if ($#listlevel != -1 && $listlevel[ $#listlevel] == $indentlen)
+			{
+				print( "</li>\n<li>");
+			}
+			else
+			{
+				closeList( $indentlen);
+				openList( $indentlen, $marker);
+			}
+			print( substMarkup( encodeHtml( $item)));
 		}
 		else
 		{
@@ -138,18 +159,16 @@ sub processLine {
 	}
 	elsif ($state eq "CODE")
 	{
-		if ($line =~ m/^[`]{3,3}$/)
+		if ($line =~ m/^[\`]{3,3}$/)
 		{
 			printCode();
 			$state = "TEXT";
 		}
-		elsif ($line =~ m/^[`]/)
-		{
-			die "Bad line in $state: $line";
-		}
 		else
 		{
-			if ($#line > 85) {die "Line too long: $line";}
+			$line =~ s/[\t]/  /g;
+			my $linelen = length($line);
+			if ($linelen > 85) {die "Line too long ($linelen): $line";}
 			$text .= encodeHtml( $line);
 		}
 	}
@@ -163,4 +182,5 @@ while (<STDIN>)
 {
 	processLine( $_);
 }
+closeList( -1);
 

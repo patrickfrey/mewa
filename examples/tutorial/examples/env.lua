@@ -4,7 +4,9 @@ typedb = mewa.typedb()
 -- Attach a data structure for a callable to its scope
 function defineCallableEnvironment( name)
 	local env = {name=name, scope=(typedb:scope())}
-	if typedb:this_instance( "callenv") then error( "Callable environment defined twice") end
+	if typedb:this_instance( "callenv") then
+		error( "Callable environment defined twice")
+	end
 	typedb:set_instance( "callenv", env)
 	return env
 end

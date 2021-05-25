@@ -12,7 +12,8 @@ local pointerTemplate = {
 	align = 8,
 	size = 8,
 	assign = "store {pointee}* {arg1}, {pointee}** {this}\n",
-	ctor_copy = "{1} = load {pointee}*, {pointee}** {arg1}\nstore {pointee}* {1}, {pointee}** {this}\n",
+	ctor_copy = "{1} = load {pointee}*, {pointee}** {arg1}\n"
+		.. "store {pointee}* {1}, {pointee}** {this}\n",
 	load = "{out} = load {pointee}*, {pointee}** {this}\n",
 	ctor_init = "store {pointee}* null, {pointee}** {this}\n",
 	scalar = true,
@@ -29,17 +30,23 @@ local pointerTemplate = {
 local arrayTemplate = {
 	symbol = "{size}__{elementsymbol}",
 	def_local = "{out} = alloca [{size} x {element}], align 8\n",
-	def_global = "{out} = internal global [{size} x {element}] zeroinitializer, align 8\n",
+	def_global = "{out} = internal global [{size} x {element}]"
+			.. " zeroinitializer, align 8\n",
 	llvmtype = "[{size} x {element}]",
 	class = "array",
 	assign = "store [{size} x {element}] {arg1}, [{size} x {element}]* {this}\n",
 	scalar = false,
-	memberwise_index = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
+	memberwise_index = "{out} = getelementptr inbounds [{size} x {element}],"
+			.. " [{size} x {element}]* {this}, i32 0, i32 {index}\n",
 	load = "{out} = load [{size} x {element}], [{size} x {element}]* {this}\n",
-	loadelemref = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n",
-	loadelem = "{1} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	loadelemref = "{out} = getelementptr inbounds [{size} x {element}],"
+			.. " [{size} x {element}]* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds [{size} x {element}],"
+			.. " [{size} x {element}]* {this}, i32 0, i32 {index}\n"
+			.. "{out} = load {type}, {type}* {1}\n",
 	index = {
-		["int"] = "{out} = getelementptr inbounds [{size} x {element}], [{size} x {element}]* {this}, i32 0, i32 {arg1}\n",
+		["int"] = "{out} = getelementptr inbounds [{size} x {element}],"
+			.. " [{size} x {element}]* {this}, i32 0, i32 {arg1}\n",
 	}
 }
 
@@ -53,8 +60,11 @@ llvmir.structTemplate = {
 	align = 8,
 	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
 	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
-	loadelemref = "{out} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n",
-	loadelem = "{1} = getelementptr inbounds %{symbol}, %{symbol}* {this}, i32 0, i32 {index}\n{out} = load {type}, {type}* {1}\n",
+	loadelemref = "{out} = getelementptr inbounds %{symbol},"
+			.. " %{symbol}* {this}, i32 0, i32 {index}\n",
+	loadelem = "{1} = getelementptr inbounds %{symbol},"
+			.. "%{symbol}* {this}, i32 0, i32 {index}\n"
+			.. "{out} = load {type}, {type}* {1}\n",
 	typedef = "%{symbol} = type { {llvmtype} }\n"
 }
 
@@ -86,8 +96,17 @@ llvmir.constexprStructDescr = {
 
 -- Format strings for code control structures
 llvmir.control = {
-	controlTrueTypeToBoolean =  "{1}:\nbr label %{2}\n{falseExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
-	controlFalseTypeToBoolean =  "{1}:\nbr label %{2}\n{trueExit}:\nbr label %{2}\n{2}:\n{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
+	controlTrueTypeToBoolean =  "{1}:\n"
+				.. "br label %{2}\n{falseExit}:\n"
+				.. "br label %{2}\n"
+				.. "{2}:\n"
+				.. "{out} = phi i1 [ 1, %{1} ], [0, %{falseExit}]\n",
+	controlFalseTypeToBoolean =  "{1}:\n"
+				.. "br label %{2}\n"
+				.. "{trueExit}:\n"
+				.. "br label %{2}\n"
+				.. "{2}:\n"
+				.. "{out} = phi i1 [ 1, %{trueExit} ], [0, %{1}]\n",
 	booleanToControlTrueType = "br i1 {inp}, label %{1}, label %{out}\n{1}:\n",
 	booleanToControlFalseType = "br i1 {inp}, label %{out}, label %{1}\n{1}:\n",
 	invertedControlType = "br label %{out}\n{inp}:\n",
@@ -99,23 +118,28 @@ llvmir.control = {
 	plainLabel = "{inp}:\n",
 	returnStatement = "ret {type} {this}\n",
 	returnVoidStatement = "ret void\n",
-	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
+	functionDeclaration = "define {lnk} {rtllvmtype} @{symbolname}( {paramstr} )"
+				.. " {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtllvmtype} {func}( {callargstr})\n",
 	procedureCall = "call {rtllvmtype} {func}( {callargstr})\n",
-	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
+	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}("
+				.. " {argstr} ) nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
-	stringConstDeclaration = "@{name} = private unnamed_addr constant [{size} x i8] c\"{value}\\00\"",
-	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8], [{size} x i8]* @{name}, i64 0, i64 0\n",
-	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0\n{\nentry:\n{body}}\n",
+	stringConstDeclaration = "@{name} = private unnamed_addr constant"
+				.. " [{size} x i8] c\"{value}\\00\"",
+	stringConstConstructor = "{out} = getelementptr inbounds [{size} x i8],"
+				.. " [{size} x i8]* @{name}, i64 0, i64 0\n",
+	mainDeclaration = "define dso_local i32 @main(i32 %argc, i8** %argv) #0\n"
+				.. "{\nentry:\n{body}}\n",
 }
 
 local pointerDescrMap = {}
 function llvmir.pointerDescr( pointeeDescr)
-	local llvmPointerType = pointeeDescr.llvmtype
-	local pointerDescr = pointerDescrMap[ llvmPointerType]
+	local llvmtype = pointeeDescr.llvmtype
+	local pointerDescr = pointerDescrMap[ llvmtype]
 	if not pointerDescr then
-		pointerDescr = utils.template_format( pointerTemplate, {pointee=llvmPointerType} )
-		pointerDescrMap[ llvmPointerType] = pointerDescr
+		pointerDescr = utils.template_format( pointerTemplate, {pointee=llvmtype} )
+		pointerDescrMap[ llvmtype] = pointerDescr
 	end
 	return pointerDescr
 end
@@ -126,7 +150,10 @@ function llvmir.arrayDescr( elementDescr, arraySize)
 	local arrayDescrKey = llvmElementType .. "#" .. arraySize
 	local arrayDescr = arrayDescrMap[ arrayDescrKey]
 	if not arrayDescr then
-		arrayDescr = utils.template_format( arrayTemplate, {element=llvmElementType, elementsymbol=elementDescr.symbol or llvmElementType, size=arraySize})
+		local subst = { element = llvmElementType,
+				elementsymbol = elementDescr.symbol or llvmElementType,
+				size = arraySize}
+		arrayDescr = utils.template_format( arrayTemplate, subst)
 		arrayDescr.size = elementDescr.size * arraySize
 		arrayDescr.align = elementDescr.align
 		arrayDescrMap[ arrayDescrKey] = arrayDescr;
