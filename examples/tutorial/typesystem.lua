@@ -8,11 +8,11 @@ localDefinitionContext = 0	-- Context type of local definitions
 seekContextKey = "seekctx"	-- Key for seek context types defined for a scope
 callableEnvKey = "env"		-- Key for current callable environment
 typeDescriptionMap = {}		-- Map of type ids to their description
-referenceTypeMap = {}		-- Map of value type ids to their reference type if it exists
-dereferenceTypeMap = {}		-- Map of reference type ids to their value type if it exists
-arrayTypeMap = {}		-- Map array keys to their array type
-stringConstantMap = {}		-- Map of string constant values to a structure with the attributes {name,size}
-scalarTypeMap = {}		-- Map of scalar type names to the correspoding value type
+referenceTypeMap = {}		-- Map of value type to reference type
+dereferenceTypeMap = {}		-- Map of reference type to value type
+arrayTypeMap = {}		-- Map array key to its type
+stringConstantMap = {}		-- Map of string constant value to its attributes
+scalarTypeMap = {}		-- Map of scalar type name to its value type
 
 dofile( "examples/tutorial/sections.inc")
 

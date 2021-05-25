@@ -407,28 +407,42 @@ The variable arguments **...** are forwarded to the _AST_ node functions called.
 
 ##### Source from typesystem_utils
 ```Lua
--- Tree traversal helper function setting the current scope/step and calling the function of one node, and returning its result:
+-- Tree traversal helper function setting the current scope/step and
+--    calling the function of one node, and returning its result:
 local function processSubnode( typedb, subnode, ...)
 	local rt
 	if subnode.call then
 		if (subnode.scope) then
 			local scope_bk,step_bk = typedb:scope( subnode.scope)
 			typedb:set_instance( "node", subnode)
-			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+			if subnode.call.obj then
+				rt = subnode.call.proc( subnode, subnode.call.obj, ...)
+			else
+				rt = subnode.call.proc( subnode, ...)
+			end
 			typedb:scope( scope_bk,step_bk)
 		elseif (subnode.step) then
 			local step_bk = typedb:step( subnode.step)
-			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+			if subnode.call.obj then
+				rt = subnode.call.proc( subnode, subnode.call.obj, ...)
+			else
+				rt = subnode.call.proc( subnode, ...)
+			end
 			typedb:step( step_bk)
 		else
-			if subnode.call.obj then rt = subnode.call.proc( subnode, subnode.call.obj, ...) else rt = subnode.call.proc( subnode, ...) end
+			if subnode.call.obj then
+				rt = subnode.call.proc( subnode, subnode.call.obj, ...)
+			else
+				rt = subnode.call.proc( subnode, ...)
+			end
 		end
 	else
 		rt = subnode.value
 	end
 	return rt
 end
--- Tree traversal or a subrange of argument nodes, define scope/step and do the traversal call
+-- Tree traversal or a subrange of argument nodes, define scope/step and
+--    process the AST node:
 function utils.traverseRange( typedb, node, range, ...)
 	if node.arg then
 		local rt = {}
@@ -440,11 +454,13 @@ function utils.traverseRange( typedb, node, range, ...)
 		return node.value
 	end
 end
--- Tree traversal, define scope/step and do the traversal call
+-- Tree traversal, define scope/step and process the AST node:
 function utils.traverse( typedb, node, ...)
 	if node.arg then
 		local rt = {}
-		for ii,subnode in ipairs(node.arg) do rt[ii] = processSubnode( typedb, subnode, ...) end
+		for ii,subnode in ipairs(node.arg) do
+			rt[ii] = processSubnode( typedb, subnode, ...)
+		end
 		return rt
 	else
 		return node.value
