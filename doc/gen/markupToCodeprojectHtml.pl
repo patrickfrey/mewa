@@ -70,7 +70,7 @@ sub printCode {
 	print( "<" . $divtag . ">\n");
 	print( "<pre>\n");
 	$text =~ s/\n+$//;
-	printSection( "code", $text);
+	print( $text);
 	$text = "";
 	print( "</pre>\n");
 	print( "</div>\n");

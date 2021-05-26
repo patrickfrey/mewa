@@ -39,7 +39,6 @@ local fmt_load = "{out} = load i32, i32* {this} ; reduction int <- int&\n"
 local fmt_assign = "store i32 {arg1}, i32* {this} ; variable assignment\n"
 
 -- [3] Define an integer type with assignment operator
-do
 local register = register_allocator()
 local intValType = typedb:def_type( 0, "int")	-- integer value type
 local intRefType = typedb:def_type( 0, "int&")	-- integer reference type
@@ -108,5 +107,3 @@ for _,item in ipairs(items) do
 end
 -- [5.3] Print the code of "b = a;"
 io.stdout:write( constructor.code)
-
-end
