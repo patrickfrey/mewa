@@ -399,7 +399,7 @@ The function used for the _AST_ tree traversal sets the current scope step and s
 
 ### Reduction Weight
 
-Now we have to look again at something a little bit puzzling. We have to assign a weight to reductions. The problem is that even trivial examples of type queries lead to ambiguity if we do not introduce a weighting scheme that memorizes a preference. The ```typedb:resolve_type``` and ```typedb:derive_type``` functions are implemented as shortest path search that selects the result and implements this preference. Real ambiguity is something we want to detect as an error. An ambiguity is indicated when two or more results are appearing having the same weight sum.
+Now we have to look again at something a little bit puzzling. We have to assign a weight to reductions. The problem is that even trivial examples of type queries lead to ambiguity if we do not introduce a weighting schema that memorizes a preference. The ```typedb:resolve_type``` and ```typedb:derive_type``` functions are implemented as shortest path search that selects the result and implements this preference. Real ambiguity is something we want to detect as an error. An ambiguity is indicated when two or more results are appearing having the same weight sum.
 I concluded that it is best to declare all reduction weights at one central place in the source and to document it well.
 
 Let's have a look at an example without weighting of reductions that will lead to ambiguity. 
