@@ -908,7 +908,7 @@ I think we are now ready to look at our example compiler as a whole.
 Now we will take a look at the grammar of the example language. 
 
 ### Parser Generator
-_Mewa_ implements an _LALR(1)_ parser generator. The source file of the attributed grammar has 3 parts. 
+_Mewa_ implements an LALR(1) parser generator. The source file of the attributed grammar has 3 parts. 
 
   * Some configurations marked with the prefix '**%**'.
   * The _tokens_ defined as name/pattern pair. The pattern is defined as a regular expression matching the _lexeme_. Optionally, an index selecting a sub-match as the _token_ value can be specified.

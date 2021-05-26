@@ -324,7 +324,7 @@ I think we are now ready to look at our example compiler as a whole.
 Now we will take a look at the grammar of the example language. 
 
 ### Parser Generator
-_Mewa_ implements an _LALR(1)_ parser generator. The source file of the attributed grammar has 3 parts. 
+_Mewa_ implements an LALR(1) parser generator. The source file of the attributed grammar has 3 parts. 
 
   * Some configurations marked with the prefix '**%**'.
   * The _tokens_ defined as name/pattern pair. The pattern is defined as a regular expression matching the _lexeme_. Optionally, an index selecting a sub-match as the _token_ value can be specified.
@@ -403,7 +403,7 @@ All _AST_ node functions participate in the traversal as it is their responsibil
   * ```function traverseRange( typedb, node, range, ...)```
 
 The ```range``` is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
-The variable arguments **...** are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, whether a variable declaration is a member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error-prone. You should restrict it to a bare minimum and use scope-bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+The variable arguments "..." are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, whether a variable declaration is a member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error-prone. You should restrict it to a bare minimum and use scope-bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
 
 ##### Source from typesystem_utils
 ```Lua
