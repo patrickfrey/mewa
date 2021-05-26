@@ -941,76 +941,101 @@ UINTEGER: '[0123456789]+';
 FLOAT    : '[0123456789]*[.][0123456789]+';
 FLOAT    : '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
 
-program           = extern_deflist free_deflist main_procedure (program)
+program
+          = extern_deflist free_deflist main_proc   (program)
 		  ;
-extern_deflist    = extern_def extern_deflist
+extern_deflist
+          = extern_def extern_deflist
 		  |
 		  ;
-free_deflist      = free_def free_deflist
+free_deflist
+          = free_def free_deflist
 		  |
 		  ;
-inclass_deflist= inclass_def inclass_deflist
+inclass_deflist
+          = inclass_def inclass_deflist
 		  |
 		  ;
-extern_def        = "extern" "function" IDENT
-		       typespec "(" extern_paramlist ")" ";"    (extern_funcdef)
+extern_def
+          = "extern" "function" IDENT typespec
+               "(" extern_paramlist ")" ";"         (extern_funcdef)
 		  ;
-extern_paramdecl  = typespec IDENT    (extern_paramdef)
-		  | typespec          (extern_paramdef)
+extern_paramdecl
+          = typespec IDENT                          (extern_paramdef)
+          | typespec                                (extern_paramdef)
 		  ;
-extern_parameters = extern_paramdecl "," extern_parameters
+extern_parameters
+          = extern_paramdecl "," extern_parameters
 		  | extern_paramdecl
 		  ;
-extern_paramlist  = extern_parameters       (extern_paramdeflist)
-		  |                         (extern_paramdeflist)
+extern_paramlist
+          = extern_parameters                       (extern_paramdeflist)
+          |                                         (extern_paramdeflist)
 		  ;
-inclass_def       = variabledef ";"         (definition 2)
-		  | classdef                (definition 1)
-		  | functiondef             (definition_2pass 4)
+inclass_def
+          = variabledef ";"                         (definition 2)
+          | classdef                                (definition 1)
+          | functiondef                             (definition_2pass 4)
 		  ;
-free_def          = variabledef ";"         (definition 1)
-		  | classdef                (definition 1)
-		  | functiondef             (definition 1)
+free_def
+          = variabledef ";"                         (definition 1)
+          | classdef                                (definition 1)
+          | functiondef                             (definition 1)
 		  ;
-typename/L1       = IDENT
+typename/L1
+          = IDENT
 		  | IDENT "::" typename
 		  ;
-typehdr/L1        = typename                                (typehdr)
+typehdr/L1
+          = typename                                (typehdr)
 		  ;
-typegen/L1        = typehdr
+typegen/L1
+          = typehdr
 		  | typegen "[" UINTEGER "]"                (arraytype)
 		  ;
-typespec/L1       = typegen                                 (typespec)
+typespec/L1
+          = typegen                                 (typespec)
 		  ;
-classdef          = "class" IDENT "{" inclass_deflist "}"   (>>classdef)
+classdef
+          = "class" IDENT "{" inclass_deflist "}"   (>>classdef)
 		  ;
-functiondef       = "function" IDENT typespec callablebody  (funcdef)
+functiondef
+          = "function" IDENT typespec callablebody  (funcdef)
 		  ;
-callablebody      = "(" impl_paramlist ")"
-			  "{" statementlist "}"             ({}callablebody)
+callablebody
+          = "(" impl_paramlist ")"
+                  "{" statementlist "}"             ({}callablebody)
 		  ;
-main_procedure    = "main" codeblock                        (main_procdef)
+main_proc
+          = "main" codeblock                        (main_procdef)
 		  |
 		  ;
-impl_paramlist    = impl_parameters                         (paramdeflist)
+impl_paramlist
+          = impl_parameters                         (paramdeflist)
 		  |                                         (paramdeflist)
 		  ;
-impl_parameters   = impl_paramdecl "," impl_parameters
+impl_parameters
+          = impl_paramdecl "," impl_parameters
 		  | impl_paramdecl
 		  ;
-impl_paramdecl    = typespec IDENT                          (paramdef)
+impl_paramdecl
+          = typespec IDENT                          (paramdef)
 		  ;
-codeblock/L1      = "{" statementlist "}"                   ({}codeblock)
+codeblock/L1
+          = "{" statementlist "}"                   ({}codeblock)
 		  ;
-statementlist/L1  = statement statementlist                 (>>)
+statementlist/L1
+          = statement statementlist                 (>>)
 		  |
 		  ;
-elseblock/L1      = "elseif" "(" expression ")"
-			  codeblock elseblock               (conditional_elseif)
+elseblock/L1
+          = "elseif" "(" expression ")"
+                  codeblock elseblock               (conditional_elseif)
 		  | "elseif" "(" expression ")" codeblock   (conditional_elseif)
 		  | "else" codeblock                        (conditional_else)
 		  ;
-statement/L1      = classdef                                (definition 1)
+statement/L1
+          = classdef                                (definition 1)
 		  | functiondef                             (definition 1)
 		  | "var" variabledef ";"                   (>>definition 1)
 		  | expression ";"                          (free_expression)
@@ -1022,50 +1047,61 @@ statement/L1      = classdef                                (definition 1)
 		  | "while" "(" expression ")" codeblock    (conditional_while)
 		  | codeblock
 		  ;
-variabledef       = typespec IDENT                          (>>vardef)
+variabledef
+          = typespec IDENT                          (>>vardef)
 		  | typespec IDENT "=" expression           (>>vardef)
 		  ;
-expression/L1     = "{" expressionlist "}"                  (>>structure)
+expression/L1
+          = "{" expressionlist "}"                  (>>structure)
 		  | "{" "}"                                 (>>structure)
 		  ;
-expression/L2     = IDENT                                   (variable)
+expression/L2
+          = IDENT                                   (variable)
 		  | BOOLEAN                                 (constant "constexpr bool")
 		  | UINTEGER                                (constant "constexpr int")
 		  | FLOAT                                   (constant "constexpr double")
 		  | DQSTRING                                (constant "constexpr string")
 		  | "(" expression ")"
 		  ;
-expression/L3     = expression  "="  expression             (>>binop "=")
+expression/L3
+          = expression  "="  expression             (>>binop "=")
 		  ;
-expression/L4     = expression  "||"  expression            (>>binop "||")
+expression/L4
+          = expression  "||"  expression            (>>binop "||")
 		  ;
-expression/L5     = expression  "&&"  expression            (>>binop "&&")
+expression/L5
+          = expression  "&&"  expression            (>>binop "&&")
 		  ;
-expression/L8     = expression  "=="  expression            (>>binop "==")
+expression/L8
+          = expression  "=="  expression            (>>binop "==")
 		  | expression  "!="  expression            (>>binop "!=")
 		  | expression  "<="  expression            (>>binop "<=")
 		  | expression  "<"  expression             (>>binop "<")
 		  | expression  ">="  expression            (>>binop ">=")
 		  | expression  ">"  expression             (>>binop ">")
 		  ;
-expression/L9     = expression  "+"  expression             (>>binop "+")
+expression/L9
+          = expression  "+"  expression             (>>binop "+")
 		  | expression  "-"  expression             (>>binop "-")
 		  | "-"  expression                         (>>unop "-")
 		  | "+"  expression                         (>>unop "+")
 		  ;
-expression/L10    = expression  "*"  expression             (>>binop "*")
+expression/L10
+          = expression  "*"  expression             (>>binop "*")
 		  | expression  "/"  expression             (>>binop "/")
 		  ;
-expression/L12    = expression "." IDENT                    (member)
+expression/L12
+          = expression "." IDENT                    (member)
 		  ;
-expression/L13    = expression  "(" expressionlist ")"      (>>operator "()")
+expression/L13
+          = expression  "(" expressionlist ")"      (>>operator "()")
 		  | expression  "(" ")"                     (>>operator "()")
 		  | expression  "[" expressionlist "]"      (>>operator_array "[]")
 		  ;
-expressionlist/L0 = expression "," expressionlist
+expressionlist/L0
+          = expression "," expressionlist
 		  | expression
 		  ;
-
 
 ```
 ## Type System
@@ -1089,21 +1125,21 @@ Numbers in curly brackets '{' '}' are substituted by values auto-generated by a 
 Identifiers have to be provided explicitly in a table.
 ```Lua
 llvmir.structTemplate = {
-	symbol = "{symbol}",
-	def_local = "{out} = alloca %{symbol}, align 8\n",
-	def_global = "{out} = internal global %{symbol} zeroinitializer, align 8\n",
-	llvmtype = "%{symbol}",
-	scalar = false,
-	class = "struct",
-	align = 8,
-	assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
-	load = "{out} = load %{symbol}, %{symbol}* {this}\n",
-	loadelemref = "{out} = getelementptr inbounds %{symbol},"
-			.. " %{symbol}* {this}, i32 0, i32 {index}\n",
-	loadelem = "{1} = getelementptr inbounds %{symbol},"
-			.. " %{symbol}* {this}, i32 0, i32 {index}\n"
-			.. "{out} = load {type}, {type}* {1}\n",
-	typedef = "%{symbol} = type { {llvmtype} }\n"
+    symbol = "{symbol}",
+    def_local = "{out} = alloca %{symbol}, align 8\n",
+    def_global = "{out} = internal global %{symbol} zeroinitializer, align 8\n",
+    llvmtype = "%{symbol}",
+    scalar = false,
+    class = "struct",
+    align = 8,
+    assign = "store %{symbol} {arg1}, %{symbol}* {this}\n",
+    load = "{out} = load %{symbol}, %{symbol}* {this}\n",
+    loadelemref = "{out} = getelementptr inbounds %{symbol},"
+                .. " %{symbol}* {this}, i32 0, i32 {index}\n",
+    loadelem = "{1} = getelementptr inbounds %{symbol},"
+                .. " %{symbol}* {this}, i32 0, i32 {index}\n"
+                .. "{out} = load {type}, {type}* {1}\n",
+    typedef = "%{symbol} = type { {llvmtype} }\n"
 }
 ```
 
@@ -1121,15 +1157,15 @@ llvmir = require "llvmir"
 typedb = mewa.typedb()
 
 -- Global variables
-localDefinitionContext = 0	-- Context type of local definitions
-seekContextKey = "seekctx"	-- Key for seek context types defined for a scope
-callableEnvKey = "env"		-- Key for current callable environment
-typeDescriptionMap = {}		-- Map of type ids to their description
-referenceTypeMap = {}		-- Map of value type to reference type
-dereferenceTypeMap = {}		-- Map of reference type to value type
-arrayTypeMap = {}		-- Map array key to its type
-stringConstantMap = {}		-- Map of string constant value to its attributes
-scalarTypeMap = {}		-- Map of scalar type name to its value type
+localDefinitionContext = 0    -- Context type of local definitions
+seekContextKey = "seekctx"    -- Key for seek context types defined for a scope
+callableEnvKey = "env"        -- Key for current callable environment
+typeDescriptionMap = {}       -- Map of type ids to their description
+referenceTypeMap = {}         -- Map of value type to reference type
+dereferenceTypeMap = {}       -- Map of reference type to value type
+arrayTypeMap = {}             -- Map array key to its type
+stringConstantMap = {}        -- Map of string constant value to its attributes
+scalarTypeMap = {}            -- Map of scalar type name to its value type
 
 dofile( "examples/intro/sections.inc")
 
@@ -1157,61 +1193,61 @@ The variable arguments **...** are forwarded to the _AST_ node functions called.
 -- Tree traversal helper function setting the current scope/step and
 --    calling the function of one node, and returning its result:
 local function processSubnode( typedb, subnode, ...)
-	local rt
-	if subnode.call then
-		if (subnode.scope) then
-			local scope_bk,step_bk = typedb:scope( subnode.scope)
-			typedb:set_instance( "node", subnode)
-			if subnode.call.obj then
-				rt = subnode.call.proc( subnode, subnode.call.obj, ...)
-			else
-				rt = subnode.call.proc( subnode, ...)
-			end
-			typedb:scope( scope_bk,step_bk)
-		elseif (subnode.step) then
-			local step_bk = typedb:step( subnode.step)
-			if subnode.call.obj then
-				rt = subnode.call.proc( subnode, subnode.call.obj, ...)
-			else
-				rt = subnode.call.proc( subnode, ...)
-			end
-			typedb:step( step_bk)
-		else
-			if subnode.call.obj then
-				rt = subnode.call.proc( subnode, subnode.call.obj, ...)
-			else
-				rt = subnode.call.proc( subnode, ...)
-			end
-		end
-	else
-		rt = subnode.value
-	end
-	return rt
+    local rt
+    if subnode.call then
+        if (subnode.scope) then
+            local scope_bk,step_bk = typedb:scope( subnode.scope)
+            typedb:set_instance( "node", subnode)
+            if subnode.call.obj then
+                rt = subnode.call.proc( subnode, subnode.call.obj, ...)
+            else
+                rt = subnode.call.proc( subnode, ...)
+            end
+            typedb:scope( scope_bk,step_bk)
+        elseif (subnode.step) then
+            local step_bk = typedb:step( subnode.step)
+            if subnode.call.obj then
+                rt = subnode.call.proc( subnode, subnode.call.obj, ...)
+            else
+                rt = subnode.call.proc( subnode, ...)
+            end
+            typedb:step( step_bk)
+        else
+            if subnode.call.obj then
+                rt = subnode.call.proc( subnode, subnode.call.obj, ...)
+            else
+                rt = subnode.call.proc( subnode, ...)
+            end
+        end
+    else
+        rt = subnode.value
+    end
+    return rt
 end
 -- Tree traversal or a subrange of argument nodes, define scope/step and
 --    process the AST node:
 function utils.traverseRange( typedb, node, range, ...)
-	if node.arg then
-		local rt = {}
-		local start,last = table.unpack(range)
-		local lasti,ofs = last-start+1,start-1
-		for ii=1,lasti do rt[ ii] = processSubnode( typedb, node.arg[ ofs+ii], ...) end
-		return rt
-	else
-		return node.value
-	end
+    if node.arg then
+        local rt = {}
+        local start,last = table.unpack(range)
+        local lasti,ofs = last-start+1,start-1
+        for ii=1,lasti do rt[ ii] = processSubnode( typedb, node.arg[ ofs+ii], ...) end
+        return rt
+    else
+        return node.value
+    end
 end
 -- Tree traversal, define scope/step and process the AST node:
 function utils.traverse( typedb, node, ...)
-	if node.arg then
-		local rt = {}
-		for ii,subnode in ipairs(node.arg) do
-			rt[ii] = processSubnode( typedb, subnode, ...)
-		end
-		return rt
-	else
-		return node.value
-	end
+    if node.arg then
+        local rt = {}
+        for ii,subnode in ipairs(node.arg) do
+            rt[ii] = processSubnode( typedb, subnode, ...)
+        end
+        return rt
+    else
+        return node.value
+    end
 end
 ```
 
@@ -1226,12 +1262,13 @@ Define atomic and structure constants in the source.
 A structure has a list of type/constructor pairs as the constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object being initializable by a constant structure. The constructor is using the typedb to find a _ctor_ type with this list matching the parameter list. If it fails the constructor function returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
 function typesystem.constant( node, decl)
-	local typeId = scalarTypeMap[ decl]
-	return {type=typeId,constructor=createConstexprValue( typeId, node.arg[1].value)}
+    local typeId = scalarTypeMap[ decl]
+    local constructor = createConstexprValue( typeId, node.arg[1].value)
+    return {type=typeId,constructor=constructor}
 end
 function typesystem.structure( node)
-	local args = utils.traverse( typedb, node)
-	return {type=constexprStructureType, constructor={list=args}}
+    local args = utils.traverse( typedb, node)
+    return {type=constexprStructureType, constructor={list=args}}
 end
 
 ```
@@ -1240,13 +1277,13 @@ end
 In this section are the node functions to define and query variables. These _AST_ node functions are just delegating to functions we will revisit later.
 ```Lua
 function typesystem.vardef( node, context)
-	local datatype,varnam,initval
-		= table.unpack( utils.traverse( typedb, node, context))
-	return defineVariable( node, context, datatype, varnam, initval)
+    local datatype,varnam,initval
+        = table.unpack( utils.traverse( typedb, node, context))
+    return defineVariable( node, context, datatype, varnam, initval)
 end
 function typesystem.variable( node)
-	local varname = node.arg[ 1].value
-	return getVariable( node, varname)
+    local varname = node.arg[ 1].value
+    return getVariable( node, varname)
 end
 
 ```
@@ -1255,36 +1292,36 @@ end
 Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as a parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```. The function call definition with ```defineFunctionCall``` is the same as for free functions and class methods.
 ```Lua
 function typesystem.extern_funcdef( node)
-	local context = {domain="global"}
-	local name,ret,param = table.unpack( utils.traverse( typedb, node, context))
-	if ret == voidType then ret = nil end
-	-- ... void type as return value means we are in a procedure without return
-	local descr = {
-			name = name,
-			symbolname = name,
-			func ='@' .. name,
-			ret =ret,
-			param = param,
-			signature="" }
-	descr.rtllvmtype = ret and typeDescriptionMap[ ret].llvmtype or "void"
-	defineFunctionCall( node, descr, context)
-	local fmt = llvmir.control.extern_functionDeclaration
-	print_section( "Typedefs", utils.constructor_format( fmt, descr))
+    local context = {domain="global"}
+    local name,ret,param = table.unpack( utils.traverse( typedb, node, context))
+    if ret == voidType then ret = nil end
+    -- ... void type as return value means we are in a procedure without return
+    local descr = {
+            name = name,
+            symbolname = name,
+            func ='@' .. name,
+            ret =ret,
+            param = param,
+            signature="" }
+    descr.rtllvmtype = ret and typeDescriptionMap[ ret].llvmtype or "void"
+    defineFunctionCall( node, descr, context)
+    local fmt = llvmir.control.extern_functionDeclaration
+    print_section( "Typedefs", utils.constructor_format( fmt, descr))
 end
 function typesystem.extern_paramdef( node, param)
-	local typeId = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
-	local descr = typeDescriptionMap[ typeId]
-	if not descr then
-		utils.errorMessage( node.line,
-			"Type '%s' not allowed as parameter of extern function",
-			typedb:type_string( typeId))
-	end
-	table.insert( param, {type=typeId,llvmtype=descr.llvmtype})
+    local typeId = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
+    local descr = typeDescriptionMap[ typeId]
+    if not descr then
+        utils.errorMessage( node.line,
+            "Type '%s' not allowed as parameter of extern function",
+            typedb:type_string( typeId))
+    end
+    table.insert( param, {type=typeId,llvmtype=descr.llvmtype})
 end
 function typesystem.extern_paramdeflist( node)
-	local param = {}
-	utils.traverse( typedb, node, param)
-	return param
+    local param = {}
+    utils.traverse( typedb, node, param)
+    return param
 end
 
 ```
@@ -1302,49 +1339,49 @@ The class node defines a multiple pass evaluation and the nodes ```typesystem.de
  
 ```Lua
 function typesystem.typehdr( node, decl)
-	return resolveTypeFromNamePath( node, utils.traverse( typedb, node))
+    return resolveTypeFromNamePath( node, utils.traverse( typedb, node))
 end
 function typesystem.arraytype( node)
-	local dim = tonumber( node.arg[2].value)
-	local elem = table.unpack( utils.traverseRange( typedb, node, {1,1}))
-	return {type=getOrCreateArrayType( node, expectDataType( node, elem), dim)}
+    local dim = tonumber( node.arg[2].value)
+    local elem = table.unpack( utils.traverseRange( typedb, node, {1,1}))
+    return {type=getOrCreateArrayType( node, expectDataType( node, elem), dim)}
 end
 function typesystem.typespec( node)
-	return expectDataType( node, table.unpack( utils.traverse( typedb, node)))
+    return expectDataType( node, table.unpack( utils.traverse( typedb, node)))
 end
 function typesystem.classdef( node, context)
-	local typnam = node.arg[1].value
-	local declContextTypeId = getDeclarationContextTypeId( context)
-	pushSeekContextType( declContextTypeId)
-	local tpl = llvmir.structTemplate
-	local typeId,descr = defineStructureType( node, declContextTypeId, typnam, tpl)
-	local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
-	utils.traverse( typedb, node, classContext, 1)	-- 1st pass: type definitions
-	utils.traverse( typedb, node, classContext, 2)	-- 2nd pass: member variables
-	descr.size = classContext.structsize
-	descr.members = classContext.members
-	defineClassStructureAssignmentOperator( node, typeId)
-	utils.traverse( typedb, node, classContext, 3)	-- 3rd pass: method decl
-	utils.traverse( typedb, node, classContext, 4)	-- 4th pass: method impl
-	local subst = {llvmtype=classContext.llvmtype}
-	print_section( "Typedefs", utils.constructor_format( descr.typedef, subst))
-	popSeekContextType( declContextTypeId)
+    local typnam = node.arg[1].value
+    local declContextTypeId = getDeclarationContextTypeId( context)
+    pushSeekContextType( declContextTypeId)
+    local tpl = llvmir.structTemplate
+    local typeId,descr = defineStructureType( node, declContextTypeId, typnam, tpl)
+    local classContext = {domain="member", decltype=typeId, members={}, descr=descr}
+    utils.traverse( typedb, node, classContext, 1)    -- 1st pass: type definitions
+    utils.traverse( typedb, node, classContext, 2)    -- 2nd pass: member variables
+    descr.size = classContext.structsize
+    descr.members = classContext.members
+    defineClassStructureAssignmentOperator( node, typeId)
+    utils.traverse( typedb, node, classContext, 3)    -- 3rd pass: method decl
+    utils.traverse( typedb, node, classContext, 4)    -- 4th pass: method impl
+    local subst = {llvmtype=classContext.llvmtype}
+    print_section( "Typedefs", utils.constructor_format( descr.typedef, subst))
+    popSeekContextType( declContextTypeId)
 end
 function typesystem.definition( node, pass, context, pass_selected)
-	if not pass_selected or pass == pass_selected then	-- pass as in the grammar
-		local statement = table.unpack(
-			utils.traverse( typedb, node, context or {domain="local"}))
-		return statement and statement.constructor or nil
-	end
+    if not pass_selected or pass == pass_selected then    -- pass as in the grammar
+        local statement = table.unpack(
+            utils.traverse( typedb, node, context or {domain="local"}))
+        return statement and statement.constructor or nil
+    end
 end
 function typesystem.definition_2pass( node, pass, context, pass_selected)
-	if not pass_selected then
-		return typesystem.definition( node, pass, context, pass_selected)
-	elseif pass == pass_selected+1 then
-		utils.traverse( typedb, node, context, 1) 	-- 3rd pass: method decl
-	elseif pass == pass_selected then
-		utils.traverse( typedb, node, context, 2)	-- 4th pass: method impl
-	end
+    if not pass_selected then
+        return typesystem.definition( node, pass, context, pass_selected)
+    elseif pass == pass_selected+1 then
+        utils.traverse( typedb, node, context, 1)     -- 3rd pass: method decl
+    elseif pass == pass_selected then
+        utils.traverse( typedb, node, context, 2)    -- 4th pass: method impl
+    end
 end
 
 
@@ -1360,67 +1397,70 @@ The _AST_ node function ```typesystem.callablebody``` collects the elements of t
 
 ```Lua
 function typesystem.funcdef( node, context, pass)
-	local typnam = node.arg[1].value
-	if not pass or pass == 1 then    -- 1st pass: function declaration
-		local rtype = table.unpack( utils.traverseRange( typedb, node, {2,2}, context))
-		if rtype == voidType then rtype = nil end -- void return => procedure
-		local symbolname = (context.domain == "member")
-					and (typedb:type_name(context.decltype) .. "__" .. typnam)
-					or typnam
-		local rtllvmtype = rtype and typeDescriptionMap[ rtype].llvmtype or "void"
-		local descr = {
-				lnk = "internal",
-				name = typnam,
-				symbolname = symbolname,
-				func = '@'..symbolname,
-				ret = rtype,
-				rtllvmtype = rtllvmtype,
-				attr = "#0"}
-		utils.traverseRange( typedb, node, {3,3}, context, descr, 1)
-		utils.allocNodeData( node, localDefinitionContext, descr)
-		defineFunctionCall( node, descr, context)
-	end
-	if not pass or pass == 2 then 	-- 2nd pass: function implementation
-		local descr = utils.getNodeData( node, localDefinitionContext)
-		utils.traverseRange( typedb, node, {3,3}, context, descr, 2)
-		if descr.ret then
-			local rtdescr = typeDescriptionMap[descr.ret]
-			local subst = {type=rtdescr.llvmtype,this=rtdescr.default}
-			descr.body = descr.body
-				.. utils.constructor_format( llvmir.control.returnStatement, subst)
-		else
-			descr.body = descr.body
-				.. utils.constructor_format( llvmir.control.returnVoidStatement)
-		end
-		print( utils.constructor_format( llvmir.control.functionDeclaration, descr))
-	end
+    local typnam = node.arg[1].value
+    if not pass or pass == 1 then    -- 1st pass: function declaration
+        local rtype = table.unpack(
+                        utils.traverseRange( typedb, node, {2,2}, context))
+        if rtype == voidType then rtype = nil end -- void return => procedure
+        local symbolname = (context.domain == "member")
+                    and (typedb:type_name(context.decltype) .. "__" .. typnam)
+                    or typnam
+        local rtllvmtype = rtype and typeDescriptionMap[ rtype].llvmtype or "void"
+        local descr = {
+                lnk = "internal",
+                name = typnam,
+                symbolname = symbolname,
+                func = '@'..symbolname,
+                ret = rtype,
+                rtllvmtype = rtllvmtype,
+                attr = "#0"}
+        utils.traverseRange( typedb, node, {3,3}, context, descr, 1)
+        utils.allocNodeData( node, localDefinitionContext, descr)
+        defineFunctionCall( node, descr, context)
+    end
+    if not pass or pass == 2 then     -- 2nd pass: function implementation
+        local descr = utils.getNodeData( node, localDefinitionContext)
+        utils.traverseRange( typedb, node, {3,3}, context, descr, 2)
+        if descr.ret then
+            local rtdescr = typeDescriptionMap[descr.ret]
+            local subst = {type=rtdescr.llvmtype,this=rtdescr.default}
+            descr.body = descr.body
+                .. utils.constructor_format( llvmir.control.returnStatement, subst)
+        else
+            descr.body = descr.body
+                .. utils.constructor_format( llvmir.control.returnVoidStatement)
+        end
+        print( utils.constructor_format( llvmir.control.functionDeclaration, descr))
+    end
 end
 function typesystem.callablebody( node, context, descr, selectid)
-	local rt
-	local context_ = {domain="local"}
-	if selectid == 1 then -- parameter declarations
-		descr.env = defineCallableEnvironment( node, "body " .. descr.name, descr.ret)
-		descr.param = table.unpack( utils.traverseRange( typedb, node, {1,1}, context_))
-		descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
-	elseif selectid == 2 then -- statements in body
-		if context.domain == "member" then
-			expandMethodEnvironment( node, context, descr, descr.env)
-		end
-		local stmlist = utils.traverseRange( typedb, node, {2,#node.arg}, context_)
-		local code = ""
-		for _,statement in ipairs(stmlist) do code = code .. statement.code end
-		descr.body = code
-	end
-	return rt
+    local rt
+    local context_ = {domain="local"}
+    if selectid == 1 then -- parameter declarations
+        local envname = "body " .. descr.name
+        descr.env = defineCallableEnvironment( node, envname, descr.ret)
+        descr.param = table.unpack(
+                            utils.traverseRange( typedb, node, {1,1}, context_))
+        descr.paramstr = getDeclarationLlvmTypeRegParameterString( descr, context)
+    elseif selectid == 2 then -- statements in body
+        if context.domain == "member" then
+            expandMethodEnvironment( node, context, descr, descr.env)
+        end
+        local stmlist = utils.traverseRange( typedb, node, {2,#node.arg}, context_)
+        local code = ""
+        for _,statement in ipairs(stmlist) do code = code .. statement.code end
+        descr.body = code
+    end
+    return rt
 end
 function typesystem.paramdef( node, param)
-	local datatype,varname = table.unpack( utils.traverse( typedb, node, param))
-	table.insert( param, defineParameter( node, datatype, varname))
+    local datatype,varname = table.unpack( utils.traverse( typedb, node, param))
+    table.insert( param, defineParameter( node, datatype, varname))
 end
 function typesystem.paramdeflist( node, param)
-	local param = {}
-	utils.traverse( typedb, node, param)
-	return param
+    local param = {}
+    utils.traverse( typedb, node, param)
+    return param
 end
 
 ```
@@ -1430,29 +1470,29 @@ This section defines the functions of _AST_ nodes implementing operators. The co
 The functions ```expectValueType``` and ```expectDataType``` used here are assertions.
 ```Lua
 function typesystem.binop( node, operator)
-	local this,operand = table.unpack( utils.traverse( typedb, node))
-	expectValueType( node, this)
-	expectValueType( node, operand)
-	return applyCallable( node, this, operator, {operand})
+    local this,operand = table.unpack( utils.traverse( typedb, node))
+    expectValueType( node, this)
+    expectValueType( node, operand)
+    return applyCallable( node, this, operator, {operand})
 end
 function typesystem.unop( node, operator)
-	local this = table.unpack( utils.traverse( typedb, node))
-	expectValueType( node, operand)
-	return applyCallable( node, this, operator, {})
+    local this = table.unpack( utils.traverse( typedb, node))
+    expectValueType( node, operand)
+    return applyCallable( node, this, operator, {})
 end
 function typesystem.member( node)
-	local struct,name = table.unpack( utils.traverse( typedb, node))
-	return applyCallable( node, struct, name)
+    local struct,name = table.unpack( utils.traverse( typedb, node))
+    return applyCallable( node, struct, name)
 end
 function typesystem.operator( node, operator)
-	local args = utils.traverse( typedb, node)
-	local this = table.remove( args, 1)
-	return applyCallable( node, this, operator, args)
+    local args = utils.traverse( typedb, node)
+    local this = table.remove( args, 1)
+    return applyCallable( node, this, operator, args)
 end
 function typesystem.operator_array( node, operator)
-	local args = utils.traverse( typedb, node)
-	local this = table.remove( args, 1)
-	return applyCallable( node, this, operator, args)
+    local args = utils.traverse( typedb, node)
+    local this = table.remove( args, 1)
+    return applyCallable( node, this, operator, args)
 end
 
 ```
@@ -1464,66 +1504,67 @@ The return node functions also use ```getRequiredTypeConstructor``` to derive th
 
 ```Lua
 function typesystem.conditional_if( node)
-	local env = getCallableEnvironment()
-	local exitLabel = env.label()
-	local condition,yesblock,noblock
-		= table.unpack( utils.traverse( typedb, node, exitLabel))
-	local rt = conditionalIfElseBlock(
-			node, condition, yesblock, noblock, exitLabel)
-	rt.code = rt.code
-		.. utils.constructor_format( llvmir.control.label, {inp=exitLabel})
-	return rt
+    local env = getCallableEnvironment()
+    local exitLabel = env.label()
+    local condition,yesblock,noblock
+        = table.unpack( utils.traverse( typedb, node, exitLabel))
+    local rt = conditionalIfElseBlock(
+            node, condition, yesblock, noblock, exitLabel)
+    rt.code = rt.code
+        .. utils.constructor_format( llvmir.control.label, {inp=exitLabel})
+    return rt
 end
 function typesystem.conditional_else( node, exitLabel)
-	return table.unpack( utils.traverse( typedb, node))
+    return table.unpack( utils.traverse( typedb, node))
 end
 function typesystem.conditional_elseif( node, exitLabel)
-	local env = getCallableEnvironment()
-	local condition,yesblock,noblock
-		= table.unpack( utils.traverse( typedb, node, exitLabel))
-	return conditionalIfElseBlock(
-			node, condition, yesblock, noblock, exitLabel)
+    local env = getCallableEnvironment()
+    local condition,yesblock,noblock
+        = table.unpack( utils.traverse( typedb, node, exitLabel))
+    return conditionalIfElseBlock(
+            node, condition, yesblock, noblock, exitLabel)
 end
 function typesystem.conditional_while( node)
-	local env = getCallableEnvironment()
-	local condition,yesblock = table.unpack( utils.traverse( typedb, node))
-	local cond_constructor
-		= getRequiredTypeConstructor(
-			node, controlTrueType, condition,
-			tagmask_matchParameter, tagmask_typeConversion)
-	if not cond_constructor then
-		utils.errorMessage( node.line, "Can't use type '%s' as a condition",
-					typedb:type_string(condition.type))
-	end
-	local start = env.label()
-	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
-	local subst = {out=start,inp=cond_constructor.out}
-	return {code = startcode .. cond_constructor.code .. yesblock.code
-			.. utils.constructor_format( llvmir.control.invertedControlType, subst)}
+    local env = getCallableEnvironment()
+    local condition,yesblock = table.unpack( utils.traverse( typedb, node))
+    local cond_constructor
+        = getRequiredTypeConstructor(
+            node, controlTrueType, condition,
+            tagmask_matchParameter, tagmask_typeConversion)
+    if not cond_constructor then
+        utils.errorMessage( node.line, "Can't use type '%s' as a condition",
+                    typedb:type_string(condition.type))
+    end
+    local start = env.label()
+    local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
+    local subst = {out=start,inp=cond_constructor.out}
+    return {code = startcode .. cond_constructor.code .. yesblock.code
+            .. utils.constructor_format( llvmir.control.invertedControlType, subst)}
 end
 function typesystem.return_value( node)
-	local operand = table.unpack( utils.traverse( typedb, node))
-	local env = getCallableEnvironment()
-	local rtype = env.returntype
-	local descr = typeDescriptionMap[ rtype]
-	expectValueType( node, operand)
-	if rtype == 0 then
-		utils.errorMessage( node.line, "Can't return value from procedure")
-	end
-	local this,code = constructorParts(
-				getRequiredTypeConstructor(
-					node, rtype, operand,
-					tagmask_matchParameter, tagmask_typeConversion))
-	local subst = {this=this, type=descr.llvmtype}
-	return {code = code
-			.. utils.constructor_format( llvmir.control.returnStatement, subst)}
+    local operand = table.unpack( utils.traverse( typedb, node))
+    local env = getCallableEnvironment()
+    local rtype = env.returntype
+    local descr = typeDescriptionMap[ rtype]
+    expectValueType( node, operand)
+    if rtype == 0 then
+        utils.errorMessage( node.line, "Can't return value from procedure")
+    end
+    local this,code = constructorParts(
+                getRequiredTypeConstructor(
+                    node, rtype, operand,
+                    tagmask_matchParameter, tagmask_typeConversion))
+    local subst = {this=this, type=descr.llvmtype}
+    return {code = code
+            .. utils.constructor_format( llvmir.control.returnStatement, subst)}
 end
 function typesystem.return_void( node)
-	local env = getCallableEnvironment()
-	if env.returntype ~= 0 then
-		utils.errorMessage( node.line, "Can't return without value from function")
-	end
-	return {code = utils.constructor_format( llvmir.control.returnVoidStatement, {})}
+    local env = getCallableEnvironment()
+    if env.returntype ~= 0 then
+        utils.errorMessage( node.line, "Can't return without value from function")
+    end
+    local code = utils.constructor_format( llvmir.control.returnVoidStatement, {})
+    return {code = code}
 end
 
 ```
@@ -1537,38 +1578,39 @@ Finally, we come to the section containing the blocks that do not fit somewhere 
 
 ```Lua
 function typesystem.program( node, options)
-	defineConstExprArithmetics()
-	defineConstExprTypeConversions()
-	initBuiltInTypes()
-	initControlBooleanTypes()
-	local context = {domain="global"}
-	utils.traverse( typedb, node, context)
+    defineConstExprArithmetics()
+    defineConstExprTypeConversions()
+    initBuiltInTypes()
+    initControlBooleanTypes()
+    local context = {domain="global"}
+    utils.traverse( typedb, node, context)
 end
 function typesystem.main_procdef( node)
-	local env = defineCallableEnvironment( node, "main ", scalarIntegerType)
-	local block = table.unpack( utils.traverse( typedb, node, {domain="local"}))
-	local subst = {type="i32",this="0"}
-	local body = block.code
-			.. utils.constructor_format( llvmir.control.returnStatement, subst)
-	print( "\n" .. utils.constructor_format(
-				llvmir.control.mainDeclaration, {body=body}))
+    local env = defineCallableEnvironment( node, "main ", scalarIntegerType)
+    local block = table.unpack( utils.traverse( typedb, node, {domain="local"}))
+    local subst = {type="i32",this="0"}
+    local body = block.code
+            .. utils.constructor_format( llvmir.control.returnStatement, subst)
+    print( "\n" .. utils.constructor_format(
+                llvmir.control.mainDeclaration, {body=body}))
 end
 function typesystem.codeblock( node)
-	local stmlist = utils.traverse( typedb, node)
-	local code = ""
-	for _,stm in ipairs(stmlist) do code = code .. stm.code end
-	return {code=code}
+    local stmlist = utils.traverse( typedb, node)
+    local code = ""
+    for _,stm in ipairs(stmlist) do code = code .. stm.code end
+    return {code=code}
 end
 function typesystem.free_expression( node)
-	local expression = table.unpack( utils.traverse( typedb, node))
-	if expression.type == controlTrueType or expression.type == controlFalseType then
-		return {code = expression.constructor.code
-				.. utils.constructor_format(
-						llvmir.control.label,
-						{inp=expression.constructor.out})}
-	else
-		return {code=expression.constructor.code}
-	end
+    local expression = table.unpack( utils.traverse( typedb, node))
+    if expression.type == controlTrueType
+            or expression.type == controlFalseType then
+        return {code = expression.constructor.code
+                .. utils.constructor_format(
+                        llvmir.control.label,
+                        {inp=expression.constructor.out})}
+    else
+        return {code=expression.constructor.code}
+    end
 end
 
 ```
@@ -1580,16 +1622,16 @@ This chapter will survey the functions used in the AST node functions we have no
 Here are all the reduction weights of the reductions defined. We have explained the need for weighting reductions in the tutorial.
 ```Lua
 -- List of reduction weights:
-rdw_conv = 1.0			-- Weight of conversion
-rdw_constexpr_float = 0.375	-- Conversion of constexpr float -> int or int -> float
-rdw_constexpr_bool = 0.50	-- Conversion of constexpr num -> bool or bool -> num
-rdw_load = 0.25			-- Weight of loading a value
-rdw_strip_r_1 = 0.25 / (1*1)	-- Weight of fetch value type with 1 qualifier
-rdw_strip_r_2 = 0.25 / (2*2)	-- Weight of fetch value type with 2 qualifiers
-rdw_strip_r_3 = 0.25 / (3*3)	-- Weight of fetch value type with 3 qualifiers
-rwd_control = 0.125 / (4*4)	-- Weight of control true/false type <-> bool
+rdw_conv = 1.0               -- Weight of conversion
+rdw_constexpr_float = 0.375  -- Conversion of constexpr float -> int or int -> float
+rdw_constexpr_bool = 0.50    -- Conversion of constexpr num -> bool or bool -> num
+rdw_load = 0.25              -- Weight of loading a value
+rdw_strip_r_1 = 0.25 / (1*1) -- Weight of fetch value type with 1 qualifier
+rdw_strip_r_2 = 0.25 / (2*2) -- Weight of fetch value type with 2 qualifiers
+rdw_strip_r_3 = 0.25 / (3*3) -- Weight of fetch value type with 3 qualifiers
+rwd_control = 0.125 / (4*4)  -- Weight of control true/false type <-> bool
 
-weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
+weightEpsilon = 1E-8         -- Epsilon used for comparing weights for equality
 
 ```
 
@@ -1597,18 +1639,18 @@ weightEpsilon = 1E-8		-- Epsilon used for comparing weights for equality
 This section defines all reduction tags and tag masks. We have explained the need for tagging in the tutorial.
 ```Lua
 -- Tags attached to reduction definitions
-tag_typeDeclaration = 1		-- Type declaration relation (e.g. variable to data type)
-tag_typeDeduction = 2		-- Type deduction (e.g. inheritance)
-tag_typeConversion = 3		-- Type value conversion
-tag_typeInstantiation = 4	-- Type value construction from const expression
+tag_typeDeclaration = 1   -- Type declaration relation (e.g. variable to data type)
+tag_typeDeduction = 2     -- Type deduction (e.g. inheritance)
+tag_typeConversion = 3    -- Type value conversion
+tag_typeInstantiation = 4 -- Type value construction from const expression
 
 -- Sets of tags used for resolving a type or deriving a type, depending on the case
 tagmask_declaration = typedb.reduction_tagmask( tag_typeDeclaration)
 tagmask_resolveType = typedb.reduction_tagmask(
-				tag_typeDeduction, tag_typeDeclaration)
+                tag_typeDeduction, tag_typeDeclaration)
 tagmask_matchParameter = typedb.reduction_tagmask(
-				tag_typeDeduction, tag_typeDeclaration,
-				tag_typeConversion, tag_typeInstantiation)
+                tag_typeDeduction, tag_typeDeclaration,
+                tag_typeConversion, tag_typeInstantiation)
 tagmask_typeConversion = typedb.reduction_tagmask( tag_typeConversion)
 
 ```
@@ -1618,16 +1660,16 @@ This function provides a signature string of the type including context type and
 ```Lua
 -- Type string of a type declaration built from its parts for error messages
 function typeDeclarationString( this, typnam, args)
-	local rt = (this == 0 or not this)
-			and typnam
-			or (typedb:type_string(type(this) == "table"
-					and this.type
-					or this
-				) .. " " .. typnam)
-	if (args) then
-		rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")"
-	end
-	return rt
+    local rt = (this == 0 or not this)
+            and typnam
+            or (typedb:type_string(type(this) == "table"
+                    and this.type
+                    or this
+                ) .. " " .. typnam)
+    if (args) then
+        rt = rt .. "(" .. utils.typeListString( typedb, args) .. ")"
+    end
+    return rt
 end
 
 
@@ -1640,36 +1682,36 @@ Here are the functions to define calls with parameters and a return value. For f
 -- Constructor for a promote call (implementing int + double by promoting
 --   the first argument int to double and do a double + double to get the result)
 function promoteCallConstructor( call_constructor, promote)
-	return function( this, arg)
-		return call_constructor( promote( this), arg)
-	end
+    return function( this, arg)
+        return call_constructor( promote( this), arg)
+    end
 end
 -- Define an operation with involving the promotion of the left-hand argument to
 --   another type and executing the operation as defined for the type promoted to.
 function definePromoteCall( rType, thisType, proType, opr, argTypes, promote)
-	local call_type = typedb:get_type( proType, opr, argTypes)
-	local call_constructor = typedb:type_constructor( call_type)
-	local constructor = promoteCallConstructor( call_constructor, promote)
-	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
-	if callType == -1 then
-		utils.errorMessage( node.line, "Duplicate definition '%s'",
-				typeDeclarationString( thisType, opr, argTypes))
-	end
-	if rType then
-		typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
-	end
+    local call_type = typedb:get_type( proType, opr, argTypes)
+    local call_constructor = typedb:type_constructor( call_type)
+    local constructor = promoteCallConstructor( call_constructor, promote)
+    local callType = typedb:def_type( thisType, opr, constructor, argTypes)
+    if callType == -1 then
+        utils.errorMessage( node.line, "Duplicate definition '%s'",
+                typeDeclarationString( thisType, opr, argTypes))
+    end
+    if rType then
+        typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
+    end
 end
 -- Define an operation generalized
 function defineCall( rType, thisType, opr, argTypes, constructor)
-	local callType = typedb:def_type( thisType, opr, constructor, argTypes)
-	if callType == -1 then
-		local declstr = typeDeclarationString( thisType, opr, argTypes)
-		utils.errorMessage( 0, "Duplicate definition of call '%s'", declstr)
-	end
-	if rType then
-		typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
-	end
-	return callType
+    local callType = typedb:def_type( thisType, opr, constructor, argTypes)
+    if callType == -1 then
+        local declstr = typeDeclarationString( thisType, opr, argTypes)
+        utils.errorMessage( 0, "Duplicate definition of call '%s'", declstr)
+    end
+    if rType then
+        typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
+    end
+    return callType
 end
 
 ```
@@ -1683,56 +1725,56 @@ The functions with the prefix ```try``` report a miss or an ambiguity with their
 -- Application of a constructor depending on its type and its argument type.
 -- Return false as 2nd result on failure, true on success
 function tryApplyConstructor( node, typeId, constructor, arg)
-	if constructor then
-		if (type(constructor) == "function") then
-			local rt = constructor( arg)
-			return rt, rt ~= nil
-		elseif arg then
-			utils.errorMessage( node.line,
-					"Reduction constructor overwriting previous constructor for '%s'",
-					typedb:type_string(typeId))
-		else
-			return constructor, true
-		end
-	else
-		return arg, true
-	end
+    if constructor then
+        if (type(constructor) == "function") then
+            local rt = constructor( arg)
+            return rt, rt ~= nil
+        elseif arg then
+            utils.errorMessage( node.line,
+                    "Reduction constructor overwriting constructor for '%s'",
+                    typedb:type_string(typeId))
+        else
+            return constructor, true
+        end
+    else
+        return arg, true
+    end
 end
 -- Application of a constructor depending on its type and its argument type.
 -- Throw error on failure.
 function applyConstructor( node, typeId, constructor, arg)
-	local result_constructor,success
-		= tryApplyConstructor( node, typeId, constructor, arg)
-	if not success then
-		utils.errorMessage( node.line, "Failed to create type '%s'",
-					typedb:type_string(typeId))
-	end
-	return result_constructor
+    local result_constructor,success
+        = tryApplyConstructor( node, typeId, constructor, arg)
+    if not success then
+        utils.errorMessage( node.line, "Failed to create type '%s'",
+                    typedb:type_string(typeId))
+    end
+    return result_constructor
 end
 -- Try to apply a list of reductions on a constructor.
 -- Return false as 2nd result on failure, true on success
-function tryApplyReductionList( node, redulist, redu_constructor)
-	local success = true
-	for _,redu in ipairs(redulist) do
-		redu_constructor,success
-			= tryApplyConstructor( node, redu.type, redu.constructor, redu_constructor)
-		if not success then return nil end
-	end
-	return redu_constructor, true
+function tryApplyReductionList( node, redulist, constructor)
+    local success = true
+    for _,redu in ipairs(redulist) do
+        constructor,success
+            = tryApplyConstructor( node, redu.type, redu.constructor, constructor)
+        if not success then return nil end
+    end
+    return constructor, true
 end
 -- Apply a list of reductions on a constructor, throw error on failure
-function applyReductionList( node, redulist, redu_constructor)
-	local success = true
-	for _,redu in ipairs(redulist) do
-		redu_constructor,success
-			= tryApplyConstructor(
-				node, redu.type, redu.constructor, redu_constructor)
-		if not success then
-			utils.errorMessage( node.line, "Reduction constructor failed for '%s'",
-						typedb:type_string(redu.type))
-		end
-	end
-	return redu_constructor
+function applyReductionList( node, redulist, constructor)
+    local success = true
+    for _,redu in ipairs(redulist) do
+        constructor,success
+            = tryApplyConstructor(
+                node, redu.type, redu.constructor, constructor)
+        if not success then
+            utils.errorMessage( node.line, "Reduction constructor failed for '%s'",
+                        typedb:type_string(redu.type))
+        end
+    end
+    return constructor
 end
 
 
@@ -1748,109 +1790,112 @@ Here are the functions for resolving types, mapping types, and asserting type pr
 ```Lua
 -- Get the handle of a type expected to have no arguments
 function selectNoArgumentType(
-		node, seekctx, typeName, tagmask, resolveContextType, reductions, items)
-	if not resolveContextType or type(resolveContextType) == "table" then
-		io.stderr:write( "TRACE typedb:resolve_type\n"
-				.. utils.getResolveTypeTrace( typedb, seekctx, typeName, tagmask)
-				.. "\n")
-		utils.errorResolveType( typedb, node.line,
-					  resolveContextType, seekctx, typeName)
-	end
-	for ii,item in ipairs(items) do
-		if typedb:type_nof_parameters( item) == 0 then
-			local constructor = applyReductionList( node, reductions, nil)
-			local item_constr = typedb:type_constructor( item)
-			constructor = applyConstructor( node, item, item_constr, constructor)
-			return item,constructor
-		end
-	end
-	utils.errorMessage( node.line, "Failed to resolve %s with no arguments",
-				  utils.resolveTypeString( typedb, seekctx, typeName))
+        node, seekctx, typeName, tagmask, resolveContextType, reductions, items)
+    if not resolveContextType or type(resolveContextType) == "table" then
+        io.stderr:write( "TRACE typedb:resolve_type\n"
+                .. utils.getResolveTypeTrace( typedb, seekctx, typeName, tagmask)
+                .. "\n")
+        utils.errorResolveType( typedb, node.line,
+                      resolveContextType, seekctx, typeName)
+    end
+    for ii,item in ipairs(items) do
+        if typedb:type_nof_parameters( item) == 0 then
+            local constructor = applyReductionList( node, reductions, nil)
+            local item_constr = typedb:type_constructor( item)
+            constructor = applyConstructor( node, item, item_constr, constructor)
+            return item,constructor
+        end
+    end
+    utils.errorMessage( node.line, "Failed to resolve %s with no arguments",
+                  utils.resolveTypeString( typedb, seekctx, typeName))
 end
 -- Get the type handle of a type defined as a path (elements of the
 --    path are namespaces and parent structures followed by the type name resolved)
 function resolveTypeFromNamePath( node, arg, argidx)
-	if not argidx then argidx = #arg end
-	local typeName = arg[ argidx]
-	local seekContextTypes
-	if argidx > 1 then
-		seekContextTypes = resolveTypeFromNamePath( node, arg, argidx-1)
-		expectDataType( node, seekContextTypes)
-	else
-		seekContextTypes = getSeekContextTypes()
-	end
-	local resolveContextType, reductions, items
-		= typedb:resolve_type( seekContextTypes, typeName, tagmask_namespace)
-	local typeId,constructor = selectNoArgumentType( node, seekContextTypes, typeName,
-					tagmask_namespace, resolveContextType, reductions, items)
-	return {type=typeId, constructor=constructor}
+    if not argidx then argidx = #arg end
+    local typeName = arg[ argidx]
+    local seekContextTypes
+    if argidx > 1 then
+        seekContextTypes = resolveTypeFromNamePath( node, arg, argidx-1)
+        expectDataType( node, seekContextTypes)
+    else
+        seekContextTypes = getSeekContextTypes()
+    end
+    local resolveContextType, reductions, items
+            = typedb:resolve_type( seekContextTypes, typeName, tagmask_namespace)
+    local typeId,constructor
+            = selectNoArgumentType( node, seekContextTypes, typeName,
+                    tagmask_namespace, resolveContextType, reductions, items)
+    return {type=typeId, constructor=constructor}
 end
 -- Try to get the constructor and weight of a parameter passed with the
 --    deduction tagmask optionally passed as an argument
 function tryGetWeightedParameterReductionList(
-		node, redutype, operand, tagmask_decl, tagmask_conv)
-	if redutype ~= operand.type then
-		local redulist,weight,altpath
-			= typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
-		if altpath then
-			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
-						typedb:type_string(operand.type),
-						utils.typeListString(typedb,altpath," =>"),
-						utils.typeListString(typedb,redulist," =>"))
-		end
-		return redulist,weight
-	else
-		return {},0.0
-	end
+        node, redutype, operand, tagmask_decl, tagmask_conv)
+    if redutype ~= operand.type then
+        local redulist,weight,altpath
+            = typedb:derive_type( redutype, operand.type,
+                                        tagmask_decl, tagmask_conv)
+        if altpath then
+            utils.errorMessage( node.line, "Ambiguous derivation for '%s': %s | %s",
+                        typedb:type_string(operand.type),
+                        utils.typeListString(typedb,altpath," =>"),
+                        utils.typeListString(typedb,redulist," =>"))
+        end
+        return redulist,weight
+    else
+        return {},0.0
+    end
 end
 -- Get the constructor of a type required. The deduction tagmasks are arguments
 function getRequiredTypeConstructor(
-		node, redutype, operand, tagmask_decl, tagmask_conv)
-	if redutype ~= operand.type then
-		local redulist,weight,altpath
-			= typedb:derive_type( redutype, operand.type, tagmask_decl, tagmask_conv)
-		if not redulist or altpath then
-			io.stderr:write( "TRACE typedb:derive_type "
-					.. typedb:type_string(redutype)
-					.. " <- " .. typedb:type_string(operand.type) .. "\n"
-					.. utils.getDeriveTypeTrace( typedb, redutype, operand.type,
-									tagmask_decl, tagmask_conv)
-					.. "\n")
-		end
-		if not redulist then
-			utils.errorMessage( node.line, "Type mismatch, required type '%s'",
-						typedb:type_string(redutype))
-		elseif altpath then
-			utils.errorMessage( node.line, "Ambiguous derivation paths for '%s': %s | %s",
-						typedb:type_string(operand.type),
-						utils.typeListString(typedb,altpath," =>"),
-						utils.typeListString(typedb,redulist," =>"))
-		end
-		local rt = applyReductionList( node, redulist, operand.constructor)
-		if not rt then
-			utils.errorMessage( node.line, "Construction of '%s' <- '%s' failed",
-						typedb:type_string(redutype),
-						typedb:type_string(operand.type))
-		end
-		return rt
-	else
-		return operand.constructor
-	end
+        node, redutype, operand, tagmask_decl, tagmask_conv)
+    if redutype ~= operand.type then
+        local redulist,weight,altpath
+            = typedb:derive_type( redutype, operand.type,
+                                        tagmask_decl, tagmask_conv)
+        if not redulist or altpath then
+            io.stderr:write( "TRACE typedb:derive_type "
+                    .. typedb:type_string(redutype)
+                    .. " <- " .. typedb:type_string(operand.type) .. "\n"
+                    .. utils.getDeriveTypeTrace( typedb, redutype, operand.type,
+                                    tagmask_decl, tagmask_conv)
+                    .. "\n")
+        end
+        if not redulist then
+            utils.errorMessage( node.line, "Type mismatch, required type '%s'",
+                        typedb:type_string(redutype))
+        elseif altpath then
+            utils.errorMessage( node.line, "Ambiguous derivation for '%s': %s | %s",
+                        typedb:type_string(operand.type),
+                        utils.typeListString(typedb,altpath," =>"),
+                        utils.typeListString(typedb,redulist," =>"))
+        end
+        local rt = applyReductionList( node, redulist, operand.constructor)
+        if not rt then
+            utils.errorMessage( node.line, "Construction of '%s' <- '%s' failed",
+                        typedb:type_string(redutype),
+                        typedb:type_string(operand.type))
+        end
+        return rt
+    else
+        return operand.constructor
+    end
 end
 -- Issue an error if the argument does not refer to a value type
 function expectValueType( node, item)
-	if not item.constructor then
-		utils.errorMessage( node.line, "'%s' does not refer to a value",
-					typedb:type_string(item.type))
-	end
+    if not item.constructor then
+        utils.errorMessage( node.line, "'%s' does not refer to a value",
+                    typedb:type_string(item.type))
+    end
 end
 -- Issue an error if the argument does not refer to a data type
 function expectDataType( node, item)
-	if item.constructor then
-		utils.errorMessage( node.line, "'%s' does not refer to a data type",
-					typedb:type_string(item.type))
-	end
-	return item.type
+    if item.constructor then
+        utils.errorMessage( node.line, "'%s' does not refer to a data type",
+                    typedb:type_string(item.type))
+    end
+    return item.type
 end
 
 ```
@@ -1868,165 +1913,169 @@ The functions ```tryApplyCallable``` and ```applyCallable``` are provided for re
 -- For a callable item, create for each argument the lists of reductions needed to
 --   pass the arguments to it, with accumulation of the reduction weights
 function collectItemParameter( node, item, args, parameters)
-	local rt = {redulist={},llvmtypes={},weight=0.0}
-	for pi=1,#args do
-		local redutype,redulist,weight
-		if pi <= #parameters then
-			redutype = parameters[ pi].type
-			redulist,weight = tryGetWeightedParameterReductionList(
-						node, redutype, args[ pi],
-						tagmask_matchParameter, tagmask_typeConversion)
-		else
-			redutype = getVarargArgumentType( args[ pi].type)
-			if redutype then
-				redulist,weight = tryGetWeightedParameterReductionList(
-							node, redutype, args[ pi],
-							tagmask_pushVararg, tagmask_typeConversion)
-			end
-		end
-		if not weight then return nil end
-		if rt.weight < weight then -- use max(a,b) as weight accumulation function
-			rt.weight = weight
-		end
-		table.insert( rt.redulist, redulist)
-		local descr = typeDescriptionMap[ redutype]
-		table.insert( rt.llvmtypes, descr.llvmtype)
-	end
-	return rt
+    local rt = {redulist={},llvmtypes={},weight=0.0}
+    for pi=1,#args do
+        local redutype,redulist,weight
+        if pi <= #parameters then
+            redutype = parameters[ pi].type
+            redulist,weight = tryGetWeightedParameterReductionList(
+                        node, redutype, args[ pi],
+                        tagmask_matchParameter, tagmask_typeConversion)
+        else
+            redutype = getVarargArgumentType( args[ pi].type)
+            if redutype then
+                redulist,weight = tryGetWeightedParameterReductionList(
+                            node, redutype, args[ pi],
+                            tagmask_pushVararg, tagmask_typeConversion)
+            end
+        end
+        if not weight then return nil end
+        if rt.weight < weight then -- use max(a,b) as weight accumulation function
+            rt.weight = weight
+        end
+        table.insert( rt.redulist, redulist)
+        local descr = typeDescriptionMap[ redutype]
+        table.insert( rt.llvmtypes, descr.llvmtype)
+    end
+    return rt
 end
 -- Select the candidate items with the highest weight not exceeding maxweight
 function selectCandidateItemsBestWeight( items, item_parameter_map, maxweight)
-	local candidates,bestweight = {},nil
-	for ii,item in ipairs(items) do
-		if item_parameter_map[ ii] then -- we have a match
-			local weight = item_parameter_map[ ii].weight
-			if not maxweight or maxweight > weight + weightEpsilon then
-				-- we have a candidate not looked at yet
-				if not bestweight then
-					candidates = {ii}
-					bestweight = weight
-				elseif weight < bestweight + weightEpsilon then
-					if weight >= bestweight - weightEpsilon then
-						-- they are equal
-						table.insert( candidates, ii)
-					else
-						-- the new candidate is the single best match
-						candidates = {ii}
-						bestweight = weight
-					end
-				end
-			end
-		end
-	end
-	return candidates,bestweight
+    local candidates,bestweight = {},nil
+    for ii,item in ipairs(items) do
+        if item_parameter_map[ ii] then -- we have a match
+            local weight = item_parameter_map[ ii].weight
+            if not maxweight or maxweight > weight + weightEpsilon then
+                -- we have a candidate not looked at yet
+                if not bestweight then
+                    candidates = {ii}
+                    bestweight = weight
+                elseif weight < bestweight + weightEpsilon then
+                    if weight >= bestweight - weightEpsilon then
+                        -- they are equal
+                        table.insert( candidates, ii)
+                    else
+                        -- the new candidate is the single best match
+                        candidates = {ii}
+                        bestweight = weight
+                    end
+                end
+            end
+        end
+    end
+    return candidates,bestweight
 end
 -- Get the best matching item from a list of items by weighting the matching of
 --   the arguments to the item parameter types
 function selectItemsMatchParameters( node, items, args, this_constructor)
-	local item_parameter_map = {}
-	local bestmatch = {}
-	local candidates = {}
-	local bestweight = nil
-	local bestgroup = 0
-	for ii,item in ipairs(items) do
-		local nof_params = typedb:type_nof_parameters( item)
-		if nof_params == #args then
-			local param = typedb:type_parameters( item)
-			item_parameter_map[ ii] = collectItemParameter( node, item, args, param)
-		end
-	end
-	while next(item_parameter_map) ~= nil do -- until no candidate groups left
-		candidates,bestweight
-			= selectCandidateItemsBestWeight( items, item_parameter_map, bestweight)
-		for _,ii in ipairs(candidates) do
-			local item_constructor = typedb:type_constructor( items[ ii])
-			local call_constructor
-			if not item_constructor and #args == 0 then
-				call_constructor = this_constructor
-			else
-				local ac,success = nil,true
-				local arg_constructors = {}
-				for ai=1,#args do
-					ac,success = tryApplyReductionList( node,
-							item_parameter_map[ ii].redulist[ ai],
-							args[ ai].constructor)
-					if not success then break end
-					table.insert( arg_constructors, ac)
-				end
-				if success then
-					call_constructor = item_constructor( this_constructor, arg_constructors,
-										item_parameter_map[ ii].llvmtypes)
-				end
-			end
-			if call_constructor then
-				table.insert( bestmatch, {type=items[ ii], constructor=call_constructor})
-			end
-			item_parameter_map[ ii] = nil
-		end
-		if #bestmatch ~= 0 then return bestmatch,bestweight end
-	end
+    local item_parameter_map = {}
+    local bestmatch = {}
+    local candidates = {}
+    local bestweight = nil
+    local bestgroup = 0
+    for ii,item in ipairs(items) do
+        local nof_params = typedb:type_nof_parameters( item)
+        if nof_params == #args then
+            local param = typedb:type_parameters( item)
+            item_parameter_map[ ii] = collectItemParameter( node,item,args,param)
+        end
+    end
+    while next(item_parameter_map) ~= nil do -- until no candidate groups left
+        candidates,bestweight
+            = selectCandidateItemsBestWeight( items,item_parameter_map,bestweight)
+        for _,ii in ipairs(candidates) do
+            local item_constructor = typedb:type_constructor( items[ ii])
+            local call_constructor
+            if not item_constructor and #args == 0 then
+                call_constructor = this_constructor
+            else
+                local ac,success = nil,true
+                local arg_constructors = {}
+                for ai=1,#args do
+                    ac,success = tryApplyReductionList( node,
+                            item_parameter_map[ ii].redulist[ ai],
+                            args[ ai].constructor)
+                    if not success then break end
+                    table.insert( arg_constructors, ac)
+                end
+                if success then
+                    call_constructor
+                        = item_constructor( this_constructor, arg_constructors,
+                                        item_parameter_map[ ii].llvmtypes)
+                end
+            end
+            if call_constructor then
+                local match = {type=items[ ii], constructor=call_constructor}
+                table.insert( bestmatch, match)
+            end
+            item_parameter_map[ ii] = nil
+        end
+        if #bestmatch ~= 0 then return bestmatch,bestweight end
+    end
 end
 -- Find a callable identified by name and its arguments (parameter matching)
 --   in the context of a type (this)
 function findCallable( node, this, callable, args)
-	local resolveContextType,reductions,items
-		= typedb:resolve_type( this.type, callable, tagmask_resolveType)
-	if not resolveContextType then return nil end
-	if type(resolveContextType) == "table" then
-		io.stderr:write( "TRACE typedb:resolve_type\n"
-				.. utils.getResolveTypeTrace( typedb, this.type, callable,
-						tagmask_resolveType) .. "\n")
-		utils.errorResolveType( typedb, node.line,
-					resolveContextType, this.type, callable)
-	end
-	local this_constructor
-		= applyReductionList( node, reductions, this.constructor)
-	local bestmatch,bestweight
-		= selectItemsMatchParameters( node, items, args or {}, this_constructor)
-	return bestmatch,bestweight
+    local resolveContextType,reductions,items
+        = typedb:resolve_type( this.type, callable, tagmask_resolveType)
+    if not resolveContextType then return nil end
+    if type(resolveContextType) == "table" then
+        io.stderr:write( "TRACE typedb:resolve_type\n"
+                .. utils.getResolveTypeTrace( typedb, this.type, callable,
+                        tagmask_resolveType) .. "\n")
+        utils.errorResolveType( typedb, node.line,
+                    resolveContextType, this.type, callable)
+    end
+    local this_constructor
+        = applyReductionList( node, reductions, this.constructor)
+    local bestmatch,bestweight
+        = selectItemsMatchParameters( node, items, args or {}, this_constructor)
+    return bestmatch,bestweight
 end
 -- Filter best result and report error on ambiguity
 function getCallableBestMatch( node, bestmatch, bestweight, this, callable, args)
-	if #bestmatch == 1 then
-		return bestmatch[1]
-	elseif #bestmatch == 0 then
-		return nil
-	else
-		local altmatchstr = ""
-		for ii,bm in ipairs(bestmatch) do
-			if altmatchstr ~= "" then
-				altmatchstr = altmatchstr .. ", "
-			end
-			altmatchstr = altmatchstr .. typedb:type_string(bm.type)
-		end
-		utils.errorMessage( node.line,
-					"Ambiguous matches resolving callable '%s', candidates: %s",
-					typeDeclarationString( this, callable, args), altmatchstr)
-	end
+    if #bestmatch == 1 then
+        return bestmatch[1]
+    elseif #bestmatch == 0 then
+        return nil
+    else
+        local altmatchstr = ""
+        for ii,bm in ipairs(bestmatch) do
+            if altmatchstr ~= "" then
+                altmatchstr = altmatchstr .. ", "
+            end
+            altmatchstr = altmatchstr .. typedb:type_string(bm.type)
+        end
+        utils.errorMessage( node.line,
+                    "Ambiguous matches resolving callable '%s', candidates: %s",
+                    typeDeclarationString( this, callable, args), altmatchstr)
+    end
 end
 -- Retrieve and apply a callable in a specified context
 function applyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findCallable( node, this, callable, args)
-	if not bestweight then
-		io.stderr:write( "TRACE typedb:resolve_type\n"
-				.. utils.getResolveTypeTrace( typedb, this.type, callable,
-						tagmask_resolveType) .. "\n")
-		utils.errorMessage( node.line, "Failed to find callable with signature '%s'",
-					typeDeclarationString( this, callable, args))
-	end
-	local rt = getCallableBestMatch( node, bestmatch, bestweight,
-						this, callable, args)
-	if not rt then
-		utils.errorMessage( node.line, "Failed to match parameters to callable '%s'",
-					typeDeclarationString( this, callable, args))
-	end
-	return rt
+    local bestmatch,bestweight = findCallable( node, this, callable, args)
+    if not bestweight then
+        io.stderr:write( "TRACE typedb:resolve_type\n"
+                .. utils.getResolveTypeTrace( typedb, this.type, callable,
+                        tagmask_resolveType) .. "\n")
+        utils.errorMessage( node.line, "Failed to find callable '%s'",
+                    typeDeclarationString( this, callable, args))
+    end
+    local rt = getCallableBestMatch( node, bestmatch, bestweight,
+                        this, callable, args)
+    if not rt then
+        utils.errorMessage( node.line, "Failed to match params to callable '%s'",
+                    typeDeclarationString( this, callable, args))
+    end
+    return rt
 end
 -- Try to retrieve a callable in a specified context, apply it and return its
 --   type/constructor pair, return nil if not found
 function tryApplyCallable( node, this, callable, args)
-	local bestmatch,bestweight = findCallable( node, this, callable, args)
-	if bestweight then return getCallableBestMatch( node, bestmatch, bestweight) end
+    local bestmatch,bestweight = findCallable( node, this, callable, args)
+    if bestweight then
+        return getCallableBestMatch( node, bestmatch, bestweight)
+    end
 end
 
 ```
@@ -2038,61 +2087,63 @@ Here are the building blocks for defining constructors.
 ```Lua
 -- Get the two parts of a constructor as tuple
 function constructorParts( constructor)
-	if type(constructor) == "table" then
-		return constructor.out,(constructor.code or "")
-	else
-		return tostring(constructor),""
-	end
+    if type(constructor) == "table" then
+        return constructor.out,(constructor.code or "")
+    else
+        return tostring(constructor),""
+    end
 end
 -- Get a constructor structure
 function constructorStruct( out, code)
-	return {out=out, code=code or ""}
+    return {out=out, code=code or ""}
 end
 -- Create a type/constructor pair as used by most functions constructing a type
 function typeConstructorPairStruct( type, out, code)
-	return {type=type, constructor=constructorStruct( out, code)}
+    return {type=type, constructor=constructorStruct( out, code)}
 end
 -- Builds the argument string and the argument build-up code for a function call
 --   or interface method call constructors
 function buildCallArguments( subst, thisTypeId, thisConstructor, args, types)
-	local this_inp,code = constructorParts(thisConstructor or "%UNDEFINED")
-	local callargstr = ""
-	if types and thisTypeId and thisTypeId ~= 0 then
-		callargstr = typeDescriptionMap[ thisTypeId].llvmtype .. " " .. this_inp .. ", "
-	end
-	if args then
-		for ii=1,#args do
-			local arg = args[ ii]
-			local arg_inp,arg_code = constructorParts( arg)
-			subst[ "arg" .. ii] = arg_inp
-			if types then
-				local llvmtype = types[ ii].llvmtype
-				if not llvmtype then
-					utils.errorMessage( 0, "Parameter has no LLVM type specified")
-				end
-				callargstr = callargstr .. llvmtype .. " " .. tostring(arg_inp) .. ", "
-			end
-			code = code .. arg_code
-		end
-	end
-	if types or thisTypeId ~= 0 then callargstr = callargstr:sub(1, -3) end
-	subst.callargstr = callargstr
-	subst.this = this_inp
-	return code
+    local this_inp,code = constructorParts(thisConstructor or "%UNDEFINED")
+    local callargstr = ""
+    if types and thisTypeId and thisTypeId ~= 0 then
+        callargstr = typeDescriptionMap[ thisTypeId].llvmtype
+                    .. " " .. this_inp .. ", "
+    end
+    if args then
+        for ii=1,#args do
+            local arg = args[ ii]
+            local arg_inp,arg_code = constructorParts( arg)
+            subst[ "arg" .. ii] = arg_inp
+            if types then
+                local llvmtype = types[ ii].llvmtype
+                if not llvmtype then
+                    utils.errorMessage( 0, "Parameter has no LLVM type specified")
+                end
+                callargstr = callargstr .. llvmtype
+                        .. " " .. tostring(arg_inp) .. ", "
+            end
+            code = code .. arg_code
+        end
+    end
+    if types or thisTypeId ~= 0 then callargstr = callargstr:sub(1, -3) end
+    subst.callargstr = callargstr
+    subst.this = this_inp
+    return code
 end
 -- Constructor of a call with an self argument and some additional arguments
 function callConstructor( fmt, thisTypeId, argTypeIds, vartable)
-	return function( this_constructor, arg_constructors)
-		env = getCallableEnvironment()
-		local out = env.register()
-		local subst = utils.deepCopyStruct( vartable) or {}
-		subst.out = out
-		local code = buildCallArguments(
-					subst, thisTypeId or 0,
-					this_constructor, arg_constructors, argTypeIds)
-		code = code .. utils.constructor_format( fmt, subst, env.register)
-		return {code=code,out=out}
-	end
+    return function( this_constructor, arg_constructors)
+        env = getCallableEnvironment()
+        local out = env.register()
+        local subst = utils.deepCopyStruct( vartable) or {}
+        subst.out = out
+        local code = buildCallArguments(
+                    subst, thisTypeId or 0,
+                    this_constructor, arg_constructors, argTypeIds)
+        code = code .. utils.constructor_format( fmt, subst, env.register)
+        return {code=code,out=out}
+    end
 end
 
 ```
@@ -2103,54 +2154,54 @@ A callable is an intermediate type created to unify all cases of a function call
 ```Lua
 -- Get the parameter string of a function declaration
 function getDeclarationLlvmTypeRegParameterString( descr, context)
-	local rt = ""
-	if context.domain == "member" then
-		rt = rt .. typeDescriptionMap[ context.decltype].llvmtype .. "* %ths, "
-	end
-	for ai,arg in ipairs(descr.param or {}) do
-		rt = rt .. arg.llvmtype .. " " .. arg.reg .. ", "
-	end
-	if rt ~= "" then rt = rt:sub(1, -3) end
-	return rt
+    local rt = ""
+    if context.domain == "member" then
+        rt = rt .. typeDescriptionMap[ context.decltype].llvmtype .. "* %ths, "
+    end
+    for ai,arg in ipairs(descr.param or {}) do
+        rt = rt .. arg.llvmtype .. " " .. arg.reg .. ", "
+    end
+    if rt ~= "" then rt = rt:sub(1, -3) end
+    return rt
 end
 
 -- Get the parameter string of a function declaration
 function getDeclarationLlvmTypedefParameterString( descr, context)
-	local rt = ""
-	if context.domain == "member" then
-		rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, "
-	end
-	for ai,arg in ipairs(descr.param) do
-		rt = rt .. arg.llvmtype .. ", "
-	end
-	if rt ~= "" then rt = rt:sub(1, -3) end
-	return rt
+    local rt = ""
+    if context.domain == "member" then
+        rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, "
+    end
+    for ai,arg in ipairs(descr.param) do
+        rt = rt .. arg.llvmtype .. ", "
+    end
+    if rt ~= "" then rt = rt:sub(1, -3) end
+    return rt
 end
 
 -- Get (if already defined) or create the callable context type (function name)
 --   on which the "()" operator implements the function call
 function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
-	local rt = typedb:get_type( contextTypeId, name)
-	if not rt then
-		rt = typedb:def_type( contextTypeId, name)
-		typeDescriptionMap[ rt] = descr
-	end
-	return rt
+    local rt = typedb:get_type( contextTypeId, name)
+    if not rt then
+        rt = typedb:def_type( contextTypeId, name)
+        typeDescriptionMap[ rt] = descr
+    end
+    return rt
 end
 
 -- Define a direct function call: class method call, free function call
 function defineFunctionCall( node, descr, context)
-	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
-	descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
-	local contextType = getDeclarationContextTypeId(context)
-	local thisType = (contextType ~= 0) and referenceTypeMap[ contextType] or 0
-	local callablectx = getOrCreateCallableContextTypeId(
-				 thisType, descr.name, llvmir.callableDescr)
-	local fmt = descr.ret
-			and llvmir.control.functionCall
-			or llvmir.control.procedureCall
-	local constructor = callConstructor( fmt, thisType, descr.param, descr)
-	return defineCall( descr.ret, callablectx, "()", descr.param, constructor)
+    descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
+    descr.llvmtype = utils.template_format( llvmir.control.functionCallType, descr)
+    local contextType = getDeclarationContextTypeId(context)
+    local thisType = (contextType ~= 0) and referenceTypeMap[ contextType] or 0
+    local callablectx = getOrCreateCallableContextTypeId(
+                 thisType, descr.name, llvmir.callableDescr)
+    local fmt = descr.ret
+            and llvmir.control.functionCall
+            or llvmir.control.procedureCall
+    local constructor = callConstructor( fmt, thisType, descr.param, descr)
+    return defineCall( descr.ret, callablectx, "()", descr.param, constructor)
 end
 
 ```
@@ -2184,7 +2235,7 @@ typeDescriptionMap[ constexprBooleanType] = llvmir.constexprBooleanDescr
 typeDescriptionMap[ constexprStructureType] = llvmir.constexprStructDescr
 
 function isScalarConstExprValueType( initType)
-	return initType >= constexprIntegerType and initType <= stringType
+    return initType >= constexprIntegerType and initType <= stringType
 end
 
 scalarTypeMap["constexpr int"] = constexprIntegerType
@@ -2195,92 +2246,96 @@ scalarTypeMap["constexpr string"] = constexprStringType
 
 -- Create a constexpr node from a lexem in the AST
 function createConstexprValue( typeId, value)
-	if typeId == constexprBooleanType then
-		if value == "true" then return true else return false end
-	elseif typeId == constexprIntegerType or typeId == constexprDoubleType then
-		return tonumber(value)
-	elseif typeId == constexprStringType then
-		if not stringConstantMap[ value] then
-			local encval,enclen = utils.encodeLexemLlvm(value)
-			local name = utils.uniqueName( "string")
-			stringConstantMap[ value] = {size=enclen+1,name=name}
-			local subst = {name=name, size=enclen+1, value=encval}
-			local fmt = llvmir.control.stringConstDeclaration
-			print_section( "Constants", utils.constructor_format( fmt, subst) .. "\n")
-		end
-		return stringConstantMap[ value]
-	end
+    if typeId == constexprBooleanType then
+        if value == "true" then return true else return false end
+    elseif typeId == constexprIntegerType or typeId == constexprDoubleType then
+        return tonumber(value)
+    elseif typeId == constexprStringType then
+        if not stringConstantMap[ value] then
+            local encval,enclen = utils.encodeLexemLlvm(value)
+            local name = utils.uniqueName( "string")
+            stringConstantMap[ value] = {size=enclen+1,name=name}
+            local subst = {name=name, size=enclen+1, value=encval}
+            local fmt = llvmir.control.stringConstDeclaration
+            print_section( "Constants",
+                utils.constructor_format( fmt, subst) .. "\n")
+        end
+        return stringConstantMap[ value]
+    end
 end
 -- List of value constructors from constexpr constructors
 function constexprDoubleToDoubleConstructor( val)
-	return constructorStruct( "0x" .. mewa.llvm_double_tohex( val))
+    return constructorStruct( "0x" .. mewa.llvm_double_tohex( val))
 end
 function constexprDoubleToIntegerConstructor( val)
-	return constructorStruct( tostring(tointeger(val)))
+    return constructorStruct( tostring(tointeger(val)))
 end
 function constexprDoubleToBooleanConstructor( val)
-	return constructorStruct( math.abs(val) < epsilon and "0" or "1")
+    return constructorStruct( math.abs(val) < epsilon and "0" or "1")
 end
 function constexprIntegerToDoubleConstructor( val)
-	return constructorStruct( "0x" .. mewa.llvm_double_tohex( val))
+    return constructorStruct( "0x" .. mewa.llvm_double_tohex( val))
 end
 function constexprIntegerToIntegerConstructor( val)
-	return constructorStruct( tostring(val))
+    return constructorStruct( tostring(val))
 end
 function constexprIntegerToBooleanConstructor( val)
-	return constructorStruct( val == "0" and "0" or "1")
+    return constructorStruct( val == "0" and "0" or "1")
 end
 function constexprBooleanToScalarConstructor( val)
-	return constructorStruct( val == true and "1" or "0")
+    return constructorStruct( val == true and "1" or "0")
 end
 
 function defineBinopConstexpr( typ, opr, constructor)
-	defineCall( typ, typ, opr, {typ}, constructor)
+    defineCall( typ, typ, opr, {typ}, constructor)
 end
 function defineBinopConstexprPromote( typ, promotetyp, opr, promote)
-	definePromoteCall( promotetyp, typ, promotetyp, opr, {promotetyp}, promote)
+    definePromoteCall( promotetyp, typ, promotetyp, opr, {promotetyp}, promote)
 end
 -- Define arithmetics of constant expressions
 function defineConstExprArithmetics()
-	defineCall( constexprIntegerType, constexprIntegerType, "-", {},
-				function(this) return -this end)
-	defineCall( constexprDoubleType, constexprDoubleType, "-", {},
-				function(this) return -this end)
-	defineBinopConstexpr( constexprIntegerType, "+", function(t,a) return t+a[1] end)
-	defineBinopConstexpr( constexprIntegerType, "-", function(t,a) return t-a[1] end)
-	defineBinopConstexpr( constexprIntegerType, "*",
-				function(t,a) return tointeger(t*a[1]) end)
-	defineBinopConstexpr( constexprIntegerType, "/",
-				function(t,a) return tointeger(t/a[1]) end)
-	defineBinopConstexpr( constexprDoubleType, "+", function(t,a) return t+a[1] end)
-	defineBinopConstexpr( constexprDoubleType, "-", function(t,a) return t-a[1] end)
-	defineBinopConstexpr( constexprDoubleType, "*", function(t,a) return t*a[1] end)
-	defineBinopConstexpr( constexprDoubleType, "/", function(t,a) return t/a[1] end)
-
-	-- Define arithmetic operators of integers with a double as promotion of the
-	--   left-hand integer to a double and an operator of a double with a double:
-	for _,opr in ipairs({"+","-","*","/"}) do
-		defineBinopConstexprPromote( constexprIntegerType, constexprDoubleType, opr,
-					function(this) return this end)
-	end
+    defineCall( constexprIntegerType, constexprIntegerType, "-", {},
+                function(this) return -this end)
+    defineCall( constexprDoubleType, constexprDoubleType, "-", {},
+                function(this) return -this end)
+    do
+        local typ = constexprIntegerType
+        defineBinopConstexpr( typ, "+", function(t,a) return t+a[1] end)
+        defineBinopConstexpr( typ, "-", function(t,a) return t-a[1] end)
+        defineBinopConstexpr( typ, "*", function(t,a) return tointeger(t*a[1]) end)
+        defineBinopConstexpr( typ, "/", function(t,a) return tointeger(t/a[1]) end)
+    end
+    do
+        local typ = constexprDoubleType
+        defineBinopConstexpr( typ, "+", function(t,a) return t+a[1] end)
+        defineBinopConstexpr( typ, "-", function(t,a) return t-a[1] end)
+        defineBinopConstexpr( typ, "*", function(t,a) return t*a[1] end)
+        defineBinopConstexpr( typ, "/", function(t,a) return t/a[1] end)
+    end
+    -- Define arithmetic operators of integers with a double as promotion of the
+    --   left-hand integer to a double and an operator of a double with a double:
+    for _,opr in ipairs({"+","-","*","/"}) do
+        defineBinopConstexprPromote( constexprIntegerType, constexprDoubleType, opr,
+                    function(this) return this end)
+    end
 end
 -- Define the type conversions of const expressions to other const expression types
 function defineConstExprTypeConversions()
-	typedb:def_reduction( constexprBooleanType, constexprIntegerType,
-			function( value) return math.abs(value) > epsilon end,
-			tag_typeConversion, rdw_constexpr_bool)
-	typedb:def_reduction( constexprBooleanType, constexprDoubleType,
-			function( value) return math.abs(value) > epsilon end,
-			tag_typeConversion, rdw_constexpr_bool)
-	typedb:def_reduction( constexprDoubleType, constexprIntegerType,
-			function( value) return value end,
-			tag_typeConversion, rdw_constexpr_float)
-	typedb:def_reduction( constexprIntegerType, constexprDoubleType,
-			function( value) return math.floor(value) end,
-			tag_typeConversion, rdw_constexpr_float)
-	typedb:def_reduction( constexprIntegerType, constexprBooleanType,
-			function( value) return value and 1 or 0 end,
-			tag_typeConversion, rdw_constexpr_bool)
+    typedb:def_reduction( constexprBooleanType, constexprIntegerType,
+            function( value) return math.abs(value) > epsilon end,
+            tag_typeConversion, rdw_constexpr_bool)
+    typedb:def_reduction( constexprBooleanType, constexprDoubleType,
+            function( value) return math.abs(value) > epsilon end,
+            tag_typeConversion, rdw_constexpr_bool)
+    typedb:def_reduction( constexprDoubleType, constexprIntegerType,
+            function( value) return value end,
+            tag_typeConversion, rdw_constexpr_float)
+    typedb:def_reduction( constexprIntegerType, constexprDoubleType,
+            function( value) return math.floor(value) end,
+            tag_typeConversion, rdw_constexpr_float)
+    typedb:def_reduction( constexprIntegerType, constexprBooleanType,
+            function( value) return value and 1 or 0 end,
+            tag_typeConversion, rdw_constexpr_bool)
 end
 
 ```
@@ -2293,133 +2348,133 @@ This section implements the creation of the first class scalar types from their 
 ```Lua
 -- Define built-in promote calls for first class citizen scalar types
 function defineBuiltInTypePromoteCalls( typnam, descr)
-	local typeId = scalarTypeMap[ typnam]
-	for i,promote_typnam in ipairs( descr.promote) do
-		local promote_typeId = scalarTypeMap[ promote_typnam]
-		local promote_descr = typeDescriptionMap[ promote_typeId]
-		local promote_conv_fmt = promote_descr.conv[ typnam].fmt
-		local promote_conv = promote_conv_fmt and callConstructor( promote_conv_fmt)
-		if promote_descr.binop then
-			for operator,operator_fmt in pairs( promote_descr.binop) do
-				definePromoteCall(
-					promote_typeId, typeId, promote_typeId,
-					operator, {promote_typeId}, promote_conv)
-			end
-		end
-		if promote_descr.cmpop then
-			for operator,operator_fmt in pairs( promote_descr.cmpop) do
-				definePromoteCall(
-					scalarBooleanType, typeId, promote_typeId,
-					operator, {promote_typeId}, promote_conv)
-			end
-		end
-	end
+    local typeId = scalarTypeMap[ typnam]
+    for i,promote_typnam in ipairs( descr.promote) do
+        local promote_typeId = scalarTypeMap[ promote_typnam]
+        local promote_descr = typeDescriptionMap[ promote_typeId]
+        local promote_conv_fmt = promote_descr.conv[ typnam].fmt
+        local promote_conv = promote_conv_fmt and callConstructor( promote_conv_fmt)
+        if promote_descr.binop then
+            for operator,operator_fmt in pairs( promote_descr.binop) do
+                definePromoteCall(
+                    promote_typeId, typeId, promote_typeId,
+                    operator, {promote_typeId}, promote_conv)
+            end
+        end
+        if promote_descr.cmpop then
+            for operator,operator_fmt in pairs( promote_descr.cmpop) do
+                definePromoteCall(
+                    scalarBooleanType, typeId, promote_typeId,
+                    operator, {promote_typeId}, promote_conv)
+            end
+        end
+    end
 end
 -- Define the promote calls of a const expression for a binary scalar operator
 function defineBinopConstexprPromoteCalls( resultType, operator, argtype, descr)
-	if descr.llvmtype == "double" then
-		definePromoteCall( resultType, constexprDoubleType, argtype,
-					operator, {argtype}, constexprDoubleToDoubleConstructor)
-		definePromoteCall( resultType, constexprIntegerType, argtype,
-					operator, {argtype}, constexprIntegerToDoubleConstructor)
-		definePromoteCall( resultType, constexprBooleanType, argtype,
-					operator, {argtype}, constexprBooleanToScalarConstructor)
-	elseif descr.class == "bool" then
-		definePromoteCall( resultType, constexprBooleanType, argtype,
-					operator, {argtype}, constexprBooleanToScalarConstructor)
-	elseif descr.class == "signed" then
-		definePromoteCall( resultType, constexprIntegerType, argtype,
-					operator, {argtype}, constexprIntegerToIntegerConstructor)
-		definePromoteCall( resultType, constexprBooleanType, argtype,
-					operator, {argtype}, constexprBooleanToScalarConstructor)
-	end
+    if descr.llvmtype == "double" then
+        definePromoteCall( resultType, constexprDoubleType, argtype,
+                    operator, {argtype}, constexprDoubleToDoubleConstructor)
+        definePromoteCall( resultType, constexprIntegerType, argtype,
+                    operator, {argtype}, constexprIntegerToDoubleConstructor)
+        definePromoteCall( resultType, constexprBooleanType, argtype,
+                    operator, {argtype}, constexprBooleanToScalarConstructor)
+    elseif descr.class == "bool" then
+        definePromoteCall( resultType, constexprBooleanType, argtype,
+                    operator, {argtype}, constexprBooleanToScalarConstructor)
+    elseif descr.class == "signed" then
+        definePromoteCall( resultType, constexprIntegerType, argtype,
+                    operator, {argtype}, constexprIntegerToIntegerConstructor)
+        definePromoteCall( resultType, constexprBooleanType, argtype,
+                    operator, {argtype}, constexprBooleanToScalarConstructor)
+    end
 end
 
 -- Helper functions to define binary operators of first class scalar types
 function defineBuiltInBinaryOperators( typnam, descr, operators, resultTypeId)
-	for opr,fmt in pairs(operators) do
-		local typeId = scalarTypeMap[ typnam]
-		local descr = typeDescriptionMap[ typeId]
-		defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt))
-		defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, descr)
-	end
+    for opr,fmt in pairs(operators) do
+        local typeId = scalarTypeMap[ typnam]
+        local descr = typeDescriptionMap[ typeId]
+        defineCall( resultTypeId, typeId, opr, {typeId}, callConstructor( fmt))
+        defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, descr)
+    end
 end
 -- Helper functions to define binary operators of first class scalar types
 function defineBuiltInUnaryOperators( typnam, descr, operators, resultTypeId)
-	for opr,fmt in ipairs(operators) do
-		local typeId = scalarTypeMap[ typnam]
-		local descr = typeDescriptionMap[ typeId]
-		defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt))
-		defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, descr)
-	end
+    for opr,fmt in ipairs(operators) do
+        local typeId = scalarTypeMap[ typnam]
+        local descr = typeDescriptionMap[ typeId]
+        defineCall( resultTypeId, typeId, opr, {}, callConstructor( fmt))
+        defineBinopConstexprPromoteCalls( resultTypeId, opr, typeId, descr)
+    end
 end
 -- Constructor of a string pointer from a string definition
 function stringPointerConstructor( stringdef)
-	local env = getCallableEnvironment()
-	local out = env.register()
-	local subst = {size=stringdef.size,name=stringdef.name,out=out}
-	local code = utils.template_format( llvmir.control.stringConstConstructor, subst)
-	return constructorStruct( out, code)
+    local env = getCallableEnvironment()
+    local out = env.register()
+    local subst = {size=stringdef.size,name=stringdef.name,out=out}
+    local fmt = llvmir.control.stringConstConstructor
+    local code = utils.template_format( fmt, subst)
+    return constructorStruct( out, code)
 end
 -- Initialize all built-in types
 function initBuiltInTypes()
-	-- Define the first class scalar types
-	for typnam, descr in pairs( llvmir.scalar) do
-		local typeId = defineDataType( {line=0}, 0, typnam, descr)
-		if typnam == "int" then
-			scalarIntegerType = typeId
-			typedb:def_reduction( typeId, constexprIntegerType,
-						constexprIntegerToIntegerConstructor, tag_typeInstantiation)
-		elseif typnam == "double" then
-			scalarDoubleType = typeId
-			typedb:def_reduction( typeId, constexprDoubleType,
-						constexprDoubleToDoubleConstructor, tag_typeInstantiation)
-		elseif typnam == "bool" then
-			scalarBooleanType = typeId
-			typedb:def_reduction( typeId, constexprBooleanType,
-						constexprBooleanToScalarConstructor, tag_typeInstantiation)
-		end
-		scalarTypeMap[ typnam] = typeId
-	end
-	-- Define the conversions between built-in types
-	for typnam, descr in pairs( llvmir.scalar) do
-		local typeId = scalarTypeMap[ typnam]
-		for typnam_conv,conv in pairs(descr.conv) do
-			local typeId_conv = scalarTypeMap[ typnam_conv]
-			typedb:def_reduction( typeId, typeId_conv, callConstructor( conv.fmt),
-						 tag_typeConversion, conv.weight)
-		end
-	end
-	-- Define operators
-	for typnam, descr in pairs( llvmir.scalar) do
-		local typeId = scalarTypeMap[ typnam]
-		defineBuiltInBinaryOperators( typnam, descr, descr.binop, typeId)
-		defineBuiltInBinaryOperators( typnam, descr, descr.cmpop, scalarBooleanType)
-		defineBuiltInUnaryOperators( typnam, descr, descr.unop, typeId)
-		defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId},
-				callConstructor( descr.assign))
-		defineCall( voidType, referenceTypeMap[ typeId], "=", {},
-					callConstructor( descr.assign, 0, nil,
-					{arg1=descr.default}))
-	end
-	-- Define operators with promoting of the left side argument
-	for typnam, descr in pairs( llvmir.scalar) do
-		defineBuiltInTypePromoteCalls( typnam, descr)
-	end
-	-- String type
-	local string_descr = typeDescriptionMap[ stringType]
-	local string_refType = referenceTypeMap[ stringType]
-	typedb:def_reduction( stringType, string_refType,
-					callConstructor( string_descr.load), tag_typeInstantiation)
-	typedb:def_reduction( stringType, constexprStringType,
-					stringPointerConstructor, tag_typeInstantiation)
-	defineCall( voidType, string_refType, "=", {stringType},
-					callConstructor( string_descr.assign))
-	defineCall( voidType, string_refType, "=", {},
-					callConstructor( string_descr.assign, 0, nil,
-					{arg1=string_descr.default}))
+    -- Define the first class scalar types
+    for typnam, descr in pairs( llvmir.scalar) do
+        local typeId = defineDataType( {line=0}, 0, typnam, descr)
+        if typnam == "int" then
+            scalarIntegerType = typeId
+            typedb:def_reduction( typeId, constexprIntegerType,
+                        constexprIntegerToIntegerConstructor, tag_typeInstantiation)
+        elseif typnam == "double" then
+            scalarDoubleType = typeId
+            typedb:def_reduction( typeId, constexprDoubleType,
+                        constexprDoubleToDoubleConstructor, tag_typeInstantiation)
+        elseif typnam == "bool" then
+            scalarBooleanType = typeId
+            typedb:def_reduction( typeId, constexprBooleanType,
+                        constexprBooleanToScalarConstructor, tag_typeInstantiation)
+        end
+        scalarTypeMap[ typnam] = typeId
+    end
+    -- Define the conversions between built-in types
+    for typnam, descr in pairs( llvmir.scalar) do
+        local typeId = scalarTypeMap[ typnam]
+        for typnam_conv,conv in pairs(descr.conv) do
+            local typeId_conv = scalarTypeMap[ typnam_conv]
+            typedb:def_reduction( typeId, typeId_conv, callConstructor( conv.fmt),
+                         tag_typeConversion, conv.weight)
+        end
+    end
+    -- Define operators
+    for typnam, descr in pairs( llvmir.scalar) do
+        local typeId = scalarTypeMap[ typnam]
+        defineBuiltInBinaryOperators( typnam, descr, descr.binop, typeId)
+        defineBuiltInBinaryOperators( typnam, descr, descr.cmpop, scalarBooleanType)
+        defineBuiltInUnaryOperators( typnam, descr, descr.unop, typeId)
+        defineCall( voidType, referenceTypeMap[ typeId], "=", {typeId},
+                callConstructor( descr.assign))
+        defineCall( voidType, referenceTypeMap[ typeId], "=", {},
+                    callConstructor( descr.assign, 0, nil,
+                    {arg1=descr.default}))
+    end
+    -- Define operators with promoting of the left side argument
+    for typnam, descr in pairs( llvmir.scalar) do
+        defineBuiltInTypePromoteCalls( typnam, descr)
+    end
+    -- String type
+    local string_descr = typeDescriptionMap[ stringType]
+    local string_refType = referenceTypeMap[ stringType]
+    typedb:def_reduction( stringType, string_refType,
+                    callConstructor( string_descr.load), tag_typeInstantiation)
+    typedb:def_reduction( stringType, constexprStringType,
+                    stringPointerConstructor, tag_typeInstantiation)
+    defineCall( voidType, string_refType, "=", {stringType},
+                    callConstructor( string_descr.assign))
+    defineCall( voidType, string_refType, "=", {},
+                    callConstructor( string_descr.assign, 0, nil,
+                    {arg1=string_descr.default}))
 end
-
 
 ```
 
@@ -2431,138 +2486,138 @@ One new thing is the use of the global variable ```localDefinitionContext``` as 
 ```Lua
 -- Define a member variable of a class or a structure
 function defineMemberVariable(
-		node, descr, context, typeId, refTypeId, name)
-	local memberpos = context.structsize or 0
-	local index = #context.members
-	local subst = {index=index, type=descr.llvmtype}
-	local load_ref = utils.template_format( context.descr.loadelemref, subst)
-	local load_val = utils.template_format( context.descr.loadelem, subst)
+            node, descr, context, typeId, refTypeId, name)
+    local memberpos = context.structsize or 0
+    local index = #context.members
+    local subst = {index=index, type=descr.llvmtype}
+    local load_ref = utils.template_format( context.descr.loadelemref, subst)
+    local load_val = utils.template_format( context.descr.loadelem, subst)
 
-	while math.fmod( memberpos, descr.align) ~= 0 do
-		memberpos = memberpos + 1
-	end
-	context.structsize = memberpos + descr.size
-	local member = { type = typeId, name = name, descr = descr, bytepos = memberpos }
-	table.insert( context.members, member)
-	if not context.llvmtype then
-		context.llvmtype = descr.llvmtype
-	else
-		context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype
-	end
-	defineCall( refTypeId, referenceTypeMap[ context.decltype], name, {},
-			callConstructor( load_ref))
-	defineCall( typeId, context.decltype, name, {},
-			callConstructor( load_val))
+    while math.fmod( memberpos, descr.align) ~= 0 do
+        memberpos = memberpos + 1
+    end
+    context.structsize = memberpos + descr.size
+    local member = { type=typeId, name=name, descr=descr, bytepos=memberpos }
+    table.insert( context.members, member)
+    if not context.llvmtype then
+        context.llvmtype = descr.llvmtype
+    else
+        context.llvmtype = context.llvmtype  .. ", " .. descr.llvmtype
+    end
+    defineCall( refTypeId, referenceTypeMap[ context.decltype], name, {},
+            callConstructor( load_ref))
+    defineCall( typeId, context.decltype, name, {},
+            callConstructor( load_val))
 end
 -- Define a free global variable
 function defineGlobalVariable(
-		node, descr, context, typeId, refTypeId, name, initVal)
-	local out = "@" .. name
-	local var = typedb:def_type( 0, name, out)
-	if var == -1 then
-		utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name)
-	end
-	typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
-	if initVal
-	and descr.scalar == true
-	and isScalarConstExprValueType( initVal.type) then
-		local initScalarConst
-			= constructorParts(
-				getRequiredTypeConstructor(
-					node, typeId, initVal,
-					tagmask_matchParameter, tagmask_typeConversion))
-		local subst = {out = out, val = initScalarConst}
-		print( utils.constructor_format( descr.def_global_val, subst))
-	else
-		utils.errorMessage( node.line, "Only const scalars as initializer of globals")
-	end
+            node, descr, context, typeId, refTypeId, name, initVal)
+    local out = "@" .. name
+    local var = typedb:def_type( 0, name, out)
+    if var == -1 then
+        utils.errorMessage( node.line, "Duplicate definition of '%s'", name)
+    end
+    typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
+    if initVal
+    and descr.scalar == true
+    and isScalarConstExprValueType( initVal.type) then
+        local initScalarConst
+            = constructorParts(
+                getRequiredTypeConstructor(
+                    node, typeId, initVal,
+                    tagmask_matchParameter, tagmask_typeConversion))
+        local subst = {out = out, val = initScalarConst}
+        print( utils.constructor_format( descr.def_global_val, subst))
+    else
+        utils.errorMessage( node.line, "Only const scalars as init of globals")
+    end
 end
 -- Define a free local variable
 function defineLocalVariable(
-		node, descr, context, typeId, refTypeId, name, initVal)
-	local env = getCallableEnvironment()
-	local out = env.register()
-	local code = utils.constructor_format( descr.def_local, {out = out}, env.register)
-	local var = typedb:def_type( localDefinitionContext, name, constructorStruct(out))
-	if var == -1 then
-		utils.errorMessage( node.line, "Duplicate definition of variable '%s'", name)
-	end
-	typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
-	local decl = {type=var, constructor={code=code,out=out}}
-	if type(initVal) == "function" then initVal = initVal() end
-	return applyCallable( node, decl, "=", {initVal})
+            node, descr, context, typeId, refTypeId, name, initVal)
+    local env = getCallableEnvironment()
+    local out = env.register()
+    local code = utils.constructor_format( descr.def_local, {out=out}, env.register)
+    local var = typedb:def_type( localDefinitionContext,name,constructorStruct(out))
+    if var == -1 then
+        utils.errorMessage( node.line, "Duplicate definition of '%s'", name)
+    end
+    typedb:def_reduction( refTypeId, var, nil, tag_typeDeclaration)
+    local decl = {type=var, constructor={code=code,out=out}}
+    if type(initVal) == "function" then initVal = initVal() end
+    return applyCallable( node, decl, "=", {initVal})
 end
 -- Define a variable (what kind is depending on the context)
 function defineVariable( node, context, typeId, name, initVal)
-	local descr = typeDescriptionMap[ typeId]
-	local refTypeId = referenceTypeMap[ typeId]
-	if not refTypeId then
-		utils.errorMessage( node.line, "Reference in variable declarations,: %s",
-					       typedb:type_string(typeId))
-	end
-	if context.domain == "local" then
-		return defineLocalVariable( node, descr, context,
-						typeId, refTypeId, name, initVal)
-	elseif context.domain == "global" then
-		return defineGlobalVariable( node, descr, context,
-						typeId, refTypeId, name, initVal)
-	elseif context.domain == "member" then
-		if initVal then
-			utils.errorMessage( node.line, "No initialization value for member allowed")
-		end
-		defineMemberVariable( node, descr, context, typeId, refTypeId, name)
-	else
-		utils.errorMessage( node.line, "Context domain undefined (%s)",
-							mewa.tostring(context))
-	end
+    local descr = typeDescriptionMap[ typeId]
+    local refTypeId = referenceTypeMap[ typeId]
+    if not refTypeId then
+        utils.errorMessage( node.line, "Reference in variable declarations,: %s",
+                           typedb:type_string(typeId))
+    end
+    if context.domain == "local" then
+        return defineLocalVariable( node, descr, context,
+                        typeId, refTypeId, name, initVal)
+    elseif context.domain == "global" then
+        return defineGlobalVariable( node, descr, context,
+                        typeId, refTypeId, name, initVal)
+    elseif context.domain == "member" then
+        if initVal then
+            utils.errorMessage( node.line, "No init value for member allowed")
+        end
+        defineMemberVariable( node, descr, context, typeId, refTypeId, name)
+    else
+        utils.errorMessage( node.line, "Context domain undefined (%s)",
+                            mewa.tostring(context))
+    end
 end
 -- Declare a variable implicitly that does not appear as definition in source
 function defineImplicitVariable( node, typeId, name, reg)
-	local var = typedb:def_type( localDefinitionContext, name, reg)
-	if var == -1 then
-		local declstr = typeDeclarationString( typeId, name)
-		utils.errorMessage( node.line, "Duplicate definition of variable '%s'", declstr)
-	end
-	typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
-	return var
+    local var = typedb:def_type( localDefinitionContext, name, reg)
+    if var == -1 then
+        local declstr = typeDeclarationString( typeId, name)
+        utils.errorMessage( node.line, "Duplicate type '%s'", declstr)
+    end
+    typedb:def_reduction( typeId, var, nil, tag_typeDeclaration)
+    return var
 end
 -- Make a function parameter addressable by name in the callable body
 function defineParameter( node, typeId, name)
-	local env = getCallableEnvironment()
-	local paramreg = env.register()
-	local var = typedb:def_type( localDefinitionContext, name, paramreg)
-	if var == -1 then
-		utils.errorMessage( node.line, "Duplicate definition of parameter '%s'",
-				typeDeclarationString( localDefinitionContext, name))
-	end
-	local descr = typeDescriptionMap[ typeId]
-	local ptype = (descr.scalar or descr.class == "pointer")
-				and typeId
-				or referenceTypeMap[ typeId]
-	if not ptype then
-		utils.errorMessage( node.line, "Cannot use type '%s' as parameter data type",
-					typedb:type_string(typeId))
-	end
-	typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
-	return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
+    local env = getCallableEnvironment()
+    local paramreg = env.register()
+    local var = typedb:def_type( localDefinitionContext, name, paramreg)
+    if var == -1 then
+        utils.errorMessage( node.line, "Duplicate definition of parameter '%s'",
+                typeDeclarationString( localDefinitionContext, name))
+    end
+    local descr = typeDescriptionMap[ typeId]
+    local ptype = (descr.scalar or descr.class == "pointer")
+                and typeId
+                or referenceTypeMap[ typeId]
+    if not ptype then
+        utils.errorMessage( node.line, "Cannot use type '%s' as parameter type",
+                    typedb:type_string(typeId))
+    end
+    typedb:def_reduction( ptype, var, nil, tag_typeDeclaration)
+    return {type=ptype, llvmtype=typeDescriptionMap[ ptype].llvmtype, reg=paramreg}
 end
 -- Resolve a variable by name and return its type/constructor structure
 function getVariable( node, varname)
-	local env = getCallableEnvironment()
-	local seekctx = getSeekContextTypes()
-	local resolveContextTypeId, reductions, items
-			= typedb:resolve_type( seekctx, varname, tagmask_resolveType)
-	local typeId,constructor = selectNoArgumentType( node, seekctx, varname,
-					tagmask_resolveType, resolveContextTypeId, reductions, items)
-	local variableScope = typedb:type_scope( typeId)
-	if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
-		-- the local variable is not belonging to another function
-		return {type=typeId, constructor=constructor}
-	else
-		utils.errorMessage( node.line, "Not allowed to access variable '%s' not "
-						.. "defined in current function or global scope",
-						typedb:type_string(typeId))
-	end
+    local env = getCallableEnvironment()
+    local seekctx = getSeekContextTypes()
+    local resolveContextTypeId, reductions, items
+            = typedb:resolve_type( seekctx, varname, tagmask_resolveType)
+    local typeId,constructor = selectNoArgumentType( node, seekctx, varname,
+                    tagmask_resolveType, resolveContextTypeId, reductions, items)
+    local variableScope = typedb:type_scope( typeId)
+    if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then
+        -- the local variable is not belonging to another function
+        return {type=typeId, constructor=constructor}
+    else
+        utils.errorMessage( node.line, "Not allowed to access variable '%s' not "
+                        .. "defined in current function or global scope",
+                        typedb:type_string(typeId))
+    end
 end
 
 
@@ -2580,119 +2635,122 @@ The ```getOrCreateArrayType``` function is a seldom case where the current scope
 ```Lua
 -- Define a data type with all its qualifiers
 function defineDataType( node, contextTypeId, typnam, descr)
-	local typeId = typedb:def_type( contextTypeId, typnam)
-	local refTypeId = typedb:def_type( contextTypeId, typnam .. "&")
-	if typeId <= 0 or refTypeId <= 0 then
-		utils.errorMessage( node.line, "Duplicate definition of '%s'", typnam)
-	end
-	referenceTypeMap[ typeId] = refTypeId
-	dereferenceTypeMap[ refTypeId] = typeId
-	typeDescriptionMap[ typeId] = descr
-	typeDescriptionMap[ refTypeId] = llvmir.pointerDescr(descr)
-	typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load),
-					tag_typeDeduction, rdw_load)
-	return typeId
+    local typeId = typedb:def_type( contextTypeId, typnam)
+    local refTypeId = typedb:def_type( contextTypeId, typnam .. "&")
+    if typeId <= 0 or refTypeId <= 0 then
+        utils.errorMessage( node.line, "Duplicate definition of '%s'", typnam)
+    end
+    referenceTypeMap[ typeId] = refTypeId
+    dereferenceTypeMap[ refTypeId] = typeId
+    typeDescriptionMap[ typeId] = descr
+    typeDescriptionMap[ refTypeId] = llvmir.pointerDescr(descr)
+    typedb:def_reduction( typeId, refTypeId, callConstructor( descr.load),
+                    tag_typeDeduction, rdw_load)
+    return typeId
 end
 -- Structure type definition for a class
 function defineStructureType( node, declContextTypeId, typnam, fmt)
-	local descr = utils.template_format( fmt, {symbol=typnam})
-	local typeId = defineDataType( node, declContextTypeId, typnam, descr)
-	return typeId,descr
+    local descr = utils.template_format( fmt, {symbol=typnam})
+    local typeId = defineDataType( node, declContextTypeId, typnam, descr)
+    return typeId,descr
 end
 -- Define the assignment operator of a class as memberwise assignment
 function defineClassStructureAssignmentOperator( node, typeId)
-	local descr = typeDescriptionMap[ typeId]
-	local function assignElementsConstructor( this, args)
-		local env = getCallableEnvironment()
-		if args and #args ~= 0 and #args ~= #descr.members then
-			utils.errorMessage( node.line, "Nof elements %d != not members %d in '%s'",
-						#args, #descr.members, typedb:type_string( typeId))
-		end
-		local this_inp,code = constructorParts( this)
-		for mi,member in ipairs(descr.members) do
-			local out = env.register()
-			local loadref = descr.loadelemref
-			local llvmtype = member.descr.llvmtype
-			local member_reftype = referenceTypeMap[ member.type]
-			local ths = {type=member_reftype,constructor=constructorStruct(out)}
-			local member_element = applyCallable( node, ths, "=", {args and args[mi]})
-			local subst = {out=out,this=this_inp,index=mi-1, type=llvmtype}
-			code = code
-				.. utils.constructor_format(loadref,subst)
-				.. member_element.constructor.code
-		end
-		return {code=code}
-	end
-	local function assignStructTypeConstructor( this, args)
-		return assignElementsConstructor( this, args[1].list)
-	end
-	defineCall( nil, referenceTypeMap[ typeId], "=", {constexprStructureType},
-				assignStructTypeConstructor)
-	defineCall( nil, referenceTypeMap[ typeId], "=", {},
-				assignElementsConstructor)
+    local descr = typeDescriptionMap[ typeId]
+    local function assignElementsConstructor( this, args)
+        local env = getCallableEnvironment()
+        if args and #args ~= 0 and #args ~= #descr.members then
+            utils.errorMessage( node.line, "Nof elements %d != members %d in '%s'",
+                        #args, #descr.members, typedb:type_string( typeId))
+        end
+        local this_inp,code = constructorParts( this)
+        for mi,member in ipairs(descr.members) do
+            local out = env.register()
+            local loadref = descr.loadelemref
+            local llvmtype = member.descr.llvmtype
+            local member_reftype = referenceTypeMap[ member.type]
+            local ths = {type=member_reftype,constructor=constructorStruct(out)}
+            local member_element
+                       = applyCallable( node, ths, "=", {args and args[mi]})
+            local subst = {out=out,this=this_inp,index=mi-1, type=llvmtype}
+            code = code
+                .. utils.constructor_format(loadref,subst)
+                .. member_element.constructor.code
+        end
+        return {code=code}
+    end
+    local function assignStructTypeConstructor( this, args)
+        return assignElementsConstructor( this, args[1].list)
+    end
+    defineCall( nil, referenceTypeMap[ typeId], "=", {constexprStructureType},
+                assignStructTypeConstructor)
+    defineCall( nil, referenceTypeMap[ typeId], "=", {},
+                assignElementsConstructor)
 end
 -- Define the index access operator for arrays
 function defineArrayIndexOperator( elemTypeId, arTypeId, arDescr)
-	defineCall( referenceTypeMap[elemTypeId], referenceTypeMap[arTypeId], "[]",
-				{scalarIntegerType}, callConstructor( arDescr.index[ "int"]))
+    defineCall( referenceTypeMap[elemTypeId], referenceTypeMap[arTypeId], "[]",
+                {scalarIntegerType}, callConstructor( arDescr.index[ "int"]))
 end
 -- Constructor for a memberwise assignment of an array from an initializer-list
 function memberwiseInitArrayConstructor(
-		node, thisTypeId, elementTypeId, nofElements)
-	return function( this, args)
-		if #args > nofElements then
-			utils.errorMessage( node.line, "Nof elements %d > %d for init '%s'",
-						#args, nofElements, typedb:type_string( thisTypeId))
-		end
-		local descr = typeDescriptionMap[ thisTypeId]
-		local descr_element = typeDescriptionMap[ elementTypeId]
-		local elementRefTypeId = referenceTypeMap[ elementTypeId] or elementTypeId
-		local env = getCallableEnvironment()
-		local this_inp,code = constructorParts( this)
-		for ai=1,nofElements do
-			local arg = (ai <= nofElements) and args[ai] or nil
-			local elemreg = env.register()
-			local elem = typeConstructorPairStruct( elementRefTypeId, elemreg)
-			local init = tryApplyCallable( node, elem, "=", {arg})
-			if not init then
-				utils.errorMessage( node.line, "Failed to find ctor with signature '%s'",
-							typeDeclarationString( elem, "=", {arg}))
-			end
-			local subst = {index=ai-1,this=this_inp,out=elemreg}
-			local fmt = descr.memberwise_index
-			local memberwise_next = utils.constructor_format( fmt, subst, env.register)
-			code = code .. memberwise_next .. init.constructor.code
-		end
-		return {out=this_inp, code=code}
-	end
+            node, thisType, elementType, nofElements)
+    return function( this, args)
+        if #args > nofElements then
+            utils.errorMessage( node.line, "Nof elements %d > %d for init '%s'",
+                        #args, nofElements, typedb:type_string( thisType))
+        end
+        local descr = typeDescriptionMap[ thisType]
+        local descr_element = typeDescriptionMap[ elementType]
+        local elementRefTypeId = referenceTypeMap[ elementType] or elementType
+        local env = getCallableEnvironment()
+        local this_inp,code = constructorParts( this)
+        for ai=1,nofElements do
+            local arg = (ai <= nofElements) and args[ai] or nil
+            local elemreg = env.register()
+            local elem = typeConstructorPairStruct( elementRefTypeId, elemreg)
+            local init = tryApplyCallable( node, elem, "=", {arg})
+            if not init then
+                utils.errorMessage( node.line, "Failed to find ctor '%s'",
+                            typeDeclarationString( elem, "=", {arg}))
+            end
+            local subst = {index=ai-1,this=this_inp,out=elemreg}
+            local fmt = descr.memberwise_index
+            local memberwise_next
+                    = utils.constructor_format( fmt, subst, env.register)
+            code = code .. memberwise_next .. init.constructor.code
+        end
+        return {out=this_inp, code=code}
+    end
 end
 -- Constructor for an assignment of a structure (initializer list) to an array
 function arrayStructureAssignmentConstructor(
-		node, thisTypeId, elementTypeId, nofElements)
-	local initfunction
-		= memberwiseInitArrayConstructor( node, thisTypeId, elementTypeId, nofElements)
-	return function( this, args)
-		return initfunction( this, args[1].list)
-	end
+        node, thisType, elementType, nofElements)
+    local initfunction
+        = memberwiseInitArrayConstructor( node, thisType, elementType, nofElements)
+    return function( this, args)
+        return initfunction( this, args[1].list)
+    end
 end
 -- Implicit on demand type definition for array
 function getOrCreateArrayType( node, elementType, arraySize)
-	local arrayKey = string.format( "%d[%d]", elementType, arraySize)
-	if not arrayTypeMap[ arrayKey] then
-		local scope_bk,step_bk = typedb:scope( typedb:type_scope( elementType))
-		local typnam = string.format( "[%d]", arraySize)
-		local elementDescr = typeDescriptionMap[ elementType]
-		local arrayDescr = llvmir.arrayDescr( elementDescr, arraySize)
-		local arrayType = defineDataType( node, elementType, typnam, arrayDescr)
-		local arrayRefType = referenceTypeMap[ arrayType]
-		arrayTypeMap[ arrayKey] = arrayType
-		defineArrayIndexOperator( elementType, arrayType, arrayDescr)
-		local constructor = arrayStructureAssignmentConstructor(
-						node, arrayType, elementType, arraySize)
-		defineCall( voidType, arrayRefType, "=", {constexprStructureType}, constructor)
-		typedb:scope( scope_bk,step_bk)
-	end
-	return arrayTypeMap[ arrayKey]
+    local arrayKey = string.format( "%d[%d]", elementType, arraySize)
+    if not arrayTypeMap[ arrayKey] then
+        local scope_bk,step_bk = typedb:scope( typedb:type_scope( elementType))
+        local typnam = string.format( "[%d]", arraySize)
+        local elementDescr = typeDescriptionMap[ elementType]
+        local arrayDescr = llvmir.arrayDescr( elementDescr, arraySize)
+        local arrayType = defineDataType( node, elementType, typnam, arrayDescr)
+        local arrayRefType = referenceTypeMap[ arrayType]
+        arrayTypeMap[ arrayKey] = arrayType
+        defineArrayIndexOperator( elementType, arrayType, arrayDescr)
+        local constructor = arrayStructureAssignmentConstructor(
+                        node, arrayType, elementType, arraySize)
+        defineCall( voidType, arrayRefType, "=",
+                        {constexprStructureType}, constructor)
+        typedb:scope( scope_bk,step_bk)
+    end
+    return arrayTypeMap[ arrayKey]
 end
 
 ```
@@ -2707,36 +2765,36 @@ The list of seek-context types is also dependent on a scope. When adding an elem
 ```Lua
 -- Get the context type for type declarations
 function getDeclarationContextTypeId( context)
-	if context.domain == "local" then return localDefinitionContext
-	elseif context.domain == "member" then return context.decltype
-	elseif context.domain == "global" then return 0
-	end
+    if context.domain == "local" then return localDefinitionContext
+    elseif context.domain == "member" then return context.decltype
+    elseif context.domain == "global" then return 0
+    end
 end
 -- Get an object instance and clone it if it is not stored in the current scope,
 --   making it possible to add elements to an inherited instance
 function thisInstanceTableClone( name, emptyInst)
-	local inst = typedb:this_instance( name)
-	if not inst then
-		inst = utils.deepCopyStruct( typedb:get_instance( name) or emptyInst)
-		typedb:set_instance( name, inst)
-	end
-	return inst
+    local inst = typedb:this_instance( name)
+    if not inst then
+        inst = utils.deepCopyStruct( typedb:get_instance( name) or emptyInst)
+        typedb:set_instance( name, inst)
+    end
+    return inst
 end
 -- Get the list of seek context types associated with the current scope
 function getSeekContextTypes()
-	return typedb:get_instance( seekContextKey) or {0}
+    return typedb:get_instance( seekContextKey) or {0}
 end
 -- Push an element to the current seek context type list
 function pushSeekContextType( val)
-	table.insert( thisInstanceTableClone( seekContextKey, {0}), val)
+    table.insert( thisInstanceTableClone( seekContextKey, {0}), val)
 end
 -- Remove the last element of the the list of seek context types
 function popSeekContextType( val)
-	local seekctx = typedb:this_instance( seekContextKey)
-	if not seekctx or seekctx[ #seekctx] ~= val then
-		utils.errorMessage( 0, "Corrupt definition context stack")
-	end
-	table.remove( seekctx, #seekctx)
+    local seekctx = typedb:this_instance( seekContextKey)
+    if not seekctx or seekctx[ #seekctx] ~= val then
+        utils.errorMessage( 0, "Corrupt definition context stack")
+    end
+    table.remove( seekctx, #seekctx)
 end
 
 ```
@@ -2748,37 +2806,37 @@ To mention is the function ```expandMethodEnvironment``` that declares the ```se
 ```Lua
 -- Create a callable environent object
 function createCallableEnvironment( node, name, rtype, rprefix, lprefix)
-	if rtype then
-		local descr = typeDescriptionMap[ rtype]
-		if not descr.scalar and not descr.class == "pointer" then
-			utils.errorMessage( node.line, "Only scalar types can be returned")
-		end
-	end
-	return {
-		name=name, line=node.line, scope=typedb:scope(),
-		register=utils.register_allocator(rprefix),
-		label=utils.label_allocator(lprefix), returntype=rtype
-	}
+    if rtype then
+        local descr = typeDescriptionMap[ rtype]
+        if not descr.scalar and not descr.class == "pointer" then
+            utils.errorMessage( node.line, "Only scalar types can be returned")
+        end
+    end
+    return {
+        name=name, line=node.line, scope=typedb:scope(),
+        register=utils.register_allocator(rprefix),
+        label=utils.label_allocator(lprefix), returntype=rtype
+    }
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype)
-	local env = createCallableEnvironment( node, name, rtype)
-	if typedb:this_instance( callableEnvKey) then
-		utils.errorMessage( node.line, "Callable environment defined twice: %s %s",
-					name, mewa.tostring({(typedb:scope())}))
-	end
-	typedb:set_instance( callableEnvKey, env)
-	return env
+    local env = createCallableEnvironment( node, name, rtype)
+    if typedb:this_instance( callableEnvKey) then
+        utils.errorMessage( node.line, "Callable env defined twice: %s %s",
+                    name, mewa.tostring({(typedb:scope())}))
+    end
+    typedb:set_instance( callableEnvKey, env)
+    return env
 end
 -- Get the active callable instance
 function getCallableEnvironment()
-	return typedb:get_instance( callableEnvKey)
+    return typedb:get_instance( callableEnvKey)
 end
 -- Set some variables needed in a class method implementation body
 function expandMethodEnvironment( node, context, descr, env)
-	local selfTypeId = referenceTypeMap[ context.decltype]
-	local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
-	pushSeekContextType( {type=classvar, constructor={out="%ths"}})
+    local selfTypeId = referenceTypeMap[ context.decltype]
+    local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
+    pushSeekContextType( {type=classvar, constructor={out="%ths"}})
 end
 
 ```
@@ -2789,146 +2847,147 @@ Here we have a complete definition of the control boolean types as introduced in
 ```Lua
 -- Initialize control boolean types used for implementing control structures
 function initControlBooleanTypes()
-	controlTrueType = typedb:def_type( 0, " controlTrueType")
-	controlFalseType = typedb:def_type( 0, " controlFalseType")
+    controlTrueType = typedb:def_type( 0, " controlTrueType")
+    controlFalseType = typedb:def_type( 0, " controlFalseType")
 
-	local function controlTrueTypeToBoolean( constructor)
-		local env = getCallableEnvironment()
-		local out = env.register()
-		local subst = {falseExit=constructor.out,out=out}
-		local fmt = llvmir.control.controlTrueTypeToBoolean
-		return {code = constructor.code
-				.. utils.constructor_format(fmt,subst,env.label),out=out}
-	end
-	local function controlFalseTypeToBoolean( constructor)
-		local env = getCallableEnvironment()
-		local out = env.register()
-		local subst = {trueExit=constructor.out,out=out}
-		local fmt = llvmir.control.controlFalseTypeToBoolean
-		return {code = constructor.code
-				.. utils.constructor_format( fmt,subst,env.label),out=out}
-	end
-	typedb:def_reduction( scalarBooleanType, controlTrueType,
-					controlTrueTypeToBoolean, tag_typeDeduction, rwd_control)
-	typedb:def_reduction( scalarBooleanType, controlFalseType,
-					controlFalseTypeToBoolean, tag_typeDeduction, rwd_control)
+    local function controlTrueTypeToBoolean( constructor)
+        local env = getCallableEnvironment()
+        local out = env.register()
+        local subst = {falseExit=constructor.out,out=out}
+        local fmt = llvmir.control.controlTrueTypeToBoolean
+        return {code = constructor.code
+                .. utils.constructor_format(fmt,subst,env.label),out=out}
+    end
+    local function controlFalseTypeToBoolean( constructor)
+        local env = getCallableEnvironment()
+        local out = env.register()
+        local subst = {trueExit=constructor.out,out=out}
+        local fmt = llvmir.control.controlFalseTypeToBoolean
+        return {code = constructor.code
+                .. utils.constructor_format( fmt,subst,env.label),out=out}
+    end
+    typedb:def_reduction( scalarBooleanType, controlTrueType,
+                    controlTrueTypeToBoolean, tag_typeDeduction, rwd_control)
+    typedb:def_reduction( scalarBooleanType, controlFalseType,
+                    controlFalseTypeToBoolean, tag_typeDeduction, rwd_control)
 
-	local function booleanToControlTrueType( constructor)
-		local env = getCallableEnvironment()
-		local out = env.label()
-		local subst = {inp=constructor.out, out=out}
-		local fmt = llvmir.control.booleanToControlTrueType
-		return {code = constructor.code
-				.. utils.constructor_format( fmt, subst, env.label),out=out}
-	end
-	local function booleanToControlFalseType( constructor)
-		local env = getCallableEnvironment()
-		local out = env.label()
-		local subst = {inp=constructor.out, out=out}
-		local fmt = llvmir.control.booleanToControlFalseType
-		return {code = constructor.code
-				.. utils.constructor_format( fmt, subst, env.label),out=out}
-	end
+    local function booleanToControlTrueType( constructor)
+        local env = getCallableEnvironment()
+        local out = env.label()
+        local subst = {inp=constructor.out, out=out}
+        local fmt = llvmir.control.booleanToControlTrueType
+        return {code = constructor.code
+                .. utils.constructor_format( fmt, subst, env.label),out=out}
+    end
+    local function booleanToControlFalseType( constructor)
+        local env = getCallableEnvironment()
+        local out = env.label()
+        local subst = {inp=constructor.out, out=out}
+        local fmt = llvmir.control.booleanToControlFalseType
+        return {code = constructor.code
+                .. utils.constructor_format( fmt, subst, env.label),out=out}
+    end
 
-	typedb:def_reduction( controlTrueType, scalarBooleanType,
-				booleanToControlTrueType, tag_typeDeduction, rwd_control)
-	typedb:def_reduction( controlFalseType, scalarBooleanType,
-				booleanToControlFalseType, tag_typeDeduction, rwd_control)
+    typedb:def_reduction( controlTrueType, scalarBooleanType,
+                booleanToControlTrueType, tag_typeDeduction, rwd_control)
+    typedb:def_reduction( controlFalseType, scalarBooleanType,
+                booleanToControlFalseType, tag_typeDeduction, rwd_control)
 
-	local function negateControlTrueType( this)
-		return {type=controlFalseType, constructor=this.constructor}
-	end
-	local function negateControlFalseType( this)
-		return {type=controlTrueType, constructor=this.constructor}
-	end
-	local function joinControlTrueTypeWithBool( this, arg)
-		local out = this.out
-		local subst = {inp=arg[1].out, out=out}
-		local fmt = llvmir.control.booleanToControlTrueType
-		local label_allocator = getCallableEnvironment().label
-		local code2 = utils.constructor_format( fmt, subst, label_allocator)
-		return {code=this.code .. arg[1].code .. code2, out=out}
-	end
-	local function joinControlFalseTypeWithBool( this, arg)
-		local out = this.out
-		local subst = {inp=arg[1].out, out=out}
-		local fmt = llvmir.control.booleanToControlFalseType
-		local label_allocator = getCallableEnvironment().label
-		local code2 = utils.constructor_format( fmt, subst, label_allocator)
-		return {code=this.code .. arg[1].code .. code2, out=out}
-	end
-	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
-	defineCall( controlFalseType, controlTrueType, "!", {}, nil)
-	defineCall( controlTrueType, controlTrueType, "&&",
-			{scalarBooleanType}, joinControlTrueTypeWithBool)
-	defineCall( controlFalseType, controlFalseType, "||",
-			{scalarBooleanType}, joinControlFalseTypeWithBool)
+    local function negateControlTrueType( this)
+        return {type=controlFalseType, constructor=this.constructor}
+    end
+    local function negateControlFalseType( this)
+        return {type=controlTrueType, constructor=this.constructor}
+    end
+    local function joinControlTrueTypeWithBool( this, arg)
+        local out = this.out
+        local subst = {inp=arg[1].out, out=out}
+        local fmt = llvmir.control.booleanToControlTrueType
+        local label_allocator = getCallableEnvironment().label
+        local code2 = utils.constructor_format( fmt, subst, label_allocator)
+        return {code=this.code .. arg[1].code .. code2, out=out}
+    end
+    local function joinControlFalseTypeWithBool( this, arg)
+        local out = this.out
+        local subst = {inp=arg[1].out, out=out}
+        local fmt = llvmir.control.booleanToControlFalseType
+        local label_allocator = getCallableEnvironment().label
+        local code2 = utils.constructor_format( fmt, subst, label_allocator)
+        return {code=this.code .. arg[1].code .. code2, out=out}
+    end
+    defineCall( controlTrueType, controlFalseType, "!", {}, nil)
+    defineCall( controlFalseType, controlTrueType, "!", {}, nil)
+    defineCall( controlTrueType, controlTrueType, "&&",
+            {scalarBooleanType}, joinControlTrueTypeWithBool)
+    defineCall( controlFalseType, controlFalseType, "||",
+            {scalarBooleanType}, joinControlFalseTypeWithBool)
 
-	local function joinControlFalseTypeWithConstexprBool( this, arg)
-		if arg == false then
-			return this
-		else
-			local env = getCallableEnvironment()
-			local subst = {out=this.out}
-			local fmt = llvmir.control.terminateTrueExit
-			return {code = this.code
-					.. utils.constructor_format(fmt,subst,env.label), out=this.out}
-		end
-	end
-	local function joinControlTrueTypeWithConstexprBool( this, arg)
-		if arg == true then
-			return this
-		else
-			local env = getCallableEnvironment()
-			local subst = {out=this.out}
-			local fmt = llvmir.control.terminateFalseExit
-			return {code = this.code
-					.. utils.constructor_format(fmt,subst,env.label), out=this.out}
-		end
-	end
-	defineCall( controlTrueType, controlTrueType, "&&",
-			{constexprBooleanType}, joinControlTrueTypeWithConstexprBool)
-	defineCall( controlFalseType, controlFalseType, "||",
-			{constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
+    local function joinControlFalseTypeWithConstexprBool( this, arg)
+        if arg == false then
+            return this
+        else
+            local env = getCallableEnvironment()
+            local subst = {out=this.out}
+            local fmt = llvmir.control.terminateTrueExit
+            return {code = this.code
+                    .. utils.constructor_format(fmt,subst,env.label), out=this.out}
+        end
+    end
+    local function joinControlTrueTypeWithConstexprBool( this, arg)
+        if arg == true then
+            return this
+        else
+            local env = getCallableEnvironment()
+            local subst = {out=this.out}
+            local fmt = llvmir.control.terminateFalseExit
+            return {code = this.code
+                    .. utils.constructor_format(fmt,subst,env.label), out=this.out}
+        end
+    end
+    defineCall( controlTrueType, controlTrueType, "&&",
+            {constexprBooleanType}, joinControlTrueTypeWithConstexprBool)
+    defineCall( controlFalseType, controlFalseType, "||",
+            {constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
 
-	local function constexprBooleanToControlTrueType( value)
-		local env = getCallableEnvironment()
-		local out = label()
-		local fmt = llvmir.control.terminateFalseExit
-		local code = (value == true)
-				and ""
-				or utils.constructor_format( fmt, {out=out}, env.label)
-		return {code=code, out=out}
-	end
-	local function constexprBooleanToControlFalseType( value)
-		local env = getCallableEnvironment()
-		local out = label()
-		local fmt = llvmir.control.terminateFalseExit
-		local code = (value == false)
-				and ""
-				or utils.constructor_format( fmt, {out=out}, env.label)
-		return {code=code, out=out}
-	end
-	typedb:def_reduction( controlFalseType, constexprBooleanType,
-				constexprBooleanToControlFalseType, tag_typeDeduction, rwd_control)
-	typedb:def_reduction( controlTrueType, constexprBooleanType,
-				constexprBooleanToControlTrueType, tag_typeDeduction, rwd_control)
+    local function constexprBooleanToControlTrueType( value)
+        local env = getCallableEnvironment()
+        local out = label()
+        local fmt = llvmir.control.terminateFalseExit
+        local code = (value == true)
+                and ""
+                or utils.constructor_format( fmt, {out=out}, env.label)
+        return {code=code, out=out}
+    end
+    local function constexprBooleanToControlFalseType( value)
+        local env = getCallableEnvironment()
+        local out = label()
+        local fmt = llvmir.control.terminateFalseExit
+        local code = (value == false)
+                and ""
+                or utils.constructor_format( fmt, {out=out}, env.label)
+        return {code=code, out=out}
+    end
+    typedb:def_reduction( controlFalseType, constexprBooleanType,
+                constexprBooleanToControlFalseType, tag_typeDeduction, rwd_control)
+    typedb:def_reduction( controlTrueType, constexprBooleanType,
+                constexprBooleanToControlTrueType, tag_typeDeduction, rwd_control)
 
-	local function invertControlBooleanType( this)
-		local out = getCallableEnvironment().label()
-		local subst = {inp=this.out, out=out}
-		local fmt = llvmir.control.invertedControlType
-		return {code = this.code .. utils.constructor_format( fmt, subst), out = out}
-	end
-	typedb:def_reduction( controlFalseType, controlTrueType,
-					invertControlBooleanType, tag_typeDeduction, rwd_control)
-	typedb:def_reduction( controlTrueType, controlFalseType,
-					invertControlBooleanType, tag_typeDeduction, rwd_control)
+    local function invertControlBooleanType( this)
+        local out = getCallableEnvironment().label()
+        local subst = {inp=this.out, out=out}
+        local fmt = llvmir.control.invertedControlType
+        return {code = this.code
+                    .. utils.constructor_format( fmt, subst), out = out}
+    end
+    typedb:def_reduction( controlFalseType, controlTrueType,
+                    invertControlBooleanType, tag_typeDeduction, rwd_control)
+    typedb:def_reduction( controlTrueType, controlFalseType,
+                    invertControlBooleanType, tag_typeDeduction, rwd_control)
 
-	definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType, "&&",
-					{scalarBooleanType}, constexprBooleanToControlTrueType)
-	definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType, "||",
-					{scalarBooleanType}, constexprBooleanToControlFalseType)
+    definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType,
+                    "&&", {scalarBooleanType}, constexprBooleanToControlTrueType)
+    definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType,
+                    "||", {scalarBooleanType}, constexprBooleanToControlFalseType)
 end
 
 
@@ -2940,31 +2999,31 @@ The last snippet implements the function ```conditionalIfElseBlock( node, condit
 ```Lua
 -- Build a conditional if/elseif block
 function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
-	local cond_constructor
-		= getRequiredTypeConstructor( node, controlTrueType, condition,
-						tagmask_matchParameter, tagmask_typeConversion)
-	if not cond_constructor then
-		local declstr = typedb:type_string(condition.type)
-		utils.errorMessage( node.line, "Can't use type '%s' as a condition", declstr)
-	end
-	local code = cond_constructor.code .. matchblk.code
-	if exitLabel then
-		local subst = {inp=cond_constructor.out, out=exitLabel}
-		local fmt = llvmir.control.invertedControlType
-		code = code .. utils.template_format( fmt, subst)
-	else
-		local subst = {inp=cond_constructor.out}
-		local fmt = llvmir.control.label
-		code = code .. utils.template_format( fmt, subst)
-	end
-	local out
-	if elseblk then
-		code = code .. elseblk.code
-		out = elseblk.out
-	else
-		out = cond_constructor.out
-	end
-	return {code = code, out = out}
+    local cond_constructor
+        = getRequiredTypeConstructor( node, controlTrueType, condition,
+                        tagmask_matchParameter, tagmask_typeConversion)
+    if not cond_constructor then
+        local declstr = typedb:type_string(condition.type)
+        utils.errorMessage( node.line, "Can't use type '%s' as a condition", declstr)
+    end
+    local code = cond_constructor.code .. matchblk.code
+    if exitLabel then
+        local subst = {inp=cond_constructor.out, out=exitLabel}
+        local fmt = llvmir.control.invertedControlType
+        code = code .. utils.template_format( fmt, subst)
+    else
+        local subst = {inp=cond_constructor.out}
+        local fmt = llvmir.control.label
+        code = code .. utils.template_format( fmt, subst)
+    end
+    local out
+    if elseblk then
+        code = code .. elseblk.code
+        out = elseblk.out
+    else
+        out = cond_constructor.out
+    end
+    return {code = code, out = out}
 end
 
 ```
