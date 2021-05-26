@@ -7,7 +7,7 @@ function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
                         tagmask_matchParameter, tagmask_typeConversion)
     if not cond_constructor then
         local declstr = typedb:type_string(condition.type)
-        utils.errorMessage( node.line, "Can't use type '%s' as a condition", declstr)
+        utils.errorMessage( node.line, "Can't use type '%s' as condition", declstr)
     end
     local code = cond_constructor.code .. matchblk.code
     if exitLabel then

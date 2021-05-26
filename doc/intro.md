@@ -1231,7 +1231,9 @@ function utils.traverseRange( typedb, node, range, ...)
         local rt = {}
         local start,last = table.unpack(range)
         local lasti,ofs = last-start+1,start-1
-        for ii=1,lasti do rt[ ii] = processSubnode( typedb, node.arg[ ofs+ii], ...) end
+        for ii=1,lasti do
+		rt[ ii] = processSubnode( typedb, node.arg[ ofs+ii], ...)
+	end
         return rt
     else
         return node.value
@@ -3004,7 +3006,7 @@ function conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)
                         tagmask_matchParameter, tagmask_typeConversion)
     if not cond_constructor then
         local declstr = typedb:type_string(condition.type)
-        utils.errorMessage( node.line, "Can't use type '%s' as a condition", declstr)
+        utils.errorMessage( node.line, "Can't use type '%s' as condition", declstr)
     end
     local code = cond_constructor.code .. matchblk.code
     if exitLabel then
