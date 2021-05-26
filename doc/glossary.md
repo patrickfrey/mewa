@@ -6,9 +6,6 @@ The Polish name for seagull. It's difficult to find short memorizable names. I g
 ## LLVM IR ##
 The intermediate representation of LLVM (https://llvm.org/). The LLVM IR has a textual representation that is used as the intermediate format in the examples of _Mewa_. The tests also use the programs *lli* (interpreter) and *llc* (compiler) that can take this textual representation of LLVM IR as input and run it (*lli*) or translate it into a binary object file (*llc*).
 
-## Type System
-A set of term rewrite rules to build structures of types and to reduce them to types and in this process construct a program that represents the entire structure defined in the program source.
-
 ## Type
 Any item addressable in a program is a **type**. In _Mewa_ types are represented by an unsigned integer number. Types are also used to describe the context of definitions inside a structure. Every type is defined with a context type. The reserved value of 0 is used as the context type for free definitions.
 
