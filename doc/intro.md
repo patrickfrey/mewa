@@ -3099,3 +3099,9 @@ Learning about another approach can be interesting, even if you go along another
 _Mewa_ is based on very old ideas and offers nothing fundamentally new. 
 But it is a pragmatic approach that brings the implementation of a prototype of a non-trivial compiler front-end for a single person within reach.
 
+## Links
+
+ * [Download source](https://www.codeproject.com/KB/Articles/5301384/Working/mewa-0.3-intro.tar.gz)
+ * [Mewa CC Home Page](http://mewa.cc)
+ * [Mewa Documentation on Github](https://github.com/patrickfrey/mewa#readme)
+
