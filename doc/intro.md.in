@@ -21,7 +21,7 @@ We start with a tutorial of the **typedb** library of _Mewa_ for _Lua_ with some
 After this, this article will guide you through the implementation of a compiler for a simple programming language missing many features.
 The example program we will compile is the following:
 ```
-$EXAMPLE:tutorial_program
+$EXAMPLE:intro_program
 ```
 We will compile this program with our example compiler and run it in a shell. We will also look at different parts including the grammar of the language.
 Finally, I will talk about the features missing in the language to give you some outlook on how to implement a compiler of a complete programming language.
@@ -97,10 +97,10 @@ make install
 Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from the command line. 
 You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
-. examples/tutorial/luaenv.sh
+. examples/intro/luaenv.sh
 ```
 ## Example Paths
-All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/tutorial``` relative to the _Mewa_ project path. The files are also uploaded in a ```tar``` as attachment of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
+All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/intro``` relative to the _Mewa_ project path. The files are also uploaded in a ```tar``` as attachment of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
 
 ## Tutorial
 
@@ -141,7 +141,7 @@ by applying the list of constructors on this path.
 Let's have a look at the example:
 
 #### Source
-File examples/variable.lua
+File intro/tutorial/variable.lua
 ```Lua
 $EXAMPLE:tutorial_variable
 ```
@@ -176,7 +176,7 @@ current_scope = typedb:scope()
 The example is fairly artificial, but it shows how it works:
 
 #### Source
-File examples/scope.lua
+File intro/tutorial/scope.lua
 ```Lua
 $EXAMPLE:tutorial_scope
 ```
@@ -197,7 +197,7 @@ I concluded that it is best to declare all reduction weights at one central plac
 Let's have a look at an example without weighting of reductions that will lead to ambiguity. 
 
 #### Failing example
-File examples/weight1.lua
+File intro/tutorial/weight1.lua
 ```Lua
 $EXAMPLE:tutorial_weight1
 ```
@@ -206,7 +206,7 @@ $EXAMPLE:tutorial_weight1
 $EXAMOUT:tutorial_weight1
 ```
 #### Adding weights
-File examples/weight2.lua
+File intro/tutorial/weight2.lua
 
 Here is a diff with the edits we have to make for fixing the problem:
 ```
@@ -229,7 +229,7 @@ The display of the type system as one graph is not enough for all cases. There a
 Let's first look at an example failing:
 
 #### Failing example
-File examples/tags1.lua
+File intro/tutorial/tags1.lua
 ```Lua
 $EXAMPLE:tutorial_tags1
 ```
@@ -238,7 +238,7 @@ $EXAMPLE:tutorial_tags1
 $EXAMOUT:tutorial_tags1
 ```
 #### Adding tags
-File examples/tags2.lua
+File intro/tutorial/tags2.lua
 
 Here is a diff with the edits we have to make for fixing the problem:
 ```
@@ -341,13 +341,13 @@ A greater priority number means a higher priority. Production priorities are use
 
 ### Source
 ```
-$EXAMPLE:tutorial_grammar
+$EXAMPLE:intro_grammar
 ```
 ## Type System
 Now let's overview the implementation of the typesystem module that generates the code.
 The code shown now will be more organized, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```examples/tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```examples/tutorial/ast```.
+In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```examples/intro/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```examples/intro/ast```.
 
 Because of the amount of code in this part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
@@ -390,7 +390,7 @@ The approach of _Mewa_ is not pure. Things are stored in the _typedb_ if it help
 
 #### Source
 ```
-$EXAMPLE:tutorial_typesystem
+$EXAMPLE:intro_typesystem
 ```
 
 ### Output
@@ -478,19 +478,19 @@ Define atomic and structure constants in the source.
 ##### Structures, e.g. Initializer Lists
 A structure has a list of type/constructor pairs as the constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object being initializable by a constant structure. The constructor is using the typedb to find a _ctor_ type with this list matching the parameter list. If it fails the constructor function returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
-$EXAMPLE:tutorial_ast_constants
+$EXAMPLE:intro_ast_constants
 ```
 
 #### Variables
 In this section are the node functions to define and query variables. These _AST_ node functions are just delegating to functions we will revisit later.
 ```Lua
-$EXAMPLE:tutorial_ast_variables
+$EXAMPLE:intro_ast_variables
 ```
 
 #### Extern Function Declarations
 Here are the extern function declarations with their parameters processed. The function ```typesystem.extern_funcdef``` calls the tree traversal to get the function name and the parameters. The collecting of the parameters is possible in different ways. Here a table is defined by the node that declares the parameter list, passed down as a parameter to the recursive list declaration, and filled by the parameter declaration node ```typesystem.extern_paramdef```. The function call definition with ```defineFunctionCall``` is the same as for free functions and class methods.
 ```Lua
-$EXAMPLE:tutorial_ast_extern
+$EXAMPLE:intro_ast_extern
 ```
 
 #### Data Types
@@ -505,7 +505,7 @@ This section defines classes, arrays and atomic data types. The function we have
 The class node defines a multiple pass evaluation and the nodes ```typesystem.definition_2pass``` and ```typesystem.definition``` implement the gates that encapsulate the decision what is processed when.
  
 ```Lua
-$EXAMPLE:tutorial_ast_types
+$EXAMPLE:intro_ast_types
 ```
 
 #### Function Declarations
@@ -517,14 +517,14 @@ It is accessed with the function ```getCallableEnvironment```.
 The _AST_ node function ```typesystem.callablebody``` collects the elements of the free function or class method description in the scope of the callable body. It collects the list of parameters in a similar way as the extern function declaration we have already seen.
 
 ```Lua
-$EXAMPLE:tutorial_ast_functions
+$EXAMPLE:intro_ast_functions
 ```
 
 #### Operators
 This section defines the functions of _AST_ nodes implementing operators. The construction of operators, member references, function calls are is redirected to the function ```applyCallable``` we will visit later. Function calls are implemented as operator "()" of a callable type.
 The functions ```expectValueType``` and ```expectDataType``` used here are assertions.
 ```Lua
-$EXAMPLE:tutorial_ast_operators
+$EXAMPLE:intro_ast_operators
 ```
 
 #### Control Structures
@@ -533,7 +533,7 @@ As we learned in the tutorial, conditionals are implemented by wiring a control 
 The return node functions also use ```getRequiredTypeConstructor``` to derive the value returned from their argument. The return type is accessible in the callable environment structure.
 
 ```Lua
-$EXAMPLE:tutorial_ast_controls
+$EXAMPLE:intro_ast_controls
 ```
 
 #### Blocks and the Rest
@@ -544,7 +544,7 @@ Finally, we come to the section containing the blocks that do not fit somewhere 
   * The node function ```typesystem.free_expression``` makes a statement node from an expression node.
 
 ```Lua
-$EXAMPLE:tutorial_ast_blocks
+$EXAMPLE:intro_ast_blocks
 ```
 
 ### Type System Functions
@@ -553,25 +553,25 @@ This chapter will survey the functions used in the AST node functions we have no
 #### Reduction Weights
 Here are all the reduction weights of the reductions defined. We have explained the need for weighting reductions in the tutorial.
 ```Lua
-$EXAMPLE:tutorial_section_reductionWeights
+$EXAMPLE:intro_section_reductionWeights
 ```
 
 #### Reduction Tags and Tag Masks
 This section defines all reduction tags and tag masks. We have explained the need for tagging in the tutorial.
 ```Lua
-$EXAMPLE:tutorial_section_reductionTagsAndTagmasks
+$EXAMPLE:intro_section_reductionTagsAndTagmasks
 ```
 
 #### Type Declaration String
 This function provides a signature string of the type including context type and parameter types. The signature string is used to refer to a type in error messages.
 ```Lua
-$EXAMPLE:tutorial_section_declarationString
+$EXAMPLE:intro_section_declarationString
 ```
 
 #### Calls and Promote Calls
 Here are the functions to define calls with parameters and a return value. For first-class scalar types we often also need to look at the 2nd argument to determine the constructor function to call. Most statically typed programming languages specify a multiplication of an interger with a floating-point number as a multiplication of floating-point numbers. If we define the operator dependent on the first argument, we have to define the call ```int * double``` as the conversion of the first operand to a ```double``` followed by a ```double * double``` multiplication. I call these calls "promote-calls" (promoting the first argument to the type of the second argument) in the examples. The integer argument is promoted to a ```double``` and then the constructor function of ```double * double``` is called.
 ```Lua
-$EXAMPLE:tutorial_section_defineCalls
+$EXAMPLE:intro_section_defineCalls
 ```
 
 #### Apply Constructors
@@ -580,7 +580,7 @@ The functions ```tryApplyConstructor``` and ```applyConstructor``` are building 
 The functions ```tryApplyReductionList``` and ```applyReductionList``` are building a constructor from a chain of reductions applied on a base constructor.
 The functions with the prefix ```try``` report a miss or an ambiguity with their return value instead of exiting with ```utils.errorMessage``` in case of an error.
 ```Lua
-$EXAMPLE:tutorial_section_applyConstructors
+$EXAMPLE:intro_section_applyConstructors
 ```
 
 #### Resolve Types
@@ -591,7 +591,7 @@ Here are the functions for resolving types, mapping types, and asserting type pr
   * The function ```getRequiredTypeConstructor``` derives a type from another type. We saw applications of this function in the implementation of ```return``` or conditionals like ```if```, ```while```, etc.
 
 ```Lua
-$EXAMPLE:tutorial_section_resolveTypes
+$EXAMPLE:intro_section_resolveTypes
 ```
 ##### Note
 The function ```getSeekContextTypes()``` called here is important when resolving types. It provides the list of the candidate context type/constructor pairs used to resolve a type. Inside a structure, for example, it is allowed to access elements of this structure by name without a full namespace path of the element. But we can also access global types. Therefore we need to maintain a list of current context types that is extended on the entry into a structure and shrunk on exit. The list of context types is bound to a scope. This implementents the _C++_ ```using``` or the _Pascal_ ```WITH``` with a one-liner. You add the argument to the list of seek-context types of the current scope.
@@ -604,7 +604,7 @@ Candidates with a failing constructor are dropped.
 
 The functions ```tryApplyCallable``` and ```applyCallable``` are provided for resolving all types with arguments (operators, member access, function call, etc.).
 ```Lua
-$EXAMPLE:tutorial_section_applyCallable
+$EXAMPLE:intro_section_applyCallable
 ```
 
 #### Constructor Functions
@@ -612,14 +612,14 @@ Here are the building blocks for defining constructors.
   * The functions ```constructorParts```, ```constructorStruct``` and ```typeConstructorPairStruct''' are helpers for constructor or type/constructor pair structures.
   * The function ```callConstructor``` builds a constructor function from a format string and additional attributes. Most of the constructor functions of this example compiler are defined with ```callConstructor```. It uses the helper function ```buildCallArguments``` to build some format string variables for mapping the arguments of a constructor call.
 ```Lua
-$EXAMPLE:tutorial_section_constructorFunctions
+$EXAMPLE:intro_section_constructorFunctions
 ```
 
 #### Define Function Call
 The function ```defineFunctionCall``` introduced in this section is used to define a free function call or a method call as "()" operator with arguments on a callable.
 A callable is an intermediate type created to unify all cases of a function call into one case. For example, function variables may also be called with the arguments in oval brackets "(" ")". If we want to unify these cases, we cannot define a function as a symbol with arguments, because the symbol binding is not available for a function variable. Therefore we define the function symbol to be of type callable with a "()" operator with the function parameter as arguments. The function variable can reference the callable as its type and also have a "()" operator with the function parameter as arguments.
 ```Lua
-$EXAMPLE:tutorial_section_defineFunctionCall
+$EXAMPLE:intro_section_defineFunctionCall
 ```
 
 #### Const Expression Types
@@ -628,7 +628,7 @@ The const expression operator constructors do not produce code but return a valu
 The constructor of a const expression is the value of the data item with this type.
 
 ```Lua
-$EXAMPLE:tutorial_section_constexprTypes
+$EXAMPLE:intro_section_constexprTypes
 ```
 ##### Remark
 The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are functions provided by the _Mewa_ library to convert floating-point number constants into a binary representation needed by LLVM IR for floating-point numbers that have no exact binary representation of a value written with decimals, e.g. ```0.1```. This is not an ideal situation. The _Mewa_ library should not have any API bindings to LLVM. 
@@ -637,7 +637,7 @@ The functions ```mewa.llvm_double_tohex``` or ```mewa.llvm_float_tohex``` are fu
 This section implements the creation of the first class scalar types from their descriptions in the module llvmir_scalar.lua. The string type is also defined here. As for the const expression types, we also define promote calls here, like ```integer + double``` implemented as ```double + double``` after promoting the left argument.
 
 ```Lua
-$EXAMPLE:tutorial_section_firstClassScalarTypes
+$EXAMPLE:intro_section_firstClassScalarTypes
 ```
 
 #### Variables
@@ -646,7 +646,7 @@ Most of the code is self-explaining now.
 
 One new thing is the use of the global variable ```localDefinitionContext``` as context type when defining local variables. We could as well use 0 instead of the variable. In a language implementing generics the value of localDefinitionContext can vary because generic instances share scopes. Instances of generics have to define an artificial type for the local definition context to separate their local definitions from others.
 ```Lua
-$EXAMPLE:tutorial_section_variables
+$EXAMPLE:intro_section_variables
 ```
 
 #### Define Data Types
@@ -659,7 +659,7 @@ This provides recursion for the assignments of substructures.
 The ```getOrCreateArrayType``` function is a seldom case where the current scope is set manually. The scope of the array type definition is set to the scope of the element type. The current scope is set back to the original after the function completed its job.
 
 ```Lua
-$EXAMPLE:tutorial_section_defineDataTypes
+$EXAMPLE:intro_section_defineDataTypes
 ```
 
 #### Context Types
@@ -670,7 +670,7 @@ The function ```getSeekContextTypes``` provides the access to the list context t
 The list of seek-context types is also dependent on a scope. When adding an element to a list not yet bound to the current scope then the list of the enclosing scope cloned calling ```thisInstanceTableClone( name, emptyInst)``` and the element is added to the clone. This comes into play when the ```self``` type is added to the list of context types. It is only visible in the body of the method.
 
 ```Lua
-$EXAMPLE:tutorial_section_contextTypes
+$EXAMPLE:intro_section_contextTypes
 ```
 
 #### Callable Environment
@@ -678,21 +678,21 @@ The callable environment bound to the scope of the function body has also been d
 
 To mention is the function ```expandMethodEnvironment``` that declares the ```self``` variable in a method body (explicit and implicit).
 ```Lua
-$EXAMPLE:tutorial_section_callableEnvironment
+$EXAMPLE:intro_section_callableEnvironment
 ```
 
 #### Control Boolean Types
 Here we have a complete definition of the control boolean types as introduced in the tutorial. The function definition has been taken one to one from the example **language1**. I think after our journey through the example, the code explains itself.
 
 ```Lua
-$EXAMPLE:tutorial_section_controlBooleanTypes
+$EXAMPLE:intro_section_controlBooleanTypes
 ```
 
 #### Control Structures
 The last snippet implements the function ```conditionalIfElseBlock( node, condition, matchblk, elseblk, exitLabel)``` that is doing the work for the _AST_ node functions implementing the _if_ with or without the _else_. If we have an _else_ then we have to branch to the end and bind the unbound label of the control true type. This is equivalent to turning the control true type to a control false type before adding the else block. 
 
 ```Lua
-$EXAMPLE:tutorial_section_controlStructures
+$EXAMPLE:intro_section_controlStructures
 ```
 
 ### Build and Run the Compiler
@@ -701,15 +701,15 @@ Finally, we build and run our compiler on the example source presented at the be
 ##### Translate the grammar and build the Lua script of the compiler
 ```bash
 LUABIN=`which lua`
-. examples/tutorial/luaenv.sh
+. examples/intro/luaenv.sh
 
-mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua examples/tutorial/grammar.g
+mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua examples/intro/grammar.g
 chmod +x build/tutorial.compiler.lua
 ```
 
 ##### Run the compiler front-end on a test program
 ```bash
-build/tutorial.compiler.lua -o build/program.llr examples/tutorial/program.prg
+build/tutorial.compiler.lua -o build/program.llr examples/intro/program.prg
 ```
 
 ##### Inspect the LLVM IR code

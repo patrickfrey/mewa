@@ -14,9 +14,9 @@ arrayTypeMap = {}		-- Map array key to its type
 stringConstantMap = {}		-- Map of string constant value to its attributes
 scalarTypeMap = {}		-- Map of scalar type name to its value type
 
-dofile( "examples/tutorial/sections.inc")
+dofile( "examples/intro/sections.inc")
 
 -- AST Callbacks:
 typesystem = {}
-dofile( "examples/tutorial/ast.inc")
+dofile( "examples/intro/ast.inc")
 return typesystem

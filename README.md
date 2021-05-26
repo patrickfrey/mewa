@@ -25,7 +25,7 @@ Issues around target platforms are discussed [here](doc/portability.md).
 
 
 # Documentation
-* [Introduction with a Tutorial](doc/tutorial.md)
+* [Introduction with a Tutorial](doc/intro.md)
 * [Examples](doc/example_compiler.md)
 * [Installation](INSTALL.Ubuntu.md)
 * [Glossary](doc/glossary.md)

@@ -1,5 +1,5 @@
-% LANGUAGE tutolang;
-% TYPESYSTEM "tutorial/typesystem";
+% LANGUAGE intro;
+% TYPESYSTEM "intro/typesystem";
 % CMDLINE "cmdlinearg";
 % COMMENT "/*" "*/";
 % COMMENT "//";

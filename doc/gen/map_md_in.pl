@@ -140,13 +140,13 @@ sub readIncludes
 }
 
 readExamples( "", "doc/examples");
-readExamples( "tutorial_", "examples/tutorial/examples");
-readExamples( "tutorial_", "examples/tutorial");
-readIncludes( "tutorial_section_", "examples/tutorial/sections", "lua", " require ");
-readIncludes( "tutorial_ast_", "examples/tutorial/ast", "lua", " require ");
-readIncludes( "tutorial_", "examples/tutorial", "prg");
-readIncludes( "tutorial_", "examples/tutorial", "g");
-readIncludes( "tutorial_", "examples/tutorial/examples", "txt");
+readExamples( "intro_", "examples/intro");
+readIncludes( "intro_", "examples/intro", "prg");
+readIncludes( "intro_", "examples/intro", "g");
+readIncludes( "intro_section_", "examples/intro/sections", "lua", " require ");
+readIncludes( "intro_ast_", "examples/intro/ast", "lua", " require ");
+readExamples( "tutorial_", "examples/intro/tutorial");
+readIncludes( "tutorial_", "examples/intro/tutorial", "txt");
 
 sub substVariables
 {
@@ -199,7 +199,7 @@ sub substVariables
 		{
 			die "Unknown variable domain '$dom'";
 		}
-
+		if (not defined $substval) {die "Unknown substitution $dom : $var\n";}
 		$rt .= $substval . substVariables( $rest . "\n");
 		if ($verbose) {print STDERR "SUBST $dom:$var => $substval\n";}
 

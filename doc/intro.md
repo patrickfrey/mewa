@@ -22,7 +22,7 @@ After this, this article will guide you through the implementation of a compiler
 The example program we will compile is the following:
 ```
 extern function printf void( string, double);
-// ... Variable argument list functions are beyond the scope of this tutorial
+// ... Variable argument list functions are beyond the scope of this intro
 
 class Employee
 {
@@ -149,10 +149,10 @@ make install
 Don't forget to set the _Lua_ environment (LUA_CPATH,LUA_PATH) correctly when running the _Lua_ scripts from the command line. 
 You find a luaenv.sh in the archive of this article. Load it with.
 ```Bash
-. examples/tutorial/luaenv.sh
+. examples/intro/luaenv.sh
 ```
 ## Example Paths
-All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/tutorial``` relative to the _Mewa_ project path. The files are also uploaded in a ```tar``` as attachment of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
+All examples in this article are part of the _Mewa_ project. The example compiler discussed here is in ```examples/intro``` relative to the _Mewa_ project path. The files are also uploaded in a ```tar``` as attachment of the article published on [codeproject.com](https://codeproject.com). But the paths of the example files as they are referred to from this article are always relative from the _Mewa_ project root directory.
 
 ## Tutorial
 
@@ -193,7 +193,7 @@ by applying the list of constructors on this path.
 Let's have a look at the example:
 
 #### Source
-File examples/variable.lua
+File intro/tutorial/variable.lua
 ```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -347,7 +347,7 @@ current_scope = typedb:scope()
 The example is fairly artificial, but it shows how it works:
 
 #### Source
-File examples/scope.lua
+File intro/tutorial/scope.lua
 ```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -408,7 +408,7 @@ I concluded that it is best to declare all reduction weights at one central plac
 Let's have a look at an example without weighting of reductions that will lead to ambiguity. 
 
 #### Failing example
-File examples/weight1.lua
+File intro/tutorial/weight1.lua
 ```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -489,7 +489,7 @@ Ambiguous: long -> const long -> const int | long -> int -> const int
 
 ```
 #### Adding weights
-File examples/weight2.lua
+File intro/tutorial/weight2.lua
 
 Here is a diff with the edits we have to make for fixing the problem:
 ```
@@ -555,7 +555,7 @@ The display of the type system as one graph is not enough for all cases. There a
 Let's first look at an example failing:
 
 #### Failing example
-File examples/tags1.lua
+File intro/tutorial/tags1.lua
 ```Lua
 mewa = require "mewa"
 typedb = mewa.typedb()
@@ -658,7 +658,7 @@ Found baseclass& constructor
 
 ```
 #### Adding tags
-File examples/tags2.lua
+File intro/tutorial/tags2.lua
 
 Here is a diff with the edits we have to make for fixing the problem:
 ```
@@ -928,8 +928,8 @@ A greater priority number means a higher priority. Production priorities are use
 
 ### Source
 ```
-% LANGUAGE tutolang;
-% TYPESYSTEM "tutorial/typesystem";
+% LANGUAGE intro;
+% TYPESYSTEM "intro/typesystem";
 % CMDLINE "cmdlinearg";
 % COMMENT "/*" "*/";
 % COMMENT "//";
@@ -1072,7 +1072,7 @@ expressionlist/L0 = expression "," expressionlist
 Now let's overview the implementation of the typesystem module that generates the code.
 The code shown now will be more organized, more complete, but in contrary to the tutorial not self-contained anymore.
 
-In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```examples/tutorial/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```examples/tutorial/ast```.
+In contrast to the example [language1](example_language1.md) the typesystem module has been split into several parts of 100 lines of code at most to make them digestible. The snippets implementing helper functions are in the directory ```examples/intro/sections```. The snippets implementing the functions attached to the _AST_ nodes are in the directory ```examples/intro/ast```.
 
 Because of the amount of code in this part, we will not inspect it so closely as in the tutorial anymore. 
 But I hope that after the tutorial you will still get a grip on the code shown.
@@ -1131,11 +1131,11 @@ arrayTypeMap = {}		-- Map array key to its type
 stringConstantMap = {}		-- Map of string constant value to its attributes
 scalarTypeMap = {}		-- Map of scalar type name to its value type
 
-dofile( "examples/tutorial/sections.inc")
+dofile( "examples/intro/sections.inc")
 
 -- AST Callbacks:
 typesystem = {}
-dofile( "examples/tutorial/ast.inc")
+dofile( "examples/intro/ast.inc")
 return typesystem
 
 ```
@@ -2975,15 +2975,15 @@ Finally, we build and run our compiler on the example source presented at the be
 ##### Translate the grammar and build the Lua script of the compiler
 ```bash
 LUABIN=`which lua`
-. examples/tutorial/luaenv.sh
+. examples/intro/luaenv.sh
 
-mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua examples/tutorial/grammar.g
+mewa -b "$LUABIN" -g -o build/tutorial.compiler.lua examples/intro/grammar.g
 chmod +x build/tutorial.compiler.lua
 ```
 
 ##### Run the compiler front-end on a test program
 ```bash
-build/tutorial.compiler.lua -o build/program.llr examples/tutorial/program.prg
+build/tutorial.compiler.lua -o build/program.llr examples/intro/program.prg
 ```
 
 ##### Inspect the LLVM IR code

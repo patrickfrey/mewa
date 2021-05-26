@@ -1,6 +1,6 @@
 local utils = require "typesystem_utils"
 local llvmir = {}
-llvmir.scalar = require "tutorial/llvmir_scalar"
+llvmir.scalar = require "intro/llvmir_scalar"
 
 local pointerTemplate = {
 	def_local = "{out} = alloca {pointee}*\n",
