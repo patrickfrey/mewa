@@ -34,4 +34,3 @@ typedb:step( 95)
 print( "Retrieve X " .. findVariable("X"))
 typedb:step( 100)
 print( "Retrieve X " .. findVariable("X"))
-

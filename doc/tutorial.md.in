@@ -496,7 +496,7 @@ $EXAMPLE:tutorial_ast_extern
 #### Data Types
 This section defines classes, arrays and atomic data types. The function we have to discuss a little bit deeper here is ```typesystem.classdef```, the definition of a class:
  1. The context is changed. Whatever is passed to this _AST_ node function as context, we define a new context (```classContext```) to be passed down to the subnodes in the traversal. The context is a structure a field ```domain``` that tells if we are inside the definition of a class ("member"), if we are in the body of a function ("local"), or if we are not inside any structure ("global"). It has other fields too depending on the context. It is also used to collect data in classes. (```structsize```,```members```) from its subnodes.
- 2. The traversal of the subnodes has 4 passes. The index of the pass is passed down as a parameter for the subnodes to decide what to do:
+ 1. The traversal of the subnodes has 4 passes. The index of the pass is passed down as a parameter for the subnodes to decide what to do:
     * 1st Pass: Type Definitions
     * 2nd Pass: Member Variable Declarations
     * 3rd Pass: Method Declarations (the traversal calls 1st pass of function declarations)
@@ -709,27 +709,27 @@ chmod +x build/tutorial.compiler.lua
 
 ##### Run the compiler front-end on a test program
 ```bash
-build/tutorial.compiler.lua -o build/tutorial.program.llr examples/tutorial/program.prg
+build/tutorial.compiler.lua -o build/program.llr examples/tutorial/program.prg
 ```
 
 ##### Inspect the LLVM IR code
 ```bash
-less build/tutorial.program.llr 
+less build/program.llr 
 ```
 
 ##### Create an object file
 ```bash
-llc -relocation-model=pic -O=3 -filetype=obj build/tutorial.program.llr -o build/tutorial.program.o
+llc -relocation-model=pic -O=3 -filetype=obj build/program.llr -o build/program.o
 ```
 
 ##### Create an executable
 ```bash
-clang -lm -lstdc++ -o build/tutorial.program build/tutorial.program.o
+clang -lm -lstdc++ -o build/program build/program.o
 ```
 
 ##### Run the executable file
 ```bash
-build/tutorial.program
+build/program
 ```
 
 #### Output
@@ -752,8 +752,10 @@ This article showed the implementation of a primitive language missing lots of f
 And many more. You can visit the [FAQ](faq.md) to get an idea, how to implement a richer language.
 You can dig into the main [example language1](example_language1.md) that implements most of the features missing here as examples.
 
-#### Remark
-You should not consider the examples presented here as a code-base for your own compiler project. The examples, together with the FAQ can help you planning your compiler project though. With a layout, you can do a much better job than me. I was cutting my way through the jungle with a machete. You have the overview.
+## Improvements
+When reading through this article, I saw that I was acting against my advice. In both example languages, the ```context``` is passed as an argument in the tree traversal. The ```context``` would better be defined bound to its _scope_. This is a good example of not taking the code presented here literally.
+
+You should not consider the examples presented here as a code-base for your compiler project. The examples, together with the FAQ can help you planning your compiler project though. With a layout, you can do a much better job than me. I was cutting my way through the jungle with a machete. You have the overview.
 
 ## Conclusion
 We have seen how a very primitive compiler is written in _Lua_ using _Mewa_. 

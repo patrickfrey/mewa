@@ -81,16 +81,16 @@ function callDefaultCtorConstructor( classname)
 	end
 end
 
-local t_baseclass = defineType("baseclass")
+local t_base = defineType("baseclass")
 local t_class = defineType("class")
 
 -- Define the default ctor of baseclass
 local ctor = callDefaultCtorConstructor("baseclass")
-local constructor_baseclass = typedb:def_type( t_baseclass.ref, "constructor", ctor)
+local constructor_base = typedb:def_type( t_base.ref, "constructor", ctor)
 
 -- Define the inheritance of class from baseclass
 local load_base = loadMemberConstructor( "class", 1)
-typedb:def_reduction( t_baseclass.ref, t_class.ref, load_base, tag_typeDeduction)
+typedb:def_reduction( t_base.ref, t_class.ref, load_base, tag_typeDeduction)
 
 -- Search for the constructor of class (that does not exist)
 local resolveTypeId, reductions, items
@@ -104,4 +104,3 @@ end
 for _,item in ipairs(items or {}) do
 	print( "Found " .. typedb:type_string( item) .. "\n")
 end
-

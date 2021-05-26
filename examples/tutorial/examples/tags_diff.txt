@@ -17,12 +17,10 @@
 < 		end, 1)
 ---
 > 		end, tag_typeDeduction)
-78,79c92,93
-< local load_baseclass = loadMemberConstructor( "class", 1)
-< typedb:def_reduction( t_baseclass.ref, t_class.ref, load_baseclass, 1)
+79c93
+< typedb:def_reduction( t_base.ref, t_class.ref, load_base, 1)
 ---
-> local load_base = loadMemberConstructor( "class", 1)
-> typedb:def_reduction( t_baseclass.ref, t_class.ref, load_base, tag_typeDeduction)
+> typedb:def_reduction( t_base.ref, t_class.ref, load_base, tag_typeDeduction)
 83c97
 < 	= typedb:resolve_type( t_class.ref, "constructor")
 ---

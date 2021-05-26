@@ -69,4 +69,3 @@ else
 	end
 	print( constructor)
 end
-

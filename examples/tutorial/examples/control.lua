@@ -97,5 +97,3 @@ local block = {code = "... this code is executed if the value in "
 			.. condition_in .. " is not 0 ...\n"}
 
 print( if_statement( condition, block).code)
-
-

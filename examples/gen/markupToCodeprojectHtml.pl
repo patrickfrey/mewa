@@ -11,6 +11,16 @@ my $text = "";
 my @listlevel = ();
 my @listtype = ();
 
+my $head = "";
+my $tail = "";
+my $verbose = 0;
+
+GetOptions (
+	"head|H=s"      => \$head,        # string, head text of output
+	"tail|T=s"      => \$tail,        # string, tail text of output
+	"verbose|V"     => \$verbose)     # verbose output
+or die("Error in command line arguments\n");
+
 sub encodeHtml {
 	my $content = $_[0];
 	$content =~ s/[']/\&\#39\;/g;
@@ -39,7 +49,7 @@ sub printSection {
 }
 
 sub printText {
-	if ($text eq "") {return;}
+	unless ($text =~ m/\S/) {return;}
 	if ($state ne "TEXT") {die "Bad call of print text in state $state";}
 	printSection( "p", $text);
 	$text = "";
@@ -59,10 +69,11 @@ sub printCode {
 	}
 	print( "<" . $divtag . ">\n");
 	print( "<pre>\n");
+	$text =~ s/\n+$//;
 	printSection( "code", $text);
+	$text = "";
 	print( "</pre>\n");
 	print( "</div>\n");
-	$text = "";
 }
 
 sub closeList {
@@ -135,6 +146,7 @@ sub processLine {
 		}
 		elsif ($line =~ m/^([\t ]+)([\*\-])[ ](.*)$/ || $line =~ m/^([\t ]+)([1][\.])[ ](.*)$/ )
 		{
+			printText();
 			$indent = $1;
 			$marker = $2;
 			$item = $3;
@@ -154,7 +166,9 @@ sub processLine {
 		else
 		{
 			closeList( -1);
-			$text .= substMarkup( encodeHtml( $line));
+			unless ($line =~ m/\S/) {printText();}
+			my $textline = substMarkup( encodeHtml( $line));
+			if ($textline =~ m/\S/) {$text .= $textline;}
 		}
 	}
 	elsif ($state eq "CODE")
@@ -178,9 +192,35 @@ sub processLine {
 	}
 }
 
+sub finishText {
+	if ($state eq "TEXT")
+	{
+		closeList( -1);
+		printText();
+	}
+	elsif ($state eq "CODE")
+	{
+		die "Code section not closed";
+	}
+	else
+	{
+		die "Bad state: $state";
+	}
+}
+
+if ($head ne "")
+{
+	print( "$head\n");
+}
 while (<STDIN>)
 {
 	processLine( $_);
+}
+finishText();
+
+if ($tail ne "")
+{
+	print( "\n$tail\n");
 }
 closeList( -1);
 

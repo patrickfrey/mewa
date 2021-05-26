@@ -110,4 +110,3 @@ end
 io.stdout:write( constructor.code)
 
 end
-
