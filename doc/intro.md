@@ -896,7 +896,7 @@ L2:
 ```
 
 #### Conclusion
-Control structures are implemented by constructing the control boolean types required. Boolean operators as the logical **AND** or the logical **OR** are constructed by wiring control boolean types together. This has not been done in this example, but it is imaginable after constructing an **IF**. The construction of types with reduction rules does not stop here. Control structures are not entirely different animals.
+Control structures are implemented by constructing the control boolean types required. Boolean operators as the logical **AND** or the logical **OR** are constructed by wiring control boolean types types with other types together. This has not been done in this example, but it is imaginable after constructing an **IF**. The construction of types with reduction rules does not stop here. Control structures are not entirely different animals.
 
 We have seen the whole variety of functions of the _typedb_ library now. The remaining functions not explained yet are convenient functions to set and get attributes of types. There is nothing substantial left to explain about the API though there is a lot more to talk about best practices and how to use this API.
 
@@ -1093,7 +1093,7 @@ expression/L12
 expression/L13
           = expression  "(" expressionlist ")"      (>>operator "()")
           | expression  "(" ")"                     (>>operator "()")
-          | expression  "[" expressionlist "]"      (>>operator_array "[]")
+          | expression  "[" expressionlist "]"      (>>operator "[]")
           ;
 expressionlist/L0
           = expression "," expressionlist
@@ -1258,7 +1258,7 @@ Most of the code is just delegating to functions we will inspect in the followin
 Define atomic and structure constants in the source.
 
 ##### Structures, e.g. Initializer Lists
-A structure has a list of type/constructor pairs as the constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object being initializable by a constant structure. The constructor is using the typedb to find a _ctor_ type with this list matching the parameter list. If it fails the constructor function returns *nil* to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
+A structure has a list of type/constructor pairs as the constructor. This resembles the parameter list of a function and that's what it is. For recursive initialization of objects from initializer lists, we declare a reduction from the type constexprStructureType to any object being initializable by a constant structure. The constructor is using the typedb to find a _ctor_ type with this list matching the parameter list. If it fails the constructor function returns **nil** to indicate that it failed and that the solution relying on this reduction should be dropped. This kind of enveloping helps us to map initializer lists recursively.
 ```Lua
 function typesystem.constant( node, decl)
     local typeId = scalarTypeMap[ decl]
@@ -1484,11 +1484,6 @@ function typesystem.member( node)
     return applyCallable( node, struct, name)
 end
 function typesystem.operator( node, operator)
-    local args = utils.traverse( typedb, node)
-    local this = table.remove( args, 1)
-    return applyCallable( node, this, operator, args)
-end
-function typesystem.operator_array( node, operator)
     local args = utils.traverse( typedb, node)
     local this = table.remove( args, 1)
     return applyCallable( node, this, operator, args)
@@ -1785,6 +1780,8 @@ Here are the functions for resolving types, mapping types, and asserting type pr
   * The function ```resolveTypeFromNamePath``` resolves a type from structure name path ( classname1 "::" classname2 ...).
   * The function ```tryGetWeightedParameterReductionList``` get the reduction of for a parameter matching and its weight. The weight can be used to accumulate the weight of a function match as a whole to determine the best match. In the example languages, the maximum is used as the accumulation function for the weight of the function match.
   * The function ```getRequiredTypeConstructor``` derives a type from another type. We saw applications of this function in the implementation of ```return``` or conditionals like ```if```, ```while```, etc.
+  * The function ```expectValueType``` asserts that the argument type has a constructor. This means it is a value type.
+  * The function ```expectDataType``` asserts that the argument type has no constructor. This means it is a data type.
 
 ```Lua
 -- Get the handle of a type expected to have no arguments
@@ -2081,7 +2078,7 @@ end
 
 #### Constructor Functions
 Here are the building blocks for defining constructors.
-  * The functions ```constructorParts```, ```constructorStruct``` and ```typeConstructorPairStruct''' are helpers for constructor or type/constructor pair structures.
+  * The functions ```constructorParts```, ```constructorStruct``` and ```typeConstructorPairStruct``` are helpers for constructor or type/constructor pair structures.
   * The function ```callConstructor``` builds a constructor function from a format string and additional attributes. Most of the constructor functions of this example compiler are defined with ```callConstructor```. It uses the helper function ```buildCallArguments``` to build some format string variables for mapping the arguments of a constructor call.
 ```Lua
 -- Get the two parts of a constructor as tuple
@@ -3102,6 +3099,6 @@ But it is a pragmatic approach that brings the implementation of a prototype of 
 ## Links
 
  * [Download source](https://www.codeproject.com/KB/Articles/5301384/Working/mewa-0.3-intro.tar.gz)
- * [Mewa CC Home Page](http://mewa.cc)
- * [Mewa Documentation on Github](https://github.com/patrickfrey/mewa#readme)
+ * [Mewa CC home page](http://mewa.cc)
+ * [Mewa documentation on Github](https://github.com/patrickfrey/mewa#readme)
 

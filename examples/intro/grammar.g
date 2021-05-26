@@ -166,7 +166,7 @@ expression/L12
 expression/L13
           = expression  "(" expressionlist ")"      (>>operator "()")
           | expression  "(" ")"                     (>>operator "()")
-          | expression  "[" expressionlist "]"      (>>operator_array "[]")
+          | expression  "[" expressionlist "]"      (>>operator "[]")
           ;
 expressionlist/L0
           = expression "," expressionlist

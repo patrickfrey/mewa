@@ -64,8 +64,6 @@ function typesystem.member( node)
 end
 function typesystem.operator( node, decl)
 end
-function typesystem.operator_array( node, decl)
-end
 
 return typesystem
 

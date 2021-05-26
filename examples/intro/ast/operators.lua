@@ -20,8 +20,3 @@ function typesystem.operator( node, operator)
     local this = table.remove( args, 1)
     return applyCallable( node, this, operator, args)
 end
-function typesystem.operator_array( node, operator)
-    local args = utils.traverse( typedb, node)
-    local this = table.remove( args, 1)
-    return applyCallable( node, this, operator, args)
-end
