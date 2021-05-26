@@ -35,7 +35,7 @@ sub substMarkup {
 	$content =~ s@([`]{3,3})([^`]*)([`]{3,3})@<code>$2</code>@g;
 	$content =~ s@(_)([^_]*)(_)@<em>$2</em>@g;
 	$content =~ s@(\*\*)([^\*]*)(\*\*)@<strong>$2</strong>@g;
-	$content =~ s@[\[](http[^\]]*)[\]][\(]([^\)]*)[\)]@<a href="$2">$1</a>@g;
+	$content =~ s@[\[]([^\]]*)[\]][\(](http[^\)]*)[\)]@<a href="$2">$1</a>@g;
 	$content =~ s@[\[]([^\]]*)[\]][\(]([^\)]*)[\)]@<a href="$docpath$2">$1</a>@g;
 	return $content;
 }
