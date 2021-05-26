@@ -135,7 +135,7 @@ sub processLine {
 			$title = $2;
 			closeList( -1);
 			printText();
-			printSection( $tag, $title);
+			printSection( $tag, substMarkup( encodeHtml( $title)));
 		}
 		elsif ($line =~ m/^[\`]{3,3}([A-Za-z0-9]*)$/)
 		{
