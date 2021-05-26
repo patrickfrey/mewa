@@ -36,7 +36,7 @@ Counter that is incremented for every production in the grammar marked with the 
 A constructor implements the construction of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor of the derived type. 
 
 ### Ctor/Dtor
-To prevent a mess in the glossary we refer to a constructor of an object in the programming language our compiler translates as *ctor*. The corresponding destructor is called *dtor".
+To prevent a mess in the glossary we refer to a constructor of an object in the programming language our compiler translates as *ctor*. The corresponding destructor is called *dtor*.
 
 ## Glossary of Formal Languages
 ### Terminal
