@@ -1,6 +1,6 @@
 # Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_
 
-This article has also been published on [codeproject.com](https://codeproject.com).
+This article has also been published on [codeproject.com](https://www.codeproject.com/Articles/5301384/Writing-Compiler-Front-Ends-for-LLVM-with-Lua-usin).
 
 ## Lead Text
 _LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of _LLVM IR_ and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
@@ -9,7 +9,7 @@ _LLVM IR_ text representation makes it possible to write a compiler front-end wi
 
 The _Mewa_ compiler-compiler is a tool to script compiler front-ends in _Lua_. A compiler written with _Mewa_ takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this article uses the text format of _LLVM IR_ as output. An executable is built using the ```llc``` command of _Clang_.
 
-_Mewa_ provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
+_Mewa_ provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of the program structures to code and to leave all analytical optimization steps to the backend.
 
 For implementing a compiler with _Mewa_, you define a grammar attributed with _Lua_ function calls.
 The program ```mewa``` will generate a _Lua_ script that will transform any source passing the grammar specified into an _AST_ with the _Lua_ function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the _AST_ that take the control of the further processing of the compiler front-end. The functions called with their _AST_ node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.

@@ -1,6 +1,6 @@
 # Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_
 
-This article has also been published on [codeproject.com](https://codeproject.com).
+This article has also been published on [codeproject.com](https://www.codeproject.com/Articles/5301384/Writing-Compiler-Front-Ends-for-LLVM-with-Lua-usin).
 
 ## Lead Text
 _LLVM IR_ text representation makes it possible to write a compiler front-end without being bound to an API. We can map the source text to the text of _LLVM IR_ and use the tools of the _Clang_ compiler for further compilation steps. This opens the doors to implement compiler front-ends in different ways. _Mewa_ tries to optimize the amount of code written. It targets single authors that would like to write a prototype of a non-trivial programming language fast, but at the expense of a structure supporting collaborative work. This makes it rather a tool for experiment than for building a product.
@@ -9,7 +9,7 @@ _LLVM IR_ text representation makes it possible to write a compiler front-end wi
 
 The _Mewa_ compiler-compiler is a tool to script compiler front-ends in _Lua_. A compiler written with _Mewa_ takes a source file as input and prints an intermediate representation as input for the next compilation step. The example in this article uses the text format of _LLVM IR_ as output. An executable is built using the ```llc``` command of _Clang_.
 
-_Mewa_ provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of program structures to code and to leave all analytical optimization steps to the backend.
+_Mewa_ provides no support for the evaluation of different paths of code generation. The idea is to do a one-to-one mapping of the program structures to code and to leave all analytical optimization steps to the backend.
 
 For implementing a compiler with _Mewa_, you define a grammar attributed with _Lua_ function calls.
 The program ```mewa``` will generate a _Lua_ script that will transform any source passing the grammar specified into an _AST_ with the _Lua_ function calls attached to the nodes. The compiler will call the functions of the top-level nodes of the _AST_ that take the control of the further processing of the compiler front-end. The functions called with their _AST_ node as argument invoke the further tree traversal. The types and data structures of the program are built and the output is printed in the process.
@@ -1183,7 +1183,7 @@ All _AST_ node functions participate in the traversal as it is their responsibil
   * ```function traverseRange( typedb, node, range, ...)```
 
 The ```range``` is a pair of _Lua_ array indices ```{first, last element of the range}``` referring to the subnodes to process for a partial traversal. Partial traversal is used for processing the subnodes selectively. You may for example traverse the function name and the parameters first, then declare the function, and then traverse the function body for enabling recursion.
-The variable arguments **...** are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, whether a variable declaration is a member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error-prone. You should restrict it to a bare minimum and use scope-bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
+The variable arguments "..." are forwarded to the _AST_ node functions called. This way you can pass parameters down to the subnodes. The examples of _Mewa_ use parameters extensively. For example to pass down the declaration context that decides, whether a variable declaration is a member of a structure or a local or a global variable. Parameters are also used to implement multipass traversal or the _AST_ to parse declarations of a subtree, e.g. a class in a specific order. You pass down the index of the pass you want to process in an _AST_ node function. But be aware that this way of communicating is error-prone. You should restrict it to a bare minimum and use scope-bound data (```typedb:set_instance```, ```typedb:get_instance```) or even global variables instead.
 
 ##### Source from typesystem_utils
 ```Lua
