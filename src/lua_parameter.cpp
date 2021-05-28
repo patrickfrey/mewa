@@ -696,6 +696,3 @@ void mewa::lua::pushStackTrace( lua_State* ls, const char* functionName, int nn,
 		++ridx;
 	}
 }
-
-
-
