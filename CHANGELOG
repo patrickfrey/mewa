@@ -3,7 +3,7 @@ mewa (0.3.0-1) stable; urgency=low
 -- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 26 Mai 2021 11:20:00 +0200
 
 mewa (0.2.0-1) stable; urgency=low
-  * Added command-line parser return value options, passed as additional argument to top level Lua AST callback functions of the compiler
+  * Added command-line parser return value options, passed as additional argument to top level Lua AST node functions of the compiler
   * Do not pass typesystem structure anymore to the command-line parser. Reduce intrusiveness.
   * Added mewa.version command
   * Make tagmask default uniform across all resolving functions, default is allways ALL and not NOTHING

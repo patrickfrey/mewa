@@ -345,7 +345,7 @@ For languages allowing a schema like C++, we need multi-pass AST traversal. See 
 
 Sometimes some definitions have to be prioritized, e.g. member variable definitions have to be known before translating member functions.
 _Mewa_ does not support multipass traversal by nature, but you can implement it by passing additional parameters to the traversal routine.
-In the example grammar I attached a pass argument for the ```definition``` _Lua_ callback:
+In the example grammar I attached a pass argument for the ```definition``` _Lua_ function call:
 ```
 inclass_definition	= typedefinition ";"		    (definition 1)
 	        		| variabledefinition ";"        (definition 2)
@@ -362,7 +362,7 @@ free_definition		= struct_definition
 			        | interfacedefinition		(definition 1)
 			        ;
 ```
-The callback then gets 2 additional parameters, one from the grammar: ```pass``` and one from the traversal call: ```pass_selected```
+The Lua function gets 2 additional parameters, one from the grammar: ```pass``` and one from the traversal call: ```pass_selected```
 ```Lua
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then

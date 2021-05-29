@@ -259,7 +259,7 @@ const char* Error::code2String( int code_) noexcept
 		case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
 		case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
 		case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
-		case NestedCallArgumentStructureInGrammarDef: return "Nested structures as callback function arguments are not allowed";
+        case NestedCallArgumentStructureInGrammarDef: return "Nested structures as AST node function arguments are not allowed";
 
 		case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 		case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";

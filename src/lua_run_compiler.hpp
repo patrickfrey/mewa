@@ -23,7 +23,7 @@ namespace mewa {
 
 // \param[in] ls Lua state
 // \param[in] automaton LALR(1) parser automaton
-// \param[in] options_index Lua stack index of options passed to top level Lua AST callback functions
+// \param[in] options_index Lua stack index of options passed to top level Lua AST node functions called by the compiler
 // \param[in] source source to compile
 // \param[in] calltable Name of Lua global variable addressing the call table of the compiler
 // \param[in] dbgout optional debug output, null if not defined

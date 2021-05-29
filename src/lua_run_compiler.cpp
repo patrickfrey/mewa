@@ -586,7 +586,7 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, int 
 	{
 		if (dbgout) printDebugAction( dbgout, ctx, automaton, lexem);
 	}
-	// Call Lua top level AST node callback functions with their associated nodes as parameter:
+    // Call Lua top level AST node functions with their associated nodes as parameter:
 	if (ctx.calltablesize)
 	{
 		int lastElementOnStack = lua_gettop( ls);

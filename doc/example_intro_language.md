@@ -16,7 +16,7 @@ This language has been designed to explain _Mewa_. It is not considered as a cod
 
 The project specific files of the example language presented in the article [Writing Compiler Front-Ends for LLVM with _Lua_ using _Mewa_](article.md) are located in [examples/intro](../examples/intro)
 
- - [grammar.g](../examples/intro/grammar.g) Grammar description in a kind of BNF with callback hooks to the typesystem module writen in Lua.
+ - [grammar.g](../examples/intro/grammar.g) Grammar description in a kind of BNF with Lua function calls to the typesystem module writen in Lua as attributes.
  - [llvmir.lua](../examples/intro/llvmir.lua) Format templates organized in structures for producing LLVM output.
  - [llvmir_scalar.lua](../examples/intro/llvmir_scalar.lua) GENERATED FILE. Format templates organized in structures for the built-in basic first class scalar types.
  - [scalar_types.txt](../examples/intro/scalar_types.txt) Descriptions of the built-in basic first class scalar types.

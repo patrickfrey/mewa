@@ -243,7 +243,7 @@ public:
 		short m_state;
 	};
 
-	/// \brief Encoded callback reference attached to a production to be performed after its reduction
+    /// \brief Encoded node call reference attached to a production to be performed after its reduction
 	class Call
 	{
 	public:

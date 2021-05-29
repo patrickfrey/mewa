@@ -1,43 +1,47 @@
 ## Abstract Syntax Tree (AST) Format of Mewa
 
-The abstract syntax tree of _Mewa_ is a tree with two types of nodes. Either a node represents a [non keyword lexem nodes](#lexem_node) or a [callback node](#callback_node) bound to a call to the typesystem defined in Lua. The tree is built during the parsing of the program. After parsing the _Mewa_ compiler calls the topmost Lua callback functions defined. These toplevel functions are then responsible for the traversal of the sub nodes of the abstract syntax tree. 
+The AST (Abstract Syntax Tree) of _Mewa_ is a tree with two types of nodes. Leaf nodes represent a [non-keyword lexeme nodes](#lexeme_node).
+Non-leaf node represent [function nodes](#nodefunc_node). AST function nodes are bound to a call to the Lua typesystem module.
+The tree is built during the parsing of the program. After parsing the _Mewa_ compiler calls the topmost AST node functions defined.
+Each AST node function is responsible for the traversal of its sub-nodes of the AST.
 
-### Note on Keyword Lexems
-Keyword lexems (lexems defined as string constants in the rules of the grammar) are dismissed during the built of the AST. They are considered to only have a contextual meaning in the language selecting a processing path of the items declared.
+### Note on Keyword Lexemes
+Keyword lexemes (lexemes defined as string constants in the rules of the grammar) are dismissed during the built of the AST.
+They are considered to only have a contextual meaning in the language selecting a processing path of the items declared.
+You can re-add information dismissed this way with the first argument of the AST functions.
 
+<a name="lexeme_node"/>
 
-<a name="lexem_node"/>
-
-### Non-Keyword Lexem Node
+### Non-Keyword Lexeme Node
 
 #### Structure
 | Name    | Type     | Description                                                             |
 | :------ | :------- | :---------------------------------------------------------------------- |
-| name    | string   | Name of the lexem assigned to it in lexer section of the grammar.       |
+| name    | string   | Name of the lexeme assigned to it in lexer section of the grammar.      |
 | value   | string   | Selected value of the pattern defined in lexer section of the grammar.  |
-| line    | integer  | Number of the line in the source where the lexem was detected.          |
+| line    | integer  | Number of the line in the source where the lexeme was detected.         |
 
 
-<a name="callback_node"/>
+<a name="nodefunc_node"/>
 
-### Lua Callback Node
+### AST Function Node
 
 #### Structure
 | Name    | Type     | Description                                                                                                    |
 | :------ | :------- | :------------------------------------------------------------------------------------------------------------- |
-| call    | table    | ([Structure](#callback_description) describing the function to call.                                           |
+| call    | table    | ([Structure](#nodefunc_description) describing the function to call.                                           |
 | scope   | table    | (optional) Scope (pair of integers) attached to the node with the operator **{}** in the grammar description.  |
 | step    | integer  | (optional) Scope step (integer) attached to the node with the operator **>>** in the grammar description.      |
-| arg     | table    | List of sub nodes, either call structures or [non keyword lexem nodes](#lexem_node).                           |
-| line    | integer  | Number of the line in the source where the last lexem was detected.                                            |
+| arg     | table    | List of sub nodes, either call structures or [non-keyword lexeme nodes](#lexeme_node).                         |
+| line    | integer  | Number of the line in the source where the last lexeme was detected.                                           |
 
 ##### Note
-There is one additional field reserved in a callback node to store some data shared between passes in a multipass traversal.
+There is one additional field reserved in an AST function node to store some data shared between passes in a multi-pass traversal.
 
-<a name="callback_description"/>
+<a name="nodefunc_description"/>
 
-### Lua Callback Description
-The Lua callback function descriptions are passed as an array that is part of the compiler definition (member "call") to the compiler.
+### AST Node Function Description
+The AST node function descriptions are passed as an array that is part of the compiler definition (member "call") to the compiler.
 They are referenced by index in the LALR(1) action table.
 
 #### Structure
@@ -46,5 +50,5 @@ They are referenced by index in the LALR(1) action table.
 | :------ | :------- | :--------------------------------------------------------------- |
 | name    | string   | Name of the function and the argument object as string.          |
 | proc    | function | Lua function to call                                             |
-| obj     | any type | 2nd argument (besides node) to pass to the Lua callback function.|
+| obj     | any type | 2nd argument (besides node) to pass to the Lua AST node function.|
 

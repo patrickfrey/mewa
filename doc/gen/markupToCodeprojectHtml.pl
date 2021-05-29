@@ -23,6 +23,7 @@ or die("Error in command line arguments\n");
 
 sub encodeHtml {
 	my $content = $_[0];
+	$content =~ s/[\&]/\&amp\;/g;
 	$content =~ s/[']/\&\#39\;/g;
 	$content =~ s/["]/\&quot\;/g;
 	$content =~ s/[<]/\&lt\;/g;

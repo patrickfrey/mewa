@@ -17,11 +17,11 @@ This is a multiparadigm general purpose statically typed programming language wi
 
 The project specific files of the test language **language1** are located in [examples/language1](../examples/language1)
 
- - [grammar.g](../examples/language1/grammar.g) Grammar description in a kind of BNF with callback hooks to the typesystem module writen in Lua.
+ - [grammar.g](../examples/language1/grammar.g) Grammar description in a kind of BNF with Lua function calls to the typesystem module writen in Lua as attributes.
  - [llvmir.lua](../examples/language1/llvmir.lua) Format templates organized in structures for producing LLVM output.
  - [llvmir_scalar.lua](../examples/language1/llvmir_scalar.lua) GENERATED FILE. Format templates organized in structures for the built-in basic first class scalar types. 
  - [scalar_types.txt](../examples/language1/scalar_types.txt) Descriptions of the built-in basic first class scalar types.
- - [typesystem.lua](../examples/language1/typesystem.lua) Implements the Lua callbacks referenced in the grammar.
+ - [typesystem.lua](../examples/language1/typesystem.lua) Implements the Lua function calls referenced in the grammar.
 
 
 ## Example Source Files
