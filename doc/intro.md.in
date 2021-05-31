@@ -32,7 +32,7 @@ To understand this article some knowledge about formal languages and parser gene
 
 ### Deeper Digging
 
-For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a statically typed multiparadigm programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
+For a deeper digging you have to look at the _Mewa_ project itself and the implementation of [the main example language](example_language1.md), a statically typed, general-purpose programming language with structures, classes, interfaces, free functions, generics, lambdas and exceptions. There exists an [FAQ](faq.md) that also tries to answer problem-solving questions.
 
 ## Preparation
 

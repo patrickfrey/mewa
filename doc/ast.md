@@ -6,7 +6,7 @@ The tree is built during the parsing of the program. After parsing the _Mewa_ co
 Each AST node function is responsible for the traversal of its sub-nodes of the AST.
 
 ### Note on Keyword Lexemes
-Keyword lexemes (lexemes defined as string constants in the rules of the grammar) are dismissed during the built of the AST.
+Keyword lexemes (lexemes defined as string constants in the rules of the grammar) are dismissed during the build of the AST.
 They are considered to only have a contextual meaning in the language selecting a processing path of the items declared.
 You can re-add information dismissed this way with the first argument of the AST functions.
 

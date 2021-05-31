@@ -1,7 +1,7 @@
 # Example "language1"
 
 ## Description
-This is a multiparadigm general purpose statically typed programming language with the following features:
+This is a general-purpose, statically typed programming language with the following features:
 
  * Structures (plain data stuctures without methods, implicitly defined assignment operator)
  * Interfaces
