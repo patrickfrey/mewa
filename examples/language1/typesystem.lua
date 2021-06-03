@@ -192,23 +192,40 @@ function buildCallArguments( out, this_inp, args)
 	end
 	return code,subst
 end
--- Constructor implementing some sort of manipulation of an object without arguments or output and without exception
-function manipConstructor( fmt)
-	return function( this)
-		local inp,code = constructorParts( this)
-		return constructorStruct( inp, code .. utils.constructor_format( fmt, {this=inp}))
+-- Get the pair output register value/constructor out member of a constructor call depending on the result parameter
+function getConstructorOutputResultPair( env, result)
+	local out,res
+	if result then
+		if type( result) == "string" then -- create unbound reference type 
+			out = "{" .. result .. "}"
+			res = result
+		else
+			out = env.register() -- constructor has a result
+			res = out
+		end
+	end
+	return out,res
+end
+-- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
+function callConstructor( fmt, result)
+	return function( this, args)
+		local env = getCallableEnvironment()
+		local this_inp,this_code = constructorParts( this)
+		local out,res = getConstructorOutputResultPair( env, result)
+		local code,subst = buildCallArguments( out, this_inp, args)
+		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, false)
 	end
 end
--- Constructor implementing a constructor of an object by a single argument without exception
-function singleArgumentConstructor( fmt)
-	return function( this, arg)
+-- Call constructor that might throw an exception
+function invokeConstructor( fmt, result)
+	return function( this, args)
 		local env = getCallableEnvironment()
-		local code = ""
 		local this_inp,this_code = constructorParts( this)
-		local arg_inp,arg_code = constructorParts( arg[1])
-		local subst = {arg1 = tostring(arg_inp), this = this_inp}
-		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
- 		return constructorStruct( this_inp, code)
+		local out,res = getConstructorOutputResultPair( env, result)
+		local code,subst = buildCallArguments( out, this_inp, args)
+		subst.success = env.label()
+		subst.cleanup = getInvokeUnwindLabel()
+		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, true)
 	end
 end
 -- Constructor of a string pointer from a string definition
@@ -220,85 +237,13 @@ function stringPointerConstructor( stringdef)
 end
 -- Constructor implementing an assignment of a free function callable to a function/procedure pointer
 function copyFunctionPointerConstructor( descr)
-	local copyFunc = singleArgumentConstructor( descr.assign)
+	local copyFunc = callConstructor( descr.assign)
 	return function( this, arg)
 		local scope_bk,step_bk = typedb:scope( typedb:type_scope( arg[1].type))
 		local functype = typedb:get_type( arg[1].type, "()", descr.param)
 		local functypeDescr = typeDescriptionMap[ functype]
 		typedb:scope( scope_bk,step_bk)
 		if functype and descr.throws == functypeDescr.throws then return copyFunc( this, {{out="@" .. functypeDescr.symbolname}}) end
-	end
-end
--- Binary operator with a conversion of the argument before the call of the operator. Needed for conversion of floating point numbers into a hexadecimal code required by LLVM IR. 
-function binopArgConversionConstructor( fmt, argconv)
-	return function( this, arg)
-		local env = getCallableEnvironment()
-		local out = env.register()
-		local code = ""
-		local this_inp,this_code = constructorParts( this)
-		local arg_inp,arg_code = constructorParts( arg[1])
-		local subst = {out = out, this = this_inp, arg1 = argconv(arg_inp)}
-		code = code .. this_code .. arg_code .. utils.constructor_format( fmt, subst, env.register)
-		return constructorStruct( out, code)
-	end
-end
--- Constructor for commutative binary operation, swapping arguments
-function binopSwapConstructor( constructor)
-	return function( this, args) return constructor( args[1], {this}) end
-end
--- Constructor imlementing a conversion of a data item to another type using a format string that describes the conversion operation
-function convConstructor( fmt)
-	return function( constructor)
-		local env = getCallableEnvironment()
-		local out = env.register()
-		local inp,code = constructorParts( constructor)
-		local convCode = utils.constructor_format( fmt, {this = inp, out = out}, env.register)
-		return constructorStruct( out, code .. convCode)
-	end
-end
--- Constructor imlementing a conversion of a data item to another and unbound reference type using a format string that describes the conversion operation
-function convConstructorUnboundReference( fmt)
-	return function( constructor)
-		local env = getCallableEnvironment()
-		local inp,code = constructorParts( constructor)
-		local convCode = utils.constructor_format( fmt, {this = inp, out = "{RVAL}"}, env.register)
-		local rt = constructorStruct( "RVAL", code .. convCode)
-		rt.step = typedb:step()
-		return rt
-	end
-end
--- Constructor implementing some operation with an arbitrary number of arguments selectively addressed without LLVM typeinfo attributes attached
-function callConstructor( fmt, has_result)
-	return function( this, args)
-		local env = getCallableEnvironment()
-		local this_inp,this_code = constructorParts( this)
-		local out,res
-		if has_result then
-			out = env.register()
-			res = out
-		else
-			res = this_inp
-		end
-		local code,subst = buildCallArguments( out, this_inp, args)
-		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, false)
-	end
-end
--- Call constructor that might throw an exception
-function invokeConstructor( fmt, has_result)
-	return function( this, args)
-		local env = getCallableEnvironment()
-		local this_inp,this_code = constructorParts( this)
-		local out,res
-		if has_result then
-			out = env.register()
-			res = out
-		else
-			res = this_inp
-		end
-		local code,subst = buildCallArguments( out, this_inp, args)
-		subst.success = env.label()
-		subst.cleanup = getInvokeUnwindLabel()
-		return constructorStructCall( res, this_code .. code .. utils.constructor_format( fmt, subst, env.register), nil, true)
 	end
 end
 -- Move constructor of a reference type from an unbound reference type
@@ -715,7 +660,7 @@ function defineQualifiedTypeRelations( qualitype, typeDescription)
 	typeQualiSepMap[ reftype]    = {valtype=valtype,qualifier={const=false,reference=true,private=false}}
 	typeQualiSepMap[ c_reftype]  = {valtype=valtype,qualifier={const=true,reference=true,private=false}}
 
- 	typedb:def_reduction( valtype, c_reftype, convConstructor( typeDescription.load), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
+ 	typedb:def_reduction( valtype, c_reftype, callConstructor( typeDescription.load, true), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
 	typedb:def_reduction( c_valtype, valtype, nil, tag_typeDeduction, rdw_strip_c_1)
 	typedb:def_reduction( c_reftype, reftype, nil, tag_typeDeduction, rdw_strip_c_1)
 end
@@ -756,7 +701,7 @@ function definePointerQualiTypes( node, typeId)
 	defineCall( valtype, pointeeRefTypeId, "&", {}, function(this) return this end)
 	defineCall( pointeeRefTypeId, valtype, "->", {}, function(this) return this end)
 
-	local dc = (typeDescription.scalar == false and typeDescription.dtor) and manipConstructor( typeDescription.dtor) or constructorStructEmpty
+	local dc = (typeDescription.scalar == false and typeDescription.dtor) and callConstructor( typeDescription.dtor) or constructorStructEmpty
 	defineCall( valtype, valtype, " delete", {}, dc)
 
 	defineArrayIndexOperators( pointeeRefTypeId, c_valtype, pointerTypeDescription)
@@ -875,13 +820,13 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 end
 -- Define the constructors/destructors for built-in scalar types
 function defineScalarConstructorDestructors( qualitype, descr)
-	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, singleArgumentConstructor( descr.ctor_copy))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, singleArgumentConstructor( descr.ctor_copy))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
+	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, callConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, callConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, callConstructor( descr.ctor_copy))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, callConstructor( descr.ctor_init))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, callConstructor( descr.assign))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_reftype}, callConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, callConstructor( descr.ctor_init))
 	defineCall( 0, qualitype.reftype, ":~", {}, constructorStructEmpty)
 end
 -- Define structure assignments as construction in a local buffer, a destructor call of the target followed by a move into the destination place
@@ -1003,7 +948,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 		defineCtorCalls( qualitype, {qualitype.c_reftype}, constructorFunc, copy.constructor.throws)
 	end
 	print_section( "Auto", utils.template_format( arrayDescr.dtorproc, {dtors=dtor_code}))
-	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( arrayDescr.dtor))
+	defineCall( 0, qualitype.reftype, ":~", {}, callConstructor( arrayDescr.dtor))
 
 	local redu_constructor_l = tryConstexprStructureReductionConstructorArray( node, qualitype.valtype, elementTypeId, arraySize)
 	local redu_constructor_c = tryConstexprStructureReductionConstructorArray( node, qualitype.c_valtype, elementTypeId, arraySize)
@@ -1051,8 +996,8 @@ function defineStructDestructors( node, qualitype, descr)
 	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol, nil, false)
 	local dtors = getStructMemberDestructorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
-	defineCall( 0, qualitype.reftype, ":~", {}, manipConstructor( descr.dtor))
-	defineCall( 0, qualitype.c_reftype, ":~", {}, manipConstructor( descr.dtor))
+	defineCall( 0, qualitype.reftype, ":~", {}, callConstructor( descr.dtor))
+	defineCall( 0, qualitype.c_reftype, ":~", {}, callConstructor( descr.dtor))
 	instantCallableEnvironment = nil
 end
 -- Print the code of the partial destructor for a 'class' type
@@ -1153,13 +1098,13 @@ function defineStructConstructors( node, qualitype, descr)
 end
 -- Define constructors/destructors for 'interface' types
 function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, manipConstructor( descr.ctor_init))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, manipConstructor( descr.ctor_init))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
-	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, singleArgumentConstructor( descr.assign))
-	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, singleArgumentConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, callConstructor( descr.ctor_init))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, callConstructor( descr.ctor_init))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, callConstructor( descr.ctor_copy))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.reftype}, callConstructor( descr.ctor_copy))
+	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.c_valtype}, callConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, callConstructor( descr.assign))
+	defineCall( qualitype.reftype, qualitype.reftype, "=", {qualitype.reftype}, callConstructor( descr.ctor_copy))
 end
 -- Tell if a method identifier by id implements an inherited interface method, thus has to be noinline
 function isInterfaceMethod( context, methodid)
@@ -1236,7 +1181,7 @@ function defineBuiltInTypeConversions( typnam, descr)
 	if descr.conv then
 		for oth_typnam,conv in pairs( descr.conv) do
 			local oth_qualitype = scalarQualiTypeMap[ oth_typnam]
-			local conv_constructor = conv.fmt and convConstructor( conv.fmt) or nil
+			local conv_constructor = conv.fmt and callConstructor( conv.fmt, true) or nil
 			typedb:def_reduction( qualitype.valtype, oth_qualitype.c_valtype, conv_constructor, tag_typeConversion, combineWeight( rdw_conv, conv.weight))
 		end
 	end
@@ -1248,7 +1193,7 @@ function defineBuiltInTypePromoteCalls( typnam, descr)
 		local promote_qualitype = scalarQualiTypeMap[ promote_typnam]
 		local promote_descr = typeDescriptionMap[ promote_qualitype.valtype]
 		local promote_conv_fmt = promote_descr.conv[ typnam].fmt
-		local promote_conv = promote_conv_fmt and convConstructor( promote_conv_fmt) or nil
+		local promote_conv = promote_conv_fmt and callConstructor( promote_conv_fmt, true) or nil
 		if promote_descr.binop then
 			for operator,operator_fmt in pairs( promote_descr.binop) do
 				definePromoteCall( promote_qualitype.valtype, qualitype.c_valtype, promote_qualitype.c_valtype, operator, {promote_qualitype.c_valtype}, promote_conv)
@@ -1978,7 +1923,7 @@ function defineInterfaceMember( node, context, typeId, typnam, private)
 	table.insert( context.interfaces, typeId)
 	local fmt = utils.template_format( descr.getClassInterface, {classname=context.descr.symbol})
 	local thisType = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
-	defineCall( unboundReferenceTypeMap[ typeId], thisType, typnam, {}, convConstructorUnboundReference( fmt))
+	defineCall( unboundReferenceTypeMap[ typeId], thisType, typnam, {}, callConstructor( fmt, "RVAL"))
 end
 -- Define a reduction to a member variable to implement class/interface inheritance
 function defineReductionToMember( objTypeId, name, const)
@@ -2447,7 +2392,7 @@ function createPointerTypeInstance( node, attr, typeId)
 		qualitype = qualitype_valtype
 		local descr = typeDescriptionMap[ typeId]
 		local voidptr_cast_fmt = utils.template_format( llvmir.control.bytePointerCast, {llvmtype=descr.llvmtype})
-		typedb:def_reduction( memPointerType, qualitype.c_valtype, convConstructor(voidptr_cast_fmt), tag_pushVararg)
+		typedb:def_reduction( memPointerType, qualitype.c_valtype, callConstructor(voidptr_cast_fmt, true), tag_pushVararg)
 	end
 	constVarargTypeMap[ qualitype.c_valtype] = memPointerType
 	if attr.const == true then return qualitype.c_valtype else return qualitype.valtype end
