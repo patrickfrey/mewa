@@ -4,12 +4,15 @@
 % COMMENT "/*" "*/";
 % COMMENT "//";
 
-BOOLEAN : '((true)|(false))';
+BOOLEAN  : '((true)|(false))';
 IDENT    : '[a-zA-Z_]+[a-zA-Z_0-9]*';
-DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
-UINTEGER: '[0123456789]+';
+DQSTRING : '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
+UINTEGER : '[0123456789]+';
 FLOAT    : '[0123456789]*[.][0123456789]+';
 FLOAT    : '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+ILLEGAL	 : '[0123456789]+[A-Za-z_]';
+ILLEGAL  : '[0123456789]*[.][0123456789]+[A-Za-z_]';
+ILLEGAL	 : '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+[A-Za-z_]';
 
 program
           = extern_deflist free_deflist main_proc   (program)
