@@ -4,7 +4,7 @@
     * [What is _Mewa_](#WTF)
     * [What audience is targeted by _Mewa_?](#targetAudience)
     * [What types of grammars are covered by _Mewa_?](#coveredGrammarClasses)
-    * [Why only a LALR(1) parser generator?](#onlyLALR1)
+    * [Why only an LALR(1) parser generator?](#onlyLALR1)
     * [What types of languages are covered by _Mewa_?](#coveredLanguageClasses)
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
     * [What are the hacks in the implementation of the example language1?](#hacks)
@@ -67,11 +67,11 @@ It aims to support the mapping of a programming language to an intermediate repr
 <a name="coveredGrammarClasses"/>
 
 ### What types of grammars are covered by _Mewa_?
-_Mewa_ is currently based on its own implementation of a **LALR(1)** parser generator. 
+_Mewa_ is currently based on its own implementation of an **LALR(1)** parser generator. 
 
 <a name="onlyLALR1"/>
 
-### Why only a LALR(1) parser generator?
+### Why only an LALR(1) parser generator?
 _Mewa_ is not first and foremost about parser generators. The main focus is currently on other problems. For a tool for prototyping languages, it is not the most important thing to be able to cover many language classes. At least not yet. This is more of an issue when dealing with legacy languages. But here, the author of the grammar is most likely also the author of the compiler. 
 But I am open to alternatives or extensions to cover more classes of grammars. I don't say that it isn't important. It's just not a forefront issue yet.
 
@@ -93,7 +93,7 @@ I think the original idea was that seagulls are a sign of land nearby when you a
 ### What are the hacks in the implementation of the example language1?
 Some may say that the whole example _language1_ is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimized for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
  1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a _Lua_ table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately, I don't have any idea to get around the problem differently.
- 2. *Cleaning up of partially constructed objects*: This problem caught on the wrong foot, especially the building of arrays from initializer lists. The solution is awkward and needs to be revisited.
+ 2. *Cleaning up of partially constructed objects*: This problem caught me on the wrong foot, especially the building of arrays from initializer lists. The solution is awkward and needs to be revisited.
 
 <a name="decisions"/>
 
@@ -473,7 +473,7 @@ The lazy evaluation used in generics requires multiple traversals of the same AS
 #### How to deduce generic function arguments from the function parameter lists
 C++ can reference template functions without declaring the template arguments. The template arguments are deduced from the call arguments.
 I did not implement this in the example _language1_.
-For automatic template argument deduction, the generic parameter assignments have to be synthesized by matching the function parameters against the function candidates. A complete set of generic parameter assignments is evaluated in the process. This list is used as generic argument list to refer to the generic instance.
+For automatic template argument deduction, the generic parameter assignments have to be synthesized by matching the function parameters against the function candidates. A complete set of generic parameter assignments is evaluated in the process. This list is used as the generic argument list to refer to the generic instance.
 
 
 <a name="multipleTraversal"/>

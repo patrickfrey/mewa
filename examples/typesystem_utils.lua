@@ -294,9 +294,9 @@ end
 function utils.errorMessage( line, fmt, ...)
 	local arg = {...}
 	if line ~= 0 then
-		error( "Error on line " .. line .. ": " .. string.format( fmt, unpack(arg)))
+		error( "Error on line " .. line .. ": " .. string.format( fmt, table.unpack(arg)))
 	else
-		error( string.format( fmt, unpack(arg)))
+		error( string.format( fmt, table.unpack(arg)))
 	end
 end
 
