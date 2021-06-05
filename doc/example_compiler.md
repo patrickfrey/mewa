@@ -2,7 +2,7 @@
 Currently there exist only one real example and an incomplete language for an article introducing _Mewa_. I have split the files in non language specific and language specific.
  
 ## Example Compiler Projects
- 1. [language1](example_language1.md) Multiparadigm programming language (also used in tests).
+ 1. [language1](example_language1.md) General-purpose programming language (also used in tests).
  2. [intro](example_intro_language.md) A demo-language for the codeproject article introducing _Mewa_. A very small subset of language1, only static structures and first class scalar types.
 
 ## Language Independent Files
