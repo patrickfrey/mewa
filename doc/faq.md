@@ -195,8 +195,8 @@ Qualifiers are not considered to be attached to the type but part of the type de
 
 ### How to implement pointers and arrays?
 
-Pointers and arrays are types on their own. An array of size 40 has to be declared as a separate type that differs from the array of size 20. For arrays, a mechanism for definition on-demand is needed. This applies to generics too.
-
+In the example _language1_, pointers and arrays are types on their own. Both types are created on-demand. The array type is created when used in a declaration. A pointer is created when used in a declaration or as a result of an '&' address operator on a pointee reference type. 
+An array of size 40 has to be declared as a separate type that differs from the array of size 20. In this regard, arrays are similar to generics. But the analogies stop there.
 
 <a name="namespaces"/>
 
@@ -262,8 +262,11 @@ Arbitrary precision arithmetics for integers and floating-point numbers are requ
 
 ### How to implement callables like functions, procedures, and methods?
 
-This is tricky because of issues around scope and visibility. There are two scopes involved the visibility of the function for callers and the scope of the code block that executed the callable. Furthermore, we have to do some tricks to do the declaration in a preceding pass of the code block traversal for enabling recursion (declare the function before its code, so it can be used in the code).
-That is why the whole thing is quirky here. See function typesystem.callablebody in typesystem.lua of the example _language1_.
+This is tricky because of issues around scope and visibility. There are two scopes involved the visibility of the function for callers and the scope of the code block that executed the callable. Furthermore, we have to do traverse the declaration and the implementation in two different passes. The function is declared in one pass, the body is traversed and the code generated in another pass. This makes the function known before its body is traversed, thus recursion possible.
+See the function ```typesystem.callablebody``` in ```typesystem.lua``` of the example _language1_.
+See also [How to implement multipass AST traversal](#multipassTraversal).
+
+There are some differences between methods and free functions and other function types, mainly in the context type and the passing of the ```self``` parameter and maybe the LLVM IR code template. But the things shared overweigh the differences. I would suggest using the same mapping for both.
 
 <a name="functionReturn"/>
 
