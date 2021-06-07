@@ -547,7 +547,9 @@ The weights should be referenced by constants we declare at a central place wher
 
 ### Reduction Tag
 
-The display of the type system as one graph is not enough for all cases. There are type derivation paths that are fitting in one case and undesirable in other cases. The following example declares an object of a class derived from a base class that calls a constructor function with no arguments. The constructor function is only declared for the base class. But when calling an object constructor an error should be reported if it does not exist for the class. The same behavior as for a method call is bad in this case.
+In this example we refer to the constructor function of a class in our example language as _ctor_ function to avoid confusion with the term constructor.
+
+The display of the type system as one graph is not enough for all cases. There are type derivation paths that are fitting in one case and undesirable in other cases. The following example declares an object of a class derived from a base class that calls a _ctor_ function with no arguments. The _ctor_ function is only declared for the base class. But when calling an object _ctor_ an error should be reported if it does not exist for the class. The same behavior as for a method call is bad in this case.
 
 Let's first look at an example failing:
 
@@ -931,12 +933,15 @@ A greater priority number means a higher priority. Production priorities are use
 % COMMENT "/*" "*/";
 % COMMENT "//";
 
-BOOLEAN : '((true)|(false))';
+BOOLEAN  : '((true)|(false))';
 IDENT    : '[a-zA-Z_]+[a-zA-Z_0-9]*';
-DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
-UINTEGER: '[0123456789]+';
+DQSTRING : '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
+UINTEGER : '[0123456789]+';
 FLOAT    : '[0123456789]*[.][0123456789]+';
 FLOAT    : '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+ILLEGAL	 : '[0123456789]+[A-Za-z_]';
+ILLEGAL  : '[0123456789]*[.][0123456789]+[A-Za-z_]';
+ILLEGAL	 : '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+[A-Za-z_]';
 
 program
           = extern_deflist free_deflist main_proc   (program)

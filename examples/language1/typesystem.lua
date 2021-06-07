@@ -3090,7 +3090,7 @@ function collectCode( node, args)
 	end
 	return {code=code, nofollow=nofollow, initstate=initstate}
 end
--- AST Callbacks:
+-- AST Node functions:
 local typesystem = {}
 function typesystem.definition( node, pass, context, pass_selected)
 	if not pass_selected or pass == pass_selected then
