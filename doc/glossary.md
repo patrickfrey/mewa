@@ -32,6 +32,9 @@ Some other compiler models represent hierarchies of data structures by lexical s
 ## Scope-step
 Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope-step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**. A **scope** starts with the scope-step counter value when first entering a state with a production marked as **{}** and ends with one step after the value of the **scope-step** after exit (**reduction** in the context of the parser).
 
+## Context Type
+Every type definition has a tuple consisting of a type and a name as the key that identifies it. The type is called the **context type** of the definition. The context type is either a type defined before or 0 representing the absence of a context type or the global context. Context types help you to describe relations like membership or another way of expressing contextual visibility.
+
 ## Constructor
 A constructor implements the construction of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor of the derived type. 
 
@@ -72,7 +75,7 @@ These types (const and non-const instance) are referring to a value of a variabl
 These types (const and non-const instance) are an internal representation of a reference type whose address has not yet been determined. They are mainly used as the return type of a function where the return slot is provided by the caller. The address of this reference type is injected by an assignment constructor.
 
 #### Private Reference Type (priv_reftype/priv_c_reftype)
-These types are used as context type for accessing private members (in class methods).
+These types are used as _context type_ for accessing private members (in class methods).
 
 #### Initialization Type (init_reftype)
 This type is used as a *self* reference in constructors. It redirects assignment calls to constructor calls during the initialization phase of the constructor. During this phase, the elements of a class are initialized in the order of their definition as members of the class. The initialization phase is completed when the first method is called or the first member is accessed otherwise than through the assignment operator redirected to a constructor call. The initialization of members not explicitly initialized is implicitly completed in the constructor.
