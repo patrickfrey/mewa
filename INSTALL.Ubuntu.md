@@ -3,6 +3,10 @@
 ### Build system
 Use Cmake with gcc or clang with C++17 support.
 
+### LLVM Version
+The examples of this version of _Mewa_ are based on LLVM version 10.0.0.
+```make test``` with other versions may fail.
+
 ### Prerequisites
 Install packages with 'apt-get'/aptitude.
 

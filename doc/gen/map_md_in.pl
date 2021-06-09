@@ -148,10 +148,17 @@ readIncludes( "intro_ast_", "examples/intro/ast", "lua", " require ");
 readExamples( "tutorial_", "examples/intro/tutorial");
 readIncludes( "tutorial_", "examples/intro/tutorial", "txt");
 
+sub stripEoln
+{
+	my $rt = $_[0];
+	chop( $rt);
+	return $rt;
+}
+
 sub substVariables
 {
 	my $line = $_[0];
-	if ($line =~ m/^([^\$]*)[\$][:]([A-Z]+)([^:A-Za-z_].*)$/)
+	if ($line =~ m/^([^\$]*)[\$][:]([A-Za-z0-9_]+)([^:A-Za-z0-9_].*)$/)
 	{
 		my $rt = $1;
 		my $var = $2;
@@ -159,6 +166,10 @@ sub substVariables
 		if ($var eq "VERSION")
 		{
 			$rt .= readFile( $var) . substVariables( $rest . "\n");
+		}
+		elsif ($var eq "LLVM_VERSION")
+		{
+			$rt .= stripEoln(`llvm-config --version`) . substVariables( $rest . "\n");
 		}
 		else
 		{
