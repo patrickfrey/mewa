@@ -480,7 +480,7 @@ static int mewa_compiler_run( lua_State* ls)
 		lua_settable( ls, -3);	//STK: table=_G
 		lua_pop( ls, 1);	//STK:
 		cp->closeOutput();
-		lua_pop( ls, 2);	// ... destroy strings on lua stack created with move_string_on_lua_stack
+		lua_pop( ls, 3);	// ... destroy strings on lua stack created with move_string_on_lua_stack and options
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 0;

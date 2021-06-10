@@ -37,8 +37,8 @@ static void printUsage()
 {
 	std::cerr << "Usage: mewa [-h][-v][-V][-s][-g][-b LUABIN][-o OUTF][-d DBGOUTF][-t TEMPLAT] INPFILE" << std::endl;
 	std::cerr << "Description: Build a lua module implementing a compiler described in\n";
-    std::cerr << "             a Bison/Yacc-like BNF dialect with lua node function calls implementing\n";
-    std::cerr << "             the type system and the code generation.\n";
+	std::cerr << "             a Bison/Yacc-like BNF dialect with lua node function calls implementing\n";
+	std::cerr << "             the type system and the code generation.\n";
 	std::cerr << "Options:\n";
 	std::cerr << " --help,\n";
 	std::cerr << " -h           : Print this usage.\n";

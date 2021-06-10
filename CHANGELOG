@@ -1,3 +1,7 @@
+mewa (0.4.0-1) stable; urgency=low
+  * Try to provide line info in compiler error message if not provided by Lua
+-- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 10 Jun 2021 11:20:00 +0200
+
 mewa (0.3.0-1) stable; urgency=low
   * Restructure documentation (mainly for the code project article), rename some files to avoid confusion
 -- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 26 Mai 2021 11:20:00 +0200

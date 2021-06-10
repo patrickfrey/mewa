@@ -284,53 +284,99 @@ static mewa::Error::Code luaErrorCode2ErrorCode( int rc)
 	return rc ? mewa::Error::LuaCallErrorUNKNOWN : mewa::Error::Ok;
 }
 
+static int lua_pcall_errorhandler( lua_State* ls)
+{
+	int line = 0;
+	char msgbuf[ 512];
+	int ridx = 1;
+	lua_Debug ar;
+
+	int nn = lua_gettop( ls);
+	char const* msgstr = (nn >= 1) ? lua_tostring( ls, 1) : "";
+	if (!msgstr) msgstr = "";
+	std::size_t msglen;
+	if (0==std::strstr( msgstr, "line") || 0==std::strstr( msgstr, "file") || 0==std::strstr( msgstr, ".lua"))
+	{
+		lua_pushstring( ls, msgstr);
+		return 1;
+	}
+	while (lua_getstack( ls, ridx, &ar))
+	{
+		lua_getinfo( ls, "S", &ar);
+		if (0 == std::strcmp( ar.short_src, "[C]")) break;
+
+		if (line == 0 && ar.linedefined >= 1)
+		{
+			line = ar.linedefined;
+			if (line)
+			{
+				msglen = std::snprintf( msgbuf, sizeof(msgbuf), "%s:%d: %s", ar.short_src, line, msgstr);
+			}
+			else
+			{
+				msglen = std::snprintf( msgbuf, sizeof(msgbuf), "%s: %s", ar.short_src, msgstr);
+			}
+			if (msglen > sizeof(msgbuf))
+			{
+				msgbuf[ msglen = sizeof(msgbuf)-1] = 0;
+			}
+			lua_pushlstring( ls, msgbuf, msglen);
+			return 1;
+		}
+		++ridx;
+	}
+	lua_pushstring( ls, msgstr);
+	return 1;
+}
+
 static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbgout, int options_index)
 {
 	if (!lua_istable( ls, li)) throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
-	lua_pushvalue( ls, li);						// STK: [NODE]
-	lua_pushliteral( ls, "call");					// STK: [NODE] "call"
-	lua_gettable( ls, -2);						// STK: [NODE] [CALL]
+	lua_pushcfunction( ls, &lua_pcall_errorhandler);		// STK: [EHND] 
+	lua_pushvalue( ls, li);						// STK: [EHND] [NODE]
+	lua_pushliteral( ls, "call");					// STK: [EHND] [NODE] "call"
+	lua_gettable( ls, -2);						// STK: [EHND] [NODE] [CALL]
 
 	if (lua_isnil( ls, -1))
 	{
-		lua_pop( ls, 1);					// STK: [NODE]
-		lua_pushliteral( ls, "name");				// STK: [NODE] "name"
-		lua_rawget( ls, -2);					// STK: [NODE] [NAME]
+		lua_pop( ls, 1);					// STK: [EHND] [NODE]
+		lua_pushliteral( ls, "name");				// STK: [EHND] [NODE] "name"
+		lua_rawget( ls, -2);					// STK: [EHND] [NODE] [NAME]
 		if (lua_type( ls, -1) != LUA_TSTRING)
 		{
 			throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 		}
 		std::string namestr( lua_tostring( ls, -1));
-		lua_pop( ls, 1);					// STK: [NODE]
-		lua_pushliteral( ls, "value");				// STK: [NODE] "value"
-		lua_rawget( ls, -2);					// STK: [NODE] [VALUE]
+		lua_pop( ls, 1);					// STK: [EHND] [NODE]
+		lua_pushliteral( ls, "value");				// STK: [EHND] [NODE] "value"
+		lua_rawget( ls, -2);					// STK: [EHND] [NODE] [VALUE]
 		if (lua_type( ls, -1) != LUA_TSTRING)
 		{
 			throw mewa::Error( mewa::Error::BadElementOnCompilerStack, mewa::string_format( "%s line %d", __FILE__, (int)__LINE__));
 		}
 		std::string valuestr( lua_tostring( ls, -1));
-		lua_pop( ls, 2);					// STK:
+		lua_pop( ls, 3);					// STK:
 		throw mewa::Error( mewa::Error::NoLuaFunctionDefinedForItem, namestr + " = " + valuestr);
 	}
 	else
 	{
 		if (dbgout)
 		{
-			lua_pushliteral( ls, "name");				// STK: [NODE] [CALL] "name"
-			lua_rawget( ls, -2);					// STK: [NODE] [CALL] [NAME]
+			lua_pushliteral( ls, "name");			// STK: [EHND] [NODE] [CALL] "name"
+			lua_rawget( ls, -2);				// STK: [EHND] [NODE] [CALL] [NAME]
 			const char* procname = lua_tostring( ls, -1);
 			printDebug( dbgout, "Calling Lua function: %s\n", procname);
-			lua_pop( ls, 1);
+			lua_pop( ls, 1);				// STK: [EHND] [NODE] [CALL]
 		}
 		int nargs = 1;
-		lua_pushliteral( ls, "proc");					// STK: [NODE] [CALL] "proc"
-		lua_rawget( ls, -2);						// STK: [NODE] [CALL] [FUNC]
-		lua_pushvalue( ls, -3);						// STK: [NODE] [CALL] [FUNC] [NODE]
-		lua_pushliteral( ls, "obj");					// STK: [NODE] [CALL] [FUNC] [NODE] "obj"
-		lua_rawget( ls, -4);						// STK: [NODE] [CALL] [FUNC] [NODE] [OBJ]
+		lua_pushliteral( ls, "proc");				// STK: [EHND] [NODE] [CALL] "proc"
+		lua_rawget( ls, -2);					// STK: [EHND] [NODE] [CALL] [FUNC]
+		lua_pushvalue( ls, -3);					// STK: [EHND] [NODE] [CALL] [FUNC] [NODE]
+		lua_pushliteral( ls, "obj");				// STK: [EHND] [NODE] [CALL] [FUNC] [NODE] "obj"
+		lua_rawget( ls, -4);					// STK: [EHND] [NODE] [CALL] [FUNC] [NODE] [OBJ]
 		if (lua_isnil( ls, -1))
 		{
-			lua_pop( ls, 1);					// STK: [NODE] [CALL] [FUNCNAME] [FUNC]
+			lua_pop( ls, 1);				// STK: [EHND] [NODE] [CALL] [FUNC] [NODE]
 		}
 		else
 		{
@@ -341,7 +387,7 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 			lua_pushvalue( ls, options_index);
 			nargs += 1;
 		}
-		int rc = lua_pcall( ls, nargs, 1/*nresults*/, 0/*errfunc*/);	// STK: [NODE] [CALL] [FUNCNAME] [FUNCRESULT]
+		int rc = lua_pcall( ls, nargs, 1/*nresults*/, -nargs-4); // STK: [EHND] [NODE] [CALL] [FUNCRESULT]
 		if (rc)
 		{
 			const char* msg = lua_tostring( ls, -1);
@@ -361,6 +407,7 @@ static void luaCallNodeFunction( lua_State* ls, int li, int calltable, FILE* dbg
 			std::string resstr( mewa::luaToString( ls, -1, true/*formatted*/, 0/*no maximum depth*/));
 			printDebug( dbgout, "%s\n", resstr.c_str());
 		}
+		lua_pop( ls, 1);					// STK: 
 	}
 }
 
@@ -586,7 +633,7 @@ void mewa::luaRunCompiler( lua_State* ls, const mewa::Automaton& automaton, int 
 	{
 		if (dbgout) printDebugAction( dbgout, ctx, automaton, lexem);
 	}
-    // Call Lua top level AST node functions with their associated nodes as parameter:
+	// Call Lua top level AST node functions with their associated nodes as parameter:
 	if (ctx.calltablesize)
 	{
 		int lastElementOnStack = lua_gettop( ls);
