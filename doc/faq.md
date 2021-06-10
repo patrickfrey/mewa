@@ -28,7 +28,7 @@
     * [How to implement return of a non-scalar type from a function?](#functionReturnComplexData)
     * [How to implement the Pascal "WITH", the C++ "using", etc...?](#withAndUsing)
     * [How to implement class inheritance?](#inheritance)
-    * [How to implement object-oriented polymorphism?](#virtualMethodTables)
+    * [How to implement method call polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private, public, protected?](#visibilityRules)
         * [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
     * [How to implement access of types declared later in the source?](#orderOfDefinition)
@@ -284,8 +284,7 @@ In the example _language1_, I defined the types
  * unbound_reftype with the qualifier "&<-" representing a reference to an unbound variable. 
  * c_unbound_reftype with the qualifiers "const " and "&<-" representing an unbound constant reference.
  
- The unbound references are instantiated by a special constructor, thus implementing copy elision.
- The ```out``` member of the constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built. This allows to implement copy elision and to instantiate the target of the constructor in the assignment of the unbound reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the unbound reference is reduced to a value instead.
+ The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built. This allows to implement copy elision and to instantiate the target of the constructor in the assignment of the unbound reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the unbound reference is reduced to a value or a const reference instead.
  
  This mechanism allows treating return value references passed as parameters uniformly with scalar return values, just using different constructors representing these types.
  
@@ -305,16 +304,16 @@ new context member to it.
 An inherited class is declared as a member. A reduction from the inheriting class to this member makes the class appearing as an instance of the inherited class.
 
 ##### Note
-For implementing polymorphism see [How to implement object-oriented polymorphism?](#virtualMethodTables).
+For implementing method call polymorphism see [How to implement method call polymorphism?](#virtualMethodTables).
 
 
 <a name="virtualMethodTables"/>
 
-### How to implement object-oriented polymorphism?
+### How to implement method call polymorphism?
 
 In the example _language1_, I implemented interface inheritance only. For class inheritance with overriding virtual method declarations possible, a _VMT_ ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)) has to be implemented. A virtual method call is a call via the _VMT_. 
 
-Polymorphism with virtual methods has some issues around the base pointer of the class. The problems start with multiple inheritances. The ```self``` pointer to be passed to the implementation of a virtual method has to be the first class defining the method as virtual. When encountering the inheritance of two base classes, then the 3 base pointers can't be aligned. Therefore each method implementation has to calculate its ```self``` pointer from the base pointer passed. This has to be the base pointer of the first class implementing the method. 
+Polymorphism with virtual methods has some issues concerning the base pointer of the class. If a method implementation can be overridden, then the base pointer of a class has to be determined by the method itself. Each method implementation has to calculate its ```self``` pointer from the base pointer passed. This could be the base pointer of the first class implementing the method. 
 
 
 <a name="orderOfDefinition"/>
