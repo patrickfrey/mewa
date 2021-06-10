@@ -23,6 +23,7 @@
     * [How to implement the resolving of initializer lists?](#initializerLists)
     * [How to implement control structures?](#controlStructures)
     * [How to implement constants and constant expressions?](#constants)
+    * [How to correctly implement (int * float)?](#promoteCall)
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
     * [How to implement return in a function?](#functionReturn)
     * [How to implement return of a non-scalar type from a function?](#functionReturnComplexData)
@@ -226,7 +227,7 @@ For control structures two new types have been defined in the example _language1
     1. **out** the name of an unbound label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and 
 1. Control-False Type
     1. **code** containing the code that is executed in the case the expression evaluates to **false** and 
-    1. **out** the name of an unbound label (not appearing in the code yet) where the evaluation jumps to in the case the expression evaluates to **true** and 
+    1. **out** the name of an unbound label (not appearing in the code yet) where the evaluation jumps to in the case the expression evaluates to **true**.
 
 An expression with the operator ```||``` is evaluated to a control-false type.
 An expression with the operator ```&&``` is evaluated to a control-true type.
@@ -257,6 +258,14 @@ In the example _language1_, I decided on the solution (1) even though it lead to
 ##### What types to use for representing constant values in the compiler
 The decision for data types used to implement constants is more complex than it looks at a first glance. To rely on the scalar types of the language of the compiler is wrong. The language of the compiler may have a different set of scalar types with a different set of rules.
 Arbitrary precision arithmetics for integers and floating-point numbers are required at least. The first example language of _Mewa_ uses a module implementing BCD numbers for arbitrary precision integer arithmetics. This should be changed in the future.
+
+
+<a name="promoteCall"/>
+
+### How to correctly implement (int * float)?
+In the example _language1_, operators are defined with the left operand as context type. Mewa encourages such a definition. Defining operators as free functions could not make much use of the type resolving mechanism provided by the _typedb_. 
+But (int * float) should be defined as the multiplication of two floating-point numbers. For this, the multiplication of an integer on the left side with a floating-point number on the right side has to be defined explicitly. In the example _language1_ these definitions are named **promote calls**. The left side argument is promoted to the type on the right side before applying the operator defined for two floating-point number arguments.
+
 
 <a name="functionsProceduresAndMethods"/>
 
