@@ -169,7 +169,7 @@ For this, we need to introduce **types** and **reductions**.
 Types are items represented as integers. They are declared and retrieved by the name of the type and a context type.
 The context type is itself a type or 0.
 Global free variables have for example no associated context type and are declared with 0 as context type. 
-Types are associated with a constructor. A constructor is a value, structure, or a function that describes the construction of the type.
+Types are associated with a constructor. A constructor is a value, structure, or a function that describes the construction of an instance of the type.
 Optionally, types can have parameters attached. Parameters are a list of type/constructor pairs. Types are declared with 
 ```Lua
 typeid = typedb:def_type( contextType, name, constructor, parameters)
@@ -178,14 +178,14 @@ The ```typeid``` returned is the integer that represents the type for the _typed
 ##### Reductions
 Reductions are paths to derive a type from another. You can imagine the type system as a directed graph of vertices (types) and edges (reductions).
 We will introduce some concepts that allow a partial view of this graph later. For now, imagine it as a graph.
-Reductions have also an associated constructor. The constructor describes the construction of the type in the direction of the reduction from its source.
+Reductions have also an associated constructor. The constructor describes the construction of an instance of the type in the direction of the reduction from its source.
 Here is an example:
 ```Lua
 typedb:def_reduction( destType, srcType, constructor, 1)
 ```
 The 1 as parameter is an integer value we will explain later.
 ##### Resolve Type
-Types can be resolved by their name and a single or a list of context types, one having a path of reductions to the context type of the resolved type.
+Types can be resolved by their name and a single or a list of context types, one having a path of reductions to the context type of the resolved types. The list of resulting type candidates is filtered by the caller inspecting their type parameters.
 ##### Derive type
 Types can be constructed by querying a reduction path from one type to another and constructing the type from the source type constructor
 by applying the list of constructors on this path. 
@@ -898,7 +898,7 @@ L2:
 ```
 
 #### Conclusion
-Control structures are implemented by constructing the control boolean types required. Boolean operators as the logical **AND** or the logical **OR** are constructed by wiring control boolean types types with other types together. This has not been done in this example, but it is imaginable after constructing an **IF**. The construction of types with reduction rules does not stop here. Control structures are not entirely different animals.
+Control structures are implemented by constructing the control boolean types required. Boolean operators as the logical **AND** or the logical **OR** are constructed by wiring control boolean types types with other types together. This has not been done in this example, but it is imaginable after constructing an **IF**. The construction of type instances with reduction rules does not stop here. Control structures are not entirely different animals.
 
 We have seen the whole variety of functions of the _typedb_ library now. The remaining functions not explained yet are convenient functions to set and get attributes of types. There is nothing substantial left to explain about the API though there is a lot more to talk about best practices and how to use this API.
 
