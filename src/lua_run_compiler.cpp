@@ -295,7 +295,7 @@ static int lua_pcall_errorhandler( lua_State* ls)
 	char const* msgstr = (nn >= 1) ? lua_tostring( ls, 1) : "";
 	if (!msgstr) msgstr = "";
 	std::size_t msglen;
-	if (0==std::strstr( msgstr, "line") || 0==std::strstr( msgstr, "file") || 0==std::strstr( msgstr, ".lua"))
+	if (0!=std::strstr( msgstr, ".lua:"))
 	{
 		lua_pushstring( ls, msgstr);
 		return 1;
