@@ -10,9 +10,9 @@ The intermediate representation of LLVM (https://llvm.org/). The LLVM IR has a t
 Any item addressable in a program is a **type**. In _Mewa_ types are represented by an unsigned integer number. Types are also used to describe the context of definitions inside a structure. Every type is defined with a context type. The reserved value of 0 is used as the context type for free definitions.
 
 ## Reduction
-### In the context of the type system
+#### In the context of the type system
 A rule to derive a **type** from another with a description of how to construct the target type from the source type attached.
-### In the context of the parser
+#### In the context of the parser
 A state transition occurring after the last item of a production has been parsed, replacing the right side of the production with the left side on the parser stack.
 
 ## Scope
@@ -55,7 +55,7 @@ Languages to describe a context free grammar. There exist many dialects for a fo
 The class of language covered by _Mewa_. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/LALR_parser).
 
 ### Lexer
-Component that scans the input and produces a stream of items called _tokens_ that are the atoms the grammar of the language is based on. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non-whitespace character in the input. Contradicting _lexeme_ matches are resolved in _Mewa_ by selecting the longest match or the first definition comparing matches of the same length as the _token_ value emitted.
+A component that scans the input and produces a stream of items called _tokens_ that are the atoms the grammar of the language is based on. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non-whitespace character in the input. Contradicting _lexeme_ matches are resolved in _Mewa_ by selecting the longest match or the first definition comparing matches of the same length as the _token_ value emitted.
 
 ### AST (Abstract Syntax Tree)
 The intermediate representation of the program. The output of the program parser. The AST in _Mewa_ is described [here](ast.md).
@@ -81,7 +81,7 @@ These types are used as _context type_ for accessing private members (in class m
 This type is used as a *self* reference in constructors. It redirects assignment calls to constructor calls during the initialization phase of the constructor. During this phase, the elements of a class are initialized in the order of their definition as members of the class. The initialization phase is completed when the first method is called or the first member is accessed otherwise than through the assignment operator redirected to a constructor call. The initialization of members not explicitly initialized is implicitly completed in the constructor.
 
 #### Control True/False Types / Control Boolean Types
-Most language specifications require the evaluation of a boolean expression to terminate as early as the result is guaranteed, even when some branches of the expressions are undefined. Thus ```if (a && a->x)``` should evaluate to false if a is _NULL_ without trying to evaluate the undefined branch ```a->x``` that would lead to a segmentation fault on most platforms. For representing boolean expressions we define the types *controlTrueType* that contains the code that is executed for the expression remaining *true* and contains an unbound label in the out variable where the code jumps to when the expression evaluates to *false*. The mirror type of the *controlTrueType* is the type *controlFalseType* that contains the code that is executed for the expression remaining *false* and in contains an unbound label in the out variable where the code jumps to when the expression evaluates to *true*.
+Most language specifications require the evaluation of a boolean expression to terminate as early as the result is guaranteed, even when some branches of the expressions are undefined. Thus ```if (a && a->x)``` should evaluate to false if a is _NULL_ without trying to evaluate the undefined branch ```a->x``` that would lead to a segmentation fault on most platforms. For representing boolean expressions we define the types *controlTrueType* that contains the code that is executed for the expression remaining *true* and contains an unbound label in the out variable where the code jumps to when the expression evaluates to *false*. The mirror type of the *controlTrueType* is the type *controlFalseType* that contains the code that is executed for the expression remaining *false* and it contains an unbound label in the out variable where the code jumps to when the expression evaluates to *true*.
 As a class of types, they are also referred to as **Control Boolean Types**.
 
 #### Pointer types
