@@ -44,6 +44,9 @@ Issues around target platforms are discussed [here](doc/portability.md).
 # Mailing List
 * mewa at freelists
 
+# Chat
+* hash mewa-dev (registered channel) at libera chat
+
 # Website
 * [mewa.cc](http://mewa.cc)
 
