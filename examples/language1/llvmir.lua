@@ -1,5 +1,8 @@
 local utils = require "typesystem_utils"
-
+local llvm_version = require "llvm_version"
+if llvm_version ~= 10 and llvm_version ~= 11 and llvm_version ~= 12 then
+	error( "LLVM version " .. llvm_version .. " not supported by the examples")
+end
 local llvmir = {}
 
 llvmir.scalar = require "language1/llvmir_scalar"
@@ -318,10 +321,21 @@ llvmir.control = {
 	sretFunctionDeclaration = "define {lnk} void @{symbolname}( {paramstr} ) {attr} {\nentry:\n{body}}\n",
 	functionCall = "{out} = call {rtllvmtype}{signature} {func}( {callargstr})\n",
 	procedureCall = "call void{signature} {func}( {callargstr})\n",
-	sretFunctionCall = "call void{signature} {func}( {rtllvmtype}* sret {reftyperef}{callargstr})\n",
+	sretParameter
+		= (llvm_version >= 12)
+				and "{llvmtype}* sret({llvmtype}) {reg}"
+				or "{llvmtype}* sret {reg}",
+	sretFunctionCall
+		= (llvm_version >= 12)
+				and "call void{signature} {func}( {rtllvmtype}* sret({rtllvmtype}) {reftyperef}{callargstr})\n"
+				or "call void{signature} {func}( {rtllvmtype}* sret {reftyperef}{callargstr})\n",
 	functionCallThrowing = "{out} = invoke {rtllvmtype}{signature} {func}( {callargstr}) to label %{success} unwind label %{cleanup}\n{success}:\n",
 	procedureCallThrowing = "invoke void{signature} {func}( {callargstr}) to label %{success} unwind label %{cleanup}\n{success}:\n",
-	sretFunctionCallThrowing = "invoke void{signature} {func}( {rtllvmtype}* sret {reftyperef}{callargstr}) to label %{success} unwind label %{cleanup}\n{success}:\n",	
+	sretFunctionCallThrowing
+		= ((llvm_version >= 12)
+				and "invoke void{signature} {func}( {rtllvmtype}* sret({rtllvmtype}) "
+				or "invoke void{signature} {func}( {rtllvmtype}* sret ")
+		.. "{reftyperef}{callargstr}) to label %{success} unwind label %{cleanup}\n{success}:\n",
 	extern_functionDeclaration = "declare external {rtllvmtype} @{symbolname}( {argstr} ) nounwind\n",
 	functionCallType = "{rtllvmtype} ({argstr})*",
 	functionVarargSignature = "({argstr} ...)",

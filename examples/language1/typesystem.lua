@@ -2584,7 +2584,7 @@ end
 -- Get the parameter string of a function declaration
 function getDeclarationLlvmTypeRegParameterString( descr, context)
 	local rt = ""
-	if doReturnValueAsReferenceParameter( descr.ret) then rt = descr.rtllvmtype .. "* sret %rt, " end
+	if doReturnValueAsReferenceParameter( descr.ret) then rt = utils.template_format( llvmir.control.sretParameter, {llvmtype=descr.rtllvmtype, reg="%rt"}) .. ", " end
 	if context.domain == "member" then rt = rt .. typeDescriptionMap[ context.qualitype.valtype].llvmtype .. "* %ths, " end
 	for ai,arg in ipairs(descr.param) do rt = rt .. arg.llvmtype .. " " .. arg.reg .. ", " end
 	if rt ~= "" then rt = rt:sub(1, -3) end
@@ -2593,7 +2593,7 @@ end
 -- Get the parameter string of a function declaration
 function getDeclarationLlvmTypedefParameterString( descr, context)
 	local rt = ""
-	if doReturnValueAsReferenceParameter( descr.ret) then rt = descr.rtllvmtype .. "* sret, " end
+	if doReturnValueAsReferenceParameter( descr.ret) then rt = utils.template_format( llvmir.control.sretParameter, {llvmtype=descr.rtllvmtype, reg="%rt"}) .. ", " end
 	if context.domain == "member" then rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, " end
 	for ai,arg in ipairs(descr.param) do rt = rt .. arg.llvmtype .. ", " end
 	if rt ~= "" then rt = rt:sub(1, -3) end

@@ -19,6 +19,9 @@ GREP=grep
 DIRNAME=dirname
 PKGCONFIG=pkg-config
 
+LLVM_VERSION=`llvm-config --version | awk -F "." '{print $1}'`
+echo "return $LLVM_VERSION" > examples/llvm_version.lua
+
 findLuaInclude() {
 	local VERSION=$1
 	local SEARCHPATH="$2"
@@ -166,6 +169,8 @@ if [ "x$OPTLUAVERSION" != "x" ]; then
 else
 	>&2 echo "Lua installation (version 5.1,5.2,5.3 or 5.4) not found!"
 fi
+
+
 
 
 

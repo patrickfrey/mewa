@@ -1,10 +1,13 @@
 #!/bin/sh
 # Some tests of the mewa Lua module
 #
-set -e 
+set -e
 
 . tests/luaenv.sh
 LUABIN=`which $1`
+LLVM_VERSION=`llvm-config --version | awk -F "." '{print $1}'`
+LLIBIN=`which lli-$LLVM_VERSION`
+LLCBIN=`which llc-$LLVM_VERSION`
 TARGET=$2
 TESTID=`echo $3 | tr a-z A-Z`
 
@@ -48,7 +51,7 @@ verify_test_result() {
 			$ECHOCOL $TNAM $FLAG_ERR
 		fi
 	else
-                echo "diff $OUTF $EXPF"
+		echo "diff $OUTF $EXPF"
 		$ECHOCOL $TNAM $FLAG_ERR
 	fi
 }
@@ -103,11 +106,11 @@ do
 						build/language1.compiler.$tst.out tests/language1.compiler.$tst.exp
 		echo "Run program examples/language1/sources/$tst.prg with LLVM interpreter (lli)"
 		/usr/bin/time -f "Running for %e seconds"\
-			lli build/language1.compiler.$tst.llr > build/language1.run.$tst.out
+			$LLIBIN build/language1.compiler.$tst.llr > build/language1.run.$tst.out
 		verify_test_result "Lua test ($tst run) interprete program translated with language1 compiler"  build/language1.run.$tst.out tests/language1.run.$tst.exp
 		echo "Build object file build/language1.compiler.$tst.o"
-		llc -relocation-model=pic -O=3 -filetype=obj build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.o
-		llc -relocation-model=pic -O=3 -filetype=asm build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.asm
+		$LLCBIN -relocation-model=pic -O=3 -filetype=obj build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.o
+		$LLCBIN -relocation-model=pic -O=3 -filetype=asm build/language1.compiler.$tst.llr -o build/language1.compiler.$tst.asm
 		echo "Build executable file build/language1.compiler.$tst"
 		clang -lm -lstdc++ -o build/language1.compiler.$tst build/language1.compiler.$tst.o
 		echo "Run executable file build/language1.compiler.$tst"
