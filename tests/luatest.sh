@@ -5,9 +5,8 @@ set -e
 
 . tests/luaenv.sh
 LUABIN=`which $1`
-LLVM_VERSION=`llvm-config --version | awk -F "." '{print $1}'`
-LLIBIN=`which lli-$LLVM_VERSION`
-LLCBIN=`which llc-$LLVM_VERSION`
+LLIBIN=lli
+LLCBIN=llc
 TARGET=$2
 TESTID=`echo $3 | tr a-z A-Z`
 
