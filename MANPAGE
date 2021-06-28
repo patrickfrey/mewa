@@ -1,6 +1,6 @@
 .\" Manpage for mewa.
 .\" Contact mail@mewa.cc.
-.TH man 1 "25 May 2021" "0.3" "mewa man page"
+.TH man 1 "25 May 2021" "0.4" "mewa man page"
 .SH NAME
 .B mewa
 \- compiler compiler
@@ -40,7 +40,7 @@ Extract all
 function calls from the grammar and prints their empty implementation stubs to the output. No debug output is provided. Be careful using this option. It is only useful after the initial definition of the grammar of your language. It overwrites previous definitions without merging with your edits in a previously generated version.
 .TP
 \fB\-o\fR, \fB\--output=\fR \fIfile\fR
-Write the output (parsing tables) to \fIfile\fR instead of stdout.  
+Write the output (parsing tables) to \fIfile\fR instead of stdout.
 .TP
 \fB\-b\fR, \fB\--luabin=\fR \fIluapath\fR
 Specify \fIluapath\fR as path of the
@@ -48,7 +48,7 @@ Specify \fIluapath\fR as path of the
 interpreter in the header of generated scripts. Default is "\fI/usr/bin/lua\fR".
 .TP
 \fB\-d\fR, \fB\--dbgout=\fR \fIfile\fR
-Write the verbose debug output (productions,states,functions,etc.) to \fIfile\fR instead of stdout.  
+Write the verbose debug output (productions,states,functions,etc.) to \fIfile\fR instead of stdout.
 .TP
 \fB\-t\fR, \fB\--template=\fR \fIfile\fR
 Use \fIfile\fR content as template for the generated

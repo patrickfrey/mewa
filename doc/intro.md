@@ -121,7 +121,7 @@ make install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b 0.3
+git checkout -b 0.4
 
 
 ```
