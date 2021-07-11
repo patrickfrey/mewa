@@ -36,7 +36,7 @@ Counter that is incremented for every production in the grammar marked with the 
 Every type definition has a tuple consisting of a type and a name as the key that identifies it. The type is called the **context type** of the definition. The context type is either a type defined before or 0 representing the absence of a context type or the global context. Context types help you to describe relations like membership or another way of expressing contextual visibility.
 
 ## Constructor
-A constructor implements the construction of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor of the derived type. 
+A constructor implements the construction of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor of the derived type.
 
 ### Ctor/Dtor
 To prevent a mess in the glossary we refer to a constructor of an object in the programming language our compiler translates as *ctor*. The corresponding destructor is called *dtor*.
@@ -49,7 +49,7 @@ A basic item of the language. Further reading in [Wikipedia: Context Free Gramma
 A named structure of the language. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
 
 ### BNF / EBNF / Yacc/Bison
-Languages to describe a context free grammar. There exist many dialects for a formal description of a context free language grammar based on _BNF_ (Backus-Naur form). The most similar to [the grammar of _Mewa_](grammar.md) is the language used in [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). Further reading in [Wikipedia: Backus-Naur form](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) and [Wikipedia: Extended Backus-Naur form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form). 
+Languages to describe a context free grammar. There exist many dialects for a formal description of a context free language grammar based on _BNF_ (Backus-Naur form). The most similar to [the grammar of _Mewa_](grammar.md) is the language used in [Yacc/Bison](https://www.cs.ccu.edu.tw/~naiwei/cs5605/YaccBison.html). Further reading in [Wikipedia: Backus-Naur form](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form) and [Wikipedia: Extended Backus-Naur form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form).
 
 ### LALR(1)
 The class of language covered by _Mewa_. Further reading in [Wikipedia: Context Free Grammar](https://en.wikipedia.org/wiki/LALR_parser).
@@ -84,8 +84,8 @@ This type is used as a *self* reference in constructors. It redirects assignment
 Most language specifications require the evaluation of a boolean expression to terminate as early as the result is guaranteed, even when some branches of the expressions are undefined. Thus ```if (a && a->x)``` should evaluate to false if a is _NULL_ without trying to evaluate the undefined branch ```a->x``` that would lead to a segmentation fault on most platforms. For representing boolean expressions we define the types *controlTrueType* that contains the code that is executed for the expression remaining *true* and contains an unbound label in the out variable where the code jumps to when the expression evaluates to *false*. The mirror type of the *controlTrueType* is the type *controlFalseType* that contains the code that is executed for the expression remaining *false* and it contains an unbound label in the out variable where the code jumps to when the expression evaluates to *true*.
 As a class of types, they are also referred to as **Control Boolean Types**.
 
-#### Pointer types
-Pointer types are implicitly created types. A pointer type is created when used the first time. 
+#### Pointer Types
+Pointer types are implicitly created types. A pointer type is created when used the first time.
 
 #### Constant Expression Types
 Constants in the source and expressions built from constants are represented by the following types
@@ -102,4 +102,8 @@ The frame object defines the context for implicit cleanup of resources after the
 ### Callable Environment
 The callable environment holds the data associated with a callable during the processing of its body. Such data are for example the generators of registers and labels, the list of allocation frames holding the code executed in case of exceptions, the return type in case of a function, the initialization state in case of a constructor, some flags that indicate some events needed for printing the function declaration, etc...
 
+### Promote Calls
+For first-class scalar types we also need to look at the 2nd argument to determine the constructor function to call.
+The multiplication of an ```int``` with a ```double``` is defined as the conversion of the first operand to a ```double``` followed by a multiplication of two ```double```s.
+This is an example of a **promote call**. It is "promoting" the first argument to the type of the second argument before applying the operator.
 
