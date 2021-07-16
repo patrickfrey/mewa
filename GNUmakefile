@@ -27,7 +27,7 @@ DEBUGOPTFLAGS:=-ggdb -g3 -O0
 endif
 endif
 
-# Flag for using an allocator always throwing bad_alloc as upstream memory resource for the monotonic buffer resource 
+# Flag for using an allocator always throwing bad_alloc as upstream memory resource for the monotonic buffer resource
 # used for structures intended to be allocated on the stack. This must not be set in a release build and not in all cases of a debug build.
 ifeq ($(subst 1,Y,$(subst YES,Y,$(strip $(TESTLOCALMEM)))),Y)
 DEBUGOPTFLAGS:=$(DEBUGOPTFLAGS) -DMEWA_TEST_LOCAL_MEMORY_RESOURCE
@@ -79,7 +79,7 @@ LDLIBS   := -lm -lstdc++
 LIBOBJS  := $(BUILDDIR)/lexer.o \
 		$(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/automaton_parser.o \
 		$(BUILDDIR)/typedb.o \
-                $(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o $(BUILDDIR)/error.o
+		$(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o $(BUILDDIR)/error.o
 MODOBJS  := $(BUILDDIR)/lualib_mewa.o \
 		$(BUILDDIR)/lua_load_automaton.o $(BUILDDIR)/lua_run_compiler.o \
 		$(BUILDDIR)/lua_serialize.o $(BUILDDIR)/lua_parameter.o
@@ -94,7 +94,7 @@ PROGRAM  := $(BUILDDIR)/mewa
 all : build $(LIBRARY) $(PROGRAM) $(MODULE) $(TESTPRG) $(MAKEDEP)
 
 clean: build
-	rm $(BUILDDIR)/* .depend
+	rm -f $(BUILDDIR)/* .depend
 build:
 	mkdir -p $(BUILDDIR)
 
@@ -145,10 +145,10 @@ install: all
 	cp $(MODULE) $(CMODPATH)
 
 uninstall:
-	rm $(CMODPATH)/mewa.so
-	rm $(MANPAGES)/man1/mewa.1.gz
-	rm $(INCDEST)/mewa/*.hpp
-	rm $(DESTINATION)/mewa
+	rm -f $(CMODPATH)/mewa.so
+	rm -f $(MANPAGES)/man1/mewa.1.gz
+	rm -f $(INCDEST)/mewa/*.hpp
+	rm -f $(DESTINATION)/mewa
 
 # ONLY FOR DEVELOPERS (All generated files of make doc are checked in, so you only have to run this if you edit the docs or sources):
 DOCSRC := $(wildcard $(DOCDIR)/*.md.in)
