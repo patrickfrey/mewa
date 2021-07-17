@@ -5,7 +5,7 @@ _Mewa_ uses a language to describe an **attributed grammar** similar to the lang
 _Mewa_ implements an LALR(1) parser generator for an attributed grammar. The grammar description is read from a source file and has 3 parts:
 
   * The **configuration declarations** marked with a prefix '%'
-  * The **lexeme/token declarations** 
+  * The **lexeme/token declarations**
   * The **production declarations**
 
 ### Configuration Declarations
@@ -20,9 +20,9 @@ The following commands are known:
     * **output**: the output file name
     * **debug**: the debug output file name
     * **options**: an option structure passed to the compiler
-    * **target**: the template file used fot the LLVM IR output. 
+    * **target**: the template file used fot the LLVM IR output.
 
-  An example of a command-line parser can be found [here](../examples/cmdlinearg.lua). 
+  An example of a command-line parser can be found [here](../examples/cmdlinearg.lua).
 
 * **%** **COMMENT** _start_ _end_ **;** Defines the content between the patterns _start_ and _end_ defined as regular expression quoted in single or double quotes as a comment. Comments are ignored by the lexer and thus by the compiler.
 * **%** **COMMENT** _start_ **;** Defines the content starting with the pattern _start_ defined as regular expression quoted in single or double quotes until the next end of a line as a comment. Comments are ignored by the lexer and thus by the compiler.
@@ -38,7 +38,7 @@ Lexeme declarations start with an identifier followed by a colon '**:**', a patt
 The name _lexemename_ defines the identifier this lexeme can be referred to as a token in the production declarations of the grammar.
 The regular expression string _pattern_ quoted in single or double quotes defines the pattern that matches the _lexeme_.
 You can have multiple declarations with the same name.
-The optional integer number _select_ defines the index of the subexpression of the regular expression match to select as the value of the _lexeme_ recognized. 
+The optional integer number _select_ defines the index of the subexpression of the regular expression match to select as the value of the _lexeme_ recognized.
 If _0_ or nothing is specified the whole expression match is chosen as the _token_ value emitted.
 If multiple patterns match at the same source position then the longest match is emitted as the _token_ value. If two matches have the same length, the first declaration is chosen. If one of the matches is a keyword or an operator, it is always the first choice.
 Keywords and operators of the grammar are not declared in the lexer section but are referred to as strings in the production declarations of the grammar.
@@ -84,9 +84,9 @@ The first production of the grammar has to be the start-production. The left-han
 The _AST_ is built during syntax analysis with to a fixed schema according your grammar definition and the attribution of nodes. Here are the rules:
 
  * New _AST_ nodes are pushed on a stack when created. _AST_ nodes are taken from this stack when declared as children of another _AST_ node created.
- * Matching lexemes declared as regular expressions in the 2nd part of the grammar create a new node on the stack. 
- * Attributes with a _Lua_ call create a new node on the stack. 
- * Nodes created from Lua calls take all elements created on the stack during the matching of their production from the stack and define them as child nodes. 
+ * Matching lexemes declared as regular expressions in the 2nd part of the grammar create a new node on the stack.
+ * Attributes with a _Lua_ call create a new node on the stack.
+ * Nodes created from Lua calls take all elements created on the stack during the matching of their production from the stack and define them as child nodes.
  * The nodes left on the stack after syntax analysis are the root nodes of the _AST_. Usually, it's one node. But there might exist many root nodes during development.
 
 ## Compilation Process
@@ -96,7 +96,7 @@ The compiler does the syntax analysis and builds the _AST_ in the process. After
 ## Differences to Yacc/Bison
  * _Mewa_ supports only LALR(1), while _Bison_ support a variety of different language classes.
  * Unlike in _Yacc/Bison_, where the lexer can be arbitrarily defined, the Lexer of _Mewa_ is restricted to classes of languages where spaces have no meaning and the _tokens_ can only be described as regular expression matches.
- * The annotation of the rules with code in _Yacc/Bison_ is also different. _Mewa_ has a fixed schema of the _AST_ construction. The actions described as attributes of the grammar are actions of the parser in _Bison/Yaac_, while is _Mewa_ they are actions performed during the tree traversal of the _AST_.
+ * The annotation of the rules with code in _Yacc/Bison_ is also different. _Mewa_ has a fixed schema of the _AST_ construction. The actions described as attributes of the grammar are actions of the parser in _Bison/Yacc_, while is _Mewa_ they are actions performed during the tree traversal of the _AST_.
  * The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right-handed associativity are attached to productions. Unfortunately, the _Mewa_ approach is more error-prone.
 
 ### Meaning of Whitespaces
