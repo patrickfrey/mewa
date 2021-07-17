@@ -1,7 +1,7 @@
 # Glossary
 
 ## Name _Mewa_
-The Polish name for seagull. It's difficult to find short memorizable names. I got stuck to names of birds in the polish language without non-ASCII characters.
+The Polish name for seagull. It's difficult to find short memorizable names. I got stuck to names of birds in the Polish language without non-ASCII characters.
 
 ## LLVM IR ##
 The intermediate representation of LLVM (https://llvm.org/). The LLVM IR has a textual representation that is used as the intermediate format in the examples of _Mewa_. The tests also use the programs *lli* (interpreter) and *llc* (compiler) that can take this textual representation of LLVM IR as input and run it (*lli*) or translate it into a binary object file (*llc*).
@@ -30,10 +30,14 @@ The Query for a type 'ABC' in an instruction with scope-step 56 assigned, return
 Some other compiler models represent hierarchies of data structures by lexical scoping. In _Mewa_ best practice is considered to represent visibility in hierarchies of data structures with context types and not by scope.
 
 ## Scope-step
-Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope-step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**. A **scope** starts with the scope-step counter value when first entering a state with a production marked as **{}** and ends with one step after the value of the **scope-step** after exit (**reduction** in the context of the parser).
+Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope-step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**.
+
+#### Initialization of the Scope from the Scope-Step counter
+A **scope** starts with the scope-step counter value when first entering the traversal of an AST node with a production marked as **{}**.
+It ends with the **scope-step** increment after exiting the traversal of the AST node.
 
 ## Context Type
-Every type definition has a tuple consisting of a type and a name as the key that identifies it. The type is called the **context type** of the definition. The context type is either a type defined before or 0 representing the absence of a context type or the global context. Context types help you to describe relations like membership or another way of expressing contextual visibility.
+Every type definition has a tuple consisting of a type and a name as the key that identifies it. The type is called the **context type** of the definition. The context type is either a type defined before or 0 representing the absence of a context type or the global context. Context types are used to describe relations like membership. They are also used to describe contextual visibility.
 
 ## Constructor
 A constructor implements the construction of an object representing a type. It is either a structure describing the initial construction of the object or a function describing the derivation of an object from the constructor of the derived type.
