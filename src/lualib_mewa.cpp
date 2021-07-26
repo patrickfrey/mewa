@@ -583,10 +583,8 @@ static int mewa_typedb_this_instance( lua_State* ls)
 
 	if (handle > 0)
 	{
-		// Get the item addressed with handle from the object table on the top of the stack and return it:
-		lua_getglobal( ls, td->objTableName.buf);
-		lua_rawgeti( ls, -1, handle);
-		lua_replace( ls, -2);
+		// Get the item referenced by 'handle' from the object registry:
+		lua_rawgeti( ls, LUA_REGISTRYINDEX, handle);
 		return 1;
 	}
 	else
@@ -611,10 +609,8 @@ static int mewa_typedb_get_instance( lua_State* ls)
 
 	if (handle > 0)
 	{
-		// Get the item addressed with handle from the object table on the top of the stack and return it:
-		lua_getglobal( ls, td->objTableName.buf);
-		lua_rawgeti( ls, -1, handle);
-		lua_replace( ls, -2);
+		// Get the item referenced by 'handle' from the object registry:
+		lua_rawgeti( ls, LUA_REGISTRYINDEX, handle);
 		return 1;
 	}
 	else
@@ -638,11 +634,10 @@ static int mewa_typedb_set_instance( lua_State* ls)
 	}
 	catch (...) { lippincottFunction( ls); }
 
-	// Put the 4th argument into the object table of this typedb with an index stored as handle in the typedb:
-	int handle = td->allocObjectHandle();
-	lua_getglobal( ls, td->objTableName.buf);
+	// Get a reference handle of the 3rd argument in the registry:
 	lua_pushvalue( ls, 3);
-	lua_rawseti( ls, -2, handle);
+	int handle = luaL_ref( ls, LUA_REGISTRYINDEX);
+
 	try
 	{
 		td->impl->setObjectInstance( name, td->curScope, handle);
