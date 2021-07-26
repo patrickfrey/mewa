@@ -1,7 +1,11 @@
+mewa (0.5.0-1) stable; urgency=low
+  * Fix issue #2: Use lua_pushvalue( ls, -1); <hnd> = luaL_ref( ls, LUA_REGISTRYINDEX); and lua_rawgeti( ls, LUA_REGISTRYINDEX, <hnd>); instead of Lua table with custom counters as keys for object references stored as integers in the C++ structures of Mewa.
+-- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 26 Jul 2021 17:10:00 +0200
+
 mewa (0.4.0-1) stable; urgency=low
   * Check LLVM version in configure, provide partial support for LLVM-12, tests run with LLVM-11, LLVM-10
   * Try to provide line info in compiler error message if not provided by Lua
--- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 26 Jun 2021 10:10:00 +0200
+-- Patrick Frey <patrickpfrey@yahoo.com>  Wed, 26 Jun 2021 10:10:00 +0200
 
 mewa (0.3.0-1) stable; urgency=low
   * Restructure documentation (mainly for the code project article), rename some files to avoid confusion

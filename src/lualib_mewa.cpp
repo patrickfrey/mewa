@@ -506,9 +506,6 @@ static int mewa_new_typedb( lua_State* ls)
 	luaL_getmetatable( ls, mewa_typedb_userdata_t::metatableName());
 	lua_setmetatable( ls, -2);
 
-	lua_createtable( ls, 1<<16/*expected array elements*/, 0);
-	lua_setglobal( ls, td->objTableName.buf);
-
 	return 1;
 }
 
@@ -682,10 +679,9 @@ static int mewa_typedb_def_type( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 8);
 		int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		std::string_view name = mewa::lua::getArgumentAsString( functionName, ls, 3);
-		lua_getglobal( ls, td->objTableName.buf);
-		int constructor = (nargs >= 4) ? mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td) : 0;
+		int constructor = (nargs >= 4) ? mewa::lua::getArgumentAsConstructor( functionName, ls, 4) : 0;
 		std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> parameter;
-		if (nargs >= 5 && !lua_isnil(ls,5)) parameter = mewa::lua::getArgumentAsTypeConstructorPairList( functionName, ls, 5, -1/*objtable*/, td, &memrsc_parameter);
+		if (nargs >= 5 && !lua_isnil(ls,5)) parameter = mewa::lua::getArgumentAsTypeConstructorPairList( functionName, ls, 5, &memrsc_parameter);
 		lua_pop( ls, 1); // ... obj table
 		int rt = td->impl->defineType( td->curScope, contextType, name, constructor, parameter);
 		lua_pushinteger( ls, rt);
@@ -769,11 +765,9 @@ static int mewa_typedb_def_reduction( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 8);
 		int toType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 		int fromType = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 3);
-		lua_getglobal( ls, td->objTableName.buf);
-		int constructor = mewa::lua::getArgumentAsConstructor( functionName, ls, 4, -1/*objtable*/, td);
+		int constructor = mewa::lua::getArgumentAsConstructor( functionName, ls, 4);
 		int tag = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 5);
 		float weight = (nargs >= 6 && !lua_isnil(ls,6)) ? mewa::lua::getArgumentAsFloatingPoint( functionName, ls, 6) : 0.0;
-		lua_pop( ls, 1); // ... obj table
 		td->impl->defineReduction( td->curScope, toType, fromType, constructor, tag, weight);
 	}
 	catch (...) { lippincottFunction( ls); }
@@ -797,9 +791,7 @@ static int mewa_typedb_get_reduction( lua_State* ls)
 		lua_pushnumber( ls, redu.weight);
 		if (redu.constructor == 0) return 1;
 
-		lua_getglobal( ls, td->objTableName.buf);
-		lua_rawgeti( ls, -1, redu.constructor);
-		lua_replace( ls, -2);
+		lua_rawgeti( ls, LUA_REGISTRYINDEX, redu.constructor);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 2;
@@ -819,7 +811,7 @@ static int mewa_typedb_get_reductions( lua_State* ls)
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
 		auto res = td->impl->getReductions( td->curStep, type, selectTags, selectTagsCount, resbuf);
-		mewa::lua::pushWeightedReductions( ls, functionName, td->objTableName.buf, res.reductions);
+		mewa::lua::pushWeightedReductions( ls, functionName, res.reductions);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;
@@ -842,7 +834,7 @@ static int mewa_typedb_derive_type( lua_State* ls)
 		auto deriveres = td->impl->deriveType( td->curStep, toType, fromType, selectTags, selectTagsCount, maxPathLen, resbuf);
 		if (deriveres.defined)
 		{
-			mewa::lua::pushTypeConstructorPairs( ls, functionName, td->objTableName.buf, deriveres.reductions);
+			mewa::lua::pushTypeConstructorPairs( ls, functionName, deriveres.reductions);
 			lua_pushnumber( ls, deriveres.weightsum);
 			if (deriveres.conflictPath.empty())
 			{
@@ -880,7 +872,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 		{
 			int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
 			auto resolveres = td->impl->resolveType( td->curStep, contextType, name, selectTags, resbuf);
-			return mewa::lua::pushResolveResult( ls, functionName, 0/*root context argument lua index*/, td->objTableName.buf, resolveres);
+			return mewa::lua::pushResolveResult( ls, functionName, 0/*root context argument lua index*/, resolveres);
 		}
 		else if (lua_type( ls, 2) == LUA_TTABLE)
 		{
@@ -889,7 +881,7 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 
 			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter, true/*allow t/c pairs*/);
 			auto resolveres = td->impl->resolveType( td->curStep, contextTypes, name, selectTags, resbuf);
-			return mewa::lua::pushResolveResult( ls, functionName, 2/*root context argument lua index*/, td->objTableName.buf, resolveres);
+			return mewa::lua::pushResolveResult( ls, functionName, 2/*root context argument lua index*/, resolveres);
 		}
 		else
 		{
@@ -963,7 +955,7 @@ static int mewa_typedb_type_parameters( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 6);
 		int type = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 2);
 		auto rt = td->impl->typeParameters( type);
-		mewa::lua::pushTypeConstructorPairs( ls, functionName, td->objTableName.buf, rt);
+		mewa::lua::pushTypeConstructorPairs( ls, functionName, rt);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;
@@ -995,7 +987,7 @@ static int mewa_typedb_type_constructor( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 2);
 		int type = mewa::lua::getArgumentAsUnsignedInteger( functionName, ls, 2);
 		auto rt = td->impl->typeConstructor( type);
-		mewa::lua::pushTypeConstructor( ls, functionName, td->objTableName.buf, rt);
+		mewa::lua::pushTypeConstructor( ls, functionName, rt);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;
@@ -1084,7 +1076,7 @@ int tree_iter<mewa::TypeDatabase::ReductionDefinitionTree>( lua_State* ls)
 		std::size_t iter = lua_tointeger( ls, lua_upvalueindex(2));
 		if (!ud->tree.get() || ud->nodeidx == 0 || iter >= (*ud->tree)[ ud->nodeidx].item().value.size()) return 0;
 		const mewa::TypeDatabase::ReductionDefinition& redu = (*ud->tree)[ ud->nodeidx].item().value[ iter];
-		mewa::lua::pushReductionDefinition( ls, functionName, ud->objTableName.buf, redu);
+		mewa::lua::pushReductionDefinition( ls, functionName, redu);
 		iter += 1;
 		lua_pushinteger( ls, iter);
 		lua_replace( ls, lua_upvalueindex(2));
@@ -1108,7 +1100,7 @@ struct LuaTreeMetaMethods
 			mewa::lua::checkNofArguments( functionName, ls, nargs/*minNofArgs*/, nargs/*maxNofArgs*/);
 
 			UD* ud = (UD*)lua_newuserdata( ls, sizeof(UD));
-			ud->init( ud->objTableName);
+			ud->init();
 			create_tree_impl( functionName, ls, *ud, td);
 		}
 		catch (...) { lippincottFunction( ls); }
@@ -1143,7 +1135,7 @@ struct LuaTreeMetaMethods
 			if (!ud->tree.get() || !iter) return 0;
 
 			UD* cur_ud = (UD*)lua_newuserdata( ls, sizeof(UD));
-			cur_ud->init( ud->objTableName);
+			cur_ud->init();
 			cur_ud->createCopy( *ud, iter);
 			luaL_getmetatable( ls, UD::metatableName());
 			lua_setmetatable( ls, -2);
@@ -1175,7 +1167,7 @@ struct LuaTreeMetaMethods
 			else
 			{
 				UD* chld_ud = (UD*)lua_newuserdata( ls, sizeof(UD));
-				chld_ud->init( ud->objTableName);
+				chld_ud->init();
 				chld_ud->createCopy( *ud, chld);
 				luaL_getmetatable( ls, UD::metatableName());
 				lua_setmetatable( ls, -2);
@@ -1228,7 +1220,7 @@ static int mewa_objtree_instance( lua_State* ls)
 	{
 		mewa_objtree_userdata_t* ud = (mewa_objtree_userdata_t*)luaL_checkudata( ls, 1, mewa_objtree_userdata_t::metatableName());
 		if (!ud->tree.get() || ud->nodeidx == 0) return 0;
-		mewa::lua::pushTypeConstructor( ls, functionName, ud->objTableName.buf, (*ud->tree)[ ud->nodeidx].item().value);
+		mewa::lua::pushTypeConstructor( ls, functionName, (*ud->tree)[ ud->nodeidx].item().value);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;

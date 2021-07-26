@@ -34,7 +34,6 @@ namespace lua {
 #define MEWA_TYPETREE_METATABLE_NAME 	"mewa.typetree"
 #define MEWA_REDUTREE_METATABLE_NAME 	"mewa.redutree"
 #define MEWA_CALLTABLE_FMT	 	"mewa.calls.%d"
-#define MEWA_OBJTABLE_FMT		"mewa.obj.%d"
 
 struct TableName
 {
@@ -62,14 +61,6 @@ struct CallTableName :public TableName
 	}
 };
 
-struct ObjectTableName :public TableName
-{
-	void init()
-	{
-		static int tableIdx = 0;
-		TableName::init( MEWA_TYPEDB_METATABLE_NAME, MEWA_OBJTABLE_FMT, ++tableIdx);
-	}
-};
 }} //namespace
 
 struct mewa_compiler_userdata_t
@@ -134,7 +125,6 @@ struct mewa_typedb_userdata_t
 {
 public:
 	mewa::TypeDatabase* impl;
-	mewa::lua::ObjectTableName objTableName;
 	mewa::Scope curScope;
 	mewa::Scope::Step curStep;
 
@@ -145,7 +135,6 @@ public:
 	void init() noexcept
 	{
 		impl = nullptr;
-		objTableName.init();
 		objCount = 0;
 		curScope = mewa::Scope( 0, std::numeric_limits<mewa::Scope::Step>::max());
 		curStep = 0;
@@ -157,15 +146,8 @@ public:
 	}
 	void destroy( lua_State* ls) noexcept
 	{
-		lua_pushnil( ls);
-		lua_setglobal( ls, objTableName.buf);
-
 		if (impl) delete impl;
 		impl = nullptr;
-	}
-	int allocObjectHandle() noexcept
-	{
-		return ++objCount;
 	}
 	static const char* metatableName() noexcept {return MEWA_TYPEDB_METATABLE_NAME;}
 };
@@ -255,14 +237,12 @@ struct mewa_treetemplate_userdata_t
 {
 	typedef TT TreeType;
 
-	mewa::lua::ObjectTableName objTableName;
 	shared_ptr<TreeType> tree;
 	std::size_t nodeidx;
 
 public:
-	void init( const mewa::lua::ObjectTableName& objTableName_) noexcept
+	void init() noexcept
 	{
-		objTableName.initCopy( objTableName_);
 		tree.init();
 		nodeidx = 0;
 	}

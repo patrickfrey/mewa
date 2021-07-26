@@ -202,16 +202,14 @@ mewa::TagMask mewa::lua::getArgumentAsTagMask( const char* functionName, lua_Sta
 	return mewa::TagMask( bs);
 }
 
-int mewa::lua::getArgumentAsConstructor( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td)
+int mewa::lua::getArgumentAsConstructor( const char* functionName, lua_State* ls, int li)
 {
 	if (lua_isnil( ls, li)) return 0;
-	int handle = td->allocObjectHandle();
 	lua_pushvalue( ls, li);
-	lua_rawseti( ls, objtable < 0 ? (objtable-1):objtable, handle);
-	return handle;
+	return luaL_ref( ls, LUA_REGISTRYINDEX);
 }
 
-static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair( const char* functionName, lua_State* ls, int li, int objtable, mewa_typedb_userdata_t* td)
+static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair( const char* functionName, lua_State* ls, int li)
 {
 	if (lua_type( ls, li) == LUA_TNUMBER)
 	{
@@ -220,14 +218,13 @@ static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair(
 	}
 	else
 	{
-		lua_pushvalue( ls, objtable);
-		lua_pushvalue( ls, li < 0 ? (li-1) : li );
-		lua_pushnil( ls);							//STK: [OBJTAB] [PARAMTAB] [KEY] NIL
+		lua_pushvalue( ls, li);
+		lua_pushnil( ls);							//STK: [PARAMTAB] [KEY]
 		int type = -1;
 		int constructor = 0;
 		int rowcnt = 0;
 
-		while (lua_next( ls, -2))						// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+		while (lua_next( ls, -2))						// STK: [PARAMTAB] [KEY] [VAL]
 		{
 			++rowcnt;
 			if (lua_type( ls, -2) == LUA_TNUMBER)
@@ -239,9 +236,8 @@ static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair(
 				}
 				else if (kidx == 2)
 				{
-					constructor = td->allocObjectHandle();
-					lua_pushvalue( ls, -1);				// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
-					lua_rawseti( ls, -5, constructor);		// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+					lua_pushvalue( ls, -1);
+					constructor = luaL_ref( ls, LUA_REGISTRYINDEX);
 				}
 				else
 				{
@@ -258,18 +254,17 @@ static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair(
 				}
 				else if (len == 11 && 0==std::memcmp( str, "constructor", len))
 				{
-					constructor = td->allocObjectHandle();
-					lua_pushvalue( ls, -1);				// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL] [VAL]
-					lua_rawseti( ls, -5, constructor);		// STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+					lua_pushvalue( ls, -1);
+					constructor = luaL_ref( ls, LUA_REGISTRYINDEX);
 				}
 			}
 			else
 			{
 				mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentTypeConstructorPairList);
 			}
-			lua_pop( ls, 1);						// STK: [OBJTAB] [PARAMTAB] [KEY]
+			lua_pop( ls, 1);						// STK: [PARAMTAB] [KEY]
 		}
-		lua_pop( ls, 2);							// STK:
+		lua_pop( ls, 1);							// STK:
 		if (type < 0)
 		{
 			mewa::lua::throwArgumentError( functionName, -1, mewa::Error::ExpectedArgumentTypeConstructorPairList);
@@ -279,18 +274,15 @@ static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair(
 }
 
 std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair>
-	mewa::lua::getArgumentAsTypeConstructorPairList( 
-			const char* functionName, lua_State* ls, int li, int objtable,
-			mewa_typedb_userdata_t* td, std::pmr::memory_resource* memrsc)
+	mewa::lua::getArgumentAsTypeConstructorPairList( const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc)
 {
 	std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> rt( memrsc);
 	if (lua_isnil( ls, li)) return rt;
 	checkArgumentAsTable( functionName, ls, li);
 
-	lua_pushvalue( ls, objtable);
-	lua_pushvalue( ls, li < 0 ? (li-1) : li);
-	lua_pushnil( ls);												//STK: [OBJTAB] [PARAMTAB] NIL
-	while (lua_next( ls, -2))											//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+	lua_pushvalue( ls, li);
+	lua_pushnil( ls);								//STK: [PARAMTAB] NIL
+	while (lua_next( ls, -2))							//STK: [PARAMTAB] [KEY] [VAL]
 	{
 		if (lua_type( ls, -2) == LUA_TNUMBER)
 		{
@@ -300,7 +292,7 @@ std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair>
 			std::size_t index = kidx-1;
 			if (index == rt.size())
 			{
-				rt.emplace_back( getArgumentAsTypeConstructorPair( functionName, ls, -1, -4, td));	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
+				rt.emplace_back( getArgumentAsTypeConstructorPair( functionName, ls, -1));	//STK: [PARAMTAB] [KEY] [VAL]
 			}
 			else
 			{
@@ -308,17 +300,16 @@ std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair>
 				{
 					rt.resize( index+1, mewa::TypeDatabase::TypeConstructorPair( -1, -1));
 				}
-				rt[ index] = getArgumentAsTypeConstructorPair( functionName, ls, -1, -4, td);	//STK: [OBJTAB] [PARAMTAB] [KEY] [VAL]
 			}
+				rt[ index] = getArgumentAsTypeConstructorPair( functionName, ls, -1);		//STK: [PARAMTAB] [KEY] [VAL]
 		}
 		else
 		{
 			throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentTypeConstructorPairList);
 		}
-		lua_pop( ls, 1);											//STK: [OBJTAB] [PARAMTAB] [KEY]
+		lua_pop( ls, 1);											//STK: [PARAMTAB] [KEY]
 	}
-	lua_pop( ls, 2);												//STK:
-
+	lua_pop( ls, 1);												//STK:
 	return rt;
 }
 
@@ -430,19 +421,18 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 	return rt;
 }
 
-/// \note Assume STK: [OBJTAB] [REDUTAB]
 static inline void pushTypeConstructorPair( lua_State* ls, int type, int constructor)
 {
-	lua_createtable( ls, 0/*narr*/, 2/*nrec*/);	// STK: [OBJTAB] [ELEMTAB] [ELEM]
-	lua_pushliteral( ls, "type");			// STK: [OBJTAB] [ELEMTAB] [ELEM] "type"
-	lua_pushinteger( ls, type);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "type" [TYPE]
-	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
+	lua_createtable( ls, 0/*narr*/, 2/*nrec*/);	// STK: [TAB]
+	lua_pushliteral( ls, "type");			// STK: [TAB] "type"
+	lua_pushinteger( ls, type);			// STK: [TAB] "type" [TYPE]
+	lua_rawset( ls, -3);				// STK: [TAB] 
 
 	if (constructor > 0)
 	{
-		lua_pushliteral( ls, "constructor");		// STK: [OBJTAB] [ELEMTAB] [ELEM] "constructor"
-		lua_rawgeti( ls, -4, constructor);		// STK: [OBJTAB] [ELEMTAB] [ELEM] "constructor" [CONSTRUCTOR]
-		lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
+		lua_pushliteral( ls, "constructor");			// STK: [TAB] "constructor"
+		lua_rawgeti( ls, LUA_REGISTRYINDEX, constructor);	// STK: [TAB] "constructor" [CONSTRUCTOR]
+		lua_rawset( ls, -3);					// STK: [TAB]
 	}
 }
 
@@ -459,14 +449,12 @@ static inline void pushTypeConstructorWeightTuple( lua_State* ls, int type, int 
 }
 
 void mewa::lua::pushTypeConstructor(
-		lua_State* ls, const char* functionName, const char* objTableName, int constructor)
+		lua_State* ls, const char* functionName, int constructor)
 {
 	checkStack( functionName, ls, 6);
 	if (constructor > 0)
 	{
-		lua_getglobal( ls, objTableName);		// STK: [OBJTAB] 
-		lua_rawgeti( ls, -1, constructor);		// STK: [OBJTAB] [CONSTRUCTOR]
-		lua_replace( ls, -2);				// STK: [CONSTRUCTOR]
+		lua_rawgeti( ls, LUA_REGISTRYINDEX, constructor);
 	}
 	else
 	{
@@ -475,13 +463,11 @@ void mewa::lua::pushTypeConstructor(
 }
 
 void mewa::lua::pushWeightedReductions(
-		lua_State* ls, const char* functionName, const char* objTableName,
+		lua_State* ls, const char* functionName,
 		const std::pmr::vector<mewa::TypeDatabase::WeightedReduction>& reductions)
 {
 	checkStack( functionName, ls, 6);
-	lua_getglobal( ls, objTableName);						// STK: [OBJTAB]
-
-	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [REDUTAB]
+	lua_createtable( ls, reductions.size()/*narr*/, 0/*nrec*/);			// STK: [REDUTAB]
 	int ridx = 0;
 	for (auto const& reduction : reductions)
 	{
@@ -489,7 +475,6 @@ void mewa::lua::pushWeightedReductions(
 		pushTypeConstructorWeightTuple( ls, reduction.type, reduction.constructor, reduction.weight, reduction.count);	// STK: [OBJTAB] [REDUTAB] [REDU]
 		lua_rawseti( ls, -2, ridx);											// STK: [OBJTAB] [REDUTAB]
 	}
-	lua_replace( ls, -2);													// STK: [REDUTAB]
 }
 
 void mewa::lua::pushTypeList(
@@ -508,77 +493,69 @@ void mewa::lua::pushTypeList(
 }
 
 void mewa::lua::pushTypeConstructorPairs(
-		lua_State* ls, const char* functionName, const char* objTableName,
+		lua_State* ls, const char* functionName,
 		const mewa::TypeDatabase::TypeConstructorPairList& parameters)
 {
 	checkStack( functionName, ls, 8);
 
-	lua_getglobal( ls, objTableName);						// STK: [OBJTAB]
-	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);			// STK: [OBJTAB] [PARAMTAB]
+	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);			// STK: [PARAMTAB]
 	int ridx = 0;
 	for (auto const& parameter : parameters)
 	{
 		++ridx;
-		pushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [OBJTAB] [PARAMTAB] [PARAM]
-		lua_rawseti( ls, -2, ridx);						// STK: [OBJTAB] [PARAMTAB]
+		pushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [PARAMTAB] [PARAM]
+		lua_rawseti( ls, -2, ridx);						// STK: [PARAMTAB]
 	}
-	lua_replace( ls, -2);								// STK: [PARAMTAB]
 }
 
 static void pushTypeConstructorPairsWithReductionRoot(
-		lua_State* ls, const char* functionName, const char* objTableName,
-		const mewa::TypeDatabase::TypeConstructorPairList& parameters)
+		lua_State* ls, const char* functionName,
+		int li_reduroot, const mewa::TypeDatabase::TypeConstructorPairList& parameters)
 {
 	mewa::lua::checkStack( functionName, ls, 8);
 
-	lua_getglobal( ls, objTableName);						// STK: [REDUROOT] [OBJTAB]
-	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);			// STK: [REDUROOT] [OBJTAB] [PARAMTAB]
+	lua_createtable( ls, parameters.size()/*narr*/, 0/*nrec*/);			// STK: [PARAMTAB]
 	int ridx = 1;
-	lua_pushvalue( ls, -3);								// STK: [REDUROOT] [OBJTAB] [PARAMTAB] [REDUROOT]
-	lua_rawseti( ls, -2, ridx);							// STK: [REDUROOT] [OBJTAB] [PARAMTAB]
+	lua_pushvalue( ls, li_reduroot < 0 ? (li_reduroot-1) : li_reduroot);		// STK: [PARAMTAB] [REDUROOT]
+	lua_rawseti( ls, -2, ridx);							// STK: [PARAMTAB]
 	for (auto const& parameter : parameters)
 	{
 		++ridx;
-		pushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [REDUROOT] [OBJTAB] [PARAMTAB] [PARAM]
-		lua_rawseti( ls, -2, ridx);						// STK: [REDUROOT] [OBJTAB] [PARAMTAB]
+		pushTypeConstructorPair( ls, parameter.type, parameter.constructor);	// STK: [PARAMTAB] [PARAM]
+		lua_rawseti( ls, -2, ridx);						// STK: [PARAMTAB]
 	}
-	lua_replace( ls, -3);								// STK: [PARAMTAB] [OBJTAB]
-	lua_pop( ls, 1);								// STK: [PARAMTAB]
 }
 
 void mewa::lua::pushReductionDefinition(
-		lua_State* ls, const char* functionName, const char* objTableName,
+		lua_State* ls, const char* functionName,
 		const mewa::TypeDatabase::ReductionDefinition& redu)
 {
 	checkStack( functionName, ls, 6);
 
-	lua_getglobal( ls, objTableName);						// STK: [OBJTAB] 
-	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);					// STK: [OBJTAB] [REDUTAB] 
+	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);					// STK: [REDUTAB] 
 
-	lua_pushliteral( ls, "to");							// STK: [OBJTAB] [REDUTAB] "to"
-	lua_pushinteger( ls, redu.toType);						// STK: [OBJTAB] [REDUTAB] "to" [TYPE]
-	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "to");							// STK: [REDUTAB] "to"
+	lua_pushinteger( ls, redu.toType);						// STK: [REDUTAB] "to" [TYPE]
+	lua_rawset( ls, -3);								// STK: [REDUTAB]
 
-	lua_pushliteral( ls, "from");							// STK: [OBJTAB] [REDUTAB] "from"
-	lua_pushinteger( ls, redu.fromType);						// STK: [OBJTAB] [REDUTAB] "from" [TYPE]
-	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "from");							// STK: [REDUTAB] "from"
+	lua_pushinteger( ls, redu.fromType);						// STK: [REDUTAB] "from" [TYPE]
+	lua_rawset( ls, -3);								// STK: [REDUTAB]
 
 	if (redu.constructor > 0)
 	{
-		lua_pushliteral( ls, "constructor");					// STK: [OBJTAB] [REDUTAB] "constructor"
-		lua_rawgeti( ls, -3, redu.constructor);					// STK: [OBJTAB] [REDUTAB] "constructor" [CONSTRUCTOR]
-		lua_rawset( ls, -3);							// STK: [OBJTAB] [REDUTAB]
+		lua_pushliteral( ls, "constructor");					// STK: [REDUTAB] "constructor"
+		lua_rawgeti( ls, LUA_REGISTRYINDEX, redu.constructor);			// STK: [REDUTAB] "constructor" [CONSTRUCTOR]
+		lua_rawset( ls, -3);							// STK: [REDUTAB]
 	}
 
-	lua_pushliteral( ls, "tag");							// STK: [OBJTAB] [REDUTAB] "tag"
-	lua_pushinteger( ls, redu.tag);							// STK: [OBJTAB] [REDUTAB] "tag" [TAG]
-	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
+	lua_pushliteral( ls, "tag");							// STK: [REDUTAB] "tag"
+	lua_pushinteger( ls, redu.tag);							// STK: [REDUTAB] "tag" [TAG]
+	lua_rawset( ls, -3);								// STK: [REDUTAB]
 
-	lua_pushliteral( ls, "weight");							// STK: [OBJTAB] [REDUTAB] "weight"
-	lua_pushnumber( ls, redu.weight);						// STK: [OBJTAB] [REDUTAB] "weight" [WEIGHT]
-	lua_rawset( ls, -3);								// STK: [OBJTAB] [REDUTAB]
-
-	lua_replace( ls, -2);								// STK: [OBJTAB]
+	lua_pushliteral( ls, "weight");							// STK: [REDUTAB] "weight"
+	lua_pushnumber( ls, redu.weight);						// STK: [REDUTAB] "weight" [WEIGHT]
+	lua_rawset( ls, -3);								// STK: [REDUTAB]
 }
 
 void mewa::lua::pushScope( lua_State* ls, const char* functionName, const mewa::Scope& scope)
@@ -591,7 +568,7 @@ void mewa::lua::pushScope( lua_State* ls, const char* functionName, const mewa::
 }
 
 int mewa::lua::pushResolveResult(
-		lua_State* ls, const char* functionName, int contextTabLuaIndex, const char* objTableName,
+		lua_State* ls, const char* functionName, int contextTabLuaIndex,
 		const mewa::TypeDatabase::ResolveResult& resolveres)
 {
 	if (resolveres.rootIndex >= 0)
@@ -612,12 +589,13 @@ int mewa::lua::pushResolveResult(
 			lua_rawgeti( ls, contextTabLuaIndex>0?contextTabLuaIndex:(contextTabLuaIndex-1), resolveres.rootIndex); 	// STK: [CTYPE] [ROOT]
 			if (lua_istable( ls, -1))
 			{
-				pushTypeConstructorPairsWithReductionRoot( ls, functionName, objTableName, resolveres.reductions); 	// STK: [CTYPE] [REDUS]
+				pushTypeConstructorPairsWithReductionRoot( ls, functionName, -1, resolveres.reductions); 		// STK: [CTYPE] [REDUS]
+				lua_replace( ls, -2);
 			}
 			else
 			{
 				lua_pop( ls, 1);											// STK: [CTYPE]
-				mewa::lua::pushTypeConstructorPairs( ls, functionName, objTableName, resolveres.reductions);		// STK: [CTYPE] [REDUS]
+				mewa::lua::pushTypeConstructorPairs( ls, functionName, resolveres.reductions);		// STK: [CTYPE] [REDUS]
 			}
 			mewa::lua::pushTypeList( ls, functionName, resolveres.items);		 					// STK: [CTYPE] [REDUS] [ITEMS]
 			return 3;
@@ -625,7 +603,7 @@ int mewa::lua::pushResolveResult(
 		else
 		{
 			lua_pushinteger( ls, resolveres.contextType);
-			mewa::lua::pushTypeConstructorPairs( ls, functionName, objTableName, resolveres.reductions);
+			mewa::lua::pushTypeConstructorPairs( ls, functionName, resolveres.reductions);
 			mewa::lua::pushTypeList( ls, functionName, resolveres.items);
 			return 3;
 		}
