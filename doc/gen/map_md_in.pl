@@ -194,8 +194,9 @@ sub substVariables
 		elsif  ($var eq "VERSION_PATCH")
 		{
 			my $ln = `git log | grep -n Version | head -n 1 | awk -F ':' '{print \$1}'`;
-			my $patch = `git log | head -n 11 | grep commit | wc -l`;
-			$patch = $patch - 1;
+			chop( $ln);
+			my $patch = `git log | head -n $ln | grep commit | wc -l`;
+			$patch = int($patch) - 1;
 			$rt .= "$patch" . substVariables( $rest);
 		}
 		elsif ($var eq "LLVM_VERSION")

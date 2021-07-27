@@ -54,9 +54,11 @@ Here are some declaration patterns described:
 1. _name_ **=** _itemlist_ **;**
 
     * Simple grammar production definition with _name_ as left-hand _nonterminal_ and _itemlist_ as a space-separated list of identifiers (nonterminals or lexeme names) and strings (keywords and operators as implicitly defined _tokens_).
+
 2. _name_/_priority_ **=** _itemlist_ **;**
 
     * Production definition with a specifier for the rule priority in _SHIFT/REDUCE_ conflicts. The priority specifier is a character **L** or **R** immediately followed by a non-negative integer number. The **L** defines the rule to be left-handed, meaning that _REDUCE_ is preferred in self including rules **L** -> **L** **..**, whereas **R** defines the rule to be right-handed, meaning that _SHIFT_ is preferred in self including rules. The integer number in the priority specifier specifies the preference in _SHIFT/REDUCE_ involving different rules. The production with the higher of two numbers is preferred in _SHIFT/REDUCE_ conflicts. Priorities of _SHIFT_ actions must be consistent for a state.
+
 3. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
 
     * Production definition with Lua function as a single identifier plus an optional argument (a Lua value or table). The function identifier refers to a member of the typesystem module written by the author and loaded by the compiler. The function and its optional argument are attached to the node of the _AST_ defined by its production.
@@ -65,15 +67,11 @@ Here are some declaration patterns described:
 
     * Production definition with an increment of the **scope-step**.
 
-5. _name_[ /_priority_ ] **=** _itemlist_ **(** _luafunction_ **)** **;**
-
-    * Production definition creating an _AST_ node with a Lua function to call.
-
-6. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
+5. _name_[ /_priority_ ] **=** _itemlist_ **(** **>>** _luafunction_ **)** **;**
 
     * Production definition creating an _AST_ node with a Lua function to call and an increment of the **scope-step**.
 
-7. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
+6. _name_[ /_priority_ ] **=** _itemlist_ **(** **{}** _luafunction_ **)** **;**
 
     * Production definition creating an _AST_ node with a Lua function to call and a **scope** structure (start and end of the scope).
 
