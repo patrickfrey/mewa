@@ -165,11 +165,42 @@ sub substVariables
 		my $rest = $3;
 		if ($var eq "VERSION")
 		{
-			$rt .= readFile( $var) . substVariables( $rest . "\n");
+			$rt .= readFile( $var) . substVariables( $rest);
+		}
+		elsif ($var eq "VERSION_MAJOR")
+		{
+			my $version = readFile( "VERSION");
+			if ($version =~ m/([0-9]+)[.]([0-9]+)/)
+			{
+				$rt .= $1 . substVariables( $rest);
+			}
+			else
+			{
+				$rt .= "0" . substVariables( $rest);
+			}
+		}
+		elsif ($var eq "VERSION_MINOR")
+		{
+			my $version = readFile( "VERSION");
+			if ($version =~ m/([0-9]+)[.]([0-9]+)/)
+			{
+				$rt .= $2 . substVariables( $rest);
+			}
+			else
+			{
+				$rt .= "0" . substVariables( $rest);
+			}
+		}
+		elsif  ($var eq "VERSION_PATCH")
+		{
+			my $ln = `git log | grep -n Version | head -n 1 | awk -F ':' '{print \$1}'`;
+			my $patch = `git log | head -n 11 | grep commit | wc -l`;
+			$patch = $patch - 1;
+			$rt .= "$patch" . substVariables( $rest);
 		}
 		elsif ($var eq "LLVM_VERSION")
 		{
-			$rt .= stripEoln(`llvm-config --version`) . substVariables( $rest . "\n");
+			$rt .= stripEoln(`llvm-config --version`) . substVariables( $rest);
 		}
 		else
 		{
@@ -261,6 +292,15 @@ sub processDocDir
 	closedir $dochnd;
 }
 
+sub processSubstFile
+{
+	my $outFile = $_[0];
+	my $inFile = "$outFile.in";
+	
+	writeFile( $outFile, substVariablesFile( $inFile));
+}
+
 processDocDir( "doc");
 processDocDir( ".");
+processSubstFile( "src/version.hpp");
 

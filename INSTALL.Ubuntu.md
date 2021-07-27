@@ -4,8 +4,7 @@
 Use Cmake with gcc or clang with C++17 support.
 
 ### LLVM Version
-The examples of this version of _Mewa_ are based on LLVM version 10.0.0.
-```make test``` with other versions may fail.
+The examples of this version of _Mewa_ are based on LLVM version 10.0.0.```make test``` with other versions may fail.
 
 ### Prerequisites
 Install packages with 'apt-get'/aptitude.
@@ -41,7 +40,6 @@ make PREFIX=/usr/local install
 git clone https://github.com/patrickfrey/mewa
 cd mewa
 git checkout -b 0.5
-
 
 ```
 
