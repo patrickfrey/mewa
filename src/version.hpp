@@ -16,11 +16,11 @@ namespace mewa
 {
 
 #define MEWA_MAJOR_VERSION 0
-#define MEWA_MINOR_VERSION 2
+#define MEWA_MINOR_VERSION 5
 #define MEWA_PATCH_VERSION 0
 #define MEWA_VERSION_NUMBER (MEWA_MAJOR_VERSION * 100 + MEWA_MINOR_VERSION)
 
-#define MEWA_VERSION_STRING  "0.2.0"
+#define MEWA_VERSION_STRING  "0.5.0"
 
 }//namespace
 #endif

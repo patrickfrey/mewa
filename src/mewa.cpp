@@ -92,6 +92,19 @@ compiler = mewa.compiler( compilerdef)
 compiler:run( ccmd.target, ccmd.options, ccmd.input, ccmd.output, ccmd.debug)
 )"};
 
+static const std::string g_defaultTemplate_no_cmdline{R"(#!%luabin%
+
+typesystem = require( "%typesystem%")
+mewa = require("mewa")
+
+compilerdef = %automaton%
+
+if not arg[1] then error( "Missign argument (program to compile)\n") end
+
+compiler = mewa.compiler( compilerdef)
+compiler:run( ccmd.target, ccmd.options, arg[1])
+)"};
+
 
 
 static std::string mapTemplateKey( const std::string& content, const char* key, const std::string& value)
@@ -361,7 +374,7 @@ int main( int argc, const char* argv[] )
 			{
 				if (automaton.cmdline().empty())
 				{
-					throw mewa::Error( mewa::Error::MandatoryCommandMissingInGrammarDef, "CMDLINE");
+					templat = g_defaultTemplate_no_cmdline;
 				}
 				else
 				{
