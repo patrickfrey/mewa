@@ -111,9 +111,9 @@ local exceptionSectionPrinted = false	-- True if the code for throwing exception
 --	returnfunction	: Function implementing the return statement, there are differences between regular functions and the main function
 --	frames		: List of allocation frames allocated during this function, used for collecting the exception handling code when printing the function
 --	features	: Set of flags indicating what features are used and what initialization code should be generated
---	initstate	: Initialization state counter in case of constructor, otherwise undefined
---	partial_dtor	: Call of partial dtor in case of an exception, used in exception handling code in the case of a constructor, otherwise undefined
---	initcontext	: Context of the class in case of a constructor, otherwise undefined
+--	initstate	: Initialization state counter in case of ctor, otherwise undefined
+--	partial_dtor	: Call of partial dtor in case of an exception, used in exception handling code in the case of a ctor, otherwise undefined
+--	initcontext	: Context of the class in case of a ctor, otherwise undefined
 --	throws		: True if the function is declared as potentially throwing exceptions
 
 -- Create a callable environent object
@@ -724,7 +724,7 @@ function definePointerQualiTypes( node, typeId)
 		typedb:def_reduction( valtype, anyClassPointerType, nil, tag_pointerReinterpretCast)
 		typedb:def_reduction( c_valtype, anyConstClassPointerType, nil, tag_pointerReinterpretCast)
 	end
-	defineScalarConstructorDestructors( qualitype, pointerTypeDescription)
+	defineScalarCtorDtors( qualitype, pointerTypeDescription)
 	typedb:scope( scope_bk,step_bk)
 	return qualitype
 end
@@ -818,8 +818,8 @@ function definePublicPrivate( contextTypeId, typnam, typeDescription, qualitype)
 	typedb:def_reduction( qualitype.reftype, priv_reftype, nil, tag_typeDeduction, rdw_strip_v_2)
 	typedb:def_reduction( qualitype.c_reftype, priv_c_reftype, nil, tag_typeDeduction, rdw_strip_v_3)
 end
--- Define the constructors/destructors for built-in scalar types
-function defineScalarConstructorDestructors( qualitype, descr)
+-- Define the ctors/dtors for built-in scalar types
+function defineScalarCtorDtors( qualitype, descr)
 	defineCall( qualitype.reftype, qualitype.reftype, "=",  {qualitype.c_valtype}, callConstructor( descr.assign))
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_valtype}, callConstructor( descr.assign))
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {qualitype.c_reftype}, callConstructor( descr.ctor_copy))
@@ -830,7 +830,7 @@ function defineScalarConstructorDestructors( qualitype, descr)
 	defineCall( 0, qualitype.reftype, ":~", {}, constructorStructEmpty)
 end
 -- Define structure assignments as construction in a local buffer, a destructor call of the target followed by a move into the destination place
-function getAssignmentsFromConstructors( node, qualitype, descr)
+function getAssignmentsFromCtors( node, qualitype, descr)
 	function assignmentConstructorFromCtor( descr, ctorfunc, throws)
 		if throws then
 			return function( this, arg)
@@ -861,7 +861,7 @@ function getAssignmentsFromConstructors( node, qualitype, descr)
 	typedb:scope( scope_bk,step_bk)
 end
 -- Get the landingpad resume code of a constructor with a fixed list of defined cleanup functions
-function getDefaultConstructorCleanupResumeCode( env, codelist, finishLabel)
+function getDefaultCtorCleanupResumeCode( env, codelist, finishLabel)
 	local partial_dtor = ""
 	for ci=#codelist,1,-1 do 
 		local label = codelist[ ci].label
@@ -905,7 +905,7 @@ function defineCtorCalls( qualitype, parameter, constructorFunc, throws)
 	end
 end
 -- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
-function defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
+function defineArrayCtorDtors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	local env = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol, nil, true)
 	pushEnvironment( env, nil, "cleanup")
 	local r_elementTypeId = referenceTypeMap[ elementTypeId]
@@ -922,7 +922,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 		if init.constructor.throws == true then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( env, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
+			rewind = getDefaultCtorCleanupResumeCode( env, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_init_throwing)
 		else
 			attributes = llvmir.functionAttribute( false, false)
@@ -937,7 +937,7 @@ function defineArrayConstructorDestructors( node, qualitype, arrayDescr, element
 		if copy.constructor.throws == true then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( env, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
+			rewind = getDefaultCtorCleanupResumeCode( env, {{label="cleanup", code=arrayDescr.rewind_ctor}}, "finish")
 			constructorFunc = invokeConstructor( arrayDescr.ctor_copy_throwing)
 		else
 			attributes = llvmir.functionAttribute( false, false)
@@ -1053,7 +1053,7 @@ function defineStructConstructors( node, qualitype, descr)
 		if init_nofThrows > 0 then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
+			rewind = getDefaultCtorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( descr.ctor_init_throwing)
 		else
 			attributes = llvmir.functionAttribute( false, false)
@@ -1068,7 +1068,7 @@ function defineStructConstructors( node, qualitype, descr)
 		if copy_nofThrows > 0 then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
+			rewind = getDefaultCtorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( descr.ctor_copy_throwing)
 		else
 			attributes = llvmir.functionAttribute( false, false)
@@ -1083,7 +1083,7 @@ function defineStructConstructors( node, qualitype, descr)
 		if element_nofThrows > 0 then
 			attributes = llvmir.functionAttribute( false, true)
 			entercode = llvmir.exception.allocLandingpad
-			rewind = getDefaultConstructorCleanupResumeCode( env, rewindlist, "finish")
+			rewind = getDefaultCtorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( utils.template_format( descr.ctor_elements_throwing, {args=argstr}))
 			
 		else
@@ -1096,8 +1096,8 @@ function defineStructConstructors( node, qualitype, descr)
 	end
 	popEnvironment()
 end
--- Define constructors/destructors for 'interface' types
-function defineInterfaceConstructorDestructors( node, qualitype, descr, context)
+-- Define ctors/dtors for 'interface' types
+function defineInterfaceCtorDtors( node, qualitype, descr, context)
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, callConstructor( descr.ctor_init))
 	defineCall( qualitype.reftype, qualitype.reftype, ":=", {}, callConstructor( descr.ctor_init))
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {qualitype.reftype}, callConstructor( descr.ctor_copy))
@@ -1345,7 +1345,7 @@ end
 --	exitmap		: Maps different named exit scenarios (exceptions thrown, return from a function with a specific value to a cleanup code sequence)
 --	exitkeys	: List of all keys for the output in definition order (deterministic) of the exitmap entries
 --	landingpad	: Landingpad table {code = code with all landingpads defined in this frame, map = maps cleanup labels to landingpad labels}
---	initstate	: Initialization state counter. This counter is used as second argument for the partial destructor called if a constructor fails.
+--	initstate	: Initialization state counter. This counter is used as second argument for the partial dtor called if a ctor fails.
 
 -- Create the allocation frame for a specific environment and scope, used for createing the allocation frame for globals
 function createAllocationFrame( env, scope)
@@ -2151,7 +2151,7 @@ function initBuiltInTypes()
 
 	for typnam, scalar_descr in pairs( llvmir.scalar) do
 		local qualitype = scalarQualiTypeMap[ typnam]
-		defineScalarConstructorDestructors( qualitype, scalar_descr)
+		defineScalarCtorDtors( qualitype, scalar_descr)
 		defineBuiltInTypeConversions( typnam, scalar_descr)
 		defineBuiltInTypeOperators( typnam, scalar_descr)
 	end
@@ -2355,8 +2355,8 @@ function createArrayTypeInstance( node, typnam, elementTypeId, elementDescr, arr
 	local qualitype = defineQualiTypes( node, elementTypeId, typnam, arrayDescr)
 	local arrayTypeId = qualitype.valtype
 	defineUnboundReferenceTypes( elementTypeId, typnam, arrayDescr, qualitype)
-	defineArrayConstructorDestructors( node, qualitype, arrayDescr, elementTypeId, arraySize)
-	getAssignmentsFromConstructors( node, qualitype, arrayDescr)
+	defineArrayCtorDtors( node, qualitype, arrayDescr, elementTypeId, arraySize)
+	getAssignmentsFromCtors( node, qualitype, arrayDescr)
 	local qualitype_element = qualiTypeMap[ elementTypeId]
 	defineArrayIndexOperators( qualitype_element.reftype, qualitype.reftype, arrayDescr)
 	defineArrayIndexOperators( qualitype_element.c_reftype, qualitype.c_reftype, arrayDescr)
@@ -2953,7 +2953,7 @@ function traverseAstInterfaceDef( node, declContextTypeId, typnam, descr, qualit
 	descr.methods = context.methods
 	descr.methodmap = context.methodmap
 	descr.const = context.const
-	defineInterfaceConstructorDestructors( node, qualitype, descr, context)
+	defineInterfaceCtorDtors( node, qualitype, descr, context)
 	defineOperatorsWithStructArgument( node, context)
 	print_section( "Typedefs", utils.template_format( descr.vmtdef, {llvmtype=context.llvmtype}))
 	print_section( "Typedefs", descr.typedef)
@@ -2976,7 +2976,7 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	if not context.properties.destructor then defineStructDestructors( node, qualitype, descr) end
 	definePartialClassDestructor( node, qualitype, descr)
 	defineInitializationFromStructure( node, qualitype)
-	if not context.properties.assignment then getAssignmentsFromConstructors( node, qualitype, descr) end
+	if not context.properties.assignment then getAssignmentsFromCtors( node, qualitype, descr) end
 	defineOperatorsWithStructArgument( node, context)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 4) -- 4th pass: define callable implementations
 	defineInheritedInterfaces( node, context, qualitype.valtype)
@@ -2996,7 +2996,7 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	defineStructConstructors( node, qualitype, descr)
 	defineStructDestructors( node, qualitype, descr)
 	defineInitializationFromStructure( node, qualitype)
-	getAssignmentsFromConstructors( node, qualitype, descr)
+	getAssignmentsFromCtors( node, qualitype, descr)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
 	popSeekContextType( qualitype.valtype)
 end
