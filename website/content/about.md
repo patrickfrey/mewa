@@ -13,7 +13,7 @@ draft: true
 I consider the software as ready for use in projects.
 
 ## Example
-As proof of concept I have implemented a compiler for a general-purpose, statically typed programming language with the following features:
+As **proof of concept**, I have implemented a compiler for a **general-purpose, statically typed programming language** with the following features:
 
  * Structures (plain data structures without methods, implicitly defined assignment operator)
  * Interfaces
