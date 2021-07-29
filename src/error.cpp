@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -30,6 +30,7 @@ Error Error::parseError( const char* errstr) noexcept
 	int line_ = 0;
 	std::string_view filename_ = "";
 	char const* ei = errstr;
+	char const* ee = ei + std::strlen(ei);
 	char const* param_ = 0;
 	char const* msgstart = 0;
 	enum State {StateInit, StateParseMessage, StateParseEndOfMessage, StateParseLineNo, StateParseFileName, StateParseArgument, StateEnd};
@@ -58,7 +59,7 @@ Error Error::parseError( const char* errstr) noexcept
 			}
 			else
 			{
-				if (0==std::memcmp( ei, "Error at line ", 14))
+				if (ee-ei > 14 && 0==std::memcmp( ei, "Error at line ", 14))
 				{
 					code_ = CompileError;
 					ei += 6;
@@ -104,7 +105,7 @@ Error Error::parseError( const char* errstr) noexcept
 			}
 			break;
 		case StateParseLineNo:
-			if (0==std::memcmp( ei, "at line ", 8))
+			if (ee-ei > 8 && 0==std::memcmp( ei, "at line ", 8))
 			{
 				ei += 8;
 				line_ = parseInteger( ei);
@@ -124,7 +125,7 @@ Error Error::parseError( const char* errstr) noexcept
 			}
 			break;
 		case StateParseFileName:
-			if (0==std::memcmp( ei, "in file ", 8))
+			if (ee-ei > 8 && 0==std::memcmp( ei, "in file ", 8))
 			{
 				ei += 8;
 				if (*ei == '"' || *ei == '\'')
@@ -152,7 +153,7 @@ Error Error::parseError( const char* errstr) noexcept
 			break;
 		case StateEnd:
 			break;
-			
+
 	}//... end for switch
 	if (filename_[0])
 	{
@@ -259,7 +260,7 @@ const char* Error::code2String( int code_) noexcept
 		case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
 		case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
 		case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
-        case NestedCallArgumentStructureInGrammarDef: return "Nested structures as AST node function arguments are not allowed";
+	case NestedCallArgumentStructureInGrammarDef: return "Nested structures as AST node function arguments are not allowed";
 
 		case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 		case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";

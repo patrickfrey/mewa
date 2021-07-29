@@ -7,6 +7,7 @@ set -e
 
 VG="valgrind --leak-check=full --show-leak-kinds=all --leak-resolution=high --show-reachable=yes --undef-value-errors=yes --track-origins=yes"
 
+$VG build/testError
 $VG build/testLexer
 $VG build/testScope
 $VG build/testRandomScope
