@@ -20,7 +20,5 @@ $VG build/mewa -d build/language1.debug.out -g -o build/language1.dump.lua -t te
 $VG build/mewa -g -o build/language1.compiler.lua examples/language1/grammar.g
 for ff in fibo tree class array pointer generic complex matrix exception
 do
-	$VG lua build/language1.compiler.lua -d build/language1.debug.$ff.out -o build/language1.compiler.$ff.out examples/language1/sources/$ff.prg
-	$VG build/language1.compiler.$ff
+	$VG lua build/language1.compiler.lua -d build/language1.debug.$ff.out -o build/language1.compiler.$ff.llr examples/language1/sources/$ff.prg
 done
-
