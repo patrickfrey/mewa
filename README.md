@@ -9,7 +9,7 @@ A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides some as
  - _Mewa_ does not aim to offer you the greatest variety of possibilities. There exist feature-richer compiler-compilers. _Mewa_ aims to **bring projects considered endless for a single person within reach**.
 
 # LLVM IR
-The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/docs/LangRef.html) for code generation. 
+The examples provided here use the [intermediate representation (IR) of LLVM](https://llvm.org/docs/LangRef.html) for code generation.
 For reading more see the [collected links](doc/links.md).
 
 # Status
@@ -18,14 +18,14 @@ I consider the software as ready for use in projects.
 # Portability
 
 ## Build
-Currently, there is only GNU Makefile support. CMake support is not planned for this project because the project is too small to justify it and it has not many dependencies. I would rather like to have Makefiles for platforms where GNU Makefile support is not available (e.g. Windows). 
+Currently, there is only GNU Makefile support. CMake support is not planned for this project because the project is too small to justify it and it has not many dependencies. I would rather like to have Makefiles for platforms where GNU Makefile support is not available (e.g. Windows).
 
 ## Target platforms
 Issues around target platforms are discussed [here](doc/portability.md).
 
 
 # Documentation
-* [Introduction with a Tutorial](doc/intro.md)
+* [Intro with a Tutorial](doc/intro.md)
 * [Examples](doc/example_compiler.md)
 * [Installation](INSTALL.Ubuntu.md)
 * [Glossary](doc/glossary.md)
