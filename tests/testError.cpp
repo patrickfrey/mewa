@@ -31,7 +31,7 @@ static std::string errorToString( const Error& error)
 	std::ostringstream buf;
 	char const* arg = error.arg();
 	if (!arg) arg = "";
-	buf << "Code=" << (int)error.code() 
+	buf << "Code=" << (int)error.code()
 			<< ", Line=" << error.location().line()
 			<< ", File=\"" << error.location().filename() << "\""
 			<< ", Arg=[" << arg << "]"
@@ -117,9 +117,9 @@ int main( int argc, const char* argv[] )
 Test Error(): Code=0, Line=0, File="", Arg=[], What=[]
 Test Error( errno): Code=12, Line=0, File="", Arg=[], What=[#12 "Cannot allocate memory"]
 Test Error( code): Code=431, Line=0, File="", Arg=[], What=[#431 "Bad character in a regular expression passed to the lexer"]
-Test Error( code, line): Code=449, Line=345, File="", Arg=[], What=[#449 "Incompatible mewa major version. You need a higher version of the mewa Lua module" at line 345]
+Test Error( code, line): Code=449, Line=345, File="", Arg=[], What=[#449 "Incompatible Mewa major version. You need a higher version of the Mewa Lua module" at line 345]
 Test Error( code, Location( filename, line)): Code=413, Line=345, File="file.txt", Arg=[], What=[#413 "Expected table as argument" at line 345 in file "file.txt"]
-Test Error( code, param): Code=447, Line=0, File="", Arg=[13.45], What=[#447 "Bad mewa version": 13.45]
+Test Error( code, param): Code=447, Line=0, File="", Arg=[13.45], What=[#447 "Bad Mewa version": 13.45]
 Test Error( code, param, line): Code=431, Line=123, File="", Arg=[int, float], What=[#431 "Bad character in a regular expression passed to the lexer" at line 123: int, float]
 Test Error( code, param, Location( filename, line)): Code=420, Line=123, File="source.txt", Arg=[int, float], What=[#420 "Too few arguments" at line 123 in file "source.txt": int, float]
 Test Error( RuntimeException): Code=403, Line=0, File="", Arg=[], What=[#403 "Runtime error exception"]
