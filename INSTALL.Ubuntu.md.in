@@ -4,8 +4,9 @@
 Use Cmake with gcc or clang with C++17 support.
 
 ### LLVM Version
-The examples of this version of _Mewa_ are based on LLVM version $:LLVM_VERSION.
-```make test``` with other versions may fail.
+The examples of this version of _Mewa_ are based on LLVM version 10 and run also with version 11.
+The examples pass with with LLVM versions 12 and 13 too, but the output of the IR differs slightly.
+Some tests that compare the IR output will therefore fail with llvm-12 or llvm-13.
 
 ### Prerequisites
 Install packages with 'apt-get'/aptitude.
@@ -14,7 +15,7 @@ Install packages with 'apt-get'/aptitude.
 ```Bash
 lua5.2 liblua5.2-dev luarocks llvm llvm-runtime
 ```
-or 
+or
 ```Bash
 lua5.1 liblua5.1-0-dev luarocks llvm llvm-runtime
 ```
@@ -23,7 +24,7 @@ when building for Lua 5.1.
 #### Install required luarocks packages
 ```Bash
 luarocks install bit32
-luarocks install penlight 
+luarocks install penlight
 luarocks install LuaBcd
 ```
 ### Build LuaBcd from sources (if luarocks install LuaBcd fails)

@@ -1,6 +1,6 @@
 local utils = require "typesystem_utils"
 local llvm_version = require "llvm_version"
-if llvm_version ~= 10 and llvm_version ~= 11 and llvm_version ~= 12 then
+if llvm_version < 10 or llvm_version > 13 then
 	error( "LLVM version " .. llvm_version .. " not supported by the examples")
 end
 local llvmir = {}
@@ -274,27 +274,27 @@ llvmir.callableDescr = {
 llvmir.constexprIntegerDescr = {
 	llvmtype = "i64",
 	scalar = true,
-	class = "constexpr"	
+	class = "constexpr"
 }
 llvmir.constexprUIntegerDescr = {
 	llvmtype = "i64",
 	scalar = true,
-	class = "constexpr"	
+	class = "constexpr"
 }
 llvmir.constexprFloatDescr = {
 	llvmtype = "double",
 	scalar = true,
-	class = "constexpr"	
+	class = "constexpr"
 }
 llvmir.constexprBooleanDescr = {
 	llvmtype = "i1",
 	scalar = true,
-	class = "constexpr"	
+	class = "constexpr"
 }
 llvmir.constexprNullDescr = {
 	llvmtype = "i8*",
 	scalar = false,
-	class = "constexpr"	
+	class = "constexpr"
 }
 llvmir.constexprStructDescr = {
 	llvmtype = "void",
@@ -439,7 +439,7 @@ function llvmir.externFunctionDeclaration( lang, rtllvmtype, symbolname, argstr,
 end
 function llvmir.functionAttribute( isInterface, throws)
 	local behaviour_exception="";
-	if throws then 
+	if throws then
 		behaviour_exception = " personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)"
 	else
 		behaviour_exception = " nounwind"
@@ -447,7 +447,7 @@ function llvmir.functionAttribute( isInterface, throws)
 	local behaviour_inline=""; if isInterface then behaviour_inline = " noinline" end
 	return "#0" .. behaviour_inline .. behaviour_exception
 end
-                                                                           
+
 local pointerDescrMap = {}
 function llvmir.pointerDescr( pointeeDescr)
 	local llvmPointerType = pointeeDescr.llvmtype
