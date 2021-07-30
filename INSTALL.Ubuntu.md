@@ -41,7 +41,7 @@ make PREFIX=/usr/local install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b 0.5
+git checkout -b 0.6
 
 ```
 
