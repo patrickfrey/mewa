@@ -450,20 +450,20 @@ Exits with error if the type passed is not valid. Returns *nil* if type is 0 or 
 <a name="type_scope"/>
 
 ### typedb:type_scope
-Get the scope where a type has been defined.
+Get the scope of a type definition.
 
 #### Parameter
-| #          | Name | Type              | Description                                                            |
-| :--------- | :--- | :---------------- | :--------------------------------------------------------------------- |
-| 1st        | type | integer           | Type identifier to query the scope                                     |
-| Return     |      | integer           | the scope where the type has been defined (global scope for typeid 0). |
+| #          | Name | Type              | Description                                                         |
+| :--------- | :--- | :---------------- | :------------------------------------------------------------------ |
+| 1st        | type | integer           | Type identifier to query the scope                                  |
+| Return     |      | integer           | the scope of the type or 0 if it was defined without context-type.  |
 
 #### Remark
 Exits with error if the type passed is not valid.
-#### Note
-Used to enforce some stricter rules for the visibility of certain objects, e.g. restrict access of variables in locally declared functions to a declared capture, the own stack frame and global variables.
-Also used for binding implicitly defined types to the scope of the type they are bound to.
 
+#### Note
+Used to enforce stricter rules for the visibility of certain objects, e.g. restrict access of variables in locally declared functions to a declared capture, the own stack frame and global variables.
+Also used for types defined on demand like generics and arrays. To enable reuse, generic and array instances are defined in the scope of their template type definition and not only in the scope where they are used.
 
 <a name="introspection"/>
 
