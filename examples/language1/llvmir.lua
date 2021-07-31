@@ -310,7 +310,6 @@ llvmir.control = {
 	invertedControlType = "br label %{out}\n{inp}:\n",
 	terminateFalseExit = "br label %{out}\n{1}:\n",
 	terminateTrueExit = "br label %{out}\n{1}:\n",
-	gotoStatementPrefix = "br label ",
 	label = "br label %{inp}\n{inp}:\n",
 	gotoStatement = "br label %{inp}\n",
 	plainLabel = "{inp}:\n",
