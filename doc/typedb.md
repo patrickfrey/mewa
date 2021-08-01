@@ -48,7 +48,7 @@ typedb = mewa.typedb()
 The variable typedb holds now the type database created.
 
 
-<a name="#scopeImpl"/>
+<a name="scopeImpl"/>
 
 ## Implementing the Concept of Scope
 

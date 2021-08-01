@@ -460,14 +460,21 @@ In the body of a method, the implicitly defined ```self``` reference is set to b
 The ```self``` is also added as a private reference to the context used for resolving types there, so it does not have to be explicitly defined.
 If defined like this, private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exists no reduction from the public context-type to the private context-type.
 
-The example **language1** implements private/public access restrictions on the type. This means that a method can access the private data of another instance of the same class like for example in C++. To make the private members of other instances besides the own ```self``` reference of a class accessible in a method, a reduction from the public reference type to the private reference type is declared in every method scope.
+The example **language1** implements private/public access restrictions on the type. This means that a method can access the private data of another instance of the same class like in C++. To make the private members of other instances besides the own ```self``` reference of a class accessible in a method, a reduction from the public reference type to the private reference type is declared in every method scope.
 
 
 <a name="visibilityRuleErrors"/>
 
 #### How to an report error on violation of visibility rules implemented as types?
 
-For reporting implied but illegal type deductions like for example writing to a const variable, you can define reductions with a constructor throwing an error if applied. High weight can ensure that the forbidden path declared as an error is taken only if no other legal path is found.
+For reporting implied but illegal type deductions like writing to a const variable, you can define reductions with a constructor
+throwing an error if applied. High weight can ensure that the forbidden path is taken only in the absence of a legal one.
+
+Another possibility is to attach an error attribute to such constructors indicating an error and forward them to referencing constructors.
+The evaluation of the best matching candidate type instance can drop instances with an error in the construction.
+In the example **language1**, the functions with the prefix **try** would drop candidates with an error attribute in the constructor.
+
+Neither one nor the other method of improving error messages has been implemented in the example **language1**.
 
 
 <a name="localFunctionCaptureRules"/>
@@ -538,7 +545,13 @@ In other words, the concept is implemented as generic with the type to check the
 
 ### How to implement lambdas?
 
-In the example **language1**, I similarly declared lambdas as generics. The node with the code of the lambda is traversed when referenced after the assignment of the parameters as an alias of the arguments passed. Because the scope of the lambda is not a subscope of the caller, the declaration type of the caller argument is assigned as an alias to the lambda parameter to make it accessible in the scope of the lambda code.
+In the example **language1**, lambdas are declared like generics.
+The node with the code of the lambda is traversed when referenced after the assignment of the parameters.
+Because the scope of the lambda is not a subscope of the caller, every parameter creates a type with the name of the lambda parameter and the constructor
+of the type instance passed. A reduction is defined to the parameter type.
+
+Because of the multiple uses of the same scope as in generics, lambdas have to define free variables with a context type created for each instance.
+
 
 <a name="cLibraryCalls"/>
 
