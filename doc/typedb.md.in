@@ -124,7 +124,12 @@ Set the instance for the object with name _name_ to be _object_ for the current 
 | 2nd | instance | any type not nil  | The instance of the object                             |
 
 #### Remark
-The object handles are currently not recycled. This means that every object update with ```set_instance``` creates a new handle and stores the object passed with this handle as key in a Lua table. As consequence, old instances are not freed when overwritten with ```set_instance```. In the example _language1_ I use ```this_instance``` to get the current object for update and ```set_instance``` only if there is no object declared for the current scope and a new one has to be created.
+The object handles are currently not recycled. This means that every object update with ```set_instance``` creates a new handle and stores the object passed with this handle as key in a Lua table.
+As a consequence, old instances are not freed when overwritten with ```set_instance```. In the example _language1_ I use ```this_instance```
+to get the current object for update and ```set_instance``` only if there is no object declared for the current scope and a new one has to be created.
+
+Since version 0.5, Mewa uses the Lua function ```luaL_ref``` for getting object handles instead of storing them in a custom table.
+This improves the situation in terms of performance. The suggested policy remains the same.
 
 <a name="get_instance"/>
 
