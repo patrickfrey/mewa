@@ -15,6 +15,7 @@
     * [How to process the AST structure?](#astStructure)
     * [How to handle lexical scopes?](#astTraversalAndScope)
     * [How to define a schema of reduction weights?](#reductionWeightSchema)
+    * [How to compare matching function candidates with more than one parameter?](#functionWeighting)
     * [How to store and access scope-bound data?](#scopeInstanceAndAllocators)
     * [How to debug/trace the _Mewa_ functions?](#tracing)
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
@@ -31,7 +32,7 @@
     * [How to implement class inheritance?](#inheritance)
     * [How to implement method call polymorphism?](#virtualMethodTables)
     * [How to implement visibility rules, e.g. private, public, protected?](#visibilityRules)
-        * [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
+	* [How to report error on violation of visibility rules implemented as types?](#visibilityRuleErrors)
     * [How to implement access of types declared later in the source?](#orderOfDefinition)
     * [How to implement multipass AST traversal?](#multipassTraversal)
     * [How to handle dependencies between branches of a node in the AST?](#branchDependencies)
@@ -56,7 +57,7 @@ This section of the FAQ answers some broader questions about what one can do wit
 
 ### What is _Mewa_?
 _Mewa_ is a tool for the prototyping of compiler frontends for statically typed languages.
-It aims to support the mapping of a programming language to an intermediate representation in the simplest way leaving all analytical optimization steps to the backend. 
+It aims to support the mapping of a programming language to an intermediate representation in the simplest way leaving all analytical optimization steps to the backend.
 
 <a name="targetAudience"/>
 
@@ -68,12 +69,12 @@ It aims to support the mapping of a programming language to an intermediate repr
 <a name="coveredGrammarClasses"/>
 
 ### What types of grammars are covered by _Mewa_?
-_Mewa_ is currently based on its own implementation of an **LALR(1)** parser generator. 
+_Mewa_ is currently based on its own implementation of an **LALR(1)** parser generator.
 
 <a name="onlyLALR1"/>
 
 ### Why only an LALR(1) parser generator?
-_Mewa_ is not first and foremost about parser generators. The main focus is currently on other problems. For a tool for prototyping languages, it is not the most important thing to be able to cover many language classes. At least not yet. This is more of an issue when dealing with legacy languages. But here, the author of the grammar is most likely also the author of the compiler. 
+_Mewa_ is not first and foremost about parser generators. The main focus is currently on other problems. For a tool for prototyping languages, it is not the most important thing to be able to cover many language classes. At least not yet. This is more of an issue when dealing with legacy languages. But here, the author of the grammar is most likely also the author of the compiler.
 But I am open to alternatives or extensions to cover more classes of grammars. I don't say that it isn't important. It's just not a forefront issue yet.
 
 <a name="coveredLanguageClasses"/>
@@ -86,13 +87,13 @@ To define a type system as a graph of types and reductions within the hierarchic
 <a name="nameMewa"/>
 
 ### What does this silly name _Mewa_ stand for?
-Name finding is difficult. I got stuck in Polish names of birds without non-ASCII characters. _Mewa_ is the Polish name for seagull. 
+Name finding is difficult. I got stuck in Polish names of birds without non-ASCII characters. _Mewa_ is the Polish name for seagull.
 I think the original idea was that seagulls are a sign of land nearby when you are lost in the sea. Compiler projects are usually a neverending thing (like the sea). With _Mewa_ you see land, meaning that you can at least prototype your compiler. :-)
 
 <a name="hacks"/>
 
 ### What are the hacks in the implementation of the example language1?
-Some may say that the whole example _language1_ is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimized for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
+Some may say that the whole example **language1** is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimized for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
  1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a _Lua_ table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately, I don't have any idea to get around the problem differently.
  2. *Cleaning up of partially constructed objects*: This problem caught me on the wrong foot, especially the building of arrays from initializer lists. The solution is awkward and needs to be revisited.
 
@@ -104,7 +105,7 @@ Some may say that the whole example _language1_ is a big hack because of the inf
 
 ### Why are type deduction paths weighted?
 
- * It makes the selection of the deduction path deterministic. 
+ * It makes the selection of the deduction path deterministic.
  * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one unique solution to a resolve type query. The request is considered to be ambiguous otherwise.
 
 
@@ -113,7 +114,7 @@ Some may say that the whole example _language1_ is a big hack because of the inf
 ### Why are reductions defined with scope?
 
 At the first glance, there seems no need to exist for defining reductions with a scope, because the types are already bound to a scope.
-But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. Private/public access restrictions on a type (meaning that in a method of a class you can access the private members of all instances of this class) can be implemented with a reduction from the class reference type to its private reference type in every method scope. 
+But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. Private/public access restrictions on a type (meaning that in a method of a class you can access the private members of all instances of this class) can be implemented with a reduction from the class reference type to its private reference type in every method scope.
 
 <a name="problemSolving"/>
 
@@ -135,8 +136,8 @@ The _scope_ (referring to the lexical scope) is part of the type database and re
 
 ### How to define a schema of reduction weights?
 
-If there is anything alien in _Mewa_, it's the assignment of weights to productions to memorize the preference of type deduction paths. 
-We talk about twenty lines of floating-point number assignments here. But weird ones. They empower _Mewa_ to use the shortest path search algorithm for resolving and deriving types, which is the key to the stunning performance of _Mewa_. 
+If there is anything alien in _Mewa_, it's the assignment of weights to productions to memorize the preference of type deduction paths.
+We talk about twenty lines of floating-point number assignments here. But weird ones. They empower _Mewa_ to use the shortest path search algorithm for resolving and deriving types, which is the key to the stunning performance of _Mewa_.
 
 When thinking about the weight-sum of a path, I imagine it as the summation of its parts. Each part represents one type of action, like removing a qualifier, adding const, converting a value, etc... Now I describe my rules like the following:
 
@@ -161,11 +162,42 @@ You will continue this process of assigning the weights yourself. It will take s
 
 In the utils helper module there are functions to trace the shortest path search of ```typedb:resolve_type (utils.getResolveTypeTrace)``` and ```typedb:derive_type (utils.getDeriveTypeTrace)``` to find bugs in your weighting schema.
 
+<a name="functionWeighting"/>
+
+### How to compare matching function candidates with more than one parameter?
+To weigh matching function candidates against each other we have to find a way to accumulate weights resulting from the matching of the parameters.
+To take the weight sum is a bad idea. Consider the example
+```
+func( 1, 2, 0.7)
+```
+Which one of the following is the better candidate:
+```
+fn func( integer A, integer B, integer C)
+```
+or
+```
+fn func( float A, float B, float C)
+```
+If we weight loss of information, we have to weight the conversion ```float -> integer``` higher than ```integer -> float```.
+(Both conversions potentially lose information, but the first one is worse in this regard).
+
+So the second function is our candidate. The problem is that with a weight sum as accumulator of weights and with a sufficient number of
+parameters, the first choice can potentially overrun the second one.
+
+In the example **language1**, I chose the maximum of all parameter matching weights as accumulating function.
+A clash of two functions with the same maximum is ambiguous. You could also take another measure than the bare maximum.
+But I think the maximum has to be the first measure. A sum of weights, if taken into account, should be capped with a normalization.
+
+
 <a name="scopeInstanceAndAllocators"/>
 
 ### How to store and access scope-bound data?
 
 _Scope_ bound data in form of a _Lua_ object can be stored with [typedb:set_instance](#set_instance) and retrieved exactly with [typedb:this_instance](#this_instance) and implying inheritance (enclosing _scopes_ inherit an object from the parent _scope_) with [typedb:get_instance](#get_instance).
+Examples of scope bound data are
+ * Structure for managing allocated variables (garbage collecting on scope exit). In the example **language1**, I  call this the **Allocation Frame**.
+ * Data of compilation units like functions (evaluate the return type the calling return). In the example **language1**, I  call this the **Callable Environment**.
+ * Node data of scopes to walk trough a definition scope (check the usage of a return variable to determine if [copy elision](#copyElision) is possible). In the example **language1**, I store every node with a scope as instance with the name "node".
 
 <a name="tracing"/>
 
@@ -174,8 +206,8 @@ _Scope_ bound data in form of a _Lua_ object can be stored with [typedb:set_inst
 A developer of a compiler front-end with _Lua_ using _Mewa_ should not have to debug a program with a C/C++ debugger if something goes wrong.
 Fortunately, the _Mewa_ code for important functions like typedb:resolve_type and typedb:derive_type is simple. I wrote parallel implementations in _Lua_ that do the same. The _typedb_ API has been extended with convenient functions that make such parallel implementations possible. The following functions are in examples/typesystem_utils.lua:
 
- * utils.getResolveTypeTrace( typedb, contextType, typeName, tagmask) is the equivalent of typedb:resolve_type 
- * utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_pathlen, max_pathlen) is the equivalent of typedb:derive_type 
+ * utils.getResolveTypeTrace( typedb, contextType, typeName, tagmask) is the equivalent of typedb:resolve_type
+ * utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_pathlen, max_pathlen) is the equivalent of typedb:derive_type
 
  Both functions are not returning a result though, but just printing a trace of the search and returning this trace as a dump.
 
@@ -184,8 +216,8 @@ Besides that, there are two functions in examples/typesystem_utils.lua that dump
  * function utils.getReductionTreeDump( typedb) dumps all types defined, arranges the definitions in a tree where the nodes correspond to scopes
 
 I must admit to having rarely used the tree dump functions. They are tested though. I found that the trace functions for typedb:resolve_type and typedb:derive_type showed to be much more useful in practice.
- 
- 
+
+
 <a name="typeQualifiers"/>
 
 ### How to implement type qualifiers like const and reference?
@@ -196,37 +228,37 @@ Qualifiers are not considered to be attached to the type but part of the type de
 
 ### How to implement pointers and arrays?
 
-In the example _language1_, pointers and arrays are types on their own. Both types are created on-demand. The array type is created when used in a declaration. A pointer is created when used in a declaration or as a result of an '&' address operator on a pointee reference type. 
+In the example **language1**, pointers and arrays are types on their own. Both types are created on-demand. The array type is created when used in a declaration. A pointer is created when used in a declaration or as a result of an '&' address operator on a pointee reference type.
 An array of size 40 has to be declared as a separate type that differs from the array of size 20. In this regard, arrays are similar to generics. But the analogies stop there.
 
 <a name="namespaces"/>
 
 ### How to implement namespaces?
 
-Namespaces are implemented as types. A namespace type can then be used as context-type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context-types or a single context-type as an argument. 
+Namespaces are implemented as types. A namespace type can then be used as context-type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context-types or a single context-type as an argument.
 
 <a name="initializerLists"/>
 
 ### How to implement resolving of initializer lists?
 
-For initializer lists without explicit typing of the nodes (like for example ```{1,{2,3},{4,5,{6,7,8}}}```) some sort of recursive type resolution is needed within a constructor call. In the example _language1_, I defined a const expression type for unresolved structures represented as a list of type constructor pairs. The reduction of such a structure to a type that can be instantiated with structures using type resolution ([typedb:resolve_type](#resolve_type)) and type derivation ([typedb:derive_type](#derive_type)) to build the structures as a composition of the structure members. This mechanism can be defined recursively, meaning that the members can be defined as const expression type for unresolved structures themselves. The rule in example _language1_ is that a constructor that returns *nil* has failed and leads to an error or a dropping of the case when using it in a function with the name prefix _try_.
+For initializer lists without explicit typing of the nodes (like for example ```{1,{2,3},{4,5,{6,7,8}}}```) some sort of recursive type resolution is needed within a constructor call. In the example **language1**, I defined a const expression type for unresolved structures represented as a list of type constructor pairs. The reduction of such a structure to a type that can be instantiated with structures using type resolution ([typedb:resolve_type](#resolve_type)) and type derivation ([typedb:derive_type](#derive_type)) to build the structures as a composition of the structure members. This mechanism can be defined recursively, meaning that the members can be defined as const expression type for unresolved structures themselves. The rule in example **language1** is that a constructor that returns *nil* has failed and leads to an error or a dropping of the case when using it in a function with the name prefix _try_.
 
 <a name="controlStructures"/>
 
 ### How to implement control structures?
 
-Control structure constructors are special because expression evaluation has to be interrupted as soon as the expression evaluation result is determined. Most known programming languages have this behavior in their specification. For example in an expression in C/C++ like 
+Control structure constructors are special because expression evaluation has to be interrupted as soon as the expression evaluation result is determined. Most known programming languages have this behavior in their specification. For example in an expression in C/C++ like
 ```C
 if (expr != NULL && expr->data != NULL) {...}
 ```
 the subexpression ```expr->data != NULL``` is not evaluated if ```expr != NULL``` evaluated to false.
 
-For control structures two new types have been defined in the example _language1_:
-1. Control-True Type that represents a constructor as a structure with 2 members: 
-    1. **code** containing the code that is executed in the case the expression evaluates to **true** and 
-    1. **out** the name of an unbound label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and 
+For control structures two new types have been defined in the example **language1**:
+1. Control-True Type that represents a constructor as a structure with 2 members:
+    1. **code** containing the code that is executed in the case the expression evaluates to **true** and
+    1. **out** the name of an unbound label (not defined in the code yet) where the evaluation jumps to in the case the expression evaluates to **false** and
 1. Control-False Type
-    1. **code** containing the code that is executed in the case the expression evaluates to **false** and 
+    1. **code** containing the code that is executed in the case the expression evaluates to **false** and
     1. **out** the name of an unbound label (not appearing in the code yet) where the evaluation jumps to in the case the expression evaluates to **true**.
 
 An expression with the operator ```||``` is evaluated to a control-false type.
@@ -242,18 +274,18 @@ Depending on the control structure, either control-true type or control-false ty
 
 ### How to implement constants and constant expressions?
 ##### Propagation of Types
-The constructors of constant values are implemented as _Lua_ userdata. Expressions are values calculated immediately by the constructor functions. 
+The constructors of constant values are implemented as _Lua_ userdata. Expressions are values calculated immediately by the constructor functions.
 The propagation of types is a more complex topic:
 ```
 byte b = 1
 int a = b + 2304879
 ```
-What type should the expression on the right side of the second assignment have? 
+What type should the expression on the right side of the second assignment have?
  1. We can reduce ```2304879``` to the type of 'b' before the addition
  1. We can promote 'b' to a maximum size integer type and so ```2304879``` before the addition
  1. We can propagate the type ```int``` of the left side of the assignment to the expression ```b + 2304879``` as result type.
 
-In the example _language1_, I decided on the solution (1) even though it lead to anomalies, but I will return to the problem later. So far all three possibilities can be implemented with _Mewa_.
+In the example **language1**, I decided on the solution (1) even though it lead to anomalies, but I will return to the problem later. So far all three possibilities can be implemented with _Mewa_.
 
 ##### What types to use for representing constant values in the compiler
 The decision for data types used to implement constants is more complex than it looks at a first glance. To rely on the scalar types of the language of the compiler is wrong. The language of the compiler may have a different set of scalar types with a different set of rules.
@@ -263,8 +295,8 @@ Arbitrary precision arithmetics for integers and floating-point numbers are requ
 <a name="promoteCall"/>
 
 ### How to correctly implement (int * float)?
-In the example _language1_, operators are defined with the left operand as context type. Mewa encourages such a definition. Defining operators as free functions could not make much use of the type resolving mechanism provided by the _typedb_. 
-But (int * float) should be defined as the multiplication of two floating-point numbers. For this, the multiplication of an integer on the left side with a floating-point number on the right side has to be defined explicitly. In the example _language1_ these definitions are named **promote calls**. The left side argument is promoted to the type on the right side before applying the operator defined for two floating-point number arguments.
+In the example **language1**, operators are defined with the left operand as context type. Mewa encourages such a definition. Defining operators as free functions could not make much use of the type resolving mechanism provided by the _typedb_.
+But (int * float) should be defined as the multiplication of two floating-point numbers. For this, the multiplication of an integer on the left side with a floating-point number on the right side has to be defined explicitly. In the example **language1** these definitions are named **promote calls**. The left side argument is promoted to the type on the right side before applying the operator defined for two floating-point number arguments.
 
 
 <a name="functionsProceduresAndMethods"/>
@@ -272,7 +304,7 @@ But (int * float) should be defined as the multiplication of two floating-point 
 ### How to implement callables like functions, procedures, and methods?
 
 This is tricky because of issues around scope and visibility. There are two scopes involved the visibility of the function for callers and the scope of the code block that executed the callable. Furthermore, we have to do traverse the declaration and the implementation in two different passes. The function is declared in one pass, the body is traversed and the code generated in another pass. This makes the function known before its body is traversed, thus recursion possible.
-See the function ```typesystem.callablebody``` in ```typesystem.lua``` of the example _language1_.
+See the function ```typesystem.callablebody``` in ```typesystem.lua``` of the example **language1**.
 See also [How to implement multipass AST traversal](#multipassTraversal).
 
 There are some differences between methods and free functions and other function types, mainly in the context type and the passing of the ```self``` parameter and maybe the LLVM IR code template. But the things shared overweigh the differences. I would suggest using the same mapping for both.
@@ -288,21 +320,21 @@ For every function, a structure named ```env``` is defined and attached to the s
 ### How to implement the return of a non-scalar type from a function?
 
 LLVM has the attribute ```sret``` for structure pointers passed to functions for storing the return value for non-scalar values.
-In the example _language1_, I defined the types
+In the example **language1**, I defined the types
 
- * unbound_reftype with the qualifier "&<-" representing a reference to an unbound variable. 
+ * unbound_reftype with the qualifier "&<-" representing a reference to an unbound variable.
  * c_unbound_reftype with the qualifiers "const " and "&<-" representing an unbound constant reference.
- 
+
  The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built. This allows to implement copy elision and to instantiate the target of the constructor in the assignment of the unbound reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the unbound reference is reduced to a value or a const reference instead.
- 
+
  This mechanism allows treating return value references passed as parameters uniformly with scalar return values, just using different constructors representing these types.
- 
+
 
 <a name="withAndUsing"/>
 
 ### How to implement type contexts, e.g. the Pascal "WITH", the C++ "using", etc...?
 
-In the example _language1_, a context list is an object bound to a scope. The enclosed scopes inherit the context list from the parent scope.
+In the example **language1**, a context list is an object bound to a scope. The enclosed scopes inherit the context list from the parent scope.
 A "WITH" or "using" defines the context list for the current scope as a copy of the inherited context list if not defined yet. It then attaches the
 new context member to it.
 
@@ -320,9 +352,9 @@ For implementing method call polymorphism see [How to implement method call poly
 
 ### How to implement method call polymorphism?
 
-In the example _language1_, I implemented interface inheritance only. For class inheritance with overriding virtual method declarations possible, a _VMT_ ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)) has to be implemented. A virtual method call is a call via the _VMT_. 
+In the example **language1**, I implemented interface inheritance only. For class inheritance with overriding virtual method declarations possible, a _VMT_ ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)) has to be implemented. A virtual method call is a call via the _VMT_.
 
-Polymorphism with virtual methods has some issues concerning the base pointer of the class. If a method implementation can be overridden, then the base pointer of a class has to be determined by the method itself. Each method implementation has to calculate its ```self``` pointer from the base pointer passed. This could be the base pointer of the first class implementing the method. 
+Polymorphism with virtual methods has some issues concerning the base pointer of the class. If a method implementation can be overridden, then the base pointer of a class has to be determined by the method itself. Each method implementation has to calculate its ```self``` pointer from the base pointer passed. This could be the base pointer of the first class implementing the method.
 
 
 <a name="orderOfDefinition"/>
@@ -359,19 +391,19 @@ _Mewa_ does not support multipass traversal by nature, but you can implement it 
 In the example grammar I attached a pass argument for the ```definition``` _Lua_ function call:
 ```
 inclass_definition	= typedefinition ";"		    (definition 1)
-	        		| variabledefinition ";"        (definition 2)
-			        | structdefinition              (definition 1)
-			        | classdefinition               (definition 1)
-			        | interfacedefinition           (definition 1)
-			        | constructordefinition         (definition_decl_impl_pass 3)
-			        | operatorordefinition          (definition_decl_impl_pass 3)
-			        | functiondefinition            (definition_decl_impl_pass 3)
-			        ;
+				| variabledefinition ";"        (definition 2)
+				| structdefinition              (definition 1)
+				| classdefinition               (definition 1)
+				| interfacedefinition           (definition 1)
+				| constructordefinition         (definition_decl_impl_pass 3)
+				| operatorordefinition          (definition_decl_impl_pass 3)
+				| functiondefinition            (definition_decl_impl_pass 3)
+				;
 free_definition		= struct_definition
-        			| functiondefinition		(definition 1)
-		        	| classdefinition           	(definition 1)
-			        | interfacedefinition		(definition 1)
-			        ;
+				| functiondefinition		(definition 1)
+				| classdefinition           	(definition 1)
+				| interfacedefinition		(definition 1)
+				;
 ```
 The Lua function gets 2 additional parameters, one from the grammar: ```pass``` and one from the traversal call: ```pass_selected```
 ```Lua
@@ -392,7 +424,7 @@ function typesystem.classdef( node, context)
 	...
 end
 ```
-The declaration of functions, operators, and methods of classes gets more complicated. In the example _language1_, I define the typesystem method ```definition_decl_impl_pass``` that is executed in two passes. The first pass declares the callable. The second pass creates its implementation. The reason for this is the possibility of the methods to call each other without being declared in an order of their dependency as this is not always possible and not intuitive.
+The declaration of functions, operators, and methods of classes gets more complicated. In the example **language1**, I define the typesystem method ```definition_decl_impl_pass``` that is executed in two passes. The first pass declares the callable. The second pass creates its implementation. The reason for this is the possibility of the methods to call each other without being declared in an order of their dependency as this is not always possible and not intuitive.
 
 
 <a name="branchDependencies"/>
@@ -401,34 +433,34 @@ The declaration of functions, operators, and methods of classes gets more compli
 
 With the tree traversal in your hands, you can partially traverse the sub-nodes of an AST node. You can also combine a partial traversal with a multipass traversal to get some info out of the AST sub-nodes before doing the real job.
 
-There are no limitations, but the model of _Mewa_ punishes partial traversal and multipass traversal with bad readability. 
+There are no limitations, but the model of _Mewa_ punishes partial traversal and multipass traversal with bad readability.
 Use it selectively and only if there is no other possibility and try to document it well.
 
-In the example **language1** of _Mewa_, I use partial traversal (utils.traverseRange) in callable definitions to make the declaration available in the body to allow self-reference. Furthermore, I use it in the declaration of inheritance. 
+In the example **language1** of _Mewa_, I use partial traversal (utils.traverseRange) in callable definitions to make the declaration available in the body to allow self-reference. Furthermore, I use it in the declaration of inheritance.
 Multipass traversal is used in **language1** to parse class and structure members, subclasses, and substructures before method declarations to make them accessible in the methods independent from the order or definition.
 
-Sharing data between passes is encouraged by the possibility to attach data to the _AST_. _Mewa_ event reserves one preallocated entry per node for that. I would not attach complex structures though as this makes the _AST_ as output unreadable. In the example _language1_, I attach an integer as an id, to a node that has data shared by multiple passes and I use this id to identify the data attached.
+Sharing data between passes is encouraged by the possibility to attach data to the _AST_. _Mewa_ event reserves one preallocated entry per node for that. I would not attach complex structures though as this makes the _AST_ as output unreadable. In the example **language1**, I attach an integer as an id, to a node that has data shared by multiple passes and I use this id to identify the data attached.
 
 
 <a name="visibilityRules"/>
 
 ### How to implement visibility rules, e.g. private, public, protected?
 
-Visibility is also best expressed with type qualifiers of the structure types with members having privileged access. In the example **language1**, I define the types 
+Visibility is also best expressed with type qualifiers of the structure types with members having privileged access. In the example **language1**, I define the types
 
  * ```priv_rval``` with the qualifier "private &" with the reduction to ```rval``` with the qualifier "&"
  * ```priv_c_rval``` with the qualifier "private const&" with the reduction to ```c_rval``` with the qualifier "const&"
 
 for each class type.
 
-Private methods are then defined in the context of ```priv_rval``` or ```priv_c_rval``` if they are const. 
-Public methods on the contrary are then defined in the context of ```rval``` or ```c_rval``` if they are const. 
+Private methods are then defined in the context of ```priv_rval``` or ```priv_c_rval``` if they are const.
+Public methods on the contrary are then defined in the context of ```rval``` or ```c_rval``` if they are const.
 
 In the body of a method, the implicitly defined ```self``` reference is set to be reducible to its private reference type.
 The ```self``` is also added as a private reference to the context used for resolving types there, so it does not have to be explicitly defined.
 If defined like this, private members are accessible from the private context, in the body of methods. Outside, in the public context, private members are not accessible, because there exists no reduction from the public context-type to the private context-type.
 
-The example _language1_ implements private/public access restrictions on the type. This means that a method can access the private data of another instance of the same class like for example in C++. To make the private members of other instances besides the own ```self``` reference of a class accessible in a method, a reduction from the public reference type to the private reference type is declared in every method scope.
+The example **language1** implements private/public access restrictions on the type. This means that a method can access the private data of another instance of the same class like for example in C++. To make the private members of other instances besides the own ```self``` reference of a class accessible in a method, a reduction from the public reference type to the private reference type is declared in every method scope.
 
 
 <a name="visibilityRuleErrors"/>
@@ -460,15 +492,15 @@ where variableScope scope is the value of ```typedb:type_scope``` of the variabl
 
 ### How to implement exception handling?
 
-In the example _language1_, I implemented a very primitive exception handling. The only thing throwable is an error code plus optionally a string. Besides simplicity, this solution has also the advantage that exceptions could potentially be thrown across shared library borders without relying on a global object registry as in _Microsoft Windows_.
+In the example **language1**, I implemented a very primitive exception handling. The only thing throwable is an error code plus optionally a string. Besides simplicity, this solution has also the advantage that exceptions could potentially be thrown across shared library borders without relying on a global object registry as in _Microsoft Windows_.
 
 Every call that can potentially raise an exception needs a label to be jumped at in the case. The first instructions at this label are launching the exception handling and extracting the exception data, storing them into local variables reserved for that. In the following the code goes through a sequence of cleanup calls. After cleanup the exception structure is rebuilt and rethrown with the LLVM 'resume' instruction or the exception is processed. The instructions for launching the exception handling and ending it are different for the two cases. LLVM calls the case of rethrowing the exception with resume 'cleanup' and the case where the exception is processed 'catch'.
 
 The templates I used for implementing it are defined in ```llvmir.exception``` in the _Lua_ module llvmir.lua. I will provide more documentation later.
 
-The most difficult about exception handling is the cleanup. In the example _language1_, I pair every constructor call where a destructor exists with a call registering a cleanup call with the current _scope-step_ in the current _allocation frame_. The _scope-step_ is the identifier that helps to figure out the label to branch to. This label is the start of the chain of cleanup commands. Every cleanup chain of an _allocation frame_ ends with the jump to a label of the enclosing _allocation frame_. For every exit case (return with a specific value, throwing an exception, handling an exception) there exists an own chain of cleanup calls with entry labels for any possible location to come from.
+The most difficult about exception handling is the cleanup. In the example **language1**, I pair every constructor call where a destructor exists with a call registering a cleanup call with the current _scope-step_ in the current _allocation frame_. The _scope-step_ is the identifier that helps to figure out the label to branch to. This label is the start of the chain of cleanup commands. Every cleanup chain of an _allocation frame_ ends with the jump to a label of the enclosing _allocation frame_. For every exit case (return with a specific value, throwing an exception, handling an exception) there exists an own chain of cleanup calls with entry labels for any possible location to come from.
 
-To figure this out was one of the most complicated things in the example _language1_. Expect to spend some time there.
+To figure this out was one of the most complicated things in the example **language1**. Expect to spend some time there.
 
 <a name="templates"/>
 
@@ -477,13 +509,13 @@ To figure this out was one of the most complicated things in the example _langua
 Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
 
 If a generic type ```TPL[A1,A2,...]``` is referenced we define a type ```T = TPL[t1,t2,...]``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
-For each template argument ```Ai``` without a constructor (data type, generic), we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. For types with a constructor (value types), we define a type ```Ai``` with the constructor and a reduction from this type to the generic argument type. With ```T``` as context-type, we call the traversal of the generic class, structure, or function. 
+For each template argument ```Ai``` without a constructor (data type, generic), we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. For types with a constructor (value types), we define a type ```Ai``` with the constructor and a reduction from this type to the generic argument type. With ```T``` as context-type, we call the traversal of the generic class, structure, or function.
 
 The lazy evaluation used in generics requires multiple traversals of the same AST node. The types defined in each traversal may differ and definitions with context-type 0 (free locals, globals) may interfere. How to handle this is answered [here](#multipleTraversal).
 
 #### How to deduce generic function arguments from the function parameter lists
 C++ can reference template functions without declaring the template arguments. The template arguments are deduced from the call arguments.
-I did not implement this in the example _language1_.
+I did not implement this in the example **language1**.
 For automatic template argument deduction, the generic parameter assignments have to be synthesized by matching the function parameters against the function candidates. A complete set of generic parameter assignments is evaluated in the process. This list is used as the generic argument list to refer to the generic instance.
 
 
@@ -498,7 +530,7 @@ Generics use definition scopes multiple times with differing declarations inside
 
 ### How to implement concepts like in C++?
 
-I did not implement concepts in the example _language1_. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context-type. In the AST node functions of the concept definition, you can use typedb:resolve_type to retrieve properties as types to check as a sub condition of the concept.
+I did not implement concepts in the example **language1**. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context-type. In the AST node functions of the concept definition, you can use typedb:resolve_type to retrieve properties as types to check as a sub condition of the concept.
 
 In other words, the concept is implemented as generic with the type to check the concept against as an argument, with the difference that it doesn't produce code. It is just used to check if the concept structure can be successfully traversed with the argument type.
 
@@ -512,21 +544,21 @@ In the example **language1**, I similarly declared lambdas as generics. The node
 
 ### How to implement calls of C-Library functions?
 
-LLVM supports extern calls. In the specification of the example _language1_, I support calls of the C standard library.
+LLVM supports extern calls. In the specification of the example **language1**, I support calls of the C standard library.
 
 
 <a name="coroutines"/>
 
 ### How to implement coroutines?
 
-Coroutines are callables that store their local variables in a structure instead of allocating them on the stack. This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time. This should not be a big deal to implement. I will do this in the example _language1_ soon. 
+Coroutines are callables that store their local variables in a structure instead of allocating them on the stack. This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time. This should not be a big deal to implement. I will do this in the example **language1** soon.
 
 
 <a name="copyElision"/>
 
 ### How to implement copy elision?
 
-Copy elision, though it's making programs faster is not considered as an optimization, because it changes behavior. Copy elision has to be part of a language specification and thus be implemented in the compiler front-end. In the example _language1_, I implemented two 2 cases of copy elision:
+Copy elision, though it's making programs faster is not considered as an optimization, because it changes behavior. Copy elision has to be part of a language specification and thus be implemented in the compiler front-end. In the example **language1**, I implemented two 2 cases of copy elision:
   * Construction of a return value in the return slot (LLVM sret) provided by the caller
   * Construction of a return value in the return slot, when using only one variable for the return value in the variable declaration scope
 

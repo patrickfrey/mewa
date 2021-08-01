@@ -359,15 +359,15 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 Select none if undefined
 #### Remark (***)
 The tagmask_pathlen, max_pathlen parameters allow to define restrictions on the number of reductions that are implicit value conversions.
-Most programming languages do have such restrictions to avoid surprises in the parameter matching of functions and to reduce the costs of calculation.
-Usually, the max_pathlen value is 1 if implicit type conversions are allowed at all. The default if not specified is also 1.
+Most programming languages allow one conversion of a function parameter. 1 is also the default for max_pathlen.
 
 
 <a name="resolve_type"/>
 
 ### typedb:resolve_type
-Finds the matching type with the searched name and a context-type derivable from the searched context-type, that has the shortest path (sum of reduction weights) of reductions of the classes selected by the _tagmask_ parameter.
-The returned list of candidates (2nd return value) has to be inspected by the client to find the best match.
+Finds the matching type with the searched name and a context-type to derive from the context-type parameter with the shortest path (sum of reduction weights) of reductions selected by the _tagmask_ parameter.
+The returned list of reductions (2nd return value) have to be applied on the searched context-type instance to construct the instance of the context-type of the returned candidate types.
+The returned list of candidates (3rd return value) has to be inspected by the client to find the best match.
 The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
