@@ -349,14 +349,14 @@ The returned list of candidates (3rd return value) has to be inspected by the cl
 The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
-| #          | Name            | Type              | Description                                                                                                        |
-| :--------- | :-------------- | :---------------- | :----------------------------------------------------------------------------------------------------------------- |
-| 1st        | context-type(s) | integer/table     | Single type or array of types or type/constructor pairs referring to the context of the type (*)                   |
-| 2nd        | name            | string            | Name of the type searched                                                                                          |
-| 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used (select all if undefined).              |
-| Return 1st |                 | integer           | Derived context-type of the result, *nil* if not found, array with two types in case of ambiguous results.         |
-| Return 2nd |                 | table             | List of context-type reductions, type/constructor pairs as tables with named members.                              |
-| Return 3rd |                 | table             | List of candidates types found, differing in the parameters. The list has to be filtered by the caller (***).      |
+| #          | Name            | Type              | Description                                                                                                           |
+| :--------- | :-------------- | :---------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| 1st        | context-type(s) | integer/table     | Single type or array of types or type/constructor pairs referring to the context of the type (*)                      |
+| 2nd        | name            | string            | Name of the type searched                                                                                             |
+| 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used (select all if undefined).                 |
+| Return 1st |                 | integer           | Derived context-type of the results, *nil* if not found, array with two types in case of ambiguous results.           |
+| Return 2nd |                 | table             | List of context-type reductions for building the result context, type/constructor pairs as tables with named members. |
+| Return 3rd |                 | table             | List of candidates types found, differing in the parameters. The list has to be filtered by the caller (***).         |
 
 #### Remark (*)
 The context-type 0 is reserved for types that are not a member of some other structure.

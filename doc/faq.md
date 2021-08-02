@@ -45,6 +45,7 @@
     * [How to implement calls of C-Library functions?](#cLibraryCalls)
     * [How to implement coroutines?](#coroutines)
     * [How to implement copy elision?](#copyElision)
+    * [How to implement reference counting on use as in Swift?](#referenceCounting)
     * [What about optimizations?](#optimizations)
 
 
@@ -574,6 +575,16 @@ Coroutines are callables that store their local variables in a structure instead
 Copy elision, though it's making programs faster is not considered as an optimization, because it changes behavior. Copy elision has to be part of a language specification and thus be implemented in the compiler front-end. In the example **language1**, I implemented two 2 cases of copy elision:
   * Construction of a return value in the return slot (LLVM sret) provided by the caller
   * Construction of a return value in the return slot, when using only one variable for the return value in the variable declaration scope
+
+
+<a name="referenceCounting"/>
+
+### How to implement reference counting on use as in Swift?
+
+Swift implements reference counting when required. This implies the adding of a traversal pass that notifies how a type (variable) is used.
+This pass decides if a reference counting type used for the variable or not. There is no way to get around the traversal pass that notifies the usage.
+I suggest to implement other things like copy elision decisions in this pass too if it is required anyway.
+I need to think a little bit more about this issue as it is an aspect that is not covered at all in the example "language1".
 
 
 <a name="optimizations"/>
