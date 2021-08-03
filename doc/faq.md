@@ -237,7 +237,8 @@ An array of size 40 has to be declared as a separate type that differs from the 
 
 ### How to implement namespaces?
 
-Namespaces are implemented as types. A namespace type can then be used as context-type in a [typedb:resolve_type](#resolve_type) call. Every resolve type call has a set of context-types or a single context-type as an argument.
+Namespaces are implemented as types. A namespace type can then be used as context-type in a [typedb:resolve_type](#resolve_type) call.
+Every resolve type call has a set of context-types or a single context-type as an argument.
 
 <a name="initializerLists"/>
 
@@ -541,8 +542,8 @@ The template parameters are declared as types in this context.
 
 In the following, I describe how generics are implemented in the example **language1**.
  1. First, a unique key is created from the template argument list.
-    All generic instances are in a map associated with the type. We make a lookup there to see if the generic type instance has already been created. We are done if yes.
- 2. Then we create the generic instance type with the generic type as context type and the unique key as type name.
+    All generic instances are in a map associated with the type. We make a lookup there to see if the generic type instance has already been created. We are done in this case.
+ 2. Otherwise, we create the generic instance type with the generic type as context type and the unique key as type name.
  3. For the local variables in the scope of the generic, we similarly create a type as the generic instance type.
     In the example **language1** a prefix "local " is used for the type name. This type is used as a context type for local definitions instead of 0.
     This ensures that local definitions from different AST node traversals are separated from each other.
@@ -588,13 +589,20 @@ In other words, the concept is implemented as generic with the type to check the
 
 ### How to implement lambdas?
 
-In the example **language1**, lambdas are declared like generics.
-The node with the code of the lambda is traversed when referenced after the assignment of the parameters.
-Because the scope of the lambda is not a subscope of the caller, every parameter creates a type with the name of the lambda parameter and the constructor
-of the type instance passed. A reduction is defined to the parameter type.
+In the example **language1**, lambdas are declared as types with an AST node and a list of parameter names attached.
+Such a lambda type can be passed as argument when instantiating a generic.
+The following happens when a lambda is applied:
 
-Because of the multiple uses of the same scope as in generics, lambdas have to define free variables with a context type created for each instance.
+ 1. For each instance of the lambda a context-type is created and the parameters with their name and this context-type.
+    * Each parameter with a constructor is defiend with ```typedb:def_type``` with this constructor. A reduction is defined from this type to the passed parameter type.
+    * Each parameter without a constructor is defiend with ```typedb:def_type_as``` as alias of the passed parameter type.
+    The parameter types are defined in the scope of the AST node of the lambda.
+ 2. The AST node of the lambda is traversed with the context-type of the lambda in the set of context-types.
+ 3. The resulting constructor is returned as result of the traversal of the the lambda instance
 
+Because of the multiple uses of the same scope as in generics, lambdas have to define free variables with a context-type created for each instance.
+As for generics, a context-type with the name prefix "local " is defined and used instead of 0 for local type definitions.
+This ensures that local definitions from different AST node traversals are separated from each other.
 
 <a name="cLibraryCalls"/>
 
@@ -607,7 +615,9 @@ LLVM supports extern calls. In the specification of the example **language1**, I
 
 ### How to implement coroutines?
 
-Coroutines are callables that store their local variables in a structure instead of allocating them on the stack. This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time. This should not be a big deal to implement. I will do this in the example **language1** soon.
+Coroutines are callables that store their local variables in a structure instead of allocating them on the stack.
+This makes them interruptable with a yield that is a return with a state that describes where the coroutine continues when it is called the next time.
+This should not be a big deal to implement. I will do this in the example **language1**.
 
 
 <a name="copyElision"/>
