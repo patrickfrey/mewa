@@ -310,12 +310,12 @@ In the example **language1** a callable type is declared as a type with a "()" o
 This way all forms of a call can be treated uniformly on application.
 
 The implementation of callables has some issues around scope and visibility. There are two scopes involved the visibility of the function for callers
-and the scope of the code block of the callable. Therefore I have to do some declaration of the current scope manually at some place.
+and the scope of the code block of the callable. Therefore I have to do some declaration of the current scope manually at someplace.
 A callable declaration declares the parameters similarly to variables in the scope of its body. But the parameters are also used as part of the
 function declaration in the outer scope.
 
 Furthermore, we have to do traverse the declaration and the implementation in two different passes. The function is declared in one pass,
-the body is traversed and the code generated in another pass. This makes the function known before its body is traversed. Recursion becomes possible.
+the body is traversed and the code is generated in another pass. This makes the function known before its body is traversed. Recursion becomes possible.
 
 See the function ```typesystem.callablebody``` in ```typesystem.lua``` of the example **language1**.
 See also [How to implement multipass AST traversal](#multipassTraversal).
@@ -529,23 +529,23 @@ To figure this out was one of the most complicated things in the example **langu
 ### How to implement generics?
 
 Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
-A generic can be implemented as type. The application of an operator with arguments triggers the creation of a template instance on demand in the scope of the generic.
+A generic can be implemented as a type. The application of an operator with arguments triggers the creation of a template instance on-demand in the scope of the generic.
 A table is used to ensure generic type instances are created only once and reused if referenced multiple times.
-The instantiation of a generic issues a traversal of the AST node of the generic with a context type declared for this one instance.
+The instantiation of a generic invokes a traversal of the AST node of the generic with a context type declared for this one instance.
 The template parameters are declared as types in this context.
 
 In the following, I describe how generics are implemented in the example **language1**.
  1. First, a unique key is created from the template argument list.
-    All generic instances are in a map associated with the type. We make a lookup there to see if the generic type instance has already been created. We are done, if yes.
+    All generic instances are in a map associated with the type. We make a lookup there to see if the generic type instance has already been created. We are done if yes.
  2. Then we create the generic instance type with the generic type as context type and the unique key as type name.
- 3. For the local variables in the scope of the generic, we create a type in a similar way as the generic instance type.
-    In the example **language1** a prefix "local " is used for the type name. This type is used as context type for local definitions instead of 0.
+ 3. For the local variables in the scope of the generic, we similarly create a type as the generic instance type.
+    In the example **language1** a prefix "local " is used for the type name. This type is used as a context type for local definitions instead of 0.
     This ensures that local definitions from different AST node traversals are separated from each other.
- 4. For each template argument we create a type with the generic instance type as context type.
-     * If the generic argument is a data type (has no constructor), we create a type as alias (typedb:def_type_as).
+ 4. For each generic argument, we create a type with the generic instance type as context type.
+     * If the generic argument is a data type (has no constructor), we create a type as an alias (typedb:def_type_as).
      * If the generic argument is a value type (with a constructor), we create a type (typedb:def_type) with this constructor and a reduction to the passed type.
     The scope of the template argument definition is the scope of the generic AST node.
- 5. Finally we add the generic instance type to the list of context types and traverse the AST node of the generic.
+ 5. Finally, we add the generic instance type to the list of context types and traverse the AST node of the generic.
     The code for the generic instance type is created in the process.
 
 
