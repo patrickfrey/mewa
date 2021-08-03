@@ -38,7 +38,8 @@
     * [How to handle dependencies between branches of a node in the AST?](#branchDependencies)
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
     * [How to implement exception handling?](#exceptions)
-    * [How to implement generic programming?](#generics)
+    * [How to implement generics?](#generics)
+       * [How to deduce generic arguments from a parameter list?](#genericsParameterDeduction)
     * [How to traverse AST nodes multiple times without the definitions of different traversals interfering?](#multipleTraversal)
     * [How to implement concepts like in C++?](#concepts)
     * [How to implement lambdas?](#lambdas)
@@ -304,11 +305,24 @@ But (int * float) should be defined as the multiplication of two floating-point 
 
 ### How to implement callables like functions, procedures, and methods?
 
-This is tricky because of issues around scope and visibility. There are two scopes involved the visibility of the function for callers and the scope of the code block that executed the callable. Furthermore, we have to do traverse the declaration and the implementation in two different passes. The function is declared in one pass, the body is traversed and the code generated in another pass. This makes the function known before its body is traversed, thus recursion possible.
+Because modern programming languages treat callables as types, we need some sort of unification of all cases to call a function.
+In the example **language1** a callable type is declared as a type with a "()" operator with the function arguments as argument types.
+This way all forms of a call can be treated uniformly on application.
+
+The implementation of callables has some issues around scope and visibility. There are two scopes involved the visibility of the function for callers
+and the scope of the code block of the callable. Therefore I have to do some declaration of the current scope manually at some place.
+A callable declaration declares the parameters similarly to variables in the scope of its body. But the parameters are also used as part of the
+function declaration in the outer scope.
+
+Furthermore, we have to do traverse the declaration and the implementation in two different passes. The function is declared in one pass,
+the body is traversed and the code generated in another pass. This makes the function known before its body is traversed. Recursion becomes possible.
+
 See the function ```typesystem.callablebody``` in ```typesystem.lua``` of the example **language1**.
 See also [How to implement multipass AST traversal](#multipassTraversal).
 
-There are some differences between methods and free functions and other function types, mainly in the context type and the passing of the ```self``` parameter and maybe the LLVM IR code template. But the things shared overweigh the differences. I would suggest using the same mapping for both.
+There are some differences between methods and free functions and other function types, mainly in the context type and the
+passing of the ```self``` parameter and maybe the LLVM IR code template. But the things shared overweigh the differences.
+I would suggest using the same mapping for both.
 
 <a name="functionReturn"/>
 
@@ -510,21 +524,40 @@ The most difficult about exception handling is the cleanup. In the example **lan
 
 To figure this out was one of the most complicated things in the example **language1**. Expect to spend some time there.
 
-<a name="templates"/>
+<a name="generics"/>
 
-### How to implement generic programming?
+### How to implement generics?
 
 Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
+A generic can be implemented as type. The application of an operator with arguments triggers the creation of a template instance on demand in the scope of the generic.
+A table is used to ensure generic type instances are created only once and reused if referenced multiple times.
+The instantiation of a generic issues a traversal of the AST node of the generic with a context type declared for this one instance.
+The template parameters are declared as types in this context.
 
-If a generic type ```TPL[A1,A2,...]``` is referenced we define a type ```T = TPL[t1,t2,...]``` with ```A1,A2,...``` being substitutes for ```t1,t2,...```.
-For each template argument ```Ai``` without a constructor (data type, generic), we make a [typedb:def_type_as](#def_type_as) definition to define ```(context=T,name=Ai)``` as type ```ti```. For types with a constructor (value types), we define a type ```Ai``` with the constructor and a reduction from this type to the generic argument type. With ```T``` as context-type, we call the traversal of the generic class, structure, or function.
+In the following, I describe how generics are implemented in the example **language1**.
+ 1. First, a unique key is created from the template argument list.
+    All generic instances are in a map associated with the type. We make a lookup there to see if the generic type instance has already been created. We are done, if yes.
+ 2. Then we create the generic instance type with the generic type as context type and the unique key as type name.
+ 3. For the local variables in the scope of the generic, we create a type in a similar way as the generic instance type.
+    In the example **language1** a prefix "local " is used for the type name. This type is used as context type for local definitions instead of 0.
+    This ensures that local definitions from different AST node traversals are separated from each other.
+ 4. For each template argument we create a type with the generic instance type as context type.
+     * If the generic argument is a data type (has no constructor), we create a type as alias (typedb:def_type_as).
+     * If the generic argument is a value type (with a constructor), we create a type (typedb:def_type) with this constructor and a reduction to the passed type.
+    The scope of the template argument definition is the scope of the generic AST node.
+ 5. Finally we add the generic instance type to the list of context types and traverse the AST node of the generic.
+    The code for the generic instance type is created in the process.
 
-The lazy evaluation used in generics requires multiple traversals of the same AST node. The types defined in each traversal may differ and definitions with context-type 0 (free locals, globals) may interfere. How to handle this is answered [here](#multipleTraversal).
 
-#### How to deduce generic function arguments from the function parameter lists
+<a name="genericsParameterDeduction"/>
+
+#### How to deduce generic arguments from a parameter list?
 C++ can reference template functions without declaring the template arguments. The template arguments are deduced from the call arguments.
-I did not implement this in the example **language1**.
-For automatic template argument deduction, the generic parameter assignments have to be synthesized by matching the function parameters against the function candidates. A complete set of generic parameter assignments is evaluated in the process. This list is used as the generic argument list to refer to the generic instance.
+I did not implement this in the example **language1**. Template parameter deduction can be seen as preliminar step before the instantiation of the generic type.
+The instantiation itself does not change having template parameter deduction.
+For automatic template argument deduction, the generic parameter assignments have to be synthesized by matching the function parameters
+against the function candidates. A complete set of generic parameter assignments is evaluated in the process. This list is used
+as the generic argument list to refer to the generic instance.
 
 
 <a name="multipleTraversal"/>
