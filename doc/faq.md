@@ -549,7 +549,9 @@ In the following, I describe how generics are implemented in the example **langu
     The code for the generic instance type is created in the process.
 
 Because the instantiation of generics may trigger the instantiation of other generics, we have to use a stack holding the state variables used in the process.
-
+The state variables include also all keys used for objects attached to a scope like callable environment, allocation frames etc.
+In the example **language1**, the function ```pushGenericLocal``` creates a unique suffix for all keys used for ```typedb:set_instance```,```typedb:get_instance```, and ```typedb:this_instance```.
+The function ```popGenericLocal``` restores the previous state.
 
 <a name="genericsParameterDeduction"/>
 
@@ -619,7 +621,7 @@ Copy elision, though it's making programs faster is not considered as an optimiz
 Swift implements reference counting when required. This implies the adding of a traversal pass that notifies how a type (variable) is used.
 This pass decides if a reference counting type used for the variable or not. There is no way to get around the traversal pass that notifies the usage.
 I suggest to implement other things like copy elision decisions in this pass too if it is required anyway.
-I need to think a little bit more about this issue as it is an aspect that is not covered at all in the example "language1".
+I need to think a little bit more about this issue as it is an aspect that is not covered at all in the example **language1**.
 
 
 <a name="optimizations"/>
