@@ -548,6 +548,8 @@ In the following, I describe how generics are implemented in the example **langu
  5. Finally, we add the generic instance type to the list of context types and traverse the AST node of the generic.
     The code for the generic instance type is created in the process.
 
+Because the instantiation of generics may trigger the instantiation of other generics, we have to use a stack holding the state variables used in the process.
+
 
 <a name="genericsParameterDeduction"/>
 
