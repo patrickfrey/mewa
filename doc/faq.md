@@ -26,7 +26,7 @@
     * [How to implement constants and constant expressions?](#constants)
     * [How to correctly implement (int * float)?](#promoteCall)
     * [How to implement callables like functions, procedures and methods?](#functionsProceduresAndMethods)
-    * [How to implement return in a function?](#functionReturn)
+    * [How to implement return from a function?](#functionReturn)
     * [How to implement return of a non-scalar type from a function?](#functionReturnComplexData)
     * [How to implement the Pascal "WITH", the C++ "using", etc...?](#withAndUsing)
     * [How to implement class inheritance?](#inheritance)
@@ -326,9 +326,14 @@ I would suggest using the same mapping for both.
 
 <a name="functionReturn"/>
 
-### How to implement return in a function?
+### How to implement return from a function?
 
 For every function, a structure named ```env``` is defined and attached to the scope of the function. In this structure, we define the type of the returned value as member ```env.returntype```. A return reduces the argument to the type specified as a return value type and returns it.
+
+In the case of having destructor chains of allocated objects to be called first, the situation gets a little bit more complicated.
+In this case the return of a value is one scenario for exit from the current allocation frame.
+Have a look at [exception handling](#exceptions) for this.
+
 
 <a name="functionReturnComplexData"/>
 
