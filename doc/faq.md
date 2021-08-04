@@ -350,10 +350,20 @@ For implementing method call polymorphism see [How to implement method call poly
 
 ### How to implement method call polymorphism?
 
-In the example **language1**, I implemented interface inheritance only. For class inheritance with overriding virtual method declarations possible, a _VMT_ ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)) has to be implemented. A virtual method call is a call via the _VMT_.
+Method call polimorphism allows to handle different implementations of an interface uniformly. Method calls are dispatched indirectly over a
+_VMT_ ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)).
+In the example **language1**, I implemented interface inheritance only. An interface is a _VMT_ with a base pointer to the data of the object.
 
-Polymorphism with virtual methods has some issues concerning the base pointer of the class. If a method implementation can be overridden, then the base pointer of a class has to be determined by the method itself. Each method implementation has to calculate its ```self``` pointer from the base pointer passed. This could be the base pointer of the first class implementing the method.
+Class inheritance with overriding virtual method declarations possible on the other hand has to define a _VMT_  for every class having virtual methods.
+Virtual methods are method calls dispatched indirectly over the _VMT_. The difference to interface inheritance is that any class inheriting from
+a base class with virtual methods that are not marked as final can override them.
 
+This raises some issues concerning the base pointer of the class. If a method implementation can be overridden, then the base pointer of a class
+has to be determined by the method itself. Each method implementation has to calculate its ```self``` pointer from the base pointer passed.
+This could be the base pointer of the first class implementing the method.
+
+Because of this complications and the lack of insight about the usefulness of overriding methods, I did not implement it in the example **language1**.
+Another reason is the need of optimizations in the compiler front-end to eliminate virtual method calls.
 
 <a name="orderOfDefinition"/>
 
