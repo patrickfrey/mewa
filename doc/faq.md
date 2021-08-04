@@ -350,7 +350,7 @@ For implementing method call polymorphism see [How to implement method call poly
 
 ### How to implement method call polymorphism?
 
-Method call polimorphism allows to handle different implementations of an interface uniformly. Method calls are dispatched indirectly over a
+Method call polymorphism allows handling different implementations of an interface uniformly. Method calls are dispatched indirectly over a
 _VMT_ ([Virtual Method Table](https://en.wikipedia.org/wiki/Virtual_method_table)).
 In the example **language1**, I implemented interface inheritance only. An interface is a _VMT_ with a base pointer to the data of the object.
 
@@ -362,8 +362,10 @@ This raises some issues concerning the base pointer of the class. If a method im
 has to be determined by the method itself. Each method implementation has to calculate its ```self``` pointer from the base pointer passed.
 This could be the base pointer of the first class implementing the method.
 
-Because of this complications and the lack of insight about the usefulness of overriding methods, I did not implement it in the example **language1**.
-Another reason is the need of optimizations in the compiler front-end to eliminate virtual method calls.
+Because of these complications and the lack of insight about the usefulness of overriding methods, I did not implement it in the example **language1**.
+Another reason is the need for optimizations in the compiler front-end to eliminate virtual method calls. As _Mewa_ follows the paradigm of mapping the input to the intermediate language without or only few optimizations,
+language models with complicated optimizations needed in the front-end are not considered practical for _Mewa_.
+
 
 <a name="orderOfDefinition"/>
 
