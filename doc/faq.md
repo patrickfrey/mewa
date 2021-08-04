@@ -39,7 +39,7 @@
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
     * [How to report shadowing declarations?](#shadowingDeclarations)
     * [How to implement exception handling?](#exceptions)
-    * [How to automate cleanup of data?](#cleanupData)
+    * [How to automate the cleanup of data?](#cleanupData)
     * [How to implement generics?](#generics)
        * [How to deduce generic arguments from a parameter list?](#genericsParameterDeduction)
     * [How to traverse AST nodes multiple times without the definitions of different traversals interfering?](#multipleTraversal)
@@ -572,36 +572,37 @@ To see how this is handled, do continue [here](#cleanupData).
 
 <a name="cleanupData"/>
 
-### How to automate cleanup of data?
+### How to automate the cleanup of data?
 
 Automated deallocation of allocated resources on the exit of scope is a complicated issue. Allocations have to be tracked.
 At any state with a  potential exit, a withdrawal scenario has to be implemented.
 In a withdrawal, all allocations have to be revoked in the reverse order they were done.
 
-To implement this, you need some definition of state. Some counter that is incremented on every resource allocation.
+To implement this, you need some definition of a state. Some counter that is incremented on every resource allocation.
 In the example **language1**, the _scope-step_ is used for this. Allocations are bound to the _scope-step_ of the _AST_
-node from which the allocation originates. With origin I mean the _AST_ node that declares the expression leading to the allocation.
-The allocations themselves might queue up in functions that are bound to a single _scope-step_ of the _AST_. Using this _scope-step_ as key
+node from which the allocation originates. With origin, I mean the _AST_ node that declares the expression leading to the allocation.
+The allocations themselves might queue up in functions that are bound to a single _scope-step_ of the _AST_. Using this _scope-step_ as the key
 is not helpful as there would be many states sharing the same _scope-step_.
-In the example **language1** _scope-step_ of the _AST_ is attached as an element to the constructor structure of a type instance.
-The resource allocation registers the snipped of its cleanup code with its _scope-step_ as key in the current _allocation frame_.
+In the example **language1**, _scope-step_ of the _AST_ is attached as an element to the constructor structure of a type instance.
+The resource allocation registers the snipped of its cleanup code with this _scope-step_ as key in the current _allocation frame_.
 
 The _allocation frame_ is a structure bound to a scope that has some cleanup to do.
-Every _allocation frame_ that has a link to its next covering _allocation frame_ if such exists.
-All exits of an allocation frame are aquired by the _scope-step_ where it happend and the key that classifies the exit.
+Every _allocation frame_ has a link to its next covering _allocation frame_ if such exists.
+All exits of an allocation frame are acquired by the _scope-step_ where it happened and the key that classifies the exit.
+
 Possible exit keys are
  * Exceptions thrown, the exceptions are store in local variables (simple, as we have only one structure for an exception in the example **language1**)
  * Exceptions forwarded (exception handling of functions called)
  * Return of a specific value or variable
 
 Every allocated exit gets a label that is called to start the exit. For example a "return 0;" is implemented as branching to the label allocated for this.
-The code at this label will start the cleanup call chain. At the end of this chain will be the "ret i32 0" instruction (in case of an 32 bit integer).
-The code generated of the allocation frame will contain the code to implement the exit chain. It will handle all allocations of exit requests in the
+The code at this label will start the cleanup call chain. At the end of this chain will be the "ret i32 0" instruction (in the case of a 32 bit integer).
+The code generated for the allocation frame will contain the code to implement the exit chain. It will handle all allocations of exit requests in the
 _allocation frame_ and it will join all registered deallocations for this _allocation frame_ with the labels of the allocated exit requests.
-At the end of an exit chain of an _allocation frame_ the code either implements the exit or it branches to the enclosing _allocation frame_ with the
+At the end of an exit chain of an _allocation frame_, the code either adds the exit code or branches to the enclosing _allocation frame_ with the
 label associated with the _scope-step_ and the exit case in this _allocation frame_.
 
-A special case is exception handling, where the branching to the enclosing _allocation frame_ done only until the catch block of the exception.
+A special case is implemented with exception handling, where the branching to the enclosing _allocation frame_ is done only until the catch block of the exception.
 
 
 <a name="generics"/>
