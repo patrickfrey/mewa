@@ -15,6 +15,7 @@
     * [How to store and access scope-bound data?](#scopeInstanceAndAllocators)
     * [How to debug/trace the _Mewa_ functions?](#tracing)
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
+    * [How to implement structures?](#structures)
     * [How to implement pointers and arrays?](#pointersAndArrays)
     * [How to implement namespaces?](#namespaces)
     * [How to implement the resolving of initializer lists?](#initializerLists)
@@ -205,12 +206,25 @@ Qualifiers are not considered to be attached to the type but part of the type de
 Relations between types like const and non-const are expressed by reductions. A non-const type is reducible to const. The reducibility allowes non-const
 types to be passed to functions that ask for a const parameter.
 
+
+<a name="structures"/>
+
+### How to implement structures?
+
+Structures are implemented as types. A member access of a structure is implemented as type built with the reference type of the structure as
+context type and the member name as type name. The structure declaration starts with the declaration of the reference type of the structure.
+During the traversal of the _AST_ nodes of the structure members, the member access types are built.
+
+Substructure types are declared with the structure type as context type.
+
+
 <a name="pointersAndArrays"/>
 
 ### How to implement pointers and arrays?
 
 In the example **language1**, pointers and arrays are types on their own. Both types are created on-demand. The array type is created when used in a declaration. A pointer is created when used in a declaration or as a result of an '&' address operator on a pointee reference type.
 An array of size 40 has to be declared as a separate type that differs from the array of size 20. In this regard, arrays are similar to generics. But the analogies stop there.
+
 
 <a name="namespaces"/>
 
