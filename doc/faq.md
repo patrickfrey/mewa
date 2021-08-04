@@ -288,17 +288,17 @@ In the example **language1** a callable type is declared as a type with a "()" o
 This way all forms of a call can be treated uniformly on application.
 
 The implementation of callables has some issues around scope and visibility. There are two scopes involved the visibility of the function for callers
-and the scope of the code block of the callable. Therefore I have to do some declaration of the current scope manually at someplace.
+and the scope of the code block of the callable. Therefore, we have to do some declarations of the current scope manually at someplace.
 A callable declaration declares the parameters similarly to variables in the scope of its body. But the parameters are also used as part of the
 function declaration in the outer scope.
 
-Furthermore, we have to do traverse the declaration and the implementation in two different passes. The function is declared in one pass,
+Furthermore, we have to traverse the declaration and the implementation in two different passes. The function is declared in one pass,
 the body is traversed and the code is generated in another pass. This makes the function known before its body is traversed. Recursion becomes possible.
 
 See the function ```typesystem.callablebody``` in ```typesystem.lua``` of the example **language1**.
 See also [How to implement multipass AST traversal](#multipassTraversal).
 
-There are some differences between methods and free functions and other function types, mainly in the context type and the
+There are some differences between methods and free functions and other callable types, mainly in the context type and the
 passing of the ```self``` parameter and maybe the LLVM IR code template. But the things shared overweigh the differences.
 I would suggest using the same mapping for both.
 
@@ -310,7 +310,7 @@ For every function, a structure named ```env``` is defined and attached to the s
 
 In the case of having destructor chains of allocated objects to be called first, the situation gets a little bit more complicated.
 In this case the return of a value is one scenario for exit from the current allocation frame.
-Have a look at [exception handling](#exceptions) for this.
+To get deeper into exit scenarios, see [How to automate the cleanup of data?](#cleanupData).
 
 
 <a name="functionReturnComplexData"/>
@@ -320,7 +320,7 @@ Have a look at [exception handling](#exceptions) for this.
 LLVM has the attribute ```sret``` for structure pointers passed to functions for storing the return value for non-scalar values.
 In the example **language1**, I defined the types
 
- * unbound_reftype with the qualifier "&<-" representing a reference to an unbound variable.
+ * unbound_reftype with the qualifier "&<-" representing an unbound reference.
  * c_unbound_reftype with the qualifiers "const " and "&<-" representing an unbound constant reference.
 
  The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built. This allows to implement copy elision and to instantiate the target of the constructor in the assignment of the unbound reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the unbound reference is reduced to a value or a const reference instead.
