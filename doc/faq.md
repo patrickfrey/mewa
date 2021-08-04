@@ -525,13 +525,15 @@ where variableScope scope is the value of ```typedb:type_scope``` of the variabl
 
 In the example **language1** there is no measure taken to report shadowing declarations.
 The symbol resolving algorithm itself gives no support on its own.
-Shadowing declarations are preferred, because the shortest path search preferes them.
+Shadowing declarations are preferred because the shortest path search prefers them.
 
 I don't consider it reasonable to add support in the typedb API because it would be complicated and because it would not generate good error messages for
-shadowing declaration conflicts. I suggest to make a list of all cases and to handle them one by one. For example:
- * When declaring a class member variable, check the accessability of an inherited definition.
- * When declaring a local variable, check the accessability of a variable in an enclosing scope.
- * Split the context type list in class method bodies in a globals and a members part and do the type resolving on both sides. Report a shadowing conflict, if the symbol was found with both context-type lists.
+shadowing declaration conflicts. I suggest making a list of all cases and to handle them one by one.
+
+For example:
+ * When declaring a class member variable, check the accessibility of an inherited definition.
+ * When declaring a local variable, check the accessibility of a variable in an enclosing scope.
+ * Split the context type list in class method bodies in a global and a members part and do the type resolving on both sides. Report a shadowing conflict, if the symbol was found with both context-type lists.
 
 
 <a name="exceptions"/>
