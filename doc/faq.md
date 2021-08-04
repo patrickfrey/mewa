@@ -7,10 +7,6 @@
     * [Why only an LALR(1) parser generator?](#onlyLALR1)
     * [What types of languages are covered by _Mewa_?](#coveredLanguageClasses)
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
-    * [What are the hacks in the implementation of the example language1?](#hacks)
-1. [Decision Questions](#decisions)
-    * [Why are type deduction paths weighted?](#weightedTypeDeduction)
-    * [Why are reductions defined with scope?](#reductionScope)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
     * [How to handle lexical scopes?](#astTraversalAndScope)
@@ -50,6 +46,10 @@
     * [How to implement copy elision?](#copyElision)
     * [How to implement reference counting on use as in Swift?](#referenceCounting)
     * [What about optimizations?](#optimizations)
+1. [Decision Questions](#decisions)
+    * [Why are type deduction paths weighted?](#weightedTypeDeduction)
+    * [Why are reductions defined with scope?](#reductionScope)
+    * [What are the hacks in the implementation of the example language1?](#hacks)
 
 
 <a name="general"/>
@@ -94,31 +94,6 @@ To define a type system as a graph of types and reductions within the hierarchic
 Name finding is difficult. I got stuck in Polish names of birds without non-ASCII characters. _Mewa_ is the Polish name for seagull.
 I think the original idea was that seagulls are a sign of land nearby when you are lost in the sea. Compiler projects are usually a neverending thing (like the sea). With _Mewa_ you see land, meaning that you can at least prototype your compiler. :-)
 
-<a name="hacks"/>
-
-### What are the hacks in the implementation of the example language1?
-Some may say that the whole example **language1** is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimized for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
- 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a _Lua_ table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately, I don't have any idea to get around the problem differently.
- 2. *Cleaning up of partially constructed objects*: This problem caught me on the wrong foot, especially the building of arrays from initializer lists. The solution is awkward and needs to be revisited.
-
-<a name="decisions"/>
-
-## Decision Questions
-
-<a name="weightedTypeDeduction"/>
-
-### Why are type deduction paths weighted?
-
- * It makes the selection of the deduction path deterministic.
- * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one unique solution to a resolve type query. The request is considered to be ambiguous otherwise.
-
-
-<a name="reductionScope"/>
-
-### Why are reductions defined with scope?
-
-At the first glance, there seems no need to exist for defining reductions with a scope, because the types are already bound to a scope.
-But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. Private/public access restrictions on a type (meaning that in a method of a class you can access the private members of all instances of this class) can be implemented with a reduction from the class reference type to its private reference type in every method scope.
 
 <a name="problemSolving"/>
 
@@ -569,7 +544,7 @@ Every exception triggers some cleanup.
 In the example **language1** I implemented the different cases of exception handling as exit scenarios.
 
 Exit scenarios are commands that need some cleanup before they are executed.
-To see how this is handled, do continue [here](#cleanupData).
+To see how this is handled, continue with [How to automate the cleanup of data?](#cleanupData).
 
 
 <a name="cleanupData"/>
@@ -722,4 +697,34 @@ I need to think a little bit more about this issue as it is an aspect that is no
 
 Other compiler-frontend models are better suited for optimizations. What you can do with _Mewa_ is to attach attributes to code that helps a back-end to optimize the code generated. That is the model LLVM IR encourages.
 
+
+
+
+
+
+<a name="decisions"/>
+
+## Decision Questions
+
+<a name="weightedTypeDeduction"/>
+
+### Why are type deduction paths weighted?
+
+ * It makes the selection of the deduction path deterministic.
+ * It helps to detect real ambiguity by sorting out solutions with multiple equivalent paths. There must always exist one unique solution to a resolve type query. The request is considered to be ambiguous otherwise.
+
+
+<a name="reductionScope"/>
+
+### Why are reductions defined with scope?
+
+At the first glance, there seems no need to exist for defining reductions with a scope, because the types are already bound to a scope.
+But there are rare cases where reductions bound to a scope are useful. One that comes into my mind is private/public access restrictions imposed on the type and not on data. Private/public access restrictions on a type (meaning that in a method of a class you can access the private members of all instances of this class) can be implemented with a reduction from the class reference type to its private reference type in every method scope.
+
+<a name="hacks"/>
+
+### What are the hacks in the implementation of the example language1?
+Some may say that the whole example **language1** is a big hack because of the information entanglement without contracts all over the place. I cannot say much against that argument. _Mewa_ is not optimized for collaborative work. What I consider hacks here are violations or circumventions of the core ideas of _Mewa_. Here are bad hacks I have to talk about:
+ 1. *Stateful constructors*: Constructors have an initialization state that tells how many of the members have been initialized. One principle of _Mewa_ is that every piece of information is related to what is stored in the _typedb_ or in the _AST_ or somehow related to that, stored in a _Lua_ table indexed by a value in the _typedb_ or the _AST_. Having a state variable during the traversal of the _AST_ and the code generation is considered bad and a hack. Unfortunately, I don't have any idea to get around the problem differently.
+ 2. *Cleaning up of partially constructed objects*: This problem caught me on the wrong foot, especially the building of arrays from initializer lists. The solution is awkward and needs to be revisited.
 
