@@ -576,11 +576,11 @@ In a withdrawal, all allocations have to be revoked in the reverse order they we
 
 To implement this, you need some definition of a state. Some counter that is incremented on every resource allocation.
 In the example **language1**, the _scope-step_ is used for this. Allocations are bound to the _scope-step_ of the _AST_
-node from which the allocation originates. With origin, I mean the _AST_ node that declares the expression leading to the allocation.
-The allocations themselves might queue up in functions that are bound to a single _scope-step_ of the _AST_. Using this _scope-step_ as the key
-is not helpful as there would be many states sharing the same _scope-step_.
-In the example **language1**, _scope-step_ of the _AST_ is attached as an element to the constructor structure of a type instance.
-The resource allocation registers the snipped of its cleanup code with this _scope-step_ as key in the current _allocation frame_.
+node from which the allocation originates. With originating, I mean the _AST_ node representing the expression.
+The allocations themselves might queue up in functions creating the constructor of the expression. Using the the _scope-step_ of
+the _AST_ node of this function would lead to allocations sharing the same _scope-step_ as state identifier.
+In the example **language1**, the origin _scope-step_ of the _AST_ node is attached as an element to the constructor.
+The resource allocation registers the snippet of its cleanup code with the origin _scope-step_ as key in the current _allocation frame_.
 
 The _allocation frame_ is a structure bound to a scope that has some cleanup to do.
 Every _allocation frame_ has a link to its next covering _allocation frame_ if such exists.
