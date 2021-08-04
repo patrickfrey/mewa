@@ -202,6 +202,8 @@ I must admit to having rarely used the tree dump functions. They are tested thou
 ### How to implement type qualifiers like const and reference?
 
 Qualifiers are not considered to be attached to the type but part of the type definition. A const reference to an integer is a type on its own, like an integer value type or an integer reference type.
+Relations between types like const and non-const are expressed by reductions. A non-const type is reducible to const. The reducibility allowes non-const
+types to be passed to functions that ask for a const parameter.
 
 <a name="pointersAndArrays"/>
 
