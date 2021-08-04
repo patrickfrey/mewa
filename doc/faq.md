@@ -326,8 +326,8 @@ In the example **language1**, I defined the types
 The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this
 value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built.
 
-Returning values by constructing them in-place at a memory address passed as parameter by the caller can be implemented with unbound reference types
-within the model of expressions represented by type/constructor pairs. The type returned in this case is an unbound reference type.
+Returning values by constructing them in place at a memory address passed as a parameter by the caller can be implemented with unbound reference types
+within the model of expressions represented by type/constructor pairs. In this case, the type returned is an unbound reference type.
 The caller then injects the destination address when assigning the return value. This by the way implements copy elision with in-place construction.
 
 Unbound reference types are defined as reducible to a reference type with a constructor creating the variable binding the reference as a local.
