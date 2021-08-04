@@ -323,9 +323,14 @@ In the example **language1**, I defined the types
  * unbound_reftype with the qualifier "&<-" representing an unbound reference.
  * c_unbound_reftype with the qualifiers "const " and "&<-" representing an unbound constant reference.
 
- The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built. This allows to implement copy elision and to instantiate the target of the constructor in the assignment of the unbound reference to a reference. Or to later allocate a local variable for the structure and to instantiate the target there, if the unbound reference is reduced to a value or a const reference instead.
+The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this
+value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built.
 
- This mechanism allows treating return value references passed as parameters uniformly with scalar return values, just using different constructors representing these types.
+Returning values by constructing them in-place at a memory address passed as parameter by the caller can be implemented with unbound reference types
+within the model of expressions represented by type/constructor pairs. The type returned in this case is an unbound reference type.
+The caller then injects the destination address when assigning the return value. This by the way implements copy elision with in-place construction.
+
+Unbound reference types are defined as reducible to a reference type with a constructor creating the variable binding the reference as a local.
 
 
 <a name="withAndUsing"/>
