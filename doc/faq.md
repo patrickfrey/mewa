@@ -37,7 +37,9 @@
     * [How to implement multipass AST traversal?](#multipassTraversal)
     * [How to handle dependencies between branches of a node in the AST?](#branchDependencies)
     * [How to implement capture rules of local function definitions?](#localFunctionCaptureRules)
+    * [How to report shadowing declarations?](#shadowingDeclarations)
     * [How to implement exception handling?](#exceptions)
+    * [How to automate cleanup of data?](#cleanupData)
     * [How to implement generics?](#generics)
        * [How to deduce generic arguments from a parameter list?](#genericsParameterDeduction)
     * [How to traverse AST nodes multiple times without the definitions of different traversals interfering?](#multipleTraversal)
@@ -126,7 +128,7 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 <a name="astStructure"/>
 
 ### How to process the AST structure?
-The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexemes explicitly declared as leaves and _Lua_ calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the _AST_. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the _Lua_ functions called. The example language uses a function utils.traverse defined in [typesystem_utils.lua](../examples/typesystem_utils.lua) for the tree traversal of sub-nodes. The traversal function sets the current scope or scope-step if defined in the _AST_ and calls the function defined for the _AST_ node.
+The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexemes explicitly declared as leaves and _Lua_ calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the _AST_. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the _Lua_ functions called. The example language uses a function utils.traverse defined in [typesystem_utils.lua](../examples/typesystem_utils.lua) for the tree traversal of sub-nodes. The traversal function sets the current scope or _scope-step_ if defined in the _AST_ and calls the function defined for the _AST_ node.
 
 <a name="astTraversalAndScope"/>
 
@@ -501,6 +503,7 @@ Neither one nor the other method of improving error messages has been implemente
 <a name="localFunctionCaptureRules"/>
 
 ### How to implement capture rules of local function definitions?
+
 The concept of scope is hierarchical and allows to access items of an enclosing scope by an enclosed scope. This raises some problems when dealing with local function definitions.
 ```
 function y() {
@@ -516,25 +519,96 @@ if variableScope[1] == 0 or env.scope[1] <= variableScope[1] then ...OK... else 
 where variableScope scope is the value of ```typedb:type_scope``` of the variable type and env.scope the procedure/function declaration scope.
 
 
+<a name="shadowingDeclarations"/>
+
+### How to report shadowing declarations?
+
+In the example **language1** there is no measure taken to report shadowing declarations.
+The symbol resolving algorithm itself gives no support on its own.
+Shadowing declarations are preferred, because the shortest path search preferes them.
+
+I don't consider it reasonable to add support in the typedb API because it would be complicated and because it would not generate good error messages for
+shadowing declaration conflicts. I suggest to make a list of all cases and to handle them one by one. For example:
+ * When declaring a class member variable, check the accessability of an inherited definition.
+ * When declaring a local variable, check the accessability of a variable in an enclosing scope.
+ * Split the context type list in class method bodies in a globals and a members part and do the type resolving on both sides. Report a shadowing conflict, if the symbol was found with both context-type lists.
+
+
 <a name="exceptions"/>
 
 ### How to implement exception handling?
 
-In the example **language1**, I implemented a very primitive exception handling. The only thing throwable is an error code plus optionally a string. Besides simplicity, this solution has also the advantage that exceptions could potentially be thrown across shared library borders without relying on a global object registry as in _Microsoft Windows_.
+In the example **language1**, I implemented a very primitive exception handling. The only thing throwable is an error code plus optionally a string.
+Besides simplicity, this solution has also the advantage that exceptions could potentially be thrown across shared library borders without relying
+on a global object registry as in _Microsoft Windows_.
 
-Every call that can potentially raise an exception needs a label to be jumped at in the case. The first instructions at this label are launching the exception handling and extracting the exception data, storing them into local variables reserved for that. In the following the code goes through a sequence of cleanup calls. After cleanup the exception structure is rebuilt and rethrown with the LLVM 'resume' instruction or the exception is processed. The instructions for launching the exception handling and ending it are different for the two cases. LLVM calls the case of rethrowing the exception with resume 'cleanup' and the case where the exception is processed 'catch'.
+The LLVM IR templates used for implementing the exception handling for example **language1** can be found in ```llvmir.exception```
+in the _Lua_ module llvmir.lua. There has been some trial and error involved in the implementation.
+But it works now and has been tested well. LLVM IR defines two variants of calling a function:
 
-The templates I used for implementing it are defined in ```llvmir.exception``` in the _Lua_ module llvmir.lua. I will provide more documentation later.
+ * One that might throw (LLVM IR instruction ```invoke```)
+ * and one that never throws (LLVM IR instruction ```call```)
 
-The most difficult about exception handling is the cleanup. In the example **language1**, I pair every constructor call where a destructor exists with a call registering a cleanup call with the current _scope-step_ in the current _allocation frame_. The _scope-step_ is the identifier that helps to figure out the label to branch to. This label is the start of the chain of cleanup commands. Every cleanup chain of an _allocation frame_ ends with the jump to a label of the enclosing _allocation frame_. For every exit case (return with a specific value, throwing an exception, handling an exception) there exists an own chain of cleanup calls with entry labels for any possible location to come from.
+The code generator has to figure out which variant is the correct one, either by declaration or by instrospection.
+Choosing the wrong one will lead to unrecoverable errors.
 
-To figure this out was one of the most complicated things in the example **language1**. Expect to spend some time there.
+The ```invoke``` is declared with two labels, one for the success case and one for the exception case.
+The exception case requires to enter a code block with a ```landingpad``` instruction. It has also two variants
+
+ * One that will process the exception (catch it)
+ * and one that will rethrow it (LLVM IR instruction ```resume```)
+
+Exceptions are thrown with a LLVM library function call ```__cxa_throw```.
+The throwing function has to be declared with function attributes telling that it is throwing. This is labeled as ```personality``` in LLVM IR.
+If you don't label a throwing function as throwing, your translated program will crash.
+Have a look at ```llvmir.functionAttribute``` in the _Lua_ module llvmir.lua as an example.
+
+Every exception triggers some cleanup.
+In the example **language1** I implemented the different cases of exception handling as exit scenarios.
+
+Exit scenarios are commands that need some cleanup before they are executed.
+To see how this is handled, do continue [here](#cleanupData).
+
+
+<a name="cleanupData"/>
+
+### How to automate cleanup of data?
+
+Automated deallocation of allocated resources on the exit of scope is a complicated issue. Allocations have to be tracked.
+At any state with a  potential exit, a withdrawal scenario has to be implemented.
+In a withdrawal, all allocations have to be revoked in the reverse order they were done.
+
+To implement this, you need some definition of state. Some counter that is incremented on every resource allocation.
+In the example **language1**, the _scope-step_ is used for this. Allocations are bound to the _scope-step_ of the _AST_
+node from which the allocation originates. With origin I mean the _AST_ node that declares the expression leading to the allocation.
+The allocations themselves might queue up in functions that are bound to a single _scope-step_ of the _AST_. Using this _scope-step_ as key
+is not helpful as there would be many states sharing the same _scope-step_.
+In the example **language1** _scope-step_ of the _AST_ is attached as an element to the constructor structure of a type instance.
+The resource allocation registers the snipped of its cleanup code with its _scope-step_ as key in the current _allocation frame_.
+
+The _allocation frame_ is a structure bound to a scope that has some cleanup to do.
+Every _allocation frame_ that has a link to its next covering _allocation frame_ if such exists.
+All exits of an allocation frame are aquired by the _scope-step_ where it happend and the key that classifies the exit.
+Possible exit keys are
+ * Exceptions thrown, the exceptions are store in local variables (simple, as we have only one structure for an exception in the example **language1**)
+ * Exceptions forwarded (exception handling of functions called)
+ * Return of a specific value or variable
+
+Every allocated exit gets a label that is called to start the exit. For example a "return 0;" is implemented as branching to the label allocated for this.
+The code at this label will start the cleanup call chain. At the end of this chain will be the "ret i32 0" instruction (in case of an 32 bit integer).
+The code generated of the allocation frame will contain the code to implement the exit chain. It will handle all allocations of exit requests in the
+_allocation frame_ and it will join all registered deallocations for this _allocation frame_ with the labels of the allocated exit requests.
+At the end of an exit chain of an _allocation frame_ the code either implements the exit or it branches to the enclosing _allocation frame_ with the
+label associated with the _scope-step_ and the exit case in this _allocation frame_.
+
+A special case is exception handling, where the branching to the enclosing _allocation frame_ done only until the catch block of the exception.
+
 
 <a name="generics"/>
 
 ### How to implement generics?
 
-Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the AST and associate it with a type instead of directly evaluating it.
+Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the _AST_ and associate it with a type instead of directly evaluating it.
 A generic can be implemented as a type. The application of an operator with arguments triggers the creation of a template instance on-demand in the scope of the generic.
 A table is used to ensure generic type instances are created only once and reused if referenced multiple times.
 The instantiation of a generic invokes a traversal of the AST node of the generic with a context type declared for this one instance.
