@@ -355,7 +355,7 @@ Unbound reference types are defined as reducible to a reference type with a cons
 
 In the example **language1**, the context list used for resolving types of free identifiers is bound to the current scope.
 A "WITH" or "using" defines the context list for the current scope as a copy of the context list of the innermost enclosing scope
-if not defined yet and adds the type created from the argument of the "WITH" or "using" command to it.
+and adds the type created from the argument of the "WITH" or "using" command to it.
 
 <a name="inheritance"/>
 
