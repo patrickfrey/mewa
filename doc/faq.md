@@ -353,9 +353,9 @@ Unbound reference types are defined as reducible to a reference type with a cons
 
 ### How to implement type contexts, e.g. the Pascal "WITH", the C++ "using", etc...?
 
-In the example **language1**, a context list is an object bound to a scope. The enclosed scopes inherit the context list from the parent scope.
-A "WITH" or "using" defines the context list for the current scope as a copy of the inherited context list if not defined yet. It then attaches the
-new context member to it.
+In the example **language1**, the context list used for resolving types of free identifiers is bound to the current scope.
+A "WITH" or "using" defines the context list for the current scope as a copy of the context list of the innermost enclosing scope
+if not defined yet and adds the type created from the argument of the "WITH" or "using" command to it.
 
 <a name="inheritance"/>
 
@@ -401,7 +401,7 @@ class A {
 	};
 };
 ```
-When relying on a single pass traversal of the AST to emit code, an order of definitions like the following is required:
+When relying on a single pass traversal of the _AST_ to emit code, an order of definitions like the following is required:
 ```
 class A {
 	class B {
@@ -410,7 +410,7 @@ class A {
 	B b;
 };
 ```
-For languages allowing a schema like C++, we need multi-pass AST traversal. See [How to implement multipass AST traversal](#multipassTraversal).
+For languages allowing a schema like C++, we need multi-pass _AST_ traversal. See [How to implement multipass AST traversal](#multipassTraversal).
 
 
 <a name="multipassTraversal"/>
@@ -462,7 +462,7 @@ The declaration of functions, operators, and methods of classes gets more compli
 
 ### How to handle dependencies between AST branches of a node in the AST?
 
-With the tree traversal in your hands, you can partially traverse the sub-nodes of an AST node. You can also combine a partial traversal with a multipass traversal to get some info out of the AST sub-nodes before doing the real job.
+With the tree traversal in your hands, you can partially traverse the sub-nodes of an _AST_ node. You can also combine a partial traversal with a multipass traversal to get some info out of the _AST_ sub-nodes before doing the real job.
 
 There are no limitations, but the model of _Mewa_ punishes partial traversal and multipass traversal with bad readability.
 Use it selectively and only if there is no other possibility and try to document it well.
@@ -619,10 +619,10 @@ A special case is implemented with exception handling, where the branching to th
 
 ### How to implement generics?
 
-Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_ as I can store a subtree of the _AST_ and associate it with a type instead of directly evaluating it.
+Generics (e.g. C++ templates) are a form of lazy evaluation. This is supported by _Mewa_. You can store a subtree of the _AST_ and associate it with a type instead of directly evaluating it.
 A generic can be implemented as a type. The application of an operator with arguments triggers the creation of a template instance on-demand in the scope of the generic.
 A table is used to ensure generic type instances are created only once and reused if referenced multiple times.
-The instantiation of a generic invokes a traversal of the AST node of the generic with a context type declared for this one instance.
+The instantiation of a generic invokes a traversal of the _AST_ node of the generic with a context type declared for this one instance.
 The template parameters are declared as types in this context.
 
 In the following, I describe how generics are implemented in the example **language1**.
@@ -631,12 +631,12 @@ In the following, I describe how generics are implemented in the example **langu
  2. Otherwise, we create the generic instance type with the generic type as context type and the unique key as type name.
  3. For the local variables in the scope of the generic, we similarly create a type as the generic instance type.
     In the example **language1** a prefix "local " is used for the type name. This type is used as a context type for local definitions instead of 0.
-    This ensures that local definitions from different AST node traversals are separated from each other.
+    This ensures that local definitions from different _AST_ node traversals are separated from each other.
  4. For each generic argument, we create a type with the generic instance type as context type.
      * If the generic argument is a data type (has no constructor), we create a type as an alias (typedb:def_type_as).
      * If the generic argument is a value type (with a constructor), we create a type (typedb:def_type) with this constructor and a reduction to the passed type.
-    The scope of the template argument definition is the scope of the generic AST node.
- 5. Finally, we add the generic instance type to the list of context types and traverse the AST node of the generic.
+    The scope of the template argument definition is the scope of the generic _AST_ node.
+ 5. Finally, we add the generic instance type to the list of context types and traverse the _AST_ node of the generic.
     The code for the generic instance type is created in the process.
 
 Because the instantiation of generics may trigger the instantiation of other generics, we have to use a stack holding the state variables used in the process.
@@ -666,7 +666,7 @@ Generics use definition scopes multiple times with differing declarations inside
 
 ### How to implement concepts like in C++?
 
-I did not implement concepts in the example **language1**. But I would implement them similarly to generic classes or structures. The AST node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context-type. In the AST node functions of the concept definition, you can use typedb:resolve_type to retrieve properties as types to check as a sub condition of the concept.
+I did not implement concepts in the example **language1**. But I would implement them similarly to generic classes or structures. The _AST_ node of the concept is kept in the concept data structure and traversed with the type to check against the concept passed down as context-type. In the _AST_ node functions of the concept definition, you can use typedb:resolve_type to retrieve properties as types to check as a sub condition of the concept.
 
 In other words, the concept is implemented as generic with the type to check the concept against as an argument, with the difference that it doesn't produce code. It is just used to check if the concept structure can be successfully traversed with the argument type.
 
@@ -674,20 +674,20 @@ In other words, the concept is implemented as generic with the type to check the
 
 ### How to implement lambdas?
 
-In the example **language1**, lambdas are declared as types with an AST node and a list of parameter names attached.
+In the example **language1**, lambdas are declared as types with an _AST_ node and a list of parameter names attached.
 Such a lambda type can be passed as argument when instantiating a generic.
 The following happens when a lambda is applied:
 
  1. For each instance of the lambda a context-type is created and the parameters with their name and this context-type.
-    * Each parameter with a constructor is defiend with ```typedb:def_type``` with this constructor. A reduction is defined from this type to the passed parameter type.
-    * Each parameter without a constructor is defiend with ```typedb:def_type_as``` as alias of the passed parameter type.
-    The parameter types are defined in the scope of the AST node of the lambda.
- 2. The AST node of the lambda is traversed with the context-type of the lambda in the set of context-types.
+    * Each parameter with a constructor is defined with ```typedb:def_type``` with this constructor. A reduction is defined from this type to the passed parameter type.
+    * Each parameter without a constructor is defined with ```typedb:def_type_as``` as alias of the passed parameter type.
+    The parameter types are defined in the scope of the _AST_ node of the lambda.
+ 2. The _AST_ node of the lambda is traversed with the context-type of the lambda in the set of context-types.
  3. The resulting constructor is returned as result of the traversal of the the lambda instance
 
 Because of the multiple uses of the same scope as in generics, lambdas have to define free variables with a context-type created for each instance.
 As for generics, a context-type with the name prefix "local " is defined and used instead of 0 for local type definitions.
-This ensures that local definitions from different AST node traversals are separated from each other.
+This ensures that local definitions from different _AST_ node traversals are separated from each other.
 
 <a name="cLibraryCalls"/>
 
