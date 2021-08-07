@@ -1,5 +1,5 @@
 {
-	mewa = "0.6.7",
+	mewa = "0.6.29",
 	language = "language1",
 	typesystem = "language1/typesystem",
 	cmdline = "cmdlinearg",
