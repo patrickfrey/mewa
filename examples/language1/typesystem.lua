@@ -30,13 +30,13 @@ local rdw_sign = 0.125			-- Conversion of integers changing sign
 local rdw_float = 0.25			-- Conversion switching floating point with integers
 local rdw_bool = 0.25			-- Conversion of numeric value to boolean
 local rdw_barrier = 2.0			-- Reduction weight of a reduction that invokes a state transition if used
-local rdw_strip_u_1 = 0.75 / (1*1)	-- Reduction weight of stripping unbound reftype from type having 1 qualifier 
+local rdw_strip_u_1 = 0.75 / (1*1)	-- Reduction weight of stripping unbound reftype from type having 1 qualifier
 local rdw_strip_u_2 = 0.75 / (2*2)	-- Reduction weight of stripping unbound reftype from type having 2 qualifiers
 local rdw_strip_u_3 = 0.75 / (3*3)	-- Reduction weight of stripping unbound reftype from type having 3 qualifiers
-local rdw_strip_v_1 = 0.125 / (1*1)	-- Reduction weight of stripping private/public from type having 1 qualifier 
+local rdw_strip_v_1 = 0.125 / (1*1)	-- Reduction weight of stripping private/public from type having 1 qualifier
 local rdw_strip_v_2 = 0.125 / (2*2)	-- Reduction weight of stripping private/public from type having 2 qualifiers
 local rdw_strip_v_3 = 0.125 / (3*3)	-- Reduction weight of stripping private/public from type having 3 qualifiers
-local rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch value) from type having 1 qualifier 
+local rdw_strip_r_1 = 0.25 / (1*1)	-- Reduction weight of stripping reference (fetch value) from type having 1 qualifier
 local rdw_strip_r_2 = 0.25 / (2*2)	-- Reduction weight of stripping reference (fetch value) from type having 2 qualifiers
 local rdw_strip_r_3 = 0.25 / (3*3)	-- Reduction weight of stripping reference (fetch value) from type having 3 qualifiers
 local rdw_strip_c_1 = 0.5 / (1*1)	-- Reduction weight of changing constant qualifier in type having 1 qualifier
@@ -46,7 +46,7 @@ local rwd_inheritance = 0.125 / (4*4)	-- Reduction weight of class inheritance
 local rwd_c_inheritance = 0.125/(5*5) 	-- Reduction weight of const class inheritance
 local rwd_control = 0.125 / (4*4)	-- Reduction weight of boolean type (control true/false type <-> boolean value) conversions
 
-function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other 
+function preferWeight( flag, w1, w2) if flag then return w1 else return w2 end end -- Prefer one weight to the other
 function factorWeight( fac, w1) return fac * w1	end
 function combineWeight( w1, w2) return w1 + (w2 * 127.0 / 128.0) end -- Combining two reductions slightly less weight compared with applying both singularily
 function combineWeight3( w1, w2, w3) return w1 + (w2 * 127.0 / 128.0) + (w3 * 255.0 / 256.0) end -- Combining three reductions slightly less weight compared with applying them singularily
@@ -78,8 +78,8 @@ local privateTypeMap = {}		-- Map of non private types to their private type
 local pointerTypeMap = {}		-- Map of non pointer types to their pointer type
 local pointeeTypeMap = {}		-- Map of pointer types to their pointee type
 local unboundReferenceTypeMap = {}	-- Map of value types to their unbound reftype type if it exists
-local ctorThrowingMap = {}		-- Map that tells if a constructor is throwing or not
-local typeHasCtorThrowingMap = {}	-- Map that tells if a type has a throwing constructor (true) or not (false or nil)
+local ctorThrowingMap = {}		-- Map that tells if a ctor is throwing or not
+local typeHasCtorThrowingMap = {}	-- Map that tells if a type has a throwing ctor (true) or not (false or nil)
 local typeQualiSepMap = {}		-- Map of any defined type id to a separation pair (valtype,qualifier) = valtype type, qualifier as booleans
 local typeDescriptionMap = {}		-- Map of any defined type id to its llvmir template structure
 local constVarargTypeMap = {}		-- Map of const value types to their vararg type (type used if passed as variable size argument list parameter)
@@ -87,15 +87,15 @@ local stringConstantMap = {}		-- Map of string constant values to a structure wi
 local arrayTypeMap = {}			-- Map of the pair valtype,size to the array type valtype for an array size
 local genericInstanceTypeMap = {}	-- Map of the pair valtype,generic parameter to the generic instance type valtype for list of arguments
 local varargFuncMap = {}		-- Map of types to true for vararg functions/procedures
-local instantCallableEnvironment = nil	-- Callable environment created for implicitly generated code (constructors,destructors,assignments,etc.)
-local globalCallableEnvironment = nil	-- Callable environment for constructors/destructors of globals
+local instantCallableEnvironment = nil	-- Callable environment created for implicitly generated code (ctors,dtors,assignments,etc.)
+local globalCallableEnvironment = nil	-- Callable environment for ctors/dtors of globals
 local instantAllocationFrame = nil	-- Allocation frame created for implicitly generated code
 local globalAllocationFrame = nil	-- Allocation frame for global variables
-local instantUnwindLabel = nil 		-- label for cleanup in case of an exception created for implicitly generated code (constructors,destructors,assignments,etc.)
+local instantUnwindLabel = nil 		-- label for cleanup in case of an exception created for implicitly generated code (ctors,dtors,assignments,etc.)
 local environmentStack = {}		-- Stack used for instantCallableEnvironment, instantAllocationFrame, instantUnwindLabel defining the environment for implicitly defined code
 local globalInitCode = ""		-- Init code for global variables
 local hardcodedTypeMap = {}		-- Map of hardcoded type names to their id
-local genericLocalStack = {}		-- Stack of values for localDefinitionContext 
+local genericLocalStack = {}		-- Stack of values for localDefinitionContext
 local localDefinitionContext = 0	-- The context type id used for local type definitions, to separate instances of generics using the same scope
 local seekContextKey = "seekctx"	-- Current key for the seek context type realm for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
 local callableEnvKey = "env"		-- Current key for the callable environment for (name parameter for typedb:set_instance,typedb:this_instance,typedb:get_instance)
@@ -119,7 +119,7 @@ local exceptionSectionPrinted = false	-- True if the code for throwing exception
 -- Create a callable environent object
 function createCallableEnvironment( node, name, rtype, throws, rprefix, lprefix)
 	return {name=name, line=node.line, scope=typedb:scope(), throws=throws, register=utils.register_allocator(rprefix), label=utils.label_allocator(lprefix),
-	        returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
+		returntype=rtype, returnfunction=nil, frames={}, features=nil, initstate=nil, partial_dtor=nil, initcontext=nil}
 end
 -- Attach a newly created data structure for a callable to its scope
 function defineCallableEnvironment( node, name, rtype, throws)
@@ -143,7 +143,7 @@ function typeDeclarationString( this, typnam, args)
 	return rt
 end
 ---- Constructor Structure Fields ----
---	out		: Output of the constructor, type depends on the constructor class (register for value constructor, unbound label for boolean control type, substitution name for unbound reference type) 
+--	out		: Output of the constructor, type depends on the constructor class (register for value constructor, unbound label for boolean control type, substitution name for unbound reference type)
 --	code 		: LLVM code of the constructor
 --	step 		: scope step of the node creating the type the constructor is associated with, inherited when resolving an unbound reference type or building a structure from a constexpr structure
 --	throws		: true if the code of this constructor may throw an exception
@@ -196,7 +196,7 @@ end
 function getConstructorOutputResultPair( env, result)
 	local out,res
 	if result then
-		if type( result) == "string" then -- create unbound reference type 
+		if type( result) == "string" then -- create unbound reference type
 			out = "{" .. result .. "}"
 			res = result
 		else
@@ -660,7 +660,7 @@ function defineQualifiedTypeRelations( qualitype, typeDescription)
 	typeQualiSepMap[ reftype]    = {valtype=valtype,qualifier={const=false,reference=true,private=false}}
 	typeQualiSepMap[ c_reftype]  = {valtype=valtype,qualifier={const=true,reference=true,private=false}}
 
- 	typedb:def_reduction( valtype, c_reftype, callConstructor( typeDescription.load, true), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
+	typedb:def_reduction( valtype, c_reftype, callConstructor( typeDescription.load, true), tag_typeDeduction, combineWeight( rdw_strip_r_2,rdw_strip_c_1))
 	typedb:def_reduction( c_valtype, valtype, nil, tag_typeDeduction, rdw_strip_c_1)
 	typedb:def_reduction( c_reftype, reftype, nil, tag_typeDeduction, rdw_strip_c_1)
 end
@@ -829,7 +829,7 @@ function defineScalarCtorDtors( qualitype, descr)
 	defineCall( qualitype.c_reftype, qualitype.c_reftype, ":=", {}, callConstructor( descr.ctor_init))
 	defineCall( 0, qualitype.reftype, ":~", {}, constructorStructEmpty)
 end
--- Define structure assignments as construction in a local buffer, a destructor call of the target followed by a move into the destination place
+-- Define structure assignments as construction in a local buffer, a ctor call of the target followed by a move into the destination place
 function getAssignmentsFromCtors( node, qualitype, descr)
 	function assignmentConstructorFromCtor( descr, ctorfunc, throws)
 		if throws then
@@ -860,10 +860,10 @@ function getAssignmentsFromCtors( node, qualitype, descr)
 	end
 	typedb:scope( scope_bk,step_bk)
 end
--- Get the landingpad resume code of a constructor with a fixed list of defined cleanup functions
+-- Get the landingpad resume code of a ctor with a fixed list of defined cleanup functions
 function getDefaultCtorCleanupResumeCode( env, codelist, finishLabel)
 	local partial_dtor = ""
-	for ci=#codelist,1,-1 do 
+	for ci=#codelist,1,-1 do
 		local label = codelist[ ci].label
 		local code = codelist[ ci].code
 		local dtor_label = label .. "_dtor"
@@ -904,7 +904,7 @@ function defineCtorCalls( qualitype, parameter, constructorFunc, throws)
 		typeHasCtorThrowingMap[ qualitype.c_reftype] = true
 	end
 end
--- Define constructors/destructors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared) 
+-- Define ctors/dtors for implicitly defined array types (when declaring a variable int a[30], then a type int[30] is implicitly declared)
 function defineArrayCtorDtors( node, qualitype, arrayDescr, elementTypeId, arraySize)
 	local env = createCallableEnvironment( node, "ctor " .. arrayDescr.symbol, nil, true)
 	pushEnvironment( env, nil, "cleanup")
@@ -963,8 +963,8 @@ function defineInitializationFromStructure( node, qualitype)
 	if redu_constructor_l then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.valtype], constexprStructureType, redu_constructor_l, tag_typeConversion, rdw_conv) end
 	if redu_constructor_c then typedb:def_reduction( unboundReferenceTypeMap[ qualitype.c_valtype], constexprStructureType, redu_constructor_c, tag_typeConversion, rdw_conv) end
 end
--- Get the code of a class/struct destructor that calls the member destructors, for struct it is the complete constructor, for classes the final part
-function getStructMemberDestructorCode( env, descr, members)
+-- Get the code of a class/struct dtor that calls the member dtors
+function getStructMemberDtorCode( env, descr, members)
 	local rt = ""
 	for mi,member in ipairs(descr.members) do
 		local out = env.register()
@@ -976,8 +976,8 @@ function getStructMemberDestructorCode( env, descr, members)
 	end
 	return rt
 end
--- Get a partial destructor used in class constructors for rewinding object construction in case of an exception
-function getClassMemberPartialDestructorCode( env, descr, members)
+-- Get a partial dtor used in class constructors for rewinding object construction in case of an exception
+function getClassMemberPartialDtorCode( env, descr, members)
 	local rt = ""
 	for mi,member in ipairs(descr.members) do
 		local out = env.register()
@@ -991,24 +991,24 @@ function getClassMemberPartialDestructorCode( env, descr, members)
 	end
 	return rt
 end
--- Define implicit destructors for 'struct'/'class' types
-function defineStructDestructors( node, qualitype, descr)
+-- Define implicit dtors for 'struct'/'class' types
+function defineStructDtors( node, qualitype, descr)
 	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol, nil, false)
-	local dtors = getStructMemberDestructorCode( instantCallableEnvironment, descr, members)
+	local dtors = getStructMemberDtorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.dtorproc, {dtors=dtors}))
 	defineCall( 0, qualitype.reftype, ":~", {}, callConstructor( descr.dtor))
 	defineCall( 0, qualitype.c_reftype, ":~", {}, callConstructor( descr.dtor))
 	instantCallableEnvironment = nil
 end
--- Print the code of the partial destructor for a 'class' type
-function definePartialClassDestructor( node, qualitype, descr)
+-- Print the code of the partial dtor for a 'class' type
+function definePartialClassDtor( node, qualitype, descr)
 	instantCallableEnvironment = createCallableEnvironment( node, "dtor " .. descr.symbol, nil, false)
-	local partial_dtors = getClassMemberPartialDestructorCode( instantCallableEnvironment, descr, members)
+	local partial_dtors = getClassMemberPartialDtorCode( instantCallableEnvironment, descr, members)
 	print_section( "Auto", utils.template_format( descr.partial_dtorproc, {dtors=partial_dtors}))
 	instantCallableEnvironment = nil
 end
--- Define implicit constructors for 'struct'/'class' types
-function defineStructConstructors( node, qualitype, descr)
+-- Define implicit ctors for 'struct'/'class' types
+function defineStructCtors( node, qualitype, descr)
 	local env = createCallableEnvironment( node, "ctor " .. descr.symbol, nil, true)
 	local ctors_init,ctors_copy,ctors_elements = "","",""
 	local paramstr,argstr,elements = "","",{}
@@ -1045,7 +1045,7 @@ function defineStructConstructors( node, qualitype, descr)
 		instantUnwindLabel = "cleanup_" .. mi
 		if member_destroy_code ~= "" and mi ~= #descr.members then table.insert( rewindlist,{label=instantUnwindLabel, code=member_destroy_code}) end
 		if member_init and ctors_init then ctors_init = ctors_init .. member_init.constructor.code else ctors_init = nil end
-		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end 
+		if member_copy and ctors_copy then ctors_copy = ctors_copy .. member_copy.constructor.code else ctors_copy = nil end
 		if member_element and ctors_elements then ctors_elements = ctors_elements .. member_element.constructor.code else ctors_elements = nil end
 	end
 	if ctors_init then
@@ -1085,7 +1085,7 @@ function defineStructConstructors( node, qualitype, descr)
 			entercode = llvmir.exception.allocLandingpad
 			rewind = getDefaultCtorCleanupResumeCode( env, rewindlist, "finish")
 			constructorFunc = invokeConstructor( utils.template_format( descr.ctor_elements_throwing, {args=argstr}))
-			
+
 		else
 			attributes = llvmir.functionAttribute( false, false)
 			entercode,rewind = "",""
@@ -1127,13 +1127,13 @@ function defineInheritedInterfaces( node, context, classTypeId)
 				cmethod = context.methods[ mk]
 				if cmethod.throws ~= imethod.throws then
 					utils.errorMessage( node.line, "Exception behaviour (attribute nothrow) of method '%s' of class '%s' differs from interface '%s': '%s'",
-					                    cmethod.methodname, typedb:type_name(classTypeId),
-					                    typedb:type_name(iTypeId), typedb:type_string( imethod.ret or 0))
+							    cmethod.methodname, typedb:type_name(classTypeId),
+							    typedb:type_name(iTypeId), typedb:type_string( imethod.ret or 0))
 				end
 				if cmethod.ret ~= imethod.ret then
 					utils.errorMessage( node.line, "Return type '%s' of method '%s' of class '%s' differs from interface '%s': '%s'",
-					                    typedb:type_string( cmethod.ret or 0), cmethod.methodname, typedb:type_name(classTypeId),
-					                    typedb:type_name(iTypeId), typedb:type_string( imethod.ret or 0))
+							    typedb:type_string( cmethod.ret or 0), cmethod.methodname, typedb:type_name(classTypeId),
+							    typedb:type_name(iTypeId), typedb:type_string( imethod.ret or 0))
 				end
 				vmtstr = vmtstr .. sep
 					.. utils.template_format( llvmir.control.vtableElement,
@@ -1333,7 +1333,7 @@ function popEnvironment()
 	local glb = table.remove( environmentStack, #environmentStack)
 	instantCallableEnvironment = glb[1]
 	instantAllocationFrame = glb[2]
-	instantUnwindLabel = glb[3]	
+	instantUnwindLabel = glb[3]
 end
 ---- Allocation Frame Fields ----
 --	parent		: Parent allocation frame, the allocation frame in which this allocation frame has been created (in the same callable environment)
@@ -1341,7 +1341,7 @@ end
 --	env		: The callable environment this allocation frame belongs to
 --	scope		: Scope of this allocation frame
 -- 	partial_dtors	: Map scope step to a partial dtor for rewinding the construction of a partially build object. The partial dtor is called on a invoke unwind label. The partial dtor has a field start, the label where to jump for calling the partial dtor and a field continue, where the execution continues after the execution of the partial dtor. The partial dtor is registered with setPartialDtor.
---	dtors		: List of cleanup code entries, one for every object with a destructor, used to build the cleanup code sequences for different exit scenarios
+--	dtors		: List of cleanup code entries, one for every object with a dtor, used to build the cleanup code sequences for different exit scenarios
 --	exitmap		: Maps different named exit scenarios (exceptions thrown, return from a function with a specific value to a cleanup code sequence)
 --	exitkeys	: List of all keys for the output in definition order (deterministic) of the exitmap entries
 --	landingpad	: Landingpad table {code = code with all landingpads defined in this frame, map = maps cleanup labels to landingpad labels}
@@ -1553,7 +1553,7 @@ function getAllocationFrameRegularExitCleanupCode( frame)
 	if #frame.dtors > 0 then
 		local label = frame.env.label()
 		code = code .. utils.constructor_format( llvmir.control.label, {inp=label})
-		for di=#frame.dtors,1,-1 do 
+		for di=#frame.dtors,1,-1 do
 			local dtor = frame.dtors[ di]
 			if dtor.cleanup then code = code .. dtor.cleanup.code end
 		end
@@ -1701,10 +1701,10 @@ function returnFromMainFunction( rtype, exitlabel, retvaladr)
 	return function( constructor)
 		local out,code = constructorParts( constructor)
 		local assignretcode = code .. utils.constructor_format( assign_int_fmt, {this=retvaladr, arg1=out})
-		return assignretcode .. doReturnFromMain( exitlabel)		
+		return assignretcode .. doReturnFromMain( exitlabel)
 	end
 end
--- Get the whole code block of a callable including init and cleanup code 
+-- Get the whole code block of a callable including init and cleanup code
 function getCallableEnvironmentCodeBlock( env, code)
 	local rt = callableFeaturesInitCode( env) .. code
 	for _,frame in ipairs(env.frames) do rt = rt .. getAllocationFrameAbortCleanupCode( frame) end
@@ -2021,7 +2021,7 @@ function initControlBooleanTypes()
 	local function joinControlFalseTypeWithConstexprBool( this, arg)
 		if arg == false then
 			return this
-		else 
+		else
 			local env = getCallableEnvironment()
 			return {code= this.code .. utils.constructor_format( llvmir.control.terminateTrueExit,{out=this.out},env.label), out=this.out}
 		end
@@ -2029,7 +2029,7 @@ function initControlBooleanTypes()
 	local function joinControlTrueTypeWithConstexprBool( this, arg)
 		if arg == true then
 			return this
-		else 
+		else
 			local env = getCallableEnvironment()
 			return {code= this.code .. utils.constructor_format( llvmir.control.terminateFalseExit,{out=this.out},env.label), out=this.out}
 		end
@@ -2119,7 +2119,7 @@ function initBuiltInTypes()
 		elseif scalar_descr.class == "unsigned" then
 			constVarargTypeMap[ c_valtype] = scalarIntegerType
 		elseif scalar_descr.class == "signed" then
-			constVarargTypeMap[ c_valtype] = scalarIntegerType			
+			constVarargTypeMap[ c_valtype] = scalarIntegerType
 		end
 	end
 	local bytePointerQualitype_valtype,bytePointerQualitype_cval
@@ -2137,7 +2137,7 @@ function initBuiltInTypes()
 
 	local qualitype_anyclassptr = defineQualiTypes( {line=0}, 0, "any class^", llvmir.anyClassPointerDescr)
 	local qualitype_anystructptr = defineQualiTypes( {line=0}, 0, "any struct^", llvmir.anyStructPointerDescr)
-			                  
+
 	anyClassPointerType = qualitype_anyclassptr.valtype
 	hardcodedTypeMap[ "any class^"] = anyClassPointerType
 	anyConstClassPointerType = qualitype_anyclassptr.c_valtype
@@ -2166,7 +2166,7 @@ function initBuiltInTypes()
 	end
 	typedb:def_reduction( stringPointerType, stringAddressType, stringPointerConstructor, tag_typeInstantiation)
 	constVarargTypeMap[ stringAddressType] = stringPointerType
-	constVarargTypeMap[ stringPointerType] = stringPointerType	
+	constVarargTypeMap[ stringPointerType] = stringPointerType
 	initControlBooleanTypes()
 end
 -- Application of a constructor depending on its type and its argument type, return false as 2nd result on failure, true on success
@@ -2269,7 +2269,7 @@ function defineGenericParameterAliases( node, instanceType, param, arg)
 end
 -- For each lambda argument, create an alias named as the parameter name as substitute for the generic argument specified
 function defineLambdaParameterAliases( node, instanceType, param, arg)
-	for ii=1,#arg do		
+	for ii=1,#arg do
 		if arg[ ii].constructor then
 			defineValueAlias( node, instanceType, param[ ii], arg[ ii].type, arg[ ii].constructor)
 		else
@@ -2321,7 +2321,7 @@ function createGenericTypeInstance( node, genericType, genericArg, genericDescr,
 		typeIdNotifyFunction( typeInstance)
 		defineGenericParameterAliases( genericDescr.node, typeInstance, genericDescr.generic.param, genericArg)
 		local descr = {lnk="internal", signature="", name=typnam, symbol=typnam,
-		               private=genericDescr.private, const=genericDescr.const, throws=genericDescr.throws, interface=false}
+			       private=genericDescr.private, const=genericDescr.const, throws=genericDescr.throws, interface=false}
 		pushSeekContextType( typeInstance)
 		if genericDescr.class == "generic_function" then
 			traverseAstFunctionDeclaration( genericDescr.node, genericDescr.context, descr, 4)
@@ -2386,7 +2386,7 @@ function createPointerTypeInstance( node, attr, typeId)
 	definePointerArithmeticOperators( qualitype_valtype.valtype)
 	definePointerArithmeticOperators( qualitype_cval.valtype)
 	local qualitype
-	if qs.qualifier.const == true then 
+	if qs.qualifier.const == true then
 		qualitype = qualitype_cval
 	else
 		qualitype = qualitype_valtype
@@ -2638,7 +2638,7 @@ function expandDescrCallTemplateParameter( descr, context)
 	descr.argstr = getDeclarationLlvmTypedefParameterString( descr, context)
 	descr.symbolname = getTargetFunctionIdentifierString( descr, context)
 end
--- Expand the structure used for relating class and interface methods and construct the LLVM type of the function representing the method 
+-- Expand the structure used for relating class and interface methods and construct the LLVM type of the function representing the method
 function expandDescrMethod( descr, context)
 	descr.methodid = getInterfaceMethodIdentifierString( descr.symbol, descr.param, descr.const)
 	descr.methodname = getInterfaceMethodNameString( descr.name, descr.param, descr.const)
@@ -2775,7 +2775,7 @@ function defineClassOperator( node, descr, context)
 	local contextTypeId = getFunctionThisType( descr.private, descr.const, context.qualitype.reftype)
 	defineFunctionCall( contextTypeId, contextTypeId, descr.name, descr)
 	defineOperatorAttributes( context, descr)
-	if descr.name == "=" then context.properties.assignment = true end
+	if descr.name == "=" then context.properties.assign = true end
 end
 -- Define a ctor procedure
 function defineCtorProcedure( node, descr, context)
@@ -2838,7 +2838,7 @@ function expandMethodEnvironment( node, context, descr, env)
 	elseif descr.const then
 		selfTypeId = privateConstThisReferenceType
 	else
-		selfTypeId = privateThisReferenceType 
+		selfTypeId = privateThisReferenceType
 	end
 	local classvar = defineImplicitVariable( node, selfTypeId, "self", "%ths")
 	typedb:def_reduction( privateConstThisReferenceType, publicConstThisReferenceType, nil, tag_typeDeduction) -- make const private members of other instances of this class accessible
@@ -2926,7 +2926,7 @@ end
 --	descr		: LLVM IR Template parameters for mapping the structure
 --	operators	: Maps the operator name ('+','-',...) to a structure with some attributes that are used to create an instance with a structure argument if possible
 --				thisType   		: Type used as self parameter of the operator
---				returnType 		: Return type 
+--				returnType 		: Return type
 --				hasStructArgument 	: Tells if it is possible to create an operator instance with a structure argument
 --				maxNofArguments 	: Maximum number of elements in a structure argument
 --	methods		: List of methods/operators declared as members of the class/interface
@@ -2937,7 +2937,7 @@ end
 --	structsize	: Structure size in bytes for class and struct
 --	index		: LLVM Member variable index (starting with 0) for class and struct
 --	private		: True if member variables are private (class), false if they are public (struct)
---	properties	: Structure with the flags {constructor,destructor,assignment} telling what elements are declared in a class and do not need an implicit default declaration
+--	properties	: Structure with the flags {ctor,dtor,assign} telling what elements are declared in a class and do not need an implicit default declaration
 
 -- Structure Description (descr) Fields:
 -- The fields methods,methodmap,const are inherited from context
@@ -2965,18 +2965,18 @@ function traverseAstClassDef( node, declContextTypeId, typnam, descr, qualitype,
 	defineUnboundReferenceTypes( declContextTypeId, typnam, descr, qualitype)
 	definePublicPrivate( declContextTypeId, typnam, descr, qualitype)
 	local context = {domain="member", qualitype=qualitype, descr=descr,
-				members={}, properties={}, operators={}, methods={}, methodmap={}, interfaces={}, 
-	                	llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
+				members={}, properties={}, operators={}, methods={}, methodmap={}, interfaces={},
+				llvmtype="", symbol=descr.symbol, structsize=0, index=0, private=true}
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 1) -- 1st pass: define types: typedefs,classes,structures
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
 	descr.members = context.members
 	descr.size = context.structsize
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 3) -- 3rd pass: define callable headers
-	if not context.properties.constructor then defineStructConstructors( node, qualitype, descr) end
-	if not context.properties.destructor then defineStructDestructors( node, qualitype, descr) end
-	definePartialClassDestructor( node, qualitype, descr)
+	if not context.properties.ctor then defineStructCtors( node, qualitype, descr) end
+	if not context.properties.dtor then defineStructDtors( node, qualitype, descr) end
+	definePartialClassDtor( node, qualitype, descr)
 	defineInitializationFromStructure( node, qualitype)
-	if not context.properties.assignment then getAssignmentsFromCtors( node, qualitype, descr) end
+	if not context.properties.assign then getAssignmentsFromCtors( node, qualitype, descr) end
 	defineOperatorsWithStructArgument( node, context)
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 4) -- 4th pass: define callable implementations
 	defineInheritedInterfaces( node, context, qualitype.valtype)
@@ -2993,8 +2993,8 @@ function traverseAstStructDef( node, declContextTypeId, typnam, descr, qualitype
 	utils.traverseRange( typedb, node, {nodeidx,#node.arg}, context, 2) -- 2nd pass: define member variables
 	descr.members = context.members
 	descr.size = context.structsize
-	defineStructConstructors( node, qualitype, descr)
-	defineStructDestructors( node, qualitype, descr)
+	defineStructCtors( node, qualitype, descr)
+	defineStructDtors( node, qualitype, descr)
 	defineInitializationFromStructure( node, qualitype)
 	getAssignmentsFromCtors( node, qualitype, descr)
 	print_section( "Typedefs", utils.template_format( descr.typedef, {llvmtype=context.llvmtype}))
@@ -3068,7 +3068,7 @@ function conditionalIfElseBlock( node, initstate, condition, matchblk, elseblk, 
 	end
 	return {code = code, out = out, exitLabelUsed=exitLabelUsed, nofollow=nofollow}
 end
--- Collect the code of a scope with the destructor code for no jump exit of the frame and resume the initialization state if we are in a constructor
+-- Collect the code of a scope with the dtor code for no jump exit of the frame and resume the initialization state if we are in a ctor
 function collectCode( node, args)
 	local code = ""
 	local nofollow = false
@@ -3107,7 +3107,7 @@ function typesystem.definition_2pass( node, pass, context, pass_selected)
 		utils.traverse( typedb, node, context, 2)	-- pass-0 (4th) pass: implementations
 	end
 end
-function typesystem.paramdef( node, context) 
+function typesystem.paramdef( node, context)
 	local datatype,varname = table.unpack( utils.traverse( typedb, node, context))
 	return defineParameter( node, context, datatype, varname)
 end
@@ -3149,7 +3149,7 @@ function typesystem.typecast( node)
 	local refTypeId = referenceTypeMap[ typeId]
 	if not refTypeId then utils.errorMessage( node.line, "Only non reference type allowed in %s", "cast") end
 	local descr = typeDescriptionMap[ typeId]
-	if doCastToUnboundReferenceType( typeId) then 
+	if doCastToUnboundReferenceType( typeId) then
 		local out = "{RVAL}"
 		rt = tryApplyCallable( node, {type=refTypeId,constructor={out=out}}, ":=", {operand})
 		if not rt then utils.errorMessage( node.line, "Failed to cast '%s' from '%s'", typedb:type_string(typeId), typedb:type_string(operand.type)) end
@@ -3196,7 +3196,7 @@ function typesystem.catchblock( node, context, catchlabel)
 	registerCleanupCode( "exception message", cleanup)
 	typedb:scope( scope_bk)
 	local rt = table.unpack( utils.traverseRange( typedb, node, {#node.arg,#node.arg}, context))
-	rt.code = code .. rt.code 
+	rt.code = code .. rt.code
 	return rt
 end
 function typesystem.trycatch( node, context)
@@ -3205,7 +3205,7 @@ function typesystem.trycatch( node, context)
 	local catchlabel = env.label()
 	local tryblock,catchblock = table.unpack( utils.traverse( typedb, node, context, catchlabel))
 	local code
-	if not tryblock.nofollow then 
+	if not tryblock.nofollow then
 		local followlabel = env.label()
 		local gotoFollow = utils.constructor_format( llvmir.control.gotoStatement, {inp=followlabel}, env.register)
 		local labelFollow = utils.constructor_format( llvmir.control.label, {inp=followlabel}, env.register)
@@ -3362,7 +3362,7 @@ function typesystem.conditional_while( node)
 	if not cond_constructor then utils.errorMessage( node.line, "Can't use type '%s' as a condition", typedb:type_string(condition.type)) end
 	local start = env.label()
 	local startcode = utils.constructor_format( llvmir.control.label, {inp=start})
-	return {code = startcode .. cond_constructor.code .. yesblock.code 
+	return {code = startcode .. cond_constructor.code .. yesblock.code
 			.. utils.constructor_format( llvmir.control.invertedControlType, {out=start,inp=cond_constructor.out})}
 end
 function typesystem.with_do( node)
@@ -3461,7 +3461,7 @@ end
 --	param		: List of declared parameters of the callable
 --	vararg		: Boolean flag, true in case of a function with a variable number of arguments, parameter list ending with "..."
 --	private		: Boolean flag, true in case of a callable that is a private member of the class
---	const		: Boolean flag, true in case of a callable that can be called for a class declared as const 
+--	const		: Boolean flag, true in case of a callable that can be called for a class declared as const
 --	throws		: Boolean flag, true in case of a callable that may throw an exception
 --	interface	: Boolean flag, true in case of a method implementing a method that is defined by an interface
 --	signature	: Signature string of the callable for casts and for calling functions with a variable number of arguments (vararg = true)
@@ -3479,7 +3479,7 @@ end
 function typesystem.funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-		local descr = {lnk = lnk.linkage, signature="", name=name, symbol=name, 
+		local descr = {lnk = lnk.linkage, signature="", name=name, symbol=name,
 				private=lnk.private, const=false, throws=false, interface=false}
 		utils.traverseRange( typedb, node, {4,4}, context, descr, 0) -- decl {const,throws}
 		if descr.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free function declaration") end
@@ -3494,7 +3494,7 @@ end
 function typesystem.procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk,name = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-		local descr = {lnk = lnk.linkage, signature="", name = name, symbol = name, 
+		local descr = {lnk = lnk.linkage, signature="", name = name, symbol = name,
 				private=lnk.private, const=false, throws=false, interface=false}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 0) -- decl {const,throws}
 		if descr.const == true and context.domain ~= "member" then utils.errorMessage( node.line, "Using 'const' attribute in free procedure declaration") end
@@ -3530,7 +3530,7 @@ end
 function typesystem.operator_funcdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl, ret = table.unpack( utils.traverseRange( typedb, node, {1,3}, context))
-		local descr = {lnk = lnk.linkage, signature="", name=operatordecl.name, symbol ="$"..operatordecl.symbol, 
+		local descr = {lnk = lnk.linkage, signature="", name=operatordecl.name, symbol ="$"..operatordecl.symbol,
 				ret=ret, private=lnk.private, const=false, throws=false, interface=false}
 		utils.traverseRange( typedb, node, {4,4}, context, descr, 0) -- decl {const,throws}
 		utils.traverseRange( typedb, node, {4,4}, context, descr, 1) -- parameter
@@ -3547,7 +3547,7 @@ end
 function typesystem.operator_procdef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk, operatordecl = table.unpack( utils.traverseRange( typedb, node, {1,2}, context))
-		local descr = {lnk = lnk.linkage, signature="", name = operatordecl.name, symbol = "$" .. operatordecl.symbol, 
+		local descr = {lnk = lnk.linkage, signature="", name = operatordecl.name, symbol = "$" .. operatordecl.symbol,
 				ret = nil, private=lnk.private, const=false, throws=false, interface=false}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 0) -- decl {const,throws}
 		utils.traverseRange( typedb, node, {3,3}, context, descr, 1) -- parameter
@@ -3564,12 +3564,12 @@ end
 function typesystem.constructordef( node, context, pass)
 	if not pass or pass == 1 then
 		local lnk = table.unpack( utils.traverseRange( typedb, node, {1,1}, context))
-		local descr = {lnk = lnk.linkage, signature="", name = ":=", symbol = "$ctor", 
+		local descr = {lnk = lnk.linkage, signature="", name = ":=", symbol = "$ctor",
 				ret = nil, private=lnk.private, const=false, throws=false, interface=false}
 		utils.traverseRange( typedb, node, {2,2}, context, descr, 0) -- decl {const,throws}
-		if descr.const == true then utils.errorMessage( node.line, "Using 'const' attribute in constructor declaration") end
+		if descr.const == true then utils.errorMessage( node.line, "Using 'const' attribute in ctor declaration") end
 		utils.traverseRange( typedb, node, {2,2}, context, descr, 1) -- parameter
-		context.properties.constructor = true
+		context.properties.ctor = true
 		defineCtorProcedure( node, descr, context)
 		utils.allocNodeData( node, localDefinitionContext, descr)
 	end
@@ -3582,9 +3582,9 @@ end
 function typesystem.destructordef( node, lnk, context, pass)
 	local subcontext = {domain="local"}
 	if not pass or pass == 1 then
-		local descr = {lnk = lnk.linkage, signature="", name = ":~", symbol = "$dtor", 
-		               ret = nil, param={}, private=false, const=false, throws=false, interface=false}
-		context.properties.destructor = true
+		local descr = {lnk = lnk.linkage, signature="", name = ":~", symbol = "$dtor",
+			       ret = nil, param={}, private=false, const=false, throws=false, interface=false}
+		context.properties.dtor = true
 		defineDtorProcedure( node, descr, context)
 		utils.allocNodeData( node, localDefinitionContext, descr)
 	end
@@ -3595,7 +3595,7 @@ function typesystem.destructordef( node, lnk, context, pass)
 		if context.domain == "member" then expandMethodEnvironment( node, context, descr, env) end
 		if descr.throws then getOrCreateThisAllocationFrame() end -- define the toplevel allocation frame if it throws
 		local block = table.unpack( utils.traverse( typedb, node, subcontext))
-		local code = block.code .. getStructMemberDestructorCode( env, context.descr, context.members)
+		local code = block.code .. getStructMemberDtorCode( env, context.descr, context.members)
 		if not block.nofollow then code = code .. doReturnVoidStatement() end
 		descr.body = getCallableEnvironmentCodeBlock( env, code)
 		descr.env = env
@@ -3686,13 +3686,13 @@ end
 function typesystem.interface_funcdef( node, context)
 	local name,ret,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=name, symbol=name, ret=ret, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
+		       index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_procdef( node, context)
 	local name,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=name, symbol=name, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
+		       index=#context.methods, llvmthis="i8", load = context.descr.loadVmtMethod}
 	defineInterfaceMethod( node, descr, context)
 end
 function typesystem.interface_operator_funcdef( node, context)
@@ -3704,7 +3704,7 @@ end
 function typesystem.interface_operator_procdef( node, context)
 	local opr,param,decl = table.unpack( utils.traverse( typedb, node, context))
 	local descr = {name=opr.name, symbol="$"..opr.symbol, ret=nil, param=param, signature="", private=false, const=decl.const, throws=decl.throws,
-	               index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod}
+		       index=#context.methods, llvmthis="i8", load=context.descr.loadVmtMethod}
 	defineInterfaceOperator( node, descr, context)
 end
 function typesystem.namespacedef( node, context)
@@ -3800,7 +3800,7 @@ function typesystem.inheritdef( node, pass, context, pass_selected)
 	end
 end
 function typesystem.count( node)
- 	if #node.arg == 0 then return 1 else return utils.traverseCall( node)[ 1] + 1 end
+	if #node.arg == 0 then return 1 else return utils.traverseCall( node)[ 1] + 1 end
 end
 function typesystem.rep_operator( node)
 	local expr,icount,name = table.unpack( utils.traverse( typedb, node))
@@ -3825,7 +3825,7 @@ function typesystem.main_procdef( node)
 	if not block.nofollow then code = code .. env.returnfunction( constructorStruct("0")) end
 	if globalCallableEnvironment.throws then enableFeatureException( env) end
 	local body = getCallableEnvironmentCodeBlock( env, code)
-		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel}) 
+		.. utils.template_format( llvmir.control.plainLabel, {inp=exitlabel})
 		.. getAllocationFrameRegularExitCleanupCode( globalAllocationFrame)
 		.. utils.constructor_format( llvmir.control.returnFromMain, {this=retvaladr}, env.register)
 		.. getAllocationFrameAbortCleanupCode( globalAllocationFrame)
