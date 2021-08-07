@@ -111,14 +111,15 @@ The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexemes exp
 
 ### How to handle lexical scopes?
 
-The _scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type, reduction, instance) has a _scope_ definition attached. Depending on the current _scope-step_ (an integer number) only the definitions having a _scope_ covering it are visible when resolving or deriving a type. The current _scope_ and the current _scope-step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. The _scope_ is usually used to envelop code blocks. Substructures on the other hand are preferably implemented with a context-type attached to the definition. So class or structure member is defined as type with a name and the owner is attached as context-type to it. Every resolve type query can contain a set of context-type candidates.
+The _scope_ (referring to the lexical scope) is part of the type database and represented as pair of integer numbers, the first element specifying the start of the _scope_ and the second the first element after the last element of the _scope_. Every definition (type, reduction, instance) has a _scope_ definition attached. Depending on the current _scope-step_ (an integer number) only the definitions having a _scope_ covering it are visible when resolving or deriving a type. The current _scope_ and the current _scope-step_ are set by the tree traversal function before calling the function attached to a node. The current _scope_ is set to its previous value after calling the function attached to a node. The _scope_ is usually used to envelop code blocks. Substructures on the other hand are preferably implemented with a context-type attached to the definition. So class and structure members are defined as types with a name and the owner is defined as its context-type. Every resolve type query can contain a set of context-type candidates.
 
 <a name="reductionWeightSchema"/>
 
 ### How to define a schema of reduction weights?
 
 If there is anything alien in _Mewa_, it's the assignment of weights to productions to memorize the preference of type deduction paths.
-We talk about twenty lines of floating-point number assignments here. But weird ones. They empower _Mewa_ to use the shortest path search algorithm for resolving and deriving types, which is the key to the stunning performance of _Mewa_.
+We talk about twenty lines of floating-point number assignments here. But weird ones. They empower _Mewa_ to rely only on the shortest path search algorithm (_Dijkstra_) for resolving and deriving types.
+This is the key to the stunning performance of _Mewa_.
 
 When thinking about the weight-sum of a path, I imagine it as the summation of its parts. Each part represents one type of action, like removing a qualifier, adding const, converting a value, etc... Now I describe my rules like the following:
 
@@ -251,6 +252,7 @@ Every resolve type call has a set of context-types or a single context-type as a
 ### How to implement resolving of initializer lists?
 
 For initializer lists without explicit typing of the nodes (like for example ```{1,{2,3},{4,5,{6,7,8}}}```) some sort of recursive type resolution is needed within a constructor call. In the example **language1**, I defined a const expression type for unresolved structures represented as a list of type constructor pairs. The reduction of such a structure to a type that can be instantiated with structures using type resolution ([typedb:resolve_type](#resolve_type)) and type derivation ([typedb:derive_type](#derive_type)) to build the structures as a composition of the structure members. This mechanism can be defined recursively, meaning that the members can be defined as const expression type for unresolved structures themselves. The rule in example **language1** is that a constructor that returns *nil* has failed and leads to an error or a dropping of the case when using it in a function with the name prefix _try_.
+
 
 <a name="controlStructures"/>
 
