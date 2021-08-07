@@ -15,6 +15,7 @@
     * [How to store and access scope-bound data?](#scopeInstanceAndAllocators)
     * [How to debug/trace the _Mewa_ functions?](#tracing)
     * [How to implement type qualifiers like const and reference?](#typeQualifiers)
+    * [How to implement free variables?](#variables)
     * [How to implement structures?](#structures)
     * [How to implement pointers and arrays?](#pointersAndArrays)
     * [How to implement namespaces?](#namespaces)
@@ -205,6 +206,18 @@ I must admit to having rarely used the tree dump functions. They are tested thou
 Qualifiers are not considered to be attached to the type but part of the type definition. A const reference to an integer is a type on its own, like an integer value type or an integer reference type.
 Relations between types like const and non-const are expressed by reductions. A non-const type is reducible to const. The reducibility allowes non-const
 types to be passed to functions that ask for a const parameter.
+
+
+<a name="variables"/>
+
+### How to implement free variables?
+
+Free variables are types declared with their name as name and 0 as context type. In the scope of generics a dedicated type is used as context type instead of 0 to separate the definition realms for unrelated type definitions not to interfere.
+The data type of a variable is delared with a reduction of the variable type to its data type.
+With this reduction declared, we can use the variable in expressions, relying on its implicit deduction and construction as an instance of its associated data type.
+
+
+Member variables are declared similarly, with the owning structure type as context type. See [structures](#structures).
 
 
 <a name="structures"/>
