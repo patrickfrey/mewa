@@ -355,7 +355,7 @@ In the example **language1**, I defined the types
  * c_unbound_reftype with the qualifiers "const " and "&<-" representing an unbound constant reference.
 
 The ```out``` member of the unbound reference constructor references a variable that can be substituted with the reference of the type this
-value is assigned to. This allows injecting the destination address later in the process after the constructor code has been built.
+value is assigned to. This allows injecting the address specifier of the reference after the constructor code has been built.
 
 Returning values by constructing them in place at a memory address passed as a parameter by the caller can be implemented with unbound reference types
 within the model of expressions represented by type/constructor pairs. In this case, the type returned is an unbound reference type.
@@ -654,20 +654,24 @@ In the following, I describe how generics are implemented in the example **langu
  5. Finally, we add the generic instance type to the list of context types and traverse the _AST_ node of the generic.
     The code for the generic instance type is created in the process.
 
-Because the instantiation of generics may trigger the instantiation of other generics, we have to use a stack holding the state variables used in the process.
+Because the instantiation of generics may trigger the instantiation of other generics, we have to use a stack holding the state variables used during this procedure.
 The state variables include also all keys used for objects attached to a scope like callable environment, allocation frames etc.
 In the example **language1**, the function ```pushGenericLocal``` creates a unique suffix for all keys used for ```typedb:set_instance```,```typedb:get_instance```, and ```typedb:this_instance```.
 The function ```popGenericLocal``` restores the previous state.
+
 
 <a name="genericsParameterDeduction"/>
 
 #### How to deduce generic arguments from a parameter list?
 C++ can reference template functions without declaring the template arguments. The template arguments are deduced from the call arguments.
-I did not implement this in the example **language1**. Template parameter deduction can be seen as preliminar step before the instantiation of the generic type.
-The instantiation itself does not change having template parameter deduction.
+I did not implement this in the example **language1**.
+
 For automatic template argument deduction, the generic parameter assignments have to be synthesized by matching the function parameters
-against the function candidates. A complete set of generic parameter assignments is evaluated in the process. This list is used
-as the generic argument list to refer to the generic instance.
+against the function candidates. As result, the complete list of generic parameter assignments has to be evaluated.
+This list is used as the generic argument list for the instantiation.
+
+The generic argument deduction is therefore decoupled from the instantiation of the generic.
+It is a preliminar step before the instantiation of the generic type.
 
 
 <a name="multipleTraversal"/>
