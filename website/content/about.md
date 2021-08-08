@@ -1,7 +1,7 @@
 ---
 title: "About"
 date: 2021-04-26T08:47:11+01:00
-draft: true
+draft: false
 ---
 
 ## Design Philosophy and Limitations

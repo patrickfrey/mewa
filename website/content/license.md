@@ -1,7 +1,7 @@
 ---
 title: "Software License"
 date: 2021-04-26T08:47:11+01:00
-draft: true
+draft: false
 ---
 ## License MIT
 Copyright (c) 2020 Patrick P. Frey
