@@ -8,7 +8,7 @@
 |                                                       |```intType = typedb:def_type( 0, "int" )                                              ```|
 |                                                       |```function call( func) return function( this, arg ) ... end end                      ```|
 |```class Obj                                        ```|```function init( obj) return function( address) ... end end                          ```|
-|```{                                                ```|                                                                                      ```|
+|```{                                                ```|```                                                                                   ```|
 |```      function run( param : int )                ```|```object = typedb:def_type( 0, "Obj" )                                               ```|
 |```                    -> int;                      ```|```mt = typedb:def_type( object, "run" )                                              ```|
 |```}                                                ```|```run = typedb:def_type( mt, "()", call( "Obj_run", {intType} )                      ```|
