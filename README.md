@@ -1,10 +1,29 @@
+# Imagine
+... to define the typesystem of your language like this:
+
+##### Class Declaration
+| Pseudocode                                          | Typedb Commands Illustration (Simplified)                                            |
+| :-------------------------------------------------- | :----------------------------------------------------------------------------------- |
+|                                                     |                                                                                      |
+|                                                     | function callConstructur( func) return function( this, arg ) ... end end             |
+| class Object                                        | function initConstructur( obj) return function( address) ... end end                 |
+| {                                                   | integerType = typedb:def_type( 0, "integer" )                                        |
+|       function run( param : integer ) -> double     |                                                                                      |
+| }                                                   | object = typedb:def_type( 0, "Object" )                                              |
+|                                                     | callable = typedb:def_type( object, "run" )                                          |
+|                                                     | run = typedb:def_type( callable, "()", callConstructur( "Object_run", {integerType} )|
+|                                                     | typedb:def_reduction( integerType, run, initConstructor( integerType) )              |
+|                                                     |                                                                                      |
+
 # Mewa
-_Mewa_ is a **compiler-compiler for prototyping** of compiler front-ends in [Lua](https://www.lua.org). You write an attributed grammar in a custom language, a sort of _Bison/Yacc_-style _BNF_. The parser creates an _AST_ (Abstract Syntax Tree) with a fixed schema. _Lua_ function calls attached as attributes are called on the _AST_ tree traversal triggered by the compiler after the syntax analysis.
-A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides some assistance to define your type system and to generate code.
+_Mewa_ is a **compiler-compiler for prototyping** of compiler front-ends for statically-typed programming languages in [Lua](https://www.lua.org).
+You write an attributed grammar in a custom language, a sort of _Bison/Yacc_-style _BNF_. The parser creates an _AST_ (Abstract Syntax Tree) with
+a fixed schema. _Lua_ function calls attached as attributes are called on the _AST_ tree traversal triggered by the compiler after the syntax analysis.
+A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides assistance to define the type system of your programming language in a declarative way.
 
 # Design Philosophy and Limitations
  - _Mewa_ is **not a framework**. It is not instrumented with configuration or plug-ins. The program logic is entirely implemented by the compiler front-end author in _Lua_. In other words: You write the compiler front-end with _Lua_ using _Mewa_ and not with _Mewa_ using _Lua_ as binding language.
- - _Mewa_ is **not optimized for collaborative work**. It encourages the use of bad practices concerning cooperation.
+ - _Mewa_ is **not optimized for collaborative work**.
  - _Mewa_ provides no support for the evaluation of different paths of code generation. **It leaves all analytical optimization steps to the backend**.
  - _Mewa_ does not aim to offer you the greatest variety of possibilities. There exist feature-richer compiler-compilers. _Mewa_ aims to **bring projects considered endless for a single person within reach**.
 
