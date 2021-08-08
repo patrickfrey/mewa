@@ -1,19 +1,26 @@
 # Imagine
 ... to define the typesystem of your language like this:
 
-##### Class Declaration
-| Pseudocode                                            | Typedb Commands Illustration (Simplified)                                               |
-| :---------------------------------------------------- | :-------------------------------------------------------------------------------------- |
-|                                                       |                                                                                         |
-|                                                       |```intType = typedb:def_type( 0, "int" )                                              ```|
-|                                                       |```function call( func) return function( this, arg ) ... end end                      ```|
-|```class Obj                                        ```|```function init( obj) return function( address) ... end end                          ```|
-|```{                                                ```|```                                                                                   ```|
-|```      function run( param : int )                ```|```object = typedb:def_type( 0, "Obj" )                                               ```|
-|```                    -> int;                      ```|```mt = typedb:def_type( object, "run" )                                              ```|
-|```}                                                ```|```run = typedb:def_type( mt, "()", call( "Obj_run", {intType} )                      ```|
-|                                                       |```typedb:def_reduction( intType, run, init( intType) )                               ```|
-|                                                       |                                                                                         |
+##### Pseudocode Class Declaration
+```C++
+class Obj
+{
+	function run( param : int ) -> int;
+}
+```
+
+##### Typedb Commands Illustration (Simplified)
+```Lua
+intType = typedb:def_type( 0, "int" )
+
+function call( func) return function( this, arg ) ... end end
+function init( obj) return function( address) ... end end
+
+object = typedb:def_type( 0, "Obj" )
+mt = typedb:def_type( object, "run" )
+run = typedb:def_type( mt, "()", call( "Obj_run", {intType} )
+typedb:def_reduction( intType, run, init( intType) )
+```
 
 # Mewa
 _Mewa_ is a **compiler-compiler for prototyping** of compiler front-ends for statically-typed programming languages in [Lua](https://www.lua.org).
