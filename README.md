@@ -2,18 +2,18 @@
 ... to define the typesystem of your language like this:
 
 ##### Class Declaration
-| Pseudocode                                          | Typedb Commands Illustration (Simplified)                                            |
-| :-------------------------------------------------- | :----------------------------------------------------------------------------------- |
-|                                                     |                                                                                      |
-|                                                     | function callConstructur( func) return function( this, arg ) ... end end             |
-| class Object                                        | function initConstructur( obj) return function( address) ... end end                 |
-| {                                                   | integerType = typedb:def_type( 0, "integer" )                                        |
-|       function run( param : integer ) -> double     |                                                                                      |
-| }                                                   | object = typedb:def_type( 0, "Object" )                                              |
-|                                                     | callable = typedb:def_type( object, "run" )                                          |
-|                                                     | run = typedb:def_type( callable, "()", callConstructur( "Object_run", {integerType} )|
-|                                                     | typedb:def_reduction( integerType, run, initConstructor( integerType) )              |
-|                                                     |                                                                                      |
+| Pseudocode                                      | Typedb Commands Illustration (Simplified)                                            |
+| :---------------------------------------------- | :----------------------------------------------------------------------------------- |
+|                                                 |                                                                                      |
+|                                                 | integerType = typedb:def_type( 0, "integer" )                                        |
+|                                                 | function call( func) return function( this, arg ) ... end end                        |
+| class Obj                                       | function init( obj) return function( address) ... end end                            |
+| {                                               |                                                                                      |
+|       function run( param : integer )           | object = typedb:def_type( 0, "Obj" )                                                 |
+|                    -> double;                   | callable = typedb:def_type( object, "run" )                                          |
+| }                                               | run = typedb:def_type( callable, "()", call( "Obj_run", {integerType} )              |
+|                                                 | typedb:def_reduction( integerType, run, initConstructor( integerType) )              |
+|                                                 |                                                                                      |
 
 # Mewa
 _Mewa_ is a **compiler-compiler for prototyping** of compiler front-ends for statically-typed programming languages in [Lua](https://www.lua.org).
