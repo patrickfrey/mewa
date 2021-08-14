@@ -16,7 +16,7 @@ A rule to derive a **type** from another with a description of how to construct 
 A state transition occurring after the last item of a production has been parsed, replacing the right side of the production with the left side on the parser stack.
 
 ## Scope
-Pair of integer numbers that address a subtree of the AST. The first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope-step of the instruction that queries the definition.
+Pair of integer numbers that address a subtree of the _AST_. The first number defines the start of the scope and the second number defines one number after the last step that belongs to the scope. The scope defines the validity of a definition in the language defined. A definition is valid if the scope includes the scope-step of the instruction that queries the definition.
 
 ### Example
 1. Item 'ABC' defined in scope [1,123]
@@ -33,8 +33,8 @@ Some other compiler models represent hierarchies of data structures by lexical s
 Counter that is incremented for every production in the grammar marked with the operators **>>** or **{}**. The **scope-step** defines the start and the end of the **scope** assigned to productions by the scope operator **{}**.
 
 #### Initialization of the Scope from the Scope-Step counter
-A **scope** starts with the scope-step counter value when first entering the traversal of an AST node with a production marked as **{}**.
-It ends with the **scope-step** increment after exiting the traversal of the AST node.
+A **scope** starts with the scope-step counter value when first entering the traversal of an _AST_ node with a production marked as **{}**.
+It ends with the **scope-step** increment after exiting the traversal of the _AST_ node.
 
 ## Context Type
 Every type definition has a tuple consisting of a type and a name as the key that identifies it. The type is called the **context type** of the definition. The context type is either a type defined before or 0 representing the absence of a context type or the global context. Context types are used to describe relations like membership. They are also used to describe contextual visibility.
@@ -62,7 +62,7 @@ The class of language covered by _Mewa_. Further reading in [Wikipedia: Context 
 A component that scans the input and produces a stream of items called _tokens_ that are the atoms the grammar of the language is based on. In _Mewa_ the _lexer_ is defined as a set of named patterns. The patterns are regular expressions that are matched on the first/next non-whitespace character in the input. Contradicting _lexeme_ matches are resolved in _Mewa_ by selecting the longest match or the first definition comparing matches of the same length as the _token_ value emitted.
 
 ### AST (Abstract Syntax Tree)
-The intermediate representation of the program. The output of the program parser. The AST in _Mewa_ is described [here](ast.md).
+The intermediate representation of the program. The output of the program parser. The _AST_ in _Mewa_ is described [here](ast.md).
 
 
 ## Glossary of the Example language1

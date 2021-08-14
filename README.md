@@ -18,7 +18,7 @@ function init( obj) return function( address) ... end end
 
 object = typedb:def_type( 0, "Obj" )
 mt = typedb:def_type( object, "run" )
-run = typedb:def_type( mt, "()", call( "Obj_run", {intType} )
+run = typedb:def_type( mt, "()", call( "Obj_run"), {intType} )
 typedb:def_reduction( intType, run, init( intType) )
 ```
 
