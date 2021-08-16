@@ -32,6 +32,7 @@ A _Lua_ module written in C++ (see [typedb API](doc/typedb.md)) provides assista
  - _Mewa_ is **not a framework**. It is not instrumented with configuration or plug-ins. The program logic is entirely implemented by the compiler front-end author in _Lua_. In other words: You write the compiler front-end with _Lua_ using _Mewa_ and not with _Mewa_ using _Lua_ as binding language.
  - _Mewa_ is **not optimized for collaborative work**.
  - _Mewa_ provides no support for the evaluation of different paths of code generation. **It leaves all analytical optimization steps to the backend**.
+ - _Mewa_ is file-in, file-out, and not suited for implementing Jit compilation.
  - _Mewa_ does not aim to offer you the greatest variety of possibilities. There exist feature-richer compiler-compilers. _Mewa_ aims to **bring projects considered endless for a single person within reach**.
 
 # LLVM IR

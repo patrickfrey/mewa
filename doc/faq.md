@@ -6,6 +6,7 @@
     * [What types of grammars are covered by _Mewa_?](#coveredGrammarClasses)
     * [Why only an LALR(1) parser generator?](#onlyLALR1)
     * [What types of languages are covered by _Mewa_?](#coveredLanguageClasses)
+    * [What does _Mewa_ do differently from the others?](#differenceMewa)
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
@@ -89,6 +90,24 @@ But I am open to alternatives or extensions to cover more classes of grammars. I
 **_Mewa_ was been designed to be capable to implement statically typed, general-purpose programming languages having a LALR(1) grammar definition.**
 It is not recommended to use _Mewa_ for processing other than compilable, statically typed programming languages, because it was not designed for other language classes.
 To define a type system as a graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
+
+
+<a name="differenceMewa"/>
+
+### What does _Mewa_ do differently from the others?
+
+Industrial compiler front-ends are building an _AST_ from the source and are processing it in several well-defined passes doing jobs
+like type checking, resolving, etc. The _AST_ is enriched and transformed in this process.
+Finally, the _AST_ is traversed and the intermediate representation code is generated.
+This model has the advantage to scale well with the number of developers involved. It is optimized for collaborative work.
+It is also not limited by other constraints than what can be expressed with the structure of the _AST_.
+
+_Mewa_, on the other hand, builds an _AST_ deduced from the grammar. The functions attached to the nodes implement the tree traversal.
+Instead of enriching the _AST_, a flat set of structures representing the typesystem is built. The resulting code is built according to
+construction plans derived from this flat set of structures. This imposes a lot more constraints on what you can do and what not.
+On the other hand, it can be interesting to think about language constructs in such a minimalistic way.
+This makes _Mewa_ a tool suitable for prototyping compiler front-ends.
+
 
 <a name="nameMewa"/>
 
