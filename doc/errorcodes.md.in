@@ -73,6 +73,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:CommandNumberOfArgumentsInGrammarDef**   _$ERRTEXT:CommandNumberOfArgumentsInGrammarDef_
 + **#$ERRCODE:CommandNameUnknownInGrammarDef**   _$ERRTEXT:CommandNameUnknownInGrammarDef_
 + **#$ERRCODE:MandatoryCommandMissingInGrammarDef**   _$ERRTEXT:MandatoryCommandMissingInGrammarDef_
++ **#$ERRCODE:ConflictingCommandInGrammarDef**   _$ERRTEXT:ConflictingCommandInGrammarDef_
 
 + **#$ERRCODE:DefinedAsTerminalAndNonterminalInGrammarDef**   _$ERRTEXT:DefinedAsTerminalAndNonterminalInGrammarDef_
 + **#$ERRCODE:UnresolvedIdentifierInGrammarDef**   _$ERRTEXT:UnresolvedIdentifierInGrammarDef_

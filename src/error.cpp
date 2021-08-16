@@ -260,7 +260,7 @@ const char* Error::code2String( int code_) noexcept
 		case UnexpectedEofInGrammarDef: return "Unexpected EOF in the grammar definition";
 		case UnexpectedTokenInGrammarDef: return "Unexpected token in the grammar definition";
 		case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
-	case NestedCallArgumentStructureInGrammarDef: return "Nested structures as AST node function arguments are not allowed";
+		case NestedCallArgumentStructureInGrammarDef: return "Nested structures as AST node function arguments are not allowed";
 
 		case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 		case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";
@@ -269,6 +269,7 @@ const char* Error::code2String( int code_) noexcept
 		case CommandNumberOfArgumentsInGrammarDef: return "Wrong number of arguments for command (followed by '%') in the grammar definition";
 		case CommandNameUnknownInGrammarDef: return "Unknown command (followed by '%') in the grammar definition";
 		case MandatoryCommandMissingInGrammarDef: return "Mandatory command is missing in grammar definition";
+		case ConflictingCommandInGrammarDef: return "Conflicting commands in grammar definition";
 
 		case DefinedAsTerminalAndNonterminalInGrammarDef: return "Identifier defined as nonterminal and as lexem in the grammar definition not allowed";
 		case UnresolvedIdentifierInGrammarDef: return "Unresolved identifier in the grammar definition";

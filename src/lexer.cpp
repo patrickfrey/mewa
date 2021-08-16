@@ -240,6 +240,61 @@ bool Scanner::scan( const char* str)
 	return (end && next( end-m_srcitr + std::strlen(str)));
 }
 
+int Scanner::indentCount( int tabSize) const noexcept
+{
+	int rt = 0;
+	char const* se = m_srcitr;
+	char const* si = m_src.data();
+	for (; se != si && *si != '\n' && (unsigned char)*si <= 32; --se)
+	{
+		rt += *si=='\t' ? tabSize : 1;
+	}
+	return (se == si || *si == '\n') ? rt : -1;
+}
+
+Scanner::IndentToken Scanner::getIndentToken( int tabSize)
+{
+	if (m_indentConsumed)
+	{
+		m_indentConsumed = false;
+		return IndentNone;
+	}
+	int cnt = indentCount( tabSize);
+	if (cnt == -1) return IndentNone;
+	if (m_indentstk.empty())
+	{
+		if (cnt == 0)
+		{
+			m_indentConsumed = true;
+			return IndentNewLine;
+		}
+		else
+		{
+			m_indentstk.push_back( cnt);
+			return IndentOpen;
+		}
+	}
+	else
+	{
+		int bk = m_indentstk.back();
+		if (bk < cnt)
+		{
+			m_indentstk.push_back( cnt);
+			return IndentOpen;
+		}
+		else if (bk > cnt)
+		{
+			m_indentstk.pop_back();
+			return IndentClose;
+		}
+		else
+		{
+			m_indentConsumed = true;
+			return IndentNewLine;
+		}
+	}
+}
+
 bool Scanner::match( const char* str)
 {
 	int ii = 0;
@@ -358,6 +413,27 @@ void Lexer::defineIgnore( const std::string_view& pattern)
 	(void)defineLexem_( "", pattern, false/*keyword*/, 0/*select*/);
 }
 
+int Lexer::defineLexemId( const std::string_view& name)
+{
+	std::size_t id_ = m_nameidmap.size()+1;
+	while (m_id2keyword.size() <= id_) {m_id2keyword.push_back( false);}
+	auto ins = m_nameidmap.insert( {std::string(name), id_} );
+	if (ins.second/*insert took place*/)
+	{
+		m_namelist.push_back( nameString( name));
+	}
+	return ins.first->second;
+}
+
+void Lexer::defineIndentLexems( const std::string_view& open, const std::string_view& close, const std::string_view& newline, int tabsize)
+{
+	if (m_indentLexemOpen) throw Error( Error::ConflictingCommandInGrammarDef);
+	m_indentLexemOpen = defineLexemId( open);
+	m_indentLexemClose = defineLexemId( close);
+	m_indentLexemNewLine = defineLexemId( newline);
+	m_indentTabSize = tabsize;
+}
+
 static std::string stringToRegex( const std::string_view& opr)
 {
 	std::string rt;
@@ -450,6 +526,16 @@ Lexem Lexer::next( Scanner& scanner) const
 	{
 		char const* start = scanner.next();
 		if (*start == '\0') return Lexem( scanner.line());
+		if (m_indentLexemOpen)
+		{
+			switch (scanner.getIndentToken( m_indentTabSize))
+			{
+				case Scanner::IndentNone: break;
+				case Scanner::IndentNewLine: return Lexem( m_namelist[ m_indentLexemNewLine-1], m_indentLexemNewLine, ""/*value*/, scanner.line());
+				case Scanner::IndentOpen: return Lexem( m_namelist[ m_indentLexemOpen-1], m_indentLexemOpen, ""/*value*/, scanner.line());
+				case Scanner::IndentClose: return Lexem( m_namelist[ m_indentLexemClose-1], m_indentLexemClose, ""/*value*/, scanner.line());
+			}
+		}
 		auto range = m_firstmap.equal_range( *start);
 		int maxlen = 0;
 		int matchidx = -1;

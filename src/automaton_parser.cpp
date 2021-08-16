@@ -561,6 +561,15 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 								throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
 							}
 						}
+						else if (caseInsensitiveEqual( cmdname, "INDENTL"))
+						{
+							if (cmdargs.size() != 4)
+							{
+								throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
+							}
+							int indent = convertStringToInt( cmdargs[3]);
+							rt.lexer.defineIndentLexems( cmdargs[0], cmdargs[1], cmdargs[2], indent);
+						}
 						else
 						{
 							throw Error( Error::CommandNameUnknownInGrammarDef, cmdname);
