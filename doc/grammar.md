@@ -28,6 +28,11 @@ The following commands are known:
 * **%** **COMMENT** _start_ **;** Defines the content starting with the pattern _start_ defined as regular expression quoted in single or double quotes until the next end of a line as a comment. Comments are ignored by the lexer and thus by the compiler.
 * **%** **IGNORE** _pattern_ **;** Defines a token matching this pattern defined as regular expression quoted in single or double quotes as invisible. It is ignored by the lexer and thus by the compiler. Hence it does not need a name.
 * **%** **BAD** _name_ **;** Defines the name of the error token of the lexer. Has no implications but for the debugging output.
+* **%** **INDENTL** _open_ _close_ _nl_ _tabsize_ **;** Defines lexems issued for indentiation. Used to implement **off-side rule** languages. The tokens issued can be referenced in the grammar by the names specified as command arguments.
+     1. _open_ is the name of the terminal issued when indentiation is increased.
+     2. _close_ is the name of the terminal issued when indentiation is decreased.
+     3. _nl_ is the name of the terminal issued when a new line is started (issued after _open_).
+     4. _tabsize_ is the number of spaces used as substitute for ```TAB```.
 
 ### Lexeme/Token Declarations
 Lexeme declarations start with an identifier followed by a colon '**:**', a pattern matching the lexeme, and an optional selection index:
@@ -98,7 +103,7 @@ The compiler does the syntax analysis and builds the _AST_ in the process. After
  * The operator precedence in _Yacc/Bison_ has a counterpart with roughly the same expressiveness in _Mewa_. In _Mewa_ priorities with left/right-handed associativity are attached to productions. Unfortunately, the _Mewa_ approach is more error-prone.
 
 ### Meaning of Whitespaces
-Whitespaces have no meaning in languages describable by _Mewa_.
+Whitespaces have no meaning in languages describable by _Mewa_ except indentiation if configured with the command **%INDENTL**.
 The lexemes of the languages cannot start with whitespaces as the parser skips whitespaces after every lexeme matched and starts matching the next lexeme with the first non-whitespace character after the last match.
 
 

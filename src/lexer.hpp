@@ -124,6 +124,7 @@ public:
 
 	enum IndentToken { IndentNone, IndentNewLine, IndentOpen, IndentClose};
 	IndentToken getIndentToken( int tabSize);
+	IndentToken getEofIndentToken();
 
 private:
 	void checkNullTerminated();

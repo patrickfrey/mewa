@@ -22,13 +22,14 @@
 #include <sstream>
 #include <string>
 
+bool g_verbose = false;
 using namespace mewa;
 
-void testActivation( const char* rxstr, const char* expected, bool verbose)
+void testActivation( const char* rxstr, const char* expected)
 {
 	LexemDef lxdef( ""/*name*/, rxstr, 0/*id*/, false/*keyword*/, 0/*select*/);
 	std::string output = lxdef.activation();
-	if (verbose)
+	if (g_verbose)
 	{
 		std::cerr << "TEST LEXEM " << rxstr << " ACTIVATION " << output << std::endl;
 	}
@@ -39,91 +40,75 @@ void testActivation( const char* rxstr, const char* expected, bool verbose)
 	}
 }
 
-int main( int argc, const char* argv[] )
+void runLexer( const char* name, const Lexer& lexer, const std::string& source, const std::string& expected)
 {
-	try
+	std::ostringstream outputbuf;
+	outputbuf << "\n";
+	Scanner scanner( source);
+	Lexem lexem = lexer.next( scanner);
+	for (; !lexem.empty(); lexem = lexer.next( scanner))
 	{
-		bool verbose = false;
-		int argi = 1;
-		for (; argi < argc; ++argi)
+		outputbuf << lexem.name() << " [" << lexem.value() << "]" << "\n";
+		if (g_verbose) std::cerr << lexem.name() << " [" << lexem.value() << "]" << std::endl;
+		if (lexem.name() == "?")
 		{
-			if (0==std::strcmp( argv[argi], "-V"))
-			{
-				verbose = true;
-			}
-			else if (0==std::strcmp( argv[argi], "-h"))
-			{
-				std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
-				break;
-			}
-			else if (0==std::strcmp( argv[argi], "--"))
-			{
-				++argi;
-				break;
-			}
-			else if (argv[argi][0] == '-')
-			{
-				std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
-				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
-			}
-			else
-			{
-				break;
-			}
+			break;
 		}
-		if (argi < argc)
-		{
-			std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
-			throw std::runtime_error( "no arguments except options expected");
-		}
-		testActivation( "0123456789", "0", verbose);
-		testActivation( "[0123456789]", "0123456789", verbose);
-		testActivation( "[0-9]", "0123456789", verbose);
-		testActivation( "[0-9]*([.][0-9]*){0,1}", "0123456789.", verbose);
-		testActivation( "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}", "0123456789. Ee", verbose);
-		testActivation( "[-]{0,1}[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}", "-0123456789. Ee", verbose);
-		testActivation( "((true)|(false))", "tf", verbose);
-		testActivation( "[a-zA-Z_]+[a-zA-Z_0-9]*", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", verbose);
-		testActivation( "[\"]((([^\\\"\n]+)|([\\][^\"\n]))*)[\"]", "\"", verbose);
-		testActivation( "[']((([^\\'\n]+)|([\\][^'\n]))*)[']", "'", verbose);
+	}
+	std::string output = outputbuf.str();
+	if (output != expected)
+	{
+		writeFile( std::string("build/testLexer.") + name + ".out", output);
+		writeFile( std::string("build/testLexer.") + name + ".exp", expected);
+		std::cerr << "ERR test output (build/testLexer." << name << ".out) differs expected build/testLexer." << name << ".exp" << std::endl;
+		throw std::runtime_error("test failed");
+	}
+	else
+	{
+		removeFile( std::string("build/testLexer.") + name + ".out");
+		removeFile( std::string("build/testLexer.") + name + ".exp");
+	}
+}
 
-		Lexer lexer;
-		lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
-		lexer.defineLexem( "UINT", "[0-9]*");
-		lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
-		lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
-		lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
-		lexer.defineLexem( "::");
-		lexer.defineLexem( "<<");
-		lexer.defineLexem( ">>");
-		lexer.defineLexem( "<");
-		lexer.defineLexem( ">");
-		lexer.defineLexem( ">=");
-		lexer.defineLexem( "<=");
-		lexer.defineLexem( "==");
-		lexer.defineLexem( "!=");
-		lexer.defineLexem( "=");
-		lexer.defineLexem( "{");
-		lexer.defineLexem( "}");
-		lexer.defineLexem( "(");
-		lexer.defineLexem( ")");
-		lexer.defineLexem( ";");
-		lexer.defineLexem( ",");
-		lexer.defineLexem( "/");
-		lexer.defineLexem( "/=");
-		lexer.defineLexem( "%");
-		lexer.defineLexem( "%=");
-		lexer.defineLexem( "+");
-		lexer.defineLexem( "+=");
-		lexer.defineLexem( "++");
-		lexer.defineLexem( "-");
-		lexer.defineLexem( "--");
-		lexer.defineLexem( "-=");
-		lexer.defineLexem( "#include");
-		lexer.defineEolnComment( "//");
-		lexer.defineBracketComment( "/*", "*/");
+void testLexer1()
+{
+	Lexer lexer;
+	lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
+	lexer.defineLexem( "UINT", "[0-9]*");
+	lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
+	lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
+	lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
+	lexer.defineLexem( "::");
+	lexer.defineLexem( "<<");
+	lexer.defineLexem( ">>");
+	lexer.defineLexem( "<");
+	lexer.defineLexem( ">");
+	lexer.defineLexem( ">=");
+	lexer.defineLexem( "<=");
+	lexer.defineLexem( "==");
+	lexer.defineLexem( "!=");
+	lexer.defineLexem( "=");
+	lexer.defineLexem( "{");
+	lexer.defineLexem( "}");
+	lexer.defineLexem( "(");
+	lexer.defineLexem( ")");
+	lexer.defineLexem( ";");
+	lexer.defineLexem( ",");
+	lexer.defineLexem( "/");
+	lexer.defineLexem( "/=");
+	lexer.defineLexem( "%");
+	lexer.defineLexem( "%=");
+	lexer.defineLexem( "+");
+	lexer.defineLexem( "+=");
+	lexer.defineLexem( "++");
+	lexer.defineLexem( "-");
+	lexer.defineLexem( "--");
+	lexer.defineLexem( "-=");
+	lexer.defineLexem( "#include");
+	lexer.defineEolnComment( "//");
+	lexer.defineBracketComment( "/*", "*/");
 
-		std::string source{R"(
+	std::string source{R"(
 #include <string>
 #include <iostream>
 
@@ -272,32 +257,201 @@ UINT [0]
 ; [;]
 } [}]
 )"};
-		std::ostringstream outputbuf;
-		outputbuf << "\n";
-		Scanner scanner( source);
-		Lexem lexem = lexer.next( scanner);
-		for (; !lexem.empty(); lexem = lexer.next( scanner))
+	runLexer( "1", lexer, source, expected);
+}
+
+
+void testLexer2()
+{
+	Lexer lexer;
+	lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
+	lexer.defineLexem( "UINT", "[0-9]*");
+	lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
+	lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
+	lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
+	lexer.defineLexem( "::");
+	lexer.defineLexem( "<<");
+	lexer.defineLexem( ">>");
+	lexer.defineLexem( "<");
+	lexer.defineLexem( ">");
+	lexer.defineLexem( ">=");
+	lexer.defineLexem( "<=");
+	lexer.defineLexem( "==");
+	lexer.defineLexem( "!=");
+	lexer.defineLexem( "=");
+	lexer.defineLexem( "{");
+	lexer.defineLexem( "}");
+	lexer.defineLexem( "(");
+	lexer.defineLexem( ")");
+	lexer.defineLexem( ";");
+	lexer.defineLexem( ",");
+	lexer.defineLexem( "/");
+	lexer.defineLexem( "/=");
+	lexer.defineLexem( "%");
+	lexer.defineLexem( "%=");
+	lexer.defineLexem( "+");
+	lexer.defineLexem( "+=");
+	lexer.defineLexem( "++");
+	lexer.defineLexem( "-");
+	lexer.defineLexem( "--");
+	lexer.defineLexem( "-=");
+	lexer.defineLexem( "#include");
+	lexer.defineEolnComment( "//");
+	lexer.defineBracketComment( "/*", "*/");
+	lexer.defineIndentLexems( "open_ind", "close_ind", "nl_ind", 4);
+
+	std::string source{R"(
+//This is a program
+fn bla( a, b)
+    if (a > b)
+        return 1
+    else
+        let z = a - b
+        return z
+        // Return z
+
+//This is a program
+fn main( a, b)
+    if (bla( a, b) > 67)
+        return 1
+    else
+        let z = a - b
+        return z
+        // Return z
+)"};
+
+	std::string expected{R"(
+"nl_ind" []
+IDENT [fn]
+IDENT [bla]
+( [(]
+IDENT [a]
+, [,]
+IDENT [b]
+) [)]
+"open_ind" []
+"nl_ind" []
+IDENT [if]
+( [(]
+IDENT [a]
+> [>]
+IDENT [b]
+) [)]
+"open_ind" []
+"nl_ind" []
+IDENT [return]
+UINT [1]
+"close_ind" []
+"nl_ind" []
+IDENT [else]
+"open_ind" []
+"nl_ind" []
+IDENT [let]
+IDENT [z]
+= [=]
+IDENT [a]
+- [-]
+IDENT [b]
+"nl_ind" []
+IDENT [return]
+IDENT [z]
+"close_ind" []
+"close_ind" []
+"nl_ind" []
+IDENT [fn]
+IDENT [main]
+( [(]
+IDENT [a]
+, [,]
+IDENT [b]
+) [)]
+"open_ind" []
+"nl_ind" []
+IDENT [if]
+( [(]
+IDENT [bla]
+( [(]
+IDENT [a]
+, [,]
+IDENT [b]
+) [)]
+> [>]
+UINT [67]
+) [)]
+"open_ind" []
+"nl_ind" []
+IDENT [return]
+UINT [1]
+"close_ind" []
+"nl_ind" []
+IDENT [else]
+"open_ind" []
+"nl_ind" []
+IDENT [let]
+IDENT [z]
+= [=]
+IDENT [a]
+- [-]
+IDENT [b]
+"nl_ind" []
+IDENT [return]
+IDENT [z]
+"close_ind" []
+"close_ind" []
+)"};
+	runLexer( "2", lexer, source, expected);
+}
+
+
+int main( int argc, const char* argv[] )
+{
+	try
+	{
+		int argi = 1;
+		for (; argi < argc; ++argi)
 		{
-			outputbuf << lexem.name() << " [" << lexem.value() << "]" << "\n";
-			if (verbose) std::cerr << lexem.name() << " [" << lexem.value() << "]" << std::endl;
-			if (lexem.name() == "?")
+			if (0==std::strcmp( argv[argi], "-V"))
+			{
+				g_verbose = true;
+			}
+			else if (0==std::strcmp( argv[argi], "-h"))
+			{
+				std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
+				break;
+			}
+			else if (0==std::strcmp( argv[argi], "--"))
+			{
+				++argi;
+				break;
+			}
+			else if (argv[argi][0] == '-')
+			{
+				std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
+				throw std::runtime_error( string_format( "unknown option '%s'", argv[argi]));
+			}
+			else
 			{
 				break;
 			}
 		}
-		std::string output = outputbuf.str();
-		if (output != expected)
+		if (argi < argc)
 		{
-			writeFile( "build/testLexer.out", output);
-			writeFile( "build/testLexer.exp", expected);
-			std::cerr << "ERR test output (build/testLexer.out) differs expected build/testLexer.exp" << std::endl;
-			return 3;
+			std::cerr << "Usage: testLexer [-h][-V]" << std::endl;
+			throw std::runtime_error( "no arguments except options expected");
 		}
-		else
-		{
-			removeFile( "build/testLexer.out");
-			removeFile( "build/testLexer.exp");
-		}
+		testActivation( "0123456789", "0");
+		testActivation( "[0123456789]", "0123456789");
+		testActivation( "[0-9]", "0123456789");
+		testActivation( "[0-9]*([.][0-9]*){0,1}", "0123456789.");
+		testActivation( "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}", "0123456789. Ee");
+		testActivation( "[-]{0,1}[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}", "-0123456789. Ee");
+		testActivation( "((true)|(false))", "tf");
+		testActivation( "[a-zA-Z_]+[a-zA-Z_0-9]*", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_");
+		testActivation( "[\"]((([^\\\"\n]+)|([\\][^\"\n]))*)[\"]", "\"");
+		testActivation( "[']((([^\\'\n]+)|([\\][^'\n]))*)[']", "'");
+
+		testLexer1();
+		testLexer2();
 		std::cerr << "OK" << std::endl;
 	}
 	catch (const mewa::Error& err)

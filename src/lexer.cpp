@@ -245,11 +245,11 @@ int Scanner::indentCount( int tabSize) const noexcept
 	int rt = 0;
 	char const* se = m_srcitr;
 	char const* si = m_src.data();
-	for (; se != si && *si != '\n' && (unsigned char)*si <= 32; --se)
+	for (; se != si && *(se-1) != '\n' && (unsigned char)*(se-1) <= 32; --se)
 	{
-		rt += *si=='\t' ? tabSize : 1;
+		rt += *(se-1)=='\t' ? tabSize : 1;
 	}
-	return (se == si || *si == '\n') ? rt : -1;
+	return (se == si || *(se-1) == '\n') ? rt : -1;
 }
 
 Scanner::IndentToken Scanner::getIndentToken( int tabSize)
@@ -292,6 +292,19 @@ Scanner::IndentToken Scanner::getIndentToken( int tabSize)
 			m_indentConsumed = true;
 			return IndentNewLine;
 		}
+	}
+}
+
+Scanner::IndentToken Scanner::getEofIndentToken()
+{
+	if (m_indentstk.empty())
+	{
+		return IndentNone;
+	}
+	else
+	{
+		m_indentstk.pop_back();
+		return IndentClose;
 	}
 }
 
@@ -525,16 +538,13 @@ Lexem Lexer::next( Scanner& scanner) const
 	for (;;)
 	{
 		char const* start = scanner.next();
-		if (*start == '\0') return Lexem( scanner.line());
-		if (m_indentLexemOpen)
+		if (*start == '\0')
 		{
-			switch (scanner.getIndentToken( m_indentTabSize))
+			if (m_indentLexemOpen && scanner.getEofIndentToken() == Scanner::IndentClose)
 			{
-				case Scanner::IndentNone: break;
-				case Scanner::IndentNewLine: return Lexem( m_namelist[ m_indentLexemNewLine-1], m_indentLexemNewLine, ""/*value*/, scanner.line());
-				case Scanner::IndentOpen: return Lexem( m_namelist[ m_indentLexemOpen-1], m_indentLexemOpen, ""/*value*/, scanner.line());
-				case Scanner::IndentClose: return Lexem( m_namelist[ m_indentLexemClose-1], m_indentLexemClose, ""/*value*/, scanner.line());
+				return Lexem( m_namelist[ m_indentLexemClose-1], m_indentLexemClose, ""/*value*/, scanner.line());
 			}
+			return Lexem( scanner.line());
 		}
 		auto range = m_firstmap.equal_range( *start);
 		int maxlen = 0;
@@ -593,6 +603,16 @@ Lexem Lexer::next( Scanner& scanner) const
 			}
 			else if (0 != m_defar[ matchidx].id())
 			{
+				if (m_indentLexemOpen)
+				{
+					switch (scanner.getIndentToken( m_indentTabSize))
+					{
+						case Scanner::IndentNone: break;
+						case Scanner::IndentNewLine: return Lexem( m_namelist[ m_indentLexemNewLine-1], m_indentLexemNewLine, ""/*value*/, line);
+						case Scanner::IndentOpen: return Lexem( m_namelist[ m_indentLexemOpen-1], m_indentLexemOpen, ""/*value*/, line);
+						case Scanner::IndentClose: return Lexem( m_namelist[ m_indentLexemClose-1], m_indentLexemClose, ""/*value*/, line);
+					}
+				}
 				scanner.next( maxlen);
 				return Lexem( m_defar[ matchidx].name(), m_defar[ matchidx].id(), std::string_view( matchstart, matchsize), line);
 			}
