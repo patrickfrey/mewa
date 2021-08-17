@@ -34,13 +34,13 @@ The following commands are known:
      3. _nl_ is the name of the terminal issued when a new line is started (issued after _open_).
      4. _tabsize_ is the number of spaces used as substitute for ```TAB```.
 
-  Here is a code example and the indent events created if ```%INDENTL OPIND CLIND NLIND 4``` is configured:
+  Here is a code example (spaces marked with dots) and the indent events created if ```%INDENTL OPIND CLIND NLIND 4``` is configured:
   ```
-  bla()
-     if (a == b)
-	return 1
-     else
-	return 2
+..bla()
+......if (a == b)
+..........return 1
+......else
+..........return 2
   ```
   ```
   NLIND [bla()] OPIND NLIND [return 1] CLIND NLIND [else] OPIND NLIND [return 2] CLIND CLIND
