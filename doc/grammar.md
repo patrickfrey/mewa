@@ -35,17 +35,17 @@ The following commands are known:
      4. _tabsize_ is the number of spaces used as substitute for ```TAB```.
 
   Here is a code example (spaces marked with dots) and the indent events created if ```%INDENTL OPIND CLIND NLIND 8``` is configured:
-  ```Python
+```Python
 fn foo()
 	if (a == b)
 		return 1
 	else
 		return 2
-  ```
+```
 
-  ```
+```
   NLIND [fn foo()] OPIND NLIND [return 1] CLIND NLIND [else] OPIND NLIND [return 2] CLIND CLIND
-  ```
+```
 
 ### Lexeme/Token Declarations
 Lexeme declarations start with an identifier followed by a colon '**:**', a pattern matching the lexeme, and an optional selection index:
