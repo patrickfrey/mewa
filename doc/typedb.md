@@ -184,13 +184,22 @@ typedb:step( 49);  print( typedb:get_instance( "register")());
 <a name="this_instance"/>
 
 ### typedb:this_instance
-Get the instance for the object with name _name_ assigned to the current scope (set with [typedb::scope](#scope) or [typedb::step](#step)).
+Get the instance for the object with name _name_ assigned to the current scope (set with [typedb::scope](#scope)).
 
 #### Parameter
 | #      | Name     | Type     | Description                                                                           |
 | :----- | :------- | :------- | :------------------------------------------------------------------------------------ |
 | 1st    | name     | string   | Name of the object we are addressing                                                  |
 | Return |          | *        | The instance of the object we addressed or *nil* if not defined in the current scope. |
+
+
+#### Note
+```typedb:this_instance``` is useful to implement the following pattern:
+  * inherit on read
+  * copy on first write
+  * reference on following writes.
+
+For example for the implementation of _allocation frames_ or the implementation of the _Pascal_ "WITH" or the C++ "using".
 
 
 <a name="types"/>
@@ -335,6 +344,10 @@ The scope-step of the search that defines the valid reduction candidates has bee
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
 
+#### Note
+```typedb:get_reductions``` is useful to implement the Dijkstra shortest part search used in [typedb:derive_type](#derive_type) and [typedb:resolve_type](#resolve_type) in plain Lua for debugging and tracing.
+Such a parallel implementation is easier to handle than it would be the to offer a mechanism to instrument the original implementation for tracing.
+
 
 <a name="deriveAndResolveTypes"/>
 
@@ -403,11 +416,13 @@ Otherwise the first return value is the context-type of the resuls types and the
 <a name="typeAttributes"/>
 
 ## Inspect Type Attributes
+The following functions are convenient getters for types defined with [typedb:def_type](#def_type).
+
 
 <a name="type_name"/>
 
 ### typedb:type_name
-Get the name of the type as it was specified as name argument (second) of 'typedb:def_type'.
+Get the name of the type as it was specified as name argument (second) of [typedb:def_type](#def_type).
 
 #### Parameter
 | #          | Name   | Type              | Description                      |
@@ -418,7 +433,7 @@ Get the name of the type as it was specified as name argument (second) of 'typed
 <a name="type_context"/>
 
 ### typedb:type_context
-Get the type handle of the type as specified as context-type argument (first) of 'typedb:def_type'.
+Get the type handle of the type as specified as context-type argument (first) of [typedb:def_type](#def_type).
 
 #### Parameter
 | #          | Name   | Type              | Description                                                         |
@@ -433,11 +448,11 @@ Get the type handle of the type as specified as context-type argument (first) of
 Get the full signature of the type as string. This is the full name of the context type, the name and the full name of all parameters defined.
 
 #### Parameter
-| #          | Name | Type              | Description                                                                                    |
-| :--------- | :--- | :---------------- | :--------------------------------------------------------------------------------------------- |
-| 1st        | type | integer           | Type identifier                                                                                |
-| 2nd        | type | string            | (optional) Separator for multipart type name, default is space ' '                             |
-| Return     |      | string            | Full name of the type with context separated by spaces and parameters in oval brackets '(' ')' |
+| #          | Name | Type              | Description                                                                                 |
+| :--------- | :--- | :---------------- | :------------------------------------------------------------------------------------------ |
+| 1st        | type | integer           | Type identifier                                                                             |
+| 2nd        | type | string            | (optional) Separator for multipart type name, default is space ' '                          |
+| Return     |      | string            | Full name of the type with context and parameters in oval brackets '(' ')' separated by ',' |
 
 
 <a name="type_parameters"/>
