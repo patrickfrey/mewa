@@ -114,7 +114,7 @@ This makes _Mewa_ a tool suitable for prototyping compiler front-ends.
 
 ### What are the known limitations of _Mewa_ so far?
 
-* The notion of _scope_ imposes some restrictions on lazy evaluation in the _AST_ traversal (generics, lambdas). Because parameter types do have their scope and so do the relations defined on them, the _scope_ of a parameter type has to cover the _scope_ of the generic or lambda. That is a restriction that applies to C++ too.
+* The notion of _scope_ imposes some restrictions on lazy evaluation in the _AST_ traversal (generics, lambdas). Because parameter types do have their scope and so do the relations defined on them, the _scope_ of a parameter type has to cover the _scope_ of the generic or lambda. That is a restriction that applies to _C++_ too. A possible solution could be to define type properties like class methods, structure member accesses, and reductions in the global scope. Because they would be related to the context type anyways, there would be no interference with other types. But I am not sure about the implications.
 
 
 <a name="nameMewa"/>
