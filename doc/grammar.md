@@ -33,6 +33,17 @@ The following commands are known:
      2. _close_ is the name of the terminal issued when indentiation is decreased.
      3. _nl_ is the name of the terminal issued when a new line is started (issued after _open_).
      4. _tabsize_ is the number of spaces used as substitute for ```TAB```.
+  Here is a code example and the indent events created if ```%INDENTL OPIND CLIND NLIND 4``` is configured:
+  ```
+  bla()
+     if (a == b)
+	return 1
+     else
+	return 2
+  ```
+  ```
+  NLIND [bla()] OPIND NLIND [return 1] CLIND NLIND [else] OPIND NLIND [return 2] CLIND CLIND
+  ```
 
 ### Lexeme/Token Declarations
 Lexeme declarations start with an identifier followed by a colon '**:**', a pattern matching the lexeme, and an optional selection index:
