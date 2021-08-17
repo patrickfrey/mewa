@@ -33,6 +33,7 @@ The following commands are known:
      2. _close_ is the name of the terminal issued when indentiation is decreased.
      3. _nl_ is the name of the terminal issued when a new line is started (issued after _open_).
      4. _tabsize_ is the number of spaces used as substitute for ```TAB```.
+
   Here is a code example and the indent events created if ```%INDENTL OPIND CLIND NLIND 4``` is configured:
   ```
   bla()
