@@ -44,7 +44,7 @@ The following commands are known:
 	```
 
 	```
-		NLIND [fn foo()] OPIND NLIND [return 1] CLIND NLIND [else] OPIND NLIND [return 2] CLIND CLIND
+	NLIND [fn foo()] OPIND NLIND [return 1] CLIND NLIND [else] OPIND NLIND [return 2] CLIND CLIND
 	```
 
 ### Lexeme/Token Declarations
