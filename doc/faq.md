@@ -7,6 +7,7 @@
     * [Why only an LALR(1) parser generator?](#onlyLALR1)
     * [What types of languages are covered by _Mewa_?](#coveredLanguageClasses)
     * [What does _Mewa_ do differently from the others?](#differenceMewa)
+    * [What are the known limitations of _Mewa_ so far?](#limitations)
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
@@ -103,10 +104,17 @@ This model has the advantage to scale well with the number of developers involve
 It is also not limited by other constraints than what can be expressed with the structure of the _AST_.
 
 _Mewa_, on the other hand, builds an _AST_ deduced from the grammar. The functions attached to the nodes implement the tree traversal.
-Instead of enriching the _AST_, a flat set of structures representing the typesystem is built. The resulting code is built according to
+Instead of enriching the _AST_, a flat set of structures representing the type system is built. The resulting code is built according to
 construction plans derived from this flat set of structures. This imposes a lot more constraints on what you can do and what not.
 On the other hand, it can be interesting to think about language constructs in such a minimalistic way.
 This makes _Mewa_ a tool suitable for prototyping compiler front-ends.
+
+
+<a name="limitations"/>
+
+### What are the known limitations of _Mewa_ so far?
+
+* The notion of _scope_ imposes some restrictions on lazy evaluation in the _AST_ traversal (generics, lambdas). Because parameter types do have their scope and so do the relations defined on them, the _scope_ of a parameter type has to cover the _scope_ of the generic or lambda. That is a restriction that applies to C++ too.
 
 
 <a name="nameMewa"/>
@@ -489,7 +497,7 @@ function typesystem.classdef( node, context)
 	...
 end
 ```
-The declaration of functions, operators, and methods of classes gets more complicated. In the example **language1**, I define the typesystem method ```definition_decl_impl_pass``` that is executed in two passes. The first pass declares the callable. The second pass creates its implementation. The reason for this is the possibility of the methods to call each other without being declared in an order of their dependency as this is not always possible and not intuitive.
+The declaration of functions, operators, and methods of classes gets more complicated. In the example **language1**, I define the type system method ```definition_decl_impl_pass``` that is executed in two passes. The first pass declares the callable. The second pass creates its implementation. The reason for this is the possibility of the methods to call each other without being declared in an order of their dependency as this is not always possible and not intuitive.
 
 
 <a name="branchDependencies"/>
