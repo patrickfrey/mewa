@@ -48,7 +48,8 @@
     * [How to implement calls of C-Library functions?](#cLibraryCalls)
     * [How to implement coroutines?](#coroutines)
     * [How to implement copy elision?](#copyElision)
-    * [How to implement reference counting on use as in Swift?](#referenceCounting)
+    * [How to implement reference counting on use as in Swift?](#referenceCountingSwift)
+    * [How to implement reference lifetime checking as in Rust?](#referenceLifetimeRust)
     * [What about optimizations?](#optimizations)
 1. [Decision Questions](#decisions)
     * [Why are type deduction paths weighted?](#weightedTypeDeduction)
@@ -306,7 +307,9 @@ This is because the behavior has also to apply to expressions without control st
 bool hasData = (expr != NULL && expr->data != NULL);
 ```
 Control true/false types are convertible into each other.
+The negation of a control true/false type is created by flipping the type to its counterpart without changing the constructor.
 Depending on the control structure, either control-true type or control-false type is required.
+
 
 <a name="constants"/>
 
@@ -760,14 +763,34 @@ Copy elision, though it's making programs faster is not considered as an optimiz
   * Construction of a return value in the return slot, when using only one variable for the return value in the variable declaration scope
 
 
-<a name="referenceCounting"/>
+<a name="referenceCountingSwift"/>
 
-### How to implement reference counting on use as in Swift?
+### How to implement reference counting on use as in _Swift_?
 
-Swift implements reference counting when required. This implies the adding of a traversal pass that notifies how a type (variable) is used.
+_Swift_ implements reference counting when required. This implies the adding of a traversal pass that notifies how a type (variable) is used.
 This pass decides if a reference counting type used for the variable or not. There is no way to get around the traversal pass that notifies the usage.
 I suggest to implement other things like copy elision decisions in this pass too if it is required anyway.
 I need to think a little bit more about this issue as it is an aspect that is not covered at all in the example **language1**.
+
+
+<a name="referenceLifetimeRust"/>
+
+### How to implement reference lifetime checking as in Rust?
+
+_Rust_ implements reference lifetime checking by mandatory attributes for references passed to and returned from functions and for structure members.
+These attributes allow assigning a lifetime to all references in the program as they describe a transitive forwarding of lifetime assignments to references.
+Values returned from a function get a lifetime attribute from their parameters.
+Structures get the lifetime of their shortest living member.
+The attributes are identifiers that express identity if they are equal.
+The following function header declares the return value lifetime being the same as the parameters lifetime.
+```Rust
+fn first_word<'a>(s: &'a str) -> &'a str
+```
+I did not yet get deep into _Rust_. But the lifetime attribute looks for me as perfectly representable by the _scope_ structure in _Mewa_.
+I suggest adding the identifier (```a``` in the example above) as an attribute to the parameter constructor.
+A function call constructor checks the _scope_ assignments (two values with the same attribute require the same _scope_) and synthesizes the _scope_ attribute of the return value (forwarding the _scope_ related to its lifetime attribute).
+I do not know yet how to pass the lifetime attribute from the structure members to the structure.
+But I guess the mechanisms are best modeled similarly to functions. It is about the transitive forwarding of lifetime attributes.
 
 
 <a name="optimizations"/>
