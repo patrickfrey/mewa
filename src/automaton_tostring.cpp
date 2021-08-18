@@ -216,6 +216,9 @@ static void printLexems( std::ostream& outstream, const char* tablename, const L
 						printString( outstream, def.end());
 						outstream << " }";
 						break;
+					case Lexer::Definition::IndentLexems:
+						outstream << " " << def.openind() << ", " << def.tabsize();
+						break;
 				}
 				++defcnt;
 			}

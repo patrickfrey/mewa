@@ -978,6 +978,9 @@ static void printLexems( const Lexer& lexer, Automaton::DebugOutput dbgout)
 			case Lexer::Definition::BracketComment:
 				dbgout.out() << deftypename << " " << def.start() << " " << def.end() << " [" << def.activation() << "]" << std::endl;
 				break;
+			case Lexer::Definition::IndentLexems:
+				dbgout.out() << deftypename << " " << def.openind() << " " << def.tabsize() << std::endl;
+				break;
 		}
 	}
 	dbgout.out() << std::endl;

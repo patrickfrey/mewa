@@ -364,6 +364,10 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 						call_arg.append( lexem.value());
 						state = ParseCallArgMemberDelim;
 					}
+					else if (state == ParseLexerCommandArg)
+					{
+						cmdargs.push_back( lexem.value());
+					}
 					else
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());

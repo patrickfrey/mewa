@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
@@ -31,6 +32,15 @@ extern "C" {
 #if __cplusplus < 201703L
 #error Building mewa requires C++17
 #endif
+
+static bool lua_isinteger( lua_State *ls, int li)
+{
+	int tp = lua_type( ls, li);
+	if (tp != LUA_TNUMBER) return false;
+	double val = lua_tonumber( ls, li);
+	double fl = val - floor( val);
+	return (fl < 10*std::numeric_limits<double>::epsilon());
+}
 
 template <typename KEY, typename VAL>
 static std::map<KEY,VAL> parsePackedTable( lua_State *ls, int li, const char* tableName)
@@ -75,7 +85,7 @@ static std::vector<std::string> parseStringArray( lua_State *ls, int li, const s
 	while (lua_next( ls, -2))
 	{
 		++rowcnt;
-		if (!lua_isnumber( ls, -2) || rowcnt != lua_tointeger( ls, -2))
+		if (!lua_isinteger( ls, -2))
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
@@ -86,6 +96,33 @@ static std::vector<std::string> parseStringArray( lua_State *ls, int li, const s
 			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
 		}
 		rt.push_back( std::string( valstr, vallen));
+		lua_pop( ls, 1);
+	}
+	lua_pop( ls, 1);
+	return rt;
+}
+
+static std::vector<int> parseIntegerArray( lua_State *ls, int li, const std::string& tableName)
+{
+	std::vector<int> rt;
+	int rowcnt = 0;
+
+	lua_pushvalue( ls, li);
+	lua_pushnil( ls);
+
+	while (lua_next( ls, -2))
+	{
+		++rowcnt;
+		if (!lua_isinteger( ls, -2))
+		{
+			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
+		}
+		if (!lua_isinteger( ls, -1))
+		{
+			throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable, mewa::string_format( "table '%s', row %d", tableName.c_str(), rowcnt));
+		}
+		int val = lua_tointeger( ls, -1);
+		rt.push_back( val);
 		lua_pop( ls, 1);
 	}
 	lua_pop( ls, 1);
@@ -223,6 +260,16 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 			{
 				rt.defineIgnore( ignore);
 			}
+		}
+		else if (0==std::strcmp( keystr, "indentl"))
+		{
+			auto indentLexems = parseIntegerArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
+			if (indentLexems.size() != 2)
+			{
+				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
+							mewa::string_format( "table '%s/%s'", tableName, keystr));
+			}
+			rt.setIndentLexems( {indentLexems[0]+0,indentLexems[0]+1,indentLexems[0]+2,indentLexems[1]} );
 		}
 		lua_pop( ls, 1);
 	}

@@ -102,7 +102,7 @@ compilerdef = %automaton%
 if not arg[1] then error( "Missign argument (program to compile)\n") end
 
 compiler = mewa.compiler( compilerdef)
-compiler:run( ccmd.target, ccmd.options, arg[1])
+compiler:run( nil, nil, arg[1])
 )"};
 
 

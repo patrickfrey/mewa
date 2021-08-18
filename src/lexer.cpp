@@ -369,7 +369,7 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 	{
 		if (name.empty())
 		{
-			m_defar.push_back( LexemDef( std::string(), std::string(pattern), 0/*id*/, false/*keyword*/, select));
+			m_defar.emplace_back( std::string(), std::string(pattern), 0/*id*/, false/*keyword*/, select);
 		}
 		else
 		{
@@ -395,7 +395,7 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 			{
 				throw Error( Error::KeywordDefinedTwiceInLexer, name);
 			}
-			m_defar.push_back( LexemDef( ins.first->first, std::string(pattern), ins.first->second, keyword_, select));
+			m_defar.emplace_back( ins.first->first, std::string(pattern), ins.first->second, keyword_, select);
 			rt = ins.first->second;
 		}
 	}
@@ -403,16 +403,19 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 	{
 		throw Error( Error::InvalidRegexInLexer, pattern);
 	}
-	int firstChars = 0;
-	for (unsigned int ii=0; ii<256; ++ii)
+	if (pattern.size() > 0)
 	{
-		if (m_defar.back().activate().test(ii))
+		int firstChars = 0;
+		for (unsigned int ii=0; ii<256; ++ii)
 		{
-			m_firstmap.insert( std::pair<unsigned char,int>( ii, m_defar.size()-1));
-			++firstChars;
+			if (m_defar.back().activate().test(ii))
+			{
+				m_firstmap.insert( std::pair<unsigned char,int>( ii, m_defar.size()-1));
+				++firstChars;
+			}
 		}
+		if (firstChars == 0) throw Error( Error::SyntaxErrorInLexer);
 	}
-	if (firstChars == 0) throw Error( Error::SyntaxErrorInLexer);
 	return rt;
 }
 
@@ -435,16 +438,21 @@ int Lexer::defineLexemId( const std::string_view& name)
 	{
 		m_namelist.push_back( nameString( name));
 	}
+	else
+	{
+		throw std::runtime_error( Error( Error::KeywordDefinedTwiceInLexer));
+	}
+	m_defar.emplace_back( std::string(name), id_);
 	return ins.first->second;
 }
 
 void Lexer::defineIndentLexems( const std::string_view& open, const std::string_view& close, const std::string_view& newline, int tabsize)
 {
-	if (m_indentLexemOpen) throw Error( Error::ConflictingCommandInGrammarDef);
-	m_indentLexemOpen = defineLexemId( open);
-	m_indentLexemClose = defineLexemId( close);
-	m_indentLexemNewLine = defineLexemId( newline);
-	m_indentTabSize = tabsize;
+	if (m_indentLexems.open) throw Error( Error::ConflictingCommandInGrammarDef);
+	m_indentLexems.open = defineLexemId( open);
+	m_indentLexems.close = defineLexemId( close);
+	m_indentLexems.newLine = defineLexemId( newline);
+	m_indentLexems.tabSize = tabsize;
 }
 
 static std::string stringToRegex( const std::string_view& opr)
@@ -540,9 +548,9 @@ Lexem Lexer::next( Scanner& scanner) const
 		char const* start = scanner.next();
 		if (*start == '\0')
 		{
-			if (m_indentLexemOpen && scanner.getEofIndentToken() == Scanner::IndentClose)
+			if (m_indentLexems.defined() && scanner.getEofIndentToken() == Scanner::IndentClose)
 			{
-				return Lexem( m_namelist[ m_indentLexemClose-1], m_indentLexemClose, ""/*value*/, scanner.line());
+				return Lexem( m_namelist[ m_indentLexems.close-1], m_indentLexems.close, ""/*value*/, scanner.line());
 			}
 			return Lexem( scanner.line());
 		}
@@ -603,14 +611,14 @@ Lexem Lexer::next( Scanner& scanner) const
 			}
 			else if (0 != m_defar[ matchidx].id())
 			{
-				if (m_indentLexemOpen)
+				if (m_indentLexems.defined())
 				{
-					switch (scanner.getIndentToken( m_indentTabSize))
+					switch (scanner.getIndentToken( m_indentLexems.tabSize))
 					{
 						case Scanner::IndentNone: break;
-						case Scanner::IndentNewLine: return Lexem( m_namelist[ m_indentLexemNewLine-1], m_indentLexemNewLine, ""/*value*/, line);
-						case Scanner::IndentOpen: return Lexem( m_namelist[ m_indentLexemOpen-1], m_indentLexemOpen, ""/*value*/, line);
-						case Scanner::IndentClose: return Lexem( m_namelist[ m_indentLexemClose-1], m_indentLexemClose, ""/*value*/, line);
+						case Scanner::IndentNewLine: return Lexem( m_namelist[ m_indentLexems.newLine-1], m_indentLexems.newLine, ""/*value*/, line);
+						case Scanner::IndentOpen: return Lexem( m_namelist[ m_indentLexems.open-1], m_indentLexems.open, ""/*value*/, line);
+						case Scanner::IndentClose: return Lexem( m_namelist[ m_indentLexems.close-1], m_indentLexems.close, ""/*value*/, line);
 					}
 				}
 				scanner.next( maxlen);
@@ -654,6 +662,12 @@ std::vector<Lexer::Definition> Lexer::getDefinitions() const
 			Definition( Definition::EolnComment, {cc}, 0/*select*/,
 					MATCH_EOLN_COMMENT/*id*/, std::string( cc.c_str(), 1)/*activation*/));
 	}
+	if (m_indentLexems.defined())
+	{
+		rt.push_back(
+			Definition( Definition::IndentLexems,
+				    {}, m_indentLexems.tabSize/*select*/,m_indentLexems.open/*id*/, std::string()/*activation*/));
+	}
 	return rt;
 }
 
@@ -669,6 +683,7 @@ Lexer::Lexer( const std::vector<Definition>& definitions)
 			case Definition::IgnoreLexem:		defineIgnore( def.pattern());
 			case Definition::EolnComment:		defineEolnComment( def.start()); break;
 			case Definition::BracketComment:	defineBracketComment( def.start(), def.end()); break;
+			case Definition::IndentLexems:		m_indentLexems = {def.openind(),def.closeind(),def.newline(),def.tabsize()}; break;
 		}
 	}
 }

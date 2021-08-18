@@ -24,11 +24,11 @@ ORANGE='\033[0;33m'
 NOCOL='\033[0m'
 ECHOBIN=`which echo`
 ECHOCOL="$ECHOBIN -e"
+FLAG_OK=${GREEN}OK${NOCOL}
+FLAG_OK_ND=${BLUE}OK${NOCOL}
+FLAG_ERR=${RED}ERR${NOCOL}
 
 verify_test_result() {
-	FLAG_OK=${GREEN}OK${NOCOL}
-	FLAG_OK_ND=${BLUE}OK${NOCOL}
-	FLAG_ERR=${RED}ERR${NOCOL}
 	TNAM=$1
 	OUTF=$2
 	EXPF=$3
@@ -57,6 +57,21 @@ verify_test_result() {
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xTYPEDB" ] ; then
 $LUABIN tests/typedb.lua
+fi
+
+if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xINDENTL" ] ; then
+build/mewa -o build/indentl.lua -g tests/indentl.g
+INDENTLRES=$?
+if [ "$INDENTLRES" = "0" ]; then
+   $LUABIN build/indentl.lua tests/indentl.prg
+   INDENTLRES=$?
+fi
+if [ "$INDENTLRES" = "0" ]; then
+   INDENTLFLAG=$FLAG_OK
+else
+   INDENTLFLAG=$FLAG_ERR
+fi
+echo "Test simple off-side rule language (%INDENTL command tests/indentl.g) $INDENTLFLAG"
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then

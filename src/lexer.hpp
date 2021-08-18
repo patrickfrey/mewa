@@ -31,7 +31,9 @@ public:
 		std::string achrs( activation( source_));
 		for (char ch : achrs) {m_activate.set( (unsigned char)ch);}
 	}
-
+	LexemDef( const std::string& name_, int id_)
+		:m_name(name_),m_source(),m_pattern(),m_activate(),m_select(0),m_id(id_),m_keyword(false)
+	{}
 	LexemDef( const LexemDef& o)
 		:m_name(o.m_name),m_source(o.m_source)
 		,m_pattern(o.m_pattern),m_activate(o.m_activate)
@@ -150,11 +152,12 @@ public:
 			KeywordLexem,
 			IgnoreLexem,
 			EolnComment,
-			BracketComment
+			BracketComment,
+			IndentLexems
 		};
 		static const char* typeName( Type type_)
 		{
-			static const char* ar[] = {"bad","token","keyword","ignore","comment","comment"};
+			static const char* ar[] = {"bad","token","keyword","ignore","comment","comment","indentl"};
 			return ar[ type_];
 		}
 		const char* typeName() const noexcept
@@ -177,6 +180,11 @@ public:
 		const std::string end() const		{return m_arg.size() <= 1 ? std::string() : m_arg[1];}
 		const std::string& activation() const	{return m_activation;}
 
+		int tabsize() const noexcept		{return m_select;}
+		int openind() const noexcept		{return m_id+0;}
+		int closeind() const noexcept		{return m_id+1;}
+		int newline() const noexcept		{return m_id+2;}
+
 	private:
 		Type m_type;
 		std::vector<std::string> m_arg;
@@ -189,28 +197,28 @@ public:
 	Lexer()
 		:m_errorLexemName("?"),m_defar(),m_firstmap(),m_nameidmap(),m_namelist()
 		,m_id2keyword(),m_bracketComments(),m_eolnComments()
-		,m_indentLexemOpen(0),m_indentLexemClose(0),m_indentLexemNewLine(0),m_indentTabSize(0){}
+		,m_indentLexems({0,0,0,0}){}
 	Lexer( const Lexer& o)
 		:m_errorLexemName(o.m_errorLexemName),m_defar(o.m_defar)
 		,m_firstmap(o.m_firstmap),m_nameidmap(o.m_nameidmap),m_namelist(o.m_namelist)
 		,m_id2keyword(o.m_id2keyword),m_bracketComments(o.m_bracketComments),m_eolnComments(o.m_eolnComments)
-		,m_indentLexemOpen(o.m_indentLexemOpen),m_indentLexemClose(o.m_indentLexemClose),m_indentLexemNewLine(o.m_indentLexemNewLine),m_indentTabSize(o.m_indentTabSize){}
+		,m_indentLexems(o.m_indentLexems){}
 	Lexer& operator=( const Lexer& o)
 		{m_errorLexemName=o.m_errorLexemName; m_defar=o.m_defar;
 		 m_firstmap=o.m_firstmap; m_nameidmap=o.m_nameidmap; m_namelist=o.m_namelist;
 		 m_id2keyword=o.m_id2keyword; m_bracketComments=o.m_bracketComments; m_eolnComments=o.m_eolnComments;
-		 m_indentLexemOpen=o.m_indentLexemOpen; m_indentLexemClose=o.m_indentLexemClose; m_indentLexemNewLine=o.m_indentLexemNewLine; m_indentTabSize=o.m_indentTabSize;
+		 m_indentLexems=o.m_indentLexems;
 		 return *this;}
 	Lexer( Lexer&& o)
 		:m_errorLexemName(std::move(o.m_errorLexemName)),m_defar(std::move(o.m_defar))
 		,m_firstmap(std::move(o.m_firstmap)),m_nameidmap(std::move(o.m_nameidmap)),m_namelist(std::move(o.m_namelist))
 		,m_id2keyword(std::move(o.m_id2keyword)),m_bracketComments(std::move(o.m_bracketComments)),m_eolnComments(std::move(o.m_eolnComments))
-		,m_indentLexemOpen(o.m_indentLexemOpen),m_indentLexemClose(o.m_indentLexemClose),m_indentLexemNewLine(o.m_indentLexemNewLine),m_indentTabSize(o.m_indentTabSize){}
+		,m_indentLexems(std::move(o.m_indentLexems)){}
 	Lexer& operator=( Lexer&& o)
 		{m_errorLexemName=std::move(o.m_errorLexemName); m_defar=std::move(o.m_defar);
 		 m_firstmap=std::move(o.m_firstmap); m_nameidmap=std::move(o.m_nameidmap); m_namelist=std::move(o.m_namelist);
 		 m_id2keyword=std::move(o.m_id2keyword); m_bracketComments=std::move(o.m_bracketComments); m_eolnComments=std::move(o.m_eolnComments);
-		 m_indentLexemOpen=o.m_indentLexemOpen; m_indentLexemClose=o.m_indentLexemClose; m_indentLexemNewLine=o.m_indentLexemNewLine; m_indentTabSize=o.m_indentTabSize;
+		 m_indentLexems=std::move(o.m_indentLexems);
 		 return *this;}
 	Lexer( const std::vector<Definition>& definitions);
 
@@ -224,6 +232,23 @@ public:
 	void defineBracketComment( const std::string_view& start, const std::string_view& end);
 
 	void defineIndentLexems( const std::string_view& open, const std::string_view& close, const std::string_view& newline, int tabsize);
+	struct IndentLexems
+	{
+		int open;
+		int close;
+		int newLine;
+		int tabSize;
+
+		bool defined() const noexcept {return open;}
+	};
+	const IndentLexems& indentLexems() const noexcept
+	{
+		return m_indentLexems;
+	}
+	void setIndentLexems( const IndentLexems& il)
+	{
+		m_indentLexems = il;
+	}
 
 	int lexemId( const std::string_view& name) const noexcept;
 	const std::string& lexemName( int id) const;
@@ -256,10 +281,7 @@ private:
 	std::vector<bool> m_id2keyword;
 	BracketCommentDefList m_bracketComments;
 	EolnCommentDefList m_eolnComments;
-	int m_indentLexemOpen;
-	int m_indentLexemClose;
-	int m_indentLexemNewLine;
-	int m_indentTabSize;
+	IndentLexems m_indentLexems;
 };
 
 }//namespace

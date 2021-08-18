@@ -414,7 +414,14 @@ static int mewa_compiler_run( lua_State* ls)
 		mewa::lua::checkStack( functionName, ls, 10);
 
 		char targetfn[ 256]; 	//... target filename
-		copyFileNameToBuffer( targetfn, sizeof(targetfn), mewa::lua::getArgumentAsString( functionName, ls, 2));
+		if (!lua_isnil( ls, 2))
+		{
+			copyFileNameToBuffer( targetfn, sizeof(targetfn), mewa::lua::getArgumentAsString( functionName, ls, 2));
+		}
+		else
+		{
+			targetfn[ 0] = 0;
+		}
 		int options_index = 3;	//... options
 		char filename[ 256]; 	//... source filename
 		copyFileNameToBuffer( filename, sizeof(filename), mewa::lua::getArgumentAsString( functionName, ls, 4));
@@ -422,7 +429,8 @@ static int mewa_compiler_run( lua_State* ls)
 
 		std::string sourcestr_ = mewa::readFile( std::string(filename));
 		std::string_view sourceptr = move_string_on_lua_stack( ls, std::move( sourcestr_));	// STK: [COMPILER] [INPUTFILE] [SOURCE]
-		std::string targetstr_ = mewa::readFile( std::string(targetfn));
+		std::string targetstr_;
+		if (targetfn[0]) targetstr_ = mewa::readFile( std::string(targetfn));
 		std::string_view targetptr = move_string_on_lua_stack( ls, std::move( targetstr_));	// STK: [COMPILER] [INPUTFILE] [SOURCE] [TARGET]
 
 		if (nargs >= 5)
