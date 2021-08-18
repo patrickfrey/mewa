@@ -464,7 +464,7 @@ For languages allowing a schema like C++, we need multi-pass _AST_ traversal. Se
 ### How to implement multi-pass AST traversal?
 
 Sometimes some definitions have to be prioritized, e.g. member variable definitions have to be known before translating member functions.
-_Mewa_ does not support multipass traversal by nature, but you can implement it by passing additional parameters to the traversal routine.
+_Mewa_ does not support multipass traversal by nature, but you can implement it by passing an additional parameters to the traversal routine.
 In the example grammar I attached a pass argument for the ```definition``` _Lua_ function call:
 ```
 inclass_definition	= typedefinition ";"		    (definition 1)
@@ -752,22 +752,22 @@ LLVM supports extern calls. In the specification of the example **language1**, I
 
 #### Extern functions
 
-In the example **language1** I define a Lua table (```constVarargTypeMap```) mapping first class types and constexpr types to the type used to pass a value as additional non specified parameter (one of ```...```).
-For every function that has a ```...``` at the end of its parameter list, that type is used as parameter type.
-About the implementation I do not have to care, except that C-library functions cannot handle certain types as ```...``` arguments. For example ```float``` has to be mapped to a ```double``` if passed as additional parameter.
+In the example **language1** I define a Lua table (```constVarargTypeMap```) mapping first-class types and const expression types to the type used to pass a value as an additional non-specified parameter (one of ```...```).
+For every function that has a ```...``` at the end of its parameter list, that type is used as a parameter type.
+About the implementation, I do not have to care, except that C-library functions cannot handle certain types as ```...``` arguments.
+For example, ```float``` has to be mapped to a ```double``` if passed as an additional parameter.
 
 #### Custom Functions
 
-For implementing functions with a variable number of arguments in your language, you have to care about adressing them.
-Clang has of course support vor variable argument functions. Unfortunately I did not dig into it yet.
-The LLVM IR commands to handle varargs are similar to the C-Library functions: ```llvm.va_start, llvm.va_copy, llvm.va_end```.
+For implementing functions with a variable number of arguments in your language, you have to care about addressing them.
+Clang has of course support for variable argument functions. Unfortunately, I did not dig into it yet.
+The LLVM IR commands to handle additional variable arguments are similar to the C-Library functions: ```llvm.va_start, llvm.va_copy, llvm.va_end```.
 
 #### Generics
 
-For implementing generics with a variable number of arguments I suggest to implement the possibility to define the last argument of a generic as array.
-A dedicated marker like ```...``` could signal that. I did not implement this in the example **language1** yet. But I do not see any obstacle here.
-Defining a template argument instantiation as a type with an access operator for its sub-types, the first element, the tail, an element addressed by a compile time index, or an iterator.
-
+For implementing generics with a variable number of arguments I suggest implementing the possibility to define the last argument of a generic as an array.
+A dedicated marker like ```...``` could signal that. I did not implement this in the example **language1** yet. But I do not see any obstacle here
+defining a template argument instantiation as a type with an access operator for its sub-types, the first element, the tail, an element addressed by a compile-time index, or an iterator.
 
 
 <a name="coroutines"/>
