@@ -46,6 +46,7 @@
     * [How to implement concepts like in C++?](#concepts)
     * [How to implement lambdas?](#lambdas)
     * [How to implement calls of C-Library functions?](#cLibraryCalls)
+    * [How to implement calls with a variable number of arguments?](#varargCalls)
     * [How to implement coroutines?](#coroutines)
     * [How to implement copy elision?](#copyElision)
     * [How to implement reference counting on use as in Swift?](#referenceCountingSwift)
@@ -145,7 +146,7 @@ The _scope_ (referring to the lexical scope) is part of the type database and re
 
 ### How to define a schema of reduction weights?
 
-If there is anything alien in _Mewa_, it's the assignment of weights to productions to memorize the preference of type deduction paths.
+If there is anything alien in _Mewa_, it's the assignment of weights to reductions to memorize the preference of type deduction paths.
 We talk about twenty lines of floating-point number assignments here. But weird ones. They empower _Mewa_ to rely only on the shortest path search algorithm (_Dijkstra_) for resolving and deriving types.
 This is the key to the stunning performance of _Mewa_.
 
@@ -743,6 +744,30 @@ This ensures that local definitions from different _AST_ node traversals are sep
 ### How to implement calls of C-Library functions?
 
 LLVM supports extern calls. In the specification of the example **language1**, I support calls of the C standard library.
+
+
+<a name="varargCalls"/>
+
+### How to implement calls with a variable number of arguments?
+
+#### Extern functions
+
+In the example **language1** I define a Lua table (```constVarargTypeMap```) mapping first class types and constexpr types to the type used to pass a value as additional non specified parameter (one of ```...```).
+For every function that has a ```...``` at the end of its parameter list, that type is used as parameter type.
+About the implementation I do not have to care, except that C-library functions cannot handle certain types as ```...``` arguments. For example ```float``` has to be mapped to a ```double``` if passed as additional parameter.
+
+#### Custom Functions
+
+For implementing functions with a variable number of arguments in your language, you have to care about adressing them.
+Clang has of course support vor variable argument functions. Unfortunately I did not dig into it yet.
+The LLVM IR commands to handle varargs are similar to the C-Library functions: ```llvm.va_start, llvm.va_copy, llvm.va_end```.
+
+#### Generics
+
+For implementing generics with a variable number of arguments I suggest to implement the possibility to define the last argument of a generic as array.
+A dedicated marker like ```...``` could signal that. I did not implement this in the example **language1** yet. But I do not see any obstacle here.
+Defining a template argument instantiation as a type with an access operator for its sub-types, the first element, the tail, an element addressed by a compile time index, or an iterator.
+
 
 
 <a name="coroutines"/>
