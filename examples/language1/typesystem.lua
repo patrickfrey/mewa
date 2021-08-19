@@ -240,7 +240,7 @@ function copyFunctionPointerConstructor( descr)
 	local copyFunc = callConstructor( descr.assign)
 	return function( this, arg)
 		local scope_bk,step_bk = typedb:scope( typedb:type_scope( arg[1].type))
-		local functype = typedb:get_type( arg[1].type, "()", descr.param)
+		local functype = typedb:this_type( arg[1].type, "()", descr.param)
 		local functypeDescr = typeDescriptionMap[ functype]
 		typedb:scope( scope_bk,step_bk)
 		if functype and descr.throws == functypeDescr.throws then return copyFunc( this, {{out="@" .. functypeDescr.symbolname}}) end
@@ -464,7 +464,7 @@ function promoteCallConstructor( call_constructor, promote_constructor)
 end
 -- Define an operation with involving the promotion of the left hand argument to another type and executing the operation as defined for the type promoted to.
 function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, promote_constructor)
-	local call_constructor = typedb:type_constructor( typedb:get_type( promoteType, opr, argTypes))
+	local call_constructor = typedb:type_constructor( typedb:this_type( promoteType, opr, argTypes))
 	local callType = typedb:def_type( thisType, opr, promoteCallConstructor( call_constructor, promote_constructor), argTypes)
 	if callType == -1 then utils.errorMessage( node.line, "Duplicate definition '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
@@ -741,7 +741,7 @@ function definePointerIncrementDecrement( ptrtype, index_typnam, index_type)
 	local descr = typeDescriptionMap[ ptrtype]
 	local index_constructor = callConstructor( descr.index[ index_typnam], true) -- Load the pointer of the element at the index given as argument
 	defineCall( ptrtype, ptrtype, "+", {index_type}, index_constructor)
-	local negop = typedb:get_type( index_type, "-", {})
+	local negop = typedb:this_type( index_type, "-", {})
 	if negop then
 		local negconstructor = typedb:type_constructor( negop)
 		local function neg_index_constructor( this, arg) return index_constructor( this, {negconstructor( arg[1])}) end -- Load the pointer of the element at index given as negative value of the argument
@@ -854,7 +854,7 @@ function getAssignmentsFromCtors( node, qualitype, descr)
 		end
 	end
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( qualitype.reftype))
-	local items = typedb:get_types( qualitype.reftype, ":=")
+	local items = typedb:this_types( qualitype.reftype, ":=")
 	for _,item in ipairs(items) do
 		defineCall( qualitype.reftype, qualitype.reftype, "=", typedb:type_parameters(item), assignmentConstructorFromCtor( descr, typedb:type_constructor(item), ctorThrowingMap[ item]))
 	end
@@ -1867,7 +1867,7 @@ end
 -- Define the assignment operators of the class members accessed via the init type of the class (self type in a constructor) as ctor instance
 function defineCtorInitAssignments( refType, initType, name, index, load_ref)
 	local scope_bk,step_bk = typedb:scope( typedb:type_scope( refType))
-	local items = typedb:get_types( refType, ":=")
+	local items = typedb:this_types( refType, ":=")
 	typedb:scope( scope_bk,step_bk)
 	local loadType = typedb:def_type( initType, name, callConstructor( load_ref, true), {})
 	for _,item in ipairs(items) do
@@ -1928,13 +1928,13 @@ end
 -- Define a reduction to a member variable to implement class/interface inheritance
 function defineReductionToMember( objTypeId, name, const)
 	local objRefTypeId = referenceTypeMap[ objTypeId]
-	memberTypeId = typedb:get_type( objRefTypeId, name)
+	memberTypeId = typedb:this_type( objRefTypeId, name)
 	typedb:def_reduction( memberTypeId, objRefTypeId, typedb:type_constructor( memberTypeId), tag_typeDeclaration, preferWeight( const, rwd_c_inheritance, rwd_inheritance))
 end
 -- Define a reduction from the pointer to the class to the pointer to the member variable to implement class/interface inheritance of class pointers
 function definePointerReductionToMemberPointer( classTypeId, name, inheritTypeId, const)
 	local classRefTypeId = referenceTypeMap[ classTypeId]
-	memberConstructor = typedb:type_constructor( typedb:get_type( classRefTypeId, name))
+	memberConstructor = typedb:type_constructor( typedb:this_type( classRefTypeId, name))
 	local inheritPointerTypeId = pointerTypeMap[ inheritTypeId]
 	local classPointerTypeId = pointerTypeMap[ classTypeId]
 	if not inheritPointerTypeId then inheritPointerTypeId = createPointerTypeInstance( node, {const=true}, inheritTypeId) end -- create pointer to member type (pointer is const)
@@ -2716,7 +2716,7 @@ function defineInterfaceMethodCall( contextTypeId, opr, descr)
 end
 -- Get (if already defined) or create the callable context type (function name) on which the "()" operator implements the function call
 function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
-	local rt = typedb:get_type( contextTypeId, name)
+	local rt = typedb:this_type( contextTypeId, name)
 	if not rt then
 		rt = typedb:def_type( contextTypeId, name)
 		typeDescriptionMap[ rt] = descr
@@ -3711,7 +3711,7 @@ function typesystem.namespacedef( node, context)
 	local typnam = node.arg[1].value
 	local declContextTypeId = getDeclarationContextTypeId( context)
 	local scope_bk,step_bk = typedb:scope( {} ) -- set global scope
-	local namespace = typedb:get_type( declContextTypeId, typnam) or typedb:def_type( declContextTypeId, typnam)
+	local namespace = typedb:this_type( declContextTypeId, typnam) or typedb:def_type( declContextTypeId, typnam)
 	typedb:scope( scope_bk,step_bk)
 	pushSeekContextType( namespace)
 	utils.traverseRange( typedb, node, {2,2}, {domain="global", namespace = namespace})

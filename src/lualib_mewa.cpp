@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -38,6 +38,9 @@
 #include <limits>
 #include <inttypes.h>
 
+static int g_called_deprecated_get_type = 0;	//< Counter for calls of deprecated function typedb:get_type
+static int g_called_deprecated_get_types = 0;	//< Counter for calls of deprecated function typedb:get_types
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -57,7 +60,7 @@ static mewa::Error::Location getLuaScriptErrorLocation( lua_State* ls)
 	return mewa::Error::Location( ar.short_src, ar.linedefined);
 }
 
-/// \note Got this idea from Jason Turner C++ Weekly Ep. 91 "Using Lippincott Functions" 
+/// \note Got this idea from Jason Turner C++ Weekly Ep. 91 "Using Lippincott Functions"
 ///		See also The C++ Standard Library2ndEd. by Nicolai M. Josuttis page 50
 static void lippincottFunction( lua_State* ls)
 {
@@ -262,7 +265,7 @@ static int mewa_version( lua_State* ls)
 		mewa::lua::checkNofArguments( functionName, ls, 0/*minNofArgs*/, 0/*maxNofArgs*/);
 		lua_pushinteger( ls, MEWA_MAJOR_VERSION);
 		lua_pushinteger( ls, MEWA_MINOR_VERSION);
-		lua_pushinteger( ls, MEWA_PATCH_VERSION);		
+		lua_pushinteger( ls, MEWA_PATCH_VERSION);
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 3;
@@ -484,11 +487,20 @@ static int mewa_compiler_run( lua_State* ls)
 
 		// Restore old print function that has been left on the stack:
 					//STK: table=_G, key=print, value=function key=debug, value=function
-		lua_settable( ls, -5);	//STK: table=_G, key=print, value=function 
+		lua_settable( ls, -5);	//STK: table=_G, key=print, value=function
 		lua_settable( ls, -3);	//STK: table=_G
 		lua_pop( ls, 1);	//STK:
 		cp->closeOutput();
 		lua_pop( ls, 3);	// ... destroy strings on lua stack created with move_string_on_lua_stack and options
+
+		if (g_called_deprecated_get_types)
+		{
+			std::cerr << "Warning: Called deprecated function typedb:get_types. This function has been renamed to typedb:this_types (issue #4)" << std::endl;
+		}
+		if (g_called_deprecated_get_type)
+		{
+			std::cerr << "Warning: Called deprecated function typedb:get_type. This function has been renamed to typedb:this_type (issue #4)" << std::endl;
+		}
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 0;
@@ -719,9 +731,9 @@ static int mewa_typedb_def_type_as( lua_State* ls)
 	return 1;
 }
 
-static int mewa_typedb_get_type( lua_State* ls)
+static int mewa_typedb_this_type( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:get_type";
+	[[maybe_unused]] static const char* functionName = "typedb:this_type";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	int buffer_parameter[ 1024];
@@ -742,9 +754,9 @@ static int mewa_typedb_get_type( lua_State* ls)
 	return 1;
 }
 
-static int mewa_typedb_get_types( lua_State* ls)
+static int mewa_typedb_this_types( lua_State* ls)
 {
-	[[maybe_unused]] static const char* functionName = "typedb:get_types";
+	[[maybe_unused]] static const char* functionName = "typedb:this_types";
 	mewa_typedb_userdata_t* td = (mewa_typedb_userdata_t*)luaL_checkudata( ls, 1, mewa_typedb_userdata_t::metatableName());
 
 	int buffer_parameter[ 1024];
@@ -761,6 +773,17 @@ static int mewa_typedb_get_types( lua_State* ls)
 	}
 	catch (...) { lippincottFunction( ls); }
 	return 1;
+}
+
+static int mewa_typedb_get_type( lua_State* ls)
+{
+	++g_called_deprecated_get_type;
+	return mewa_typedb_this_type( ls);
+}
+static int mewa_typedb_get_types( lua_State* ls)
+{
+	++g_called_deprecated_get_types;
+	return mewa_typedb_this_types( ls);
 }
 
 static int mewa_typedb_def_reduction( lua_State* ls)
@@ -1266,6 +1289,8 @@ static const struct luaL_Reg mewa_typedb_methods[] = {
 	{ "set_instance",	mewa_typedb_set_instance },
 	{ "def_type",		mewa_typedb_def_type },
 	{ "def_type_as",	mewa_typedb_def_type_as },
+	{ "this_type",		mewa_typedb_this_type },
+	{ "this_types",		mewa_typedb_this_types },
 	{ "get_type",		mewa_typedb_get_type },
 	{ "get_types",		mewa_typedb_get_types },
 	{ "def_reduction",	mewa_typedb_def_reduction },
