@@ -256,7 +256,7 @@ Same as [typedb:this_type](#this_type) but retrieving all instances differing in
 Deprecated function, renamed to [typedb:this_type](#this_type).
 
 ### typedb:get_types
-Deprecated function, renamed to [typedb:this_type](#this_types).
+Deprecated function, renamed to [typedb:this_types](#this_types).
 
 
 <a name="reductions"/>

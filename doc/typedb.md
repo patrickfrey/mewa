@@ -154,11 +154,11 @@ typedb = mewa.typedb()
 
 -- A register allocator as a generator function counting from 1, returning the LLVM register identifiers:
 function register_allocator()
-        local i = 0
-        return function ()
-                i = i + 1
-                return "%R" .. i
-        end
+	local i = 0
+	return function ()
+		i = i + 1
+		return "%R" .. i
+	end
 end
 
 -- Create a register allocator for the scope [0..1000]:
@@ -283,7 +283,7 @@ Same as [typedb:this_type](#this_type) but retrieving all instances differing in
 Deprecated function, renamed to [typedb:this_type](#this_type).
 
 ### typedb:get_types
-Deprecated function, renamed to [typedb:this_type](#this_types).
+Deprecated function, renamed to [typedb:this_types](#this_types).
 
 
 <a name="reductions"/>
