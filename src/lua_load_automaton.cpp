@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -33,6 +33,7 @@ extern "C" {
 #error Building mewa requires C++17
 #endif
 
+#if LUA_VERSION_NUM <= 502
 static bool lua_isinteger( lua_State *ls, int li)
 {
 	int tp = lua_type( ls, li);
@@ -41,6 +42,7 @@ static bool lua_isinteger( lua_State *ls, int li)
 	double fl = val - floor( val);
 	return (fl < 10*std::numeric_limits<double>::epsilon());
 }
+#endif
 
 template <typename KEY, typename VAL>
 static std::map<KEY,VAL> parsePackedTable( lua_State *ls, int li, const char* tableName)
@@ -297,7 +299,7 @@ static mewa::Automaton::Call parseCall( lua_State *ls, int li, const std::string
 		{
 			throw mewa::Error( mewa::Error::BadKeyInGeneratedLuaTable, mewa::string_format( "table '%s'", tableName.c_str()));
 		}
-		const char* key = lua_tostring( ls, -2); 
+		const char* key = lua_tostring( ls, -2);
 
 		if (key[0] == 'n' && 0==std::strcmp( key, "name"))
 		{
