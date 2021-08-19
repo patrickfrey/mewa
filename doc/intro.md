@@ -1681,33 +1681,33 @@ Here are the functions to define calls with parameters and a return value. For f
 --   the first argument int to double and do a double + double to get the result)
 function promoteCallConstructor( call_constructor, promote)
     return function( this, arg)
-        return call_constructor( promote( this), arg)
+	return call_constructor( promote( this), arg)
     end
 end
 -- Define an operation with involving the promotion of the left-hand argument to
 --   another type and executing the operation as defined for the type promoted to.
 function definePromoteCall( rType, thisType, proType, opr, argTypes, promote)
-    local call_type = typedb:get_type( proType, opr, argTypes)
+    local call_type = typedb:this_type( proType, opr, argTypes)
     local call_constructor = typedb:type_constructor( call_type)
     local constructor = promoteCallConstructor( call_constructor, promote)
     local callType = typedb:def_type( thisType, opr, constructor, argTypes)
     if callType == -1 then
-        utils.errorMessage( node.line, "Duplicate definition '%s'",
-                typeDeclarationString( thisType, opr, argTypes))
+	utils.errorMessage( node.line, "Duplicate definition '%s'",
+		typeDeclarationString( thisType, opr, argTypes))
     end
     if rType then
-        typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
+	typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
     end
 end
 -- Define an operation generalized
 function defineCall( rType, thisType, opr, argTypes, constructor)
     local callType = typedb:def_type( thisType, opr, constructor, argTypes)
     if callType == -1 then
-        local declstr = typeDeclarationString( thisType, opr, argTypes)
-        utils.errorMessage( 0, "Duplicate definition of call '%s'", declstr)
+	local declstr = typeDeclarationString( thisType, opr, argTypes)
+	utils.errorMessage( 0, "Duplicate definition of call '%s'", declstr)
     end
     if rType then
-        typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
+	typedb:def_reduction( rType, callType, nil, tag_typeDeclaration)
     end
     return callType
 end
@@ -2156,10 +2156,10 @@ A callable is an intermediate type created to unify all cases of a function call
 function getDeclarationLlvmTypeRegParameterString( descr, context)
     local rt = ""
     if context.domain == "member" then
-        rt = rt .. typeDescriptionMap[ context.decltype].llvmtype .. "* %ths, "
+	rt = rt .. typeDescriptionMap[ context.decltype].llvmtype .. "* %ths, "
     end
     for ai,arg in ipairs(descr.param or {}) do
-        rt = rt .. arg.llvmtype .. " " .. arg.reg .. ", "
+	rt = rt .. arg.llvmtype .. " " .. arg.reg .. ", "
     end
     if rt ~= "" then rt = rt:sub(1, -3) end
     return rt
@@ -2169,10 +2169,10 @@ end
 function getDeclarationLlvmTypedefParameterString( descr, context)
     local rt = ""
     if context.domain == "member" then
-        rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, "
+	rt = rt .. (descr.llvmthis or context.descr.llvmtype) .. "*, "
     end
     for ai,arg in ipairs(descr.param) do
-        rt = rt .. arg.llvmtype .. ", "
+	rt = rt .. arg.llvmtype .. ", "
     end
     if rt ~= "" then rt = rt:sub(1, -3) end
     return rt
@@ -2181,10 +2181,10 @@ end
 -- Get (if already defined) or create the callable context type (function name)
 --   on which the "()" operator implements the function call
 function getOrCreateCallableContextTypeId( contextTypeId, name, descr)
-    local rt = typedb:get_type( contextTypeId, name)
+    local rt = typedb:this_type( contextTypeId, name)
     if not rt then
-        rt = typedb:def_type( contextTypeId, name)
-        typeDescriptionMap[ rt] = descr
+	rt = typedb:def_type( contextTypeId, name)
+	typeDescriptionMap[ rt] = descr
     end
     return rt
 end
@@ -2196,10 +2196,10 @@ function defineFunctionCall( node, descr, context)
     local contextType = getDeclarationContextTypeId(context)
     local thisType = (contextType ~= 0) and referenceTypeMap[ contextType] or 0
     local callablectx = getOrCreateCallableContextTypeId(
-                 thisType, descr.name, llvmir.callableDescr)
+		 thisType, descr.name, llvmir.callableDescr)
     local fmt = descr.ret
-            and llvmir.control.functionCall
-            or llvmir.control.procedureCall
+	    and llvmir.control.functionCall
+	    or llvmir.control.procedureCall
     local constructor = callConstructor( fmt, thisType, descr.param, descr)
     return defineCall( descr.ret, callablectx, "()", descr.param, constructor)
 end

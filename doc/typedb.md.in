@@ -14,8 +14,10 @@ The type database API referred to as _mewa.typedb_ offers you the functions need
 1. [Types](#types)
     * [typedb:def_type](#def_type)
     * [typedb:def_type_as](#def_type_as)
-    * [typedb:get_type](#get_type)
-    * [typedb:get_types](#get_types)
+    * [typedb:this_type](#this_type)
+       * former name typedb:get_type is deprecated
+    * [typedb:this_types](#this_types)
+       * former name typedb:get_types is deprecated
 1. [Reductions](#reductions)
     * [typedb:def_reduction](#def_reduction)
     * [typedb:reduction_tagmask](#reduction_tagmask)
@@ -61,8 +63,8 @@ Get or/and set the current scope. All methods defining objects dependent on a sc
  - [typedb:this_instance](#this_instance)
  - [typedb:def_type](#def_type)
  - [typedb:def_type_as](#def_type_as)
- - [typedb:get_type](#get_type)
- - [typedb:get_types](#get_types)
+ - [typedb:this_type](#this_type)
+ - [typedb:this_types](#this_types)
  - [typedb:def_reduction](#def_reduction)
 
 are referring to the current scope. Without parameter the function just returns the current scope.
@@ -219,12 +221,12 @@ The scope of the newly defined type has been set with the last call of the sette
 The type defined like this has the same constructor, therefore it cannot be used as alias for a type with a built constructor.
 
 
-<a name="get_type"/>
+<a name="this_type"/>
 
-### typedb:get_type
+### typedb:this_type
 Get a type definition defined in the current scope, without lookup in enclosing scopes and without any reductions of the context type.
 The current scope has been set with the last call of the setter [typedb::scope](#scope).
-Same as [typedb:get_types](#get_types) but filtering the one instance with all parameters matching.
+Same as [typedb:this_types](#this_types) but filtering the one instance with all parameters matching.
 
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                 |
@@ -235,12 +237,12 @@ Same as [typedb:get_types](#get_types) but filtering the one instance with all p
 | Return |              | integer          | identifier assigned to the type or *nil* if not found                                                       |
 
 
-<a name="get_types"/>
+<a name="this_types"/>
 
-### typedb:get_types
+### typedb:this_types
 Get all type definitions without matching the parameters defined in the current scope, without lookup in enclosing scopes and without any reductions of the context type.
 The current scope has been set with the last call of the setter [typedb::scope](#scope).
-Same as [typedb:get_type](#get_type) but retrieving all instances differing in the parameters attached.
+Same as [typedb:this_type](#this_type) but retrieving all instances differing in the parameters attached.
 
 #### Parameter
 | #      | Name         | Type             | Description                                                                                         |
@@ -248,6 +250,13 @@ Same as [typedb:get_type](#get_type) but retrieving all instances differing in t
 | 1st    | context-type | integer          | Type referring to the context of the type or 0 if the type is not a member of some other structure  |
 | 2nd    | name         | string           | Name of the type defined                                                                            |
 | Return |              | table            | List of types                                                                                       |
+
+
+### typedb:get_type
+Deprecated function, renamed to [typedb:this_type](#this_type).
+
+### typedb:get_types
+Deprecated function, renamed to [typedb:this_type](#this_types).
 
 
 <a name="reductions"/>
