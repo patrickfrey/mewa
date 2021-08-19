@@ -3,10 +3,7 @@
 #
 set +x
 
-TMPFILE=`mktemp`
-luarocks path > $TMPFILE
-. $TMPFILE
-rm $TMPFILE
+. ./LuaPath.inc
 
 export LUA_CPATH="build/?.so;$LUA_CPATH"
 export LUA_PATH="examples/?.lua;examples/intro/?.lua;tests/?.lua;$LUA_PATH";

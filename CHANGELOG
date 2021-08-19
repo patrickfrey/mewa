@@ -1,3 +1,7 @@
+mewa (0.8.0-1) stable; urgency=low
+  * Fixed bad usage of luarocks when determining path of Lua libraries. Caused problems if multimple Lua versions installed.
+-- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 20 Aug 2021 10:00:00 +0200
+
 mewa (0.7.0-1) stable; urgency=low
   * Added possibility to implement off-side rule languages (languages with a meaning of indentiation): Command %INDENTL in the grammar file.
 -- Patrick Frey <patrickpfrey@yahoo.com>  Mon, 16 Aug 2021 15:00:00 +0200

@@ -4,6 +4,7 @@
 set -e
 
 . tests/luaenv.sh
+
 LUABIN=`which $1`
 LLIBIN=lli
 LLCBIN=llc

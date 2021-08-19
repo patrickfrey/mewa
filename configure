@@ -18,6 +18,7 @@ FIND=find
 GREP=grep
 DIRNAME=dirname
 PKGCONFIG=pkg-config
+LUAROCKS=luarocks
 
 LLVM_VERSION=`llvm-config --version | awk -F "." '{print $1}'`
 echo "return $LLVM_VERSION" > examples/llvm_version.lua
@@ -77,6 +78,11 @@ writePlatformInclude() {
 	fi
 }
 
+writeLuaModulePathsInclude() {
+	local VERSION=$1
+	$LUAROCKS --lua-version "$VERSION" path > LuaPath.inc
+}
+
 searchLuaVersionWithPkgConfig() {
 	local VERSION=$1
 	>&2 echo "Checking with pkg-config for version $VERSION ..."
@@ -99,6 +105,7 @@ searchLuaVersionWithPkgConfig() {
 			if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ] && [ x$PREFIX != 'x' ] ; then
 				local BINPATH="$PREFIX/bin/lua$VERSION"
 				writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH $CMODPATH
+				writeLuaModulePathsInclude $VERSION
 				>&2 echo "$PKGCONFIG --variable=includedir lua$VERSION => $INCPATH"
 				>&2 echo "$PKGCONFIG --variable=libdir lua$VERSION => $LIBPATH"
 				>&2 echo "$PKGCONFIG --variable=prefix lua$VERSION => $PREFIX, BINPATH=$BINPATH"
@@ -135,6 +142,7 @@ searchLuaVersionWithRawFind() {
 	local CMODPATH="$LIBPATH/lua/$VERSION"
 	if [ x$INCPATH != 'x' ] && [ x$LIBPATH != 'x' ]; then
 		writeLuaInclude $VERSION $INCPATH $LIBPATH $BINPATH $CMODPATH
+		writeLuaModulePathsInclude $VERSION
 		>&2 echo "Lua include path = $INCPATH"
 		>&2 echo "Lua library path = $LIBPATH"
 		>&2 echo "Lua binary path = $BINPATH"

@@ -41,6 +41,7 @@ build/*.hex
 
 # Configure
 Lua.inc
+LuaPath.inc
 Platform.inc
 examples/llvm_version.lua
 
