@@ -1,7 +1,7 @@
 mewa (0.8.0-1) stable; urgency=low
   * Make typedb API naming consistent: Deprecated functions typedb:get_type (renamed typedb:this_type), and typedb:get_types (renamed typedb:this_types) (issue #4)
   * Fixed bad usage of luarocks when determining path of Lua libraries. Caused problems if multimple Lua versions installed.
--- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 20 Aug 2021 10:00:00 +0200
+-- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 20 Aug 2021 17:30:00 +0200
 
 mewa (0.7.0-1) stable; urgency=low
   * Added possibility to implement off-side rule languages (languages with a meaning of indentiation): Command %INDENTL in the grammar file.
