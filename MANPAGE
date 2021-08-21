@@ -34,7 +34,7 @@ module described by the grammar in the input file.
 \fB\-s\fR, \fB\--generate-template\fR
 Do generate a template for your
 .BR Lua
-module implementing the typesystem.
+module implementing the type system.
 Extract all
 .BR Lua
 function calls from the grammar and prints their empty implementation stubs to the output. No debug output is provided. Be careful using this option. It is only useful after the initial definition of the grammar of your language. It overwrites previous definitions without merging with your edits in a previously generated version.
