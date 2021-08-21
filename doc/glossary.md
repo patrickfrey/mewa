@@ -10,7 +10,7 @@ The intermediate representation of LLVM (https://llvm.org/). The LLVM IR has a t
 
 ## Type
 Any item addressable in a program is a **type**. In _Mewa_ types are represented by an unsigned integer number that is created by the typedb library from a counter.
-Every type definition has a tuple consisting of a ([context type](#contextType)) and a name as the key that identifies it plus some optional ([paramameter](#paramameter)) definitions attached.
+Every type definition has a tuple consisting of a ([context type](#contextType)) and a name as the key that identifies it plus some optional ([parameter](#parameter)) definitions attached.
 
 <a name="reduction"/>
 
