@@ -74,30 +74,24 @@ With a parameter the function sets the current scope to the parameter value and 
 This function was designed to support the mapping of AST nodes to scopes in the tree traversal: You set the current scope when you enter the node and restore the old current scope value when leaving the node.
 
 #### Parameter
-| #          | Name     | Type              | Description                                                                                                |
-| :--------- | :------- | :---------------- | :--------------------------------------------------------------------------------------------------------- |
-| 1st        | scope    | table             | (optional) pair of integers describing the scope to set as the current one                                 |
-| 2nd        | step     | integer           | (optional) integer describing the scope-step to set as the current one, set to scope[2]-1 if not specified |
-| Return 1st |          | table             | pair of integers describing the (previously defined) current scope                                         |
-| Return 2nd |          | integer           | integer describing the (previously defined) current scope-step                                             |
+| #          | Name     | Type              | Description                                                                                                  |
+| :--------- | :------- | :---------------- | :----------------------------------------------------------------------------------------------------------- |
+| 1st        | scope    | table             | (optional) pair of integers describing the scope to set as the current one                                   |
+| 2nd        | step     | integer           | (optional) integer describing the _scope-step_ to set as the current one, set to scope[2]-1 if not specified |
+| Return 1st |          | table             | pair of integers describing the (previously defined) current scope                                           |
+| Return 2nd |          | integer           | integer describing the (previously defined) current _scope-step_                                             |
 
 
 <a name="step"/>
 
 ### typedb:step
-Get or/and set the current scope-step. All methods retrieving objects dependent on a scope like
-
- - [typedb:get_instance](#get_instance)
- - [typedb:derive_type](#derive_type)
- - [typedb:resolve_type](#resolve_type)
- - [typedb:get_reduction](#get_reduction)
- - [typedb:get_reductions](#get_reductions)
-
-are referring to the current scope-step. Without parameter the function just returns the current scope-step.
-With a parameter the function sets the current scope-step to the parameter value and returns the previously defined value for the current scope-step.
+Get or/and set the current _scope-step_. All methods retrieving objects dependent on a scope like
+[typedb:get_instance](#get_instance), [typedb:derive_type](#derive_type), [typedb:resolve_type](#resolve_type), [typedb:get_reduction](#get_reduction), [typedb:get_reductions](#get_reductions)
+are referring to the current _scope-step_. Without parameter the function just returns the current _scope-step_.
+With a parameter the function sets the current scope-step to the parameter value and returns the previously defined value for the current _scope-step_.
 
 #### Note
-This function was designed to support the mapping of AST nodes to scope-steps in the tree traversal in the same way as [typedb:scope](#scope).
+This function was designed to support the mapping of _AST_ nodes to _scope-steps_ in the tree traversal in the same way as [typedb:scope](#scope).
 
 #### Parameter
 | #      | Name     | Type              | Description                                                    |
@@ -106,8 +100,8 @@ This function was designed to support the mapping of AST nodes to scope-steps in
 | Return |          | integer           | integer describing the (previously defined) current scope-step |
 
 #### Remark
-The call of [typedb:scope](#scope) with parameter sets the scope-step implicitly to the start of the scope.
-_If you are not relying on a scope-step different from that, you don't have to call scope-step for every scope-step value provided by the grammar description_.
+The call of [typedb:scope](#scope) with parameter sets the _scope-step_ implicitly to the start of the _scope_.
+If you are not relying on a _scope-step_ different from that, you don't have to call _step_ for every _scope-step_ value provided by the grammar description.
 
 
 <a name="instance"/>
@@ -136,7 +130,7 @@ This improves the situation in terms of performance. The suggested policy remain
 <a name="get_instance"/>
 
 ### typedb:get_instance
-Get the instance for the object with name _name_ for the innermost scope including the current scope-step (set with [typedb::scope](#scope) or [typedb::step](#step)).
+Get the instance for the object with name _name_ for the innermost scope including the current _scope-step_ (set with [typedb::scope](#scope) or [typedb::step](#step)).
 
 #### Parameter
 | #      | Name     | Type     | Description                                                                                                      |
@@ -233,7 +227,7 @@ Be aware of the pitfalls and try to separate the types that can have parameters 
 ### typedb:def_type_as
 Define a new type representing another type already defined.
 The newly defined type name can be used as a kind of synonym for the specified type in the current scope.
-The scope of the newly defined type has been set with the last call of the setter [typedb::scope](#scope).
+The _scope_ of the newly defined type has been set with the last call of the setter [typedb::scope](#scope).
 
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                   |
@@ -252,7 +246,7 @@ The type defined like this has the same constructor, therefore it cannot be used
 
 ### typedb:this_type
 Get a type definition defined in the current scope, without lookup in enclosing scopes and without any reductions of the context type.
-The current scope has been set with the last call of the setter [typedb::scope](#scope).
+The current _scope_ has been set with the last call of the setter [typedb::scope](#scope).
 Same as [typedb:this_types](#this_types) but filtering the one instance with all parameters matching.
 
 #### Parameter
@@ -268,7 +262,7 @@ Same as [typedb:this_types](#this_types) but filtering the one instance with all
 
 ### typedb:this_types
 Get all type definitions without matching the parameters defined in the current scope, without lookup in enclosing scopes and without any reductions of the context type.
-The current scope has been set with the last call of the setter [typedb::scope](#scope).
+The current _scope_ has been set with the last call of the setter [typedb::scope](#scope).
 Same as [typedb:this_type](#this_type) but retrieving all instances differing in the parameters attached.
 
 #### Parameter
@@ -294,7 +288,7 @@ Deprecated function, renamed to [typedb:this_types](#this_types).
 
 ### typedb:def_reduction
 Define a reduction from a type resulting in another type with a tag to classify it.
-The scope of the newly defined reduction has been set with the last call of the setter [typedb::scope](#scope).
+The _scope_ of the newly defined reduction has been set with the last call of the setter [typedb::scope](#scope).
 
 #### Parameter
 | #      | Name         | Type             | Description                                                                                                       |
@@ -321,16 +315,16 @@ Create a set of tags for selecting a set of reductions valid in the context of a
 
 ### typedb:get_reduction
 Get the constructor of a reduction from a type to another if it exists.
-The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
+The current _scope-step_ defining the valid reduction candidates defined in a covering _scope_ has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
-| #          | Name         | Type     | Description                                                                                                         |
-| :--------- | :----------- | :------- | :------------------------------------------------------------------------------------------------------------------ |
-| 1st        | dest-type    | integer  | Resulting type to of the reduction.                                                                                 |
-| 2nd        | src-type     | integer  | Start type of the reduction.                                                                                        |
-| 3rd        | tagmask      | integer  | (optional) Set (bit-set) of tags (*) that selects the reduction classes to consider. No restriction if undefined.   |
-| Return 1st |              | number   | Weight of the reduction if it exists in a scope and the result is valid or *nil* if it does not exist.              |
-| Return 2nd |              | any type | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the current scope-step. |
+| #          | Name         | Type     | Description                                                                                                           |
+| :--------- | :----------- | :------- | :-------------------------------------------------------------------------------------------------------------------- |
+| 1st        | dest-type    | integer  | Resulting type to of the reduction.                                                                                   |
+| 2nd        | src-type     | integer  | Start type of the reduction.                                                                                          |
+| 3rd        | tagmask      | integer  | (optional) Set (bit-set) of tags (*) that selects the reduction classes to consider. No restriction if undefined.     |
+| Return 1st |              | number   | Weight of the reduction if it exists in a scope and the result is valid or *nil* if it does not exist.                |
+| Return 2nd |              | any type | Constructor of the reduction if it exists or *nil* if it is not defined by a scope covering the current _scope-step_. |
 
 #### Remark (*)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
@@ -340,7 +334,7 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 
 ### typedb:get_reductions
 Get the list of reductions defined for a type from a list of selected classes defined by tag.
-The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
+The current _scope-step_ defining the valid reduction candidates defined in a covering _scope_ has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
 | #      | Name         | Type    | Description                                                                                                    |
@@ -366,7 +360,7 @@ Such a parallel implementation is easier to handle than it would be the to offer
 
 ### typedb:derive_type
 Finds the path of reductions selected by the _tagmask_ parameter with the minimum cost (sum of reduction weights).
-The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
+The current _scope-step_ defining the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
 | #          | Name            | Type     | Description                                                                                                               |
@@ -395,31 +389,43 @@ Most programming languages allow one conversion of a function parameter. 1 is al
 Finds the matching type with the searched name and a context-type to derive from the context-type parameter with the shortest path (sum of reduction weights) of reductions selected by the _tagmask_ parameter.
 The returned list of reductions (2nd return value) have to be applied on the searched context-type instance to construct the instance of the context-type of the returned candidate types.
 The returned list of candidates (3rd return value) has to be inspected by the client to find the best match.
-The scope-step of the search that defines the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
+The current _scope-step_ defining the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
 #### Parameter
-| #          | Name            | Type              | Description                                                                                                           |
-| :--------- | :-------------- | :---------------- | :-------------------------------------------------------------------------------------------------------------------- |
-| 1st        | context-type(s) | integer/table     | Single type or array of types or type/constructor pairs referring to the context of the type (*)                      |
-| 2nd        | name            | string            | Name of the type searched                                                                                             |
-| 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used (select all if undefined).                 |
-| Return 1st |                 | integer           | Derived context-type of the results, *nil* if not found, array with two types in case of ambiguous results.           |
-| Return 2nd |                 | table             | List of context-type reductions for building the result context, type/constructor pairs as tables with named members. |
-| Return 3rd |                 | table             | List of candidates types found, differing in the parameters. The list has to be filtered by the caller (***).         |
+| #          | Name            | Type              | Description                                                                                                                 |
+| :--------- | :-------------- | :---------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| 1st        | context-type(s) | integer/table     | Single type or array of types or type/constructor pairs referring to the context of the type (*)                            |
+| 2nd        | name            | string            | Name of the type searched                                                                                                   |
+| 3rd        | tagmask         | integer           | (optional) Set (bit-set) of tags (**) selecting the reduction classes used (select all if undefined).                       |
+| Return 1st |                 | integer           | Derived context-type of the results, *nil* if not found, array with two types in case of ambiguous results.                 |
+| Return 2nd |                 | table             | List of context-type reductions for building the result context, type/constructor pairs as tables with named members. (***) |
+| Return 3rd |                 | table             | List of candidates types found, differing in the parameters. The list has to be filtered by the caller (****).              |
 
 #### Remark (*)
-The context-type 0 is reserved for types that are not a member of some other structure.
-In case of a type/constructor pair selected as root type of the resolved type, this pair is returned as first element if the list of reductions (2nd return value).
+The context-type 0 is reserved for types that are not a member of some other structure. If passing a list of context types (table),
+the behaviour is slightly different (see (***)).
+
 #### Remark (**)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
+
 #### Remark (***)
+If passing a list of context-types or context-type/constructor pairs as first argument, then the origin of the reduction path to the
+resulting context-type is returned as first element of the reduction list returned as 2nd return value. So the caller is able to construct
+the instance of the result context from the second return value.
+
+#### Remark (****)
 The reason why parameter matching of the results is left to the caller is because there are different ways how to do this depending on the language.
 In fact, how parameters are matched is a core characteristic of the language and should therefore be implemented in the lua part of the type system.
+
 
 #### Note
 To inspect the result you first have to look if the 1st return value is *nil* (meaning that the type could not be resolved).
 Then you have to check if the first return value is a table (meaning that there are ambiguous results). The table contains two of the conflicting context types.
-Otherwise the first return value is the context-type of the resuls types and the 2nd and 3rd return value specify how the resolved types are built.
+Otherwise the first return value is the context-type of the resuls types and the 2nd and 3rd return value specify how the instances of the resolved types are built.
+
+#### Note
+All programming languages I know follow the policy that a function name in the innermost possible scope is shadowing declarations in the outer scopes, even if these have nearer matches of the arguments.
+Another behavior would be alien and dangerous from the software engineering point of view. Therefore I consider the restriction that all candidate matches have to share the same context-type as useful.
 
 
 <a name="typeAttributes"/>

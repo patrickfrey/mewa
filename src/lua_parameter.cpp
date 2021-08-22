@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -343,7 +343,7 @@ std::vector<std::string> mewa::lua::getArgumentAsStringList( const char* functio
 	return rt;
 }
 
-std::pmr::vector<int> mewa::lua::getArgumentAsTypeList( 
+std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc, bool allowTypeConstructorPairs)
 {
 	std::pmr::vector<int> rt( memrsc);
@@ -369,7 +369,7 @@ std::pmr::vector<int> mewa::lua::getArgumentAsTypeList(
 				{
 					lua_pushliteral( ls, "type");					// STK: [KEY] [VAL] "type"
 					lua_rawget( ls, -2);						// STK: [KEY] [VAL] [TYPE]
-					if (lua_isnumber( ls, -1)) 
+					if (lua_isnumber( ls, -1))
 					{
 						type = lua_tointeger( ls, -1);
 					}
@@ -426,7 +426,7 @@ static inline void pushTypeConstructorPair( lua_State* ls, int type, int constru
 	lua_createtable( ls, 0/*narr*/, 2/*nrec*/);	// STK: [TAB]
 	lua_pushliteral( ls, "type");			// STK: [TAB] "type"
 	lua_pushinteger( ls, type);			// STK: [TAB] "type" [TYPE]
-	lua_rawset( ls, -3);				// STK: [TAB] 
+	lua_rawset( ls, -3);				// STK: [TAB]
 
 	if (constructor > 0)
 	{
@@ -444,7 +444,7 @@ static inline void pushTypeConstructorWeightTuple( lua_State* ls, int type, int 
 	lua_pushnumber( ls, weight);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "weight" [WEIGHT]
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
 	lua_pushliteral( ls, "count");			// STK: [OBJTAB] [ELEMTAB] [ELEM] "count"
-	lua_pushboolean( ls, countFlag);			// STK: [OBJTAB] [ELEMTAB] [ELEM] "count" [COUNT]
+	lua_pushboolean( ls, countFlag);		// STK: [OBJTAB] [ELEMTAB] [ELEM] "count" [COUNT]
 	lua_rawset( ls, -3);				// STK: [OBJTAB] [ELEMTAB] [ELEM]
 }
 
@@ -482,7 +482,7 @@ void mewa::lua::pushTypeList(
 {
 	checkStack( functionName, ls, 6);
 
-	lua_createtable( ls, typelist.size()/*narr*/, 0/*nrec*/);		// STK: [TYPETAB] 
+	lua_createtable( ls, typelist.size()/*narr*/, 0/*nrec*/);		// STK: [TYPETAB]
 	int tidx = 0;
 	for (int tp : typelist)
 	{
@@ -532,7 +532,7 @@ void mewa::lua::pushReductionDefinition(
 {
 	checkStack( functionName, ls, 6);
 
-	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);					// STK: [REDUTAB] 
+	lua_createtable( ls, 0/*narr*/, 5/*nrec*/);					// STK: [REDUTAB]
 
 	lua_pushliteral( ls, "to");							// STK: [REDUTAB] "to"
 	lua_pushinteger( ls, redu.toType);						// STK: [REDUTAB] "to" [TYPE]
@@ -585,19 +585,20 @@ int mewa::lua::pushResolveResult(
 		}
 		else if (contextTabLuaIndex)
 		{
-			lua_pushinteger( ls, resolveres.contextType);									// STK: [CTYPE]
-			lua_rawgeti( ls, contextTabLuaIndex>0?contextTabLuaIndex:(contextTabLuaIndex-1), resolveres.rootIndex); 	// STK: [CTYPE] [ROOT]
+			lua_pushinteger( ls, resolveres.contextType);								// STK: [CTYPE]
+			int relContextTabLuaIndex = contextTabLuaIndex>0?contextTabLuaIndex:(contextTabLuaIndex-1);
+			lua_rawgeti( ls, relContextTabLuaIndex, resolveres.rootIndex);						// STK: [CTYPE] [ROOT]
 			if (lua_istable( ls, -1))
 			{
-				pushTypeConstructorPairsWithReductionRoot( ls, functionName, -1, resolveres.reductions); 		// STK: [CTYPE] [REDUS]
+				pushTypeConstructorPairsWithReductionRoot( ls, functionName, -1, resolveres.reductions); 	// STK: [CTYPE] [REDUS]
 				lua_replace( ls, -2);
 			}
 			else
 			{
-				lua_pop( ls, 1);											// STK: [CTYPE]
-				mewa::lua::pushTypeConstructorPairs( ls, functionName, resolveres.reductions);		// STK: [CTYPE] [REDUS]
+				lua_pop( ls, 1);										// STK: [CTYPE]
+				mewa::lua::pushTypeConstructorPairs( ls, functionName, resolveres.reductions);			// STK: [CTYPE] [REDUS]
 			}
-			mewa::lua::pushTypeList( ls, functionName, resolveres.items);		 					// STK: [CTYPE] [REDUS] [ITEMS]
+			mewa::lua::pushTypeList( ls, functionName, resolveres.items);		 				// STK: [CTYPE] [REDUS] [ITEMS]
 			return 3;
 		}
 		else
