@@ -11,6 +11,7 @@
 /// \file "lua_load_automaton.cpp"
 
 #include "lua_load_automaton.hpp"
+#include "lua_5_2.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
 #include "strings.hpp"
@@ -31,17 +32,6 @@ extern "C" {
 
 #if __cplusplus < 201703L
 #error Building mewa requires C++17
-#endif
-
-#if LUA_VERSION_NUM <= 502
-static bool lua_isinteger( lua_State *ls, int li)
-{
-	int tp = lua_type( ls, li);
-	if (tp != LUA_TNUMBER) return false;
-	double val = lua_tonumber( ls, li);
-	double fl = val - floor( val);
-	return (fl < 10*std::numeric_limits<double>::epsilon());
-}
 #endif
 
 template <typename KEY, typename VAL>

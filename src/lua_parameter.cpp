@@ -368,8 +368,8 @@ int mewa::lua::getArgumentAsType( const char* functionName, lua_State* ls, int l
 	int rt = 0;
 	if (lua_type( ls, li) == LUA_TTABLE)
 	{
-		lua_pushliteral( ls, "type");					// STK: [ARG] "type"
-		lua_rawget( ls, li > 0 ? li : (li-1));				// STK: [ARG] [TYPE]
+		lua_pushliteral( ls, "type");			// STK: [ARG] "type"
+		lua_rawget( ls, li > 0 ? li : (li-1));		// STK: [ARG] [TYPE]
 		if (lua_isnumber( ls, -1))
 		{
 			rt = lua_tointeger( ls, -1);
