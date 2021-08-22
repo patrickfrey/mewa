@@ -899,15 +899,9 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 
 		mewa::TypeDatabase::ResultBuffer resbuf;
 
-		if (lua_type( ls, 2) == LUA_TNUMBER)
+		if (mewa::lua::argumentIsArray( ls, 2))
 		{
-			int contextType = mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, 2);
-			auto resolveres = td->impl->resolveType( td->curStep, contextType, name, selectTags, resbuf);
-			return mewa::lua::pushResolveResult( ls, functionName, 0/*root context argument lua index*/, resolveres);
-		}
-		else if (lua_type( ls, 2) == LUA_TTABLE)
-		{
-			int buffer_parameter[ 256];
+			int buffer_parameter[ 1024];
 			mewa::monotonic_buffer_resource memrsc_parameter( buffer_parameter, sizeof buffer_parameter);
 
 			std::pmr::vector<int> contextTypes = mewa::lua::getArgumentAsTypeList( functionName, ls, 2, &memrsc_parameter, true/*allow t/c pairs*/);
@@ -916,7 +910,9 @@ static int mewa_typedb_resolve_type( lua_State* ls)
 		}
 		else
 		{
-			mewa::lua::throwArgumentError( functionName, 2, mewa::Error::ExpectedArgumentTypeList);
+			int contextType = mewa::lua::getArgumentAsType( functionName, ls, 2);
+			auto resolveres = td->impl->resolveType( td->curStep, contextType, name, selectTags, resbuf);
+			return mewa::lua::pushResolveResult( ls, functionName, 0/*root context argument lua index*/, resolveres);
 		}
 	}
 	catch (...) { lippincottFunction( ls); }

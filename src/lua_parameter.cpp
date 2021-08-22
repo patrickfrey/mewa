@@ -60,6 +60,26 @@ void mewa::lua::throwArgumentError( const char* functionName, int li, mewa::Erro
 	}
 }
 
+bool mewa::lua::argumentIsArray( lua_State* ls, int li)
+{
+	bool rt = false;
+	if (lua_type( ls, 2) == LUA_TTABLE)
+	{
+		lua_pushvalue( ls, li);
+		lua_pushnil( ls);
+		if (lua_next( ls, -2))
+		{
+			rt = (lua_type( ls, -2) == LUA_TNUMBER);
+			lua_pop( ls, 2);
+		}
+		else
+		{
+			lua_pop( ls, 1);
+		}
+	}
+	return rt;
+}
+
 std::string_view mewa::lua::getArgumentAsString( const char* functionName, lua_State* ls, int li)
 {
 	if (!mewa::lua::isArgumentType( functionName, ls, li, (1 << LUA_TSTRING)))
@@ -340,6 +360,31 @@ std::vector<std::string> mewa::lua::getArgumentAsStringList( const char* functio
 		lua_pop( ls, 1);	//STK: [STRLIST] [KEY]
 	}
 	lua_pop( ls, 1);		//STK:
+	return rt;
+}
+
+int mewa::lua::getArgumentAsType( const char* functionName, lua_State* ls, int li)
+{
+	int rt = 0;
+	if (lua_type( ls, li) == LUA_TTABLE)
+	{
+		lua_pushliteral( ls, "type");					// STK: [ARG] "type"
+		lua_rawget( ls, li > 0 ? li : (li-1));				// STK: [ARG] [TYPE]
+		if (lua_isnumber( ls, -1))
+		{
+			rt = lua_tointeger( ls, -1);
+			if (rt < 0) mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentType);
+			lua_pop( ls, 1);
+		}
+		else
+		{
+			mewa::lua::throwArgumentError( functionName, li, mewa::Error::ExpectedArgumentType);
+		}
+	}
+	else
+	{
+		return mewa::lua::getArgumentAsNonNegativeInteger( functionName, ls, li);
+	}
 	return rt;
 }
 

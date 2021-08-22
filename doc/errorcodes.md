@@ -24,12 +24,13 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#414**   _Expected argument to be a structure (pair of non negative integers, unsigned integer range)_
 + **#415**   _Expected argument to be a list of type,constructor pairs (named or positional)_
 + **#416**   _Expected argument to be a list of strings_
-+ **#417**   _Expected argument to be a list of types (integers)_
-+ **#418**   _Expected argument to be a list of types (integers) or type,constructor pairs_
-+ **#419**   _Expected argument to be not nil_
-+ **#420**   _Too few arguments_
-+ **#421**   _Too many arguments_
-+ **#422**	_Compile error_
++ **#417**   _Expected argument to be a type or a type/constructor pair_
++ **#418**   _Expected argument to be a list of types (integers) or a list of type/constructor pairs_
++ **#419**   _Expected argument to be a list of types (integers) or type,constructor pairs_
++ **#420**   _Expected argument to be not nil_
++ **#421**   _Too few arguments_
++ **#422**   _Too many arguments_
++ **#423**	_Compile error_
 
 ## Errors in Lexer
 + **#431**   _Bad character in a regular expression passed to the lexer_

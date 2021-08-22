@@ -222,7 +222,8 @@ const char* Error::code2String( int code_) noexcept
 		case ExpectedArgumentScopeStructure:  return "Expected argument to be a structure (pair of non negative integers, unsigned integer range)";
 		case ExpectedArgumentTypeConstructorPairList:  return "Expected argument to be a list of type,constructor pairs (named or positional)";
 		case ExpectedArgumentStringList: return "Expected argument to be a list of strings";
-		case ExpectedArgumentTypeList: return "Expected argument to be a list of types (integers)";
+		case ExpectedArgumentType: return "Expected argument to be a type or a type/constructor pair";
+		case ExpectedArgumentTypeList: return "Expected argument to be a list of types (integers) or a list of type/constructor pairs";
 		case ExpectedArgumentTypeOrTypeConstructorPairList: return "Expected argument to be a list of types (integers) or type,constructor pairs";
 
 		case ExpectedArgumentNotNil: return "Expected argument to be not nil";

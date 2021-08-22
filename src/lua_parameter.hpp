@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -40,6 +40,8 @@ inline bool isArgumentType( const char* functionName, lua_State* ls, int li, int
 std::string_view getArgumentAsString( const char* functionName, lua_State* ls, int li);
 const char* getArgumentAsCString( const char* functionName, lua_State* ls, int li);
 
+bool argumentIsArray( lua_State* ls, int li);
+
 long getArgumentAsInteger( const char* functionName, lua_State* ls, int li, mewa::Error::Code ec = mewa::Error::ExpectedIntegerArgument);
 
 long getArgumentAsUnsignedInteger( const char* functionName, lua_State* ls, int li);
@@ -58,10 +60,12 @@ mewa::TagMask getArgumentAsTagMask( const char* functionName, lua_State* ls, int
 
 int getArgumentAsConstructor( const char* functionName, lua_State* ls, int li);
 
-std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> getArgumentAsTypeConstructorPairList( 
+std::pmr::vector<mewa::TypeDatabase::TypeConstructorPair> getArgumentAsTypeConstructorPairList(
 	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc);
 
-std::pmr::vector<int> getArgumentAsTypeList( 
+int getArgumentAsType( const char* functionName, lua_State* ls, int li);
+
+std::pmr::vector<int> getArgumentAsTypeList(
 	const char* functionName, lua_State* ls, int li, std::pmr::memory_resource* memrsc, bool allowTypeConstructorPairs);
 
 std::vector<std::string> getArgumentAsStringList( const char* functionName, lua_State* ls, int li);

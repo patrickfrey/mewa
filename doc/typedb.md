@@ -387,7 +387,7 @@ Most programming languages allow one conversion of a function parameter. 1 is al
 
 ### typedb:resolve_type
 Finds the matching type with the searched name and a context-type to derive from the context-type parameter with the shortest path (sum of reduction weights) of reductions selected by the _tagmask_ parameter.
-The returned list of reductions (2nd return value) have to be applied on the searched context-type instance to construct the instance of the context-type of the returned candidate types.
+The returned list of reductions (2nd return value) have to be applied on the searched context-type instance to construct the instance of the context-type of the returned candidate types (***).
 The returned list of candidates (3rd return value) has to be inspected by the client to find the best match.
 The current _scope-step_ defining the valid reduction candidates has been set with the last call of the setter [typedb::step](#step) or [typedb::scope](#scope).
 
@@ -403,7 +403,7 @@ The current _scope-step_ defining the valid reduction candidates has been set wi
 
 #### Remark (*)
 The context-type 0 is reserved for types that are not a member of some other structure. If passing a list of context types (table),
-the behaviour is slightly different (see (***)).
+the behavior is slightly different (see (***)).
 
 #### Remark (**)
 Built with [typedb:reduction_tagmask](#reduction_tagmask).
@@ -411,7 +411,8 @@ Built with [typedb:reduction_tagmask](#reduction_tagmask).
 #### Remark (***)
 If passing a list of context-types or context-type/constructor pairs as first argument, then the origin of the reduction path to the
 resulting context-type is returned as first element of the reduction list returned as 2nd return value. So the caller is able to construct
-the instance of the result context from the second return value.
+the instance of the result context from the second return value only.
+If passing a single type/constructor pair or type then the returned reduction list has to be applied on this to construct the instance of the result context.
 
 #### Remark (****)
 The reason why parameter matching of the results is left to the caller is because there are different ways how to do this depending on the language.

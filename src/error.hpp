@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -47,12 +47,13 @@ public:
 		ExpectedArgumentScopeStructure=414,
 		ExpectedArgumentTypeConstructorPairList=415,
 		ExpectedArgumentStringList=416,
-		ExpectedArgumentTypeList=417,
-		ExpectedArgumentTypeOrTypeConstructorPairList=418,
-		ExpectedArgumentNotNil=419,
-		TooFewArguments=420,
-		TooManyArguments=421,
-		CompileError=422,
+		ExpectedArgumentType=417,
+		ExpectedArgumentTypeList=418,
+		ExpectedArgumentTypeOrTypeConstructorPairList=419,
+		ExpectedArgumentNotNil=420,
+		TooFewArguments=421,
+		TooManyArguments=422,
+		CompileError=423,
 
 		IllegalFirstCharacterInLexer=431,
 		SyntaxErrorInLexer=432,
@@ -160,24 +161,24 @@ public:
 	Error()
 		:std::runtime_error(""),m_code(Ok),m_location(){}
 	Error( Code code_, const Location& location_ = Location())
-                :std::runtime_error(map2string(code_,"",location_)),m_code(code_),m_location(location_){}
+		:std::runtime_error(map2string(code_,"",location_)),m_code(code_),m_location(location_){}
 	Error( Code code_, const std::string& param_, const Location& location_ = Location())
-                :std::runtime_error(map2string(code_,param_.c_str(),location_)),m_code(code_),m_location(location_){}
+		:std::runtime_error(map2string(code_,param_.c_str(),location_)),m_code(code_),m_location(location_){}
 	Error( Code code_, const std::string_view& param_, const Location& location_ = Location())
-                :std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
+		:std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
 	Error( Code code_, const char* param_, const Location& location_ = Location())
-                :std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
+		:std::runtime_error(map2string(code_,param_,location_)),m_code(code_),m_location(location_){}
 	Error( const Error& o)
-                :std::runtime_error(map2string(o.code(),o.arg(),o.location())),m_code(o.m_code),m_location(o.location()){}
+		:std::runtime_error(map2string(o.code(),o.arg(),o.location())),m_code(o.m_code),m_location(o.location()){}
 	Error( const Error& o, const Location& location_)
-                :std::runtime_error(map2string(o.code(),o.arg(),location_)),m_code(o.m_code),m_location(location_){}
+		:std::runtime_error(map2string(o.code(),o.arg(),location_)),m_code(o.m_code),m_location(location_){}
 
 	Code code() const noexcept			{return m_code;}
 	const char* arg() const noexcept		{char const* rt = std::strstr( what(), ": "); return rt?(rt+2):rt;}
-        const Location& location() const noexcept	{return m_location;}
+	const Location& location() const noexcept	{return m_location;}
 
-        const char* what() const noexcept override
-        {
+	const char* what() const noexcept override
+	{
 		return std::runtime_error::what();
 	}
 
@@ -188,11 +189,11 @@ public:
 	static std::string_view parseString( char const*& si) noexcept;
 	static void skipSpaces( char const*& si) noexcept;
 	static bool skipUntil( char const*& si, char eb) noexcept;
-        static const char* code2String( int code_) noexcept;
+	static const char* code2String( int code_) noexcept;
 
 private:
-        static std::string map2string( Code code_, const char* param_, const Location& location_);
-        static std::string map2string( Code code_, const std::string_view& param_, const Location& location_);
+	static std::string map2string( Code code_, const char* param_, const Location& location_);
+	static std::string map2string( Code code_, const std::string_view& param_, const Location& location_);
 
 private:
 	Code m_code;

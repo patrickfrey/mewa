@@ -24,6 +24,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:ExpectedArgumentScopeStructure**   _$ERRTEXT:ExpectedArgumentScopeStructure_
 + **#$ERRCODE:ExpectedArgumentTypeConstructorPairList**   _$ERRTEXT:ExpectedArgumentTypeConstructorPairList_
 + **#$ERRCODE:ExpectedArgumentStringList**   _$ERRTEXT:ExpectedArgumentStringList_
++ **#$ERRCODE:ExpectedArgumentType**   _$ERRTEXT:ExpectedArgumentType_
 + **#$ERRCODE:ExpectedArgumentTypeList**   _$ERRTEXT:ExpectedArgumentTypeList_
 + **#$ERRCODE:ExpectedArgumentTypeOrTypeConstructorPairList**   _$ERRTEXT:ExpectedArgumentTypeOrTypeConstructorPairList_
 + **#$ERRCODE:ExpectedArgumentNotNil**   _$ERRTEXT:ExpectedArgumentNotNil_

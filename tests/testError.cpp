@@ -121,7 +121,7 @@ Test Error( code, line): Code=449, Line=345, File="", Arg=[], What=[#449 "Incomp
 Test Error( code, Location( filename, line)): Code=413, Line=345, File="file.txt", Arg=[], What=[#413 "Expected table as argument" at line 345 in file "file.txt"]
 Test Error( code, param): Code=447, Line=0, File="", Arg=[13.45], What=[#447 "Bad Mewa version": 13.45]
 Test Error( code, param, line): Code=431, Line=123, File="", Arg=[int, float], What=[#431 "Bad character in a regular expression passed to the lexer" at line 123: int, float]
-Test Error( code, param, Location( filename, line)): Code=420, Line=123, File="source.txt", Arg=[int, float], What=[#420 "Too few arguments" at line 123 in file "source.txt": int, float]
+Test Error( code, param, Location( filename, line)): Code=421, Line=123, File="source.txt", Arg=[int, float], What=[#421 "Too few arguments" at line 123 in file "source.txt": int, float]
 Test Error( RuntimeException): Code=403, Line=0, File="", Arg=[], What=[#403 "Runtime error exception"]
 Test Error( RuntimeException, param): Code=403, Line=0, File="", Arg=[a runtime error with msg], What=[#403 "Runtime error exception": a runtime error with msg]
 Test Error( RuntimeException, param, line): Code=403, Line=234, File="", Arg=[a runtime error with msg and line info], What=[#403 "Runtime error exception" at line 234: a runtime error with msg and line info]
@@ -129,7 +129,7 @@ Test Error( RuntimeException, param, line): Code=403, Line=234, File="input.txt"
 Test runtime error: Code=403, Line=0, File="", Arg=[Message from outer space!], What=[#403 "Runtime error exception": Message from outer space!]
 Test runtime error with line info: Code=403, Line=91, File="", Arg=[Message from outer space with line info!], What=[#403 "Runtime error exception" at line 91: Message from outer space with line info!]
 Test runtime error with location info: Code=403, Line=91, File="program.txt", Arg=[Message from outer space with location info!], What=[#403 "Runtime error exception" at line 91 in file "program.txt": Message from outer space with location info!]
-Test compile error with line info: Code=422, Line=612, File="", Arg=[This is a compilation error!], What=[Error at line 612: This is a compilation error!]
+Test compile error with line info: Code=423, Line=612, File="", Arg=[This is a compilation error!], What=[Error at line 612: This is a compilation error!]
 
 )"};
 		std::ostringstream outputbuf;
