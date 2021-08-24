@@ -72,7 +72,7 @@ function testRegisterAllocator()
 end
 
 
--- Function that tests the typedb define/resolve type 
+-- Function that tests the typedb define/resolve type
 function testDefineResolveType()
 	typedb = mewa.typedb()
 
@@ -281,7 +281,7 @@ function testDefineTypeAs()
 	local type2 = typedb:def_type( ctx2, "type2", "constructor type2")
 	local syn1 = typedb:def_type_as( ctx1, "syn1", type2)
 	local syn2 = typedb:def_type_as( ctx2, "syn2", type1)
-	
+
 	local rctx1,reductions1,items1 = typedb:resolve_type( ctx1, "syn1", mask_resolve)
 	local rctx2,reductions2,items2 = typedb:resolve_type( ctx2, "syn2", mask_resolve)
 	if rctx1 then
@@ -337,11 +337,70 @@ function testLlvmFloatAndDoubleToHex()
 	checkTestResult( "testLlvmFloatAndDoubleToHex", result, expected)
 end
 
+-- Function that tests the resolve type with type/constructor pair as arguments
+function dumpValue( val)
+	if type(val) == "table" then
+		local dd = nil
+		for kk,vv in pairs(val) do
+			dd = dd and (dd .. "," .. kk .. "=" .. dumpValue(vv)) or (kk .. "=" .. dumpValue(vv))
+		end
+		return "{" .. (dd and dd or "") .. "}"
+	else
+		return tostring(val)
+	end
+end
+function testResolveType_typeConstructorPairs()
+	local function dumpResult( init_constructor, ctx, reductions, items)
+		if not ctx then
+			return "!NOTFOUND"
+		elseif type(ctx) == "table" then
+			return "!AMBIGUOUS"
+		else
+			local res = init_constructor;
+			for _,redu in ipairs(reductions) do
+				local constructor = redu.constructor
+				if constructor then
+					if type(constructor) == "function" then
+						res = constructor( res)
+					else
+						res = constructor
+					end
+				end
+			end
+			if #items ~= 1 then return "!LOGICERR" end
+			return dumpValue(res) .. " " .. items[1];
+		end
+	end
+	typedb = mewa.typedb()
+	local tag_conv = 1
+	local mask_resolve = typedb.reduction_tagmask( tag_conv)
+	local type_any = typedb:def_type( 0, "any", nil)
+	local type_int = typedb:def_type( 0, "int", nil)
+	typedb:def_reduction( type_any, type_int, function( arg) return "any: " .. arg end, 1, 0.1)
+	local type_foo = typedb:def_type( type_any, "foo", "any -> foo")
+	local type_a = typedb:def_type( 0, "a", "#a")
+	local type_b = typedb:def_type( 0, "b", "#b")
+	typedb:def_reduction( type_int, type_a, function( arg) return "int(" .. arg .. ")" end, 1, 0.1)
+	typedb:def_reduction( type_int, type_b, function( arg) return "int(" .. arg .. ")" end, 1, 0.05)
+	local res = ""
+	res = res .. dumpResult( typedb:type_constructor(type_a), typedb:resolve_type( type_a, "foo", mask_resolve)) .. "\n"
+	res = res .. dumpResult( "#a!", typedb:resolve_type( {type=type_a,constructor="#a!"}, "foo", mask_resolve)) .. "\n"
+	res = res .. dumpResult( "#a!", typedb:resolve_type( {type_a,type_b}, "foo", mask_resolve)) .. "\n"
+	res = res .. dumpResult( nil, typedb:resolve_type( {{type=type_a,constructor="#a!"},{type=type_b,constructor="#b!"}}, "foo", mask_resolve)) .. "\n"
+	local expected = [[any: int(#a) 3
+any: int(#a!) 3
+any: int(#a!) 3
+any: int(#b!) 3
+]]
+	checkTestResult( "testResolveType_typeConstructorPairs", res, expected)
+end
+
 testRegisterAllocator()
 testDefineResolveType()
 testResolveTypeContext()
 testDefineTypeAs()
 testLlvmFloatAndDoubleToHex()
+testResolveType_typeConstructorPairs()
 
 if errorCount > 0 then
 	error( "result of " .. errorCount .. " tests not as expected!")

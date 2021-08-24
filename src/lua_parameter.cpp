@@ -11,6 +11,7 @@
 /// \file "lua_parameter.cpp"
 #include "lua_parameter.hpp"
 #include "lua_userdata.hpp"
+#include "lua_5_2.hpp"
 #include "error.hpp"
 #include "scope.hpp"
 #include "typedb.hpp"
@@ -69,7 +70,7 @@ bool mewa::lua::argumentIsArray( lua_State* ls, int li)
 		lua_pushnil( ls);
 		if (lua_next( ls, -2))
 		{
-			rt = (lua_type( ls, -2) == LUA_TNUMBER);
+			rt = lua_isinteger( ls, -2) && 1==lua_tointeger( ls, -2);
 			lua_pop( ls, 2);
 		}
 		else
