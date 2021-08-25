@@ -26,7 +26,8 @@ enum {
 	MAX_SEARCH_SIZE = 256,
 	MAX_TREE_SIZE = 2048,
 	IDENTBUF32_SIZE = 1<<16,
-	HASHTABLE_SIZE = 1<<17
+	HASHTABLE_SIZE = 1<<17,
+	HASHTABLE_MASK = HASHTABLE_SIZE-1
 };
 typedef enum {
 	Ok=0,
@@ -235,6 +236,10 @@ static int32_t getIdentHash( IdentSeqBuf const* buf, int32_t id)
 {
 	return buf->ar[ id-1];
 }
+static int32_t getIdentRehash( IdentSeqBuf const* buf, int32_t id, int32_t hs, int32_t hi)
+{
+	return rot( buf->ar[ id], hi) + hs + hi;
+}
 static const char* getIdentString( IdentSeqBuf const* buf, int32_t id)
 {
 	return (const char*)(buf->ar + id);
@@ -248,6 +253,32 @@ static void initIdentMap( IdentMap* map) {
 	initIdentSeqBuf( &map->idseqbuf);
 	memset( map->slotar, 0, sizeof(map->slotar));
 	map->fillsize = 0;
+}
+static inline int identMatches( IdentMap const* map, int32_t id, int32_t hash, const char* idstr, size_t idsize) {
+	return (hash==getIdentHash( &map->idseqbuf, id) && 0==memcmp( getIdentString( &map->idseqbuf, id), idstr, idsize+1));
+}
+static int32_t getIdent( IdentMap* map, const char* idstr, size_t idsize) {
+	int32_t rt = newIdent( &map->idseqbuf, idstr, idsize);
+	int32_t hash = getIdentHash( &map->idseqbuf, rt);
+	int32_t hi = 0;
+	int32_t slotidx = hash;
+	int32_t slot = map->slotar[ slotidx & HASHTABLE_MASK];
+
+	while (slot != 0 && !identMatches( map, slot, hash, idstr, idsize)) {
+		slotidx = getIdentRehash( &map->idseqbuf, rt, hash, hi);
+		slot = map->slotar[ slotidx & HASHTABLE_MASK];
+		hi += 1;
+	}
+	if (slot != 0)
+	{
+		rt = slot;
+	}
+	else
+	{
+		map->slotar[ slotidx & HASHTABLE_MASK] = rt;
+		finalizeIdent( &map->idseqbuf, idsize);
+	}
+	return rt;
 }
 
 int main( int argc, char const* argv[])
