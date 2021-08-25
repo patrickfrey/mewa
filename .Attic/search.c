@@ -9,11 +9,11 @@ typedef struct SPSStackElement {
 	int32_t idx;
 } SPSStackElement;
 
-typedef struct FollowElement {
+typedef struct SPSFollowElement {
 	float weight;
 	int32_t type;
 	int32_t constructor;
-} FollowElement;
+} SPSFollowElement;
 
 typedef struct SPSTreeElement {
 	int32_t type;
@@ -21,10 +21,12 @@ typedef struct SPSTreeElement {
 	int32_t prev;
 } SPSTreeElement;
 
-enum Constants {
+enum {
 	MAX_PATH_SIZE = 32,
 	MAX_SEARCH_SIZE = 256,
-	MAX_TREE_SIZE = 2048
+	MAX_TREE_SIZE = 2048,
+	IDENTBUF32_SIZE = 1<<16,
+	HASHTABLE_SIZE = 1<<17
 };
 typedef enum {
 	Ok=0,
@@ -32,8 +34,7 @@ typedef enum {
 	BufferTooSmall=2
 } ErrorCode;
 
-static const char* errorString( ErrorCode errcode)
-{
+static const char* errorString( ErrorCode errcode) {
 	static const char* ar[] = {
 		"",
 		"logic error",
@@ -41,8 +42,7 @@ static const char* errorString( ErrorCode errcode)
 	};
 	return ar[ errcode];
 }
-static void throwError( ErrorCode errcode, const char* msg)
-{
+static void throwError( ErrorCode errcode, const char* msg) {
 	if (msg) {
 		fprintf( stderr, "Exception %d: %s (%s)\n", (int)errcode, errorString( errcode), msg);
 	} else {
@@ -51,30 +51,27 @@ static void throwError( ErrorCode errcode, const char* msg)
 	exit( 1);
 }
 
-typedef size_t (*SPSGetFollow)( FollowElement* buf, void* context, int32_t type);
+typedef size_t (*SPSGetFollow)( SPSFollowElement* buf, void* context, int32_t type);
 typedef int (*SPSMatch)( void* context, int32_t type);
 
-typedef struct TypeConstructorPair
-{
+typedef struct TypeConstructorPair {
 	int32_t type;
 	int32_t constructor;
 } TypeConstructorPair;
 
-typedef struct ShortestPathSearchResult
-{
+typedef struct ShortestPathSearchResult {
 	float weight;
 	int32_t fromindex;
 	size_t arsize;
-	TypeConstructorPair ar[ MAX_PATH_SIZE];
 	size_t arsize_alt;
+	TypeConstructorPair ar[ MAX_PATH_SIZE];
 	TypeConstructorPair ar_alt[ MAX_PATH_SIZE];
 } ShortestPathSearchResult;
 
-static size_t fillResult( TypeConstructorPair* ar, SPSTreeElement const* tree, int32_t ti)
+static size_t fillSPSResult( TypeConstructorPair* ar, SPSTreeElement const* tree, int32_t ti)
 {
 	size_t ai = 0;
-	while (ti >= 0)
-	{
+	while (ti >= 0) {
 		if (ai >= MAX_PATH_SIZE) throwError( BufferTooSmall, 0);
 		ar[ ai].type = tree[ti].type;
 		ar[ ai].constructor = tree[ti].constructor;
@@ -82,8 +79,7 @@ static size_t fillResult( TypeConstructorPair* ar, SPSTreeElement const* tree, i
 	}
 	size_t bn = (ti & ~1) /2;
 	size_t bi = 0;
-	for (; bi <= bn; ++bi)
-	{
+	for (; bi <= bn; ++bi) {
 		// swap
 		int32_t tt = ar[bi].type;
 		int32_t cc = ar[bi].constructor;
@@ -98,7 +94,7 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 {
 	SPSTreeElement tree[ MAX_TREE_SIZE];
 	SPSStackElement stk[ MAX_SEARCH_SIZE];
-	FollowElement follow[ MAX_SEARCH_SIZE];
+	SPSFollowElement follow[ MAX_SEARCH_SIZE];
 	size_t followsize = 0;
 	size_t stksize = 0;
 	size_t treesize = 0;
@@ -108,10 +104,8 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 	result->arsize = 0;
 	result->arsize_alt = 0;
 	memset( &stk, 0, sizeof(stk));
-	for (; fi != fromtypesize; ++fi)
-	{
-		if (match( context, fromtype[ fi]))
-		{
+	for (; fi != fromtypesize; ++fi) {
+		if (match( context, fromtype[ fi])) {
 			result->fromindex = fi;
 			return 1;
 		}
@@ -126,8 +120,7 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 		SPSStackElement* elem = &stk[ stksize-1];
 		int32_t fotreeidx = elem->idx;
 		followsize = getFollow( follow, context, tree[ fotreeidx].type);
-		for (fi=0; fi<followsize; ++fi)
-		{
+		for (fi=0; fi<followsize; ++fi) {
 			int32_t fotype = follow[ fi].type;
 			float foweight = elem->weight + follow[ fi].weight;
 			size_t si = stksize;
@@ -136,14 +129,14 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 			for (; tree[ti].type != fotype && tree[ti].prev >= 0; ti = tree[ti].prev){}
 			if (tree[ti].type != fotype)
 			{
-				if (treesize == MAX_TREE_SIZE) throwError( BufferTooSmall, 0);
-				if (stksize == MAX_SEARCH_SIZE) throwError( BufferTooSmall, 0);
+				if (treesize == MAX_TREE_SIZE || stksize == MAX_SEARCH_SIZE) {
+					throwError( BufferTooSmall, 0);
+				}
 				tree[ treesize].prev = fotreeidx;
 				tree[ treesize].type = fotype;
 				tree[ treesize].constructor = follow[ fi].constructor;
 				size_t sn = stksize;
-				for (; sn != si; --sn)
-				{
+				for (; sn != si; --sn) {
 					stk[ sn].weight = stk[ sn-1].weight;
 					stk[ sn].idx = stk[ sn-1].idx;
 				}
@@ -159,11 +152,11 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 				if (match( context, fotype))
 				{
 					if (result->fromindex >= 0) {
-						result->arsize_alt = fillResult( result->ar_alt, tree, treesize-1);
+						result->arsize_alt = fillSPSResult( result->ar_alt, tree, treesize-1);
 						result->ar_alt[0].constructor = -1;
 						break;
 					} else {
-						result->arsize = fillResult( result->ar, tree, treesize-1);
+						result->arsize = fillSPSResult( result->ar, tree, treesize-1);
 						result->fromindex = result->ar_alt[0].constructor;
 						result->ar_alt[0].constructor = -1;
 						result->weight = foweight;
@@ -175,8 +168,92 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 	return (result->fromindex >= 0);
 }
 
+typedef struct IdentSeqBuf {
+	int32_t ar[ IDENTBUF32_SIZE];
+	int32_t arpos;
+} IdentSeqBuf;
+static void initIdentSeqBuf( IdentSeqBuf* buf) {
+	buf->arpos = 0;
+}
+static inline uint32_t rot( uint32_t n, uint32_t d)
+{
+	return (n<<d)|(n>>(32-d));
+}
+static uint32_t hashword( const int32_t* key, size_t keysize)
+{
+	uint32_t a = 0xdeadbeef;
+	uint32_t b = 0xdeadbeef;
+	uint32_t c = 0xdeadbeef;
+	int32_t length = keysize;
+	uint32_t const* kk = (uint32_t const*)key;
+
+	while (length > 3)
+	{
+		a += kk[0];
+		b += kk[1];
+		c += kk[2];
+		a -= c;  a ^= rot(c, 4);  c += b;
+		b -= a;  b ^= rot(a, 6);  a += c;
+		c -= b;  c ^= rot(b, 8);  b += a;
+		a -= c;  a ^= rot(c,16);  c += b;
+		b -= a;  b ^= rot(a,19);  a += c;
+		c -= b;  c ^= rot(b, 4);  b += a;
+		length -= 3;
+		kk += 3;
+	}
+	switch(length)
+	{
+		case 3 : c += kk[2];
+		case 2 : b += kk[1];
+		case 1 : a += kk[0];
+		c ^= b; c -= rot(b,14);
+		a ^= c; a -= rot(c,11);
+		b ^= a; b -= rot(a,25);
+		c ^= b; c -= rot(b,16);
+		a ^= c; a -= rot(c,4);
+		b ^= a; b -= rot(a,14);
+		c ^= b; c -= rot(b,24);
+	}
+	return (c + b + a);
+}
+static int32_t newIdent( IdentSeqBuf* buf, const char* id, size_t idsize) {
+	int32_t ai = buf->arpos;
+	if (idsize + buf->arpos >= IDENTBUF32_SIZE) {
+		throwError( BufferTooSmall, 0);
+	}
+	int32_t ae = buf->arpos + (idsize+1)/4;
+	buf->ar[ ae + 1] = 0;
+	memcpy( buf->ar + buf->arpos + 1, id, idsize);
+	buf->ar[ ai] = hashword( buf->ar + buf->arpos + 1, ae - ai);
+	return ai+1;
+}
+static void finalizeIdent( IdentSeqBuf* buf, size_t idsize)
+{
+	buf->arpos += (idsize+1)/4 + 1;
+}
+static int32_t getIdentHash( IdentSeqBuf const* buf, int32_t id)
+{
+	return buf->ar[ id-1];
+}
+static const char* getIdentString( IdentSeqBuf const* buf, int32_t id)
+{
+	return (const char*)(buf->ar + id);
+}
+typedef struct IdentMap {
+	IdentSeqBuf idseqbuf;
+	int32_t slotar[ HASHTABLE_SIZE];
+	int32_t fillsize;
+} IdentMap;
+static void initIdentMap( IdentMap* map) {
+	initIdentSeqBuf( &map->idseqbuf);
+	memset( map->slotar, 0, sizeof(map->slotar));
+	map->fillsize = 0;
+}
+
 int main( int argc, char const* argv[])
 {
+	IdentMap identmap;
+	initIdentMap( &identmap);
 	return 0;
 }
 
