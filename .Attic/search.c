@@ -27,7 +27,10 @@ enum {
 	MAX_TREE_SIZE = 2048,
 	IDENTBUF32_SIZE = 1<<16,
 	HASHTABLE_SIZE = 1<<17,
-	HASHTABLE_MASK = HASHTABLE_SIZE-1
+	HASHTABLE_MASK = HASHTABLE_SIZE-1,
+	SCOPEDMAP_BANK_SIZE = 63,
+	SCOPEDMAP_SIZE = 2048,
+	SCOPEDMAP_NODE_SIZE = 1<<17
 };
 typedef enum {
 	Ok=0,
@@ -279,6 +282,98 @@ static int32_t getIdent( IdentMap* map, const char* idstr, size_t idsize) {
 		finalizeIdent( &map->idseqbuf, idsize);
 	}
 	return rt;
+}
+typedef struct Scope {
+	int32_t start;
+	int32_t end;
+} Scope;
+
+typedef struct ScopedMapEntry {
+	uint64_t key;
+	int32_t scope_end;
+	int32_t nodeidx;
+} ScopedMapEntry;
+static inline void initScopedMapEntry( ScopedMapEntry* st, uint64_t key, int32_t nodeidx, int32_t scope_end) {
+	st->key = key; st->key = nodeidx; st->key = scope_end;
+}
+
+typedef struct ScopedMapBank {
+	ScopedMapEntry ar[ SCOPEDMAP_BANK_SIZE];
+	int32_t arsize;
+	int32_t next;
+	int32_t __reserved;
+} ScopedMapBank;
+static inline void initScopedMapBank( ScopedMapBank* st) {
+	st->arsize = 0; st->next = -1;
+}
+typedef struct ScopedMapValueNode {
+	int32_t uplink;
+	int32_t value;
+	Scope scope;
+}  ScopedMapValueNode;
+static inline void initScopedMapValueNode( ScopedMapValueNode* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end) {
+	st->uplink = uplink; st->value = value; st->scope.start = scope_start; st->scope.end = scope_end;
+}
+
+typedef struct ScopedMap {
+	uint64_t firstkeyar[ SCOPEDMAP_SIZE];
+	int32_t firstidxar[ SCOPEDMAP_SIZE];
+	ScopedMapBank bankar[ SCOPEDMAP_SIZE];
+	ScopedMapValueNode nodear[ SCOPEDMAP_NODE_SIZE];
+	int32_t bankarsize;
+	int32_t nodearsize;
+} ScopedMap;
+static inline void initScopedMap( ScopedMap* st) {
+	memset( st, 0, sizeof(ScopedMap));
+}
+static inline void insertBank( ScopedMap* st, int32_t bi)
+{
+	if (st->bankarsize == SCOPEDMAP_SIZE) {
+		throwError( BufferTooSmall, 0);
+	}
+	int32_t be = st->bankarsize;
+	for (; be > bi; be--) {memcpy( st->bankar+be, st->bankar+be-1, sizeof(ScopedMapBank));}
+	st->bankarsize += 1;
+	initScopedMapBank( st->bankar + bi);
+}
+static inline int32_t appendNode( ScopedMap* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end)
+{
+	int32_t nodeidx = st->nodearsize;
+	if (st->nodearsize >= SCOPEDMAP_NODE_SIZE) {
+		throwError( BufferTooSmall, 0);
+	}
+	st->nodearsize += 1;
+	initScopedMapValueNode( st->nodear+nodeidx, uplink, value, scope_start, scope_end);
+	return nodeidx;
+}
+static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_t scope_start, int32_t scope_end)
+{
+	int32_t bi = 0, bn = st->bankarsize;
+	while (bn - bi > 3) {
+		int32_t bm = bi + (bn-bi) / 2;
+		if (st->firstkeyar[ bm] > key) {
+			bn = bm;
+		} else {
+			bi = bm;
+		}
+	}
+	for (; bi < bn && st->firstkeyar[ bi] < key; ++bi){}
+	if (bi == 0)
+	{
+		int32_t nodeidx = appendNode( st, -1, value, scope_start, scope_end);
+
+	} else {
+		int32_t nodeidx = appendNode( st, -1, value, scope_start, scope_end);
+		if (bi == 0 || st->bankar[ bi-1].arsize == SCOPEDMAP_BANK_SIZE) {
+			if (st->bankarsize == SCOPEDMAP_SIZE) {
+				throwError( BufferTooSmall, 0);
+			}
+			++st->bankarsize;
+			initScopedMapBank( st->bankar + bi);
+		}
+		int32_t ai = st->bankar[ bi-1].arsize++;
+		initScopedMapEntry( st->bankar[ bi-1].ar + ai, key, nodeidx, scope_end);
+	}
 }
 
 int main( int argc, char const* argv[])
