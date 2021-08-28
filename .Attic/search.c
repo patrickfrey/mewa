@@ -54,7 +54,12 @@ static void throwError( ErrorCode errcode, const char* msg) {
 	}
 	exit( 1);
 }
-
+static void assertBufferSize( int32_t pos, int32_t size)
+{
+	if (pos >= size) {
+		throwError( BufferTooSmall, 0);
+	}
+}
 typedef size_t (*SPSGetFollow)( SPSFollowElement* buf, void* context, int32_t type);
 typedef int (*SPSMatch)( void* context, int32_t type);
 
@@ -76,7 +81,7 @@ static size_t fillSPSResult( TypeConstructorPair* ar, SPSTreeElement const* tree
 {
 	size_t ai = 0;
 	while (ti >= 0) {
-		if (ai >= MAX_PATH_SIZE) throwError( BufferTooSmall, 0);
+		assertBufferSize( ai, MAX_PATH_SIZE);
 		ar[ ai].type = tree[ti].type;
 		ar[ ai].constructor = tree[ti].constructor;
 		ti = tree[ti].prev;
@@ -133,9 +138,8 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 			for (; tree[ti].type != fotype && tree[ti].prev >= 0; ti = tree[ti].prev){}
 			if (tree[ti].type != fotype)
 			{
-				if (treesize == MAX_TREE_SIZE || stksize == MAX_SEARCH_SIZE) {
-					throwError( BufferTooSmall, 0);
-				}
+				assertBufferSize( treesize, MAX_TREE_SIZE);
+				assertBufferSize( stksize, MAX_SEARCH_SIZE);
 				tree[ treesize].prev = fotreeidx;
 				tree[ treesize].type = fotype;
 				tree[ treesize].constructor = follow[ fi].constructor;
@@ -179,7 +183,7 @@ typedef struct IdentSeqBuf {
 static void initIdentSeqBuf( IdentSeqBuf* buf) {
 	buf->arpos = 0;
 }
-static inline uint32_t rot( uint32_t n, uint32_t d)
+static uint32_t rot( uint32_t n, uint32_t d)
 {
 	return (n<<d)|(n>>(32-d));
 }
@@ -222,9 +226,7 @@ static uint32_t hashword( const int32_t* key, size_t keysize)
 }
 static int32_t newIdent( IdentSeqBuf* buf, const char* id, size_t idsize) {
 	int32_t ai = buf->arpos;
-	if (idsize + buf->arpos >= IDENTBUF32_SIZE) {
-		throwError( BufferTooSmall, 0);
-	}
+	assertBufferSize( idsize + buf->arpos, IDENTBUF32_SIZE);
 	int32_t ae = buf->arpos + (idsize+1)/4;
 	buf->ar[ ae + 1] = 0;
 	memcpy( buf->ar + buf->arpos + 1, id, idsize);
@@ -252,12 +254,13 @@ typedef struct IdentMap {
 	int32_t slotar[ HASHTABLE_SIZE];
 	int32_t fillsize;
 } IdentMap;
+
 static void initIdentMap( IdentMap* map) {
 	initIdentSeqBuf( &map->idseqbuf);
 	memset( map->slotar, 0, sizeof(map->slotar));
 	map->fillsize = 0;
 }
-static inline int identMatches( IdentMap const* map, int32_t id, int32_t hash, const char* idstr, size_t idsize) {
+static int identMatches( IdentMap const* map, int32_t id, int32_t hash, const char* idstr, size_t idsize) {
 	return (hash==getIdentHash( &map->idseqbuf, id) && 0==memcmp( getIdentString( &map->idseqbuf, id), idstr, idsize+1));
 }
 static int32_t getIdent( IdentMap* map, const char* idstr, size_t idsize) {
@@ -293,8 +296,30 @@ typedef struct ScopedMapEntry {
 	int32_t scope_end;
 	int32_t nodeidx;
 } ScopedMapEntry;
-static inline void initScopedMapEntry( ScopedMapEntry* st, uint64_t key, int32_t nodeidx, int32_t scope_end) {
+
+static void initScopedMapEntry( ScopedMapEntry* st, uint64_t key, int32_t nodeidx, int32_t scope_end) {
 	st->key = key; st->key = nodeidx; st->key = scope_end;
+}
+static int32_t ScopedMapEntryArray_upperbound( ScopedMapEntry* ar, int32_t arsize, uint64_t key, int32_t scope_end) {
+	int32_t bi = 0, bn = arsize;
+	while (bn - bi > 3) {
+		int32_t bm = bi + (bn-bi) / 2;
+		if (ar[ bm].key >= key && (ar[ bm].key > key || ar[ bm].scope_end > scope_end)) {
+			bn = bm;
+		} else {
+			bi = bm;
+		}
+	}
+	for (; bi < bn && ar[ bi].key < key; ++bi){}
+	for (; bi < bn && ar[ bi].key == key && ar[ bi].scope_end < scope_end; ++bi){}
+	return bi;
+}
+static void ScopedMapEntryArray_insert_at( ScopedMapEntry* ar, int32_t arsize, int32_t bi, uint64_t key, int32_t nodeidx, int32_t scope_end) {
+	int32_t be = arsize;
+	for (; be > bi; be--) {
+		ar[be].key = ar[be-1].key; ar[be].scope_end = ar[be-1].scope_end; ar[be].nodeidx = ar[be-1].nodeidx;
+	}
+	ar[bi].key = key; ar[bi].scope_end = scope_end; ar[bi].nodeidx = nodeidx;
 }
 
 typedef struct ScopedMapBank {
@@ -303,71 +328,59 @@ typedef struct ScopedMapBank {
 	int32_t next;
 	int32_t __reserved;
 } ScopedMapBank;
-static inline void initScopedMapBank( ScopedMapBank* st) {
+
+static void initScopedMapBank( ScopedMapBank* st) {
 	st->arsize = 0; st->next = -1;
 }
+
 typedef struct ScopedMapValueNode {
 	int32_t uplink;
 	int32_t value;
 	Scope scope;
 }  ScopedMapValueNode;
-static inline void initScopedMapValueNode( ScopedMapValueNode* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end) {
+
+static void initScopedMapValueNode( ScopedMapValueNode* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end) {
 	st->uplink = uplink; st->value = value; st->scope.start = scope_start; st->scope.end = scope_end;
 }
 
 typedef struct ScopedMap {
-	uint64_t firstkeyar[ SCOPEDMAP_SIZE];
-	int32_t firstidxar[ SCOPEDMAP_SIZE];
+	ScopedMapEntry firstar[ SCOPEDMAP_SIZE];
 	ScopedMapBank bankar[ SCOPEDMAP_SIZE];
 	ScopedMapValueNode nodear[ SCOPEDMAP_NODE_SIZE];
+	int32_t firstarsize;
 	int32_t bankarsize;
 	int32_t nodearsize;
 } ScopedMap;
-static inline void initScopedMap( ScopedMap* st) {
+static void initScopedMap( ScopedMap* st) {
 	memset( st, 0, sizeof(ScopedMap));
 }
-static inline void insertBank( ScopedMap* st, int32_t bi)
+static void insertBank( ScopedMap* st, int32_t bi)
 {
-	if (st->bankarsize == SCOPEDMAP_SIZE) {
-		throwError( BufferTooSmall, 0);
-	}
+	assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
 	int32_t be = st->bankarsize;
 	for (; be > bi; be--) {memcpy( st->bankar+be, st->bankar+be-1, sizeof(ScopedMapBank));}
 	st->bankarsize += 1;
 	initScopedMapBank( st->bankar + bi);
 }
-static inline int32_t appendNode( ScopedMap* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end)
+static int32_t appendNode( ScopedMap* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end)
 {
 	int32_t nodeidx = st->nodearsize;
-	if (st->nodearsize >= SCOPEDMAP_NODE_SIZE) {
-		throwError( BufferTooSmall, 0);
-	}
+	assertBufferSize( st->nodearsize, SCOPEDMAP_NODE_SIZE);
 	st->nodearsize += 1;
 	initScopedMapValueNode( st->nodear+nodeidx, uplink, value, scope_start, scope_end);
 	return nodeidx;
 }
 static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_t scope_start, int32_t scope_end)
 {
-	int32_t bi = 0, bn = st->bankarsize;
-	while (bn - bi > 3) {
-		int32_t bm = bi + (bn-bi) / 2;
-		if (st->firstkeyar[ bm] > key) {
-			bn = bm;
-		} else {
-			bi = bm;
-		}
-	}
-	for (; bi < bn && st->firstkeyar[ bi] < key; ++bi){}
+	int32_t bi = ScopedMapEntryArray_upperbound( st->firstar, st->firstarsize, key, scope_end);
 	if (bi == 0)
 	{
 		int32_t nodeidx = appendNode( st, -1, value, scope_start, scope_end);
 
 	} else {
 		int32_t nodeidx = appendNode( st, -1, value, scope_start, scope_end);
-		if (bi == 0 || st->bankar[ bi-1].arsize == SCOPEDMAP_BANK_SIZE) {
-			if (st->bankarsize == SCOPEDMAP_SIZE) {
-				throwError( BufferTooSmall, 0);
-			}
+		if (st->bankar[ bi-1].arsize == SCOPEDMAP_BANK_SIZE) {
+			assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
 			++st->bankarsize;
 			initScopedMapBank( st->bankar + bi);
 		}
