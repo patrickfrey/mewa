@@ -354,13 +354,32 @@ typedef struct ScopedMap {
 static void initScopedMap( ScopedMap* st) {
 	memset( st, 0, sizeof(ScopedMap));
 }
-static void insertBank( ScopedMap* st, int32_t bi)
+static int32_t appendBank( ScopedMap* st)
 {
+	int32_t rt = st->bankarsize;
 	assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
-	int32_t be = st->bankarsize;
-	for (; be > bi; be--) {memcpy( st->bankar+be, st->bankar+be-1, sizeof(ScopedMapBank));}
 	st->bankarsize += 1;
-	initScopedMapBank( st->bankar + bi);
+	initScopedMapBank( st->bankar + rt);
+	return rt;
+}
+static int32_t splitBank( ScopedMap* st, int bi)
+{
+	int32_t rt = st->bankarsize;
+	assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
+	st->bankarsize += 1;
+	initScopedMapBank( st->bankar + rt);
+	int32_t sn = st->bankar[ bi].arsize;
+	int32_t si = sn / 2;
+	st->bankar[ bi].arsize = si;
+	int32_t di = 0;
+	ScopedMapEntry* dbase = st->bankar[ rt].ar;
+	ScopedMapEntry* sbase = st->bankar[ bi].ar;
+	for (; si < sn; ++si,++di) {
+		initScopedMapEntry( dbase + di, sbase[ si].key, sbase[ si].nodeidx, sbase[ si].scope_end);
+	}
+	st->bankar[ rt].arsize = di;
+	if (di == 0) throwError( LogicError, 0);
+	return rt;
 }
 static int32_t appendNode( ScopedMap* st, int32_t uplink, int32_t value, int32_t scope_start, int32_t scope_end)
 {
@@ -372,12 +391,19 @@ static int32_t appendNode( ScopedMap* st, int32_t uplink, int32_t value, int32_t
 }
 static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_t scope_start, int32_t scope_end)
 {
-	int32_t bi = ScopedMapEntryArray_upperbound( st->firstar, st->firstarsize, key, scope_end);
-	if (bi == 0)
-	{
+	if (st->firstarsize == 0) {
 		int32_t nodeidx = appendNode( st, -1, value, scope_start, scope_end);
-
+		appendBank( st);
+		ScopedMapEntryArray_insert_at( st->bankar[0].ar, st->bankar[0].arsize, 0, key, nodeidx, scope_end);
+		ScopedMapEntryArray_insert_at( st->firstar, st->firstarsize, 0, key, 0/*nodeidx*/, scope_end);
 	} else {
+		int32_t bi = ScopedMapEntryArray_upperbound( st->firstar, st->firstarsize, key, scope_end);
+		if (bi == st->firstarsize) {
+			bi -= 1;
+		}
+		if (st->bankar[bi].arsize >= SCOPEDMAP_BANK_SIZE) {
+
+		}
 		int32_t nodeidx = appendNode( st, -1, value, scope_start, scope_end);
 		if (st->bankar[ bi-1].arsize == SCOPEDMAP_BANK_SIZE) {
 			assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
