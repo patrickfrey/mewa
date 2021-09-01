@@ -285,6 +285,13 @@ typedef struct Scope {
 	int32_t end;
 } Scope;
 
+static int Scope_covers( Scope const* upper, Scope const* inner) {
+	return upper->start <= inner->start && upper->end >= inner->end;
+}
+static int Scope_contains( Scope const* upper, int32_t step) {
+	return upper->start <= step && upper->end > step;
+}
+
 typedef struct ScopedMapEntry {
 	uint64_t key;
 	int32_t scope_end;
@@ -297,7 +304,7 @@ static void initScopedMapEntry( ScopedMapEntry* st, uint64_t key, int32_t scope_
 static void copyScopedMapEntry( ScopedMapEntry* st, ScopedMapEntry const* ot) {
 	st->key = ot->key; st->scope_end = ot->scope_end; st->nodeidx = ot->nodeidx;
 }
-static int32_t ScopedMapEntryArray_upperbound( ScopedMapEntry* ar, int32_t arsize, uint64_t key, int32_t scope_end) {
+static int32_t ScopedMapEntryArray_upperbound( ScopedMapEntry const* ar, int32_t arsize, uint64_t key, int32_t scope_end) {
 	int32_t bi = 0, bn = arsize;
 	while (bn - bi > 3) {
 		int32_t bm = bi + (bn-bi) / 2;
@@ -394,7 +401,58 @@ static int32_t appendNode( ScopedMap* st, int32_t value, int32_t scope_start, in
 	initScopedMapValueNode( st->nodear+nodeidx, -1/*uplink*/, value, scope_start, scope_end);
 	return nodeidx;
 }
-static void insertNode( ScopedMap* st, int32_t* nodeidx, int32_t value, int32_t scope_start, int32_t scope_end) {
+static int32_t findNode( ScopedMap const* st, uint64_t key, int32_t step)
+{
+	int32_t fi = ScopedMapEntryArray_upperbound( st->firstar, st->firstarsize, key, step);
+	if (fi == st->firstarsize || st->firstar[ fi].key != key) {
+		return -1;
+	}
+	int32_t bi = st->firstar[ fi].nodeidx;
+	ScopedMapBank const* bank = st->bankar + bi;
+	int32_t ei = ScopedMapEntryArray_upperbound( bank->ar, bank->arsize, key, step);
+	if (ei == bank->arsize || bank->ar[ ei].key != key) {
+		return -1;
+	}
+	int32_t ni = bank->ar[ ei].nodeidx;
+	for (; ni >= 0 && st->nodear[ ni].scope.start > step; ni = st->nodear[ ni].uplink){}
+	return ni;
+}
+static void rewireNodesLeftHand( ScopedMap* st, int32_t nodeidx, uint64_t key, int32_t step) {
+	while (step >= 0) {
+		int32_t ni = findNode( st, key, step);
+		if (ni < 0) {
+			throwError( LogicError, 0);
+		}
+		if (st->nodear[ ni].scope.end != st->nodear[ nodeidx].scope.end) {
+			while (ni >= 0 && st->nodear[ ni].scope.start < st->nodear[ nodeidx].scope.start) {
+				step = st->nodear[ ni].scope.end;
+				ni = st->nodear[ ni].uplink;
+			}
+			if (ni >= 0) {
+				int32_t pi = ni;
+				while (pi >= 0 && Scope_covers( &st->nodear[ nodeidx].scope, &st->nodear[ pi].scope)) {
+					pi = st->nodear[ ni = pi].uplink;
+				}
+				if (Scope_covers( &st->nodear[ nodeidx].scope, &st->nodear[ ni].scope)) {
+					st->nodear[ ni].uplink = nodeidx;
+					step = st->nodear[ ni].scope.end;
+				}
+			}
+		}
+	}
+}
+static int32_t findRightHandNode( ScopedMap* st, int32_t nodeidx, uint64_t key) {
+
+	int32_t ni = findNode( st, key, st->nodear[ nodeidx].scope.end);
+	if (ni >= 0) {
+		while (ni >= 0 && st->nodear[ ni].scope.start > st->nodear[ nodeidx].scope.start) {
+			ni = st->nodear[ ni].uplink;
+		}
+		return ni;
+	}
+	return -1;
+}
+static int32_t insertNode( ScopedMap* st, int32_t* nodeidx, uint64_t key, int32_t value, int32_t scope_start, int32_t scope_end) {
 	int32_t ni = *nodeidx;
 	if (ni < 0 || ni >= st->nodearsize || scope_end != st->nodear[ ni].scope.end) {
 		throwError( LogicError, 0);
@@ -411,6 +469,7 @@ static void insertNode( ScopedMap* st, int32_t* nodeidx, int32_t value, int32_t 
 		for (; ui >= 0 && st->nodear[ ui].scope.start <= scope_start; ni = ui, ui = st->nodear[ ni].uplink){}
 		if (ui < 0) {
 			ni = st->nodear[ ni].uplink = appendNode( st, value, scope_start, scope_end);
+			st->nodear[ ni].uplink = findRightHandNode( st, ni, key);
 		} else {
 			int32_t mi = appendNode( st, value, scope_start, scope_end);
 			st->nodear[ mi].uplink = ui;
@@ -418,7 +477,9 @@ static void insertNode( ScopedMap* st, int32_t* nodeidx, int32_t value, int32_t 
 			ni = mi;
 		}
 	}
+	return ni;
 }
+
 static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_t scope_start, int32_t scope_end)
 {
 	int32_t fi;
@@ -447,6 +508,7 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 					ScopedMapEntryArray_insert_at( bank->ar, &bank->arsize, di, key, scope_end, nodeidx);
 					initScopedMapEntry( st->firstar + fi, key, scope_end, di/*nodeidx*/);
 				}
+				rewireNodesLeftHand( st, nodeidx, key, scope_start);
 			} else {
 				int32_t bi = st->firstar[ fi].nodeidx;
 				if (bi < 0 || bi >= st->bankarsize) {
@@ -458,7 +520,8 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 					throwError( LogicError, 0);
 				}
 				if (bank->ar[ di].key == key && bank->ar[ di].scope_end == scope_end) {
-					insertNode( st, &bank->ar[ di].nodeidx, value, scope_start, scope_end);
+					int32_t nodeidx = insertNode( st, &bank->ar[ di].nodeidx, key, value, scope_start, scope_end);
+					rewireNodesLeftHand( st, nodeidx, key, scope_start);
 				} else {
 					int32_t nodeidx = appendNode( st, value, scope_start, scope_end);
 					assertBufferSize( st->firstarsize, SCOPEDMAP_SIZE);
@@ -468,6 +531,7 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 						continue;
 					}
 					ScopedMapEntryArray_insert_at( bank->ar, &bank->arsize, di, key, scope_end, nodeidx);
+					rewireNodesLeftHand( st, nodeidx, key, scope_start);
 				}
 			}
 			break;
