@@ -54,8 +54,7 @@ static void throwError( ErrorCode errcode, const char* msg) {
 	}
 	exit( 1);
 }
-static void assertBufferSize( int32_t pos, int32_t size)
-{
+static void assertBufferSize( int32_t pos, int32_t size) {
 	if (pos >= size) {
 		throwError( BufferTooSmall, 0);
 	}
@@ -77,8 +76,7 @@ typedef struct ShortestPathSearchResult {
 	TypeConstructorPair ar_alt[ MAX_PATH_SIZE];
 } ShortestPathSearchResult;
 
-static size_t fillSPSResult( TypeConstructorPair* ar, SPSTreeElement const* tree, int32_t ti)
-{
+static size_t fillSPSResult( TypeConstructorPair* ar, SPSTreeElement const* tree, int32_t ti) {
 	size_t ai = 0;
 	while (ti >= 0) {
 		assertBufferSize( ai, MAX_PATH_SIZE);
@@ -99,8 +97,7 @@ static size_t fillSPSResult( TypeConstructorPair* ar, SPSTreeElement const* tree
 	}
 	return ai;
 }
-static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match, int32_t* fromtype, size_t fromtypesize, SPSGetFollow getFollow, void* context)
-{
+static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match, int32_t* fromtype, size_t fromtypesize, SPSGetFollow getFollow, void* context) {
 	SPSTreeElement tree[ MAX_TREE_SIZE];
 	SPSStackElement stk[ MAX_SEARCH_SIZE];
 	SPSFollowElement follow[ MAX_SEARCH_SIZE];
@@ -275,12 +272,9 @@ static int32_t getIdent( IdentMap* map, const char* idstr, size_t idsize) {
 		slot = map->slotar[ slotidx & HASHTABLE_MASK];
 		hi += 1;
 	}
-	if (slot != 0)
-	{
+	if (slot != 0) {
 		rt = slot;
-	}
-	else
-	{
+	} else {
 		map->slotar[ slotidx & HASHTABLE_MASK] = rt;
 		finalizeIdent( &map->idseqbuf, idsize);
 	}
@@ -317,12 +311,13 @@ static int32_t ScopedMapEntryArray_upperbound( ScopedMapEntry* ar, int32_t arsiz
 	for (; bi < bn && ar[ bi].key == key && ar[ bi].scope_end < scope_end; ++bi){}
 	return bi;
 }
-static void ScopedMapEntryArray_insert_at( ScopedMapEntry* ar, int32_t arsize, int32_t bi, uint64_t key, int32_t scope_end, int32_t nodeidx) {
-	int32_t be = arsize;
+static void ScopedMapEntryArray_insert_at( ScopedMapEntry* ar, int32_t* arsize, int32_t bi, uint64_t key, int32_t scope_end, int32_t nodeidx) {
+	int32_t be = *arsize;
 	for (; be > bi; be--) {
 		ar[be].key = ar[be-1].key; ar[be].scope_end = ar[be-1].scope_end; ar[be].nodeidx = ar[be-1].nodeidx;
 	}
 	ar[bi].key = key; ar[bi].scope_end = scope_end; ar[bi].nodeidx = nodeidx;
+	*arsize += 1;
 }
 
 typedef struct ScopedMapBank {
@@ -354,25 +349,25 @@ typedef struct ScopedMap {
 	int32_t bankarsize;
 	int32_t nodearsize;
 } ScopedMap;
+
 static void initScopedMap( ScopedMap* st) {
 	memset( st, 0, sizeof(ScopedMap));
 }
-static int32_t appendBank( ScopedMap* st)
-{
+static int32_t appendBank( ScopedMap* st) {
 	int32_t rt = st->bankarsize;
 	assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
 	st->bankarsize += 1;
 	initScopedMapBank( st->bankar + rt);
 	return rt;
 }
-static int32_t splitBank( ScopedMap* st, int32_t firstidx, int32_t bi)
-{
+static int32_t splitBank( ScopedMap* st, int32_t firstidx, int32_t bi) {
 	ScopedMapEntry* et;
 	ScopedMapEntry* dbase;
 	ScopedMapEntry* sbase;
 	int32_t rt = st->bankarsize, di = 0, si, sn;
 
 	assertBufferSize( st->bankarsize, SCOPEDMAP_SIZE);
+	assertBufferSize( st->firstarsize, SCOPEDMAP_SIZE);
 	st->bankarsize += 1;
 	initScopedMapBank( st->bankar + rt);
 	sn = st->bankar[ bi].arsize;
@@ -386,22 +381,43 @@ static int32_t splitBank( ScopedMap* st, int32_t firstidx, int32_t bi)
 	st->bankar[ rt].arsize = di;
 	if (di == 0) throwError( LogicError, 0);
 	et = st->bankar[rt].ar + di-1;
-	ScopedMapEntryArray_insert_at( st->firstar, st->firstarsize, 0, et->key, et->scope_end, rt/*nodeidx*/);
+	ScopedMapEntryArray_insert_at( st->firstar, &st->firstarsize, 0, et->key, et->scope_end, rt/*nodeidx*/);
 	et = st->bankar[bi].ar + si-1;
-	initScopedMapEntry( st->firstar + firstidx, et->key, et->scope_end, bi/*nodeidx*/);
+	st->firstar[ firstidx].key = et->key;
+	st->firstar[ firstidx].scope_end = et->scope_end;
 	return rt;
 }
-static int32_t appendNode( ScopedMap* st, int32_t value, int32_t scope_start, int32_t scope_end)
-{
+static int32_t appendNode( ScopedMap* st, int32_t value, int32_t scope_start, int32_t scope_end) {
 	int32_t nodeidx = st->nodearsize;
 	assertBufferSize( st->nodearsize, SCOPEDMAP_NODE_SIZE);
 	st->nodearsize += 1;
 	initScopedMapValueNode( st->nodear+nodeidx, -1/*uplink*/, value, scope_start, scope_end);
 	return nodeidx;
 }
-static int32_t insertNode( ScopedMap* st, int32_t nodeidx, int32_t value, int32_t scope_start, int32_t scope_end)
-{
-	return -1;
+static void insertNode( ScopedMap* st, int32_t* nodeidx, int32_t value, int32_t scope_start, int32_t scope_end) {
+	int32_t ni = *nodeidx;
+	if (ni < 0 || ni >= st->nodearsize || scope_end != st->nodear[ ni].scope.end) {
+		throwError( LogicError, 0);
+	}
+	if (st->nodear[ ni].scope.start <= scope_start) {
+		if (st->nodear[ ni].scope.start == scope_start) {
+			throwError( LogicError, 0);
+		}
+		ni = appendNode( st, value, scope_start, scope_end);
+		st->nodear[ ni].uplink = *nodeidx;
+		*nodeidx = ni;
+	} else {
+		int32_t ui = st->nodear[ ni].uplink;
+		for (; ui >= 0 && st->nodear[ ui].scope.start <= scope_start; ni = ui, ui = st->nodear[ ni].uplink){}
+		if (ui < 0) {
+			ni = st->nodear[ ni].uplink = appendNode( st, value, scope_start, scope_end);
+		} else {
+			int32_t mi = appendNode( st, value, scope_start, scope_end);
+			st->nodear[ mi].uplink = ui;
+			st->nodear[ ni].uplink = mi;
+			ni = mi;
+		}
+	}
 }
 static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_t scope_start, int32_t scope_end)
 {
@@ -409,37 +425,40 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 	if (st->firstarsize == 0) { //... first element to insert
 		int32_t nodeidx = appendNode( st, value, scope_start, scope_end);
 		appendBank( st);
-		assertBufferSize( st->bankar[0].arsize, SCOPEDMAP_BANK_SIZE);
-		ScopedMapEntryArray_insert_at( st->bankar[0].ar, st->bankar[0].arsize, 0, key, scope_end, nodeidx);
-		assertBufferSize( st->firstarsize, SCOPEDMAP_SIZE);
-		ScopedMapEntryArray_insert_at( st->firstar, st->firstarsize, 0, key, scope_end, 0/*nodeidx*/);
+		ScopedMapEntryArray_insert_at( st->bankar[0].ar, &st->bankar[0].arsize, 0, key, scope_end, nodeidx);
+		ScopedMapEntryArray_insert_at( st->firstar, &st->firstarsize, 0, key, scope_end, 0/*nodeidx*/);
 	} else {
-		for (;;)
-		{
+		for (;;) {
 			fi = ScopedMapEntryArray_upperbound( st->firstar, st->firstarsize, key, scope_end);
 			if (fi == st->firstarsize) {
 				int32_t nodeidx = appendNode( st, value, scope_start, scope_end);
 				fi -= 1;
 				int32_t bi = st->firstar[ fi].nodeidx;
+				if (bi < 0 || bi >= st->bankarsize) {
+					throwError( LogicError, 0);
+				}
 				ScopedMapBank* bank = st->bankar + bi;
 				if (bank->arsize == SCOPEDMAP_BANK_SIZE) {
 					bi = appendBank( st);
-					ScopedMapEntryArray_insert_at( bank->ar, bank->arsize, 0, key, scope_end, nodeidx);
-					ScopedMapEntryArray_insert_at( st->firstar, st->firstarsize, 0, key, scope_end, bi/*nodeidx*/);
+					ScopedMapEntryArray_insert_at( bank->ar, &bank->arsize, 0, key, scope_end, nodeidx);
+					ScopedMapEntryArray_insert_at( st->firstar, &st->firstarsize, 0, key, scope_end, bi/*nodeidx*/);
 				} else {
 					int32_t di = bank->arsize;
-					ScopedMapEntryArray_insert_at( bank->ar, di, di, key, scope_end, nodeidx);
+					ScopedMapEntryArray_insert_at( bank->ar, &bank->arsize, di, key, scope_end, nodeidx);
 					initScopedMapEntry( st->firstar + fi, key, scope_end, di/*nodeidx*/);
 				}
 			} else {
 				int32_t bi = st->firstar[ fi].nodeidx;
+				if (bi < 0 || bi >= st->bankarsize) {
+					throwError( LogicError, 0);
+				}
 				ScopedMapBank* bank = st->bankar + bi;
 				int32_t di = ScopedMapEntryArray_upperbound( bank->ar, bank->arsize, key, scope_end);
-				if (di >= bank->arsize) {
+				if (di < 0 || di >= bank->arsize) {
 					throwError( LogicError, 0);
 				}
 				if (bank->ar[ di].key == key && bank->ar[ di].scope_end == scope_end) {
-					insertNode( st, bank->ar[ di].nodeidx, value, scope_start, scope_end);
+					insertNode( st, &bank->ar[ di].nodeidx, value, scope_start, scope_end);
 				} else {
 					int32_t nodeidx = appendNode( st, value, scope_start, scope_end);
 					assertBufferSize( st->firstarsize, SCOPEDMAP_SIZE);
@@ -448,7 +467,7 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 						splitBank( st, fi, bi);
 						continue;
 					}
-					ScopedMapEntryArray_insert_at( bank->ar, bank->arsize, di, key, scope_end, nodeidx);
+					ScopedMapEntryArray_insert_at( bank->ar, &bank->arsize, di, key, scope_end, nodeidx);
 				}
 			}
 			break;
@@ -456,8 +475,7 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 	}
 }
 
-int main( int argc, char const* argv[])
-{
+int main( int argc, char const* argv[]) {
 	IdentMap identmap;
 	initIdentMap( &identmap);
 	return 0;
