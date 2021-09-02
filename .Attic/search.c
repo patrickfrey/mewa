@@ -30,12 +30,15 @@ enum {
 	HASHTABLE_MASK = HASHTABLE_SIZE-1,
 	SCOPEDMAP_BANK_SIZE = 63,
 	SCOPEDMAP_SIZE = 2048,
-	SCOPEDMAP_NODE_SIZE = 1<<17
+	SCOPEDMAP_NODE_SIZE = 1<<17,
+	MAX_AST_SIZE = 1<<16,
+	MAX_PARSE_STACK_SIZE = 512
 };
 typedef enum {
 	Ok=0,
 	LogicError=1,
-	BufferTooSmall=2
+	BufferTooSmall=2,
+	ValueOutOfRange=3
 } ErrorCode;
 
 static const char* errorString( ErrorCode errcode) {
@@ -537,6 +540,120 @@ static void ScopedMap_insert( ScopedMap* st, uint64_t key, int32_t value, int32_
 			break;
 		}
 	}
+}
+
+typedef struct TreeNode {
+	int32_t type;	//<  6 bits
+	int32_t leaf;	//<  1 bit
+	int32_t size;	//<  3 bits
+	int32_t index;	//< 22 bits
+} TreeNode;
+
+static uint32_t packTreeNode( int32_t type, int32_t leaf, int32_t size, uint32_t index)
+{
+	if (type >= (1<<6) || leaf >= (1<<1) || size >= (1<<3) || index >= (1<<22)) {
+		throwError( ValueOutOfRange, 0);
+	}
+	return index | (size << 22) | (leaf << 25) | (type << 26);
+}
+static void unpackTreeNode( TreeNode* dest, uint32_t value)
+{
+	dest->type  = (value >> 26) & ((1<<6)-1);
+	dest->leaf  = (value >> 25) & 1;
+	dest->size  = (value >> 22) & ((1<<3)-1);
+	dest->index = value & ((1<<22)-1);
+}
+
+typedef struct AbstractSyntaxTree {
+	uint32_t nodear[ MAX_AST_SIZE];
+	uint32_t nodescope[ MAX_AST_SIZE];
+	size_t nodearsize;
+	IdentMap identMap;
+} AbstractSyntaxTree;
+
+void initAbstractSyntaxTree( AbstractSyntaxTree* ast) {
+	memset( ast->nodear, 0, sizeof( ast->nodear));
+	memset( ast->nodescope, 0, sizeof( ast->nodescope));
+	ast->nodearsize = 0;
+	initIdentMap( &ast->identMap);
+}
+typedef struct ParseStackElement {
+	uint32_t astnode;
+	uint8_t state;
+} ParseStackElement;
+typedef struct ParseStack {
+	ParseStackElement ar[ MAX_PARSE_STACK_SIZE];
+	size_t arsize;
+} ParseStack;
+
+void initParseStack( ParseStack* ast) {
+	ast->arsize = 0;
+}
+static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int type, const char* valuestr, size_t valuelen)
+{
+	uint32_t id = getIdent( &ast->identMap, valuestr, valuelen);
+	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
+	ParseStackElement* elem = stk->ar + stk->arsize;
+	elem->astnode = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
+	elem->state = state;
+	stk->arsize += 1;
+}
+static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int type, size_t size)
+{
+	uint32_t id = ast->nodearsize;
+	size_t si = 0;
+	ParseStackElement const* ei = stk->ar + stk->arsize - size;
+	if (stk->arsize < size) {
+		throwError( LogicError, 0);
+	}
+	assertBufferSize( ast->nodearsize + size, MAX_AST_SIZE);
+	for (; si != size; ++si,++ei) {
+		ast->nodear[ ast->nodearsize + si] = ei->astnode;
+	}
+	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
+	ParseStackElement* elem = stk->ar + stk->arsize - size;
+	elem->astnode = packTreeNode( type, 0/*leaf*/, size, id);
+	elem->state = state;
+	stk->arsize -= size;
+	stk->arsize += 1;
+}
+static uint32_t packScope( int32_t scope_start, int32_t scope_end)
+{
+	uint32_t scope_diff;
+	if (scope_end < 0) {
+		scope_diff = 0;
+	} else {
+		scope_diff = scope_end - scope_start;
+		if (scope_diff >= (1<<13)) {
+			throwError( ValueOutOfRange, 0);
+		}
+	}
+	uint32_t scope_base = scope_start;
+	if (scope_base >= (1<<18)) {
+		throwError( ValueOutOfRange, 0);
+	}
+	return (scope_base << 13)|scope_diff;
+}
+static uint32_t packStep( uint32_t scope_step)
+{
+	if (scope_step > (1<<18)) {
+		throwError( ValueOutOfRange, 0);
+	}
+	return scope_step|(1<<31);
+}
+static void setScope( AbstractSyntaxTree* ast, uint32_t nodeid, int32_t scope_start, int32_t scope_end)
+{
+	if (nodeid >= ast->nodearsize) {
+		throwError( LogicError, 0);
+	}
+	ast->nodescope[ nodeid] = packScope( scope_start, scope_end);
+}
+static void setStep( AbstractSyntaxTree* ast, uint32_t nodeid, int32_t scope_step)
+{
+	if (nodeid >= ast->nodearsize) {
+		throwError( LogicError, 0);
+	}
+	ast->nodescope[ nodeid] = packStep( scope_step);
 }
 
 int main( int argc, char const* argv[]) {
