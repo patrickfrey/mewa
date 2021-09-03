@@ -38,7 +38,8 @@ typedef enum {
 	Ok=0,
 	LogicError=1,
 	BufferTooSmall=2,
-	ValueOutOfRange=3
+	ValueOutOfRange=3,
+	SyntaxError=21
 } ErrorCode;
 
 static const char* errorString( ErrorCode errcode) {
@@ -656,10 +657,12 @@ static void setStep( AbstractSyntaxTree* ast, uint32_t nodeid, int32_t scope_ste
 	ast->nodescope[ nodeid] = packStep( scope_step);
 }
 typedef enum {
-	Lememe_EOF=0,
-	Lememe_Identifier,
-	Lememe_CQString,
-	Lememe_DQString,
+	Lexeme_EOF=0,
+	Lexeme_Identifier,
+	Lexeme_SQString,
+	Lexeme_DQString,
+	Lexeme_Integer,
+	Lexeme_Float,
 	Operator_ASSIGN,	// '='
 	Operator_DPLUS,		// '++'
 	Operator_DMINUS,	// '--'
@@ -685,6 +688,8 @@ typedef enum {
 	Operator_COLON,		// ':'
 	Operator_QUESTION,	// '?'
 	Operator_COMMA,		// ','
+	Operator_DOT,		// '.'
+	Operator_ARROW,		// '->'
 	Operator_OVAL_OPEN,	// '('
 	Operator_OVAL_CLOSE,	// ')'
 	Operator_CURLY_OPEN,	// '{'
@@ -764,6 +769,12 @@ static size_t skipSpaces( char const* src, size_t pos) {
 	}
 	return pos;
 }
+static int isDigit( char ch) {
+	return (ch - '0') <= 9;
+}
+static int isAlpha( char ch) {
+	return (unsigned char)((ch|32) - 'a') <= 26 || ch == '_';
+}
 static int isAlphaNum( char ch) {
 	return (unsigned char)((ch|32) - 'a') <= 26 || ch == '_' || (ch - '0') <= 9;
 }
@@ -771,56 +782,105 @@ static int isKeyword( char const* kw, char const* src, size_t pos) {
 	for (; src[pos] == *kw; ++kw,++pos){}
 	return !isAlphaNum( src[pos]);
 }
-static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, CompileError* err) {
-	*pos = skipSpaces( src, *pos);
-	switch (src[*pos]) {
-		case '\0': return lexeme( lx, Lememe_EOF, -1/*id*/, *pos);
-		case '+': ++*pos; return (src[*pos] == '+') ? lexeme( lx, Operator_DPLUS, -1/*id*/, *pos += 1) : lexeme( lx, Operator_PLUS, -1/*id*/, *pos);
-		case '-': ++*pos; return (src[*pos] == '-') ? lexeme( lx, Operator_DMINUS, -1/*id*/, *pos += 1) : lexeme( lx, Operator_MINUS, -1/*id*/, *pos);
-		case '*': ++*pos; return lexeme( lx, Operator_ASTERISK, -1/*id*/, *pos);
-		case '/': ++*pos; return lexeme( lx, Operator_SLASH, -1/*id*/, *pos);
-		case '\\': ++*pos; return lexeme( lx, Operator_BSLASH, -1/*id*/, *pos);
-		case '&': ++*pos; return (src[*pos] == '&') ? lexeme( lx, Operator_LAND, -1/*id*/, *pos += 1) : lexeme( lx, Operator_AND, -1/*id*/, *pos);
-		case '|': ++*pos; return (src[*pos] == '|') ? lexeme( lx, Operator_LOR, -1/*id*/, *pos += 1) : lexeme( lx, Operator_OR, -1/*id*/, *pos);
-		case '^': ++*pos; return lexeme( lx, Operator_XOR, -1/*id*/, *pos);
-		case '~': ++*pos; return lexeme( lx, Operator_INV, -1/*id*/, *pos);
-		case '>': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_GE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_GT, -1/*id*/, *pos);
-		case '<': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_LE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_LT, -1/*id*/, *pos);
-		case '=': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_EQ, -1/*id*/, *pos += 1) : lexeme( lx, Operator_ASSIGN, -1/*id*/, *pos);
-		case '!': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_NE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_NOT, -1/*id*/, *pos);
-		case ';': ++*pos; return lexeme( lx, Operator_SEMICOLON, -1/*id*/, *pos);
-		case ':': ++*pos; return lexeme( lx, Operator_COLON, -1/*id*/, *pos);
-		case '?': ++*pos; return lexeme( lx, Operator_QUESTION, -1/*id*/, *pos);
-		case ',': ++*pos; return lexeme( lx, Operator_COMMA, -1/*id*/, *pos);
-		case '(': ++*pos; return lexeme( lx, Operator_OVAL_OPEN, -1/*id*/, *pos);
-		case ')': ++*pos; return lexeme( lx, Operator_OVAL_CLOSE, -1/*id*/, *pos);
-		case '{': ++*pos; return lexeme( lx, Operator_CURLY_OPEN, -1/*id*/, *pos);
-		case '}': ++*pos; return lexeme( lx, Operator_CURLY_CLOSE, -1/*id*/, *pos);
-		case '[': ++*pos; return lexeme( lx, Operator_SQUARE_OPEN, -1/*id*/, *pos);
-		case ']': ++*pos; return lexeme( lx, Operator_SQUARE_CLOSE, -1/*id*/, *pos);
-
-		case 'w': if (isKeyword( "while", src, *pos)) {
-			return lexeme( lx, Keyword_WHILE, -1/*id*/, *pos += 5);
+static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* identMap, CompileError* err) {
+	for (;;) {
+		*pos = skipSpaces( src, *pos);
+		switch (src[*pos]) {
+			case '\0': return lexeme( lx, Lexeme_EOF, -1/*id*/, *pos);
+			case '+': ++*pos; return (src[*pos] == '+') ? lexeme( lx, Operator_DPLUS, -1/*id*/, *pos += 1) : lexeme( lx, Operator_PLUS, -1/*id*/, *pos);
+			case '-': ++*pos; return (src[*pos] == '-') ? lexeme( lx, Operator_DMINUS, -1/*id*/, *pos += 1) : (src[*pos] == '>') ? lexeme( lx, Operator_ARROW, -1/*id*/, *pos += 1) : lexeme( lx, Operator_MINUS, -1/*id*/, *pos);
+			case '*': ++*pos; return lexeme( lx, Operator_ASTERISK, -1/*id*/, *pos);
+			case '/': ++*pos; return lexeme( lx, Operator_SLASH, -1/*id*/, *pos);
+			case '\\': ++*pos; return lexeme( lx, Operator_BSLASH, -1/*id*/, *pos);
+			case '&': ++*pos; return (src[*pos] == '&') ? lexeme( lx, Operator_LAND, -1/*id*/, *pos += 1) : lexeme( lx, Operator_AND, -1/*id*/, *pos);
+			case '|': ++*pos; return (src[*pos] == '|') ? lexeme( lx, Operator_LOR, -1/*id*/, *pos += 1) : lexeme( lx, Operator_OR, -1/*id*/, *pos);
+			case '^': ++*pos; return lexeme( lx, Operator_XOR, -1/*id*/, *pos);
+			case '~': ++*pos; return lexeme( lx, Operator_INV, -1/*id*/, *pos);
+			case '>': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_GE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_GT, -1/*id*/, *pos);
+			case '<': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_LE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_LT, -1/*id*/, *pos);
+			case '=': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_EQ, -1/*id*/, *pos += 1) : lexeme( lx, Operator_ASSIGN, -1/*id*/, *pos);
+			case '!': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_NE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_NOT, -1/*id*/, *pos);
+			case ';': ++*pos; return lexeme( lx, Operator_SEMICOLON, -1/*id*/, *pos);
+			case ':': ++*pos; return lexeme( lx, Operator_COLON, -1/*id*/, *pos);
+			case '?': ++*pos; return lexeme( lx, Operator_QUESTION, -1/*id*/, *pos);
+			case ',': ++*pos; return lexeme( lx, Operator_COMMA, -1/*id*/, *pos);
+			case '.': if (!isDigit(src[*pos+1])) {++*pos; return lexeme( lx, Operator_DOT, -1/*id*/, *pos);} else break;
+			case '(': ++*pos; return lexeme( lx, Operator_OVAL_OPEN, -1/*id*/, *pos);
+			case ')': ++*pos; return lexeme( lx, Operator_OVAL_CLOSE, -1/*id*/, *pos);
+			case '{': ++*pos; return lexeme( lx, Operator_CURLY_OPEN, -1/*id*/, *pos);
+			case '}': ++*pos; return lexeme( lx, Operator_CURLY_CLOSE, -1/*id*/, *pos);
+			case '[': ++*pos; return lexeme( lx, Operator_SQUARE_OPEN, -1/*id*/, *pos);
+			case ']': ++*pos; return lexeme( lx, Operator_SQUARE_CLOSE, -1/*id*/, *pos);
+			case '#': ++*pos; if (isKeyword( "include", src, *pos)) {
+				*pos = skipEndOfLine( src, *pos);
+				continue;
+			}
+			case 'w': if (isKeyword( "while", src, *pos)) {
+				return lexeme( lx, Keyword_WHILE, -1/*id*/, *pos += 5);
+			}
+			case 'f': if (isKeyword( "for", src, *pos)) {
+				return lexeme( lx, Keyword_FOR, -1/*id*/, *pos += 3);
+			}
+			case 'i': if (isKeyword( "if", src, *pos)) {
+				return lexeme( lx, Keyword_IF, -1/*id*/, *pos += 2);
+			}
+			case 's': if (isKeyword( "switch", src, *pos)) {
+				return lexeme( lx, Keyword_SWITCH, -1/*id*/, *pos += 6);
+			}
+			case 'c': if (isKeyword( "case", src, *pos)) {
+				return lexeme( lx, Keyword_CASE, -1/*id*/, *pos += 4);
+			} else if (isKeyword( "continue", src, *pos)) {
+				return lexeme( lx, Keyword_CONTINUE, -1/*id*/, *pos += 8);
+			}
+			case 'b': if (isKeyword( "break", src, *pos)) {
+				return lexeme( lx, Keyword_BREAK, -1/*id*/, *pos += 5);
+			}
+			case 'r': if (isKeyword( "return", src, *pos)) {
+				 return lexeme( lx, Keyword_RETURN, -1/*id*/, *pos += 6);
+			}
 		}
-		case 'f': if (isKeyword( "for", src, *pos)) {
-			return lexeme( lx, Keyword_FOR, -1/*id*/, *pos += 3);
+		if (src[*pos] == '\'' || src[*pos] == '\"')
+		{
+			char eb = src[*pos];
+			char const* si = src + ++*pos;
+			for (; *si != eb && *si != '\n'; ++si) {
+				if (*si == '\\') {
+					++si;
+				}
+			}
+			if (*si == eb) {
+				size_t len = si - src - *pos;
+				int32_t id = getIdent( identMap, src + *pos, len);
+				return lexeme( lx, eb == '\'' ? Lexeme_SQString : Lexeme_DQString, id, *pos += len+1);
+			} else {
+				return compileError( err, SyntaxError, src, *pos);
+			}
 		}
-		case 'i': if (isKeyword( "if", src, *pos)) {
-			return lexeme( lx, Keyword_IF, -1/*id*/, *pos += 2);
+		else if (isAlpha( src[*pos]))
+		{
+			char const* si = src + *pos;
+			for (; isAlphaNum( *si); ++si){}
+			size_t len = si - src - *pos;
+			int32_t id = getIdent( identMap, src + *pos, len);
+			return lexeme( lx, Lexeme_Identifier, id, *pos += len);
 		}
-		case 's': if (isKeyword( "switch", src, *pos)) {
-			return lexeme( lx, Keyword_SWITCH, -1/*id*/, *pos += 6);
+		else if (isDigit( src[*pos]) || src[*pos] == '.')
+		{
+			char const* si = src + *pos;
+			for (; isDigit( *si); ++si){}
+			LexemeType lt = Lexeme_Integer;
+			if (*si == '.') {
+				lt = Lexeme_Float;
+				++si;
+				for (; isDigit( *si); ++si){}
+			}
+			size_t len = si - src - *pos;
+			int32_t id = getIdent( identMap, src + *pos, len);
+			return lexeme( lx, lt, id, *pos += len);
 		}
-		case 'c': if (isKeyword( "case", src, *pos)) {
-			return lexeme( lx, Keyword_CASE, -1/*id*/, *pos += 4);
-		} else if (isKeyword( "continue", src, *pos)) {
-			return lexeme( lx, Keyword_CONTINUE, -1/*id*/, *pos += 8);
-		}
-		case 'b': if (isKeyword( "break", src, *pos)) {
-			return lexeme( lx, Keyword_BREAK, -1/*id*/, *pos += 5);
-		}
-		case 'r': if (isKeyword( "return", src, *pos)) {
-			 return lexeme( lx, Keyword_RETURN, -1/*id*/, *pos += 6);
+		else
+		{
+			return compileError( err, SyntaxError, src, *pos);
 		}
 	}
 }
