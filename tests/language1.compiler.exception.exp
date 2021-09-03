@@ -690,7 +690,7 @@ resume { i8*, i32 } %r13
 L4:
 ret void
 }
-define external void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+define external void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %rt, %std__String* %ths, %std__String* %r1 ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
@@ -805,7 +805,7 @@ ret i8* %r6
 L3:
 ret i8* %r7
 }
-define internal void @getGreeting( %std__String* sret %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+define internal void @getGreeting( %std__String* sret(%std__String) %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
@@ -817,7 +817,7 @@ L3:
 %r9 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r14, i8* %r9) to label %L6 unwind label %L5
 L6:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %r13, %std__String* %r14) to label %L9 unwind label %L8
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %rt, %std__String* %r13, %std__String* %r14) to label %L9 unwind label %L8
 L9:
 br label %L10
 L2:
@@ -858,7 +858,7 @@ call void @__dtor_std__String( %std__String* %r14)
 call void @__dtor_std__String( %std__String* %r13)
 ret void
 }
-define internal void @getGreetingA1( %std__String* sret %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+define internal void @getGreetingA1( %std__String* sret(%std__String) %rt ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
@@ -899,13 +899,13 @@ store i32 4, i32* %r2
 %r33 = alloca %std__String, align 8
 %r27 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 0
 %r28 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 1
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r33, %std__String* %r27, %std__String* %r28) to label %L9 unwind label %L8
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %r33, %std__String* %r27, %std__String* %r28) to label %L9 unwind label %L8
 L9:
 %r32 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 2
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r38, %std__String* %r33, %std__String* %r32) to label %L12 unwind label %L11
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %r38, %std__String* %r33, %std__String* %r32) to label %L12 unwind label %L11
 L12:
 %r37 = getelementptr inbounds [4 x %std__String], [4 x %std__String]* %r1, i32 0, i32 3
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %r38, %std__String* %r37) to label %L15 unwind label %L14
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %rt, %std__String* %r38, %std__String* %r37) to label %L15 unwind label %L14
 L15:
 br label %L16
 L2:
@@ -1064,7 +1064,7 @@ br label %L4
 L4:
 ret void
 }
-define external void @__C_GreetingType__phrase__const( %std__String* sret %rt, %GreetingType* %ths ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+define external void @__C_GreetingType__phrase__const( %std__String* sret(%std__String) %rt, %GreetingType* %ths ) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 %excptr = alloca i8*
 %excidx = alloca i32
@@ -1080,13 +1080,13 @@ L20:
 %r5 = getelementptr inbounds [2 x i8], [2 x i8]* @string16, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r13, i8* %r5) to label %L5 unwind label %L4
 L5:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r18, %std__String* %r4, %std__String* %r13) to label %L8 unwind label %L7
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %r18, %std__String* %r4, %std__String* %r13) to label %L8 unwind label %L7
 L8:
 %r17 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 1
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r23, %std__String* %r18, %std__String* %r17) to label %L11 unwind label %L10
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %r23, %std__String* %r18, %std__String* %r17) to label %L11 unwind label %L10
 L11:
 %r22 = getelementptr inbounds %GreetingType, %GreetingType* %ths, i32 0, i32 2
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %rt, %std__String* %r23, %std__String* %r22) to label %L14 unwind label %L13
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %rt, %std__String* %r23, %std__String* %r22) to label %L14 unwind label %L13
 L14:
 br label %L16
 L19:
@@ -1157,10 +1157,10 @@ entry:
 store i32 %r1, i32* @g_maxAllocCnt
 store i32 0, i32* @g_allocCnt
 %r2 = alloca %std__String, align 8
-invoke void @getGreeting( %std__String* sret %r2) to label %L6 unwind label %L5
+invoke void @getGreeting( %std__String* sret(%std__String) %r2) to label %L6 unwind label %L5
 L6:
 %r8 = alloca %std__String, align 8
-invoke void @getGreetingA1( %std__String* sret %r8) to label %L9 unwind label %L8
+invoke void @getGreetingA1( %std__String* sret(%std__String) %r8) to label %L9 unwind label %L8
 L9:
 %r14 = alloca %std__String, align 8
 %r15 = getelementptr inbounds [13 x i8], [13 x i8]* @string22, i64 0, i64 0
@@ -1362,13 +1362,13 @@ L70:
 %r155 = getelementptr inbounds [2 x i8], [2 x i8]* @string16, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r162, i8* %r155) to label %L73 unwind label %L72
 L73:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r174, %std__String* %r161, %std__String* %r162) to label %L76 unwind label %L75
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %r174, %std__String* %r161, %std__String* %r162) to label %L76 unwind label %L75
 L76:
 %r175 = alloca %std__String, align 8
 %r168 = getelementptr inbounds [7 x i8], [7 x i8]* @string36, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %r175, i8* %r168) to label %L79 unwind label %L78
 L79:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %r148, %std__String* %r174, %std__String* %r175) to label %L82 unwind label %L81
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %r148, %std__String* %r174, %std__String* %r175) to label %L82 unwind label %L81
 L82:
 %r182 = getelementptr inbounds [13 x i8], [13 x i8]* @string37, i64 0, i64 0
 %r181 = call i8* @__C_std__String__c_str__const( %std__String* %r148)
@@ -1389,7 +1389,7 @@ call void(i8*,  ...) @printf( i8* %r186, i8* %r183, i8* %r184, i8* %r185)
 %r194 = alloca %std__String, align 8
 %r187 = getelementptr inbounds [10 x [10 x %GreetingType]], [10 x [10 x %GreetingType]]* %r73, i32 0, i32 1
 %r188 = getelementptr inbounds [10 x %GreetingType], [10 x %GreetingType]* %r187, i32 0, i32 1
-invoke void @__C_GreetingType__phrase__const( %std__String* sret %r194, %GreetingType* %r188) to label %L86 unwind label %L85
+invoke void @__C_GreetingType__phrase__const( %std__String* sret(%std__String) %r194, %GreetingType* %r188) to label %L86 unwind label %L85
 L86:
 %r195 = call i8* @__C_std__String__c_str__const( %std__String* %r194)
 call void(i8*,  ...) @printf( i8* %r196, i8* %r195)
@@ -1646,19 +1646,19 @@ IL1:
 %ir2 = getelementptr inbounds [2 x i8], [2 x i8]* @string16, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %ir4, i8* %ir2) to label %IL2 unwind label %abort
 IL2:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %ir6, %std__String* %ir3, %std__String* %ir4) to label %IL3 unwind label %abort
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %ir6, %std__String* %ir3, %std__String* %ir4) to label %IL3 unwind label %abort
 IL3:
 %ir7 = alloca %std__String, align 8
 %ir5 = getelementptr inbounds [6 x i8], [6 x i8]* @string31, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %ir7, i8* %ir5) to label %IL4 unwind label %abort
 IL4:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret %ir9, %std__String* %ir6, %std__String* %ir7) to label %IL5 unwind label %abort
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) %ir9, %std__String* %ir6, %std__String* %ir7) to label %IL5 unwind label %abort
 IL5:
 %ir10 = alloca %std__String, align 8
 %ir8 = getelementptr inbounds [2 x i8], [2 x i8]* @string14, i64 0, i64 0
 invoke void @__C_std__String__$ctor__i8$( %std__String* %ir10, i8* %ir8) to label %IL6 unwind label %abort
 IL6:
-invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret @g_globalGreeting, %std__String* %ir9, %std__String* %ir10) to label %IL7 unwind label %abort
+invoke void @__C_std__String__$plus__std__String$__const( %std__String* sret(%std__String) @g_globalGreeting, %std__String* %ir9, %std__String* %ir10) to label %IL7 unwind label %abort
 IL7:
 %ir11 = alloca i32, align 4
 store i32 -1, i32* %ir11

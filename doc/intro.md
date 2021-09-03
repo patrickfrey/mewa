@@ -121,7 +121,7 @@ make install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b 0.8
+git checkout -b 0.9
 
 ```
 #### Configure to find Lua includes and to write the file Lua.inc included by make
@@ -307,13 +307,6 @@ io.stdout:write( constructor.code)
 ```
 #### Output
 ```
-; SOURCE int a = 1;
-%R1 = alloca i32, align 4 ; variable allocation
-store i32 1, i32* %R1 ; variable assignment
-; SOURCE int b = a;
-%R2 = alloca i32, align 4 ; variable allocation
-%R3 = load i32, i32* %R1 ; reduction int <- int&
-store i32 %R3, i32* %R2 ; variable assignment
 
 ```
 #### Conclusion
@@ -385,10 +378,6 @@ print( "Retrieve X " .. findVariable("X"))
 ```
 #### Output
 ```
-Retrieve X instance of scope {20,30}
-Retrieve X instance of scope {10,50}
-Retrieve X instance of scope {1,100}
-Retrieve X !NOTFOUND
 
 ```
 #### Conclusion
@@ -481,7 +470,6 @@ end
 ```
 #### Output
 ```
-Ambiguous: long -> const long -> const int | long -> int -> const int
 
 ```
 #### Adding weights
@@ -535,7 +523,6 @@ Here is a diff with the edits we have to make for fixing the problem:
 ```
 #### Output with weights
 ```
-convert const int ( load ( make const ( long&)))
 
 ```
 #### Conclusion
@@ -651,8 +638,6 @@ end
 ```
 #### Output
 ```
-Found baseclass& constructor
-
 
 ```
 #### Adding tags
@@ -691,7 +676,6 @@ Here is a diff with the edits we have to make for fixing the problem:
 ```
 #### Output with tags
 ```
-Not found
 
 ```
 #### Conclusion
@@ -757,9 +741,6 @@ print( "We are in " .. getFunctionName())
 ```
 #### Output
 ```
-We are in function X
-We are in function Y
-We are in function Z
 
 ```
 #### Conclusion
@@ -886,13 +867,6 @@ print( if_statement( condition, block).code)
 ```
 #### Output
 ```
-%R2 = icmp ne i32 %R1, 0
-br i1 %R2, label %L1, label %L2
-L1:
-... this code is executed if the value in %R1 is not 0 ...
-br label L2
-L2:
-
 
 ```
 

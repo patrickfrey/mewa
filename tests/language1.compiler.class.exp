@@ -125,7 +125,7 @@ br label %L1
 L1:
 ret i32 %r4
 }
-define external void @__C_Point__object__const( %Object* sret %rt, %Point* %ths ) #0 nounwind {
+define external void @__C_Point__object__const( %Object* sret(%Object) %rt, %Point* %ths ) #0 nounwind {
 entry:
 %r1 = bitcast %Point* %ths to i8*
 %r2 = getelementptr inbounds %Object, %Object* %rt, i32 0, i32 0
@@ -136,7 +136,7 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C_Point__updater( %ObjectUpdater* sret %rt, %Point* %ths ) #0 nounwind {
+define external void @__C_Point__updater( %ObjectUpdater* sret(%ObjectUpdater) %rt, %Point* %ths ) #0 nounwind {
 entry:
 %r1 = bitcast %Point* %ths to i8*
 %r2 = getelementptr inbounds %ObjectUpdater, %ObjectUpdater* %rt, i32 0, i32 0
@@ -174,7 +174,7 @@ store float 0x3FF3AE1480000000, float* %r2
 call void @__C_Line__$ctor__i32__i32( %Line* %r3, i32 7, i32 4)
 %r4 = alloca %Object, align 8
 %r5 = getelementptr inbounds %Line, %Line* %r3, i32 0, i32 0
-call void @__C_Point__object__const( %Object* sret %r4, %Point* %r5)
+call void @__C_Point__object__const( %Object* sret(%Object) %r4, %Point* %r5)
 %r13 = getelementptr inbounds [18 x i8], [18 x i8]* @string1, i64 0, i64 0
 %r8 = getelementptr inbounds %Object, %Object* %r4, i32 0, i32 1
 %r9 = load %Object__VMT*, %Object__VMT** %r8
@@ -195,7 +195,7 @@ call void(i8*,  ...) @printf( i8* %r13, i32 %r12)
 call void(i8*,  ...) @printf( i8* %r21, i32 %r20)
 %r22 = alloca %ObjectUpdater, align 8
 %r23 = getelementptr inbounds %Line, %Line* %r3, i32 0, i32 0
-call void @__C_Point__updater( %ObjectUpdater* sret %r22, %Point* %r23)
+call void @__C_Point__updater( %ObjectUpdater* sret(%ObjectUpdater) %r22, %Point* %r23)
 %r26 = getelementptr inbounds %ObjectUpdater, %ObjectUpdater* %r22, i32 0, i32 1
 %r27 = load %ObjectUpdater__VMT*, %ObjectUpdater__VMT** %r26
 %r28 = getelementptr inbounds %ObjectUpdater__VMT, %ObjectUpdater__VMT* %r27, i32 0, i32 0

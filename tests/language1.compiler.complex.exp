@@ -152,7 +152,7 @@ br label %L1
 L1:
 ret double %r12
 }
-define external void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %rt, %__Complex__double* %ths ) #0 nounwind {
+define external void @__C___Complex__double__squareRoot__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths ) #0 nounwind {
 entry:
 %r1 = alloca double, align 8
 %r2 = call double @__C___Complex__double__abs__const( %__Complex__double* %ths)
@@ -171,20 +171,20 @@ call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r1
 %r12 = fadd double %r10, %r11
 %r13 = fmul double 0x4000000000000000, %r12
 %r14 = call double @sqrt( double %r13)
-call void @__C___Complex__double__$div__double__const( %__Complex__double* sret %rt, %__Complex__double* %r15, double %r14)
+call void @__C___Complex__double__$div__double__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %r15, double %r14)
 br label %L1
 L1:
 call void @__dtor___Complex__double( %__Complex__double* %r15)
 ret void
 }
-define external void @__C___Complex__double__square__const( %__Complex__double* sret %rt, %__Complex__double* %ths ) #0 nounwind {
+define external void @__C___Complex__double__square__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths ) #0 nounwind {
 entry:
-call void @__C___Complex__double__$mul____Complex__double$__const( %__Complex__double* sret %rt, %__Complex__double* %ths, %__Complex__double* %ths)
+call void @__C___Complex__double__$mul____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths, %__Complex__double* %ths)
 br label %L1
 L1:
 ret void
 }
-define external void @__C___Complex__double__$plus____Complex__double$__const( %__Complex__double* sret %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
+define external void @__C___Complex__double__$plus____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Complex__double, %__Complex__double* %ths, i32 0, i32 0
 %r4 = load double, double* %r2
@@ -199,7 +199,7 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Complex__double__$minus____Complex__double$__const( %__Complex__double* sret %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
+define external void @__C___Complex__double__$minus____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Complex__double, %__Complex__double* %ths, i32 0, i32 0
 %r4 = load double, double* %r2
@@ -214,7 +214,7 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Complex__double__$minus__const( %__Complex__double* sret %rt, %__Complex__double* %ths ) #0 nounwind {
+define external void @__C___Complex__double__$minus__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths ) #0 nounwind {
 entry:
 %r1 = getelementptr inbounds %__Complex__double, %__Complex__double* %ths, i32 0, i32 0
 %r2 = load double, double* %r1
@@ -227,7 +227,7 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Complex__double__$mul____Complex__double$__const( %__Complex__double* sret %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
+define external void @__C___Complex__double__$mul____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Complex__double, %__Complex__double* %ths, i32 0, i32 0
 %r4 = load double, double* %r2
@@ -252,7 +252,7 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Complex__double__$div__double__const( %__Complex__double* sret %rt, %__Complex__double* %ths, double %r1 ) #0 nounwind {
+define external void @__C___Complex__double__$div__double__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths, double %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Complex__double, %__Complex__double* %ths, i32 0, i32 0
 %r3 = load double, double* %r2
@@ -265,7 +265,7 @@ br label %L1
 L1:
 ret void
 }
-define external void @__C___Complex__double__$div____Complex__double$__const( %__Complex__double* sret %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
+define external void @__C___Complex__double__$div____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %rt, %__Complex__double* %ths, %__Complex__double* %r1 ) #0 nounwind {
 entry:
 %r2 = getelementptr inbounds %__Complex__double, %__Complex__double* %ths, i32 0, i32 0
 %r4 = load double, double* %r2
@@ -358,15 +358,15 @@ entry:
 %r4 = alloca %__Complex__double, align 8
 %r3 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r3, double 0x4014000000000000, double 0x4000000000000000)
-call void @__C___Complex__double__square__const( %__Complex__double* sret %r4, %__Complex__double* %r3)
-call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r2, %__Complex__double* %r4)
+call void @__C___Complex__double__square__const( %__Complex__double* sret(%__Complex__double) %r4, %__Complex__double* %r3)
+call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret(%__Complex__double) %r2, %__Complex__double* %r4)
 %r5 = getelementptr inbounds [41 x i8], [41 x i8]* @string4, i64 0, i64 0
 call void @printComplex__double__i8$____Complex__double$( i8* %r5, %__Complex__double* %r2)
 %r7 = getelementptr inbounds [30 x i8], [30 x i8]* @string5, i64 0, i64 0
 %r8 = alloca %__Complex__double, align 8
 %r6 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r6, double 0x3FF0000000000000, double 0x4008000000000000)
-call void @__C___Complex__double__square__const( %__Complex__double* sret %r8, %__Complex__double* %r6)
+call void @__C___Complex__double__square__const( %__Complex__double* sret(%__Complex__double) %r8, %__Complex__double* %r6)
 call void @printComplex__double__i8$____Complex__double$( i8* %r7, %__Complex__double* %r8)
 %r11 = getelementptr inbounds [33 x i8], [33 x i8]* @string6, i64 0, i64 0
 %r12 = alloca %__Complex__double, align 8
@@ -374,7 +374,7 @@ call void @printComplex__double__i8$____Complex__double$( i8* %r7, %__Complex__d
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r9, double 0x4000000000000000, double 0x4008000000000000)
 %r10 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r10, double 0x4010000000000000, double 0xC01C000000000000)
-call void @__C___Complex__double__$mul____Complex__double$__const( %__Complex__double* sret %r12, %__Complex__double* %r9, %__Complex__double* %r10)
+call void @__C___Complex__double__$mul____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %r12, %__Complex__double* %r9, %__Complex__double* %r10)
 call void @printComplex__double__i8$____Complex__double$( i8* %r11, %__Complex__double* %r12)
 %r15 = getelementptr inbounds [34 x i8], [34 x i8]* @string7, i64 0, i64 0
 %r16 = alloca %__Complex__double, align 8
@@ -382,7 +382,7 @@ call void @printComplex__double__i8$____Complex__double$( i8* %r11, %__Complex__
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r13, double 0x4008000000000000, double 0xBFF0000000000000)
 %r14 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r14, double 0xC010000000000000, double 0xC008000000000000)
-call void @__C___Complex__double__$plus____Complex__double$__const( %__Complex__double* sret %r16, %__Complex__double* %r13, %__Complex__double* %r14)
+call void @__C___Complex__double__$plus____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %r16, %__Complex__double* %r13, %__Complex__double* %r14)
 call void @printComplex__double__i8$____Complex__double$( i8* %r15, %__Complex__double* %r16)
 %r19 = getelementptr inbounds [29 x i8], [29 x i8]* @string8, i64 0, i64 0
 %r20 = alloca %__Complex__double, align 8
@@ -390,7 +390,7 @@ call void @printComplex__double__i8$____Complex__double$( i8* %r15, %__Complex__
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r17, double 0xC000000000000000, double 0x4000000000000000)
 %r18 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r18, double 0xC008000000000000, double 0x4000000000000000)
-call void @__C___Complex__double__$minus____Complex__double$__const( %__Complex__double* sret %r20, %__Complex__double* %r17, %__Complex__double* %r18)
+call void @__C___Complex__double__$minus____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %r20, %__Complex__double* %r17, %__Complex__double* %r18)
 call void @printComplex__double__i8$____Complex__double$( i8* %r19, %__Complex__double* %r20)
 %r23 = getelementptr inbounds [43 x i8], [43 x i8]* @string9, i64 0, i64 0
 %r24 = alloca %__Complex__double, align 8
@@ -398,7 +398,7 @@ call void @printComplex__double__i8$____Complex__double$( i8* %r19, %__Complex__
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r21, double 0x4000000000000000, double 0x4008000000000000)
 %r22 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r22, double 0x4008000000000000, double 0xC008000000000000)
-call void @__C___Complex__double__$div____Complex__double$__const( %__Complex__double* sret %r24, %__Complex__double* %r21, %__Complex__double* %r22)
+call void @__C___Complex__double__$div____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %r24, %__Complex__double* %r21, %__Complex__double* %r22)
 call void @printComplex__double__i8$____Complex__double$( i8* %r23, %__Complex__double* %r24)
 %r27 = getelementptr inbounds [33 x i8], [33 x i8]* @string10, i64 0, i64 0
 %r28 = alloca %__Complex__double, align 8
@@ -406,7 +406,7 @@ call void @printComplex__double__i8$____Complex__double$( i8* %r23, %__Complex__
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r25, double 0x4000000000000000, double 0x4000000000000000)
 %r26 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r26, double 0x4008000000000000, double 0xC008000000000000)
-call void @__C___Complex__double__$div____Complex__double$__const( %__Complex__double* sret %r28, %__Complex__double* %r25, %__Complex__double* %r26)
+call void @__C___Complex__double__$div____Complex__double$__const( %__Complex__double* sret(%__Complex__double) %r28, %__Complex__double* %r25, %__Complex__double* %r26)
 call void @printComplex__double__i8$____Complex__double$( i8* %r27, %__Complex__double* %r28)
 %r31 = getelementptr inbounds [24 x i8], [24 x i8]* @string11, i64 0, i64 0
 %r29 = alloca %__Complex__double, align 8
@@ -417,19 +417,19 @@ call void @printFloat__double__i8$__double( i8* %r31, double %r30)
 %r34 = alloca %__Complex__double, align 8
 %r32 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r32, double 0x0, double 0x3FF0000000000000)
-call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r34, %__Complex__double* %r32)
+call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret(%__Complex__double) %r34, %__Complex__double* %r32)
 call void @printComplex__double__i8$____Complex__double$( i8* %r33, %__Complex__double* %r34)
 %r36 = getelementptr inbounds [38 x i8], [38 x i8]* @string13, i64 0, i64 0
 %r37 = alloca %__Complex__double, align 8
 %r35 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r35, double 0x3FF0000000000000, double 0x3FF0000000000000)
-call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r37, %__Complex__double* %r35)
+call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret(%__Complex__double) %r37, %__Complex__double* %r35)
 call void @printComplex__double__i8$____Complex__double$( i8* %r36, %__Complex__double* %r37)
 %r39 = getelementptr inbounds [34 x i8], [34 x i8]* @string14, i64 0, i64 0
 %r40 = alloca %__Complex__double, align 8
 %r38 = alloca %__Complex__double, align 8
 call void @__C___Complex__double__$ctor__double__double( %__Complex__double* %r38, double 0xC020000000000000, double 0x4018000000000000)
-call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret %r40, %__Complex__double* %r38)
+call void @__C___Complex__double__squareRoot__const( %__Complex__double* sret(%__Complex__double) %r40, %__Complex__double* %r38)
 call void @printComplex__double__i8$____Complex__double$( i8* %r39, %__Complex__double* %r40)
 %r41 = alloca double, align 8
 store double 0x4052066666666667, double* %r41

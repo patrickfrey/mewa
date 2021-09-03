@@ -1,3 +1,8 @@
+mewa (0.9.0-1) stable; urgency=low
+  * Support vor LLVM version 14 and switch to LLVM-14 as default version because Ubuntu did so too.
+  * Fixed bug in typedb:resolve_type, case of single context type/constructor pair argument was not handled correctly.
+-- Patrick Frey <patrickpfrey@yahoo.com>  Fri, 3 Sep 2021 10:50:00 +0200
+
 mewa (0.8.0-1) stable; urgency=low
   * Make typedb API naming consistent: Deprecated functions typedb:get_type (renamed typedb:this_type), and typedb:get_types (renamed typedb:this_types) (issue #4)
   * Fixed bad usage of luarocks when determining the path of Lua libraries. Caused problems if multiple Lua versions were installed.
