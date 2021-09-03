@@ -657,12 +657,12 @@ static void setStep( AbstractSyntaxTree* ast, uint32_t nodeid, int32_t scope_ste
 	ast->nodescope[ nodeid] = packStep( scope_step);
 }
 typedef enum {
-	Lexeme_EOF=0,
-	Lexeme_Identifier,
-	Lexeme_SQString,
-	Lexeme_DQString,
-	Lexeme_Integer,
-	Lexeme_Float,
+	Lexeme_EOF=0,		// '\0'
+	Lexeme_Identifier,	// alpha alphanum-seq
+	Lexeme_SQString,	// ''' ... '''
+	Lexeme_DQString,	// '"' ... '"'
+	Lexeme_Integer,		// digit-seq
+	Lexeme_Float,		// digit-seq '.' digit-seq
 	Operator_ASSIGN,	// '='
 	Operator_DPLUS,		// '++'
 	Operator_DMINUS,	// '--'
@@ -696,14 +696,15 @@ typedef enum {
 	Operator_CURLY_CLOSE,	// '}'
 	Operator_SQUARE_OPEN,	// '['
 	Operator_SQUARE_CLOSE,	// ']'
-	Keyword_WHILE,
-	Keyword_FOR,
-	Keyword_IF,
-	Keyword_SWITCH,
-	Keyword_CASE,
-	Keyword_BREAK,
-	Keyword_CONTINUE,
-	Keyword_RETURN
+	Keyword_WHILE,		// "while"
+	Keyword_FOR,		// "for"
+	Keyword_IF,		// "if"
+	Keyword_ELSE,		// "else"
+	Keyword_SWITCH,		// "switch"
+	Keyword_CASE,		// "case"
+	Keyword_BREAK,		// "break"
+	Keyword_CONTINUE,	// "continue"
+	Keyword_RETURN		// "return"
 } LexemeType;
 
 typedef struct Lexeme {
@@ -823,6 +824,9 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 			}
 			case 'i': if (isKeyword( "if", src, *pos)) {
 				return lexeme( lx, Keyword_IF, -1/*id*/, *pos += 2);
+			}
+			case 'e': if (isKeyword( "else", src, *pos)) {
+				return lexeme( lx, Keyword_ELSE, -1/*id*/, *pos += 4);
 			}
 			case 's': if (isKeyword( "switch", src, *pos)) {
 				return lexeme( lx, Keyword_SWITCH, -1/*id*/, *pos += 6);
