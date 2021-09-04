@@ -5,12 +5,12 @@
 #include <unistd.h>
 
 typedef struct SPSStackElement {
-	float weight;
+	int32_t weight;
 	int32_t idx;
 } SPSStackElement;
 
 typedef struct SPSFollowElement {
-	float weight;
+	int32_t weight;
 	int32_t type;
 	int32_t constructor;
 } SPSFollowElement;
@@ -39,26 +39,49 @@ typedef enum {
 	LogicError=1,
 	BufferTooSmall=2,
 	ValueOutOfRange=3,
-	SyntaxError=21
+	SyntaxError=21,
+	UnexpectedEOF=22
 } ErrorCode;
 
 static const char* errorString( ErrorCode errcode) {
 	static const char* ar[] = {
 		"",
 		"logic error",
-		"internal buffer too small"
+		"internal buffer too small",
+		"value out of range",
+		"syntax error",
+		"unexpected end of program source"
 	};
 	return ar[ errcode];
 }
-static void throwError( ErrorCode errcode, const char* msg) {
+static void int2str( char* buf, int value, size_t* size) {
+	size_t bn = 0;
+	for (; value; ++bn,value/=10) {
+		buf[bn]='0'+(value%10);
+	}
+	if (bn == 0) {
+		buf[bn++] = '0';
+	}
+	size_t bi = 0, bm = (bn-1)/2;
+	for (; bi != bm; ++bi) {
+		char tmp = buf[ bi];
+		buf[ bi] = buf[ bn - bi - 1];
+		buf[ bn - bi - 1] = tmp;
+	}
+	buf[ bn] = 0;
+	*size = bn;
+}
+static void throwError( ErrorCode errcode, int line) {
 	char const* estr = errorString( errcode);
 	size_t elen = strlen( estr);
 	write( 2, "Exception: ", 11);
 	write( 2, estr, elen);
-	if (msg) {
-		size_t msglen = strlen( msg);
-		write( 2, " ", 1);
-		write( 2, msg, msglen);
+	if (line) {
+		char num[32];
+		size_t numsize;
+		write( 2, " on line ", 9);
+		int2str( num, line, &numsize);
+		write( 2, num, numsize);
 	}
 	write( 2, "\n", 1);
 	exit( 1);
@@ -77,7 +100,7 @@ typedef struct TypeConstructorPair {
 } TypeConstructorPair;
 
 typedef struct ShortestPathSearchResult {
-	float weight;
+	int32_t weight;
 	int32_t fromindex;
 	size_t arsize;
 	size_t arsize_alt;
@@ -137,7 +160,7 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 		followsize = getFollow( follow, context, tree[ fotreeidx].type);
 		for (fi=0; fi<followsize; ++fi) {
 			int32_t fotype = follow[ fi].type;
-			float foweight = elem->weight + follow[ fi].weight;
+			int32_t foweight = elem->weight + follow[ fi].weight;
 			size_t si = stksize;
 			for (; si > 0 && stk[ si-1].weight < foweight; --si){}
 			size_t ti = fotreeidx;
@@ -585,7 +608,7 @@ void initAbstractSyntaxTree( AbstractSyntaxTree* ast) {
 }
 typedef struct ParseStackElement {
 	uint32_t astnode;
-	uint8_t state;
+	int8_t state;
 } ParseStackElement;
 typedef struct ParseStack {
 	ParseStackElement ar[ MAX_PARSE_STACK_SIZE];
@@ -595,16 +618,15 @@ typedef struct ParseStack {
 void initParseStack( ParseStack* ast) {
 	ast->arsize = 0;
 }
-static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int type, const char* valuestr, size_t valuelen)
+static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int32_t type, int32_t id)
 {
-	uint32_t id = getIdent( &ast->identMap, valuestr, valuelen);
 	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
 	ParseStackElement* elem = stk->ar + stk->arsize;
 	elem->astnode = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
 	elem->state = state;
 	stk->arsize += 1;
 }
-static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int type, size_t size)
+static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int32_t type, size_t size)
 {
 	uint32_t id = ast->nodearsize;
 	size_t si = 0;
@@ -924,11 +946,52 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 	}
 }
 
+typedef enum {
+	Program,
+	GlobalDeclarationStart,
+	LocalDeclarationStart,
+	StatementBlock,
+	Expression
+} ParseState;
+
 static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t srclen) {
 	Lexeme lx;
 	size_t srcpos = 0;
 	CompileError err = {0,0};
+	ParseStack stk;
+	initParseStack( &stk);
+	ParseState state = Program;
+
 	while (nextLexeme( &lx, srcstr, &srcpos, &ast->identMap, &err)) {
+		switch (state) {
+			case Program:
+				switch (lx.type) {
+					case Lexeme_Identifier: pushLexemNode( &stk, ast, state=GlobalDeclarationStart, lx.type, lx.id); break;
+					default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				}
+				break;
+			case StatementBlock:
+				switch (lx.type) {
+					case Lexeme_Identifier: pushLexemNode( &stk, ast, state=LocalDeclarationStart, lx.type, lx.id); break;
+					case Keyword_WHILE:
+					case Keyword_FOR:
+					case Keyword_IF:
+					case Keyword_ELSE:
+					case Keyword_SWITCH:
+					case Keyword_CASE:
+					case Keyword_BREAK:
+					case Keyword_CONTINUE:
+					case Keyword_RETURN:
+					case Keyword_STATIC:
+					default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				}
+				break;
+			case Expression:
+				break;
+		}
+	}
+	if (state != Program) {
+		throwError( UnexpectedEOF, lineNumber( srcstr, srcpos));
 	}
 }
 int main( int argc, char const* argv[]) {
