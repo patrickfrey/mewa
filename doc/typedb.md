@@ -100,8 +100,11 @@ This function was designed to support the mapping of _AST_ nodes to _scope-steps
 | Return |          | integer           | integer describing the (previously defined) current scope-step |
 
 #### Remark
-The call of [typedb:scope](#scope) with parameter sets the _scope-step_ implicitly to the start of the _scope_.
+The call of [typedb:scope](#scope) with one parameter only sets the _scope-step_ implicitly to the last value inside the _scope_ (end of scope minus 1).
 If you are not relying on a _scope-step_ different from that, you don't have to call _step_ for every _scope-step_ value provided by the grammar description.
+
+#### Note
+Besides describing the relation to an enclosing _scope_, _scope-step_ can also be used as a state counter for implementing cleanup in an exit scenario, e.g. return or exception handling.
 
 
 <a name="instance"/>
