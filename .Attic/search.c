@@ -1,8 +1,8 @@
 #include <inttypes.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct SPSStackElement {
 	float weight;
@@ -51,11 +51,16 @@ static const char* errorString( ErrorCode errcode) {
 	return ar[ errcode];
 }
 static void throwError( ErrorCode errcode, const char* msg) {
+	char const* estr = errorString( errcode);
+	size_t elen = strlen( estr);
+	write( 2, "Exception: ", 11);
+	write( 2, estr, elen);
 	if (msg) {
-		fprintf( stderr, "Exception %d: %s (%s)\n", (int)errcode, errorString( errcode), msg);
-	} else {
-		fprintf( stderr, "Exception %d: %s\n", (int)errcode, errorString( errcode));
+		size_t msglen = strlen( msg);
+		write( 2, " ", 1);
+		write( 2, msg, msglen);
 	}
+	write( 2, "\n", 1);
 	exit( 1);
 }
 static void assertBufferSize( int32_t pos, int32_t size) {
@@ -670,7 +675,10 @@ typedef enum {
 	Operator_MINUS,		// '-'
 	Operator_ASTERISK,	// '*'
 	Operator_SLASH,		// '/'
+	Operator_PERCENT,	// '%'
 	Operator_BSLASH,	// '\'
+	Operator_RSHIFT,	// '>>'
+	Operator_LSHIFT,	// '<<'
 	Operator_LAND,		// '&&'
 	Operator_LOR,		// '||'
 	Operator_AND,		// '&'
@@ -704,8 +712,32 @@ typedef enum {
 	Keyword_CASE,		// "case"
 	Keyword_BREAK,		// "break"
 	Keyword_CONTINUE,	// "continue"
-	Keyword_RETURN		// "return"
+	Keyword_RETURN,		// "return"
+	Keyword_STATIC		// "static"
 } LexemeType;
+
+static int8_t operatorPrecedence_C( LexemeType op) {
+	switch (op) {
+		case Operator_DPLUS: case Operator_DMINUS: case Operator_DOT: case Operator_ARROW: case Operator_OVAL_OPEN:
+			case Operator_OVAL_CLOSE: case Operator_CURLY_OPEN: case Operator_CURLY_CLOSE:
+			case Operator_SQUARE_OPEN: Operator_SQUARE_CLOSE: return 1;
+		case Operator_NOT: case Operator_INV: return 2;
+		case Operator_ASTERISK: case Operator_SLASH: case Operator_PERCENT: return 3;
+		case Operator_PLUS: case Operator_MINUS: return 4;
+		case Operator_RSHIFT: case Operator_LSHIFT: return 5;
+		case Operator_GT: case Operator_GE: case Operator_LT: case Operator_LE: return 6;
+		case Operator_EQ: case Operator_NE: return 7;
+		case Operator_AND: return 8;
+		case Operator_XOR: return 9;
+		case Operator_OR: return 10;
+		case Operator_LAND: return 11;
+		case Operator_LOR: return 12;
+		case Operator_QUESTION: 13;
+		case Operator_ASSIGN: return 14;
+		case Operator_COMMA: return 15;
+	}
+	return 127;
+}
 
 typedef struct Lexeme {
 	size_t pos;
@@ -792,6 +824,7 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 			case '-': ++*pos; return (src[*pos] == '-') ? lexeme( lx, Operator_DMINUS, -1/*id*/, *pos += 1) : (src[*pos] == '>') ? lexeme( lx, Operator_ARROW, -1/*id*/, *pos += 1) : lexeme( lx, Operator_MINUS, -1/*id*/, *pos);
 			case '*': ++*pos; return lexeme( lx, Operator_ASTERISK, -1/*id*/, *pos);
 			case '/': ++*pos; return lexeme( lx, Operator_SLASH, -1/*id*/, *pos);
+			case '%': ++*pos; return lexeme( lx, Operator_PERCENT, -1/*id*/, *pos);
 			case '\\': ++*pos; return lexeme( lx, Operator_BSLASH, -1/*id*/, *pos);
 			case '&': ++*pos; return (src[*pos] == '&') ? lexeme( lx, Operator_LAND, -1/*id*/, *pos += 1) : lexeme( lx, Operator_AND, -1/*id*/, *pos);
 			case '|': ++*pos; return (src[*pos] == '|') ? lexeme( lx, Operator_LOR, -1/*id*/, *pos += 1) : lexeme( lx, Operator_OR, -1/*id*/, *pos);
@@ -830,6 +863,8 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 			}
 			case 's': if (isKeyword( "switch", src, *pos)) {
 				return lexeme( lx, Keyword_SWITCH, -1/*id*/, *pos += 6);
+			} else if (isKeyword( "static", src, *pos)) {
+				return lexeme( lx, Keyword_STATIC, -1/*id*/, *pos += 6);
 			}
 			case 'c': if (isKeyword( "case", src, *pos)) {
 				return lexeme( lx, Keyword_CASE, -1/*id*/, *pos += 4);
@@ -889,9 +924,16 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 	}
 }
 
+static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t srclen) {
+	Lexeme lx;
+	size_t srcpos = 0;
+	CompileError err = {0,0};
+	while (nextLexeme( &lx, srcstr, &srcpos, &ast->identMap, &err)) {
+	}
+}
 int main( int argc, char const* argv[]) {
-	IdentMap identmap;
-	initIdentMap( &identmap);
+	AbstractSyntaxTree ast;
+	initAbstractSyntaxTree( &ast);
 	return 0;
 }
 
