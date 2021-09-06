@@ -728,14 +728,27 @@ typedef enum {
 	Operator_SQUARE_CLOSE,	// ']'
 	Keyword_WHILE,		// "while"
 	Keyword_FOR,		// "for"
+	Keyword_DO,		// "do"
+	Keyword_DEFAULT,	// "default"
 	Keyword_IF,		// "if"
 	Keyword_ELSE,		// "else"
 	Keyword_SWITCH,		// "switch"
 	Keyword_CASE,		// "case"
+	Keyword_CONST,		// "const"
 	Keyword_BREAK,		// "break"
 	Keyword_CONTINUE,	// "continue"
 	Keyword_RETURN,		// "return"
-	Keyword_STATIC		// "static"
+	Keyword_STATIC,		// "static"
+	Keyword_ENUM,		// "enum"
+	Keyword_SIZEOF,		// "sizeof"
+	Keyword_TYPEDEF,	// "typedef"
+	Keyword_UNION,		// "typedef"
+	Keyword_SIGNED,		// "signed"
+	Keyword_UNSIGNED,	// "unsigned"
+	Keyword_INT,		// "int"
+	Keyword_SHORT,		// "short"
+	Keyword_CHAR,		// "char"
+	Keyword_LONG		// "long"
 } LexemeType;
 
 static int8_t operatorPrecedence_C( LexemeType op) {
@@ -773,10 +786,6 @@ static int lexeme( Lexeme* lx, LexemeType type, int32_t id, size_t pos) {
 	lx->pos = pos;
 	return 1;
 }
-typedef struct CompileError {
-	int line;
-	ErrorCode code;
-} CompileError;
 static int lineNumber( char const* src, size_t pos) {
 	int rt = 1;
 	for (size_t pi = 0; pi < pos; ++pi) {
@@ -785,11 +794,6 @@ static int lineNumber( char const* src, size_t pos) {
 		}
 	}
 	return rt;
-}
-static int compileError( CompileError* err, ErrorCode code, char const* src, size_t pos) {
-	err->line = lineNumber( src, pos);
-	err->code = code;
-	return 0;
 }
 static size_t skipEndOfLine( char const* src, size_t pos) {
 	while (src[pos] && (unsigned char) src[pos] != '\n') {
@@ -837,7 +841,7 @@ static int isKeyword( char const* kw, char const* src, size_t pos) {
 	for (; src[pos] == *kw; ++kw,++pos){}
 	return !isAlphaNum( src[pos]);
 }
-static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* identMap, CompileError* err) {
+static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* identMap) {
 	for (;;) {
 		*pos = skipSpaces( src, *pos);
 		switch (src[*pos]) {
@@ -879,17 +883,42 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 			}
 			case 'i': if (isKeyword( "if", src, *pos)) {
 				return lexeme( lx, Keyword_IF, -1/*id*/, *pos += 2);
+			} else if (isKeyword( "int", src, *pos)) {
+				return lexeme( lx, Keyword_INT, -1/*id*/, *pos += 3);
+			}
+			case 'l': if (isKeyword( "long", src, *pos)) {
+				return lexeme( lx, Keyword_LONG, -1/*id*/, *pos += 4);
 			}
 			case 'e': if (isKeyword( "else", src, *pos)) {
 				return lexeme( lx, Keyword_ELSE, -1/*id*/, *pos += 4);
+			} else if (isKeyword( "enum", src, *pos)) {
+				return lexeme( lx, Keyword_ENUM, -1/*id*/, *pos += 4);
 			}
 			case 's': if (isKeyword( "switch", src, *pos)) {
 				return lexeme( lx, Keyword_SWITCH, -1/*id*/, *pos += 6);
 			} else if (isKeyword( "static", src, *pos)) {
 				return lexeme( lx, Keyword_STATIC, -1/*id*/, *pos += 6);
+			} else if (isKeyword( "signed", src, *pos)) {
+				return lexeme( lx, Keyword_SIGNED, -1/*id*/, *pos += 6);
+			} else if (isKeyword( "sizeof", src, *pos)) {
+				return lexeme( lx, Keyword_SIZEOF, -1/*id*/, *pos += 6);
+			} else if (isKeyword( "short", src, *pos)) {
+				return lexeme( lx, Keyword_SHORT, -1/*id*/, *pos += 5);
+			}
+			case 't': if (isKeyword( "typedef", src, *pos)) {
+				return lexeme( lx, Keyword_TYPEDEF, -1/*id*/, *pos += 7);
+			}
+			case 'd': if (isKeyword( "do", src, *pos)) {
+				return lexeme( lx, Keyword_DO, -1/*id*/, *pos += 2);
+			} else if (isKeyword( "default", src, *pos)) {
+				return lexeme( lx, Keyword_DEFAULT, -1/*id*/, *pos += 7);
 			}
 			case 'c': if (isKeyword( "case", src, *pos)) {
 				return lexeme( lx, Keyword_CASE, -1/*id*/, *pos += 4);
+			} else if (isKeyword( "const", src, *pos)) {
+				return lexeme( lx, Keyword_CONST, -1/*id*/, *pos += 5);
+			} else if (isKeyword( "char", src, *pos)) {
+				return lexeme( lx, Keyword_CHAR, -1/*id*/, *pos += 4);
 			} else if (isKeyword( "continue", src, *pos)) {
 				return lexeme( lx, Keyword_CONTINUE, -1/*id*/, *pos += 8);
 			}
@@ -898,6 +927,11 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 			}
 			case 'r': if (isKeyword( "return", src, *pos)) {
 				 return lexeme( lx, Keyword_RETURN, -1/*id*/, *pos += 6);
+			}
+			case 'u': if (isKeyword( "union", src, *pos)) {
+				return lexeme( lx, Keyword_UNION, -1/*id*/, *pos += 5);
+			} else if (isKeyword( "unsigned", src, *pos)) {
+				return lexeme( lx, Keyword_UNSIGNED, -1/*id*/, *pos += 8);
 			}
 		}
 		if (src[*pos] == '\'' || src[*pos] == '\"')
@@ -914,7 +948,7 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 				int32_t id = getIdent( identMap, src + *pos, len);
 				return lexeme( lx, eb == '\'' ? Lexeme_SQString : Lexeme_DQString, id, *pos += len+1);
 			} else {
-				return compileError( err, SyntaxError, src, *pos);
+				throwError( SyntaxError, lineNumber( src, *pos));
 			}
 		}
 		else if (isAlpha( src[*pos]))
@@ -941,62 +975,130 @@ static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* ident
 		}
 		else
 		{
-			return compileError( err, SyntaxError, src, *pos);
+			throwError( SyntaxError, lineNumber( src, *pos));
 		}
 	}
 }
 
 typedef enum {
-	Program,
-	GlobalDeclarationStart,
-	LocalDeclarationStart,
-	StatementBlock,
-	Expression
-} ParseState;
+	AstInteger,
+	AstFloat,
+	AstDQString,
+	AstSQString,
+	AstIdentifier,
+	AstPointer,
+	AstConst
+} AstNodeType;
+
+static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t srclen, size_t* srcpos) {
+	Lexeme lx;
+	size_t prevpos = *srcpos;
+	LexemeType prevtype;
+	char const* lxstr;
+	int state = 0; //... 0: prefix const, 1: expect idenfitier, 2: expect const, '*', 3: done
+
+	for (; state <= 2 && nextLexeme( &lx, srcstr, srcpos, &ast->identMap); prevpos=*srcpos) {
+		switch (lx.type) {
+			case Keyword_CONST:
+				if (state == 0) {//... prefix const
+					if (!nextLexeme( &lx, srcstr, srcpos, &ast->identMap)) {
+						throwError( UnexpectedEOF, lineNumber( srcstr, lx.pos));
+					}
+					if (lx.type != Lexeme_Identifier) {
+						throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+					}
+					pushLexemNode( stk, ast, state=1, AstIdentifier, lx.id);
+					reduceNode( stk, ast, state, AstConst, 1);
+				} else {//... postfix const
+					reduceNode( stk, ast, state, AstConst, 1);
+				}
+				break;
+			case Operator_ASTERISK:
+				if (state <= 1) {
+					throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				} else {
+					reduceNode( stk, ast, state, AstPointer, 1);
+				}
+				break;
+			case Keyword_UNSIGNED:
+			case Keyword_SIGNED:
+				if (state <= 1) {
+					prevtype = lx.type;
+					prevpos = *srcpos;
+					if (nextLexeme( &lx, srcstr, srcpos, &ast->identMap)) {
+						switch (lx.type) {
+							case Keyword_INT:
+								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
+								break;
+							case Keyword_SHORT:
+								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned short" : "signed short";
+								break;
+							case Keyword_LONG:
+								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned long" : "signed long";
+								break;
+							case Keyword_CHAR:
+								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned char" : "signed char";
+								break;
+							default:
+								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
+								*srcpos = prevpos;
+						}
+					} else {
+						lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
+						*srcpos = prevpos;
+					}
+					pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, lxstr, strlen(lxstr)));
+				} else	{
+					throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				}
+				break;
+			case Keyword_INT:
+				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "int", 3));
+				break;
+			case Keyword_SHORT:
+				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "short", 5));
+				break;
+			case Keyword_LONG:
+				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "long", 4));
+				break;
+			case Keyword_CHAR:
+				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "char", 4));
+				break;
+			case Lexeme_Identifier:
+				if (state <= 1) {
+					pushLexemNode( stk, ast, state=2, AstIdentifier, lx.id);
+				} else {
+					*srcpos = prevpos;
+					state = 3;
+				}
+				break;
+			default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+		}
+	}
+}
 
 static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t srclen) {
 	Lexeme lx;
 	size_t srcpos = 0;
-	CompileError err = {0,0};
+	size_t prevpos = srcpos;
 	ParseStack stk;
 	initParseStack( &stk);
-	ParseState state = Program;
 
-	while (nextLexeme( &lx, srcstr, &srcpos, &ast->identMap, &err)) {
-		switch (state) {
-			case Program:
-				switch (lx.type) {
-					case Lexeme_Identifier: pushLexemNode( &stk, ast, state=GlobalDeclarationStart, lx.type, lx.id); break;
-					default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
-				}
+	for (; nextLexeme( &lx, srcstr, &srcpos, &ast->identMap); prevpos=srcpos) {
+		switch (lx.type) {
+			case Lexeme_Identifier: Keyword_CONST: case Keyword_SIGNED: case Keyword_UNSIGNED: case Keyword_CHAR: case Keyword_SHORT: case Keyword_INT: case Keyword_LONG:
+				srcpos = prevpos;
+				parseTypeDeclaration( &stk, ast, srcstr, srclen, &srcpos);
 				break;
-			case StatementBlock:
-				switch (lx.type) {
-					case Lexeme_Identifier: pushLexemNode( &stk, ast, state=LocalDeclarationStart, lx.type, lx.id); break;
-					case Keyword_WHILE:
-					case Keyword_FOR:
-					case Keyword_IF:
-					case Keyword_ELSE:
-					case Keyword_SWITCH:
-					case Keyword_CASE:
-					case Keyword_BREAK:
-					case Keyword_CONTINUE:
-					case Keyword_RETURN:
-					case Keyword_STATIC:
-					default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
-				}
-				break;
-			case Expression:
-				break;
+			default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
 		}
 	}
-	if (state != Program) {
-		throwError( UnexpectedEOF, lineNumber( srcstr, srcpos));
-	}
 }
+
 int main( int argc, char const* argv[]) {
 	AbstractSyntaxTree ast;
 	initAbstractSyntaxTree( &ast);
+	parseSource( &ast, 0, 0);
 	return 0;
 }
 
