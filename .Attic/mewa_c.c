@@ -841,7 +841,7 @@ static int isKeyword( char const* kw, char const* src, size_t pos) {
 	for (; src[pos] == *kw; ++kw,++pos){}
 	return !isAlphaNum( src[pos]);
 }
-static int nextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* identMap) {
+static int fetchNextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* identMap) {
 	for (;;) {
 		*pos = skipSpaces( src, *pos);
 		switch (src[*pos]) {
@@ -997,13 +997,13 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 	char const* lxstr;
 	int state = 0; //... 0: prefix const, 1: expect idenfitier, 2: expect const, '*', 3: done
 
-	for (; state <= 2 && nextLexeme( &lx, srcstr, srcpos, &ast->identMap); prevpos=*srcpos) {
+	while (state <= 2) {
+		prevpos = *srcpos;
+		fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
 		switch (lx.type) {
 			case Keyword_CONST:
 				if (state == 0) {//... prefix const
-					if (!nextLexeme( &lx, srcstr, srcpos, &ast->identMap)) {
-						throwError( UnexpectedEOF, lineNumber( srcstr, lx.pos));
-					}
+					fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
 					if (lx.type != Lexeme_Identifier) {
 						throwError( SyntaxError, lineNumber( srcstr, lx.pos));
 					}
@@ -1025,27 +1025,23 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 				if (state <= 1) {
 					prevtype = lx.type;
 					prevpos = *srcpos;
-					if (nextLexeme( &lx, srcstr, srcpos, &ast->identMap)) {
-						switch (lx.type) {
-							case Keyword_INT:
-								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
-								break;
-							case Keyword_SHORT:
-								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned short" : "signed short";
-								break;
-							case Keyword_LONG:
-								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned long" : "signed long";
-								break;
-							case Keyword_CHAR:
-								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned char" : "signed char";
-								break;
-							default:
-								lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
-								*srcpos = prevpos;
-						}
-					} else {
-						lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
-						*srcpos = prevpos;
+					fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+					switch (lx.type) {
+						case Keyword_INT:
+							lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
+							break;
+						case Keyword_SHORT:
+							lxstr = prevtype == Keyword_UNSIGNED ? "unsigned short" : "signed short";
+							break;
+						case Keyword_LONG:
+							lxstr = prevtype == Keyword_UNSIGNED ? "unsigned long" : "signed long";
+							break;
+						case Keyword_CHAR:
+							lxstr = prevtype == Keyword_UNSIGNED ? "unsigned char" : "signed char";
+							break;
+						default:
+							lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
+							*srcpos = prevpos;
 					}
 					pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, lxstr, strlen(lxstr)));
 				} else	{
@@ -1084,7 +1080,9 @@ static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t src
 	ParseStack stk;
 	initParseStack( &stk);
 
-	for (; nextLexeme( &lx, srcstr, &srcpos, &ast->identMap); prevpos=srcpos) {
+	for (;;) {
+		prevpos = srcpos;
+		fetchNextLexeme( &lx, srcstr, &srcpos, &ast->identMap);
 		switch (lx.type) {
 			case Lexeme_Identifier: Keyword_CONST: case Keyword_SIGNED: case Keyword_UNSIGNED: case Keyword_CHAR: case Keyword_SHORT: case Keyword_INT: case Keyword_LONG:
 				srcpos = prevpos;
