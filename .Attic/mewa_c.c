@@ -608,7 +608,6 @@ void initAbstractSyntaxTree( AbstractSyntaxTree* ast) {
 }
 typedef struct ParseStackElement {
 	uint32_t astnode;
-	int8_t state;
 } ParseStackElement;
 typedef struct ParseStack {
 	ParseStackElement ar[ MAX_PARSE_STACK_SIZE];
@@ -618,15 +617,14 @@ typedef struct ParseStack {
 void initParseStack( ParseStack* ast) {
 	ast->arsize = 0;
 }
-static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int32_t type, int32_t id)
+static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, int32_t id)
 {
 	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
 	ParseStackElement* elem = stk->ar + stk->arsize;
 	elem->astnode = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
-	elem->state = state;
 	stk->arsize += 1;
 }
-static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state, int32_t type, size_t size)
+static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, size_t size)
 {
 	uint32_t id = ast->nodearsize;
 	size_t si = 0;
@@ -641,7 +639,6 @@ static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, uint8_t state,
 	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
 	ParseStackElement* elem = stk->ar + stk->arsize - size;
 	elem->astnode = packTreeNode( type, 0/*leaf*/, size, id);
-	elem->state = state;
 	stk->arsize -= size;
 	stk->arsize += 1;
 }
@@ -987,8 +984,22 @@ typedef enum {
 	AstSQString,
 	AstIdentifier,
 	AstPointer,
-	AstConst
+	AstConst,
+	AstVariableDecl,
+	AstParameterDecl
 } AstNodeType;
+
+typedef enum {
+	ParseGlobalDeclaration,
+	ParseGlobalDeclarationName,
+	ParseGlobalDeclarationAssign,
+	ParseLocalDeclaration,
+	ParseLocalDeclarationName,
+	ParseLocalDeclarationAssign,
+	ParseParamDeclaration,
+	ParseParamDeclarationName,
+	ParseParamDeclarationAssign
+} ParseState;
 
 static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t srclen, size_t* srcpos) {
 	Lexeme lx;
@@ -1007,17 +1018,17 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 					if (lx.type != Lexeme_Identifier) {
 						throwError( SyntaxError, lineNumber( srcstr, lx.pos));
 					}
-					pushLexemNode( stk, ast, state=1, AstIdentifier, lx.id);
-					reduceNode( stk, ast, state, AstConst, 1);
+					pushLexemNode( stk, ast, AstIdentifier, lx.id);
+					reduceNode( stk, ast, AstConst, 1);
 				} else {//... postfix const
-					reduceNode( stk, ast, state, AstConst, 1);
+					reduceNode( stk, ast, AstConst, 1);
 				}
 				break;
 			case Operator_ASTERISK:
 				if (state <= 1) {
 					throwError( SyntaxError, lineNumber( srcstr, lx.pos));
 				} else {
-					reduceNode( stk, ast, state, AstPointer, 1);
+					reduceNode( stk, ast, AstPointer, 1);
 				}
 				break;
 			case Keyword_UNSIGNED:
@@ -1043,26 +1054,26 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 							lxstr = prevtype == Keyword_UNSIGNED ? "unsigned int" : "signed int";
 							*srcpos = prevpos;
 					}
-					pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, lxstr, strlen(lxstr)));
+					pushLexemNode( stk, ast, AstIdentifier, getIdent( &ast->identMap, lxstr, strlen(lxstr)));
 				} else	{
 					throwError( SyntaxError, lineNumber( srcstr, lx.pos));
 				}
 				break;
 			case Keyword_INT:
-				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "int", 3));
+				pushLexemNode( stk, ast, AstIdentifier, getIdent( &ast->identMap, "int", 3));
 				break;
 			case Keyword_SHORT:
-				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "short", 5));
+				pushLexemNode( stk, ast, AstIdentifier, getIdent( &ast->identMap, "short", 5));
 				break;
 			case Keyword_LONG:
-				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "long", 4));
+				pushLexemNode( stk, ast, AstIdentifier, getIdent( &ast->identMap, "long", 4));
 				break;
 			case Keyword_CHAR:
-				pushLexemNode( stk, ast, state=2, AstIdentifier, getIdent( &ast->identMap, "char", 4));
+				pushLexemNode( stk, ast, AstIdentifier, getIdent( &ast->identMap, "char", 4));
 				break;
 			case Lexeme_Identifier:
 				if (state <= 1) {
-					pushLexemNode( stk, ast, state=2, AstIdentifier, lx.id);
+					pushLexemNode( stk, ast, AstIdentifier, lx.id);
 				} else {
 					*srcpos = prevpos;
 					state = 3;
@@ -1074,6 +1085,7 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 }
 
 static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t srclen) {
+	ParseState state = ParseGlobalDeclaration;
 	Lexeme lx;
 	size_t srcpos = 0;
 	size_t prevpos = srcpos;
@@ -1083,12 +1095,54 @@ static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t src
 	for (;;) {
 		prevpos = srcpos;
 		fetchNextLexeme( &lx, srcstr, &srcpos, &ast->identMap);
-		switch (lx.type) {
-			case Lexeme_Identifier: Keyword_CONST: case Keyword_SIGNED: case Keyword_UNSIGNED: case Keyword_CHAR: case Keyword_SHORT: case Keyword_INT: case Keyword_LONG:
-				srcpos = prevpos;
-				parseTypeDeclaration( &stk, ast, srcstr, srclen, &srcpos);
+		switch (state)
+		{
+			case ParseGlobalDeclaration:
+			case ParseLocalDeclaration:
+			case ParseParamDeclaration:
+				switch (lx.type) {
+					case Lexeme_Identifier: Keyword_CONST: case Keyword_SIGNED: case Keyword_UNSIGNED: case Keyword_CHAR: case Keyword_SHORT: case Keyword_INT: case Keyword_LONG:
+						srcpos = prevpos;
+						parseTypeDeclaration( &stk, ast, srcstr, srclen, &srcpos);
+						break;
+					default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				}
+				state = (ParseState)(state+1);
 				break;
-			default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+			case ParseGlobalDeclarationName:
+			case ParseLocalDeclarationName:
+			case ParseParamDeclarationName:
+				if (lx.type == Lexeme_Identifier) {
+					pushLexemNode( &stk, ast, AstIdentifier, lx.id);
+				} else {
+					throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				}
+				prevpos = srcpos;
+				fetchNextLexeme( &lx, srcstr, &srcpos, &ast->identMap);
+				switch (lx.type)
+				{
+					case Operator_SEMICOLON:
+						if (state == ParseParamDeclarationName) {throwError( SyntaxError, lineNumber( srcstr, lx.pos));}
+						reduceNode( &stk, ast, AstVariableDecl, 2);
+						state = (ParseState)(state-1);
+						continue;
+					case Operator_COMMA:
+					case Operator_OVAL_CLOSE:
+						if (state != ParseParamDeclarationName) {throwError( SyntaxError, lineNumber( srcstr, lx.pos));}
+						reduceNode( &stk, ast, AstParameterDecl, 2);
+						state = (ParseState)(state-1);
+						continue;
+					case Operator_ASSIGN:
+						state = (ParseState)(state+1);
+						continue;
+					default:
+						throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+				}
+				break;
+			case ParseGlobalDeclarationAssign:
+			case ParseLocalDeclarationAssign:
+			case ParseParamDeclarationAssign:
+				break;
 		}
 	}
 }
