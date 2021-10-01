@@ -592,7 +592,10 @@ static void unpackTreeNode( TreeNode* dest, uint32_t value)
 	dest->size  = (value >> 22) & ((1<<3)-1);
 	dest->index = value & ((1<<22)-1);
 }
-
+static int32_t treeNodeType( uint32_t packedNode)
+{
+	return (packedNode >> 26) & ((1<<6)-1);
+}
 typedef struct AbstractSyntaxTree {
 	uint32_t nodear[ MAX_AST_SIZE];
 	uint32_t nodescope[ MAX_AST_SIZE];
@@ -606,11 +609,8 @@ void initAbstractSyntaxTree( AbstractSyntaxTree* ast) {
 	ast->nodearsize = 0;
 	initIdentMap( &ast->identMap);
 }
-typedef struct ParseStackElement {
-	uint32_t astnode;
-} ParseStackElement;
 typedef struct ParseStack {
-	ParseStackElement ar[ MAX_PARSE_STACK_SIZE];
+	uint32_t ar[ MAX_PARSE_STACK_SIZE];
 	size_t arsize;
 } ParseStack;
 
@@ -620,27 +620,28 @@ void initParseStack( ParseStack* ast) {
 static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, int32_t id)
 {
 	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
-	ParseStackElement* elem = stk->ar + stk->arsize;
-	elem->astnode = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
-	stk->arsize += 1;
+	stk->ar[ stk->arsize++] = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
 }
 static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, size_t size)
 {
 	uint32_t id = ast->nodearsize;
 	size_t si = 0;
-	ParseStackElement const* ei = stk->ar + stk->arsize - size;
+	uint32_t const* ei = stk->ar + stk->arsize - size;
 	if (stk->arsize < size) {
 		throwError( LogicError, 0);
 	}
 	assertBufferSize( ast->nodearsize + size, MAX_AST_SIZE);
 	for (; si != size; ++si,++ei) {
-		ast->nodear[ ast->nodearsize + si] = ei->astnode;
+		ast->nodear[ ast->nodearsize + si] = *ei;
 	}
 	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
-	ParseStackElement* elem = stk->ar + stk->arsize - size;
-	elem->astnode = packTreeNode( type, 0/*leaf*/, size, id);
 	stk->arsize -= size;
-	stk->arsize += 1;
+	stk->ar[ stk->arsize++] = packTreeNode( type, 0/*leaf*/, size, id);
+}
+static uint32_t stackTopPacked( ParseStack* stk, int ofs)
+{
+	if (ofs < 1) return 0;
+	return stk->ar[ stk->arsize - ofs];
 }
 static uint32_t packScope( int32_t scope_start, int32_t scope_end)
 {
@@ -1021,6 +1022,9 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 					pushLexemNode( stk, ast, AstIdentifier, lx.id);
 					reduceNode( stk, ast, AstConst, 1);
 				} else {//... postfix const
+					if (treeNodeType( stackTopPacked( stk, 1)) == AstConst) {
+						throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+					}
 					reduceNode( stk, ast, AstConst, 1);
 				}
 				break;
