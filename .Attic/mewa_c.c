@@ -56,14 +56,15 @@ static const char* errorString( ErrorCode errcode) {
 }
 static void int2str( char* buf, int value, size_t* size) {
 	size_t bn = 0;
-	for (; value; ++bn,value/=10) {
+	for (; value; bn += 1,value/=10) {
 		buf[bn]='0'+(value%10);
 	}
 	if (bn == 0) {
-		buf[bn++] = '0';
+		buf[bn] = '0';
+		bn += 1;
 	}
 	size_t bi = 0, bm = (bn-1)/2;
-	for (; bi != bm; ++bi) {
+	for (; bi != bm; bi += 1) {
 		char tmp = buf[ bi];
 		buf[ bi] = buf[ bn - bi - 1];
 		buf[ bn - bi - 1] = tmp;
@@ -118,7 +119,7 @@ static size_t fillSPSResult( TypeConstructorPair* ar, SPSTreeElement const* tree
 	}
 	size_t bn = (ti & ~1) /2;
 	size_t bi = 0;
-	for (; bi <= bn; ++bi) {
+	for (; bi <= bn; bi += 1) {
 		// swap
 		int32_t tt = ar[bi].type;
 		int32_t cc = ar[bi].constructor;
@@ -142,7 +143,7 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 	result->arsize = 0;
 	result->arsize_alt = 0;
 	memset( &stk, 0, sizeof(stk));
-	for (; fi != fromtypesize; ++fi) {
+	for (; fi != fromtypesize; fi += 1) {
 		if (match( context, fromtype[ fi])) {
 			result->fromindex = fi;
 			return 1;
@@ -158,11 +159,11 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 		SPSStackElement* elem = &stk[ stksize-1];
 		int32_t fotreeidx = elem->idx;
 		followsize = getFollow( follow, context, tree[ fotreeidx].type);
-		for (fi=0; fi<followsize; ++fi) {
+		for (fi=0; fi<followsize; fi += 1) {
 			int32_t fotype = follow[ fi].type;
 			int32_t foweight = elem->weight + follow[ fi].weight;
 			size_t si = stksize;
-			for (; si > 0 && stk[ si-1].weight < foweight; --si){}
+			for (; si > 0 && stk[ si-1].weight < foweight; si -= 1){}
 			size_t ti = fotreeidx;
 			for (; tree[ti].type != fotype && tree[ti].prev >= 0; ti = tree[ti].prev){}
 			if (tree[ti].type != fotype)
@@ -173,14 +174,14 @@ static int shortestPathSearch( ShortestPathSearchResult* result, SPSMatch match,
 				tree[ treesize].type = fotype;
 				tree[ treesize].constructor = follow[ fi].constructor;
 				size_t sn = stksize;
-				for (; sn != si; --sn) {
+				for (; sn != si; sn -= 1) {
 					stk[ sn].weight = stk[ sn-1].weight;
 					stk[ sn].idx = stk[ sn-1].idx;
 				}
 				stk[ si].weight = foweight;
 				stk[ si].idx = treesize;
-				++treesize;
-				++stksize;
+				treesize += 1;
+				stksize += 1;
 
 				if (result->fromindex >= 0 && result->weight < foweight + 2E-24)
 				{
@@ -255,7 +256,7 @@ static uint32_t hashword( const int32_t* key, size_t keysize)
 }
 static int32_t newIdent( IdentSeqBuf* buf, const char* id, size_t idsize) {
 	int32_t ai = buf->arpos;
-	assertBufferSize( idsize + buf->arpos, IDENTBUF32_SIZE);
+	assertBufferSize( idsize + buf->arpos + 1, IDENTBUF32_SIZE);
 	int32_t ae = buf->arpos + (idsize+1)/4;
 	buf->ar[ ae + 1] = 0;
 	memcpy( buf->ar + buf->arpos + 1, id, idsize);
@@ -346,13 +347,13 @@ static int32_t ScopedMapEntryArray_upperbound( ScopedMapEntry const* ar, int32_t
 			bi = bm;
 		}
 	}
-	for (; bi < bn && ar[ bi].key < key; ++bi){}
-	for (; bi < bn && ar[ bi].key == key && ar[ bi].scope_end < scope_end; ++bi){}
+	for (; bi < bn && ar[ bi].key < key; bi += 1){}
+	for (; bi < bn && ar[ bi].key == key && ar[ bi].scope_end < scope_end; bi += 1){}
 	return bi;
 }
 static void ScopedMapEntryArray_insert_at( ScopedMapEntry* ar, int32_t* arsize, int32_t bi, uint64_t key, int32_t scope_end, int32_t nodeidx) {
 	int32_t be = *arsize;
-	for (; be > bi; be--) {
+	for (; be > bi; be -= 1) {
 		ar[be].key = ar[be-1].key; ar[be].scope_end = ar[be-1].scope_end; ar[be].nodeidx = ar[be-1].nodeidx;
 	}
 	ar[bi].key = key; ar[bi].scope_end = scope_end; ar[bi].nodeidx = nodeidx;
@@ -414,7 +415,7 @@ static int32_t splitBank( ScopedMap* st, int32_t firstidx, int32_t bi) {
 	st->bankar[ bi].arsize = si;
 	dbase = st->bankar[ rt].ar;
 	sbase = st->bankar[ bi].ar;
-	for (; si < sn; ++si,++di) {
+	for (; si < sn; si+=1,di+=1) {
 		copyScopedMapEntry( dbase + di, sbase + si);
 	}
 	st->bankar[ rt].arsize = di;
@@ -619,8 +620,9 @@ void initParseStack( ParseStack* ast) {
 }
 static void pushLexemNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, int32_t id)
 {
-	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
-	stk->ar[ stk->arsize++] = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
+	assertBufferSize( stk->arsize +1, MAX_PARSE_STACK_SIZE);
+	stk->ar[ stk->arsize] = packTreeNode( type, 1/*leaf*/, 0/*size*/, id);
+	stk->arsize += 1;
 }
 static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, size_t size)
 {
@@ -631,12 +633,13 @@ static void reduceNode( ParseStack* stk, AbstractSyntaxTree* ast, int32_t type, 
 		throwError( LogicError, 0);
 	}
 	assertBufferSize( ast->nodearsize + size, MAX_AST_SIZE);
-	for (; si != size; ++si,++ei) {
+	for (; si != size; si+=1,ei+=1) {
 		ast->nodear[ ast->nodearsize + si] = *ei;
 	}
-	assertBufferSize( stk->arsize, MAX_PARSE_STACK_SIZE);
+	assertBufferSize( stk->arsize +1, MAX_PARSE_STACK_SIZE);
 	stk->arsize -= size;
-	stk->ar[ stk->arsize++] = packTreeNode( type, 0/*leaf*/, size, id);
+	stk->ar[ stk->arsize] = packTreeNode( type, 0/*leaf*/, size, id);
+	stk->arsize += 1;
 }
 static uint32_t stackTopPacked( ParseStack* stk, int ofs)
 {
@@ -786,7 +789,7 @@ static int lexeme( Lexeme* lx, LexemeType type, int32_t id, size_t pos) {
 }
 static int lineNumber( char const* src, size_t pos) {
 	int rt = 1;
-	for (size_t pi = 0; pi < pos; ++pi) {
+	for (size_t pi = 0; pi < pos; pi += 1) {
 		if (src[pi] == '\n') {
 			rt += 1;
 		}
@@ -836,7 +839,7 @@ static int isAlphaNum( char ch) {
 	return (unsigned char)((ch|32) - 'a') <= 26 || ch == '_' || (ch - '0') <= 9;
 }
 static int isKeyword( char const* kw, char const* src, size_t pos) {
-	for (; src[pos] == *kw; ++kw,++pos){}
+	for (; src[pos] == *kw; kw+=1,pos+=1){}
 	return !isAlphaNum( src[pos]);
 }
 static int fetchNextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* identMap) {
@@ -844,32 +847,32 @@ static int fetchNextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* 
 		*pos = skipSpaces( src, *pos);
 		switch (src[*pos]) {
 			case '\0': return lexeme( lx, Lexeme_EOF, -1/*id*/, *pos);
-			case '+': ++*pos; return (src[*pos] == '+') ? lexeme( lx, Operator_DPLUS, -1/*id*/, *pos += 1) : lexeme( lx, Operator_PLUS, -1/*id*/, *pos);
-			case '-': ++*pos; return (src[*pos] == '-') ? lexeme( lx, Operator_DMINUS, -1/*id*/, *pos += 1) : (src[*pos] == '>') ? lexeme( lx, Operator_ARROW, -1/*id*/, *pos += 1) : lexeme( lx, Operator_MINUS, -1/*id*/, *pos);
-			case '*': ++*pos; return lexeme( lx, Operator_ASTERISK, -1/*id*/, *pos);
-			case '/': ++*pos; return lexeme( lx, Operator_SLASH, -1/*id*/, *pos);
-			case '%': ++*pos; return lexeme( lx, Operator_PERCENT, -1/*id*/, *pos);
-			case '\\': ++*pos; return lexeme( lx, Operator_BSLASH, -1/*id*/, *pos);
-			case '&': ++*pos; return (src[*pos] == '&') ? lexeme( lx, Operator_LAND, -1/*id*/, *pos += 1) : lexeme( lx, Operator_AND, -1/*id*/, *pos);
-			case '|': ++*pos; return (src[*pos] == '|') ? lexeme( lx, Operator_LOR, -1/*id*/, *pos += 1) : lexeme( lx, Operator_OR, -1/*id*/, *pos);
-			case '^': ++*pos; return lexeme( lx, Operator_XOR, -1/*id*/, *pos);
-			case '~': ++*pos; return lexeme( lx, Operator_INV, -1/*id*/, *pos);
-			case '>': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_GE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_GT, -1/*id*/, *pos);
-			case '<': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_LE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_LT, -1/*id*/, *pos);
-			case '=': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_EQ, -1/*id*/, *pos += 1) : lexeme( lx, Operator_ASSIGN, -1/*id*/, *pos);
-			case '!': ++*pos; return (src[*pos] == '=') ? lexeme( lx, Operator_NE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_NOT, -1/*id*/, *pos);
-			case ';': ++*pos; return lexeme( lx, Operator_SEMICOLON, -1/*id*/, *pos);
-			case ':': ++*pos; return lexeme( lx, Operator_COLON, -1/*id*/, *pos);
-			case '?': ++*pos; return lexeme( lx, Operator_QUESTION, -1/*id*/, *pos);
-			case ',': ++*pos; return lexeme( lx, Operator_COMMA, -1/*id*/, *pos);
-			case '.': if (!isDigit(src[*pos+1])) {++*pos; return lexeme( lx, Operator_DOT, -1/*id*/, *pos);} else break;
-			case '(': ++*pos; return lexeme( lx, Operator_OVAL_OPEN, -1/*id*/, *pos);
-			case ')': ++*pos; return lexeme( lx, Operator_OVAL_CLOSE, -1/*id*/, *pos);
-			case '{': ++*pos; return lexeme( lx, Operator_CURLY_OPEN, -1/*id*/, *pos);
-			case '}': ++*pos; return lexeme( lx, Operator_CURLY_CLOSE, -1/*id*/, *pos);
-			case '[': ++*pos; return lexeme( lx, Operator_SQUARE_OPEN, -1/*id*/, *pos);
-			case ']': ++*pos; return lexeme( lx, Operator_SQUARE_CLOSE, -1/*id*/, *pos);
-			case '#': ++*pos; if (isKeyword( "include", src, *pos)) {
+			case '+': *pos += 1; return (src[*pos] == '+') ? lexeme( lx, Operator_DPLUS, -1/*id*/, *pos += 1) : lexeme( lx, Operator_PLUS, -1/*id*/, *pos);
+			case '-': *pos += 1; return (src[*pos] == '-') ? lexeme( lx, Operator_DMINUS, -1/*id*/, *pos += 1) : (src[*pos] == '>') ? lexeme( lx, Operator_ARROW, -1/*id*/, *pos += 1) : lexeme( lx, Operator_MINUS, -1/*id*/, *pos);
+			case '*': *pos += 1; return lexeme( lx, Operator_ASTERISK, -1/*id*/, *pos);
+			case '/': *pos += 1; return lexeme( lx, Operator_SLASH, -1/*id*/, *pos);
+			case '%': *pos += 1; return lexeme( lx, Operator_PERCENT, -1/*id*/, *pos);
+			case '\\': *pos += 1; return lexeme( lx, Operator_BSLASH, -1/*id*/, *pos);
+			case '&': *pos += 1; return (src[*pos] == '&') ? lexeme( lx, Operator_LAND, -1/*id*/, *pos += 1) : lexeme( lx, Operator_AND, -1/*id*/, *pos);
+			case '|': *pos += 1; return (src[*pos] == '|') ? lexeme( lx, Operator_LOR, -1/*id*/, *pos += 1) : lexeme( lx, Operator_OR, -1/*id*/, *pos);
+			case '^': *pos += 1; return lexeme( lx, Operator_XOR, -1/*id*/, *pos);
+			case '~': *pos += 1; return lexeme( lx, Operator_INV, -1/*id*/, *pos);
+			case '>': *pos += 1; return (src[*pos] == '=') ? lexeme( lx, Operator_GE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_GT, -1/*id*/, *pos);
+			case '<': *pos += 1; return (src[*pos] == '=') ? lexeme( lx, Operator_LE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_LT, -1/*id*/, *pos);
+			case '=': *pos += 1; return (src[*pos] == '=') ? lexeme( lx, Operator_EQ, -1/*id*/, *pos += 1) : lexeme( lx, Operator_ASSIGN, -1/*id*/, *pos);
+			case '!': *pos += 1; return (src[*pos] == '=') ? lexeme( lx, Operator_NE, -1/*id*/, *pos += 1) : lexeme( lx, Operator_NOT, -1/*id*/, *pos);
+			case ';': *pos += 1; return lexeme( lx, Operator_SEMICOLON, -1/*id*/, *pos);
+			case ':': *pos += 1; return lexeme( lx, Operator_COLON, -1/*id*/, *pos);
+			case '?': *pos += 1; return lexeme( lx, Operator_QUESTION, -1/*id*/, *pos);
+			case ',': *pos += 1; return lexeme( lx, Operator_COMMA, -1/*id*/, *pos);
+			case '.': if (!isDigit(src[*pos+1])) {*pos += 1; return lexeme( lx, Operator_DOT, -1/*id*/, *pos);} else break;
+			case '(': *pos += 1; return lexeme( lx, Operator_OVAL_OPEN, -1/*id*/, *pos);
+			case ')': *pos += 1; return lexeme( lx, Operator_OVAL_CLOSE, -1/*id*/, *pos);
+			case '{': *pos += 1; return lexeme( lx, Operator_CURLY_OPEN, -1/*id*/, *pos);
+			case '}': *pos += 1; return lexeme( lx, Operator_CURLY_CLOSE, -1/*id*/, *pos);
+			case '[': *pos += 1; return lexeme( lx, Operator_SQUARE_OPEN, -1/*id*/, *pos);
+			case ']': *pos += 1; return lexeme( lx, Operator_SQUARE_CLOSE, -1/*id*/, *pos);
+			case '#': *pos += 1; if (isKeyword( "include", src, *pos)) {
 				*pos = skipEndOfLine( src, *pos);
 				continue;
 			}
@@ -935,15 +938,16 @@ static int fetchNextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* 
 		if (src[*pos] == '\'' || src[*pos] == '\"')
 		{
 			char eb = src[*pos];
-			char const* si = src + ++*pos;
-			for (; *si != eb && *si != '\n'; ++si) {
+			*pos += 1;
+			char const* si = src + *pos;
+			for (; *si != eb && *si != '\n'; si += 1) {
 				if (*si == '\\') {
-					++si;
+					si += 1;
 				}
 			}
 			if (*si == eb) {
 				size_t len = si - src - *pos;
-				int32_t id = getIdent( identMap, src + *pos, len);
+				int32_t id = identMap ? getIdent( identMap, src + *pos, len) : 0;
 				return lexeme( lx, eb == '\'' ? Lexeme_SQString : Lexeme_DQString, id, *pos += len+1);
 			} else {
 				throwError( SyntaxError, lineNumber( src, *pos));
@@ -952,23 +956,23 @@ static int fetchNextLexeme( Lexeme* lx, char const* src, size_t* pos, IdentMap* 
 		else if (isAlpha( src[*pos]))
 		{
 			char const* si = src + *pos;
-			for (; isAlphaNum( *si); ++si){}
+			for (; isAlphaNum( *si); si += 1){}
 			size_t len = si - src - *pos;
-			int32_t id = getIdent( identMap, src + *pos, len);
+			int32_t id = identMap ? getIdent( identMap, src + *pos, len) : 0;
 			return lexeme( lx, Lexeme_Identifier, id, *pos += len);
 		}
 		else if (isDigit( src[*pos]) || src[*pos] == '.')
 		{
 			char const* si = src + *pos;
-			for (; isDigit( *si); ++si){}
+			for (; isDigit( *si); si += 1){}
 			LexemeType lt = Lexeme_Integer;
 			if (*si == '.') {
 				lt = Lexeme_Float;
-				++si;
-				for (; isDigit( *si); ++si){}
+				si += 1;
+				for (; isDigit( *si); si+=1){}
 			}
 			size_t len = si - src - *pos;
-			int32_t id = getIdent( identMap, src + *pos, len);
+			int32_t id = identMap ? getIdent( identMap, src + *pos, len) : 0;
 			return lexeme( lx, lt, id, *pos += len);
 		}
 		else
@@ -987,22 +991,19 @@ typedef enum {
 	AstPointer,
 	AstConst,
 	AstVariableDecl,
-	AstParameterDecl
+	AstParameterList,
+	AstFunctionDecl
 } AstNodeType;
 
-typedef enum {
-	ParseGlobalDeclaration,
-	ParseGlobalDeclarationName,
-	ParseGlobalDeclarationAssign,
-	ParseLocalDeclaration,
-	ParseLocalDeclarationName,
-	ParseLocalDeclarationAssign,
-	ParseParamDeclaration,
-	ParseParamDeclarationName,
-	ParseParamDeclarationAssign
-} ParseState;
+static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
+static void parseExpression( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
+static int parseTypeNamePair( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
+static int parseDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
+static int parseParameterDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
+static void parseParameterDeclarationList( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
+static void parseFunctionBody( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos);
 
-static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t srclen, size_t* srcpos) {
+static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
 	Lexeme lx;
 	size_t prevpos = *srcpos;
 	LexemeType prevtype;
@@ -1088,73 +1089,118 @@ static void parseTypeDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, cons
 	}
 }
 
-static void parseSource( AbstractSyntaxTree* ast, const char* srcstr, size_t srclen) {
-	ParseState state = ParseGlobalDeclaration;
+static void parseExpression( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
+}
+
+static void parseFunctionBody( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
+}
+
+static int parseTypeNamePair( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
+	Lexeme lx;
+	size_t prevpos = *srcpos;
+	fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+	switch (lx.type) {
+		case Lexeme_Identifier: Keyword_CONST: case Keyword_SIGNED: case Keyword_UNSIGNED: case Keyword_CHAR: case Keyword_SHORT: case Keyword_INT: case Keyword_LONG:
+			*srcpos = prevpos;
+			parseTypeDeclaration( stk, ast, srcstr, srcpos);
+			break;
+		case Lexeme_EOF:
+		case Operator_OVAL_CLOSE:
+			*srcpos = prevpos;
+			return 0;
+		default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+	}
+	fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+	if (lx.type == Lexeme_Identifier) {
+		pushLexemNode( stk, ast, AstIdentifier, lx.id);
+	} else {
+		throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+	}
+	return 1;
+}
+
+static int parseParameterDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
+	if (!parseTypeNamePair( stk, ast, srcstr, srcpos)) return 0;
+	Lexeme lx;
+	size_t prevpos = *srcpos;
+	fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+	switch (lx.type)
+	{
+		case Operator_COMMA:
+			reduceNode( stk, ast, AstVariableDecl, 2);
+			break;
+		case Operator_OVAL_CLOSE:
+			*srcpos = prevpos;
+			reduceNode( stk, ast, AstVariableDecl, 2);
+			break;
+		default:
+			throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+	}
+	return 1;
+}
+
+static void parseParameterDeclarationList( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
+	Lexeme lx;
+	size_t nargs = 0;
+	while (parseParameterDeclaration( stk, ast, srcstr, srcpos)) {
+		nargs += 1;
+	}
+	reduceNode( stk, ast, AstParameterList, nargs);
+}
+
+static int parseDeclaration( ParseStack* stk, AbstractSyntaxTree* ast, const char* srcstr, size_t* srcpos) {
+	if (!parseTypeNamePair( stk, ast, srcstr, srcpos)) return 0;
+	Lexeme lx;
+	size_t prevpos = *srcpos;
+	fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+	switch (lx.type)
+	{
+		case Operator_SEMICOLON:
+			reduceNode( stk, ast, AstVariableDecl, 2);
+			break;
+		case Operator_ASSIGN:
+			parseExpression( stk, ast, srcstr, srcpos);
+			reduceNode( stk, ast, AstVariableDecl, 3);
+			fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+			if (lx.type != Operator_SEMICOLON) {
+				throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+			}
+			break;
+		case Operator_OVAL_OPEN:
+			parseParameterDeclarationList( stk, ast, srcstr, srcpos);
+			fetchNextLexeme( &lx, srcstr, srcpos, &ast->identMap);
+			if (lx.type == Operator_CURLY_OPEN) {
+				parseFunctionBody( stk, ast, srcstr, srcpos);
+				reduceNode( stk, ast, AstFunctionDecl, 4);
+			} else if (lx.type == Operator_SEMICOLON) {
+				reduceNode( stk, ast, AstFunctionDecl, 3);
+			} else {
+				throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+			}
+			break;
+		default:
+			throwError( SyntaxError, lineNumber( srcstr, lx.pos));
+	}
+	return 1;
+}
+
+static void parseSource( AbstractSyntaxTree* ast, const char* srcstr) {
 	Lexeme lx;
 	size_t srcpos = 0;
 	size_t prevpos = srcpos;
 	ParseStack stk;
 	initParseStack( &stk);
+	size_t declcount = 0;
 
-	for (;;) {
-		prevpos = srcpos;
-		fetchNextLexeme( &lx, srcstr, &srcpos, &ast->identMap);
-		switch (state)
-		{
-			case ParseGlobalDeclaration:
-			case ParseLocalDeclaration:
-			case ParseParamDeclaration:
-				switch (lx.type) {
-					case Lexeme_Identifier: Keyword_CONST: case Keyword_SIGNED: case Keyword_UNSIGNED: case Keyword_CHAR: case Keyword_SHORT: case Keyword_INT: case Keyword_LONG:
-						srcpos = prevpos;
-						parseTypeDeclaration( &stk, ast, srcstr, srclen, &srcpos);
-						break;
-					default: throwError( SyntaxError, lineNumber( srcstr, lx.pos));
-				}
-				state = (ParseState)(state+1);
-				break;
-			case ParseGlobalDeclarationName:
-			case ParseLocalDeclarationName:
-			case ParseParamDeclarationName:
-				if (lx.type == Lexeme_Identifier) {
-					pushLexemNode( &stk, ast, AstIdentifier, lx.id);
-				} else {
-					throwError( SyntaxError, lineNumber( srcstr, lx.pos));
-				}
-				prevpos = srcpos;
-				fetchNextLexeme( &lx, srcstr, &srcpos, &ast->identMap);
-				switch (lx.type)
-				{
-					case Operator_SEMICOLON:
-						if (state == ParseParamDeclarationName) {throwError( SyntaxError, lineNumber( srcstr, lx.pos));}
-						reduceNode( &stk, ast, AstVariableDecl, 2);
-						state = (ParseState)(state-1);
-						continue;
-					case Operator_COMMA:
-					case Operator_OVAL_CLOSE:
-						if (state != ParseParamDeclarationName) {throwError( SyntaxError, lineNumber( srcstr, lx.pos));}
-						reduceNode( &stk, ast, AstParameterDecl, 2);
-						state = (ParseState)(state-1);
-						continue;
-					case Operator_ASSIGN:
-						state = (ParseState)(state+1);
-						continue;
-					default:
-						throwError( SyntaxError, lineNumber( srcstr, lx.pos));
-				}
-				break;
-			case ParseGlobalDeclarationAssign:
-			case ParseLocalDeclarationAssign:
-			case ParseParamDeclarationAssign:
-				break;
-		}
+	while (parseDeclaration( &stk, ast, srcstr, &srcpos)) {
+		declcount += 1;
 	}
 }
 
 int main( int argc, char const* argv[]) {
 	AbstractSyntaxTree ast;
 	initAbstractSyntaxTree( &ast);
-	parseSource( &ast, 0, 0);
+	parseSource( &ast, 0);
 	return 0;
 }
 
