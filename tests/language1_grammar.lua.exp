@@ -1,5 +1,4 @@
 local languagedef = {
-	VERSION = "0.10.12",
 	LANGUAGE="language1",
 	TYPESYSTEM="language1/typesystem",
 	CMDLINE="cmdlinearg",

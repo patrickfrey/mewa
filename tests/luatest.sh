@@ -89,7 +89,8 @@ echo "image.printLanguageDef( langdef)" >> build/language1.image.lua
 chmod +x build/language1.image.lua
 $ECHOCOL "${ORANGE}Create grammar for example \"language1\" from Lua table...${NOCOL}"
 build/language1.image.lua > build/language1.image.tmp
-verify_test_result "Check 'mewa -l' output of parsed grammar as Lua table" build/language1_grammar.lua tests/language1_grammar.lua.exp
+cat build/language1_grammar.lua | grep -v "VERSION =" > build/language1_grammar.tmp
+verify_test_result "Check 'mewa -l' output of parsed grammar as Lua table" build/language1_grammar.tmp tests/language1_grammar.lua.exp
 chmod +x build/language1.dump.lua
 $ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
 build/language1.dump.lua > build/language1.dump.lua.tmp
