@@ -7,15 +7,29 @@
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-/// \brief Version of mewa
-/// \file version.hpp
-#ifndef _MEWA_VERSION_HPP_INCLUDED
-#define _MEWA_VERSION_HPP_INCLUDED
 
-#define MEWA_MAJOR_VERSION 0
-#define MEWA_MINOR_VERSION 10
-#define MEWA_PATCH_VERSION 12
-#define MEWA_VERSION_NUMBER (MEWA_MAJOR_VERSION * 100 + MEWA_MINOR_VERSION)
+/// \brief Function to print Lexem definitions as Lua table
+/// \file "automaton_structs.cpp"
+#include "automaton_structs.hpp"
 
-#define MEWA_VERSION_STRING  "0.10.12"
-#endif
+using namespace mewa;
+
+void LanguageDecoratorMap::addDecorator( int line_, const LanguageDecorator& dc)
+{
+	linemap.insert( {line_, decorators.size()});
+	decorators.push_back( dc);
+}
+
+std::vector<LanguageDecorator> LanguageDecoratorMap::get( int line) const
+{
+	std::vector<LanguageDecorator> rt;
+	auto range = linemap.equal_range( line);
+	auto li = range.first;
+	auto le = range.second;
+	for (; li != le; ++li)
+	{
+		rt.push_back( decorators[ li->second]);
+	}
+	return rt;
+}
+

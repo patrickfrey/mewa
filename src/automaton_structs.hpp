@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -13,6 +13,7 @@
 #define _MEWA_AUTOMATON_STRUCTS_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include "error.hpp"
+#include "automaton.hpp"
 #include <utility>
 #include <string>
 #include <string_view>
@@ -80,6 +81,7 @@ public:
 		{ProductionNode::operator=(o); m_name=o.m_name; m_symbol=o.m_symbol; return *this;}
 
 	const std::string_view& name() const noexcept		{return m_name;}
+	bool symbol() const noexcept				{return m_symbol;}
 
 	std::string tostring() const
 	{
@@ -127,7 +129,7 @@ struct Priority {
 	{
 		std::string rt;
 		char buf[ 32];
-		std::snprintf( buf, sizeof(buf), 
+		std::snprintf( buf, sizeof(buf),
 				assoziativity == Assoziativity::Undefined
 					? "%d" : (assoziativity == Assoziativity::Left ? "L%d" : "R%d"),
 				(int)value);
@@ -153,18 +155,15 @@ struct ProductionDef
 	Priority priority;
 	int callidx;
 	ScopeFlag scope;
+	int line;
 
-	ProductionDef( const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_, 
+	ProductionDef( int line_, const std::string_view& leftname_, const ProductionNodeDefList& right_, const Priority priority_,
 			int callidx_=0, const ScopeFlag scope_=Automaton::Action::NoScope)
-		:left(leftname_,true/*symbol*/),right(right_),priority(priority_),callidx(callidx_),scope(scope_){}
-	ProductionDef( const ProductionDef& o)
-		:left(o.left),right(o.right),priority(o.priority),callidx(o.callidx),scope(o.scope){}
-	ProductionDef& operator=( const ProductionDef& o)
-		{left=o.left; right=o.right; priority=o.priority; callidx=o.callidx; scope=o.scope; return *this;}
-	ProductionDef( ProductionDef&& o) noexcept
-		:left(std::move(o.left)),right(std::move(o.right)),priority(o.priority),callidx(o.callidx),scope(o.scope){}
-	ProductionDef& operator=( ProductionDef&& o) noexcept
-		{left=std::move(o.left); right=std::move(o.right); priority=o.priority; callidx=o.callidx; scope=o.scope; return *this;}
+		:left(leftname_,true/*symbol*/),right(right_),priority(priority_),callidx(callidx_),scope(scope_),line(line_){}
+	ProductionDef( const ProductionDef& o) = default;
+	ProductionDef& operator=( const ProductionDef& o) = default;
+	ProductionDef( ProductionDef&& o) noexcept = default;
+	ProductionDef& operator=( ProductionDef&& o) noexcept = default;
 
 	std::string prodstring() const
 	{
@@ -294,7 +293,7 @@ struct TransitionItem
 	{
 		static_assert (Automaton::ShiftNofProductions
 				+ Automaton::ShiftProductionLength
-				+ Automaton::ShiftTerminal <= 31, "sizeof packed transition item"); 
+				+ Automaton::ShiftTerminal <= 31, "sizeof packed transition item");
 		int rt = 0;
 		rt |= prodindex << (Automaton::ShiftProductionLength + Automaton::ShiftTerminal);
 		rt |= prodpos << (Automaton::ShiftTerminal);
@@ -324,7 +323,7 @@ public:
 	FlatSet( FlatSet<TYPE>&& o) noexcept
 		:std::vector<TYPE>(std::move(o)){}
 	FlatSet& operator=( const FlatSet<TYPE>& o)
-		{std::vector<TYPE>::reserve( reserveSize( o.size())); 
+		{std::vector<TYPE>::reserve( reserveSize( o.size()));
 		 std::vector<TYPE>::insert( std::vector<TYPE>::end(), o.begin(), o.end()); return *this;}
 	FlatSet& operator=( FlatSet<TYPE>&& o) noexcept
 		{std::vector<TYPE>::operator=(std::move(o)); return *this;}
@@ -449,11 +448,11 @@ public:
 	TransitionState()
 		:m_packedElements(){}
 	TransitionState( const TransitionState& o)
-		:m_packedElements( o.m_packedElements){} 
+		:m_packedElements( o.m_packedElements){}
 	TransitionState( TransitionState&& o) noexcept
 		:m_packedElements(std::move(o.m_packedElements)){}
 	TransitionState& operator=( const TransitionState& o)
-		{m_packedElements=o.m_packedElements; return *this;} 
+		{m_packedElements=o.m_packedElements; return *this;}
 	TransitionState& operator=( TransitionState&& o) noexcept
 		{m_packedElements=std::move(o.m_packedElements); return *this;}
 	TransitionState( const std::initializer_list<TransitionItem>& itemlist)
@@ -611,7 +610,32 @@ private:
 
 private:
 	std::vector<ProductionDef> m_ar;
- 	LeftIndexMap m_leftindexmap;
+	LeftIndexMap m_leftindexmap;
+};
+
+struct LanguageDecorator
+{
+	LanguageDecorator() = default;
+	LanguageDecorator( const std::string& name_, const std::vector<std::string>& content_) :name(name_),content(content_){}
+	LanguageDecorator( const LanguageDecorator& o) = default;
+	LanguageDecorator( LanguageDecorator&& o) noexcept = default;
+
+	std::string name;
+	std::vector<std::string> content;
+};
+
+struct LanguageDecoratorMap
+{
+	LanguageDecoratorMap() = default;
+	LanguageDecoratorMap( const LanguageDecoratorMap& o) = default;
+	LanguageDecoratorMap( LanguageDecoratorMap&& o) noexcept = default;
+
+	void addDecorator( int line_, const LanguageDecorator& dc);
+	bool empty() const noexcept	{return decorators.empty();}
+	std::vector<LanguageDecorator> get( int line) const;
+
+	std::vector<LanguageDecorator> decorators;
+	std::multimap<int,std::size_t> linemap;
 };
 
 }//namespace

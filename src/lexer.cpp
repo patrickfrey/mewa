@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -209,7 +209,7 @@ std::pair<std::string_view,int> LexemDef::match( const char* srcptr, std::size_t
 
 	if (std::regex_search( srcptr, srcptr+srclen, pieces_match, m_pattern, match_flags) && pieces_match.size() > select())
 	{
-		return std::pair<std::string_view,int>( 
+		return std::pair<std::string_view,int>(
 				std::string_view( srcptr + pieces_match.position( select()), pieces_match.length( select())),
 				pieces_match.length(0));
 	}
@@ -362,14 +362,14 @@ static std::string nameString( const std::string_view& name)
 	return rt;
 }
 
-int Lexer::defineLexem_( const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select)
+int Lexer::defineLexem_( int line, const std::string_view& name, const std::string_view& pattern, bool keyword_, std::size_t select)
 {
 	int rt = 0;
 	try
 	{
 		if (name.empty())
 		{
-			m_defar.emplace_back( std::string(), std::string(pattern), 0/*id*/, false/*keyword*/, select);
+			m_defar.emplace_back( line, std::string(), std::string(pattern), 0/*id*/, false/*keyword*/, select);
 		}
 		else
 		{
@@ -395,7 +395,7 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 			{
 				throw Error( Error::KeywordDefinedTwiceInLexer, name);
 			}
-			m_defar.emplace_back( ins.first->first, std::string(pattern), ins.first->second, keyword_, select);
+			m_defar.emplace_back( line, ins.first->first, std::string(pattern), ins.first->second, keyword_, select);
 			rt = ins.first->second;
 		}
 	}
@@ -419,14 +419,14 @@ int Lexer::defineLexem_( const std::string_view& name, const std::string_view& p
 	return rt;
 }
 
-int Lexer::defineLexem( const std::string_view& name, const std::string_view& pattern, std::size_t select)
+int Lexer::defineLexem( int line, const std::string_view& name, const std::string_view& pattern, std::size_t select)
 {
-	return defineLexem_( name, pattern, false/*keyword*/, select);
+	return defineLexem_( line, name, pattern, false/*keyword*/, select);
 }
 
-void Lexer::defineIgnore( const std::string_view& pattern)
+void Lexer::defineIgnore( int line, const std::string_view& pattern)
 {
-	(void)defineLexem_( "", pattern, false/*keyword*/, 0/*select*/);
+	(void)defineLexem_( line, "", pattern, false/*keyword*/, 0/*select*/);
 }
 
 int Lexer::defineLexemId( const std::string_view& name)
@@ -442,13 +442,14 @@ int Lexer::defineLexemId( const std::string_view& name)
 	{
 		throw std::runtime_error( Error( Error::KeywordDefinedTwiceInLexer));
 	}
-	m_defar.emplace_back( std::string(name), id_);
+	m_defar.emplace_back( 0/*no line*/, std::string(name), id_);
 	return ins.first->second;
 }
 
-void Lexer::defineIndentLexems( const std::string_view& open, const std::string_view& close, const std::string_view& newline, int tabsize)
+void Lexer::defineIndentLexems( int line, const std::string_view& open, const std::string_view& close, const std::string_view& newline, int tabsize)
 {
 	if (m_indentLexems.open) throw Error( Error::ConflictingCommandInGrammarDef);
+	m_indentLexems.line = line;
 	m_indentLexems.open = defineLexemId( open);
 	m_indentLexems.close = defineLexemId( close);
 	m_indentLexems.newLine = defineLexemId( newline);
@@ -473,27 +474,27 @@ static std::string stringToRegex( const std::string_view& opr)
 int Lexer::defineLexem( const std::string_view& opr)
 {
 	std::string pattern = stringToRegex(opr);
-	return defineLexem_( opr, pattern, true/*keyword*/, 0);
+	return defineLexem_( 0/*no line*/, opr, pattern, true/*keyword*/, 0);
 }
 
-void Lexer::defineBadLexem( const std::string_view& name_)
+void Lexer::defineBadLexem( int line, const std::string_view& name_)
 {
-	m_errorLexemName = name_;
+	m_errorLexem = ErrorLexemDef( line, std::string(name_));
 }
 
 #define MATCH_EOLN_COMMENT -1
 #define MATCH_BRACKET_COMMENT -2
 
-void Lexer::defineEolnComment( const std::string_view& opr)
+void Lexer::defineEolnComment( int line, const std::string_view& opr)
 {
-	m_eolnComments.push_back( std::string(opr));
+	m_eolnComments.emplace_back( line, std::string(opr));
 	if (opr.empty()) throw Error( Error::SyntaxErrorInLexer);
 	m_firstmap.insert( std::pair<char,int>( opr[0], MATCH_EOLN_COMMENT));
 }
 
-void Lexer::defineBracketComment( const std::string_view& start, const std::string_view& end)
+void Lexer::defineBracketComment( int line, const std::string_view& start, const std::string_view& end)
 {
-	m_bracketComments.push_back( BracketCommentDef( std::string(start), std::string(end)));
+	m_bracketComments.emplace_back( line, std::string(start), std::string(end));
 	if (start.empty() || end.empty()) throw Error( Error::SyntaxErrorInLexer);
 	m_firstmap.insert( std::pair<char,int>( start[0], MATCH_BRACKET_COMMENT));
 }
@@ -502,7 +503,7 @@ bool Lexer::matchEolnComment( Scanner& scanner) const
 {
 	for (auto const& eolnComment : m_eolnComments)
 	{
-		if (scanner.match( eolnComment.c_str()))
+		if (scanner.match( eolnComment.open.c_str()))
 		{
 			return true;
 		}
@@ -516,7 +517,7 @@ int Lexer::matchBracketCommentStart( Scanner& scanner) const
 	for (auto const& bracketComment : m_bracketComments)
 	{
 		++rt;
-		if (scanner.match( bracketComment.first.c_str()))
+		if (scanner.match( bracketComment.open.c_str()))
 		{
 			return rt;
 		}
@@ -579,9 +580,9 @@ Lexem Lexer::next( Scanner& scanner) const
 				int cidx = matchBracketCommentStart( scanner);
 				if (cidx >= 0)
 				{
-					if (!scanner.scan( m_bracketComments[ cidx].second.c_str()))
+					if (!scanner.scan( m_bracketComments[ cidx].close.c_str()))
 					{
-						return Lexem( m_errorLexemName, -1/*id*/, m_bracketComments[ cidx].first, scanner.line());
+						return Lexem( m_errorLexem.value, -1/*id*/, m_bracketComments[ cidx].open, scanner.line());
 						//... no matching end bracket of comment found, then return ERROR
 					}
 					break; //... comment skipped, fetch next lexem
@@ -607,7 +608,7 @@ Lexem Lexer::next( Scanner& scanner) const
 			{
 				std::string_view chr = parseChar( start);
 				scanner.next( chr.size());
-				return Lexem( m_errorLexemName, -1/*id*/, chr, line);
+				return Lexem( m_errorLexem.value, -1/*id*/, chr, line);
 			}
 			else if (0 != m_defar[ matchidx].id())
 			{
@@ -631,41 +632,41 @@ Lexem Lexer::next( Scanner& scanner) const
 std::vector<Lexer::Definition> Lexer::getDefinitions() const
 {
 	std::vector<Lexer::Definition> rt;
-	if (m_errorLexemName != "?")
+	if (m_errorLexem.value != "?")
 	{
-		rt.push_back( Definition( Definition::BadLexem, {m_errorLexemName}, 0/*select*/, 0/*id*/, ""/*activation*/));
+		rt.push_back( Definition( m_errorLexem.line, Definition::BadLexem, {m_errorLexem.value}, 0/*select*/, 0/*id*/, ""/*activation*/));
 	}
 	for (auto const& def : m_defar)
 	{
 		if (def.name().empty())
 		{
-			rt.push_back( Definition( Definition::IgnoreLexem, {def.source()}, 0/*select*/,def.id(), def.activation()));
+			rt.push_back( Definition( def.line(), Definition::IgnoreLexem, {def.source()}, 0/*select*/,def.id(), def.activation()));
 		}
 		else if (def.keyword())
 		{
-			rt.push_back( Definition( Definition::KeywordLexem, {def.name()}, 0/*select*/, def.id(), def.activation()));
+			rt.push_back( Definition( def.line(),  Definition::KeywordLexem, {def.name()}, 0/*select*/, def.id(), def.activation()));
 		}
 		else
 		{
-			rt.push_back( Definition( Definition::NamedPatternLexem, {def.name(), def.source()}, def.select(), def.id(), def.activation()));
+			rt.push_back( Definition( def.line(), Definition::NamedPatternLexem, {def.name(), def.source()}, def.select(), def.id(), def.activation()));
 		}
 	}
 	for (auto const& bc : m_bracketComments)
 	{
 		rt.push_back(
-			Definition( Definition::BracketComment, {bc.first,bc.second}, 0/*select*/,
-					MATCH_BRACKET_COMMENT/*id*/, std::string( bc.first.c_str(), 1)/*activation*/));
+			Definition( bc.line, Definition::BracketComment, {bc.open,bc.close}, 0/*select*/,
+					MATCH_BRACKET_COMMENT/*id*/, std::string( bc.open.c_str(), 1)/*activation*/));
 	}
 	for (auto const& cc : m_eolnComments)
 	{
 		rt.push_back(
-			Definition( Definition::EolnComment, {cc}, 0/*select*/,
-					MATCH_EOLN_COMMENT/*id*/, std::string( cc.c_str(), 1)/*activation*/));
+			Definition( cc.line, Definition::EolnComment, {cc.open}, 0/*select*/,
+					MATCH_EOLN_COMMENT/*id*/, std::string( cc.open.c_str(), 1)/*activation*/));
 	}
 	if (m_indentLexems.defined())
 	{
 		rt.push_back(
-			Definition( Definition::IndentLexems,
+			Definition( m_indentLexems.line, Definition::IndentLexems,
 				    {}, m_indentLexems.tabSize/*select*/,m_indentLexems.open/*id*/, std::string()/*activation*/));
 	}
 	return rt;
@@ -677,13 +678,13 @@ Lexer::Lexer( const std::vector<Definition>& definitions)
 	{
 		switch (def.type())
 		{
-			case Definition::BadLexem:		defineBadLexem( def.name()); break;
-			case Definition::NamedPatternLexem:	defineLexem( def.name(), def.pattern(), def.select()); break;
+			case Definition::BadLexem:		defineBadLexem( def.line(), def.name()); break;
+			case Definition::NamedPatternLexem:	defineLexem( def.line(), def.name(), def.pattern(), def.select()); break;
 			case Definition::KeywordLexem:		defineLexem( def.name()); break;
-			case Definition::IgnoreLexem:		defineIgnore( def.pattern());
-			case Definition::EolnComment:		defineEolnComment( def.start()); break;
-			case Definition::BracketComment:	defineBracketComment( def.start(), def.end()); break;
-			case Definition::IndentLexems:		m_indentLexems = {def.openind(),def.closeind(),def.newline(),def.tabsize()}; break;
+			case Definition::IgnoreLexem:		defineIgnore( def.line(), def.pattern());
+			case Definition::EolnComment:		defineEolnComment( def.line(), def.start()); break;
+			case Definition::BracketComment:	defineBracketComment( def.line(), def.start(), def.end()); break;
+			case Definition::IndentLexems:		m_indentLexems = {def.line(),def.openind(),def.closeind(),def.newline(),def.tabsize()}; break;
 		}
 	}
 }

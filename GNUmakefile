@@ -77,7 +77,8 @@ INCFLAGS := -I$(SRCDIR) -I$(LUAINC) -I$(INCDIR)
 LDFLAGS  := -g -pthread
 LDLIBS   := -lm -lstdc++
 LIBOBJS  := $(BUILDDIR)/lexer.o \
-		$(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/automaton_parser.o \
+		$(BUILDDIR)/automaton.o $(BUILDDIR)/automaton_tostring.o $(BUILDDIR)/languagedef_tostring.o \
+		$(BUILDDIR)/automaton_structs.o $(BUILDDIR)/automaton_parser.o \
 		$(BUILDDIR)/typedb.o \
 		$(BUILDDIR)/fileio.o $(BUILDDIR)/strings.o $(BUILDDIR)/error.o
 MODOBJS  := $(BUILDDIR)/lualib_mewa.o \

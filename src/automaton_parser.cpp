@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -13,6 +13,7 @@
 #include "automaton_structs.hpp"
 #include "automaton_parser.hpp"
 #include "strings.hpp"
+#include "utf8.hpp"
 #include <map>
 #include <algorithm>
 #include <type_traits>
@@ -52,14 +53,14 @@ public:
 
 	GrammarLexer()
 	{
-		defineEolnComment( "//");
-		defineEolnComment( "#");
-		defineBracketComment( "/*", "*/");
-		defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
-		defineLexem( "NUMBER", "[0-9]+");
-		defineLexem( "PRIORITY", "[0-9]+[LR]");
-		defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n])|([\\\\][^\"\\n]))*)[\"]", 1);
-		defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n])|([\\\\][^\'\\n]))*)[\']", 1);
+		defineEolnComment( 0/*no line*/, "//");
+		defineEolnComment( 0/*no line*/, "#");
+		defineBracketComment( 0/*no line*/, "/*", "*/");
+		defineLexem( 0/*no line*/, "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
+		defineLexem( 0/*no line*/, "NUMBER", "[0-9]+");
+		defineLexem( 0/*no line*/, "PRIORITY", "[0-9]+[LR]");
+		defineLexem( 0/*no line*/, "DQSTRING", "[\"]((([^\\\\\"\\n])|([\\\\][^\"\\n]))*)[\"]", 1);
+		defineLexem( 0/*no line*/, "SQSTRING", "[\']((([^\\\\\'\\n])|([\\\\][^\'\\n]))*)[\']", 1);
 		defineLexem( "%");
 		defineLexem( "/");
 		defineLexem( "=");
@@ -67,7 +68,7 @@ public:
 		defineLexem( ":");
 		defineLexem( ";");
 		defineLexem( "ε");
-		defineLexem( "CALL", "[-]{0,1}[a-zA-Z_][.a-zA-Z_0-9]*");
+		defineLexem( 0/*no line*/, "CALL", "[-]{0,1}[a-zA-Z_][.a-zA-Z_0-9]*");
 		defineLexem( "{");
 		defineLexem( "}");
 		defineLexem( ",");
@@ -267,7 +268,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					else
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
-					}	
+					}
 					break;
 				case GrammarLexer::CALL:
 					if (state == ParseCallName)
@@ -496,7 +497,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					else if (state == ParseProductionAttributes || state == ParseAssign)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
-						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
+						rt.prodlist.push_back( ProductionDef( lexem.line(), rulename, ProductionNodeDefList(), priority));
 						if (nonTerminalIdMap.insert( std::pair<std::string_view, int>( rulename, nonTerminalIdMap.size()+1)).second/*insert took place*/)
 						{
 							rt.nonterminals.push_back( std::string( rulename));
@@ -520,7 +521,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					else
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
-					}	
+					}
 					break;
 				case GrammarLexer::SEMICOLON:
 					if (state == ParseLexerCommandArg)
@@ -543,22 +544,22 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 						else if (caseInsensitiveEqual( cmdname, "IGNORE"))
 						{
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
-							rt.lexer.defineIgnore( cmdargs[ 0]);
+							rt.lexer.defineIgnore( lexem.line(), cmdargs[ 0]);
 						}
 						else if (caseInsensitiveEqual( cmdname, "BAD"))
 						{
 							if (cmdargs.size() != 1) throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
-							rt.lexer.defineBadLexem( cmdargs[ 0]);
+							rt.lexer.defineBadLexem( lexem.line(), cmdargs[ 0]);
 						}
 						else if (caseInsensitiveEqual( cmdname, "COMMENT"))
 						{
 							if (cmdargs.size() == 1)
 							{
-								rt.lexer.defineEolnComment( cmdargs[ 0]);
+								rt.lexer.defineEolnComment( lexem.line(), cmdargs[ 0]);
 							}
 							else if (cmdargs.size() == 2)
 							{
-								rt.lexer.defineBracketComment( cmdargs[ 0], cmdargs[ 1]);
+								rt.lexer.defineBracketComment( lexem.line(), cmdargs[ 0], cmdargs[ 1]);
 							}
 							else
 							{
@@ -572,7 +573,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 								throw Error( Error::CommandNumberOfArgumentsInGrammarDef, cmdname);
 							}
 							int indent = convertStringToInt( cmdargs[3]);
-							rt.lexer.defineIndentLexems( cmdargs[0], cmdargs[1], cmdargs[2], indent);
+							rt.lexer.defineIndentLexems( lexem.line(), cmdargs[0], cmdargs[1], cmdargs[2], indent);
 						}
 						else
 						{
@@ -581,11 +582,11 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					}
 					else if (state == ParsePatternSelect)
 					{
-						rt.lexer.defineLexem( rulename, patternstr);
+						rt.lexer.defineLexem( lexem.line(), rulename, patternstr);
 					}
 					else if (state == ParseEndOfLexemDef)
 					{
-						rt.lexer.defineLexem( rulename, patternstr, selectidx);
+						rt.lexer.defineLexem( lexem.line(), rulename, patternstr, selectidx);
 					}
 					else if (state == ParseProductionElement || state == ParseEndOfProduction || state == ParseCall)
 					{
@@ -601,7 +602,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					if (state == ParseProductionElement || state == ParseEndOfProduction || state == ParseCall)
 					{
 						prodmap.insert( std::pair<std::string_view, std::size_t>( rulename, rt.prodlist.size()));
-						rt.prodlist.push_back( ProductionDef( rulename, ProductionNodeDefList(), priority));
+						rt.prodlist.push_back( ProductionDef( lexem.line(), rulename, ProductionNodeDefList(), priority));
 						call_argtype = Automaton::Call::NoArg;
 						call_function.clear();
 						call_arg.clear();
@@ -610,7 +611,7 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 					else
 					{
 						throw Error( Error::UnexpectedTokenInGrammarDef, lexem.value());
-					}	
+					}
 					break;
 			}
 		}
@@ -717,6 +718,132 @@ std::string mewa::printLuaTypeSystemStub( const LanguageDef& langdef)
 		}
 	}
 	rt.append( "\nreturn typesystem\n\n");
+	return rt;
+}
+
+static std::vector<std::string> splitLines( char const* str, std::size_t sz)
+{
+	std::vector<std::string> rt;
+	const char* end = str + sz;
+	while (str < end)
+	{
+		const char* start = str;
+		for (; (unsigned char)*str <= 32 && str < end; ++str){} //skip leading spaces
+		for (; *str != '\n' && str < end; ++str){}
+		std::size_t nn = str-start;
+		while (nn > 0 && (unsigned char)start[ nn-1] <= 32)
+		{
+			--nn;
+		}
+		rt.emplace_back( start, nn);
+	}
+	while (!rt.empty() && rt.back().empty())
+	{
+		rt.pop_back();
+	}
+	return rt;
+}
+
+static std::pair<std::string,std::string> splitDecoratorDef( const std::string& ln)
+{
+	char const* lp = ln.c_str();
+	for (; *lp && (unsigned char)*lp <=32; ++lp){}
+	if (lp[0] == '@')
+	{
+		char const* start = lp+1;
+		char const* cc = start;
+		while (((unsigned char)(*cc|32) >= 'a' && (unsigned char)(*cc|32) <= 'z') || (*cc >= '0' && *cc <= '9') || (*cc == '_'))
+		{
+			++cc;
+		}
+		std::string id( start,cc-start);
+		for (; (unsigned char)*cc <= 32 && *cc; ++cc){}
+		return {id, std::string(cc)};
+	}
+	else
+	{
+		return {"",lp};
+	}
+}
+
+static void extractDecorators( std::vector<LanguageDecorator>& res, const std::vector<std::string>& comment)
+{
+	for (auto const& cm : comment)
+	{
+		auto const& dd = splitDecoratorDef( cm);
+		if (dd.first.empty())
+		{
+			if (!res.empty())
+			{
+				res.back().content.push_back( dd.second);
+			}
+		}
+		else
+		{
+			std::vector<std::string> content;
+			content.push_back( dd.second);
+			res.push_back( {dd.first, content});
+		}
+	}
+}
+
+LanguageDecoratorMap mewa::parseLanguageDecoratorMap( const std::string& source)
+{
+	LanguageDecoratorMap rt;
+	GrammarLexer grammarLexer;
+	Scanner scanner( source);
+	Lexem lexem( 1/*line*/);
+	std::vector<std::string> comment;
+	std::vector<LanguageDecorator> decorators;
+	std::size_t symlen = 0;
+	int line = 0;
+	char const* start = scanner.next();
+	for (; *start; start = scanner.next( symlen))
+	{
+		comment.clear();
+		if (start[0] == '#' || (start[0] == '/' && start[1] == '/'))
+		{
+			line = scanner.line();
+			start += start[0] == '#' ? 1:2;
+			if (scanner.scan( "\n"))
+			{
+				comment.emplace_back( start, scanner.current() - start - 1);
+			}
+			else
+			{
+				comment.emplace_back( start);
+			}
+			symlen = 0;
+		}
+		else if (start[0] == '/' && start[1] == '*')
+		{
+			line = scanner.line();
+			start += 2;
+			if (scanner.scan( "*/"))
+			{
+				comment = splitLines( start, scanner.current() - start);
+			}
+			else
+			{
+				throw Error( Error::UnexpectedEofInGrammarDef);
+			}
+			symlen = 1;
+		}
+		else
+		{
+			line = scanner.line();
+			grammarLexer.next( scanner);
+			for (auto const& dc : decorators)
+			{
+				rt.addDecorator( line, dc);
+			}
+			decorators.clear();
+		}
+		if (!comment.empty())
+		{
+			extractDecorators( decorators, comment);
+		}
+	}
 	return rt;
 }
 

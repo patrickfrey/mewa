@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -10,6 +10,7 @@
 /// \brief LALR(1) Parser generator tostring (Lua syntax) implementation
 /// \file "automaton_tostring.cpp"
 #include "automaton.hpp"
+#include "languagedef_tostring.hpp"
 #include "version.hpp"
 #include "lexer.hpp"
 #include "error.hpp"
@@ -59,102 +60,7 @@ static bool isConstantArgument( const std::string& val)
 	return false;
 }
 
-static std::string escapeString( const std::string& str)
-{
-	std::string rt;
-	char const* si = str.c_str();
-	for (; *si; ++si)
-	{
-		if (*si == '\\')
-		{
-			rt.append( "\\\\");
-		}
-		else
-		{
-			rt.push_back( *si);
-		}
-	}
-	return rt;
-}
-
-static void printString( std::ostream& outstream, const std::string& str)
-{
-	char const* sqpos = std::strchr( str.c_str(), '\'');
-	char const* dqpos = std::strchr( str.c_str(), '\"');
-	if (sqpos && dqpos)
-	{
-		sqpos = 0;
-		dqpos = 0;
-		char const* si = str.c_str();
-		for (; si; ++si)
-		{
-			if (*si == '\\')
-			{
-				++si;
-			}
-			else if (*si == '\'')
-			{
-				sqpos = si;
-			}
-			else if (*si == '\"')
-			{
-				dqpos = si;
-			}
-		}
-	}
-	if (dqpos)
-	{
-		if (sqpos) throw Error( Error::EscapeQuoteErrorInString, str);
-		outstream << "\'" << escapeString( str) << "\'";
-	}
-	else
-	{
-		outstream << "\"" << escapeString( str) << "\"";
-	}
-}
-
-static void printCallTable( std::ostream& outstream, const char* tablename, const std::vector<Automaton::Call>& table, bool sep)
-{
-	outstream << "\t" << tablename << " = {";
-	int tidx = 0;
-	for (auto call : table)
-	{
-		outstream << ((tidx++) ? ",\n\t\t{ " : "\n\t\t{ ");
-
-		switch (call.argtype())
-		{
-			case Automaton::Call::NoArg:
-				outstream << "name=";
-				printString( outstream, call.function());
-				outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
-				break;
-			case Automaton::Call::StringArg:
-				outstream << "name=";
-				printString( outstream, call.function() + " " + call.arg());
-				outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
-				outstream << ", obj=\"" << call.arg() << "\"";
-				break;
-			case Automaton::Call::ReferenceArg:
-				outstream << "name=";
-				printString( outstream, call.function() + " " + call.arg());
-				if (isConstantArgument( call.arg()))
-				{
-					outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
-					outstream << ", obj=" << call.arg();
-				}
-				else
-				{
-					outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
-					outstream << ", obj=" << g_typeSystemModulePrefix << call.arg();
-				}
-				break;
-		}
-		outstream << "}";
-	}
-	outstream << (sep ? "},\n" : "}\n");
-}
-
-static void printLexems( std::ostream& outstream, const char* tablename, const Lexer& lexer, bool sep)
+static void printLexer( std::ostream& outstream, const char* tablename, const Lexer& lexer, bool sep)
 {
 	auto definitions = lexer.getDefinitions();
 	if (!definitions.empty())
@@ -228,6 +134,47 @@ static void printLexems( std::ostream& outstream, const char* tablename, const L
 	}
 }
 
+static void printCallTable( std::ostream& outstream, const char* tablename, const std::vector<Automaton::Call>& table, bool sep)
+{
+	outstream << "\t" << tablename << " = {";
+	int tidx = 0;
+	for (auto call : table)
+	{
+		outstream << ((tidx++) ? ",\n\t\t{ " : "\n\t\t{ ");
+
+		switch (call.argtype())
+		{
+			case Automaton::Call::NoArg:
+				outstream << "name=";
+				printString( outstream, call.function());
+				outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
+				break;
+			case Automaton::Call::StringArg:
+				outstream << "name=";
+				printString( outstream, call.function() + " " + call.arg());
+				outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
+				outstream << ", obj=\"" << call.arg() << "\"";
+				break;
+			case Automaton::Call::ReferenceArg:
+				outstream << "name=";
+				printString( outstream, call.function() + " " + call.arg());
+				if (isConstantArgument( call.arg()))
+				{
+					outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
+					outstream << ", obj=" << call.arg();
+				}
+				else
+				{
+					outstream << ", proc=" << g_typeSystemModulePrefix << call.function();
+					outstream << ", obj=" << g_typeSystemModulePrefix << call.arg();
+				}
+				break;
+		}
+		outstream << "}";
+	}
+	outstream << (sep ? "},\n" : "}\n");
+}
+
 std::string Automaton::tostring() const
 {
 	std::ostringstream outstream;
@@ -245,7 +192,7 @@ std::string Automaton::tostring() const
 	{
 		outstream << "\tcmdline = \"" << cmdline() << "\",\n";
 	}
-	printLexems( outstream, "lexer", lexer(), true/*sep*/);
+	printLexer( outstream, "lexer", lexer(), true/*sep*/);
 	printStringArray( outstream, "nonterminal", m_nonterminals, true/*sep*/);
 	printTable( outstream, "action", actions(), true/*sep*/);
 	printTable( outstream, "gto", gotos(), true/*sep*/);

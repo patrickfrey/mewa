@@ -24,8 +24,8 @@ The following commands are known:
 
   An example of a command-line parser can be found [here](../examples/cmdlinearg.lua).
 
-* **%** **COMMENT** _start_ _end_ **;** Defines the content between the patterns _start_ and _end_ defined as regular expression quoted in single or double quotes as a comment. Comments are ignored by the lexer and thus by the compiler.
-* **%** **COMMENT** _start_ **;** Defines the content starting with the pattern _start_ defined as regular expression quoted in single or double quotes until the next end of a line as a comment. Comments are ignored by the lexer and thus by the compiler.
+* **%** **COMMENT** _open_ _close_ **;** Defines the content between the patterns _open_ and _close_ defined as regular expression quoted in single or double quotes as a comment. Comments are ignored by the lexer and thus by the compiler.
+* **%** **COMMENT** _open_ **;** Defines the content starting with the pattern _open_ defined as regular expression quoted in single or double quotes until the next end of a line as a comment. Comments are ignored by the lexer and thus by the compiler.
 * **%** **IGNORE** _pattern_ **;** Defines a token matching this pattern defined as regular expression quoted in single or double quotes as invisible. It is ignored by the lexer and thus by the compiler. Hence it does not need a name.
 * **%** **BAD** _name_ **;** Defines the name of the error token of the lexer. Has no implications but for the debugging output.
 * **%** **INDENTL** _open_ _close_ _nl_ _tabsize_ **;** Defines lexems issued for indentiation. Used to implement **off-side rule** languages. The tokens issued can be referenced in the grammar by the names specified as command arguments.
@@ -50,15 +50,16 @@ The following commands are known:
 ### Lexeme/Token Declarations
 Lexeme declarations start with an identifier followed by a colon '**:**', a pattern matching the lexeme, and an optional selection index:
 
-* _lexemename_ **:** _pattern_ **;**
-* _lexemename_ **:** _pattern_ _select_ **;**
+* _name_ **:** _pattern_ **;**
+* _name_ **:** _pattern_ _select_ **;**
 
-The name _lexemename_ defines the identifier this lexeme can be referred to as a token in the production declarations of the grammar.
+_name_ defines the identifier this lexeme can be referred to as a token in the production declarations of the grammar.
 The regular expression string _pattern_ quoted in single or double quotes defines the pattern that matches the _lexeme_.
-You can have multiple declarations with the same name.
+You can have multiple declarations with the same identifier _name_.
 The optional integer number _select_ defines the index of the subexpression of the regular expression match to select as the value of the _lexeme_ recognized.
 If _0_ or nothing is specified the whole expression match is chosen as the _token_ value emitted.
-If multiple patterns match at the same source position then the longest match is emitted as the _token_ value. If two matches have the same length, the first declaration is chosen. If one of the matches is a keyword or an operator, it is always the first choice.
+If multiple patterns match at the same source position then the longest match is emitted as the _token_ value. If two matches have the same length, the first declaration is chosen.
+If one of the matches is a keyword or an operator, it is always the first choice.
 Keywords and operators of the grammar are not declared in the lexer section but are referred to as strings in the production declarations of the grammar.
 
 ### Production Declarations

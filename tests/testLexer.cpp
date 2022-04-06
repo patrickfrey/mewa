@@ -27,7 +27,7 @@ using namespace mewa;
 
 void testActivation( const char* rxstr, const char* expected)
 {
-	LexemDef lxdef( ""/*name*/, rxstr, 0/*id*/, false/*keyword*/, 0/*select*/);
+	LexemDef lxdef( 0/*no line*/, ""/*name*/, rxstr, 0/*id*/, false/*keyword*/, 0/*select*/);
 	std::string output = lxdef.activation();
 	if (g_verbose)
 	{
@@ -73,11 +73,11 @@ void runLexer( const char* name, const Lexer& lexer, const std::string& source, 
 void testLexer1()
 {
 	Lexer lexer;
-	lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
-	lexer.defineLexem( "UINT", "[0-9]*");
-	lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
-	lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
-	lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
+	lexer.defineLexem( 0/*no line*/, "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
+	lexer.defineLexem( 0/*no line*/, "UINT", "[0-9]*");
+	lexer.defineLexem( 0/*no line*/, "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
+	lexer.defineLexem( 0/*no line*/, "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
+	lexer.defineLexem( 0/*no line*/, "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
 	lexer.defineLexem( "::");
 	lexer.defineLexem( "<<");
 	lexer.defineLexem( ">>");
@@ -105,8 +105,8 @@ void testLexer1()
 	lexer.defineLexem( "--");
 	lexer.defineLexem( "-=");
 	lexer.defineLexem( "#include");
-	lexer.defineEolnComment( "//");
-	lexer.defineBracketComment( "/*", "*/");
+	lexer.defineEolnComment( 0/*no line*/, "//");
+	lexer.defineBracketComment( 0/*no line*/, "/*", "*/");
 
 	std::string source{R"(
 #include <string>
@@ -130,7 +130,7 @@ int main() {
 }
 )"};
 
-		std::string expected{R"(
+                std::string expected{R"(
 #include [#include]
 < [<]
 IDENT [string]
@@ -264,11 +264,11 @@ UINT [0]
 void testLexer2()
 {
 	Lexer lexer;
-	lexer.defineLexem( "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
-	lexer.defineLexem( "UINT", "[0-9]*");
-	lexer.defineLexem( "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
-	lexer.defineLexem( "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
-	lexer.defineLexem( "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
+	lexer.defineLexem( 0/*no line*/, "IDENT", "[a-zA-Z_][a-zA-Z_0-9]*");
+	lexer.defineLexem( 0/*no line*/, "UINT", "[0-9]*");
+	lexer.defineLexem( 0/*no line*/, "FLOAT", "[0-9]*([.][0-9]*){0,1}[ ]*([Ee][+-]{0,1}[0-9]+){0,1}");
+	lexer.defineLexem( 0/*no line*/, "DQSTRING", "[\"]((([^\\\\\"\\n]+)|([\\\\][^\"\\n]))*)[\"]", 1);
+	lexer.defineLexem( 0/*no line*/, "SQSTRING", "[\']((([^\\\\\'\\n]+)|([\\\\][^\'\\n]))*)[\']", 1);
 	lexer.defineLexem( "::");
 	lexer.defineLexem( "<<");
 	lexer.defineLexem( ">>");
@@ -296,9 +296,9 @@ void testLexer2()
 	lexer.defineLexem( "--");
 	lexer.defineLexem( "-=");
 	lexer.defineLexem( "#include");
-	lexer.defineEolnComment( "//");
-	lexer.defineBracketComment( "/*", "*/");
-	lexer.defineIndentLexems( "open_ind", "close_ind", "nl_ind", 4);
+	lexer.defineEolnComment( 0/*no line*/, "//");
+	lexer.defineBracketComment( 0/*no line*/, "/*", "*/");
+	lexer.defineIndentLexems( 0/*no line*/, "open_ind", "close_ind", "nl_ind", 4);
 
 	std::string source{R"(
 //This is a program
@@ -320,7 +320,7 @@ fn main( a, b)
         // Return z
 )"};
 
-	std::string expected{R"(
+        std::string expected{R"(
 "nl_ind" []
 IDENT [fn]
 IDENT [bla]

@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -108,7 +108,7 @@ public:
 		}
 		static ActionKey unpack( int pkg) noexcept
 		{
-			static_assert (ShiftState + ShiftTerminal <= 31, "sizeof packed action key structure"); 
+			static_assert (ShiftState + ShiftTerminal <= 31, "sizeof packed action key structure");
 
 			return ActionKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*terminal*/);
 		}
@@ -156,12 +156,12 @@ public:
 		}
 		static Action unpack( int pkg) noexcept
 		{
-			static_assert (ShiftProductionLength + ShiftCall + ShiftState + ShiftScopeFlag + ShiftActionType <= 31, "sizeof packed action structure"); 
+			static_assert (ShiftProductionLength + ShiftCall + ShiftState + ShiftScopeFlag + ShiftActionType <= 31, "sizeof packed action structure");
 
 			return Action( (Type)((pkg >> (ShiftProductionLength + ShiftCall + ShiftState + ShiftScopeFlag)) & MaskActionType)/*type*/,
 					(ScopeFlag)((pkg >> (ShiftProductionLength + ShiftCall + ShiftState)) & MaskScopeFlag)/*scopeflag*/,
 					(pkg >> (ShiftProductionLength + ShiftCall)) & MaskState/*value*/,
-				        (pkg >> ShiftProductionLength) & MaskCall/*call*/,
+					(pkg >> ShiftProductionLength) & MaskCall/*call*/,
 					(pkg) & MaskProductionLength/*count*/);
 		}
 
@@ -202,7 +202,7 @@ public:
 		}
 		static GotoKey unpack( int pkg) noexcept
 		{
-			static_assert (ShiftState + ShiftTerminal <= 31, "sizeof packed goto-key structure"); 
+			static_assert (ShiftState + ShiftTerminal <= 31, "sizeof packed goto-key structure");
 
 			return GotoKey( pkg >> ShiftTerminal /*state*/, pkg & MaskTerminal /*nonterminal*/);
 		}
@@ -234,7 +234,7 @@ public:
 		}
 		static Goto unpack( int pkg) noexcept
 		{
-			static_assert (ShiftState <= 31, "sizeof packed goto structure"); 
+			static_assert (ShiftState <= 31, "sizeof packed goto structure");
 
 			return Goto( pkg);
 		}
@@ -243,7 +243,7 @@ public:
 		short m_state;
 	};
 
-    /// \brief Encoded node call reference attached to a production to be performed after its reduction
+	/// \brief Encoded node call reference attached to a production to be performed after its reduction
 	class Call
 	{
 	public:

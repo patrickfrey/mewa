@@ -1,20 +1,40 @@
 % LANGUAGE language1;
 % TYPESYSTEM "language1/typesystem";
 % CMDLINE "cmdlinearg";
+# @description C style comments
+# @rule	COMMENT ::= "/*" ... "*/"
 % COMMENT "/*" "*/";
+# @description C++ style end of line comments
+# @rule	COMMENT ::= "//" ... "\\n"
 % COMMENT "//";
 
+# @rule BOOLEAN ::= "true" | "false"
 BOOLEAN : '((true)|(false))';
+# @rule LOALPHA ::= "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z"
+#	HIALPHA ::= "A"|"B"|"B"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"
+#	USCORE  ::= "_"
+#	IDENT   ::= (LOALPHA | HIALPHA | USCORE) (LOALPHA | HIALPHA | USCORE | DIGIT)*
 IDENT	: '[a-zA-Z_]+[a-zA-Z_0-9]*';
+# @rule DQSTRING ::= [double quoted string]
+# @description Double quoted string with backslash are used for escaping double quotes and back slashes in the string
 DQSTRING: '["]((([^\\"\n]+)|([\\][^"\n]))*)["]' 1;
+# @rule SQSTRING ::= [single quoted string]
+# @description Single quoted string with backslash are used for escaping single quotes and back slashes in the string
 SQSTRING: "[']((([^\\'\n]+)|([\\][^'\n]))*)[']" 1;
+# @rule DIGIT ::= ("0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9")
+#	UINTEGER ::= DIGIT*
 UINTEGER: '[0123456789]+';
+# @rule FLOAT ::= DIGIT* "." DIGIT+
 FLOAT	: '[0123456789]*[.][0123456789]+';
+# @rule EXPONENT ::= ("E"|"e") (("-"|"+") DIGIT+ | DIGIT+)
+#	FLOAT ::= DIGIT* "." DIGIT+ EXPONENT
 FLOAT	: '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+';
+# @description Numbers must not be followed immediately by an identifier
 ILLEGAL	: '[0123456789]+[A-Za-z_]';
 ILLEGAL	: '[0123456789]*[.][0123456789]+[A-Za-z_]';
 ILLEGAL	: '[0123456789]*[.][0123456789]+[Ee][+-]{0,1}[0123456789]+[A-Za-z_]';
 
+# @startsymbol program
 program		   	= extern_definitionlist free_definitionlist main_procedure			(program)
 			;
 extern_definitionlist	= extern_definition extern_definitionlist
@@ -71,7 +91,7 @@ inclass_definition	= typedefinition ";"								(definition 1)
 			| operatordefinition								(definition_2pass 4)
 			| constructordefinition								(definition_2pass 4)
 			;
-free_definition		= namespacedefinition								
+free_definition		= namespacedefinition
 			| typedefinition ";"								(definition 1)
 			| variabledefinition ";"							(definition 1)
 			| structdefinition								(definition 1)
@@ -125,7 +145,7 @@ classdefinition		= "class" IDENT "{" inclass_definitionlist "}"					(classdef)
 			| "class" IDENT ":" inheritlist "{" inclass_definitionlist "}"			(classdef)
 			| "generic" "class" IDENT "[" generic_header "]"
 				"{" inclass_definitionlist "}"						(generic_classdef)
-			| "generic" "class" IDENT "[" generic_header "]" 
+			| "generic" "class" IDENT "[" generic_header "]"
 				":" inheritlist "{" inclass_definitionlist "}"				(generic_classdef)
 			;
 linkage			= "private"									(linkage {private=true, linkage="internal", explicit=true})
@@ -280,10 +300,10 @@ expression/L4		= expression  "||"  expression							(>>binop "||")
 expression/L5		= expression  "&&"  expression							(>>binop "&&")
 			;
 expression/L6		= expression  "|"  expression							(>>binop "|")
-			;			
+			;
 expression/L7		= expression  "^"  expression							(>>binop "^")
 			| expression  "&"  expression							(>>binop "&")
-			;			
+			;
 expression/L8		= expression  "=="  expression							(>>binop "==")
 			| expression  "!="  expression							(>>binop "!=")
 			| expression  "<="  expression							(>>binop "<=")
@@ -295,9 +315,9 @@ expression/L9		= expression  "+"  expression							(>>binop "+")
 			| expression  "-"  expression							(>>binop "-")
 			| "&"  expression								(operator_address "&")
 			| "-"  expression								(>>unop "-")
-			| "+"  expression								(>>unop "+") 
+			| "+"  expression								(>>unop "+")
 			| "~"  expression								(>>unop "~")
-			| "!"  expression								(>>unop "!") 
+			| "!"  expression								(>>unop "!")
 			;
 expression/L10		= expression  "*"  expression							(>>binop "*")
 			| expression  "/"  expression							(>>binop "/")

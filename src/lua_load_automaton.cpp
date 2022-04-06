@@ -181,17 +181,17 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 					}
 					else if (arg.size() == 1)
 					{
-						rt.defineEolnComment( arg[ 0]);
+						rt.defineEolnComment( 0/*no line*/, arg[ 0]);
 					}
 					else
 					{
-						rt.defineBracketComment( arg[0], arg[1]);
+						rt.defineBracketComment( 0/*no line*/, arg[0], arg[1]);
 					}
 				}
 				else if (lua_type( ls, -1) == LUA_TSTRING)
 				{
 					auto arg = lua_tostring( ls, -1);
-					rt.defineEolnComment( arg);
+					rt.defineEolnComment( 0/*no line*/, arg);
 				}
 				else
 				{
@@ -227,11 +227,11 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 				}
 				else if (arg.size() > 2)
 				{
-					rt.defineLexem( arg[0], arg[1], string2int( arg[2]));
+					rt.defineLexem( 0/*no line*/, arg[0], arg[1], string2int( arg[2]));
 				}
 				else
 				{
-					rt.defineLexem( arg[0], arg[1]);
+					rt.defineLexem( 0/*no line*/, arg[0], arg[1]);
 				}
 				lua_pop( ls, 1);
 			}
@@ -242,7 +242,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 			auto badlexems = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 			for (auto badlexem : badlexems)
 			{
-				rt.defineBadLexem( badlexem);
+				rt.defineBadLexem( 0/*no line*/, badlexem);
 			}
 		}
 		else if (0==std::strcmp( keystr, "ignore"))
@@ -250,7 +250,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 			auto ignores = parseStringArray( ls, -1, mewa::string_format( "%s/%s", tableName, keystr));
 			for (auto ignore : ignores)
 			{
-				rt.defineIgnore( ignore);
+				rt.defineIgnore( 0/*no line*/, ignore);
 			}
 		}
 		else if (0==std::strcmp( keystr, "indentl"))
@@ -261,7 +261,7 @@ static mewa::Lexer parseLexerDefinitions( lua_State *ls, int li, const char* tab
 				throw mewa::Error( mewa::Error::BadValueInGeneratedLuaTable,
 							mewa::string_format( "table '%s/%s'", tableName, keystr));
 			}
-			rt.setIndentLexems( {indentLexems[0]+0,indentLexems[0]+1,indentLexems[0]+2,indentLexems[1]} );
+			rt.setIndentLexems( {0/*no line*/,indentLexems[0]+0,indentLexems[0]+1,indentLexems[0]+2,indentLexems[1]} );
 		}
 		lua_pop( ls, 1);
 	}

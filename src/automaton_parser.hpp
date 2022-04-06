@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -13,36 +13,20 @@
 #define _MEWA_AUTOMATON_PARSER_HPP_INCLUDED
 #if __cplusplus >= 201703L
 #include "automaton_structs.hpp"
+#include "languagedef.hpp"
 #include "error.hpp"
 #include "lexer.hpp"
 #include <utility>
 #include <string>
 #include <string_view>
 #include <set>
+#include <map>
 #include <vector>
 
 namespace mewa {
 
-struct LanguageDef
-{
-	std::string language;
-	std::string typesystem;
-	std::string cmdline;
-	Lexer lexer;
-	std::vector<ProductionDef> prodlist;
-	std::vector<Automaton::Call> calls;
-	std::vector<std::string> nonterminals;
-
-	LanguageDef()
-		:language(),typesystem(),lexer(),prodlist(),calls(),nonterminals(){};
-	LanguageDef( const LanguageDef& o)
-		:language(o.language),typesystem(o.typesystem),lexer(o.lexer),prodlist(o.prodlist),calls(o.calls),nonterminals(o.nonterminals){}
-	LanguageDef( LanguageDef&& o) noexcept
-		:language(std::move(o.language)),typesystem(std::move(o.typesystem))
-		,lexer(std::move(o.lexer)),prodlist(std::move(o.prodlist)),calls(std::move(o.calls)),nonterminals(std::move(o.nonterminals)){}
-};
-
 LanguageDef parseLanguageDef( const std::string& source);
+LanguageDecoratorMap parseLanguageDecoratorMap( const std::string& source);
 
 std::string printLuaTypeSystemStub( const LanguageDef& langdef);
 

@@ -176,13 +176,11 @@ mewa::Scope mewa::lua::getArgumentAsScope( const char* functionName, lua_State* 
 	checkArgumentAsTable( functionName, ls, li);
 	mewa::Scope::Step start = 0;
 	mewa::Scope::Step end = std::numeric_limits<mewa::Scope::Step>::max();
-	int rowcnt = 0;
 
 	lua_pushvalue( ls, li);
 	lua_pushnil( ls);
 	while (lua_next( ls, -2))
 	{
-		++rowcnt;
 		if (lua_type( ls, -2) == LUA_TNUMBER && lua_type( ls, -1) == LUA_TNUMBER)
 		{
 			int kidx = getTableIndex( ls, -2);
@@ -243,11 +241,9 @@ static mewa::TypeDatabase::TypeConstructorPair getArgumentAsTypeConstructorPair(
 		lua_pushnil( ls);							//STK: [PARAMTAB] [KEY]
 		int type = -1;
 		int constructor = 0;
-		int rowcnt = 0;
 
 		while (lua_next( ls, -2))						// STK: [PARAMTAB] [KEY] [VAL]
 		{
-			++rowcnt;
 			if (lua_type( ls, -2) == LUA_TNUMBER)
 			{
 				int kidx = getTableIndex( ls, -2);

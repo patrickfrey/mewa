@@ -121,7 +121,7 @@ make install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b 0.9
+git checkout -b 0.10
 
 ```
 #### Configure to find Lua includes and to write the file Lua.inc included by make

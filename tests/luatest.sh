@@ -79,6 +79,17 @@ if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then
 $ECHOCOL "${ORANGE}Building tables for dump of example \"language1\" ...${NOCOL}"
 /usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -d build/language1.debug.tmp -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
+$ECHOCOL "${ORANGE}Building table with all the contents of the language parsed for \"language1\" ...${NOCOL}"
+/usr/bin/time -f "Running for %e seconds"\
+    build/mewa -b "$LUABIN" -l -o build/language1_grammar.lua examples/language1/grammar.g
+echo "#!$LUABIN" > build/language1.image.lua
+echo "image = require(\"printGrammarFromImage\")" >> build/language1.image.lua
+echo "langdef = require(\"language1_grammar\")" >> build/language1.image.lua
+echo "image.printLanguageDef( langdef)" >> build/language1.image.lua
+chmod +x build/language1.image.lua
+$ECHOCOL "${ORANGE}Create grammar for example \"language1\" from Lua table...${NOCOL}"
+build/language1.image.lua > build/language1.image.tmp
+verify_test_result "Check 'mewa -l' output of parsed grammar as Lua table" build/language1_grammar.lua tests/language1_grammar.lua.exp
 chmod +x build/language1.dump.lua
 $ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
 build/language1.dump.lua > build/language1.dump.lua.tmp

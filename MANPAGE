@@ -24,20 +24,27 @@ Print the current version of
 .B mewa
 .TP
 \fB\-V\fR, \fB\--verbose\fR
-Do verbose debug output to stderr.
+Verbose debug output to stderr.
 .TP
 \fB\-g\fR, \fB\--generate-compiler\fR
-Do generate a compiler as a
+Generate a compiler as a
 .BR Lua
 module described by the grammar in the input file.
 .TP
 \fB\-s\fR, \fB\--generate-template\fR
-Do generate a template for your
+Generate a template for your
 .BR Lua
 module implementing the type system.
 Extract all
 .BR Lua
 function calls from the grammar and prints their empty implementation stubs to the output. No debug output is provided. Be careful using this option. It is only useful after the initial definition of the grammar of your language. It overwrites previous definitions without merging with your edits in a previously generated version.
+.TP
+\fB\-l\fR, \fB\--generate-language\fR
+Generate a
+.BR Lua
+table with the language description parsed for
+.BR Lua
+scripts generating descriptions for interfacing with other tools.
 .TP
 \fB\-o\fR, \fB\--output=\fR \fIfile\fR
 Write the output (parsing tables) to \fIfile\fR instead of stdout.

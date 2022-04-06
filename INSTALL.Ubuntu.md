@@ -4,9 +4,8 @@
 Use Cmake with gcc or clang with C++17 support.
 
 ### LLVM Version
-The examples of this version of _Mewa_ are based on LLVM version 10 and run also with version 11.
-The examples pass with with LLVM versions 12 and 13 too, but the output of the IR differs slightly.
-Some tests that compare the IR output will therefore fail with llvm-12 or llvm-13.
+The examples of this version of _Mewa_ are based on LLVM version > 12 and run also with version 10 or 11.
+The examples pass with with LLVM versions 10 and 11 too, but the output of the IR differs slightly.
 
 ### Prerequisites
 Install packages with 'apt-get'/aptitude.
@@ -41,7 +40,7 @@ make PREFIX=/usr/local install
 ```Bash
 git clone https://github.com/patrickfrey/mewa
 cd mewa
-git checkout -b 0.9
+git checkout -b 0.10
 
 ```
 

@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -16,6 +16,7 @@
 
 #include "automaton.hpp"
 #include "automaton_parser.hpp"
+#include "languagedef_tostring.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
 #include "strings.hpp"
@@ -45,13 +46,16 @@ static void printUsage()
 	std::cerr << " --version,\n";
 	std::cerr << " -v           : Print the current version of mewa.\n";
 	std::cerr << " --verbose,\n";
-	std::cerr << " -V           : Do verbose output to stderr.\n";
+	std::cerr << " -V           : Verbose output to stderr.\n";
 	std::cerr << " --generate-compiler,\n";
-	std::cerr << " -g           : Do generate a compiler as a Lua module.\n";
+	std::cerr << " -g           : Generate a compiler as a Lua module.\n";
 	std::cerr << " --generate-template,\n";
-	std::cerr << " -s           : Do generate a template for your Lua module implementing the typesystem.\n";
+	std::cerr << " -s           : Generate a template for your Lua module implementing the typesystem.\n";
 	std::cerr << "                Extracts all Lua function calls from the grammar and prints their\n";
 	std::cerr << "                empty implementation stubs to the output. No debug output is provided.\n";
+	std::cerr << " --generate-language,\n";
+	std::cerr << " -l           : Generate a Lua table with the language description parsed for Lua\n";
+	std::cerr << "                scripts generating descriptions for interfacing with other tools.\n";
 	std::cerr << " --luabin <LUABIN>,\n";
 	std::cerr << " -b <LUABIN>  : Specify the path of the Lua program in the header of generated scripts.\n";
 	std::cerr << " --output <OUTF>,\n";
@@ -159,6 +163,7 @@ int main( int argc, const char* argv[] )
 			NoCommand,
 			GenerateCompilerForLua,
 			GenerateTypesystemTemplateForLua,
+			GenerateLanguageDescriptionForLua
 		};
 		Command cmd = NoCommand;
 		std::string inputFilename;
@@ -204,6 +209,16 @@ int main( int argc, const char* argv[] )
 				}
 				cmd = GenerateTypesystemTemplateForLua;
 			}
+			else if (0==std::strcmp( argv[argi], "-l") || 0==std::strcmp( argv[argi], "--generate-language"))
+			{
+				if (cmd != NoCommand)
+				{
+					std::cerr << "Conflicting options" << std::endl << std::endl;
+					printUsage();
+					return ERRCODE_INVALID_ARGUMENTS;
+				}
+				cmd = GenerateLanguageDescriptionForLua;
+			}
 			else if (0==std::memcmp( argv[argi], "-b", 2) || 0==std::memcmp( argv[argi], "--luabin=", 9))
 			{
 				if (cmd == GenerateTypesystemTemplateForLua)
@@ -220,7 +235,7 @@ int main( int argc, const char* argv[] )
 				else
 				{
 					++argi;
-					if (argi == argc || argv[argi][0] == '-') 
+					if (argi == argc || argv[argi][0] == '-')
 					{
 						std::cerr << "Option -b,--luabin requires a path (lua program) as argument" << std::endl << std::endl;
 						printUsage();
@@ -239,7 +254,7 @@ int main( int argc, const char* argv[] )
 				else
 				{
 					++argi;
-					if (argi == argc || argv[argi][0] == '-') 
+					if (argi == argc || argv[argi][0] == '-')
 					{
 						std::cerr << "Option -o,--output requires a file path as argument" << std::endl << std::endl;
 						printUsage();
@@ -265,7 +280,7 @@ int main( int argc, const char* argv[] )
 				else
 				{
 					++argi;
-					if (argi == argc || argv[argi][0] == '-') 
+					if (argi == argc || argv[argi][0] == '-')
 					{
 						std::cerr << "Option -d,--dbgout requires a file path as argument" << std::endl << std::endl;
 						printUsage();
@@ -291,7 +306,7 @@ int main( int argc, const char* argv[] )
 				else
 				{
 					++argi;
-					if (argi == argc || argv[argi][0] == '-') 
+					if (argi == argc || argv[argi][0] == '-')
 					{
 						std::cerr << "Option -t requires a file path as argument" << std::endl << std::endl;
 						printUsage();
@@ -349,6 +364,38 @@ int main( int argc, const char* argv[] )
 			LanguageDef langdef( parseLanguageDef( source));
 			output = printLuaTypeSystemStub( langdef);
 		}
+		else if (cmd == GenerateLanguageDescriptionForLua)
+		{
+			std::set<int> lines;
+			LanguageDef langdef( parseLanguageDef( source));
+			for (auto const& prod: langdef.prodlist)
+			{
+				if (prod.line)
+				{
+					lines.insert( prod.line);
+				}
+			}
+			std::vector<Lexer::Definition> ldar = langdef.lexer.getDefinitions();
+			bool predLine = false;
+			for (auto const& lxdef: ldar)
+			{
+				if (lxdef.line())
+				{
+					if (predLine)
+					{
+						lines.insert( lxdef.line()-1);
+						predLine = false;
+					}
+					lines.insert( lxdef.line());
+				}
+				else
+				{
+					predLine = true;
+				}
+			}
+			LanguageDecoratorMap decoratormap( parseLanguageDecoratorMap( source));
+			output = printLuaLanguageDefinition( langdef, decoratormap);
+		}
 		else
 		{
 			if (debugFilename.empty())
@@ -390,6 +437,16 @@ int main( int argc, const char* argv[] )
 				printAutomaton( outputFilename, templat, automaton, luabin);
 				break;
 			case GenerateTypesystemTemplateForLua:
+				if (outputFilename.empty())
+				{
+					std::cout << output << std::endl;
+				}
+				else
+				{
+					writeFile( outputFilename, output);
+				}
+				break;
+			case GenerateLanguageDescriptionForLua:
 				if (outputFilename.empty())
 				{
 					std::cout << output << std::endl;
