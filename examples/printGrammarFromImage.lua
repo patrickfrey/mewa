@@ -19,7 +19,7 @@ local function contains( tb, val)
    return false
 end
 
-local function printDecoratorsAsComments( rule)
+local function printAdditionalAttributesAsComments( rule)
 	for key, val in pairs(rule) do
 		if not contains( reserved, key) and #val > 0 then
 			print( "# @" .. key .. " " .. val[ 1])
@@ -60,7 +60,7 @@ function image.printLanguageDef( def)
 	prev_prodname = nil
 	rulestr = nil
 	for idx,rule in ipairs( def.RULES ) do
-		printDecoratorsAsComments( rule)
+		printAdditionalAttributesAsComments( rule)
 		if rule.op == "COMMENT" then
 			if rule.close then
 				print( "% COMMENT " .. quoteString( rule.open) .. " " .. quoteString( rule.close) .. ";")
