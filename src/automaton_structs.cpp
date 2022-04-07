@@ -14,6 +14,13 @@
 
 using namespace mewa;
 
+static const std::set<std::string_view> g_reserved = {"op","name","pattern","open","close","tabsize","nl","select","priority","left","right","scope","call","line"};
+
+bool LanguageDecorator::isReservedAttribute( const std::string_view& id) noexcept
+{
+	return g_reserved.find( id) != g_reserved.end();
+}
+
 void LanguageDecoratorMap::addDecorator( int line_, const LanguageDecorator& dc)
 {
 	linemap.insert( {line_, decorators.size()});

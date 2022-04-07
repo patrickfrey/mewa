@@ -85,6 +85,7 @@ public:
 		UnexpectedTokenInGrammarDef=504,
 		DuplicateScopeInGrammarDef=505,
 		NestedCallArgumentStructureInGrammarDef=506,
+		UsingReservedAttributeNameInGrammarDef=507,
 
 		PriorityDefNotForLexemsInGrammarDef=521,
 		UnexpectedEndOfRuleInGrammarDef=531,

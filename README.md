@@ -58,6 +58,7 @@ Issues around target platforms are discussed [here](doc/portability.md).
 * [Glossary](doc/glossary.md)
 * [Grammar Description Language](doc/grammar.md)
 * [Parser Generator](doc/program_mewa.pdf)
+* [Bridges to Other Tools](doc/bridges.md)
 * [API](doc/libmewa.md)
    - [typedb](doc/typedb.md)
 * [AST (Abstract Syntax Tree) Format](doc/ast.md)

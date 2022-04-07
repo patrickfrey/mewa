@@ -721,15 +721,26 @@ std::string mewa::printLuaTypeSystemStub( const LanguageDef& langdef)
 	return rt;
 }
 
+static char const* skipSpaces( char const* str, const char* end=nullptr)
+{
+	for (; (unsigned char)*str <= 32 && *str != '\n' && str != end; ++str){}
+	return str;
+}
+
+static char const* skipEoln( char const* str, const char* end=nullptr)
+{
+	for (; *str != '\n' && str != end; ++str){}
+	return str;
+}
+
 static std::vector<std::string> splitLines( char const* str, std::size_t sz)
 {
 	std::vector<std::string> rt;
 	const char* end = str + sz;
 	while (str < end)
 	{
-		const char* start = str;
-		for (; (unsigned char)*str <= 32 && str < end; ++str){} //skip leading spaces
-		for (; *str != '\n' && str < end; ++str){}
+		const char* start = skipSpaces( str, end); //skip leading spaces
+		str = skipEoln( start, end);
 		std::size_t nn = str-start;
 		while (nn > 0 && (unsigned char)start[ nn-1] <= 32)
 		{
@@ -746,18 +757,17 @@ static std::vector<std::string> splitLines( char const* str, std::size_t sz)
 
 static std::pair<std::string,std::string> splitDecoratorDef( const std::string& ln)
 {
-	char const* lp = ln.c_str();
-	for (; *lp && (unsigned char)*lp <=32; ++lp){}
+	char const* lp = skipSpaces( ln.c_str(), ln.c_str() + ln.size());
 	if (lp[0] == '@')
 	{
-		char const* start = lp+1;
+		char const* start = skipSpaces( lp+1, ln.c_str() + ln.size());
 		char const* cc = start;
 		while (((unsigned char)(*cc|32) >= 'a' && (unsigned char)(*cc|32) <= 'z') || (*cc >= '0' && *cc <= '9') || (*cc == '_'))
 		{
 			++cc;
 		}
 		std::string id( start,cc-start);
-		for (; (unsigned char)*cc <= 32 && *cc; ++cc){}
+		cc = skipSpaces( cc, ln.c_str() + ln.size());
 		return {id, std::string(cc)};
 	}
 	else
@@ -835,6 +845,10 @@ LanguageDecoratorMap mewa::parseLanguageDecoratorMap( const std::string& source)
 			grammarLexer.next( scanner);
 			for (auto const& dc : decorators)
 			{
+				if (LanguageDecorator::isReservedAttribute( dc.name))
+				{
+					throw Error( Error::UsingReservedAttributeNameInGrammarDef);
+				}
 				rt.addDecorator( line, dc);
 			}
 			decorators.clear();

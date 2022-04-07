@@ -68,6 +68,7 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#$ERRCODE:UnexpectedTokenInGrammarDef**   _$ERRTEXT:UnexpectedTokenInGrammarDef_
 + **#$ERRCODE:DuplicateScopeInGrammarDef**   _$ERRTEXT:DuplicateScopeInGrammarDef_
 + **#$ERRCODE:NestedCallArgumentStructureInGrammarDef**   _$ERRTEXT:NestedCallArgumentStructureInGrammarDef_
+* **#$ERRCODE:UsingReservedAttributeNameInGrammarDef** _$ERRTEXT:UsingReservedAttributeNameInGrammarDef_. The mewa program option --generate-language creates a Lua table out of the grammar with all elements parsed accessible. Additionally it embedds comments attributed in a JavaDoc-like manner. You have used a reserved attribute name in a comment in your grammar. The list of reserved attributes can be found in the comment section of [the grammar description of _Mewa_](grammar.md).
 + **#$ERRCODE:PriorityDefNotForLexemsInGrammarDef**   _$ERRTEXT:PriorityDefNotForLexemsInGrammarDef_
 + **#$ERRCODE:UnexpectedEndOfRuleInGrammarDef**   _$ERRTEXT:UnexpectedEndOfRuleInGrammarDef_
 + **#$ERRCODE:EscapeQuoteErrorInString**   _$ERRTEXT:EscapeQuoteErrorInString_

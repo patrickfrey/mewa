@@ -620,6 +620,8 @@ struct LanguageDecorator
 	LanguageDecorator( const LanguageDecorator& o) = default;
 	LanguageDecorator( LanguageDecorator&& o) noexcept = default;
 
+	static bool isReservedAttribute( const std::string_view& id) noexcept;
+
 	std::string name;
 	std::vector<std::string> content;
 };
