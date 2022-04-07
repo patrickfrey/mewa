@@ -80,9 +80,9 @@ The following tree describes the Lua table attributes of the generated table.
       * line <integer>   : line number of the command or rule in the original _grammar definition_.
 
 ## Example Output
-The example language1 creates (this table structure)[../tests/language1_grammar.lua.exp].
+The example language1 creates [this table structure](../tests/language1_grammar.lua.exp).
 
 ## Example Lua Module
-The example Lua module (printGrammarFromImage.lua)[../examples/printGrammarFromImage.lua] creates a valid mewa grammar file from the table structure described here.
+The example Lua module [printGrammarFromImage.lua](../examples/printGrammarFromImage.lua) creates a valid mewa grammar file from the table structure described here.
 
 
