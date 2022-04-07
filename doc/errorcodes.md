@@ -68,6 +68,8 @@ A list for Linux can be found [here](https://nuetzlich.net/errno.html).
 + **#504**   _Unexpected token in the grammar definition_
 + **#505**   _More than one scope marker '{}' of '>>' not allowed in a call definition_
 + **#506**   _Nested structures as AST node function arguments are not allowed_
+* **#507** _Using reserved attribute in comment (identifier with prefix '@')_. The mewa program option --generate-language creates a Lua table out of the grammar with all elements parsed accessible. Additionally it embedds comments attributed in a JavaDoc-like manner. You have used a reserved attribute name in a comment in your grammar. The list of reserved attributes can be found in the comment section of [the grammar description of _Mewa_](grammar.md).
+* **#508** _Duplicate production in the grammar definition_
 + **#521**   _Priority definition for lexems not implemented_
 + **#531**   _Unexpected end of rule in the grammar definition_
 + **#532**   _Some internal pattern string mapping error in the grammar definition_

@@ -692,6 +692,16 @@ LanguageDef mewa::parseLanguageDef( const std::string& source)
 		{
 			throw Error( Error::ComplexityMaxNonterminalInGrammarDef);
 		}
+
+		// [6] Test for duplicate productions:
+		std::set<std::string> prodset;
+		for (auto const& prod: rt.prodlist)
+		{
+			if (prodset.insert( prod.prodstring()).second == false /*not new*/)
+			{
+				throw Error( Error::DuplicateProductionInGrammarDef, prod.prodstring());
+			}
+		}
 	}
 	catch (const Error& err)
 	{

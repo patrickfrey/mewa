@@ -263,6 +263,7 @@ const char* Error::code2String( int code_) noexcept
 		case DuplicateScopeInGrammarDef: return "More than one scope marker '{}' of '>>' not allowed in a call definition";
 		case NestedCallArgumentStructureInGrammarDef: return "Nested structures as AST node function arguments are not allowed";
 		case UsingReservedAttributeNameInGrammarDef: return "Using reserved attribute in comment (identifier with prefix '@')";
+		case DuplicateProductionInGrammarDef: return "Duplicate production in the grammar definition";
 
 		case PriorityDefNotForLexemsInGrammarDef: return "Priority definition for lexems not implemented";
 		case UnexpectedEndOfRuleInGrammarDef: return "Unexpected end of rule in the grammar definition";
