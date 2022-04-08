@@ -95,7 +95,8 @@ chmod +x build/language1.dump.lua
 $ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
 build/language1.dump.lua > build/language1.dump.lua.tmp
 cat build/language1.dump.lua.tmp\
-	| sed -E 's@\[[0-9][0-9]*\] = [0-9][0-9]*@\[XX\] = YY@g' | uniq > build/language1.dump.lua.out
+	| sed -E 's@\[[0-9][0-9]*\] = [0-9][0-9]*@\[XX\] = YY@g'\
+	| sed -E 's@[0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*@MM.mm.pp@g' | uniq > build/language1.dump.lua.out
 cat build/language1.debug.tmp\
 	| sed -E 's@^\[[0-9][0-9]*\]@\[XX\]@g'\
 	| sed -E 's@FOLLOW \[[0-9][0-9]*\]@FOLLOW \[XX\]@g'\

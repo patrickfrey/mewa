@@ -211,6 +211,9 @@ V = "*" E
 [10]
 	N = V "=" E ., FOLLOW [0] -> REDUCE N #3
 
+-- Statistics:
+ * SHIFT/REDUCE conflicts solved by priority 0
+
 -- Action table:
 [1]
 	IDENT => Shift goto 5
@@ -273,7 +276,7 @@ V = "*" E
 		// [2] Test packing of structures used in automaton:
 		for (int ii=0; ii<100000; ++ii)
 		{
-			Automaton::ActionKey actionKey( 
+			Automaton::ActionKey actionKey(
 							g_random.get( 0, Automaton::MaxState)/*state*/,
 							g_random.get( 0, Automaton::MaxTerminal)/*terminal*/);
 			Automaton::Action::Type atype = (Automaton::Action::Type)g_random.get( 0, 3);
@@ -282,12 +285,12 @@ V = "*" E
 							g_random.get( 0, Automaton::MaxState)/*value*/,
 							g_random.get( 0, Automaton::MaxCall)/*call*/,
 							g_random.get( 0, Automaton::MaxProductionLength)/*count*/);
-			Automaton::GotoKey gtoKey( 
+			Automaton::GotoKey gtoKey(
 							g_random.get( 0, Automaton::MaxState)/*state*/,
 							g_random.get( 0, Automaton::MaxNonterminal)/*nonterminal*/);
-			Automaton::Goto gto( 
+			Automaton::Goto gto(
 							g_random.get( 0, Automaton::MaxState)/*state*/);
-			TransitionItem titm( 
+			TransitionItem titm(
 							g_random.get( 0, Automaton::MaxNofProductions)/*prodindex*/,
 							g_random.get( 0, Automaton::MaxProductionLength)/*prodpos*/,
 							g_random.get( 0, Automaton::MaxTerminal)/*follow*/);

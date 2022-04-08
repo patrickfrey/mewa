@@ -1,6 +1,6 @@
 /*
   Copyright (c) 2020 Patrick P. Frey
- 
+
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -26,11 +26,11 @@ using namespace mewa;
 
 static std::string getLexemName( const Lexer& lexer, int terminal)
 {
-        return terminal ? lexer.lexemName( terminal) : std::string("$");
+	return terminal ? lexer.lexemName( terminal) : std::string("$");
 }
 
 static std::pair<FlatSet<int>,bool> getLr1FirstSet(
-				const ProductionDef& prod, int prodpos, 
+				const ProductionDef& prod, int prodpos,
 				const std::map<int, std::set<int> >& nonTerminalFirstSetMap,
 				const std::set<int>& nullableNonterminalSet)
 {
@@ -239,7 +239,7 @@ static TransitionState getLr0TransitionStateClosure( const TransitionState& ts, 
 	return rt;
 }
 
-static TransitionState getLr1TransitionStateClosure( 
+static TransitionState getLr1TransitionStateClosure(
 		const TransitionState& ts, const ProductionDefList& prodlist, FollowMap& followMap)
 {
 	TransitionState rt;
@@ -341,7 +341,7 @@ static void mergeTransitionStateFollow( TransitionState& state, FollowMap& follo
 		auto item = TransitionItem::unpack( state.packedElements()[ oidx]);
 		int joinedFollow = item.follow;
 
-		std::size_t oidx2 = oidx+1; 
+		std::size_t oidx2 = oidx+1;
 		for (; oidx2 < state.size(); ++oidx2)
 		{
 			auto item2 = TransitionItem::unpack( state.packedElements()[ oidx2]);
@@ -523,7 +523,7 @@ static std::vector<ProductionShiftNode> getShiftNodes(
 		const ProductionDef& prod = prodlist[ item.prodindex];
 		if (item.prodpos < (int)prod.right.size())
 		{
-			const ProductionNodeDef& nd = prod.right[ item.prodpos]; 
+			const ProductionNodeDef& nd = prod.right[ item.prodpos];
 			int succ = TransitionItem( item.prodindex, item.prodpos+1, 0/*follow*/).packed();
 
 			nodemap.insert( {nd,succ} );
@@ -845,8 +845,46 @@ static void printLalr1StateCores( std::ostream& out, const TransitionItemGotoMap
 	}
 }
 
+class SolvedConflictMap
+{
+public:
+	SolvedConflictMap() :m_map(),m_count(0){};
+
+	void insert( const Automaton::ActionKey& key)
+	{
+		auto mi = m_map.insert( {key, 1});
+		if (mi.second == false)
+		{
+			mi.first->second += 1;
+		}
+		m_count += 1;
+	}
+
+	int count() const noexcept
+	{
+		int rt = 0;
+		for (auto const& mi : m_map)
+		{
+			int nn = 1;
+			int ii = mi.second;
+			// Calculate factorial (count every conflict)
+			for (; ii > 0; --ii)
+			{
+				nn *= ii;
+			}
+			rt += nn;
+		}
+		return rt;
+	}
+
+private:
+	std::map<Automaton::ActionKey,int> m_map;
+	int m_count;
+};
+
 static void insertAction(
 	std::map<Automaton::ActionKey,Priority>& priorityMap,
+	SolvedConflictMap& solvedConflictMap,
 	std::map<Automaton::ActionKey,Automaton::Action>& actionMap,
 	const std::vector<ProductionDef>& prodlist,
 	const FollowMap& followMap,
@@ -854,7 +892,7 @@ static void insertAction(
 	int terminal,
 	const Automaton::ActionKey& key,
 	const Automaton::Action& action,
-	const Priority priority, 
+	const Priority priority,
 	std::vector<Error>& warnings,
 	const Lexer& lexer)
 {
@@ -876,20 +914,21 @@ static void insertAction(
 	else if (priority.defined() != pi->second.defined())
 	{
 		warnings.push_back(
-			Error( Error::ShiftReduceConflictInGrammarDef, 
+			Error( Error::ShiftReduceConflictInGrammarDef,
 			getStateTransitionString( lr1State, terminal, prodlist, lexer, followMap)));
 	}
 	else if (priority.value > pi->second.value)
 	{
 		actionMap[ key] = action;
 		priorityMap[ key] = priority;
+		solvedConflictMap.insert( key);
 	}
 	else if (priority.value == pi->second.value)
 	{
 		if (priority.assoziativity != pi->second.assoziativity || priority.assoziativity == Assoziativity::Undefined)
 		{
 			warnings.push_back(
-				Error( Error::ShiftReduceConflictInGrammarDef, 
+				Error( Error::ShiftReduceConflictInGrammarDef,
 				getStateTransitionString( lr1State, terminal, prodlist, lexer, followMap)));
 		}
 		else
@@ -910,7 +949,12 @@ static void insertAction(
 					priorityMap[ key] = priority;
 				}
 			}
+			solvedConflictMap.insert( key);
 		}
+	}
+	else //if priority.value < pi->second.value
+	{
+		solvedConflictMap.insert( key);
 	}
 }
 
@@ -1015,6 +1059,13 @@ static void printProductions( const std::vector<ProductionDef>& prodlist, Automa
 	dbgout.out() << std::endl;
 }
 
+static void printStatistics( const SolvedConflictMap& solvedConflictMap, Automaton::DebugOutput dbgout)
+{
+	dbgout.out() << "-- Statistics:" << std::endl;
+	dbgout.out() << " * SHIFT/REDUCE conflicts solved by priority " << solvedConflictMap.count() << std::endl;
+	dbgout.out() << std::endl;
+}
+
 static void printLr0States(
 		const std::unordered_map<TransitionState,int>& lr0statemap,
 		const std::vector<ProductionDef>& prodlist, const Lexer& lexer, Automaton::DebugOutput dbgout)
@@ -1091,7 +1142,7 @@ static void printLalr1States(
 			{
 				ReductionDef rd = getReductionDef( state, follow, prodlist, lexer, followMap, warnings);
 				auto const& prod = prodlist[ rd.prodindex];
-				dbgout.out() << "\t" << prod.tostring( prod.right.size()) << ", FOLLOW [" << follow << "]";			
+				dbgout.out() << "\t" << prod.tostring( prod.right.size()) << ", FOLLOW [" << follow << "]";
 				dbgout.out() << " -> REDUCE " << rd.headname << " #" << rd.count;
 				if (rd.callidx) dbgout.out() << " CALL " << calls[ rd.callidx-1].tostring();
 				dbgout.out() << std::endl;
@@ -1239,7 +1290,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	{
 		throw Error( Error::ComplexityMaxTerminalInGrammarDef);
 	}
-	for (auto const& prod : langdef.prodlist) 
+	for (auto const& prod : langdef.prodlist)
 	{
 		if (prod.right.size() >= MaxProductionLength)
 		{
@@ -1281,6 +1332,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	// [4] Build the LALR(1) automaton:
 	std::map<ActionKey,Priority> priorityMap;
 	int nofAcceptStates = 0;
+	SolvedConflictMap solvedConflictMap;
 
 	for (auto const& lalr1StateAssign : lalr1States)
 	{
@@ -1308,7 +1360,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 				int terminal = shft.node.index();
 
 				ActionKey key( stateidx, terminal);
-				insertAction( priorityMap, m_actions, langdef.prodlist, followMap,
+				insertAction( priorityMap, solvedConflictMap, m_actions, langdef.prodlist, followMap,
 						lalr1State, terminal, key, Action::shift(to_stateidx),
 						shft.priority, warnings, langdef.lexer);
 			}
@@ -1328,7 +1380,7 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 			for (int terminal : followMap.content( follow))
 			{
 				ActionKey key( stateidx, terminal);
-				insertAction( priorityMap, m_actions, langdef.prodlist, followMap, lalr1State, terminal, key, 
+				insertAction( priorityMap, solvedConflictMap, m_actions, langdef.prodlist, followMap, lalr1State, terminal, key,
 						Action::reduce( rd.head, rd.scope, rd.callidx, rd.count), rd.priority, warnings, langdef.lexer);
 			}
 		}
@@ -1336,6 +1388,10 @@ void Automaton::build( const std::string& source, std::vector<Error>& warnings, 
 	if (nofAcceptStates == 0)
 	{
 		throw Error( Error::NoAcceptStatesInGrammarDef);
+	}
+	if (dbgout.enabled( DebugOutput::Statistics))
+	{
+		printStatistics( solvedConflictMap, dbgout);
 	}
 	std::swap( m_language, langdef.language);
 	std::swap( m_typesystem, langdef.typesystem);

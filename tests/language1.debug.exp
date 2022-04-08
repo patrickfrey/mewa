@@ -18711,6 +18711,9 @@ expressionlist/L0 = expression
 (XX) rep_operator, "->"
 (XX) count
 
+-- Statistics:
+ * SHIFT/REDUCE conflicts solved by priority 1366
+
 -- Action table:
 [XX]
 	$ => Reduce #0 extern_definitionlist

@@ -73,7 +73,7 @@ public:
 		DebugOutput( const DebugOutput& o) noexcept
 			:m_enabledMask(o.m_enabledMask),m_out(o.m_out){}
 
-		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, StateTransitions=0x20, All=0xFF};
+		enum Type {None=0x0, Productions=0x1, Lexems=0x2, Nonterminals=0x4, States=0x8, FunctionCalls=0x10, StateTransitions=0x20, Statistics=0x40, All=0xFF};
 
 		DebugOutput& enable( Type type_) noexcept	{m_enabledMask |= (int)(type_); return *this;}
 		bool enabled( Type type_) const noexcept	{return (m_enabledMask & (int)(type_)) == (int)(type_);}
