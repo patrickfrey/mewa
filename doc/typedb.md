@@ -174,6 +174,9 @@ typedb:step( 49);  print( typedb:get_instance( "register")());
 ```
 #### Output
 ```
+%R1
+%R1
+%R2
 
 ```
 
