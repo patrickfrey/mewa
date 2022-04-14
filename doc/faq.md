@@ -11,6 +11,7 @@
     * [What does this silly name _Mewa_ stand for?](#nameMewa)
 1. [Problem Solving HOWTO](#problemSolving)
     * [How to process the AST structure?](#astStructure)
+    * [How to parse off-side rule languages?](#offSideRuleLanguages)
     * [How to handle lexical scopes?](#astTraversalAndScope)
     * [How to define a schema of reduction weights?](#reductionWeightSchema)
     * [How to compare matching function candidates with more than one parameter?](#functionWeighting)
@@ -91,6 +92,7 @@ But I am open to alternatives or extensions to cover more classes of grammars. I
 
 ### What types of languages are covered by _Mewa_?
 **_Mewa_ was been designed to be capable to implement statically typed, general-purpose programming languages having a LALR(1) grammar definition.**
+You can also [parse off-side rule languages](#offSideRuleLanguages) by converting indentiation into lexems.
 It is not recommended to use _Mewa_ for processing other than compilable, statically typed programming languages, because it was not designed for other language classes.
 To define a type system as a graph of types and reductions within the hierarchical concept of scope in this form makes no sense for other language classes.
 
@@ -135,6 +137,15 @@ This section of the FAQ gives some recommendations on how to solve specific prob
 
 ### How to process the AST structure?
 The compiler builds an Abstract Syntax Tree ([AST](ast.md)) with the lexemes explicitly declared as leaves and _Lua_ calls bound to the productions as non-leaf nodes. Keywords of the language specified as strings in the productions are not appearing in the _AST_. The compiler calls the topmost nodes of the tree built this way. It is assumed that the tree is traversed by the _Lua_ functions called. The example language uses a function utils.traverse defined in [typesystem_utils.lua](../examples/typesystem_utils.lua) for the tree traversal of sub-nodes. The traversal function sets the current scope or _scope-step_ if defined in the _AST_ and calls the function defined for the _AST_ node.
+
+<a name="offSideRuleLanguages">
+
+### How to parse off-side rule languages?
+
+The command **INDENTL** in the [definition of the grammar](grammar.md) allows to define lexemes issued for indentiation and new line.
+These lexemes can be referred to in the productions of the grammar.
+By converting new line and indentiation signals into end of command and brackets, you can implement off-side rule languages as if they were
+languages with operators marking the end of a command and open/close brackets marking blocks defined by indentiation in the original source.
 
 <a name="astTraversalAndScope"/>
 
