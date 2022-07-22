@@ -797,7 +797,7 @@ This should not be a big deal to implement. I will do this in the example **lang
 Copy elision, though it's making programs faster is not considered as an optimization, because it changes behavior. Copy elision has to be part of a language specification and thus be implemented in the compiler front-end. In the example **language1**, I implemented two 2 cases of copy elision:
   * Construction of a return value in the return slot (LLVM sret) provided by the caller
   * Construction of a return value in the return slot, when using only one variable for the return value in the variable declaration scope
-
+Copy elision is implemented with the help of the **Unbound Reference Type**.
 
 <a name="referenceCountingSwift"/>
 
