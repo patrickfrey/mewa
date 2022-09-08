@@ -76,10 +76,10 @@ echo "Test simple off-side rule language (%INDENTL command tests/indentl.g) $IND
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then
-$ECHOCOL "${ORANGE}Building tables for dump of example \"language1\" ...${NOCOL}"
+$ECHOCOL "${ORANGE}Building tables for debug dump of example \"language1\" (slow, only for tracing)...${NOCOL}"
 /usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -d build/language1.debug.tmp -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
-$ECHOCOL "${ORANGE}Building table with all the contents of the language parsed for \"language1\" ...${NOCOL}"
+$ECHOCOL "${ORANGE}Building the compiler of the language parsed for \"language1\" ...${NOCOL}"
 /usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -l -o build/language1_grammar.lua examples/language1/grammar.g
 echo "#!$LUABIN" > build/language1.image.lua
@@ -92,7 +92,7 @@ build/language1.image.lua > build/language1.image.tmp
 cat build/language1_grammar.lua | grep -v "VERSION =" > build/language1_grammar.tmp
 verify_test_result "Check 'mewa -l' output of parsed grammar as Lua table" build/language1_grammar.tmp tests/language1_grammar.lua.exp
 chmod +x build/language1.dump.lua
-$ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
+$ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" (slow, only for tracing) ...${NOCOL}"
 build/language1.dump.lua > build/language1.dump.lua.tmp
 cat build/language1.dump.lua.tmp\
 	| sed -E 's@\[[0-9][0-9]*\] = [0-9][0-9]*@\[XX\] = YY@g'\
@@ -115,7 +115,7 @@ echo "Building tables and script implementing the compiler for example \"languag
 chmod +x build/language1.compiler.lua
 fi
 
-for tst in fibo tree class array pointer generic complex matrix exception
+for tst in control fibo tree class array pointer generic complex matrix exception
 do
 	TST=`echo $tst | tr a-z A-Z`
 	if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "x$TST" ] ; then

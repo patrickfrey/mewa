@@ -1,0 +1,71 @@
+@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__ctors, i8* null }]
+@llvm.global_dtors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__dtors, i8* null }]
+
+declare external i32 @__gxx_personality_v0( ... ) nounwind
+@string1 = private unnamed_addr constant [26 x i8] c"Value is smaller than %d\0A\00"
+@string2 = private unnamed_addr constant [25 x i8] c"Value is bigger than %d\0A\00"
+
+
+define internal void @_GLOBAL__ctors() nounwind uwtable readnone optsize ssp section ".text.startup" {
+  ret void
+}
+
+define internal void @_GLOBAL__dtors() nounwind uwtable readnone optsize ssp section ".text.startup" {
+  ret void
+}
+
+declare external void @printf( i8*, ... ) nounwind
+
+define dso_local i32 @main(i32 %argc, i8** %argv) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+{
+entry:
+%r1 = alloca i32, align 4
+%r2 = alloca i32, align 4
+store i32 0, i32* %r2
+br label %L14
+L14:
+%r3 = load i32, i32* %r2
+%r4 = icmp slt i32 %r3, 5
+br i1 %r4, label %L13, label %L12
+L13:
+%r5 = load i32, i32* %r2
+%r6 = icmp eq i32 %r5, 0
+br i1 %r6, label %L3, label %L4
+L4:
+%r7 = load i32, i32* %r2
+%r8 = icmp eq i32 %r7, 1
+br i1 %r8, label %L3, label %L6
+L6:
+%r9 = load i32, i32* %r2
+%r10 = icmp eq i32 %r9, 2
+br i1 %r10, label %L3, label %L8
+L8:
+%r11 = load i32, i32* %r2
+%r12 = icmp eq i32 %r11, 3
+br i1 %r12, label %L3, label %L10
+L10:
+br label %L11
+L3:
+%r13 = getelementptr inbounds [26 x i8], [26 x i8]* @string1, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r13, i64 4)
+br label %L2
+L11:
+%r14 = getelementptr inbounds [25 x i8], [25 x i8]* @string2, i64 0, i64 0
+call void(i8*,  ...) @printf( i8* %r14, i64 4)
+br label %L2
+L2:
+%r15 = load i32, i32* %r2
+%r16 = add nsw i32 %r15, 1
+store i32 %r16, i32* %r2
+br label %L14
+L12:
+store i32 0, i32* %r1
+br label %L15
+L15:
+br label %L1
+L1:
+%r17 = load i32, i32* %r1
+ret i32 %r17
+}
+
+

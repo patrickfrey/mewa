@@ -17,7 +17,7 @@ end
 
 -- Encode a name
 local encodeNameSubstMap = {
- 	["*"]  = "$",
+	["*"]  = "$",
 	[" "]  = "",
 	["["]  = "$",
 	["]"]  = "",
@@ -90,7 +90,7 @@ function utils.constructor_format( fmt, argtable, allocator)
 				valtable[ index] = rr
 				return rr
 			else
-				utils.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined", 
+				utils.errorMessage( 0, "Can't build constructor for '%s', having unbound enumerated variable '%d' and no allocator defined",
 							utils.encodeCString( fmt), index)
 			end
 		elseif argtable[ match] then
@@ -100,6 +100,18 @@ function utils.constructor_format( fmt, argtable, allocator)
 		end
 	end
 	return (fmt:gsub("[{]([_%d%w]*)[}]", subst))
+end
+
+-- Replace one identifier by another in a string
+function utils.patch_identifier( code, orig, repl)
+	local subst = function( match)
+		if match == orig then
+			return repl
+		else
+			return match
+		end
+	end
+	return (code:gsub("([_%w%d]+)", subst))
 end
 
 -- Map a LLVM Code synthesis template to a template substituting only the defined arguments and leaving the rest of the substitutions occurring untouched
@@ -126,11 +138,11 @@ end
 
 -- Name allocators for LLVM
 function utils.name_allocator( prefix)
-        local i = 0
-        return function ()
-                i = i + 1
-                return prefix .. i
-        end
+	local i = 0
+	return function ()
+		i = i + 1
+		return prefix .. i
+	end
 end
 
 function utils.label_allocator( prefix)
@@ -432,7 +444,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 		rt = rt .. "CANDIDATE weight=" .. string.format( "%.4f", weight) .. " #" .. element.pathlen .. " = " .. elementString( element, elementidx) .. "\n"
 		if element.type == destType then
 			if resultweight then
-				if resultweight < weight + weightEpsilon then 
+				if resultweight < weight + weightEpsilon then
 					rt = rt .. "AMBIGUOUS\n"
 					rt_bk = rt
 				end
@@ -448,7 +460,7 @@ function utils.getDeriveTypeTrace( typedb, destType, srcType, tagmask, tagmask_p
 			pushElement( redu.type, redu.weight, redu.count, elementidx, redu.constructor)
 		end
 	end
-	if not resultweight then 
+	if not resultweight then
 		rt = rt .. "NOTFOUND\n"
 	end
 	return rt
@@ -481,5 +493,24 @@ function utils.getReductionTreeDump( typedb)
 	return treeToString( typedb, typedb:reduction_tree(), "", node_tostring)
 end
 
+function utils.dump( arg)
+	if type(arg) == "table" then
+		local rt
+		for key,val in pairs(arg) do
+			if rt then
+				rt = rt .. ", " .. key .. "=" .. utils.dump(val)
+			else
+				rt = key .. "=" .. utils.dump(val)
+			end
+		end
+		if rt then
+			return "{" .. rt .. "}"
+		else
+			return "{}"
+		end
+	else
+		return tostring(arg)
+	end
+end
 return utils
 

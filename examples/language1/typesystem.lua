@@ -464,7 +464,8 @@ function promoteCallConstructor( call_constructor, promote_constructor)
 end
 -- Define an operation with involving the promotion of the left hand argument to another type and executing the operation as defined for the type promoted to.
 function definePromoteCall( returnType, thisType, promoteType, opr, argTypes, promote_constructor)
-	local call_constructor = typedb:type_constructor( typedb:this_type( promoteType, opr, argTypes))
+	local call_type = typedb:this_type( promoteType, opr, argTypes)
+	local call_constructor = typedb:type_constructor( call_type)
 	local callType = typedb:def_type( thisType, opr, promoteCallConstructor( call_constructor, promote_constructor), argTypes)
 	if callType == -1 then utils.errorMessage( node.line, "Duplicate definition '%s'", typeDeclarationString( thisType, opr, argTypes)) end
 	if returnType then typedb:def_reduction( returnType, callType, nil, tag_typeDeclaration) end
@@ -2003,39 +2004,14 @@ function initControlBooleanTypes()
 	local function negateControlTrueType( this) return {type=controlFalseType, constructor=this.constructor} end
 	local function negateControlFalseType( this) return {type=controlTrueType, constructor=this.constructor} end
 
-	local function joinControlTrueTypeWithBool( this, arg)
-		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToControlTrueType, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
-		return {code=this.code .. arg[1].code .. code2, out=out}
-	end
-	local function joinControlFalseTypeWithBool( this, arg)
-		local out = this.out
-		local code2 = utils.constructor_format( llvmir.control.booleanToControlFalseType, {inp=arg[1].out, out=out}, getCallableEnvironment().label)
-		return {code=this.code .. arg[1].code .. code2, out=out}
+	local function joinControlBooleanTypes( this, args)
+		local code = this.code .. utils.patch_identifier( args[1].code, args[1].out, this.out)
+		return {code = code, out = this.out}
 	end
 	defineCall( controlTrueType, controlFalseType, "!", {}, nil)
 	defineCall( controlFalseType, controlTrueType, "!", {}, nil)
-	defineCall( controlTrueType, controlTrueType, "&&", {scalarBooleanType}, joinControlTrueTypeWithBool)
-	defineCall( controlFalseType, controlFalseType, "||", {scalarBooleanType}, joinControlFalseTypeWithBool)
-
-	local function joinControlFalseTypeWithConstexprBool( this, arg)
-		if arg == false then
-			return this
-		else
-			local env = getCallableEnvironment()
-			return {code= this.code .. utils.constructor_format( llvmir.control.terminateTrueExit,{out=this.out},env.label), out=this.out}
-		end
-	end
-	local function joinControlTrueTypeWithConstexprBool( this, arg)
-		if arg == true then
-			return this
-		else
-			local env = getCallableEnvironment()
-			return {code= this.code .. utils.constructor_format( llvmir.control.terminateFalseExit,{out=this.out},env.label), out=this.out}
-		end
-	end
-	defineCall( controlTrueType, controlTrueType, "&&", {constexprBooleanType}, joinControlTrueTypeWithConstexprBool)
-	defineCall( controlFalseType, controlFalseType, "||", {constexprBooleanType}, joinControlFalseTypeWithConstexprBool)
+	defineCall( controlTrueType, controlTrueType, "&&", {controlTrueType}, joinControlBooleanTypes)
+	defineCall( controlFalseType, controlFalseType, "||", {controlFalseType}, joinControlBooleanTypes)
 
 	local function constexprBooleanToControlTrueType( value)
 		local env = getCallableEnvironment()
@@ -2059,8 +2035,8 @@ function initControlBooleanTypes()
 	typedb:def_reduction( controlFalseType, controlTrueType, invertControlBooleanType, tag_typeDeduction, rwd_control)
 	typedb:def_reduction( controlTrueType, controlFalseType, invertControlBooleanType, tag_typeDeduction, rwd_control)
 
-	definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType, "&&", {scalarBooleanType}, constexprBooleanToControlTrueType)
-	definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType, "||", {scalarBooleanType}, constexprBooleanToControlFalseType)
+	definePromoteCall( controlTrueType, constexprBooleanType, controlTrueType, "&&", {controlTrueType}, constexprBooleanToControlTrueType)
+	definePromoteCall( controlFalseType, constexprBooleanType, controlFalseType, "||", {controlFalseType}, constexprBooleanToControlFalseType)
 end
 -- Initialize all built-in types
 function initBuiltInTypes()
@@ -2450,7 +2426,11 @@ function collectItemParameter( node, item, args, parameters)
 		if rt.weight < weight then rt.weight = weight end -- use max(a,b) as weight accumulation function
 		table.insert( rt.redulist, redulist)
 		local descr = typeDescriptionMap[ redutype]
-		table.insert( rt.llvmtypes, descr.llvmtype)
+		if descr then
+			table.insert( rt.llvmtypes, descr.llvmtype)
+		else
+			table.insert( rt.llvmtypes, "__control")
+		end
 	end
 	return rt
 end
