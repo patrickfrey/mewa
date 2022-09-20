@@ -1,6 +1,6 @@
 local utils = require "typesystem_utils"
 local llvm_version = require "llvm_version"
-if llvm_version < 10 or llvm_version > 15 then
+if llvm_version < 10 or llvm_version > 16 then
 	error( "LLVM version " .. llvm_version .. " not supported by the examples")
 end
 local llvmir = {}

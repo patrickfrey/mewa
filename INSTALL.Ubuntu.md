@@ -4,7 +4,7 @@
 Use Cmake with gcc or clang with C++17 support.
 
 ### LLVM Version
-The examples of this version of _Mewa_ are based on LLVM version > 12 and run also with version 10 or 11.
+The examples of this version of _Mewa_ are based on LLVM version 12 to 16 and run also with version 10 or 11.
 The examples pass with with LLVM versions 10 and 11 too, but the output of the IR differs slightly.
 
 ### Prerequisites
