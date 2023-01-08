@@ -76,9 +76,6 @@ echo "Test simple off-side rule language (%INDENTL command tests/indentl.g) $IND
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xATM" ] ; then
-$ECHOCOL "${ORANGE}Building tables for debug dump of example \"language1\" (slow, only for tracing)...${NOCOL}"
-/usr/bin/time -f "Running for %e seconds"\
-    build/mewa -b "$LUABIN" -d build/language1.debug.tmp -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
 $ECHOCOL "${ORANGE}Building the compiler of the language parsed for \"language1\" ...${NOCOL}"
 /usr/bin/time -f "Running for %e seconds"\
     build/mewa -b "$LUABIN" -l -o build/language1_grammar.lua examples/language1/grammar.g
@@ -91,8 +88,15 @@ $ECHOCOL "${ORANGE}Create grammar for example \"language1\" from Lua table...${N
 build/language1.image.lua > build/language1.image.tmp
 cat build/language1_grammar.lua | grep -v "VERSION =" > build/language1_grammar.tmp
 verify_test_result "Check 'mewa -l' output of parsed grammar as Lua table" build/language1_grammar.tmp tests/language1_grammar.lua.exp
+fi
+
+if [ "x$TESTID" = "xDEBUG" ] ; then
+$ECHOCOL "${ORANGE}Building tables for debug dump of example \"language1\" (slow, only for tracing)...${NOCOL}"
+/usr/bin/time -f "Running for %e seconds"\
+    build/mewa -b "$LUABIN" -d build/language1.debug.tmp -g -o build/language1.dump.lua -t tests/dumpAutomaton.tpl examples/language1/grammar.g
+
 chmod +x build/language1.dump.lua
-$ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" (slow, only for tracing) ...${NOCOL}"
+$ECHOCOL "${ORANGE}Dump tables of compiler for example \"language1\" ...${NOCOL}"
 build/language1.dump.lua > build/language1.dump.lua.tmp
 cat build/language1.dump.lua.tmp\
 	| sed -E 's@\[[0-9][0-9]*\] = [0-9][0-9]*@\[XX\] = YY@g'\
@@ -104,8 +108,8 @@ cat build/language1.debug.tmp\
 	| sed -E 's@GOTO [0-9][0-9]*@GOTO XX@g'\
 	| sed -E 's@goto [0-9][0-9]*@goto XX@g'\
 	| sed -E 's@=> [0-9][0-9]*@=> XX@g' > build/language1.debug.out
-verify_test_result "Check dump automaton read by Lua script"  build/language1.dump.lua.out tests/language1.dump.lua.exp
-verify_test_result "Check dump states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp "SORT"
+verify_test_result "Check automaton definition read by Lua script"  build/language1.dump.lua.out tests/language1.dump.lua.exp
+verify_test_result "Check states dumped from language1 grammar"  build/language1.debug.out tests/language1.debug.exp "SORT"
 fi
 
 if [ "x$TESTID" = "x" ] || [ "x$TESTID" = "xLANG1" ] ; then

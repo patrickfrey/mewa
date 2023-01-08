@@ -19,9 +19,15 @@ GREP=grep
 DIRNAME=dirname
 PKGCONFIG=pkg-config
 LUAROCKS=luarocks
+RED='\033[0;31m'
+NOCOL='\033[0m'
 
 LLVM_VERSION=`llvm-config --version | awk -F "." '{print $1}'`
 echo "return $LLVM_VERSION" > examples/llvm_version.lua
+if [ "$LLVM_VERSION" -lt "10" ] || [ "$LLVM_VERSION" -gt "16" ]; then
+	echo "${RED}ERR${NOCOL} mewa is not tested with the LLVM version $LLVM_VERSION!"
+	echo ""
+fi
 
 findLuaInclude() {
 	local VERSION=$1

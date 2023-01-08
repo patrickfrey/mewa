@@ -137,6 +137,9 @@ test : all
 	tests/luatest.sh "$(LUABIN)" "$(TARGET)"
 check: test
 
+longtest : all
+	tests/luatest.sh "$(LUABIN)" "$(TARGET)" "DEBUG"
+
 install: all
 	cp $(PROGRAM) $(DESTINATION)
 	mkdir -p $(INCDEST)/mewa
